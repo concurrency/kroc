@@ -1,0 +1,2066 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>File library</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-file" class="module">
+<h1>Module <code>file</code> - File library</h1>
+<div class="header"><div class="description">
+<p>File library.</p>
+<p> This library provides a subset of the standard POSIX file-handling functions, with some additions. Many of the provided processes (<a href="file.html#name-file.open"><code>file.open</code></a>, <a href="file.html#name-file.close"><code>file.close</code></a>, ...) are implemented as direct C calls rather than as blocking calls, as they are unlikely to block in the OS kernel.</p>
+<p> This may be used as a replacement for the hostio/hostsp libraries when writing applications for POSIX platforms.</p>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "file.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="group" href="file.html#name-ACCESS">Group <code>ACCESS</code></a> - Constants for   <br><ul>
+<li>
+<a class="constant" href="file.html#name-F.OK">Constant <code>F.OK</code></a> - Check existance</li>
+<li>
+<a class="constant" href="file.html#name-R.OK">Constant <code>R.OK</code></a> - Check read permission</li>
+<li>
+<a class="constant" href="file.html#name-W.OK">Constant <code>W.OK</code></a> - Check write permission</li>
+<li>
+<a class="constant" href="file.html#name-X.OK">Constant <code>X.OK</code></a> - Check execute permission</li>
+</ul>
+</li>
+<li>
+<a class="record" href="file.html#name-DIRENT">Record <code>DIRENT</code></a> - Information about a directory entry<br><ul><li>
+<a class="variable" href="file.html#name-filename">Variable <code>filename</code></a> - Filename, terminated with  '*0'</li></ul>
+</li>
+<li>
+<a class="group" href="file.html#name-FCNTL">Group <code>FCNTL</code></a> - Constants for    and   <br><ul>
+<li>
+<a class="constant" href="file.html#name-F.DUPFD">Constant <code>F.DUPFD</code></a> - Duplicate file descriptor</li>
+<li>
+<a class="constant" href="file.html#name-F.GETFD">Constant <code>F.GETFD</code></a> - Read the close-on-exec flag</li>
+<li>
+<a class="constant" href="file.html#name-F.GETFL">Constant <code>F.GETFL</code></a> - Get file descriptor flags</li>
+<li>
+<a class="constant" href="file.html#name-F.GETLK">Constant <code>F.GETLK</code></a> - Get  flock  structure</li>
+<li>
+<a class="constant" href="file.html#name-F.GETLK64">Constant <code>F.GETLK64</code></a> - Get  flock64  structure</li>
+<li>
+<a class="constant" href="file.html#name-F.GETOWN">Constant <code>F.GETOWN</code></a> - Get process ID receiving SIGIO and SIGURG signals</li>
+<li>
+<a class="constant" href="file.html#name-F.GETSIG">Constant <code>F.GETSIG</code></a> - Set signal sent when I/O becomes available on the descriptor</li>
+<li>
+<a class="constant" href="file.html#name-F.RDLCK">Constant <code>F.RDLCK</code></a> - Obtain read lock</li>
+<li>
+<a class="constant" href="file.html#name-F.SETFD">Constant <code>F.SETFD</code></a> - Set the close-on-exec flag</li>
+<li>
+<a class="constant" href="file.html#name-F.SETFL">Constant <code>F.SETFL</code></a> - Set file descriptor flags</li>
+<li>
+<a class="constant" href="file.html#name-F.SETLK">Constant <code>F.SETLK</code></a> - Set file lock</li>
+<li>
+<a class="constant" href="file.html#name-F.SETLK64">Constant <code>F.SETLK64</code></a> - Set 64-bit file lock</li>
+<li>
+<a class="constant" href="file.html#name-F.SETLKW">Constant <code>F.SETLKW</code></a> - Set file lock with wait</li>
+<li>
+<a class="constant" href="file.html#name-F.SETLKW64">Constant <code>F.SETLKW64</code></a> - Set 64-bit file lock with wait</li>
+<li>
+<a class="constant" href="file.html#name-F.SETOWN">Constant <code>F.SETOWN</code></a> - Set process ID that will receive  SIGIO  and  SIGURG  signals</li>
+<li>
+<a class="constant" href="file.html#name-F.SETSIG">Constant <code>F.SETSIG</code></a> - Get signal sent when I/O becomes available on the descriptor</li>
+<li>
+<a class="constant" href="file.html#name-F.UNLCK">Constant <code>F.UNLCK</code></a> - Release lock</li>
+<li>
+<a class="constant" href="file.html#name-F.WRLCK">Constant <code>F.WRLCK</code></a> - Obtain write lock</li>
+<li>
+<a class="constant" href="file.html#name-FD.CLOEXEC">Constant <code>FD.CLOEXEC</code></a> - Close-on-exec flag for   / </li>
+</ul>
+</li>
+<li>
+<a class="group" href="file.html#name-FILE.MODE">Group <code>FILE.MODE</code></a> - Constants for file modes<br><ul>
+<li>
+<a class="constant" href="file.html#name-S.I644">Constant <code>S.I644</code></a> - User may write; all may read</li>
+<li>
+<a class="constant" href="file.html#name-S.I755">Constant <code>S.I755</code></a> - User may write; all may read and execute</li>
+<li>
+<a class="constant" href="file.html#name-S.IFBLK">Constant <code>S.IFBLK</code></a> - Block device</li>
+<li>
+<a class="constant" href="file.html#name-S.IFCHR">Constant <code>S.IFCHR</code></a> - Character device</li>
+<li>
+<a class="constant" href="file.html#name-S.IFDIR">Constant <code>S.IFDIR</code></a> - Directory</li>
+<li>
+<a class="constant" href="file.html#name-S.IFIFO">Constant <code>S.IFIFO</code></a> - FIFO</li>
+<li>
+<a class="constant" href="file.html#name-S.IFLNK">Constant <code>S.IFLNK</code></a> - Symbolic link</li>
+<li>
+<a class="constant" href="file.html#name-S.IFMT">Constant <code>S.IFMT</code></a> - Bitmask for the file type bitfields</li>
+<li>
+<a class="constant" href="file.html#name-S.IFREG">Constant <code>S.IFREG</code></a> - Regular file</li>
+<li>
+<a class="constant" href="file.html#name-S.IFSOCK">Constant <code>S.IFSOCK</code></a> - Socket</li>
+<li>
+<a class="constant" href="file.html#name-S.IRGRP">Constant <code>S.IRGRP</code></a> - Group may read</li>
+<li>
+<a class="constant" href="file.html#name-S.IROTH">Constant <code>S.IROTH</code></a> - Others may read</li>
+<li>
+<a class="constant" href="file.html#name-S.IRUSR">Constant <code>S.IRUSR</code></a> - User may read</li>
+<li>
+<a class="constant" href="file.html#name-S.IRWXG">Constant <code>S.IRWXG</code></a> - Group may read, write and execute</li>
+<li>
+<a class="constant" href="file.html#name-S.IRWXO">Constant <code>S.IRWXO</code></a> - Others may read, write and execute</li>
+<li>
+<a class="constant" href="file.html#name-S.IRWXU">Constant <code>S.IRWXU</code></a> - User may read, write and execute</li>
+<li>
+<a class="constant" href="file.html#name-S.ISGID">Constant <code>S.ISGID</code></a> - Set-GID</li>
+<li>
+<a class="constant" href="file.html#name-S.ISUID">Constant <code>S.ISUID</code></a> - Set-UID</li>
+<li>
+<a class="constant" href="file.html#name-S.ISVTX">Constant <code>S.ISVTX</code></a> - Sticky</li>
+<li>
+<a class="constant" href="file.html#name-S.IWGRP">Constant <code>S.IWGRP</code></a> - Group may write</li>
+<li>
+<a class="constant" href="file.html#name-S.IWOTH">Constant <code>S.IWOTH</code></a> - Others may write</li>
+<li>
+<a class="constant" href="file.html#name-S.IWUSR">Constant <code>S.IWUSR</code></a> - User may write</li>
+<li>
+<a class="constant" href="file.html#name-S.IXGRP">Constant <code>S.IXGRP</code></a> - Group may execute</li>
+<li>
+<a class="constant" href="file.html#name-S.IXOTH">Constant <code>S.IXOTH</code></a> - Others may execute</li>
+<li>
+<a class="constant" href="file.html#name-S.IXUSR">Constant <code>S.IXUSR</code></a> - User may execute</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="file.html#name-GETOPT">Protocol <code>GETOPT</code></a> - Responses from   <br><ul>
+<li>
+<a class="tag" href="file.html#name-arg">Tag <code>arg</code></a> - A non-option argument (such as  foo )</li>
+<li>
+<a class="tag" href="file.html#name-bad">Tag <code>bad</code></a> - An unrecognised option</li>
+<li>
+<a class="tag" href="file.html#name-done">Tag <code>done</code></a> - No more options</li>
+<li>
+<a class="tag" href="file.html#name-opt">Tag <code>opt</code></a> - An option (such as  -a )</li>
+<li>
+<a class="tag" href="file.html#name-opt.arg">Tag <code>opt.arg</code></a> - An option with an argument (such as  -a foo )</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="file.html#name-GETOPT.LONG">Protocol <code>GETOPT.LONG</code></a> - Responses from   <br><ul>
+<li>
+<a class="tag" href="file.html#name-arg">Tag <code>arg</code></a> - A non-option argument (such as  foo )</li>
+<li>
+<a class="tag" href="file.html#name-bad">Tag <code>bad</code></a> - An unrecognised option</li>
+<li>
+<a class="tag" href="file.html#name-done">Tag <code>done</code></a> - No more options</li>
+<li>
+<a class="tag" href="file.html#name-opt">Tag <code>opt</code></a> - An option (such as  -a  or  --arg )</li>
+<li>
+<a class="tag" href="file.html#name-opt.arg">Tag <code>opt.arg</code></a> - An option with an argument (such as  -a foo  or  --arg foo )</li>
+</ul>
+</li>
+<li>
+<a class="group" href="file.html#name-OPEN.MODE">Group <code>OPEN.MODE</code></a> - Constants for   <br><ul>
+<li>
+<a class="constant" href="file.html#name-O.APPEND">Constant <code>O.APPEND</code></a> - Position file pointer at EOF before each write</li>
+<li>
+<a class="constant" href="file.html#name-O.ASYNC">Constant <code>O.ASYNC</code></a> - Generate a signal when IO becomes possible</li>
+<li>
+<a class="constant" href="file.html#name-O.CREAT">Constant <code>O.CREAT</code></a> - Create if not already present</li>
+<li>
+<a class="constant" href="file.html#name-O.DIRECT">Constant <code>O.DIRECT</code></a> - Don't cache data for this file</li>
+<li>
+<a class="constant" href="file.html#name-O.DIRECTORY">Constant <code>O.DIRECTORY</code></a> - Fail if not opening a directory</li>
+<li>
+<a class="constant" href="file.html#name-O.EXCL">Constant <code>O.EXCL</code></a> - Fail if    is given and the file already exists</li>
+<li>
+<a class="constant" href="file.html#name-O.LARGEFILE">Constant <code>O.LARGEFILE</code></a> - Allow the file to be larger than 2GB</li>
+<li>
+<a class="constant" href="file.html#name-O.NDELAY">Constant <code>O.NDELAY</code></a> - Synonym for  </li>
+<li>
+<a class="constant" href="file.html#name-O.NOCTTY">Constant <code>O.NOCTTY</code></a> - Don't become controlling terminal</li>
+<li>
+<a class="constant" href="file.html#name-O.NOFOLLOW">Constant <code>O.NOFOLLOW</code></a> - Don't follow symbolic links when opening</li>
+<li>
+<a class="constant" href="file.html#name-O.NONBLOCK">Constant <code>O.NONBLOCK</code></a> - Make operations on this FD not block</li>
+<li>
+<a class="constant" href="file.html#name-O.RDONLY">Constant <code>O.RDONLY</code></a> - Open for reading</li>
+<li>
+<a class="constant" href="file.html#name-O.RDWR">Constant <code>O.RDWR</code></a> - Open for reading and writing</li>
+<li>
+<a class="constant" href="file.html#name-O.SYNC">Constant <code>O.SYNC</code></a> - Open for synchronous IO</li>
+<li>
+<a class="constant" href="file.html#name-O.TRUNC">Constant <code>O.TRUNC</code></a> - Truncate to zero length after opening</li>
+<li>
+<a class="constant" href="file.html#name-O.WRONLY">Constant <code>O.WRONLY</code></a> - Open for writing</li>
+</ul>
+</li>
+<li>
+<a class="group" href="file.html#name-SEEK">Group <code>SEEK</code></a> - Constants for   <br><ul>
+<li>
+<a class="constant" href="file.html#name-SEEK.CUR">Constant <code>SEEK.CUR</code></a> - Relative to current location</li>
+<li>
+<a class="constant" href="file.html#name-SEEK.END">Constant <code>SEEK.END</code></a> - Relative to end of file</li>
+<li>
+<a class="constant" href="file.html#name-SEEK.SET">Constant <code>SEEK.SET</code></a> - Relative to start of file</li>
+</ul>
+</li>
+<li>
+<a class="record" href="file.html#name-STAT">Record <code>STAT</code></a> - Information about a filesystem object<br><ul>
+<li>
+<a class="variable" href="file.html#name-atime">Variable <code>atime</code></a> - Access time</li>
+<li>
+<a class="variable" href="file.html#name-blksize">Variable <code>blksize</code></a> - Block size for filesystem IO</li>
+<li>
+<a class="variable" href="file.html#name-blocks">Variable <code>blocks</code></a> - Number of blocks allocated</li>
+<li>
+<a class="variable" href="file.html#name-ctime">Variable <code>ctime</code></a> - Change time</li>
+<li>
+<a class="variable" href="file.html#name-dev">Variable <code>dev</code></a> - Device number</li>
+<li>
+<a class="variable" href="file.html#name-gid">Variable <code>gid</code></a> - Group's gid</li>
+<li>
+<a class="variable" href="file.html#name-ino">Variable <code>ino</code></a> - Inode number</li>
+<li>
+<a class="variable" href="file.html#name-mode">Variable <code>mode</code></a> - Object type and permissions</li>
+<li>
+<a class="variable" href="file.html#name-mtime">Variable <code>mtime</code></a> - Modification time</li>
+<li>
+<a class="variable" href="file.html#name-nlink">Variable <code>nlink</code></a> - Number of links</li>
+<li>
+<a class="variable" href="file.html#name-rdev">Variable <code>rdev</code></a> - Device type</li>
+<li>
+<a class="variable" href="file.html#name-size">Variable <code>size</code></a> - Size in bytes</li>
+<li>
+<a class="variable" href="file.html#name-uid">Variable <code>uid</code></a> - Owner's uid</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="file.html#name-file.altable.fd.fd.copy">Process <code>file.altable.fd.fd.copy</code></a> - ALT able equivalent of   </li>
+<li>
+<a class="proc" href="file.html#name-file.altable.read">Process <code>file.altable.read</code></a> - ALT able equivalent of   </li>
+<li>
+<a class="proc" href="file.html#name-file.altable.write">Process <code>file.altable.write</code></a> - ALT able equivalent of   </li>
+<li>
+<a class="proc" href="file.html#name-file.array.select">Process <code>file.array.select</code></a> - Wait for one of a set of file descriptors to become ready</li>
+<li>
+<a class="proc" href="file.html#name-file.blocking.read">Process <code>file.blocking.read</code></a> - Read from a file descriptor into a buffer without blocking the occam system</li>
+<li>
+<a class="proc" href="file.html#name-file.blocking.write">Process <code>file.blocking.write</code></a> - Write from a buffer to a file descriptor without blocking the occam system</li>
+<li>
+<a class="proc" href="file.html#name-file.check.access">Process <code>file.check.access</code></a> - Check access to a filesystem object</li>
+<li>
+<a class="proc" href="file.html#name-file.chmod">Process <code>file.chmod</code></a> - Change the permissions of a filesystem object</li>
+<li>
+<a class="proc" href="file.html#name-file.close">Process <code>file.close</code></a> - Close a file descriptor</li>
+<li>
+<a class="proc" href="file.html#name-file.closedir">Process <code>file.closedir</code></a> - Close a directory descriptor</li>
+<li>
+<a class="proc" href="file.html#name-file.dup2">Process <code>file.dup2</code></a> - Make a copy of a file descriptor</li>
+<li>
+<a class="proc" href="file.html#name-file.fcntl0">Process <code>file.fcntl0</code></a> - Perform various operations on file descriptors</li>
+<li>
+<a class="proc" href="file.html#name-file.fcntl1">Process <code>file.fcntl1</code></a> - Perform various operations on file descriptors</li>
+<li>
+<a class="proc" href="file.html#name-file.fd.fd.copy">Process <code>file.fd.fd.copy</code></a> - Copy bytes between file descriptors</li>
+<li>
+<a class="proc" href="file.html#name-file.fstat">Process <code>file.fstat</code></a> - Get information about an open filesystem object</li>
+<li>
+<a class="proc" href="file.html#name-file.fsync">Process <code>file.fsync</code></a> - Force changes to an open file to be written to disk</li>
+<li>
+<a class="proc" href="file.html#name-file.get.long.options">Process <code>file.get.long.options</code></a> - Parse command-line options</li>
+<li>
+<a class="proc" href="file.html#name-file.get.options">Process <code>file.get.options</code></a> - Parse command-line options</li>
+<li>
+<a class="function" href="file.html#name-file.high.fd">Function <code>file.high.fd</code></a> - Find the highest file descriptor in three sets</li>
+<li>
+<a class="proc" href="file.html#name-file.lstat">Process <code>file.lstat</code></a> - Get information about a filesystem object or link</li>
+<li>
+<a class="proc" href="file.html#name-file.mkdir">Process <code>file.mkdir</code></a> - Create a directory</li>
+<li>
+<a class="proc" href="file.html#name-file.npipes">Process <code>file.npipes</code></a> - Create several pipes using   </li>
+<li>
+<a class="proc" href="file.html#name-file.nth.arg">Process <code>file.nth.arg</code></a> - Get a program argument</li>
+<li>
+<a class="proc" href="file.html#name-file.num.args">Process <code>file.num.args</code></a> - Get number of program arguments</li>
+<li>
+<a class="proc" href="file.html#name-file.open">Process <code>file.open</code></a> - Open a file descriptor</li>
+<li>
+<a class="proc" href="file.html#name-file.open3">Process <code>file.open3</code></a> - Open a file descriptor</li>
+<li>
+<a class="proc" href="file.html#name-file.opendir">Process <code>file.opendir</code></a> - Open a directory</li>
+<li>
+<a class="proc" href="file.html#name-file.pipe">Process <code>file.pipe</code></a> - Create a pipe</li>
+<li>
+<a class="proc" href="file.html#name-file.read">Process <code>file.read</code></a> - Read from a file descriptor into a buffer</li>
+<li>
+<a class="proc" href="file.html#name-file.readdir">Process <code>file.readdir</code></a> - Read the next directory entry from a directory</li>
+<li>
+<a class="proc" href="file.html#name-file.rmdir">Process <code>file.rmdir</code></a> - Remove a directory</li>
+<li>
+<a class="proc" href="file.html#name-file.seek">Process <code>file.seek</code></a> - Move the read/write offset of a file descriptor</li>
+<li>
+<a class="proc" href="file.html#name-file.sendfile">Process <code>file.sendfile</code></a> - Copy bytes between file descriptors efficiently</li>
+<li>
+<a class="proc" href="file.html#name-file.size">Process <code>file.size</code></a> - Get the size of a filesystem object</li>
+<li>
+<a class="proc" href="file.html#name-file.stat">Process <code>file.stat</code></a> - Get information about a filesystem object</li>
+<li>
+<a class="proc" href="file.html#name-file.unlink">Process <code>file.unlink</code></a> - Unlink a filesystem object</li>
+<li>
+<a class="proc" href="file.html#name-file.write">Process <code>file.write</code></a> - Write from a buffer to a file descriptor</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-ACCESS" class="declaration group">
+<h3>
+<span class="location"><code>filelib.inc</code>:22</span>Group <code>ACCESS</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Constants for <a href="file.html#name-file.check.access"><code>file.check.access</code></a>.</p></div>
+<div class="children">
+<div id="name-R.OK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:23</span>Constant <code>R.OK</code>
+</h3>
+<p class="definition"><code>VAL R.OK</code></p>
+<div class="description"><p>Check read permission</p></div>
+</div>
+<div id="name-W.OK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:24</span>Constant <code>W.OK</code>
+</h3>
+<p class="definition"><code>VAL W.OK</code></p>
+<div class="description"><p>Check write permission</p></div>
+</div>
+<div id="name-X.OK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:25</span>Constant <code>X.OK</code>
+</h3>
+<p class="definition"><code>VAL X.OK</code></p>
+<div class="description"><p>Check execute permission</p></div>
+</div>
+<div id="name-F.OK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:26</span>Constant <code>F.OK</code>
+</h3>
+<p class="definition"><code>VAL F.OK</code></p>
+<div class="description"><p>Check existance</p></div>
+</div>
+</div>
+</div>
+<div id="name-OPEN.MODE" class="declaration group">
+<h3>
+<span class="location"><code>filelib.inc</code>:28</span>Group <code>OPEN.MODE</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Constants for <a href="file.html#name-file.open"><code>file.open</code></a>.</p></div>
+<div class="children">
+<div id="name-O.RDONLY" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:31</span>Constant <code>O.RDONLY</code>
+</h3>
+<p class="definition"><code>VAL O.RDONLY</code></p>
+<div class="description"><p>Open for reading</p></div>
+</div>
+<div id="name-O.WRONLY" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:33</span>Constant <code>O.WRONLY</code>
+</h3>
+<p class="definition"><code>VAL O.WRONLY</code></p>
+<div class="description"><p>Open for writing</p></div>
+</div>
+<div id="name-O.RDWR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:35</span>Constant <code>O.RDWR</code>
+</h3>
+<p class="definition"><code>VAL O.RDWR</code></p>
+<div class="description"><p>Open for reading and writing</p></div>
+</div>
+<div id="name-O.CREAT" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:37</span>Constant <code>O.CREAT</code>
+</h3>
+<p class="definition"><code>VAL O.CREAT</code></p>
+<div class="description"><p>Create if not already present</p></div>
+</div>
+<div id="name-O.EXCL" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:39</span>Constant <code>O.EXCL</code>
+</h3>
+<p class="definition"><code>VAL O.EXCL</code></p>
+<div class="description"><p>Fail if <a href="file.html#name-O.CREAT"><code>O.CREAT</code></a> is given and the file already exists</p></div>
+</div>
+<div id="name-O.NOCTTY" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:41</span>Constant <code>O.NOCTTY</code>
+</h3>
+<p class="definition"><code>VAL O.NOCTTY</code></p>
+<div class="description"><p>Don't become controlling terminal</p></div>
+</div>
+<div id="name-O.TRUNC" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:43</span>Constant <code>O.TRUNC</code>
+</h3>
+<p class="definition"><code>VAL O.TRUNC</code></p>
+<div class="description"><p>Truncate to zero length after opening</p></div>
+</div>
+<div id="name-O.APPEND" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:45</span>Constant <code>O.APPEND</code>
+</h3>
+<p class="definition"><code>VAL O.APPEND</code></p>
+<div class="description"><p>Position file pointer at EOF before each write</p></div>
+</div>
+<div id="name-O.NONBLOCK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:47</span>Constant <code>O.NONBLOCK</code>
+</h3>
+<p class="definition"><code>VAL O.NONBLOCK</code></p>
+<div class="description"><p>Make operations on this FD not block</p></div>
+</div>
+<div id="name-O.NDELAY" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:50</span>Constant <code>O.NDELAY</code>
+</h3>
+<p class="definition"><code>VAL O.NDELAY</code></p>
+<div class="description"><p>Synonym for <a href="file.html#name-O.NONBLOCK"><code>O.NONBLOCK</code></a></p></div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+</div>
+<div id="name-O.SYNC" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:52</span>Constant <code>O.SYNC</code>
+</h3>
+<p class="definition"><code>VAL O.SYNC</code></p>
+<div class="description"><p>Open for synchronous IO</p></div>
+</div>
+<div id="name-O.ASYNC" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:54</span>Constant <code>O.ASYNC</code>
+</h3>
+<p class="definition"><code>VAL O.ASYNC</code></p>
+<div class="description"><p>Generate a signal when IO becomes possible</p></div>
+</div>
+<div id="name-O.DIRECT" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:56</span>Constant <code>O.DIRECT</code>
+</h3>
+<p class="definition"><code>VAL O.DIRECT</code></p>
+<div class="description"><p>Don't cache data for this file</p></div>
+</div>
+<div id="name-O.LARGEFILE" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:58</span>Constant <code>O.LARGEFILE</code>
+</h3>
+<p class="definition"><code>VAL O.LARGEFILE</code></p>
+<div class="description"><p>Allow the file to be larger than 2GB</p></div>
+</div>
+<div id="name-O.DIRECTORY" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:60</span>Constant <code>O.DIRECTORY</code>
+</h3>
+<p class="definition"><code>VAL O.DIRECTORY</code></p>
+<div class="description"><p>Fail if not opening a directory</p></div>
+</div>
+<div id="name-O.NOFOLLOW" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:62</span>Constant <code>O.NOFOLLOW</code>
+</h3>
+<p class="definition"><code>VAL O.NOFOLLOW</code></p>
+<div class="description"><p>Don't follow symbolic links when opening</p></div>
+</div>
+</div>
+</div>
+<div id="name-SEEK" class="declaration group">
+<h3>
+<span class="location"><code>filelib.inc</code>:64</span>Group <code>SEEK</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Constants for <a href="file.html#name-file.seek"><code>file.seek</code></a>.</p></div>
+<div class="children">
+<div id="name-SEEK.SET" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:65</span>Constant <code>SEEK.SET</code>
+</h3>
+<p class="definition"><code>VAL SEEK.SET</code></p>
+<div class="description"><p>Relative to start of file</p></div>
+</div>
+<div id="name-SEEK.CUR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:66</span>Constant <code>SEEK.CUR</code>
+</h3>
+<p class="definition"><code>VAL SEEK.CUR</code></p>
+<div class="description"><p>Relative to current location</p></div>
+</div>
+<div id="name-SEEK.END" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:67</span>Constant <code>SEEK.END</code>
+</h3>
+<p class="definition"><code>VAL SEEK.END</code></p>
+<div class="description"><p>Relative to end of file</p></div>
+</div>
+</div>
+</div>
+<div id="name-FCNTL" class="declaration group">
+<h3>
+<span class="location"><code>filelib.inc</code>:69</span>Group <code>FCNTL</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Constants for <a href="file.html#name-file.fcntl0"><code>file.fcntl0</code></a> and <a href="file.html#name-file.fcntl1"><code>file.fcntl1</code></a>.</p></div>
+<div class="children">
+<div id="name-F.DUPFD" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:70</span>Constant <code>F.DUPFD</code>
+</h3>
+<p class="definition"><code>VAL F.DUPFD</code></p>
+<div class="description"><p>Duplicate file descriptor</p></div>
+</div>
+<div id="name-F.GETFD" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:71</span>Constant <code>F.GETFD</code>
+</h3>
+<p class="definition"><code>VAL F.GETFD</code></p>
+<div class="description"><p>Read the close-on-exec flag</p></div>
+</div>
+<div id="name-F.SETFD" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:72</span>Constant <code>F.SETFD</code>
+</h3>
+<p class="definition"><code>VAL F.SETFD</code></p>
+<div class="description"><p>Set the close-on-exec flag</p></div>
+</div>
+<div id="name-F.GETFL" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:75</span>Constant <code>F.GETFL</code>
+</h3>
+<p class="definition"><code>VAL F.GETFL</code></p>
+<div class="description"><p>Get file descriptor flags. See <a href="file.html#name-OPEN.MODE"><code>OPEN.MODE</code></a>.</p></div>
+</div>
+<div id="name-F.SETFL" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:78</span>Constant <code>F.SETFL</code>
+</h3>
+<p class="definition"><code>VAL F.SETFL</code></p>
+<div class="description"><p>Set file descriptor flags. See <a href="file.html#name-OPEN.MODE"><code>OPEN.MODE</code></a>.</p></div>
+</div>
+<div id="name-F.GETLK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:81</span>Constant <code>F.GETLK</code>
+</h3>
+<p class="definition"><code>VAL F.GETLK</code></p>
+<div class="description"><p>Get <code>flock</code> structure. Not fully supported.</p></div>
+</div>
+<div id="name-F.SETLK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:84</span>Constant <code>F.SETLK</code>
+</h3>
+<p class="definition"><code>VAL F.SETLK</code></p>
+<div class="description"><p>Set file lock. Not fully supported.</p></div>
+</div>
+<div id="name-F.SETLKW" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:87</span>Constant <code>F.SETLKW</code>
+</h3>
+<p class="definition"><code>VAL F.SETLKW</code></p>
+<div class="description"><p>Set file lock with wait. Not fully supported.</p></div>
+</div>
+<div id="name-F.SETOWN" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:92</span>Constant <code>F.SETOWN</code>
+</h3>
+<p class="definition"><code>VAL F.SETOWN</code></p>
+<div class="description"><p>Set process ID that will receive <code>SIGIO</code> and <code>SIGURG</code> signals. Use a negative ID for a process group. Not fully supported.</p></div>
+</div>
+<div id="name-F.GETOWN" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:96</span>Constant <code>F.GETOWN</code>
+</h3>
+<p class="definition"><code>VAL F.GETOWN</code></p>
+<div class="description"><p>Get process ID receiving SIGIO and SIGURG signals. Returns a negative ID for a process group. Not fully supported.</p></div>
+</div>
+<div id="name-F.SETSIG" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:100</span>Constant <code>F.SETSIG</code>
+</h3>
+<p class="definition"><code>VAL F.SETSIG</code></p>
+<div class="description"><p>Get signal sent when I/O becomes available on the descriptor. <code>0</code> means <code>SIGIO</code>. <code>SA_SIGINFO</code> may be available. Not fully supported.</p></div>
+</div>
+<div id="name-F.GETSIG" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:104</span>Constant <code>F.GETSIG</code>
+</h3>
+<p class="definition"><code>VAL F.GETSIG</code></p>
+<div class="description"><p>Set signal sent when I/O becomes available on the descriptor. <code>0</code> means <code>SIGIO</code>. <code>SA_SIGINFO</code> may be available. Not fully supported.</p></div>
+</div>
+<div id="name-F.GETLK64" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:108</span>Constant <code>F.GETLK64</code>
+</h3>
+<p class="definition"><code>VAL F.GETLK64</code></p>
+<div class="description"><p>Get <code>flock64</code> structure. Not fully supported.</p></div>
+</div>
+<div id="name-F.SETLK64" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:111</span>Constant <code>F.SETLK64</code>
+</h3>
+<p class="definition"><code>VAL F.SETLK64</code></p>
+<div class="description"><p>Set 64-bit file lock. Not fully supported.</p></div>
+</div>
+<div id="name-F.SETLKW64" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:114</span>Constant <code>F.SETLKW64</code>
+</h3>
+<p class="definition"><code>VAL F.SETLKW64</code></p>
+<div class="description"><p>Set 64-bit file lock with wait. Not fully supported.</p></div>
+</div>
+<div id="name-FD.CLOEXEC" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:116</span>Constant <code>FD.CLOEXEC</code>
+</h3>
+<p class="definition"><code>VAL FD.CLOEXEC</code></p>
+<div class="description"><p>Close-on-exec flag for <a href="file.html#name-F.GETFD"><code>F.GETFD</code></a>/<a href="file.html#name-F.SETFD"><code>F.SETFD</code></a></p></div>
+</div>
+<div id="name-F.RDLCK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:117</span>Constant <code>F.RDLCK</code>
+</h3>
+<p class="definition"><code>VAL F.RDLCK</code></p>
+<div class="description"><p>Obtain read lock</p></div>
+</div>
+<div id="name-F.WRLCK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:118</span>Constant <code>F.WRLCK</code>
+</h3>
+<p class="definition"><code>VAL F.WRLCK</code></p>
+<div class="description"><p>Obtain write lock</p></div>
+</div>
+<div id="name-F.UNLCK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:119</span>Constant <code>F.UNLCK</code>
+</h3>
+<p class="definition"><code>VAL F.UNLCK</code></p>
+<div class="description"><p>Release lock</p></div>
+</div>
+</div>
+</div>
+<div id="name-FILE.MODE" class="declaration group">
+<h3>
+<span class="location"><code>filelib.inc</code>:123</span>Group <code>FILE.MODE</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Constants for file modes.</p></div>
+<div class="children">
+<div id="name-S.IRWXU" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:124</span>Constant <code>S.IRWXU</code>
+</h3>
+<p class="definition"><code>VAL S.IRWXU</code></p>
+<div class="description"><p>User may read, write and execute</p></div>
+</div>
+<div id="name-S.IRUSR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:125</span>Constant <code>S.IRUSR</code>
+</h3>
+<p class="definition"><code>VAL S.IRUSR</code></p>
+<div class="description"><p>User may read</p></div>
+</div>
+<div id="name-S.IWUSR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:126</span>Constant <code>S.IWUSR</code>
+</h3>
+<p class="definition"><code>VAL S.IWUSR</code></p>
+<div class="description"><p>User may write</p></div>
+</div>
+<div id="name-S.IXUSR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:127</span>Constant <code>S.IXUSR</code>
+</h3>
+<p class="definition"><code>VAL S.IXUSR</code></p>
+<div class="description"><p>User may execute</p></div>
+</div>
+<div id="name-S.IRWXG" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:128</span>Constant <code>S.IRWXG</code>
+</h3>
+<p class="definition"><code>VAL S.IRWXG</code></p>
+<div class="description"><p>Group may read, write and execute</p></div>
+</div>
+<div id="name-S.IRGRP" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:129</span>Constant <code>S.IRGRP</code>
+</h3>
+<p class="definition"><code>VAL S.IRGRP</code></p>
+<div class="description"><p>Group may read</p></div>
+</div>
+<div id="name-S.IWGRP" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:130</span>Constant <code>S.IWGRP</code>
+</h3>
+<p class="definition"><code>VAL S.IWGRP</code></p>
+<div class="description"><p>Group may write</p></div>
+</div>
+<div id="name-S.IXGRP" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:131</span>Constant <code>S.IXGRP</code>
+</h3>
+<p class="definition"><code>VAL S.IXGRP</code></p>
+<div class="description"><p>Group may execute</p></div>
+</div>
+<div id="name-S.IRWXO" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:132</span>Constant <code>S.IRWXO</code>
+</h3>
+<p class="definition"><code>VAL S.IRWXO</code></p>
+<div class="description"><p>Others may read, write and execute</p></div>
+</div>
+<div id="name-S.IROTH" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:133</span>Constant <code>S.IROTH</code>
+</h3>
+<p class="definition"><code>VAL S.IROTH</code></p>
+<div class="description"><p>Others may read</p></div>
+</div>
+<div id="name-S.IWOTH" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:134</span>Constant <code>S.IWOTH</code>
+</h3>
+<p class="definition"><code>VAL S.IWOTH</code></p>
+<div class="description"><p>Others may write</p></div>
+</div>
+<div id="name-S.IXOTH" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:135</span>Constant <code>S.IXOTH</code>
+</h3>
+<p class="definition"><code>VAL S.IXOTH</code></p>
+<div class="description"><p>Others may execute</p></div>
+</div>
+<div id="name-S.I644" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:136</span>Constant <code>S.I644</code>
+</h3>
+<p class="definition"><code>VAL S.I644</code></p>
+<div class="description"><p>User may write; all may read</p></div>
+</div>
+<div id="name-S.I755" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:137</span>Constant <code>S.I755</code>
+</h3>
+<p class="definition"><code>VAL S.I755</code></p>
+<div class="description"><p>User may write; all may read and execute</p></div>
+</div>
+<div id="name-S.IFMT" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:138</span>Constant <code>S.IFMT</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFMT</code></p>
+<div class="description"><p>Bitmask for the file type bitfields</p></div>
+</div>
+<div id="name-S.IFSOCK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:139</span>Constant <code>S.IFSOCK</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFSOCK</code></p>
+<div class="description"><p>Socket</p></div>
+</div>
+<div id="name-S.IFLNK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:140</span>Constant <code>S.IFLNK</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFLNK</code></p>
+<div class="description"><p>Symbolic link</p></div>
+</div>
+<div id="name-S.IFREG" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:141</span>Constant <code>S.IFREG</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFREG</code></p>
+<div class="description"><p>Regular file</p></div>
+</div>
+<div id="name-S.IFBLK" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:142</span>Constant <code>S.IFBLK</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFBLK</code></p>
+<div class="description"><p>Block device</p></div>
+</div>
+<div id="name-S.IFDIR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:143</span>Constant <code>S.IFDIR</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFDIR</code></p>
+<div class="description"><p>Directory</p></div>
+</div>
+<div id="name-S.IFCHR" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:144</span>Constant <code>S.IFCHR</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFCHR</code></p>
+<div class="description"><p>Character device</p></div>
+</div>
+<div id="name-S.IFIFO" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:145</span>Constant <code>S.IFIFO</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.IFIFO</code></p>
+<div class="description"><p>FIFO</p></div>
+</div>
+<div id="name-S.ISUID" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:146</span>Constant <code>S.ISUID</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.ISUID</code></p>
+<div class="description"><p>Set-UID</p></div>
+</div>
+<div id="name-S.ISGID" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:147</span>Constant <code>S.ISGID</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.ISGID</code></p>
+<div class="description"><p>Set-GID</p></div>
+</div>
+<div id="name-S.ISVTX" class="declaration constant">
+<h3>
+<span class="location"><code>filelib.inc</code>:148</span>Constant <code>S.ISVTX</code>
+</h3>
+<p class="definition"><code>VAL INT32 S.ISVTX</code></p>
+<div class="description"><p>Sticky</p></div>
+</div>
+</div>
+</div>
+<div id="name-GETOPT" class="declaration protocol">
+<h3>
+<span class="location"><code>filelib.inc</code>:157</span>Protocol <code>GETOPT</code>
+</h3>
+<p class="definition"><code>PROTOCOL GETOPT</code></p>
+<div class="description"><p>Responses from <a href="file.html#name-file.get.options"><code>file.get.options</code></a>.</p></div>
+<div class="children">
+<div id="name-opt" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:161</span>Tag <code>opt</code>
+</h3>
+<p class="definition"><code>opt; BYTE</code></p>
+<div class="description"><p>An option (such as <code>-a</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>opt</code></td>
+<td class="param-desc">The option</td>
+</tr></table></div>
+</div>
+<div id="name-opt.arg" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:165</span>Tag <code>opt.arg</code>
+</h3>
+<p class="definition"><code>opt.arg; BYTE; MOBILE []BYTE</code></p>
+<div class="description"><p>An option with an argument (such as <code>-a foo</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>opt</code></td>
+<td class="param-desc">The option</td>
+</tr>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>arg</code></td>
+<td class="param-desc">The argument</td>
+</tr>
+</table></div>
+</div>
+<div id="name-arg" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:168</span>Tag <code>arg</code>
+</h3>
+<p class="definition"><code>arg; MOBILE []BYTE</code></p>
+<div class="description"><p>A non-option argument (such as <code>foo</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>arg</code></td>
+<td class="param-desc">The argument</td>
+</tr></table></div>
+</div>
+<div id="name-bad" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:172</span>Tag <code>bad</code>
+</h3>
+<p class="definition"><code>bad; BYTE</code></p>
+<div class="description"><p>An unrecognised option. This will be followed immediately by <code>done</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>opt</code></td>
+<td class="param-desc">The option</td>
+</tr></table></div>
+</div>
+<div id="name-done" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:174</span>Tag <code>done</code>
+</h3>
+<p class="definition"><code>done</code></p>
+<div class="description"><p>No more options.</p></div>
+</div>
+</div>
+</div>
+<div id="name-GETOPT.LONG" class="declaration protocol">
+<h3>
+<span class="location"><code>filelib.inc</code>:179</span>Protocol <code>GETOPT.LONG</code>
+</h3>
+<p class="definition"><code>PROTOCOL GETOPT.LONG</code></p>
+<div class="description"><p>Responses from <a href="file.html#name-file.get.long.options"><code>file.get.long.options</code></a>.</p></div>
+<div class="children">
+<div id="name-opt" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:183</span>Tag <code>opt</code>
+</h3>
+<p class="definition"><code>opt; MOBILE []BYTE</code></p>
+<div class="description"><p>An option (such as <code>-a</code> or <code>--arg</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>opt</code></td>
+<td class="param-desc">The option (e.g. <code>a</code> or <code>arg</code>)</td>
+</tr></table></div>
+</div>
+<div id="name-opt.arg" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:187</span>Tag <code>opt.arg</code>
+</h3>
+<p class="definition"><code>opt.arg; MOBILE []BYTE; MOBILE []BYTE</code></p>
+<div class="description"><p>An option with an argument (such as <code>-a foo</code> or <code>--arg foo</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>opt</code></td>
+<td class="param-desc">The option (e.g. <code>a</code> or <code>arg</code>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>arg</code></td>
+<td class="param-desc">The argument</td>
+</tr>
+</table></div>
+</div>
+<div id="name-arg" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:190</span>Tag <code>arg</code>
+</h3>
+<p class="definition"><code>arg; MOBILE []BYTE</code></p>
+<div class="description"><p>A non-option argument (such as <code>foo</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>arg</code></td>
+<td class="param-desc">The argument</td>
+</tr></table></div>
+</div>
+<div id="name-bad" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:194</span>Tag <code>bad</code>
+</h3>
+<p class="definition"><code>bad; MOBILE []BYTE</code></p>
+<div class="description"><p>An unrecognised option. This will be followed immediately by <code>done</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>opt</code></td>
+<td class="param-desc">The option</td>
+</tr></table></div>
+</div>
+<div id="name-done" class="declaration tag">
+<h3>
+<span class="location"><code>filelib.inc</code>:196</span>Tag <code>done</code>
+</h3>
+<p class="definition"><code>done</code></p>
+<div class="description"><p>No more options.</p></div>
+</div>
+</div>
+</div>
+<div id="name-STAT" class="declaration record">
+<h3>
+<span class="location"><code>filelib.inc</code>:207</span>Record <code>STAT</code>
+</h3>
+<p class="definition"><code>DATA TYPE STAT</code></p>
+<div class="description"><p>Information about a filesystem object. This is the result from <a href="file.html#name-file.stat"><code>file.stat</code></a>, <a href="file.html#name-file.lstat"><code>file.lstat</code></a> and <a href="file.html#name-file.fstat"><code>file.fstat</code></a>. See the <code>stat(2)</code> manual page for more information on the meaning of the fields.</p></div>
+<div class="children">
+<div id="name-dev" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:209</span>Variable <code>dev</code>
+</h3>
+<p class="definition"><code>INT64</code></p>
+<div class="description"><p>Device number</p></div>
+</div>
+<div id="name-ino" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:210</span>Variable <code>ino</code>
+</h3>
+<p class="definition"><code>INT64</code></p>
+<div class="description"><p>Inode number</p></div>
+</div>
+<div id="name-mode" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:211</span>Variable <code>mode</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Object type and permissions</p></div>
+</div>
+<div id="name-nlink" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:212</span>Variable <code>nlink</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Number of links</p></div>
+</div>
+<div id="name-uid" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:213</span>Variable <code>uid</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Owner's uid</p></div>
+</div>
+<div id="name-gid" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:214</span>Variable <code>gid</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Group's gid</p></div>
+</div>
+<div id="name-rdev" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:215</span>Variable <code>rdev</code>
+</h3>
+<p class="definition"><code>INT64</code></p>
+<div class="description"><p>Device type</p></div>
+</div>
+<div id="name-size" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:216</span>Variable <code>size</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Size in bytes</p></div>
+</div>
+<div id="name-blksize" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:217</span>Variable <code>blksize</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Block size for filesystem IO</p></div>
+</div>
+<div id="name-blocks" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:218</span>Variable <code>blocks</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Number of blocks allocated</p></div>
+</div>
+<div id="name-atime" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:219</span>Variable <code>atime</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Access time</p></div>
+</div>
+<div id="name-mtime" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:220</span>Variable <code>mtime</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Modification time</p></div>
+</div>
+<div id="name-ctime" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:221</span>Variable <code>ctime</code>
+</h3>
+<p class="definition"><code>INT32</code></p>
+<div class="description"><p>Change time</p></div>
+</div>
+</div>
+</div>
+<div id="name-DIRENT" class="declaration record">
+<h3>
+<span class="location"><code>filelib.inc</code>:229</span>Record <code>DIRENT</code>
+</h3>
+<p class="definition"><code>DATA TYPE DIRENT</code></p>
+<div class="description"><p>Information about a directory entry. This is the result from <a href="file.html#name-file.readdir"><code>file.readdir</code></a>.</p></div>
+<div class="children"><div id="name-filename" class="declaration variable">
+<h3>
+<span class="location"><code>filelib.inc</code>:231</span>Variable <code>filename</code>
+</h3>
+<p class="definition"><code>[256]BYTE</code></p>
+<div class="description"><p>Filename, terminated with <code>'*0'</code></p></div>
+</div></div>
+</div>
+<div id="name-file.check.access" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:92</span>Process <code>file.check.access</code>
+</h3>
+<p class="definition"><code>PROC file.check.access (VAL []BYTE filename, VAL INT what, BOOL result)</code></p>
+<div class="description"><p>Check access to a filesystem object.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">The filename to check</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>what</code></td>
+<td class="param-desc">Bitwise OR of permissions to test (see <a href="file.html#name-ACCESS"><code>ACCESS</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>TRUE</code> if the access check succeeded, else <code>FALSE</code>
+</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.size" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:108</span>Process <code>file.size</code>
+</h3>
+<p class="definition"><code>PROC file.size (VAL []BYTE filename, INT result)</code></p>
+<div class="description"><p>Get the size of a filesystem object.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">The filename to examine</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The size of the object in bytes, or <code>-1</code> if it does not exist</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.open" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:119</span>Process <code>file.open</code>
+</h3>
+<p class="definition"><code>PROC file.open (VAL []BYTE filename, VAL INT mode, INT fd)</code></p>
+<div class="description"><p>Open a file descriptor. This form should be used when <a href="file.html#name-O.CREAT"><code>O.CREAT</code></a> is not among the modes.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">The filename to open</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>mode</code></td>
+<td class="param-desc">Bitwise OR of the file descriptor's modes (see <a href="file.html#name-OPEN.MODE"><code>OPEN.MODE</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor, or <code>-1</code> if it cannot be opened</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.open3" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:131</span>Process <code>file.open3</code>
+</h3>
+<p class="definition"><code>PROC file.open3 (VAL []BYTE filename, VAL INT mode, VAL INT perm, INT fd)</code></p>
+<div class="description"><p>Open a file descriptor. This form should be used when <a href="file.html#name-O.CREAT"><code>O.CREAT</code></a> is among the modes.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">The filename to open</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>mode</code></td>
+<td class="param-desc">Bitwise OR of the file descriptor's modes (see <a href="file.html#name-OPEN.MODE"><code>OPEN.MODE</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>perm</code></td>
+<td class="param-desc">The permissions of <code>filename</code> after creation</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor, or <code>-1</code> if it cannot be opened</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.pipe" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:163</span>Process <code>file.pipe</code>
+</h3>
+<p class="definition"><code>PROC file.pipe (INT fd.0, fd.1, result)</code></p>
+<div class="description">
+<p>Create a pipe.</p>
+<p> Example that copies a string by sending it through a pipe:</p>
+<pre><code>INT fd.read, fd.write:
+ INT result, result.rd, result.wr:
+ VAL []BYTE string IS "hello world!":
+ [(SIZE string)]BYTE buffer:
+ SEQ
+   file.pipe (fd.read, fd.write, result)
+   ASSERT (result = 0)
+   PAR
+     file.blocking.read (fd.read, buffer, (SIZE string), result.rd)
+     file.write (fd.write, string, (SIZE string), result.wr)
+   file.close (fd.read, result)
+   ASSERT (result = 0)
+   file.close (fd.write, result)
+   ASSERT (result = 0)</code></pre>
+<p> See <a href="file.html#name-file.npipes"><code>file.npipes</code></a> if you're creating several pipes.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>fd.0</code></td>
+<td class="param-desc">File descriptor for the read end of the pipe</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>fd.1</code></td>
+<td class="param-desc">File descriptor for the write end of the pipe</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> if the pipe was created, or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.dup2" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:174</span>Process <code>file.dup2</code>
+</h3>
+<p class="definition"><code>PROC file.dup2 (VAL INT old.fd, VAL INT new.fd, INT result)</code></p>
+<div class="description"><p>Make a copy of a file descriptor. <code>new.fd</code> will be closed first if it is already open.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>old.fd</code></td>
+<td class="param-desc">The source descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>new.fd</code></td>
+<td class="param-desc">The destination descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> if successful, <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.read" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:191</span>Process <code>file.read</code>
+</h3>
+<p class="definition"><code>PROC file.read (VAL INT fd, []BYTE buffer, INT result)</code></p>
+<div class="description">
+<p>Read from a file descriptor into a buffer. No more than <code>SIZE buffer</code> bytes will be read from the descriptor.</p>
+<p> <em>Note:</em> <code>file.read</code> assumes that data is available (e.g. reading from a file), and is not a blocking call; if the read could block, use <a href="file.html#name-file.blocking.read"><code>file.blocking.read</code></a> instead.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">The buffer</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The number of bytes read; or <code>0</code> if at end of file; or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.blocking.read" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:204</span>Process <code>file.blocking.read</code>
+</h3>
+<p class="definition"><code>PROC file.blocking.read (VAL INT fd, []BYTE buffer, INT result)</code></p>
+<div class="description"><p>Read from a file descriptor into a buffer without blocking the occam system. No more than <code>SIZE buffer</code> bytes will be read from the descriptor.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">The buffer</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The number of bytes read; or <code>0</code> if at end of file; or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.write" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:221</span>Process <code>file.write</code>
+</h3>
+<p class="definition"><code>PROC file.write (VAL INT fd, VAL []BYTE buffer, INT result)</code></p>
+<div class="description">
+<p>Write from a buffer to a file descriptor. No more than <code>SIZE buffer</code> bytes will be written.</p>
+<p> <em>Note:</em> <code>file.write</code> assumes that data can always be written (e.g. writing to a file), and is not a blocking call; if the write could block, use <a href="file.html#name-file.blocking.write"><code>file.blocking.write</code></a> instead.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">The buffer</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The number of bytes written, or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.blocking.write" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:233</span>Process <code>file.blocking.write</code>
+</h3>
+<p class="definition"><code>PROC file.blocking.write (VAL INT fd, VAL []BYTE buffer, INT result)</code></p>
+<div class="description"><p>Write from a buffer to a file descriptor without blocking the occam system. No more than <code>SIZE buffer</code> bytes will be written.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">The buffer</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The number of bytes written, or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.seek" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:245</span>Process <code>file.seek</code>
+</h3>
+<p class="definition"><code>PROC file.seek (VAL INT fd, VAL INT offset, VAL INT whence, INT result)</code></p>
+<div class="description"><p>Move the read/write offset of a file descriptor.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>offset</code></td>
+<td class="param-desc">The offset from the location in <code>whence</code>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>whence</code></td>
+<td class="param-desc">The base location; one of the <a href="file.html#name-SEEK"><code>SEEK</code></a> constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The new absolute file offset, or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.close" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:254</span>Process <code>file.close</code>
+</h3>
+<p class="definition"><code>PROC file.close (VAL INT fd, RESULT INT result)</code></p>
+<div class="description"><p>Close a file descriptor.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> upon success; <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.mkdir" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:264</span>Process <code>file.mkdir</code>
+</h3>
+<p class="definition"><code>PROC file.mkdir (VAL []BYTE pathname, VAL INT perm, INT result)</code></p>
+<div class="description"><p>Create a directory.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>pathname</code></td>
+<td class="param-desc">Name of the directory</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>perm</code></td>
+<td class="param-desc">Permissions (see <a href="file.html#name-FILE.MODE"><code>FILE.MODE</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> upon success; <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.rmdir" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:274</span>Process <code>file.rmdir</code>
+</h3>
+<p class="definition"><code>PROC file.rmdir (VAL []BYTE pathname, INT result)</code></p>
+<div class="description"><p>Remove a directory. The directory must be empty before it can be removed.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>pathname</code></td>
+<td class="param-desc">Name of the directory</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> upon success; <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.unlink" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:284</span>Process <code>file.unlink</code>
+</h3>
+<p class="definition"><code>PROC file.unlink (VAL []BYTE filename, INT result)</code></p>
+<div class="description"><p>Unlink a filesystem object. This can be used to remove anything that isn't a directory.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">Name of the object</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> upon success; <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.fd.fd.copy" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:300</span>Process <code>file.fd.fd.copy</code>
+</h3>
+<p class="definition"><code>PROC file.fd.fd.copy (VAL INT src.fd, dst.fd, count, INT result)</code></p>
+<div class="description"><p>Copy bytes between file descriptors. The copy is performed in the background to reduce overhead.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>src.fd</code></td>
+<td class="param-desc">The source file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dst.fd</code></td>
+<td class="param-desc">The destination file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>count</code></td>
+<td class="param-desc">The number of bytes to copy, or <code>0</code> to copy until end of file on <code>src.fd</code>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> if the copy completed successfully, or <code>count</code> was <code>0</code> and <code>src.fd</code> was at end of file; <code>-1</code> if an error occurred; <code>-3</code> if <code>src.fd</code> reached end of file before <code>count</code> bytes had been copied</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.sendfile" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:317</span>Process <code>file.sendfile</code>
+</h3>
+<p class="definition"><code>PROC file.sendfile (VAL INT src.fd, dst.fd, count, INT offset, result)</code></p>
+<div class="description"><p>Copy bytes between file descriptors efficiently. This uses the <code>sendfile(2)</code> system call to avoid copying data between userspace and kernelspace. Either or both descriptors may refer to a socket.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>src.fd</code></td>
+<td class="param-desc">The source file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dst.fd</code></td>
+<td class="param-desc">The destination file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>count</code></td>
+<td class="param-desc">The number of bytes to copy</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>offset</code></td>
+<td class="param-desc">The offset (in <code>src.fd</code>) to start copying from. After a successful copy, this is updated to point at the byte following the last one read.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The number of bytes written, or <code>-1</code> if an error occurred.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.npipes" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:328</span>Process <code>file.npipes</code>
+</h3>
+<p class="definition"><code>PROC file.npipes ([]INT readers, writers, INT result)</code></p>
+<div class="description"><p>Create several pipes using <a href="file.html#name-file.pipe"><code>file.pipe</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>readers</code></td>
+<td class="param-desc">The read ends of the pipes</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>writers</code></td>
+<td class="param-desc">The write ends of the pipes</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> if the pipes were created, or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.altable.read" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:358</span>Process <code>file.altable.read</code>
+</h3>
+<p class="definition"><code>PROC file.altable.read (CHAN OF BOOL kill, CHAN OF INT response, VAL INT fd, []BYTE buffer, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able equivalent of <a href="file.html#name-file.blocking.read"><code>file.blocking.read</code></a>.</p></div>
+</div>
+<div id="name-file.altable.write" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:390</span>Process <code>file.altable.write</code>
+</h3>
+<p class="definition"><code>PROC file.altable.write (CHAN OF BOOL kill, CHAN OF INT response, VAL INT fd, VAL []BYTE buffer, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able equivalent of <a href="file.html#name-file.blocking.write"><code>file.blocking.write</code></a>.</p></div>
+</div>
+<div id="name-file.altable.fd.fd.copy" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:422</span>Process <code>file.altable.fd.fd.copy</code>
+</h3>
+<p class="definition"><code>PROC file.altable.fd.fd.copy (CHAN OF BOOL kill, CHAN OF INT response, VAL INT src.fd, dst.fd, count, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able equivalent of <a href="file.html#name-file.fd.fd.copy"><code>file.fd.fd.copy</code></a>.</p></div>
+</div>
+<div id="name-file.array.select" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:472</span>Process <code>file.array.select</code>
+</h3>
+<p class="definition"><code>PROC file.array.select ([]INT read.set, write.set, except.set, VAL INT high.fd, timeout, RESULT INT result)</code></p>
+<div class="description">
+<p>Wait for one of a set of file descriptors to become ready. This performs the <code>select(2)</code> system call.</p>
+<p> After <code>file.array.select</code> returns, the file descriptors in the sets that are <em>not</em> ready are changed to <code>-1</code>. Any file descriptors passed that are already <code>-1</code> are ignored.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>read.set</code></td>
+<td class="param-desc">The set of reading file descriptors</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>write.set</code></td>
+<td class="param-desc">The set of writing file descriptors</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>except.set</code></td>
+<td class="param-desc">The set of exception-watching file descriptors</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>high.fd</code></td>
+<td class="param-desc">The highest file descriptor in all three sets, plus one; you can use <a href="file.html#name-file.high.fd"><code>file.high.fd</code></a> to calculate this</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>timeout</code></td>
+<td class="param-desc">The time to wait for a file descriptor to become ready; or <code>0</code> to return immediately if none are ready; or <code>-1</code> to wait indefinitely</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The number of ready file descriptors in the three sets (which may be <code>0</code> if the timeout passed before any were ready), or <code>-1</code> if an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.high.fd" class="declaration function">
+<h3>
+<span class="location"><code>filelib.occ</code>:485</span>Function <code>file.high.fd</code>
+</h3>
+<p class="definition"><code>INT FUNCTION file.high.fd (VAL []INT read.set, write.set, except.set)</code></p>
+<div class="description"><p>Find the highest file descriptor in three sets. This is for use with <a href="file.html#name-file.array.select"><code>file.array.select</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>read.set</code></td>
+<td class="param-desc">The set of reading file descriptors</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>write.set</code></td>
+<td class="param-desc">The set of writing file descriptors</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>except.set</code></td>
+<td class="param-desc">The set of exception-watching file descriptors</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The highest file descriptor in the sets; add one to this to get the value to pass to <a href="file.html#name-file.array.select"><code>file.array.select</code></a>
+</td>
+</tr></table></div>
+</div>
+<div id="name-file.fcntl0" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:513</span>Process <code>file.fcntl0</code>
+</h3>
+<p class="definition"><code>PROC file.fcntl0 (VAL INT fd, cmd, RESULT INT result)</code></p>
+<div class="description"><p>Perform various operations on file descriptors. This allows occam-pi programs to make a <code>fcntl(2)</code> system call with no optional parameter. See the <code>fcntl(2)</code> manual page for more information.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The (source) file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>cmd</code></td>
+<td class="param-desc">The command (one of <a href="file.html#name-FCNTL"><code>FCNTL</code></a>, such as <a href="file.html#name-F.GETFD"><code>F.GETFD</code></a> or <a href="file.html#name-F.GETFL"><code>F.GETFL</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The result of the operation</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.fcntl1" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:528</span>Process <code>file.fcntl1</code>
+</h3>
+<p class="definition"><code>PROC file.fcntl1 (VAL INT fd, cmd, arg, RESULT INT result)</code></p>
+<div class="description"><p>Perform various operations on file descriptors. This allows occam-pi programs to make a <code>fcntl(2)</code> system call with one optional parameter. See the <code>fcntl(2)</code> manual page for more information.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The (source) file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>cmd</code></td>
+<td class="param-desc">The command (one of <a href="file.html#name-FCNTL"><code>FCNTL</code></a>, such as <a href="file.html#name-F.DUPFD"><code>F.DUPFD</code></a>, <a href="file.html#name-F.SETFD"><code>F.SETFD</code></a> or <a href="file.html#name-F.SETFL"><code>F.SETFL</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>arg</code></td>
+<td class="param-desc">A parameter for the operation</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">The result of the operation</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.num.args" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:538</span>Process <code>file.num.args</code>
+</h3>
+<p class="definition"><code>PROC file.num.args (RESULT INT n)</code></p>
+<div class="description"><p>Get number of program arguments. This is the equivalent of <code>argc</code> in C. Programs always have at least one argument: their own name.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">The number of arguments the program was given</td>
+</tr></table></div>
+</div>
+<div id="name-file.nth.arg" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:565</span>Process <code>file.nth.arg</code>
+</h3>
+<p class="definition"><code>PROC file.nth.arg (VAL INT n, RESULT []BYTE arg, RESULT INT len)</code></p>
+<div class="description">
+<p>Get a program argument. This is the equivalent of <code>argv[n]</code> in C.</p>
+<p> For example, if the occam-pi program was invoked as <code>./argtest foo "bar foo"</code>, then argument 1 will be <code>foo</code>, argument 2 will be <code>bar foo</code>, and <a href="file.html#name-file.num.args"><code>file.num.args</code></a> will return 3.</p>
+<p> If you want to parse Unix-style command-line options, use <a href="file.html#name-file.get.options"><code>file.get.options</code></a> instead.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">The number of the argument to fetch</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT []BYTE</code></td>
+<td class="param-name"><code>arg</code></td>
+<td class="param-desc">The buffer to copy the argument into</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">The length of the argument in bytes, or <code>SIZE arg</code> if the argument was too long to fit in the buffer</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.get.long.options" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:620</span>Process <code>file.get.long.options</code>
+</h3>
+<p class="definition"><code>PROC file.get.long.options (MOBILE []MOBILE []BYTE options, CHAN GETOPT.LONG out!)</code></p>
+<div class="description">
+<p>Parse command-line options. This is intended to behave like GNU <code>getopt_long(3)</code>, but without support for permuting options.</p>
+<p> The <code>options</code> argument is an array of strings listing the possible options for the program. Options that can take an argument should be followed by an equals sign.</p>
+<p> Example, for a program which can take <code>-v</code>/<code>--verbose</code> and <code>-h</code>/<code>--host HOST</code> arguments:</p>
+<pre><code>CHAN GETOPT.LONG opts:
+ PAR
+   INITIAL MOBILE []MOBILE []BYTE spec IS MOBILE [4]MOBILE []BYTE:
+   SEQ
+     spec[0] := "v"
+     spec[1] := "verbose"
+     spec[2] := "h="
+     spec[3] := "host="
+     file.get.long.options (spec, opts!)
+   INITIAL BOOL running IS TRUE:
+   WHILE running
+     MOBILE []BYTE o, a:
+     opts ? CASE
+       opt; o
+         IF
+           same.string (o, "v") OR same.string (o, "verbose")
+             ...  handle -v option
+       opt.arg; o; a
+         IF
+           same.string (o, "h") OR same.string (o, "host")
+             ...  handle -h option; argument is in a
+       arg; a
+         ...  handle non-option argument a
+       bad; o
+         ...  print usage message and exit
+       done
+         running := FALSE</code></pre>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []MOBILE []BYTE</code></td>
+<td class="param-name"><code>options</code></td>
+<td class="param-desc">List of options that this program can take</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN GETOPT.LONG</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel down which options are reported (using <a href="file.html#name-GETOPT.LONG"><code>GETOPT.LONG</code></a>)</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.get.options" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:889</span>Process <code>file.get.options</code>
+</h3>
+<p class="definition"><code>PROC file.get.options (VAL []BYTE options, CHAN GETOPT out!)</code></p>
+<div class="description">
+<p>Parse command-line options. This is intended to behave like POSIX (not GNU) <code>getopt(3)</code>. If you want to handle long options, use <a href="file.html#name-file.get.long.options"><code>file.get.long.options</code></a> instead; this <code>PROC</code> will report all long options as <code>bad</code>.</p>
+<p> The <code>options</code> argument is a string listing the possible (single-character) options for the program. Options that can take an argument should be followed by a colon.</p>
+<p> Example, for a program which can take <code>-v</code> and <code>-h HOST</code> arguments:</p>
+<pre><code>CHAN GETOPT opts:
+ PAR
+   file.get.options ("vh:", opts!)
+   INITIAL BOOL running IS TRUE:
+   WHILE running
+     BYTE o:
+     MOBILE []BYTE a:
+     opts ? CASE
+       opt; o
+         CASE o
+           'v'
+             ...  handle -v option
+       opt.arg; o; a
+         CASE o
+           'h'
+             ...  handle -h option; argument is in a
+       arg; a
+         ...  handle non-option argument a
+       bad; o
+         ...  print usage message and exit
+       done
+         running := FALSE</code></pre>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>options</code></td>
+<td class="param-desc">List of options that this program can take</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN GETOPT</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel down which options are reported (using <a href="file.html#name-GETOPT"><code>GETOPT</code></a>)</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.stat" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:949</span>Process <code>file.stat</code>
+</h3>
+<p class="definition"><code>PROC file.stat (VAL []BYTE name, RESULT STAT info, RESULT INT res)</code></p>
+<div class="description"><p>Get information about a filesystem object. Symbolic links will be followed.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">The filename to examine</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT STAT</code></td>
+<td class="param-name"><code>info</code></td>
+<td class="param-desc">The returned information (see <a href="file.html#name-STAT"><code>STAT</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.lstat" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:959</span>Process <code>file.lstat</code>
+</h3>
+<p class="definition"><code>PROC file.lstat (VAL []BYTE name, RESULT STAT info, RESULT INT res)</code></p>
+<div class="description"><p>Get information about a filesystem object or link. Symbolic links will not be followed.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">The filename to examine</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT STAT</code></td>
+<td class="param-name"><code>info</code></td>
+<td class="param-desc">The returned information (see <a href="file.html#name-STAT"><code>STAT</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.fstat" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:968</span>Process <code>file.fstat</code>
+</h3>
+<p class="definition"><code>PROC file.fstat (VAL INT fd, RESULT STAT info, RESULT INT res)</code></p>
+<div class="description"><p>Get information about an open filesystem object.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor to examine</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT STAT</code></td>
+<td class="param-name"><code>info</code></td>
+<td class="param-desc">The returned information (see <a href="file.html#name-STAT"><code>STAT</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.opendir" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:976</span>Process <code>file.opendir</code>
+</h3>
+<p class="definition"><code>PROC file.opendir (VAL []BYTE filename, RESULT INT dd)</code></p>
+<div class="description"><p>Open a directory.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">The directory path</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>dd</code></td>
+<td class="param-desc">The returned directory descriptor, or <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.readdir" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:986</span>Process <code>file.readdir</code>
+</h3>
+<p class="definition"><code>PROC file.readdir (VAL INT dd, RESULT DIRENT info, RESULT INT res)</code></p>
+<div class="description"><p>Read the next directory entry from a directory.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dd</code></td>
+<td class="param-desc">The directory descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT DIRENT</code></td>
+<td class="param-name"><code>info</code></td>
+<td class="param-desc">The returned directory entry (see <a href="file.html#name-DIRENT"><code>DIRENT</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.closedir" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:994</span>Process <code>file.closedir</code>
+</h3>
+<p class="definition"><code>PROC file.closedir (VAL INT dd, RESULT INT res)</code></p>
+<div class="description"><p>Close a directory descriptor.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dd</code></td>
+<td class="param-desc">The directory descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.chmod" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:1004</span>Process <code>file.chmod</code>
+</h3>
+<p class="definition"><code>PROC file.chmod (VAL []BYTE filename, INT mode, RESULT INT res)</code></p>
+<div class="description"><p>Change the permissions of a filesystem object.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">The filename to change</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>mode</code></td>
+<td class="param-desc">The new permissions of the object (see <a href="file.html#name-FILE.MODE"><code>FILE.MODE</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.fsync" class="declaration proc">
+<h3>
+<span class="location"><code>filelib.occ</code>:1013</span>Process <code>file.fsync</code>
+</h3>
+<p class="definition"><code>PROC file.fsync (VAL INT fd, RESULT INT result)</code></p>
+<div class="description"><p>Force changes to an open file to be written to disk.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">The file descriptor</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>0</code> on success, <code>-1</code> on error</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

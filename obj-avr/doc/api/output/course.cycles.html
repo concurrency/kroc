@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Demonstration cycles</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-course.cycles" class="module">
+<h1>Module <code>course.cycles</code> - Demonstration cycles</h1>
+<div class="header"><div class="description">
+<p>Demonstration cycles.</p>
+<p> This is part of the course library. To use this library:</p>
+<pre><code>#INCLUDE "course.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="course.cycles.html#name-delta">Process <code>delta</code></a> - Duplicate a stream of numbers</li>
+<li>
+<a class="proc" href="course.cycles.html#name-id">Process <code>id</code></a> - Copy input to output</li>
+<li>
+<a class="proc" href="course.cycles.html#name-plus">Process <code>plus</code></a> - Add two streams of numbers together</li>
+<li>
+<a class="proc" href="course.cycles.html#name-prefix">Process <code>prefix</code></a> - Output a fixed number, then copy input to output</li>
+<li>
+<a class="proc" href="course.cycles.html#name-succ">Process <code>succ</code></a> - Add one to input numbers</li>
+<li>
+<a class="proc" href="course.cycles.html#name-tail">Process <code>tail</code></a> - Drop the first input number, then copy input to output</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-id" class="declaration proc">
+<h3>
+<span class="location"><code>demo_cycles.occ</code>:33</span>Process <code>id</code>
+</h3>
+<p class="definition"><code>PROC id (CHAN INT in?, out!)</code></p>
+<div class="description"><p>Copy input to output.</p></div>
+</div>
+<div id="name-succ" class="declaration proc">
+<h3>
+<span class="location"><code>demo_cycles.occ</code>:44</span>Process <code>succ</code>
+</h3>
+<p class="definition"><code>PROC succ (CHAN INT in?, out!)</code></p>
+<div class="description"><p>Add one to input numbers.</p></div>
+</div>
+<div id="name-plus" class="declaration proc">
+<h3>
+<span class="location"><code>demo_cycles.occ</code>:55</span>Process <code>plus</code>
+</h3>
+<p class="definition"><code>PROC plus (CHAN INT in.1?, in.2?, out!)</code></p>
+<div class="description"><p>Add two streams of numbers together.</p></div>
+</div>
+<div id="name-delta" class="declaration proc">
+<h3>
+<span class="location"><code>demo_cycles.occ</code>:68</span>Process <code>delta</code>
+</h3>
+<p class="definition"><code>PROC delta (CHAN INT in?, out.1!, out.2!)</code></p>
+<div class="description"><p>Duplicate a stream of numbers.</p></div>
+</div>
+<div id="name-prefix" class="declaration proc">
+<h3>
+<span class="location"><code>demo_cycles.occ</code>:81</span>Process <code>prefix</code>
+</h3>
+<p class="definition"><code>PROC prefix (VAL INT n, CHAN INT in?, out!)</code></p>
+<div class="description"><p>Output a fixed number, then copy input to output.</p></div>
+</div>
+<div id="name-tail" class="declaration proc">
+<h3>
+<span class="location"><code>demo_cycles.occ</code>:90</span>Process <code>tail</code>
+</h3>
+<p class="definition"><code>PROC tail (CHAN INT in?, out!)</code></p>
+<div class="description"><p>Drop the first input number, then copy input to output.</p></div>
+</div>
+</div></div></body>
+</html>

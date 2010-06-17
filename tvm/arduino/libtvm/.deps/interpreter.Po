@@ -1,0 +1,151 @@
+interpreter.o: .././../../runtime/libtvm/interpreter.c \
+  .././../../runtime/libtvm/tvm.h tvm_config.h \
+  .././../../runtime/libtvm/tvm_compiler.h \
+  /usr/lib/gcc/avr/4.3.4/include/stddef.h \
+  .././../../runtime/libtvm/tvm_types.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/inttypes.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/stdint.h \
+  .././../../runtime/libtvm/transputer.h \
+  .././../../runtime/libtvm/tvm_mem.h \
+  .././../../runtime/libtvm/tvm_mem_intf.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/io.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/sfr_defs.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/iom328p.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/portpins.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/common.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/version.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/fuse.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/lock.h \
+  /usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/pgmspace.h \
+  .././../../runtime/libtvm/tvm_time.h \
+  .././../../runtime/libtvm/instructions.h \
+  .././../../runtime/libtvm/interpreter.h config.h \
+  .././../../runtime/libtvm/mem.c .././../../runtime/libtvm/ins_alt.c \
+  .././../../runtime/libtvm/scheduler.h \
+  .././../../runtime/libtvm/ins_alt.h \
+  .././../../runtime/libtvm/ins_barrier.c \
+  .././../../runtime/libtvm/ins_barrier.h \
+  .././../../runtime/libtvm/ins_chan.c \
+  .././../../runtime/libtvm/ins_chan.h \
+  .././../../runtime/libtvm/ins_float.c \
+  .././../../runtime/libtvm/ins_float.h \
+  .././../../runtime/libtvm/ins_pi.c .././../../runtime/libtvm/ins_sec.h \
+  .././../../runtime/libtvm/ins_pi.h .././../../runtime/libtvm/ins_pri.h \
+  .././../../runtime/libtvm/ins_mobile.c \
+  .././../../runtime/libtvm/ins_mobile.h \
+  .././../../runtime/libtvm/ins_pri.c \
+  .././../../runtime/libtvm/ins_proc.c \
+  .././../../runtime/libtvm/ins_rmox.c \
+  .././../../runtime/libtvm/ins_rmox.h \
+  .././../../runtime/libtvm/ins_sec.c \
+  .././../../runtime/libtvm/ins_timer.c \
+  .././../../runtime/libtvm/ins_timer.h \
+  .././../../runtime/libtvm/ins_t800.c \
+  .././../../runtime/libtvm/ins_t800.h \
+  .././../../runtime/libtvm/ins_t9000.c \
+  .././../../runtime/libtvm/ins_t9000.h \
+  .././../../runtime/libtvm/instructions.c dispatch_ins.c
+
+.././../../runtime/libtvm/tvm.h:
+
+tvm_config.h:
+
+.././../../runtime/libtvm/tvm_compiler.h:
+
+/usr/lib/gcc/avr/4.3.4/include/stddef.h:
+
+.././../../runtime/libtvm/tvm_types.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/inttypes.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/stdint.h:
+
+.././../../runtime/libtvm/transputer.h:
+
+.././../../runtime/libtvm/tvm_mem.h:
+
+.././../../runtime/libtvm/tvm_mem_intf.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/io.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/sfr_defs.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/iom328p.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/portpins.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/common.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/version.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/fuse.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/lock.h:
+
+/usr/lib/gcc/avr/4.3.4/../../../avr/include/avr/pgmspace.h:
+
+.././../../runtime/libtvm/tvm_time.h:
+
+.././../../runtime/libtvm/instructions.h:
+
+.././../../runtime/libtvm/interpreter.h:
+
+config.h:
+
+.././../../runtime/libtvm/mem.c:
+
+.././../../runtime/libtvm/ins_alt.c:
+
+.././../../runtime/libtvm/scheduler.h:
+
+.././../../runtime/libtvm/ins_alt.h:
+
+.././../../runtime/libtvm/ins_barrier.c:
+
+.././../../runtime/libtvm/ins_barrier.h:
+
+.././../../runtime/libtvm/ins_chan.c:
+
+.././../../runtime/libtvm/ins_chan.h:
+
+.././../../runtime/libtvm/ins_float.c:
+
+.././../../runtime/libtvm/ins_float.h:
+
+.././../../runtime/libtvm/ins_pi.c:
+
+.././../../runtime/libtvm/ins_sec.h:
+
+.././../../runtime/libtvm/ins_pi.h:
+
+.././../../runtime/libtvm/ins_pri.h:
+
+.././../../runtime/libtvm/ins_mobile.c:
+
+.././../../runtime/libtvm/ins_mobile.h:
+
+.././../../runtime/libtvm/ins_pri.c:
+
+.././../../runtime/libtvm/ins_proc.c:
+
+.././../../runtime/libtvm/ins_rmox.c:
+
+.././../../runtime/libtvm/ins_rmox.h:
+
+.././../../runtime/libtvm/ins_sec.c:
+
+.././../../runtime/libtvm/ins_timer.c:
+
+.././../../runtime/libtvm/ins_timer.h:
+
+.././../../runtime/libtvm/ins_t800.c:
+
+.././../../runtime/libtvm/ins_t800.h:
+
+.././../../runtime/libtvm/ins_t9000.c:
+
+.././../../runtime/libtvm/ins_t9000.h:
+
+.././../../runtime/libtvm/instructions.c:
+
+dispatch_ins.c:

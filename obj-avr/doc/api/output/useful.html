@@ -1,0 +1,677 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>General utilities</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-useful" class="module">
+<h1>Module <code>useful</code> - General utilities</h1>
+<div class="header"><div class="description">
+<p>General utilities.</p>
+<p> This module contains miscellaneous utilities for occam-pi programs. The aim is to provide somewhere to collect code that should obviously be in the standard library (that is: it's been needed by more than one occam-pi program), but where there isn't an existing module that it should obviously go into.</p>
+<p> This module includes a large number of <code>PROC</code>s for formatted output that aren't individually documented. These take varying numbers of arguments, and have names that end with a "format string" indicating the types of the arguments they support. Several families of <code>PROC</code>s are provided for different purposes:</p>
+<ul>
+<li> <code>print.*</code> write to a <code>CHAN BYTE</code>; </li>
+<li> <code>prints.*</code> write to a <code>SHARED CHAN BYTE</code>, claiming it first; </li>
+<li> <code>format.*</code> return a string as a <code>RESULT MOBILE []BYTE</code>; </li>
+<li> <code>trace.*</code> write directly to standard error, taking no additional parameters.</li>
+</ul>
+<p> The output channel or variable always appears at the end of the argument list.</p>
+<p> The formatting characters supported are:</p>
+<ul>
+<li> <code>s</code> for a string as a <code>VAL []BYTE</code>; </li>
+<li> <code>i</code> for a decimal integer as a <code>VAL INT</code>; </li>
+<li> <code>r</code> for a decimal floating-point value as a <code>VAL REAL32</code>; </li>
+<li> <code>b</code> for a boolean value as a <code>VAL BOOL</code>; </li>
+<li> <code>n</code> for a newline (taking no parameter).</li>
+</ul>
+<p> For example, if you wanted to print a string and an integer followed by a newline to a channel, you could use <code>PROC print.sin (VAL []BYTE s, VAL
+ INT i, CHAN BYTE out!)</code> as follows:</p>
+<pre><code>print.sin ("Number of interrupts: ", count, out!)</code></pre>
+<p> <code>PROC</code>s are provided for all valid combinations of up to 5 formatting characters, with the restrictions that <code>n</code> is only permitted at the end of a format string, and <code>i</code>, <code>r</code> and <code>b</code> cannot occur next to each other. (For example, <code>trace.sisin</code> is provided, but <code>trace.siin</code> and <code>trace.sinin</code> are not.)</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="record" href="useful.html#name-COMPLEX32">Record <code>COMPLEX32</code></a> - A 2*32-bit complex number</li>
+<li>
+<a class="record" href="useful.html#name-COMPLEX64">Record <code>COMPLEX64</code></a> - A 2*64-bit complex number</li>
+<li>
+<a class="record" href="useful.html#name-VECTOR2">Record <code>VECTOR2</code></a> - A two-dimensional vector</li>
+<li>
+<a class="record" href="useful.html#name-VECTOR3">Record <code>VECTOR3</code></a> - A three-dimensional vector</li>
+<li>
+<a class="function" href="useful.html#name-abs.int">Function <code>abs.int</code></a> - Remove the sign from an integer</li>
+<li>
+<a class="function" href="useful.html#name-abs.real32">Function <code>abs.real32</code></a> - Remove the sign from a real</li>
+<li>
+<a class="proc" href="useful.html#name-append.int">Process <code>append.int</code></a> - Append a number to a string</li>
+<li>
+<a class="proc" href="useful.html#name-append.string">Process <code>append.string</code></a> - Append a string to a string</li>
+<li>
+<a class="function" href="useful.html#name-clamp.int">Function <code>clamp.int</code></a> - Limit an integer to a particular range</li>
+<li>
+<a class="function" href="useful.html#name-cross.product3">Function <code>cross.product3</code></a> - Compute the cross product of two   s</li>
+<li>
+<a class="function" href="useful.html#name-deg.to.rad">Function <code>deg.to.rad</code></a> - Convert an angle in degrees into radians</li>
+<li>
+<a class="function" href="useful.html#name-is.whitespace">Function <code>is.whitespace</code></a> - Is a character whitespace?</li>
+<li>
+<a class="function" href="useful.html#name-mag.squared2">Function <code>mag.squared2</code></a> - Compute the square of the magnitude of a   </li>
+<li>
+<a class="function" href="useful.html#name-mag.squared3">Function <code>mag.squared3</code></a> - Compute the square of the magnitude of a   </li>
+<li>
+<a class="proc" href="useful.html#name-matrix.add">Process <code>matrix.add</code></a> - Add two matrices</li>
+<li>
+<a class="proc" href="useful.html#name-matrix.multiply">Process <code>matrix.multiply</code></a> - Compute the ordinary product of two matrices</li>
+<li>
+<a class="function" href="useful.html#name-max.int">Function <code>max.int</code></a> - Find the greater of two integers</li>
+<li>
+<a class="function" href="useful.html#name-max.real32">Function <code>max.real32</code></a> - Find the greater of two reals</li>
+<li>
+<a class="function" href="useful.html#name-min.int">Function <code>min.int</code></a> - Find the lesser of two integers</li>
+<li>
+<a class="function" href="useful.html#name-min.real32">Function <code>min.real32</code></a> - Find the lesser of two reals</li>
+<li>
+<a class="function" href="useful.html#name-normal3">Function <code>normal3</code></a> - Compute the normal to the plane defined by the two given vectors</li>
+<li>
+<a class="function" href="useful.html#name-normalise2">Function <code>normalise2</code></a> - Normalise a   </li>
+<li>
+<a class="function" href="useful.html#name-normalise3">Function <code>normalise3</code></a> - Normalise a   </li>
+<li>
+<a class="operator" href="useful.html#name-operator2a.VECTOR2.-2--2-REAL32.VECTOR2">Operator <code>* (VECTOR2, [2][2]REAL32)</code></a> - Multiply a    by a transformation matrix</li>
+<li>
+<a class="operator" href="useful.html#name-operator2a.VECTOR3.-3--3-REAL32.VECTOR3">Operator <code>* (VECTOR3, [3][3]REAL32)</code></a> - Multiply a    by a transformation matrix</li>
+<li>
+<a class="proc" href="useful.html#name-out.vector2">Process <code>out.vector2</code></a> - Print a   </li>
+<li>
+<a class="proc" href="useful.html#name-out.vector3">Process <code>out.vector3</code></a> - Print a   </li>
+<li>
+<a class="function" href="useful.html#name-rad.to.deg">Function <code>rad.to.deg</code></a> - Convert an angle in radians into degrees</li>
+<li>
+<a class="proc" href="useful.html#name-resize.string">Process <code>resize.string</code></a> - Resize a string, keeping its contents intact</li>
+<li>
+<a class="function" href="useful.html#name-rotate2">Function <code>rotate2</code></a> - Generate a transformation matrix that rotates a 2D point around the origin</li>
+<li>
+<a class="function" href="useful.html#name-rotate3.x">Function <code>rotate3.x</code></a> - Generate a transformation matrix that rotates a 3D point around the X axis</li>
+<li>
+<a class="function" href="useful.html#name-rotate3.y">Function <code>rotate3.y</code></a> - Generate a transformation matrix that rotates a 3D point around the Y axis</li>
+<li>
+<a class="function" href="useful.html#name-rotate3.z">Function <code>rotate3.z</code></a> - Generate a transformation matrix that rotates a 3D point around the Z axis</li>
+<li>
+<a class="proc" href="useful.html#name-rstrip.string">Process <code>rstrip.string</code></a> - Remove trailing whitespace from a string</li>
+<li>
+<a class="function" href="useful.html#name-same.string">Function <code>same.string</code></a> - Compare two strings for equality</li>
+<li>
+<a class="proc" href="useful.html#name-update.max.int">Process <code>update.max.int</code></a> - Update a running maximum value</li>
+<li>
+<a class="function" href="useful.html#name-wrap.int">Function <code>wrap.int</code></a> - Wrap array indexes around</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-resize.string" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:29</span>Process <code>resize.string</code>
+</h3>
+<p class="definition"><code>PROC resize.string (MOBILE []BYTE s, VAL INT new.size)</code></p>
+<div class="description"><p>Resize a string, keeping its contents intact.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">String to resize</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>new.size</code></td>
+<td class="param-desc">New length</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.string" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:37</span>Process <code>append.string</code>
+</h3>
+<p class="definition"><code>PROC append.string (MOBILE []BYTE out, VAL []BYTE in)</code></p>
+<div class="description"><p>Append a string to a string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">String to append to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">String that will be appended to <code>out</code>
+</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.int" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:48</span>Process <code>append.int</code>
+</h3>
+<p class="definition"><code>PROC append.int (MOBILE []BYTE out, VAL INT n)</code></p>
+<div class="description"><p>Append a number to a string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">String to which the decimal representation of <code>n</code> will be appended</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer to format</td>
+</tr>
+</table></div>
+</div>
+<div id="name-same.string" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:82</span>Function <code>same.string</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION same.string (VAL []BYTE a, b)</code></p>
+<div class="description"><p>Compare two strings for equality.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Strings to compare</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>TRUE</code> if the strings are the same, <code>FALSE</code> otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-is.whitespace" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:100</span>Function <code>is.whitespace</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.whitespace (VAL BYTE ch)</code></p>
+<div class="description"><p>Is a character whitespace?</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>ch</code></td>
+<td class="param-desc">Character to examine</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>TRUE</code> if <code>ch</code> is a space, tab, carriage-return or line-feed</td>
+</tr></table></div>
+</div>
+<div id="name-rstrip.string" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:113</span>Process <code>rstrip.string</code>
+</h3>
+<p class="definition"><code>PROC rstrip.string (MOBILE []BYTE s)</code></p>
+<div class="description"><p>Remove trailing whitespace from a string.</p></div>
+</div>
+<div id="name-VECTOR2" class="declaration record">
+<h3>
+<span class="location"><code>useful.inc</code>:71</span>Record <code>VECTOR2</code>
+</h3>
+<p class="definition"><code>DATA TYPE VECTOR2</code></p>
+<div class="description"><p>A two-dimensional vector.</p></div>
+</div>
+<div id="name-mag.squared2" class="declaration function">
+<h3>
+<span class="location"><code>useful.inc</code>:85</span>Function <code>mag.squared2</code>
+</h3>
+<p class="definition"><code>REAL32 INLINE FUNCTION mag.squared2 (VAL VECTOR2 v)</code></p>
+<div class="description"><p>Compute the square of the magnitude of a <a href="useful.html#name-VECTOR2"><code>VECTOR2</code></a>.</p></div>
+</div>
+<div id="name-VECTOR3" class="declaration record">
+<h3>
+<span class="location"><code>useful.inc</code>:93</span>Record <code>VECTOR3</code>
+</h3>
+<p class="definition"><code>DATA TYPE VECTOR3</code></p>
+<div class="description"><p>A three-dimensional vector.</p></div>
+</div>
+<div id="name-mag.squared3" class="declaration function">
+<h3>
+<span class="location"><code>useful.inc</code>:107</span>Function <code>mag.squared3</code>
+</h3>
+<p class="definition"><code>REAL32 INLINE FUNCTION mag.squared3 (VAL VECTOR3 v)</code></p>
+<div class="description"><p>Compute the square of the magnitude of a <a href="useful.html#name-VECTOR3"><code>VECTOR3</code></a>.</p></div>
+</div>
+<div id="name-COMPLEX32" class="declaration record">
+<h3>
+<span class="location"><code>useful.inc</code>:116</span>Record <code>COMPLEX32</code>
+</h3>
+<p class="definition"><code>DATA TYPE COMPLEX32</code></p>
+<div class="description"><p>A 2*32-bit complex number.</p></div>
+</div>
+<div id="name-COMPLEX64" class="declaration record">
+<h3>
+<span class="location"><code>useful.inc</code>:173</span>Record <code>COMPLEX64</code>
+</h3>
+<p class="definition"><code>DATA TYPE COMPLEX64</code></p>
+<div class="description"><p>A 2*64-bit complex number.</p></div>
+</div>
+<div id="name-abs.int" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:29</span>Function <code>abs.int</code>
+</h3>
+<p class="definition"><code>INT FUNCTION abs.int (VAL INT n)</code></p>
+<div class="description"><p>Remove the sign from an integer.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>-n</code> if <code>n</code> is negative, else <code>n</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-min.int" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:44</span>Function <code>min.int</code>
+</h3>
+<p class="definition"><code>INT FUNCTION min.int (VAL INT a, b)</code></p>
+<div class="description"><p>Find the lesser of two integers.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to compare</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The lesser of <code>a</code> and <code>b</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-max.int" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:59</span>Function <code>max.int</code>
+</h3>
+<p class="definition"><code>INT FUNCTION max.int (VAL INT a, b)</code></p>
+<div class="description"><p>Find the greater of two integers.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to compare</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The greater of <code>a</code> and <code>b</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-abs.real32" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:74</span>Function <code>abs.real32</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION abs.real32 (VAL REAL32 n)</code></p>
+<div class="description"><p>Remove the sign from a real.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>-n</code> if <code>n</code> is negative, else <code>n</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-min.real32" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:89</span>Function <code>min.real32</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION min.real32 (VAL REAL32 a, b)</code></p>
+<div class="description"><p>Find the lesser of two reals.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Reals to compare</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The lesser of <code>a</code> and <code>b</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-max.real32" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:104</span>Function <code>max.real32</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION max.real32 (VAL REAL32 a, b)</code></p>
+<div class="description"><p>Find the greater of two reals.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Reals to compare</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The greater of <code>a</code> and <code>b</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-update.max.int" class="declaration proc">
+<h3>
+<span class="location"><code>math.occ</code>:121</span>Process <code>update.max.int</code>
+</h3>
+<p class="definition"><code>PROC update.max.int (INT max, VAL INT value)</code></p>
+<div class="description"><p>Update a running maximum value. If <code>value</code> is greater than <code>max</code>, <code>max</code> will be set to <code>value</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">The running maximum</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">The input value</td>
+</tr>
+</table></div>
+</div>
+<div id="name-clamp.int" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:137</span>Function <code>clamp.int</code>
+</h3>
+<p class="definition"><code>INT FUNCTION clamp.int (VAL INT in, left, width)</code></p>
+<div class="description"><p>Limit an integer to a particular range. For example, if you call this with <code>left = 3</code> and <code>width = 3</code>, then the output value will be in the range <code>3 .. 5</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Input value</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>left</code></td>
+<td class="param-desc">The lowest value in the range</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">The width of the range</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">A value in the range <code>left .. (left + width - 1)</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-wrap.int" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:156</span>Function <code>wrap.int</code>
+</h3>
+<p class="definition"><code>INT FUNCTION wrap.int (VAL INT i, max)</code></p>
+<div class="description"><p>Wrap array indexes around. If given <code>-1</code>, this will return <code>max - 1</code>; if given <code>max
+ + 1</code>, this will return <code>1</code>. This is not quite the same thing as <code>\ max</code>, since that doesn't do the right thing for negative numbers.</p></div>
+</div>
+<div id="name-deg.to.rad" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:168</span>Function <code>deg.to.rad</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION deg.to.rad (VAL REAL32 deg)</code></p>
+<div class="description"><p>Convert an angle in degrees into radians.</p></div>
+</div>
+<div id="name-rad.to.deg" class="declaration function">
+<h3>
+<span class="location"><code>math.occ</code>:172</span>Function <code>rad.to.deg</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION rad.to.deg (VAL REAL32 rad)</code></p>
+<div class="description"><p>Convert an angle in radians into degrees.</p></div>
+</div>
+<div id="name-matrix.multiply" class="declaration proc">
+<h3>
+<span class="location"><code>matrix.occ</code>:33</span>Process <code>matrix.multiply</code>
+</h3>
+<p class="definition"><code>PROC matrix.multiply (VAL [][]REAL32 a, b, [][]REAL32 result)</code></p>
+<div class="description"><p>Compute the ordinary product of two matrices. The number of columns in <code>a</code> must be the same as the number of rows in <code>b</code>. <code>result</code> must have the same number of rows as <code>a</code> and the same number of columns as <code>b</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL [][]REAL32</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">First matrix</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][]REAL32</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Second matrix</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]REAL32</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">Product</td>
+</tr>
+</table></div>
+</div>
+<div id="name-matrix.add" class="declaration proc">
+<h3>
+<span class="location"><code>matrix.occ</code>:53</span>Process <code>matrix.add</code>
+</h3>
+<p class="definition"><code>PROC matrix.add (VAL [][]REAL32 a, b, [][]REAL32 result)</code></p>
+<div class="description"><p>Add two matrices. <code>a</code>, <code>b</code> and <code>result</code> must all be the same size.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL [][]REAL32</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">First matrix</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][]REAL32</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Second matrix</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]REAL32</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">Product</td>
+</tr>
+</table></div>
+</div>
+<div id="name-operator2a.VECTOR2.-2--2-REAL32.VECTOR2" class="declaration operator">
+<h3>
+<span class="location"><code>matrix.occ</code>:67</span>Operator <code>* (VECTOR2, [2][2]REAL32)</code>
+</h3>
+<p class="definition"><code>VECTOR2 FUNCTION "**" (VAL VECTOR2 v, VAL [2][2]REAL32 m)</code></p>
+<div class="description"><p>Multiply a <a href="useful.html#name-VECTOR2"><code>VECTOR2</code></a> by a transformation matrix.</p></div>
+</div>
+<div id="name-operator2a.VECTOR3.-3--3-REAL32.VECTOR3" class="declaration operator">
+<h3>
+<span class="location"><code>matrix.occ</code>:77</span>Operator <code>* (VECTOR3, [3][3]REAL32)</code>
+</h3>
+<p class="definition"><code>VECTOR3 FUNCTION "**" (VAL VECTOR3 v, VAL [3][3]REAL32 m)</code></p>
+<div class="description"><p>Multiply a <a href="useful.html#name-VECTOR3"><code>VECTOR3</code></a> by a transformation matrix.</p></div>
+</div>
+<div id="name-rotate2" class="declaration function">
+<h3>
+<span class="location"><code>matrix.occ</code>:90</span>Function <code>rotate2</code>
+</h3>
+<p class="definition"><code>[2][2]REAL32 FUNCTION rotate2 (VAL REAL32 theta)</code></p>
+<div class="description"><p>Generate a transformation matrix that rotates a 2D point around the origin.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>theta</code></td>
+<td class="param-desc">Angle (in radians)</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>[2][2]REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Transformation matrix</td>
+</tr></table></div>
+</div>
+<div id="name-rotate3.x" class="declaration function">
+<h3>
+<span class="location"><code>matrix.occ</code>:98</span>Function <code>rotate3.x</code>
+</h3>
+<p class="definition"><code>[3][3]REAL32 FUNCTION rotate3.x (VAL REAL32 theta)</code></p>
+<div class="description"><p>Generate a transformation matrix that rotates a 3D point around the X axis.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>theta</code></td>
+<td class="param-desc">Angle (in radians)</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>[3][3]REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Transformation matrix</td>
+</tr></table></div>
+</div>
+<div id="name-rotate3.y" class="declaration function">
+<h3>
+<span class="location"><code>matrix.occ</code>:107</span>Function <code>rotate3.y</code>
+</h3>
+<p class="definition"><code>[3][3]REAL32 FUNCTION rotate3.y (VAL REAL32 theta)</code></p>
+<div class="description"><p>Generate a transformation matrix that rotates a 3D point around the Y axis.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>theta</code></td>
+<td class="param-desc">Angle (in radians)</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>[3][3]REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Transformation matrix</td>
+</tr></table></div>
+</div>
+<div id="name-rotate3.z" class="declaration function">
+<h3>
+<span class="location"><code>matrix.occ</code>:116</span>Function <code>rotate3.z</code>
+</h3>
+<p class="definition"><code>[3][3]REAL32 FUNCTION rotate3.z (VAL REAL32 theta)</code></p>
+<div class="description"><p>Generate a transformation matrix that rotates a 3D point around the Z axis.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>theta</code></td>
+<td class="param-desc">Angle (in radians)</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>[3][3]REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Transformation matrix</td>
+</tr></table></div>
+</div>
+<div id="name-out.vector2" class="declaration proc">
+<h3>
+<span class="location"><code>vector.occ</code>:28</span>Process <code>out.vector2</code>
+</h3>
+<p class="definition"><code>PROC out.vector2 (VAL VECTOR2 v, CHAN BYTE out!)</code></p>
+<div class="description"><p>Print a <a href="useful.html#name-VECTOR2"><code>VECTOR2</code></a>.</p></div>
+</div>
+<div id="name-normalise2" class="declaration function">
+<h3>
+<span class="location"><code>vector.occ</code>:42</span>Function <code>normalise2</code>
+</h3>
+<p class="definition"><code>VECTOR2 FUNCTION normalise2 (VAL VECTOR2 v)</code></p>
+<div class="description"><p>Normalise a <a href="useful.html#name-VECTOR2"><code>VECTOR2</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL VECTOR2</code></td>
+<td class="param-name"><code>v</code></td>
+<td class="param-desc">Input vector</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>VECTOR2</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Unit vector parallel to <code>v</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-out.vector3" class="declaration proc">
+<h3>
+<span class="location"><code>vector.occ</code>:47</span>Process <code>out.vector3</code>
+</h3>
+<p class="definition"><code>PROC out.vector3 (VAL VECTOR3 v, CHAN BYTE out!)</code></p>
+<div class="description"><p>Print a <a href="useful.html#name-VECTOR3"><code>VECTOR3</code></a>.</p></div>
+</div>
+<div id="name-normalise3" class="declaration function">
+<h3>
+<span class="location"><code>vector.occ</code>:64</span>Function <code>normalise3</code>
+</h3>
+<p class="definition"><code>VECTOR3 FUNCTION normalise3 (VAL VECTOR3 v)</code></p>
+<div class="description"><p>Normalise a <a href="useful.html#name-VECTOR3"><code>VECTOR3</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL VECTOR3</code></td>
+<td class="param-name"><code>v</code></td>
+<td class="param-desc">Input vector</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>VECTOR3</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Unit vector parallel to <code>v</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-cross.product3" class="declaration function">
+<h3>
+<span class="location"><code>vector.occ</code>:68</span>Function <code>cross.product3</code>
+</h3>
+<p class="definition"><code>VECTOR3 FUNCTION cross.product3 (VAL VECTOR3 a, b)</code></p>
+<div class="description"><p>Compute the cross product of two <a href="useful.html#name-VECTOR3"><code>VECTOR3</code></a>s.</p></div>
+</div>
+<div id="name-normal3" class="declaration function">
+<h3>
+<span class="location"><code>vector.occ</code>:80</span>Function <code>normal3</code>
+</h3>
+<p class="definition"><code>VECTOR3 FUNCTION normal3 (VAL VECTOR3 a, b)</code></p>
+<div class="description"><p>Compute the normal to the plane defined by the two given vectors.</p></div>
+</div>
+</div></div></body>
+</html>

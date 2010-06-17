@@ -1,0 +1,44 @@
+ --
+ --  This library is free software; you can redistribute it and/or
+ --  modify it under the terms of the GNU Lesser General Public
+ --  License as published by the Free Software Foundation; either
+ --  version 2.1 of the License, or (at your option) any later version.
+ 
+ --  This library is distributed in the hope that it will be useful,
+ --  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ --  Lesser General Public License for more details.
+ 
+ --  You should have received a copy of the GNU Lesser General Public
+ --  License along with this library; if not, write to the Free 
+ --  Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ --  Boston, MA  02110-1301  USA
+ 
+ --  **********************************************************************
+
+#INCLUDE "wiring.module"
+#INCLUDE "servos.module"
+
+VAL INT servo.pause IS 2000 :
+
+PROC test.servo ()
+  INT pin :
+  INT degrees :
+  SEQ
+    pin := 7
+    degrees := 45
+    beginSerial (57600)
+    serialWrite ("entering servos.module\n")
+    addServo( pin )
+    setServoPositionInDegrees( pin, degrees )
+    delay ( servo.pause )
+    setServoPositionInDegrees( pin, degrees + 45 )
+    delay ( servo.pause )
+    setServoPositionInDegrees( pin, degrees + 100 )
+:
+
+PROC main ()
+  -- test the servo process
+  PAR
+    test.servo ()
+:

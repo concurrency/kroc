@@ -1,0 +1,980 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Basic raster graphics support</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-raster" class="module">
+<h1>Module <code>raster</code> - Basic raster graphics support</h1>
+<div class="header"><div class="description"><p>Basic raster graphics support. This module provides basic data types for two-dimensional bitmap ("raster") graphics. To display graphics, you'll want to use a module like <a href="sdlraster.html"><code>sdlraster</code></a>.</p></div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="datatype" href="raster.html#name-RASTER">Data type <code>RASTER</code></a> - A bitmap image</li>
+<li>
+<a class="group" href="raster.html#name-RASTER.BUTTON">Group <code>RASTER.BUTTON</code></a> - Mouse buttons<br><ul>
+<li>
+<a class="constant" href="raster.html#name-RASTER.BUTTON.LEFT">Constant <code>RASTER.BUTTON.LEFT</code></a> - Left button</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.BUTTON.MIDDLE">Constant <code>RASTER.BUTTON.MIDDLE</code></a> - Middle button</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.BUTTON.RIGHT">Constant <code>RASTER.BUTTON.RIGHT</code></a> - Right button</li>
+</ul>
+</li>
+<li>
+<a class="group" href="raster.html#name-RASTER.ET">Group <code>RASTER.ET</code></a> - Input event types<br><ul>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.EXPOSE">Constant <code>RASTER.ET.EXPOSE</code></a> - Window exposure</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.KEYDOWN">Constant <code>RASTER.ET.KEYDOWN</code></a> - Key down</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.KEYUP">Constant <code>RASTER.ET.KEYUP</code></a> - Key up</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.MOUSEBUTTONDOWN">Constant <code>RASTER.ET.MOUSEBUTTONDOWN</code></a> - Mouse button down</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.MOUSEBUTTONUP">Constant <code>RASTER.ET.MOUSEBUTTONUP</code></a> - Mouse button up</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.MOUSEMOTION">Constant <code>RASTER.ET.MOUSEMOTION</code></a> - Mouse motion</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.QUIT">Constant <code>RASTER.ET.QUIT</code></a> - Window closed</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.ET.SHUTDOWN">Constant <code>RASTER.ET.SHUTDOWN</code></a> - The event channel is shutting down</li>
+</ul>
+</li>
+<li>
+<a class="record" href="raster.html#name-RASTER.EVENT">Record <code>RASTER.EVENT</code></a> - An input event<br><ul>
+<li>
+<a class="variable" href="raster.html#name-id">Variable <code>id</code></a> - Identifier</li>
+<li>
+<a class="variable" href="raster.html#name-mod">Variable <code>mod</code></a> - Modifier keys</li>
+<li>
+<a class="variable" href="raster.html#name-type">Variable <code>type</code></a> - What type of event this is -- one of   </li>
+<li>
+<a class="variable" href="raster.html#name-x">Variable <code>x</code>, <code>y</code></a> - Pointer coordinates</li>
+</ul>
+</li>
+<li>
+<a class="group" href="raster.html#name-RASTER.KEY">Group <code>RASTER.KEY</code></a> - Key symbols<br><ul>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.BACKSPACE">Constant <code>RASTER.KEY.BACKSPACE</code></a> - Backspace</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.BREAK">Constant <code>RASTER.KEY.BREAK</code></a> - Break</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.CAPSLOCK">Constant <code>RASTER.KEY.CAPSLOCK</code></a> - Caps lock</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.CLEAR">Constant <code>RASTER.KEY.CLEAR</code></a> - Clear</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.COMPOSE">Constant <code>RASTER.KEY.COMPOSE</code></a> - Compose</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.DELETE">Constant <code>RASTER.KEY.DELETE</code></a> - Delete</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.DOWN">Constant <code>RASTER.KEY.DOWN</code></a> - Down arrow</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.END">Constant <code>RASTER.KEY.END</code></a> - End</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.ESCAPE">Constant <code>RASTER.KEY.ESCAPE</code></a> - Escape</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.EURO">Constant <code>RASTER.KEY.EURO</code></a> - Euro</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F1">Constant <code>RASTER.KEY.F1</code></a> - F1</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F10">Constant <code>RASTER.KEY.F10</code></a> - F10</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F11">Constant <code>RASTER.KEY.F11</code></a> - F11</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F12">Constant <code>RASTER.KEY.F12</code></a> - F12</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F13">Constant <code>RASTER.KEY.F13</code></a> - F13</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F14">Constant <code>RASTER.KEY.F14</code></a> - F14</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F15">Constant <code>RASTER.KEY.F15</code></a> - F15</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F2">Constant <code>RASTER.KEY.F2</code></a> - F2</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F3">Constant <code>RASTER.KEY.F3</code></a> - F3</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F4">Constant <code>RASTER.KEY.F4</code></a> - F4</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F5">Constant <code>RASTER.KEY.F5</code></a> - F5</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F6">Constant <code>RASTER.KEY.F6</code></a> - F6</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F7">Constant <code>RASTER.KEY.F7</code></a> - F7</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F8">Constant <code>RASTER.KEY.F8</code></a> - F8</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.F9">Constant <code>RASTER.KEY.F9</code></a> - F9</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.HELP">Constant <code>RASTER.KEY.HELP</code></a> - Help</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.HOME">Constant <code>RASTER.KEY.HOME</code></a> - Home</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.INSERT">Constant <code>RASTER.KEY.INSERT</code></a> - Insert</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.DIVIDE">Constant <code>RASTER.KEY.KP.DIVIDE</code></a> - Keypad  / </li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.ENTER">Constant <code>RASTER.KEY.KP.ENTER</code></a> - Keypad Enter</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.EQUALS">Constant <code>RASTER.KEY.KP.EQUALS</code></a> - Keypad  = </li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.MINUS">Constant <code>RASTER.KEY.KP.MINUS</code></a> - Keypad  - </li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.MULTIPLY">Constant <code>RASTER.KEY.KP.MULTIPLY</code></a> - Keypad  * </li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.PERIOD">Constant <code>RASTER.KEY.KP.PERIOD</code></a> - Keypad  </li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP.PLUS">Constant <code>RASTER.KEY.KP.PLUS</code></a> - Keypad  + </li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP0">Constant <code>RASTER.KEY.KP0</code></a> - Keypad 0</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP1">Constant <code>RASTER.KEY.KP1</code></a> - Keypad 1</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP2">Constant <code>RASTER.KEY.KP2</code></a> - Keypad 2</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP3">Constant <code>RASTER.KEY.KP3</code></a> - Keypad 3</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP4">Constant <code>RASTER.KEY.KP4</code></a> - Keypad 4</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP5">Constant <code>RASTER.KEY.KP5</code></a> - Keypad 5</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP6">Constant <code>RASTER.KEY.KP6</code></a> - Keypad 6</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP7">Constant <code>RASTER.KEY.KP7</code></a> - Keypad 7</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP8">Constant <code>RASTER.KEY.KP8</code></a> - Keypad 8</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.KP9">Constant <code>RASTER.KEY.KP9</code></a> - Keypad 9</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.LALT">Constant <code>RASTER.KEY.LALT</code></a> - Left alt</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.LCTRL">Constant <code>RASTER.KEY.LCTRL</code></a> - Left control</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.LEFT">Constant <code>RASTER.KEY.LEFT</code></a> - Left arrow</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.LMETA">Constant <code>RASTER.KEY.LMETA</code></a> - Left meta</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.LSHIFT">Constant <code>RASTER.KEY.LSHIFT</code></a> - Left shift</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.LSUPER">Constant <code>RASTER.KEY.LSUPER</code></a> - Left super</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.MENU">Constant <code>RASTER.KEY.MENU</code></a> - Menu</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.MODE">Constant <code>RASTER.KEY.MODE</code></a> - Mode</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.NUMLOCK">Constant <code>RASTER.KEY.NUMLOCK</code></a> - Num lock</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.PAGEDOWN">Constant <code>RASTER.KEY.PAGEDOWN</code></a> - Page down</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.PAGEUP">Constant <code>RASTER.KEY.PAGEUP</code></a> - Page up</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.PAUSE">Constant <code>RASTER.KEY.PAUSE</code></a> - Pause</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.POWER">Constant <code>RASTER.KEY.POWER</code></a> - Power</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.PRINT">Constant <code>RASTER.KEY.PRINT</code></a> - Print</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RALT">Constant <code>RASTER.KEY.RALT</code></a> - Right alt</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RCTRL">Constant <code>RASTER.KEY.RCTRL</code></a> - Right control</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RETURN">Constant <code>RASTER.KEY.RETURN</code></a> - Return</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RIGHT">Constant <code>RASTER.KEY.RIGHT</code></a> - Right arrow</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RMETA">Constant <code>RASTER.KEY.RMETA</code></a> - Right meta</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RSHIFT">Constant <code>RASTER.KEY.RSHIFT</code></a> - Right shift</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.RSUPER">Constant <code>RASTER.KEY.RSUPER</code></a> - Right super</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.SCROLLOCK">Constant <code>RASTER.KEY.SCROLLOCK</code></a> - Scroll lock</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.SYSREQ">Constant <code>RASTER.KEY.SYSREQ</code></a> - SysReq</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.TAB">Constant <code>RASTER.KEY.TAB</code></a> - Tab</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.UNDO">Constant <code>RASTER.KEY.UNDO</code></a> - Undo</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.KEY.UP">Constant <code>RASTER.KEY.UP</code></a> - Up arrow</li>
+</ul>
+</li>
+<li>
+<a class="group" href="raster.html#name-RASTER.MOD">Group <code>RASTER.MOD</code></a> - Modifier keys<br><ul>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.CAPS">Constant <code>RASTER.MOD.CAPS</code></a> - Caps lock</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.LALT">Constant <code>RASTER.MOD.LALT</code></a> - Left alt</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.LCTRL">Constant <code>RASTER.MOD.LCTRL</code></a> - Left control</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.LMETA">Constant <code>RASTER.MOD.LMETA</code></a> - Left meta</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.LSHIFT">Constant <code>RASTER.MOD.LSHIFT</code></a> - Left shift</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.MODE">Constant <code>RASTER.MOD.MODE</code></a> - Mode lock</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.NUM">Constant <code>RASTER.MOD.NUM</code></a> - Num lock</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.RALT">Constant <code>RASTER.MOD.RALT</code></a> - Right alt</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.RCTRL">Constant <code>RASTER.MOD.RCTRL</code></a> - Right control</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.RMETA">Constant <code>RASTER.MOD.RMETA</code></a> - Right meta</li>
+<li>
+<a class="constant" href="raster.html#name-RASTER.MOD.RSHIFT">Constant <code>RASTER.MOD.RSHIFT</code></a> - Right shift</li>
+</ul>
+</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-RASTER" class="declaration datatype">
+<h3>
+<span class="location"><code>raster.inc</code>:44</span>Data type <code>RASTER</code>
+</h3>
+<p class="definition"><code>DATA TYPE RASTER</code></p>
+<div class="description">
+<p>A bitmap image.</p>
+<p> This is really a <code>MOBILE [][]INT</code>, with the first dimension being the Y coordinate and the second the X coordinate. Each element represents an RGB-colourspace pixel in <code>#AARRGGBB</code> format, with eight bits for each of red, green, blue and alpha. (Most things ignore the alpha component.)</p>
+<p> The pixel representation uses the native endianism, so if you retype it to an array of <code>BYTE</code>s then the order of the components will vary between platforms.</p>
+<p> It's sometimes useful to have a sentinel value of this type (for example, to use as a poison value in process networks); a zero-by-zero raster can be used for this purpose (<code>MOBILE [0][0]INT</code>).</p>
+</div>
+</div>
+<div id="name-RASTER.EVENT" class="declaration record">
+<h3>
+<span class="location"><code>raster.inc</code>:49</span>Record <code>RASTER.EVENT</code>
+</h3>
+<p class="definition"><code>DATA TYPE RASTER.EVENT</code></p>
+<div class="description"><p>An input event.</p></div>
+<div class="children">
+<div id="name-type" class="declaration variable">
+<h3>
+<span class="location"><code>raster.inc</code>:52</span>Variable <code>type</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>What type of event this is -- one of <a href="raster.html#name-RASTER.ET"><code>RASTER.ET</code></a>.</p></div>
+</div>
+<div id="name-id" class="declaration variable">
+<h3>
+<span class="location"><code>raster.inc</code>:57</span>Variable <code>id</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description">
+<p>Identifier. </p>
+<ul>
+<li> For keyboard events, this is the key symbol -- a Unicode character, or one of <a href="raster.html#name-RASTER.KEY"><code>RASTER.KEY</code></a>. </li>
+<li> For mouse button events, this is one of <a href="raster.html#name-RASTER.BUTTON"><code>RASTER.BUTTON</code></a>.</li>
+</ul>
+</div>
+</div>
+<div id="name-mod" class="declaration variable">
+<h3>
+<span class="location"><code>raster.inc</code>:61</span>Variable <code>mod</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description">
+<p>Modifier keys. </p>
+<ul><li> For keyboard and mouse button events, this is the modifier state -- one or more of <a href="raster.html#name-RASTER.MOD"><code>RASTER.MOD</code></a> bitwise-ORed together.</li></ul>
+</div>
+</div>
+<div id="name-x" class="declaration variable">
+<h3>
+<span class="location"><code>raster.inc</code>:64</span>Variable <code>x</code>, <code>y</code>
+</h3>
+<p class="definition"><code>INT16</code></p>
+<div class="description">
+<p>Pointer coordinates. </p>
+<ul><li> For mouse events, this is the pointer position.</li></ul>
+</div>
+</div>
+</div>
+</div>
+<div id="name-RASTER.ET" class="declaration group">
+<h3>
+<span class="location"><code>raster.inc</code>:68</span>Group <code>RASTER.ET</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Input event types.</p></div>
+<div class="children">
+<div id="name-RASTER.ET.SHUTDOWN" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:72</span>Constant <code>RASTER.ET.SHUTDOWN</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.SHUTDOWN</code></p>
+<div class="description"><p>The event channel is shutting down. This will always be the last event you receive.</p></div>
+</div>
+<div id="name-RASTER.ET.QUIT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:73</span>Constant <code>RASTER.ET.QUIT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.QUIT</code></p>
+<div class="description"><p>Window closed</p></div>
+</div>
+<div id="name-RASTER.ET.KEYDOWN" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:74</span>Constant <code>RASTER.ET.KEYDOWN</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.KEYDOWN</code></p>
+<div class="description"><p>Key down</p></div>
+</div>
+<div id="name-RASTER.ET.KEYUP" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:75</span>Constant <code>RASTER.ET.KEYUP</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.KEYUP</code></p>
+<div class="description"><p>Key up</p></div>
+</div>
+<div id="name-RASTER.ET.MOUSEBUTTONDOWN" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:76</span>Constant <code>RASTER.ET.MOUSEBUTTONDOWN</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.MOUSEBUTTONDOWN</code></p>
+<div class="description"><p>Mouse button down</p></div>
+</div>
+<div id="name-RASTER.ET.MOUSEBUTTONUP" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:77</span>Constant <code>RASTER.ET.MOUSEBUTTONUP</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.MOUSEBUTTONUP</code></p>
+<div class="description"><p>Mouse button up</p></div>
+</div>
+<div id="name-RASTER.ET.MOUSEMOTION" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:78</span>Constant <code>RASTER.ET.MOUSEMOTION</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.MOUSEMOTION</code></p>
+<div class="description"><p>Mouse motion</p></div>
+</div>
+<div id="name-RASTER.ET.EXPOSE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:79</span>Constant <code>RASTER.ET.EXPOSE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.ET.EXPOSE</code></p>
+<div class="description"><p>Window exposure</p></div>
+</div>
+</div>
+</div>
+<div id="name-RASTER.KEY" class="declaration group">
+<h3>
+<span class="location"><code>raster.inc</code>:81</span>Group <code>RASTER.KEY</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Key symbols.</p></div>
+<div class="children">
+<div id="name-RASTER.KEY.BACKSPACE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:86</span>Constant <code>RASTER.KEY.BACKSPACE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.BACKSPACE</code></p>
+<div class="description"><p>Backspace.</p></div>
+</div>
+<div id="name-RASTER.KEY.TAB" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:87</span>Constant <code>RASTER.KEY.TAB</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.TAB</code></p>
+<div class="description"><p>Tab.</p></div>
+</div>
+<div id="name-RASTER.KEY.CLEAR" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:88</span>Constant <code>RASTER.KEY.CLEAR</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.CLEAR</code></p>
+<div class="description"><p>Clear.</p></div>
+</div>
+<div id="name-RASTER.KEY.RETURN" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:89</span>Constant <code>RASTER.KEY.RETURN</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RETURN</code></p>
+<div class="description"><p>Return.</p></div>
+</div>
+<div id="name-RASTER.KEY.PAUSE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:90</span>Constant <code>RASTER.KEY.PAUSE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.PAUSE</code></p>
+<div class="description"><p>Pause.</p></div>
+</div>
+<div id="name-RASTER.KEY.ESCAPE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:91</span>Constant <code>RASTER.KEY.ESCAPE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.ESCAPE</code></p>
+<div class="description"><p>Escape.</p></div>
+</div>
+<div id="name-RASTER.KEY.DELETE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:92</span>Constant <code>RASTER.KEY.DELETE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.DELETE</code></p>
+<div class="description"><p>Delete.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP0" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:93</span>Constant <code>RASTER.KEY.KP0</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP0</code></p>
+<div class="description"><p>Keypad 0.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP1" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:94</span>Constant <code>RASTER.KEY.KP1</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP1</code></p>
+<div class="description"><p>Keypad 1.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP2" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:95</span>Constant <code>RASTER.KEY.KP2</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP2</code></p>
+<div class="description"><p>Keypad 2.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP3" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:96</span>Constant <code>RASTER.KEY.KP3</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP3</code></p>
+<div class="description"><p>Keypad 3.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP4" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:97</span>Constant <code>RASTER.KEY.KP4</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP4</code></p>
+<div class="description"><p>Keypad 4.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP5" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:98</span>Constant <code>RASTER.KEY.KP5</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP5</code></p>
+<div class="description"><p>Keypad 5.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP6" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:99</span>Constant <code>RASTER.KEY.KP6</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP6</code></p>
+<div class="description"><p>Keypad 6.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP7" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:100</span>Constant <code>RASTER.KEY.KP7</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP7</code></p>
+<div class="description"><p>Keypad 7.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP8" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:101</span>Constant <code>RASTER.KEY.KP8</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP8</code></p>
+<div class="description"><p>Keypad 8.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP9" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:102</span>Constant <code>RASTER.KEY.KP9</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP9</code></p>
+<div class="description"><p>Keypad 9.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.PERIOD" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:103</span>Constant <code>RASTER.KEY.KP.PERIOD</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.PERIOD</code></p>
+<div class="description"><p>Keypad <code>.</code>.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.DIVIDE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:104</span>Constant <code>RASTER.KEY.KP.DIVIDE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.DIVIDE</code></p>
+<div class="description"><p>Keypad <code>/</code>.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.MULTIPLY" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:105</span>Constant <code>RASTER.KEY.KP.MULTIPLY</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.MULTIPLY</code></p>
+<div class="description"><p>Keypad <code>*</code>.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.MINUS" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:106</span>Constant <code>RASTER.KEY.KP.MINUS</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.MINUS</code></p>
+<div class="description"><p>Keypad <code>-</code>.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.PLUS" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:107</span>Constant <code>RASTER.KEY.KP.PLUS</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.PLUS</code></p>
+<div class="description"><p>Keypad <code>+</code>.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.ENTER" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:108</span>Constant <code>RASTER.KEY.KP.ENTER</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.ENTER</code></p>
+<div class="description"><p>Keypad Enter.</p></div>
+</div>
+<div id="name-RASTER.KEY.KP.EQUALS" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:109</span>Constant <code>RASTER.KEY.KP.EQUALS</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.KP.EQUALS</code></p>
+<div class="description"><p>Keypad <code>=</code>.</p></div>
+</div>
+<div id="name-RASTER.KEY.UP" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:110</span>Constant <code>RASTER.KEY.UP</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.UP</code></p>
+<div class="description"><p>Up arrow.</p></div>
+</div>
+<div id="name-RASTER.KEY.DOWN" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:111</span>Constant <code>RASTER.KEY.DOWN</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.DOWN</code></p>
+<div class="description"><p>Down arrow.</p></div>
+</div>
+<div id="name-RASTER.KEY.RIGHT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:112</span>Constant <code>RASTER.KEY.RIGHT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RIGHT</code></p>
+<div class="description"><p>Right arrow.</p></div>
+</div>
+<div id="name-RASTER.KEY.LEFT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:113</span>Constant <code>RASTER.KEY.LEFT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.LEFT</code></p>
+<div class="description"><p>Left arrow.</p></div>
+</div>
+<div id="name-RASTER.KEY.INSERT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:114</span>Constant <code>RASTER.KEY.INSERT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.INSERT</code></p>
+<div class="description"><p>Insert.</p></div>
+</div>
+<div id="name-RASTER.KEY.HOME" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:115</span>Constant <code>RASTER.KEY.HOME</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.HOME</code></p>
+<div class="description"><p>Home.</p></div>
+</div>
+<div id="name-RASTER.KEY.END" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:116</span>Constant <code>RASTER.KEY.END</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.END</code></p>
+<div class="description"><p>End.</p></div>
+</div>
+<div id="name-RASTER.KEY.PAGEUP" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:117</span>Constant <code>RASTER.KEY.PAGEUP</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.PAGEUP</code></p>
+<div class="description"><p>Page up.</p></div>
+</div>
+<div id="name-RASTER.KEY.PAGEDOWN" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:118</span>Constant <code>RASTER.KEY.PAGEDOWN</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.PAGEDOWN</code></p>
+<div class="description"><p>Page down.</p></div>
+</div>
+<div id="name-RASTER.KEY.F1" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:119</span>Constant <code>RASTER.KEY.F1</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F1</code></p>
+<div class="description"><p>F1.</p></div>
+</div>
+<div id="name-RASTER.KEY.F2" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:120</span>Constant <code>RASTER.KEY.F2</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F2</code></p>
+<div class="description"><p>F2.</p></div>
+</div>
+<div id="name-RASTER.KEY.F3" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:121</span>Constant <code>RASTER.KEY.F3</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F3</code></p>
+<div class="description"><p>F3.</p></div>
+</div>
+<div id="name-RASTER.KEY.F4" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:122</span>Constant <code>RASTER.KEY.F4</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F4</code></p>
+<div class="description"><p>F4.</p></div>
+</div>
+<div id="name-RASTER.KEY.F5" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:123</span>Constant <code>RASTER.KEY.F5</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F5</code></p>
+<div class="description"><p>F5.</p></div>
+</div>
+<div id="name-RASTER.KEY.F6" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:124</span>Constant <code>RASTER.KEY.F6</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F6</code></p>
+<div class="description"><p>F6.</p></div>
+</div>
+<div id="name-RASTER.KEY.F7" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:125</span>Constant <code>RASTER.KEY.F7</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F7</code></p>
+<div class="description"><p>F7.</p></div>
+</div>
+<div id="name-RASTER.KEY.F8" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:126</span>Constant <code>RASTER.KEY.F8</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F8</code></p>
+<div class="description"><p>F8.</p></div>
+</div>
+<div id="name-RASTER.KEY.F9" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:127</span>Constant <code>RASTER.KEY.F9</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F9</code></p>
+<div class="description"><p>F9.</p></div>
+</div>
+<div id="name-RASTER.KEY.F10" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:128</span>Constant <code>RASTER.KEY.F10</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F10</code></p>
+<div class="description"><p>F10.</p></div>
+</div>
+<div id="name-RASTER.KEY.F11" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:129</span>Constant <code>RASTER.KEY.F11</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F11</code></p>
+<div class="description"><p>F11.</p></div>
+</div>
+<div id="name-RASTER.KEY.F12" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:130</span>Constant <code>RASTER.KEY.F12</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F12</code></p>
+<div class="description"><p>F12.</p></div>
+</div>
+<div id="name-RASTER.KEY.F13" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:131</span>Constant <code>RASTER.KEY.F13</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F13</code></p>
+<div class="description"><p>F13.</p></div>
+</div>
+<div id="name-RASTER.KEY.F14" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:132</span>Constant <code>RASTER.KEY.F14</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F14</code></p>
+<div class="description"><p>F14.</p></div>
+</div>
+<div id="name-RASTER.KEY.F15" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:133</span>Constant <code>RASTER.KEY.F15</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.F15</code></p>
+<div class="description"><p>F15.</p></div>
+</div>
+<div id="name-RASTER.KEY.NUMLOCK" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:134</span>Constant <code>RASTER.KEY.NUMLOCK</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.NUMLOCK</code></p>
+<div class="description"><p>Num lock.</p></div>
+</div>
+<div id="name-RASTER.KEY.CAPSLOCK" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:135</span>Constant <code>RASTER.KEY.CAPSLOCK</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.CAPSLOCK</code></p>
+<div class="description"><p>Caps lock.</p></div>
+</div>
+<div id="name-RASTER.KEY.SCROLLOCK" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:136</span>Constant <code>RASTER.KEY.SCROLLOCK</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.SCROLLOCK</code></p>
+<div class="description"><p>Scroll lock.</p></div>
+</div>
+<div id="name-RASTER.KEY.RSHIFT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:137</span>Constant <code>RASTER.KEY.RSHIFT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RSHIFT</code></p>
+<div class="description"><p>Right shift.</p></div>
+</div>
+<div id="name-RASTER.KEY.LSHIFT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:138</span>Constant <code>RASTER.KEY.LSHIFT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.LSHIFT</code></p>
+<div class="description"><p>Left shift.</p></div>
+</div>
+<div id="name-RASTER.KEY.RCTRL" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:139</span>Constant <code>RASTER.KEY.RCTRL</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RCTRL</code></p>
+<div class="description"><p>Right control.</p></div>
+</div>
+<div id="name-RASTER.KEY.LCTRL" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:140</span>Constant <code>RASTER.KEY.LCTRL</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.LCTRL</code></p>
+<div class="description"><p>Left control.</p></div>
+</div>
+<div id="name-RASTER.KEY.RALT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:141</span>Constant <code>RASTER.KEY.RALT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RALT</code></p>
+<div class="description"><p>Right alt.</p></div>
+</div>
+<div id="name-RASTER.KEY.LALT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:142</span>Constant <code>RASTER.KEY.LALT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.LALT</code></p>
+<div class="description"><p>Left alt.</p></div>
+</div>
+<div id="name-RASTER.KEY.RMETA" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:143</span>Constant <code>RASTER.KEY.RMETA</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RMETA</code></p>
+<div class="description"><p>Right meta.</p></div>
+</div>
+<div id="name-RASTER.KEY.LMETA" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:144</span>Constant <code>RASTER.KEY.LMETA</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.LMETA</code></p>
+<div class="description"><p>Left meta.</p></div>
+</div>
+<div id="name-RASTER.KEY.LSUPER" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:145</span>Constant <code>RASTER.KEY.LSUPER</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.LSUPER</code></p>
+<div class="description"><p>Left super.</p></div>
+</div>
+<div id="name-RASTER.KEY.RSUPER" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:146</span>Constant <code>RASTER.KEY.RSUPER</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.RSUPER</code></p>
+<div class="description"><p>Right super.</p></div>
+</div>
+<div id="name-RASTER.KEY.MODE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:147</span>Constant <code>RASTER.KEY.MODE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.MODE</code></p>
+<div class="description"><p>Mode.</p></div>
+</div>
+<div id="name-RASTER.KEY.COMPOSE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:148</span>Constant <code>RASTER.KEY.COMPOSE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.COMPOSE</code></p>
+<div class="description"><p>Compose.</p></div>
+</div>
+<div id="name-RASTER.KEY.HELP" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:149</span>Constant <code>RASTER.KEY.HELP</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.HELP</code></p>
+<div class="description"><p>Help.</p></div>
+</div>
+<div id="name-RASTER.KEY.PRINT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:150</span>Constant <code>RASTER.KEY.PRINT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.PRINT</code></p>
+<div class="description"><p>Print.</p></div>
+</div>
+<div id="name-RASTER.KEY.SYSREQ" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:151</span>Constant <code>RASTER.KEY.SYSREQ</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.SYSREQ</code></p>
+<div class="description"><p>SysReq.</p></div>
+</div>
+<div id="name-RASTER.KEY.BREAK" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:152</span>Constant <code>RASTER.KEY.BREAK</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.BREAK</code></p>
+<div class="description"><p>Break.</p></div>
+</div>
+<div id="name-RASTER.KEY.MENU" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:153</span>Constant <code>RASTER.KEY.MENU</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.MENU</code></p>
+<div class="description"><p>Menu.</p></div>
+</div>
+<div id="name-RASTER.KEY.POWER" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:154</span>Constant <code>RASTER.KEY.POWER</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.POWER</code></p>
+<div class="description"><p>Power.</p></div>
+</div>
+<div id="name-RASTER.KEY.EURO" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:155</span>Constant <code>RASTER.KEY.EURO</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.EURO</code></p>
+<div class="description"><p>Euro</p></div>
+</div>
+<div id="name-RASTER.KEY.UNDO" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:156</span>Constant <code>RASTER.KEY.UNDO</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.KEY.UNDO</code></p>
+<div class="description"><p>Undo.</p></div>
+</div>
+</div>
+</div>
+<div id="name-RASTER.BUTTON" class="declaration group">
+<h3>
+<span class="location"><code>raster.inc</code>:158</span>Group <code>RASTER.BUTTON</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Mouse buttons.</p></div>
+<div class="children">
+<div id="name-RASTER.BUTTON.LEFT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:160</span>Constant <code>RASTER.BUTTON.LEFT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.BUTTON.LEFT</code></p>
+<div class="description"><p>Left button.</p></div>
+</div>
+<div id="name-RASTER.BUTTON.MIDDLE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:161</span>Constant <code>RASTER.BUTTON.MIDDLE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.BUTTON.MIDDLE</code></p>
+<div class="description"><p>Middle button.</p></div>
+</div>
+<div id="name-RASTER.BUTTON.RIGHT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:162</span>Constant <code>RASTER.BUTTON.RIGHT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.BUTTON.RIGHT</code></p>
+<div class="description"><p>Right button.</p></div>
+</div>
+</div>
+</div>
+<div id="name-RASTER.MOD" class="declaration group">
+<h3>
+<span class="location"><code>raster.inc</code>:164</span>Group <code>RASTER.MOD</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Modifier keys.</p></div>
+<div class="children">
+<div id="name-RASTER.MOD.LSHIFT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:168</span>Constant <code>RASTER.MOD.LSHIFT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.LSHIFT</code></p>
+<div class="description"><p>Left shift.</p></div>
+</div>
+<div id="name-RASTER.MOD.RSHIFT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:169</span>Constant <code>RASTER.MOD.RSHIFT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.RSHIFT</code></p>
+<div class="description"><p>Right shift.</p></div>
+</div>
+<div id="name-RASTER.MOD.LCTRL" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:170</span>Constant <code>RASTER.MOD.LCTRL</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.LCTRL</code></p>
+<div class="description"><p>Left control.</p></div>
+</div>
+<div id="name-RASTER.MOD.RCTRL" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:171</span>Constant <code>RASTER.MOD.RCTRL</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.RCTRL</code></p>
+<div class="description"><p>Right control.</p></div>
+</div>
+<div id="name-RASTER.MOD.LALT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:172</span>Constant <code>RASTER.MOD.LALT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.LALT</code></p>
+<div class="description"><p>Left alt.</p></div>
+</div>
+<div id="name-RASTER.MOD.RALT" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:173</span>Constant <code>RASTER.MOD.RALT</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.RALT</code></p>
+<div class="description"><p>Right alt.</p></div>
+</div>
+<div id="name-RASTER.MOD.LMETA" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:174</span>Constant <code>RASTER.MOD.LMETA</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.LMETA</code></p>
+<div class="description"><p>Left meta.</p></div>
+</div>
+<div id="name-RASTER.MOD.RMETA" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:175</span>Constant <code>RASTER.MOD.RMETA</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.RMETA</code></p>
+<div class="description"><p>Right meta.</p></div>
+</div>
+<div id="name-RASTER.MOD.NUM" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:176</span>Constant <code>RASTER.MOD.NUM</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.NUM</code></p>
+<div class="description"><p>Num lock.</p></div>
+</div>
+<div id="name-RASTER.MOD.CAPS" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:177</span>Constant <code>RASTER.MOD.CAPS</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.CAPS</code></p>
+<div class="description"><p>Caps lock.</p></div>
+</div>
+<div id="name-RASTER.MOD.MODE" class="declaration constant">
+<h3>
+<span class="location"><code>raster.inc</code>:178</span>Constant <code>RASTER.MOD.MODE</code>
+</h3>
+<p class="definition"><code>VAL INT RASTER.MOD.MODE</code></p>
+<div class="description"><p>Mode lock.</p></div>
+</div>
+</div>
+</div>
+</div></div></body>
+</html>

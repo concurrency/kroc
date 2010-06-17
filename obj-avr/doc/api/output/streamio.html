@@ -1,0 +1,977 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-streamio" class="module">
+<h1>Module <code>streamio</code>
+</h1>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="streamio.html#name-ks.keystream.sink">Process <code>ks.keystream.sink</code></a> - Read word length quantities from the given key stream until ft.terminated is received, at which point this procedure terminates</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.keystream.to.scrstream">Process <code>ks.keystream.to.scrstream</code></a> - Convert keystream protocol into screen stream protocol</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.read.char">Process <code>ks.read.char</code></a> - Obtain the value of the next word length quantity from the given keystream channel</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.read.int">Process <code>ks.read.int</code></a> - Read a decimal or hexadecimal integer from the given keystream</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.read.int64">Process <code>ks.read.int64</code></a> - Read a 64-bit decimal or hexadecimal integer from the given keystream</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.read.line">Process <code>ks.read.line</code></a> - Read a line of text from the given keystream channel</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.read.real32">Process <code>ks.read.real32</code></a> - Read a single precision real number from the given keystream<br><ul><li>
+<a class="proc" href="streamio.html#name-get.real.string">Process <code>get.real.string</code></a> - Read a string representing a real number from the given keystream</li></ul>
+</li>
+<li>
+<a class="proc" href="streamio.html#name-ks.read.real64">Process <code>ks.read.real64</code></a> - Read a double precision real number from the given keystream<br><ul><li>
+<a class="proc" href="streamio.html#name-get.real.string">Process <code>get.real.string</code></a> - Read a string representing a real number from the given keystream</li></ul>
+</li>
+<li>
+<a class="proc" href="streamio.html#name-so.keystream.from.file">Process <code>so.keystream.from.file</code></a> - Read lines from a text file and output them on the given key stream channel</li>
+<li>
+<a class="proc" href="streamio.html#name-so.keystream.from.kbd">Process <code>so.keystream.from.kbd</code></a> - Read keys from the keyboard at full speed if they are available, otherwise waiting a given interval between polls of the keyboard, and output them as integers on the given key stream</li>
+<li>
+<a class="proc" href="streamio.html#name-so.keystream.from.stdin">Process <code>so.keystream.from.stdin</code></a> - Read lines from standard input and output them on the given key stream channel</li>
+<li>
+<a class="proc" href="streamio.html#name-so.scrstream.to.ANSI">Process <code>so.scrstream.to.ANSI</code></a> - Convert output in screen stream protocol to output using ANSI screen conventions</li>
+<li>
+<a class="proc" href="streamio.html#name-so.scrstream.to.TVI920">Process <code>so.scrstream.to.TVI920</code></a> - Convert output in screen stream protocol to output using TVI920 screen conventions</li>
+<li>
+<a class="proc" href="streamio.html#name-so.scrstream.to.file">Process <code>so.scrstream.to.file</code></a> - Write the data sent on the given screen stream to a file</li>
+<li>
+<a class="proc" href="streamio.html#name-so.scrstream.to.stdout">Process <code>so.scrstream.to.stdout</code></a> - Write the data sent on the given screen stream to standard out</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.scrstream.copy">Process <code>ss.scrstream.copy</code></a> - Copy the output of one screen stream to the input of another</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.scrstream.fan.out">Process <code>ss.scrstream.fan.out</code></a> - Copy everything received on the given screen stream input channel to both of the given screen stream output channels</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.scrstream.from.array">Process <code>ss.scrstream.from.array</code></a> - Output the data in the given array on the given screen stream channel</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.scrstream.multiplexor">Process <code>ss.scrstream.multiplexor</code></a> - Multiplex up to 256 screen stream channels onto a single such channel</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.scrstream.sink">Process <code>ss.scrstream.sink</code></a> - Ignore all but st.endstream of screen stream protocol, and to terminate when it does receive st.endstream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.scrstream.to.array">Process <code>ss.scrstream.to.array</code></a> - Put the data received on given screen stream channel into given array</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.char">Process <code>ss.write.char</code></a> - Send a character to the given screen stream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.endstream">Process <code>ss.write.endstream</code></a> - Write a st.endstream tag on the given screen stream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.hex.int">Process <code>ss.write.hex.int</code></a> - Write an integer as hexadecimal ASCII characters preceded by the '#' character to the given screen stream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.hex.int64">Process <code>ss.write.hex.int64</code></a> - Write a 64-bit integer as hexadecimal ASCII characters preceded by the '#' character to the given screen stream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.int">Process <code>ss.write.int</code></a> - Write to the given screen stream an integer as decimal ASCII digits, padded out with leading spaces to the specified field width</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.int64">Process <code>ss.write.int64</code></a> - Write to the given screen stream a 64-bit integer as decimal ASCII digits, padded out with leading spaces to the specified field width</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.nl">Process <code>ss.write.nl</code></a> - Send "*c*n" on the given screen stream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.real32">Process <code>ss.write.real32</code></a> - Format into ASCII characters and then write to the given screen stream a single precision real number</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.real64">Process <code>ss.write.real64</code></a> - Format into ASCII characters and then write to the given screen stream a double precision real number</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.string">Process <code>ss.write.string</code></a> - Send the given string on the given screen stream</li>
+<li>
+<a class="proc" href="streamio.html#name-ss.write.text.line">Process <code>ss.write.text.line</code></a> - Send a text line on the given screen stream</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-ks.read.int64" class="declaration proc">
+<h3>
+<span class="location"><code>srint64.occ</code>:53</span>Process <code>ks.read.int64</code>
+</h3>
+<p class="definition"><code>PROC ks.read.int64 (CHAN OF KS source, INT64 number, INT char)</code></p>
+<div class="description">
+<p>Read a 64-bit decimal or hexadecimal integer from the given keystream.</p>
+<p> A distinction must be made here between a character held in a byte and a character held in a word length quantity. Here the former is referred to as a character and the latter as a 'character' ( note the quotes ). Upper and lower case letters are permissible in a hexadecimal integer. All input up to a plus sign, a minus sign, a hash symbol, decimal digit, or a negative valued word is skipped. If it is the hash that is encountered first then it is a hexadecimal integer ( in two's complement form ) that is expected. If it is a negative valued word that is encountered then an input error has occurred and that value is returned in char. The integer is terminated when anything other than a valid digit ( hex and/or decimal, as the case may be ) is read, and it is this terminating quantity that is returned in char if the integer read is not invalid.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>source</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">if char is not ft.number.error, the value of the integer read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">on entry: the first 'character' from the input to be read; on exit: ft.number.error if the integer read overflowed the range of INT64; otherwise the 'character' that terminated the integer</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ks.keystream.sink" class="declaration proc">
+<h3>
+<span class="location"><code>keysink.occ</code>:30</span>Process <code>ks.keystream.sink</code>
+</h3>
+<p class="definition"><code>PROC ks.keystream.sink (CHAN OF KS keys)</code></p>
+<div class="description"><p>Read word length quantities from the given key stream until ft.terminated is received, at which point this procedure terminates.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>keys</code></td>
+<td class="param-desc">for input</td>
+</tr></table></div>
+</div>
+<div id="name-ks.keystream.to.scrstream" class="declaration proc">
+<h3>
+<span class="location"><code>keyscr.occ</code>:38</span>Process <code>ks.keystream.to.scrstream</code>
+</h3>
+<p class="definition"><code>PROC ks.keystream.to.scrstream (CHAN OF KS keyboard, CHAN OF SS scrn)</code></p>
+<div class="description">
+<p>Convert keystream protocol into screen stream protocol.</p>
+<p> This procedure is terminated by the receipt of ft.terminated from the keyboard stream. For keystream values above ft.tag, only ft.tag + 1 to ft.tag + 8 are dealt with, values above ft.tag + 8, and ft.tag itself are translated into st.beep. Keystream values which are negative, other than ft.terminated, are ignored. Keystream values in the range [0, ft.tag) are passed straight through, other than '*c' which is translated into '*c' followed by '*n'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>keyboard</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.scrstream.copy" class="declaration proc">
+<h3>
+<span class="location"><code>scrcopy.occ</code>:33</span>Process <code>ss.scrstream.copy</code>
+</h3>
+<p class="definition"><code>PROC ss.scrstream.copy (CHAN OF SS scrn.in, scrn.out)</code></p>
+<div class="description">
+<p>Copy the output of one screen stream to the input of another.</p>
+<p> Receipt of st.endstream on scrn.in will terminate this procedure, without the stream terminator being passed on.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn.in</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn.out</code></td>
+<td class="param-desc">for output</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ks.read.int" class="declaration proc">
+<h3>
+<span class="location"><code>srint.occ</code>:53</span>Process <code>ks.read.int</code>
+</h3>
+<p class="definition"><code>PROC ks.read.int (CHAN OF KS source, INT number, char)</code></p>
+<div class="description">
+<p>Read a decimal or hexadecimal integer from the given keystream.</p>
+<p> A distinction must be made here between a character held in a byte and a character held in a word length quantity. Here the former is referred to as a character and the latter as a 'character' ( note the quotes ). Upper and lower case letters are permissible in a hexadecimal integer. All input up to a plus sign, a minus sign, a hash symbol, decimal digit, or a negative valued word is skipped. If it is the hash that is encountered first then it is a hexadecimal integer ( in two's complement form ) that is expected. If it is a negative valued word that is encountered then an input error has occurred and that value is returned in char. The integer is terminated when anything other than a valid digit ( hex and/or decimal, as the case may be ) is read, and it is this terminating quantity that is returned in char if the integer read is not invalid.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>source</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">if char is not ft.number.error or negative, the value of the integer read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">on entry: the first 'character' from the input to be read; on exit: ft.number.error if the integer read overflowed the range of INT; a negative value ( other than ft.number.error ) indicating an input error; otherwise the 'character' that terminated the integer</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.int64" class="declaration proc">
+<h3>
+<span class="location"><code>swint64.occ</code>:46</span>Process <code>ss.write.int64</code>
+</h3>
+<p class="definition"><code>PROC ss.write.int64 (CHAN OF SS scrn, VAL INT64 number, VAL INT width )</code></p>
+<div class="description">
+<p>Write to the given screen stream a 64-bit integer as decimal ASCII digits, padded out with leading spaces to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the 64-bit integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.hex.int64" class="declaration proc">
+<h3>
+<span class="location"><code>swint64.occ</code>:87</span>Process <code>ss.write.hex.int64</code>
+</h3>
+<p class="definition"><code>PROC ss.write.hex.int64 (CHAN OF SS scrn, VAL INT64 number, VAL INT width )</code></p>
+<div class="description"><p>Write a 64-bit integer as hexadecimal ASCII characters preceded by the '#' character to the given screen stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the 64-bit integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account. A negative field width is an error.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.scrstream.to.stdout" class="declaration proc">
+<h3>
+<span class="location"><code>sstdout.occ</code>:43</span>Process <code>so.scrstream.to.stdout</code>
+</h3>
+<p class="definition"><code>PROC so.scrstream.to.stdout (CHAN OF SP fs, ts, CHAN OF SS scrn, BYTE result)</code></p>
+<div class="description">
+<p>Write the data sent on the given screen stream to standard out.</p>
+<p> This routine terminates on receipt of st.endstream on scrn. What is written to the file is the bytes that follow tags ( for those tags that have them ), with the exception that the st.out.int tag has its following INT32 truncated to a BYTE, and that the st.beep tag is transformed into '*#07'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the data sent on scrn was successfully written to standard out; otherwise is &gt;= spr.operation.failed in which case see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.scrstream.to.array" class="declaration proc">
+<h3>
+<span class="location"><code>scrtfarr.occ</code>:71</span>Process <code>ss.scrstream.to.array</code>
+</h3>
+<p class="definition"><code>PROC ss.scrstream.to.array (CHAN OF SS scrn, []BYTE buffer)</code></p>
+<div class="description">
+<p>Put the data received on given screen stream channel into given array.</p>
+<p> This procedure terminates when st.endstream is read on channel scrn. This terminating st.endstream is stored in buffer as tt.endstream.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">the array to which the data received on scrn is placed; the data is stored in the form of TDS2 tt. tags followed as necessary by further data bytes; if buffer overflows then this procedure acts as an invalid process</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.scrstream.from.array" class="declaration proc">
+<h3>
+<span class="location"><code>scrtfarr.occ</code>:209</span>Process <code>ss.scrstream.from.array</code>
+</h3>
+<p class="definition"><code>PROC ss.scrstream.from.array (CHAN OF SS scrn, VAL []BYTE buffer)</code></p>
+<div class="description">
+<p>Output the data in the given array on the given screen stream channel.</p>
+<p> This procedure terminates when tt.endstream is found in buffer. This tt.endstream is not sent out ( as st.endstream or anything else ).</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">the array from which the data is to be sent on scrn; the data should be in the form of TDS2 tt. tags, followed as necessary by further data bytes.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.keystream.from.stdin" class="declaration proc">
+<h3>
+<span class="location"><code>kstdin.occ</code>:43</span>Process <code>so.keystream.from.stdin</code>
+</h3>
+<p class="definition"><code>PROC so.keystream.from.stdin (CHAN OF SP fs, ts, CHAN OF KS keys.out, BYTE result)</code></p>
+<div class="description">
+<p>Read lines from standard input and output them on the given key stream channel.</p>
+<p> The value ft.terminated is sent on keys.out on termination. Termination of this procedure is either when an error occurs or when all characters from standard input have been read, ie when end of file from standard input is read. A '*c' is output to terminate a text line.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>keys.out</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the process was successful; otherwise &gt;= spr.operation.failed meaning that reading standard input failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ks.read.real64" class="declaration proc">
+<h3>
+<span class="location"><code>srreal64.occ</code>:50</span>Process <code>ks.read.real64</code>
+</h3>
+<p class="definition"><code>PROC ks.read.real64 (CHAN OF KS source, REAL64 number, INT char)</code></p>
+<div class="description">
+<p>Read a double precision real number from the given keystream.</p>
+<p> A distinction must be made here between a character held in a byte and a character held in a word length quantity. Here the former is referred to as a character and the latter as a 'character' ( note the quotes ). All input up to a plus sign, a minus sign or a decimal digit is skipped. The real is terminated when anything other than a valid real 'character' is encountered, and it is this 'character' that is returned in char if char is not set to ft.number.error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>source</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">if char on exit is not ft.number.error or less than zero then the real number read in double precision IEEE format; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">on entry: the first 'character' from the input to be read; on exit: ft.number.error if the 'characters' read did not form an occam syntax real number ( with optional plus or minus sign as first 'character', and permissible INT 'e' rather than INT 'E' ) or there were more than 30 'characters' read or the 'characters' formed an infinity; less than zero ( other than ft.number.error ) if there was an input error ( eg end of file read ); otherwise it is the 'character' that terminated the sequence of 'characters' read</td>
+</tr>
+</table></div>
+<div class="children"><div id="name-get.real.string" class="declaration proc">
+<h3>
+<span class="location"><code>srreal64.occ</code>:77</span>Process <code>get.real.string</code>
+</h3>
+<p class="definition"><code>PROC get.real.string (CHAN OF KS in, INT len, []BYTE str, INT char)</code></p>
+<div class="description">
+<p>Read a string representing a real number from the given keystream.</p>
+<p> All input up to a '+', '-', or a decimal digit is skipped. The string representing the real is terminated by a word length quantity that cannot form part of a real number. A lower case exponential symbol ( 'e' ) is alllowed.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of characters in str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the characters read, after initial skipping, are in the first len bytes of this variable, further bytes being undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">on entry: the first word length quantity of the input to be read; on exit: ft.number.error if the array str would have overflown; less than zero ( other than ft.number.error ) if there was an input error; otherwise the word length quantity that terminated the real number string</td>
+</tr>
+</table></div>
+</div></div>
+</div>
+<div id="name-so.keystream.from.kbd" class="declaration proc">
+<h3>
+<span class="location"><code>kkbd.occ</code>:42</span>Process <code>so.keystream.from.kbd</code>
+</h3>
+<p class="definition"><code>PROC so.keystream.from.kbd (CHAN OF SP fs, ts, CHAN OF KS keys.out, CHAN OF BOOL stopper, VAL INT ticks.per.poll)</code></p>
+<div class="description">
+<p>Read keys from the keyboard at full speed if they are available, otherwise waiting a given interval between polls of the keyboard, and output them as integers on the given key stream.</p>
+<p> On termination, ft.terminated is sent on keys.out.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>keys.out</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">for input; FALSE or TRUE received on this channel terminates this procedure</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ticks.per.poll</code></td>
+<td class="param-desc">this procedure polls the keyboard at intervals of ticks.per.poll low priority transputer clock cycles if keys are not available; a value of less than or equal to zero is an error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.char" class="declaration proc">
+<h3>
+<span class="location"><code>swsimple.occ</code>:32</span>Process <code>ss.write.char</code>
+</h3>
+<p class="definition"><code>PROC ss.write.char (CHAN OF SS scrn, VAL BYTE char)</code></p>
+<div class="description"><p>Send a character to the given screen stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte to send on the channel</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.string" class="declaration proc">
+<h3>
+<span class="location"><code>swsimple.occ</code>:43</span>Process <code>ss.write.string</code>
+</h3>
+<p class="definition"><code>PROC ss.write.string (CHAN OF SS scrn, VAL []BYTE str)</code></p>
+<div class="description"><p>Send the given string on the given screen stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">a string all the characters of which are sent on scrn.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.nl" class="declaration proc">
+<h3>
+<span class="location"><code>swsimple.occ</code>:51</span>Process <code>ss.write.nl</code>
+</h3>
+<p class="definition"><code>PROC ss.write.nl (CHAN OF SS scrn)</code></p>
+<div class="description"><p>Send "*c*n" on the given screen stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr></table></div>
+</div>
+<div id="name-ss.write.endstream" class="declaration proc">
+<h3>
+<span class="location"><code>swsimple.occ</code>:62</span>Process <code>ss.write.endstream</code>
+</h3>
+<p class="definition"><code>PROC ss.write.endstream (CHAN OF SS scrn)</code></p>
+<div class="description"><p>Write a st.endstream tag on the given screen stream</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr></table></div>
+</div>
+<div id="name-ss.write.text.line" class="declaration proc">
+<h3>
+<span class="location"><code>swsimple.occ</code>:76</span>Process <code>ss.write.text.line</code>
+</h3>
+<p class="definition"><code>PROC ss.write.text.line (CHAN OF SS scrn, VAL []BYTE str)</code></p>
+<div class="description"><p>Send a text line on the given screen stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string of characters to send. This string may be terminated by '*c' or not, but in either case, the last two characters written are "*c*n".</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.real32" class="declaration proc">
+<h3>
+<span class="location"><code>swreal32.occ</code>:37</span>Process <code>ss.write.real32</code>
+</h3>
+<p class="definition"><code>PROC ss.write.real32 (CHAN OF SS scrn, VAL REAL32 number, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Format into ASCII characters and then write to the given screen stream a single precision real number.</p>
+<p> If Ip, Dp and number are such that the resulting formatted form is longer than 24 characters this procedure will act as an invalid process.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the IEEE single precision real to format and write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values; see REAL32TOSTRING for their effect</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.scrstream.sink" class="declaration proc">
+<h3>
+<span class="location"><code>scrsink.occ</code>:30</span>Process <code>ss.scrstream.sink</code>
+</h3>
+<p class="definition"><code>PROC ss.scrstream.sink (CHAN OF SS scrn)</code></p>
+<div class="description"><p>Ignore all but st.endstream of screen stream protocol, and to terminate when it does receive st.endstream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr></table></div>
+</div>
+<div id="name-so.scrstream.to.ANSI" class="declaration proc">
+<h3>
+<span class="location"><code>toansi.occ</code>:39</span>Process <code>so.scrstream.to.ANSI</code>
+</h3>
+<p class="definition"><code>PROC so.scrstream.to.ANSI (CHAN OF SP fs, ts, CHAN OF SS scrn)</code></p>
+<div class="description">
+<p>Convert output in screen stream protocol to output using ANSI screen conventions.</p>
+<p> Receipt of st.endstream will terminate this procedure. ANSI screen convertions are set out in ANSI X3.64-1979 "Additional controls for use with american national standard code for information interchange."</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ks.read.real32" class="declaration proc">
+<h3>
+<span class="location"><code>srreal32.occ</code>:50</span>Process <code>ks.read.real32</code>
+</h3>
+<p class="definition"><code>PROC ks.read.real32 (CHAN OF KS source, REAL32 number, INT char)</code></p>
+<div class="description">
+<p>Read a single precision real number from the given keystream.</p>
+<p> A distinction must be made here between a character held in a byte and a character held in a word length quantity. Here the former is referred to as a character and the latter as a 'character' ( note the quotes ). All input up to a plus sign, a minus sign or a decimal digit is skipped. The real is terminated when anything other than a valid real 'character' is encountered, and it is this 'character' that is returned in char if char is not set to ft.number.error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>source</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">if char on exit is not ft.number.error or less than zero then the real number read in single precision IEEE format; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">on entry: the first 'character' from the input to be read; on exit: ft.number.error if the 'characters' read did not form an occam syntax real number ( with optional plus or minus sign as first 'character', and permissible INT 'e' rather than INT 'E' ) or there were more than 24 'characters' read or the 'characters' formed an infinity; less than zero ( other than ft.number.error ) if there was an input error ( eg end of file read ); otherwise it is the 'character' that terminated the sequence of 'characters' read</td>
+</tr>
+</table></div>
+<div class="children"><div id="name-get.real.string" class="declaration proc">
+<h3>
+<span class="location"><code>srreal32.occ</code>:77</span>Process <code>get.real.string</code>
+</h3>
+<p class="definition"><code>PROC get.real.string (CHAN OF KS in, INT len, []BYTE str, INT char)</code></p>
+<div class="description">
+<p>Read a string representing a real number from the given keystream.</p>
+<p> All input up to a plus sign, a minus sign, or a decimal digit is skipped. The string representing the real is terminated by a word length quantity that cannot form part of a real number. A lower case exponential symbol ( 'e' ) is alllowed.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of characters in str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the characters read, after initial skipping, are in the first len bytes of this variable, further bytes being undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">on entry: the first word length quantity of the input to be read; on exit: ft.number.error if the array str would have overflown; less than zero ( other than ft.number.error ) if there was an input error; otherwise the word length quantity that terminated the real number string</td>
+</tr>
+</table></div>
+</div></div>
+</div>
+<div id="name-so.scrstream.to.file" class="declaration proc">
+<h3>
+<span class="location"><code>sfile.occ</code>:49</span>Process <code>so.scrstream.to.file</code>
+</h3>
+<p class="definition"><code>PROC so.scrstream.to.file (CHAN OF SP fs, ts, CHAN OF SS scrn, VAL []BYTE filename, BYTE result)</code></p>
+<div class="description">
+<p>Write the data sent on the given screen stream to a file.</p>
+<p> This routine terminates on receipt of st.endstream on scrn. What is written to the file is the bytes that follow tags ( for those tags that have them ), with the exception that the st.out.int tag has its following INT32 truncated to a BYTE.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">the name of the file to be write to. The name of the file must fit exactly into filename, i.e. there are (SIZE filename) characters in the name of the file. A directory specification may form part of filename. If a file of the same name exists it is overwritten.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the data sent on scrn was successfully written to the file filename; otherwise it takes on a value indicating what went wrong: spr.bad.packet.size filename too large (SIZE filename) &gt; sp.max.openname.size spr.bad.name null file name &gt;=spr.operation.failed see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ks.read.char" class="declaration proc">
+<h3>
+<span class="location"><code>srchar.occ</code>:36</span>Process <code>ks.read.char</code>
+</h3>
+<p class="definition"><code>PROC ks.read.char (CHAN OF KS source, INT char)</code></p>
+<div class="description"><p>Obtain the value of the next word length quantity from the given keystream channel.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>source</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the value of the word obtained</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ks.read.line" class="declaration proc">
+<h3>
+<span class="location"><code>srchar.occ</code>:56</span>Process <code>ks.read.line</code>
+</h3>
+<p class="definition"><code>PROC ks.read.line (CHAN OF KS source, INT len, []BYTE line, INT char)</code></p>
+<div class="description">
+<p>Read a line of text from the given keystream channel.</p>
+<p> Although characters ( ie BYTE's ) are inserted into line, it is word length quantities that are read from source. The line of text is deemed to be terminated by INT '*c' or any negative value. The word that terminated the line is not included in line. Any word read with a value greater than 255 ( the maximum that a byte can hold ) is ignored. Any '*n' read is ignored. If the array line is filled before a valid termination character is encountered, then all further words are ignored.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>source</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of characters that have been put into line</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>line</code></td>
+<td class="param-desc">the line that was read is [ line FROM 0 FOR len ]</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the word that terminated the line</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.scrstream.multiplexor" class="declaration proc">
+<h3>
+<span class="location"><code>scrmux.occ</code>:45</span>Process <code>ss.scrstream.multiplexor</code>
+</h3>
+<p class="definition"><code>PROC ss.scrstream.multiplexor ([]CHAN OF SS screen.in, CHAN OF SS screen.out, CHAN OF INT stopper)</code></p>
+<div class="description">
+<p>Multiplex up to 256 screen stream channels onto a single such channel.</p>
+<p> It is an error if there are more than 256 channels in screen.in. It is permissible for screen.in to be a null array. Each change of input channel directs output to the next line of the screen, and each such line is annotated at the left with the array index of the channel used followed by '&gt;'. The tag st.endstream is ignored. To attempt some degree of fairness, let the implementation give priority in a heirarchy from screen.in with index i for SIZE screen.in, using modulo SIZE screen.in on the indexes; starting from 0 and incrementing it by one after each input accepted.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]CHAN OF SS</code></td>
+<td class="param-name"><code>screen.in</code></td>
+<td class="param-desc">an array of input channels</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>screen.out</code></td>
+<td class="param-desc">the single output channel</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF INT</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine; any integer received on this channel will terminate this routine; this channel has highest priority</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.scrstream.to.TVI920" class="declaration proc">
+<h3>
+<span class="location"><code>totvi.occ</code>:36</span>Process <code>so.scrstream.to.TVI920</code>
+</h3>
+<p class="definition"><code>PROC so.scrstream.to.TVI920 (CHAN OF SP fs, ts, CHAN OF SS scrn)</code></p>
+<div class="description">
+<p>Convert output in screen stream protocol to output using TVI920 screen conventions.</p>
+<p> Receipt of st.endstream will terminate this procedure.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.int" class="declaration proc">
+<h3>
+<span class="location"><code>swint.occ</code>:47</span>Process <code>ss.write.int</code>
+</h3>
+<p class="definition"><code>PROC ss.write.int (CHAN OF SS scrn, VAL INT number, width )</code></p>
+<div class="description">
+<p>Write to the given screen stream an integer as decimal ASCII digits, padded out with leading spaces to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.hex.int" class="declaration proc">
+<h3>
+<span class="location"><code>swint.occ</code>:88</span>Process <code>ss.write.hex.int</code>
+</h3>
+<p class="definition"><code>PROC ss.write.hex.int (CHAN OF SS scrn, VAL INT number, width )</code></p>
+<div class="description"><p>Write an integer as hexadecimal ASCII characters preceded by the '#' character to the given screen stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account. A negative field width is an error.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.write.real64" class="declaration proc">
+<h3>
+<span class="location"><code>swreal64.occ</code>:37</span>Process <code>ss.write.real64</code>
+</h3>
+<p class="definition"><code>PROC ss.write.real64 (CHAN OF SS scrn, VAL REAL64 number, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Format into ASCII characters and then write to the given screen stream a double precision real number.</p>
+<p> If Ip, Dp and number are such that the resulting formatted form is longer than 30 characters this procedure will act as an invalid process.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the IEEE double precision real to format and write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values; see REAL64TOSTRING for their effect</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ss.scrstream.fan.out" class="declaration proc">
+<h3>
+<span class="location"><code>scrfan.occ</code>:35</span>Process <code>ss.scrstream.fan.out</code>
+</h3>
+<p class="definition"><code>PROC ss.scrstream.fan.out (CHAN OF SS scrn, screen.out1, screen.out2)</code></p>
+<div class="description">
+<p>Copy everything received on the given screen stream input channel to both of the given screen stream output channels.</p>
+<p> Receipt of st.endstream on scrn will terminate this procedure, without sending the stream terminator on.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>scrn</code></td>
+<td class="param-desc">for input</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>screen.out1</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SS</code></td>
+<td class="param-name"><code>screen.out2</code></td>
+<td class="param-desc">for output</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.keystream.from.file" class="declaration proc">
+<h3>
+<span class="location"><code>kfile.occ</code>:49</span>Process <code>so.keystream.from.file</code>
+</h3>
+<p class="definition"><code>PROC so.keystream.from.file (CHAN OF SP fs, ts, CHAN OF KS keys.out, VAL []BYTE filename, BYTE result)</code></p>
+<div class="description">
+<p>Read lines from a text file and output them on the given key stream channel.</p>
+<p> The value ft.terminated is sent on keys.out on termination. Termination of this procedure is either when an error occurs or when all characters in the file have been read. A '*c' is output to terminate a text line.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF KS</code></td>
+<td class="param-name"><code>keys.out</code></td>
+<td class="param-desc">for output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">the name of the file to be opened. The name of the file must fit exactly into filename, i.e. there are (SIZE filename) characters in the name of the file. A directory specification may form part of filename.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the process was successful; otherwise it takes on a value indicating what went wrong: spr.bad.packet.size filename too large: (SIZE filename) &gt; sp.max.openname.size spr.bad.name null file name &gt;=spr.operation.failed the open failed or reading the file failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

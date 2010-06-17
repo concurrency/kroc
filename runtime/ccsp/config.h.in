@@ -1,0 +1,193 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* define to use per-CPU block allocator */
+#undef ALLOC_BLOCK
+
+/* define to use system malloc */
+#undef ALLOC_MALLOC
+
+/* define to use shared block allocator */
+#undef ALLOC_SBLOCK
+
+/* define to enable blocking syscall debugging */
+#undef BLOCKING_DEBUG
+
+/* define to enable blocking syscall profiling */
+#undef BLOCKING_PROFILE
+
+/* define to allow blocking calls to stop when they receive SIGSEGV */
+#undef BLOCKING_STOP
+
+/* define to support blocking syscalls */
+#undef BLOCKING_SYSCALLS
+
+/* define if blocking syscalls are unsupported */
+#undef BLOCKING_SYSCALLS_UNSUPPORTED
+
+/* default minimum sleep (microseconds) */
+#undef CCSP_MINIMUM_SLEEP_US
+
+/* define to enable brief deadlock debugging */
+#undef DEADLOCK_BRIEF
+
+/* define to enable terse deadlock debugging */
+#undef DEADLOCK_TERSE
+
+/* define to enable debug debugging */
+#undef DEBUG_DEBUG
+
+/* define to enable dynamic process debugging */
+#undef DEBUG_DYNPROC
+
+/* defines the default memory base for fixed mappings */
+#undef DMEM_MEMBASE
+
+/* define this if MAP_FIXED must be given for fixed mappings */
+#undef DMEM_MMAP_FIXED
+
+/* define this if anonymous memory-mapping is done on an invalid descriptor */
+#undef DMEM_MMAP_INVFD
+
+/* define this if fixed anonymous memory-mapping is supported */
+#undef DMEM_USE_MMAP
+
+/* define to enable dynamic memory debugging */
+#undef DM_DEBUG
+
+/* define to use libelf with dynamic memory debugging */
+#undef DM_DEBUG_LIBELF
+
+/* define to enable dynamic processes */
+#undef DYNAMIC_PROCS
+
+/* define to support CPU timers */
+#undef ENABLE_CPU_TIMERS
+
+/* define to enable kernel traces */
+#undef ENABLE_KTRACES
+
+/* define to enable multi-processor support */
+#undef ENABLE_MP
+
+/* define to let CCSP drop core files */
+#undef GENERATE_CORES
+
+/* CPU supports SSE2 instructions */
+#undef HAVE_IA32_SSE2
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <time.h> header file. */
+#undef HAVE_TIME_H
+
+/* define if this system has ualarm() */
+#undef HAVE_UALARM
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* define number of runtime threads */
+#undef MAX_RUNTIME_THREADS
+
+/* don't produce ELF symbol type directives */
+#undef NO_ASM_TYPE_DIRECTIVE
+
+/* define to optimise for size over speed */
+#undef OPTIMISE_SIZE
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* define if building for RMoX */
+#undef RMOX_BUILD
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* define if big-endian target */
+#undef TARGET_BIGENDIAN
+
+/* define if i386 or greater target */
+#undef TARGET_CPU_386
+
+/* define if using cygwin */
+#undef TARGET_OS_CYGWIN
+
+/* define if using Darwin */
+#undef TARGET_OS_DARWIN
+
+/* define if using FreeBSD */
+#undef TARGET_OS_FREEBSD
+
+/* define to enable verbose FPE messages */
+#undef USEFUL_FPEDEBUG
+
+/* define to enable a verbose segfault */
+#undef USEFUL_SEGFAULT
+
+/* define to use POSIX threads for blocking syscalls and multi-processor */
+#undef USE_PTHREADS
+
+/* define to enable use of thread-local-storage */
+#undef USE_TLS
+
+/* Version number of package */
+#undef VERSION

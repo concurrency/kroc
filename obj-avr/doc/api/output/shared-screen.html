@@ -1,0 +1,666 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Shared screen library</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-shared-screen" class="module">
+<h1>Module <code>shared_screen</code> - Shared screen library</h1>
+<div class="header"><div class="description">
+<p>Shared screen library.</p>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "shared_screen.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="datatype" href="shared-screen.html#name-COLOUR">Data type <code>COLOUR</code></a> - A colour</li>
+<li>
+<a class="group" href="shared-screen.html#name-COLOURS">Group <code>COLOURS</code></a> - Colour constants<br><ul>
+<li>
+<a class="constant" href="shared-screen.html#name-black">Constant <code>black</code></a> - Black</li>
+<li>
+<a class="constant" href="shared-screen.html#name-blue">Constant <code>blue</code></a> - Blue</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.black">Constant <code>bold.black</code></a> - Bold black (grey)</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.blue">Constant <code>bold.blue</code></a> - Bold blue</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.cyan">Constant <code>bold.cyan</code></a> - Bold cyan</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.green">Constant <code>bold.green</code></a> - Bold green</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.magenta">Constant <code>bold.magenta</code></a> - Bold magenta</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.red">Constant <code>bold.red</code></a> - Bold red</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.white">Constant <code>bold.white</code></a> - Bold white</li>
+<li>
+<a class="constant" href="shared-screen.html#name-bold.yellow">Constant <code>bold.yellow</code></a> - Bold yellow</li>
+<li>
+<a class="constant" href="shared-screen.html#name-cyan">Constant <code>cyan</code></a> - Cyan</li>
+<li>
+<a class="constant" href="shared-screen.html#name-default">Constant <code>default</code></a> - Default colour</li>
+<li>
+<a class="constant" href="shared-screen.html#name-green">Constant <code>green</code></a> - Green</li>
+<li>
+<a class="constant" href="shared-screen.html#name-magenta">Constant <code>magenta</code></a> - Magenta</li>
+<li>
+<a class="constant" href="shared-screen.html#name-red">Constant <code>red</code></a> - Red</li>
+<li>
+<a class="constant" href="shared-screen.html#name-white">Constant <code>white</code></a> - White</li>
+<li>
+<a class="constant" href="shared-screen.html#name-yellow">Constant <code>yellow</code></a> - Yellow</li>
+</ul>
+</li>
+<li>
+<a class="record" href="shared-screen.html#name-COORDINATES">Record <code>COORDINATES</code></a> - A pair of coordinates<br><ul>
+<li>
+<a class="variable" href="shared-screen.html#name-X">Variable <code>X</code></a> - X coordinate</li>
+<li>
+<a class="variable" href="shared-screen.html#name-Y">Variable <code>Y</code></a> - Y coordinate</li>
+</ul>
+</li>
+<li>
+<a class="record" href="shared-screen.html#name-COORDINATES.COLOUR">Record <code>COORDINATES.COLOUR</code></a> - A pair of coordinates and a colour<br><ul>
+<li>
+<a class="variable" href="shared-screen.html#name-X">Variable <code>X</code></a> - X coordinate</li>
+<li>
+<a class="variable" href="shared-screen.html#name-Y">Variable <code>Y</code></a> - Y coordinate</li>
+<li>
+<a class="variable" href="shared-screen.html#name-col">Variable <code>col</code></a> - Colour</li>
+</ul>
+</li>
+<li>
+<a class="group" href="shared-screen.html#name-SCREEN.COMMAND">Group <code>SCREEN.COMMAND</code></a> - Command tags for   </li>
+<li>
+<a class="protocol" href="shared-screen.html#name-SCREEN.CONTROL">Protocol <code>SCREEN.CONTROL</code></a> - Control protocol for   <br><ul>
+<li>
+<a class="tag" href="shared-screen.html#name-byte">Tag <code>byte</code></a> - Draw a byte</li>
+<li>
+<a class="tag" href="shared-screen.html#name-c.erase.bol">Tag <code>c.erase.bol</code></a> - Move then erase to beginning of line</li>
+<li>
+<a class="tag" href="shared-screen.html#name-c.erase.bos">Tag <code>c.erase.bos</code></a> - Move then erase to beginning of screen</li>
+<li>
+<a class="tag" href="shared-screen.html#name-c.erase.eol">Tag <code>c.erase.eol</code></a> - Move then erase to end of line</li>
+<li>
+<a class="tag" href="shared-screen.html#name-c.erase.eos">Tag <code>c.erase.eos</code></a> - Move then erase to end of screen</li>
+<li>
+<a class="tag" href="shared-screen.html#name-c.erase.line">Tag <code>c.erase.line</code></a> - Move then erase whole line</li>
+<li>
+<a class="tag" href="shared-screen.html#name-character">Tag <code>character</code></a> - Draw a character</li>
+<li>
+<a class="tag" href="shared-screen.html#name-colour">Tag <code>colour</code></a> - Set colour</li>
+<li>
+<a class="tag" href="shared-screen.html#name-coordinates">Tag <code>coordinates</code></a> - Set coordinates</li>
+<li>
+<a class="tag" href="shared-screen.html#name-cursor.invisible">Tag <code>cursor.invisible</code></a> - Make the cursor invisible</li>
+<li>
+<a class="tag" href="shared-screen.html#name-cursor.visible">Tag <code>cursor.visible</code></a> - Make the cursor visible</li>
+<li>
+<a class="tag" href="shared-screen.html#name-down">Tag <code>down</code></a> - Move down</li>
+<li>
+<a class="tag" href="shared-screen.html#name-draw.down">Tag <code>draw.down</code></a> - Move down drawing character</li>
+<li>
+<a class="tag" href="shared-screen.html#name-draw.left">Tag <code>draw.left</code></a> - Move left drawing character</li>
+<li>
+<a class="tag" href="shared-screen.html#name-draw.right">Tag <code>draw.right</code></a> - Move right drawing character</li>
+<li>
+<a class="tag" href="shared-screen.html#name-draw.up">Tag <code>draw.up</code></a> - Move up drawing character</li>
+<li>
+<a class="tag" href="shared-screen.html#name-erase.bol">Tag <code>erase.bol</code></a> - Erase to beginning of line</li>
+<li>
+<a class="tag" href="shared-screen.html#name-erase.bos">Tag <code>erase.bos</code></a> - Erase to beginning of screen</li>
+<li>
+<a class="tag" href="shared-screen.html#name-erase.eol">Tag <code>erase.eol</code></a> - Erase to end of line</li>
+<li>
+<a class="tag" href="shared-screen.html#name-erase.eos">Tag <code>erase.eos</code></a> - Erase to end of screen</li>
+<li>
+<a class="tag" href="shared-screen.html#name-erase.line">Tag <code>erase.line</code></a> - Erase whole line</li>
+<li>
+<a class="tag" href="shared-screen.html#name-erase.screen">Tag <code>erase.screen</code></a> - Clear the screen</li>
+<li>
+<a class="tag" href="shared-screen.html#name-flush">Tag <code>flush</code></a> - Force a screen update</li>
+<li>
+<a class="tag" href="shared-screen.html#name-integer">Tag <code>integer</code></a> - Draw an integer</li>
+<li>
+<a class="tag" href="shared-screen.html#name-interpret">Tag <code>interpret</code></a> - Interpret a list of commands</li>
+<li>
+<a class="tag" href="shared-screen.html#name-left">Tag <code>left</code></a> - Move left</li>
+<li>
+<a class="tag" href="shared-screen.html#name-poison">Tag <code>poison</code></a> - Exit</li>
+<li>
+<a class="tag" href="shared-screen.html#name-right">Tag <code>right</code></a> - Move right</li>
+<li>
+<a class="tag" href="shared-screen.html#name-string">Tag <code>string</code></a> - Draw a string</li>
+<li>
+<a class="tag" href="shared-screen.html#name-up">Tag <code>up</code></a> - Move up</li>
+</ul>
+</li>
+<li>
+<a class="record" href="shared-screen.html#name-SCREEN.NODE">Record <code>SCREEN.NODE</code></a> - A batch instruction to the shared screen<br><ul>
+<li>
+<a class="variable" href="shared-screen.html#name-a">Variable <code>a</code></a> - First argument</li>
+<li>
+<a class="variable" href="shared-screen.html#name-b">Variable <code>b</code></a> - Second argument</li>
+<li>
+<a class="variable" href="shared-screen.html#name-tag">Variable <code>tag</code></a> - The command to execute</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="shared-screen.html#name-fg.col">Process <code>fg.col</code></a> - Set foreground colour</li>
+<li>
+<a class="proc" href="shared-screen.html#name-screen.driver">Process <code>screen.driver</code></a> - Shared screen process</li>
+<li>
+<a class="proc" href="shared-screen.html#name-screen.interpret">Process <code>screen.interpret</code></a> - Interpret an array of screen update commands</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-COLOUR" class="declaration datatype">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:25</span>Data type <code>COLOUR</code>
+</h3>
+<p class="definition"><code>DATA TYPE COLOUR</code></p>
+<div class="description"><p>A colour.</p></div>
+</div>
+<div id="name-COLOURS" class="declaration group">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:26</span>Group <code>COLOURS</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Colour constants</p></div>
+<div class="children">
+<div id="name-default" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:27</span>Constant <code>default</code>
+</h3>
+<p class="definition"><code>VAL COLOUR default</code></p>
+<div class="description"><p>Default colour</p></div>
+</div>
+<div id="name-black" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:28</span>Constant <code>black</code>
+</h3>
+<p class="definition"><code>VAL COLOUR black</code></p>
+<div class="description"><p>Black</p></div>
+</div>
+<div id="name-red" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:29</span>Constant <code>red</code>
+</h3>
+<p class="definition"><code>VAL COLOUR red</code></p>
+<div class="description"><p>Red</p></div>
+</div>
+<div id="name-green" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:30</span>Constant <code>green</code>
+</h3>
+<p class="definition"><code>VAL COLOUR green</code></p>
+<div class="description"><p>Green</p></div>
+</div>
+<div id="name-yellow" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:31</span>Constant <code>yellow</code>
+</h3>
+<p class="definition"><code>VAL COLOUR yellow</code></p>
+<div class="description"><p>Yellow</p></div>
+</div>
+<div id="name-blue" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:32</span>Constant <code>blue</code>
+</h3>
+<p class="definition"><code>VAL COLOUR blue</code></p>
+<div class="description"><p>Blue</p></div>
+</div>
+<div id="name-magenta" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:33</span>Constant <code>magenta</code>
+</h3>
+<p class="definition"><code>VAL COLOUR magenta</code></p>
+<div class="description"><p>Magenta</p></div>
+</div>
+<div id="name-cyan" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:34</span>Constant <code>cyan</code>
+</h3>
+<p class="definition"><code>VAL COLOUR cyan</code></p>
+<div class="description"><p>Cyan</p></div>
+</div>
+<div id="name-white" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:35</span>Constant <code>white</code>
+</h3>
+<p class="definition"><code>VAL COLOUR white</code></p>
+<div class="description"><p>White</p></div>
+</div>
+<div id="name-bold.black" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:36</span>Constant <code>bold.black</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.black</code></p>
+<div class="description"><p>Bold black (grey)</p></div>
+</div>
+<div id="name-bold.red" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:37</span>Constant <code>bold.red</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.red</code></p>
+<div class="description"><p>Bold red</p></div>
+</div>
+<div id="name-bold.green" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:38</span>Constant <code>bold.green</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.green</code></p>
+<div class="description"><p>Bold green</p></div>
+</div>
+<div id="name-bold.yellow" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:39</span>Constant <code>bold.yellow</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.yellow</code></p>
+<div class="description"><p>Bold yellow</p></div>
+</div>
+<div id="name-bold.blue" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:40</span>Constant <code>bold.blue</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.blue</code></p>
+<div class="description"><p>Bold blue</p></div>
+</div>
+<div id="name-bold.magenta" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:41</span>Constant <code>bold.magenta</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.magenta</code></p>
+<div class="description"><p>Bold magenta</p></div>
+</div>
+<div id="name-bold.cyan" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:42</span>Constant <code>bold.cyan</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.cyan</code></p>
+<div class="description"><p>Bold cyan</p></div>
+</div>
+<div id="name-bold.white" class="declaration constant">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:43</span>Constant <code>bold.white</code>
+</h3>
+<p class="definition"><code>VAL COLOUR bold.white</code></p>
+<div class="description"><p>Bold white</p></div>
+</div>
+</div>
+</div>
+<div id="name-COORDINATES" class="declaration record">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:48</span>Record <code>COORDINATES</code>
+</h3>
+<p class="definition"><code>DATA TYPE COORDINATES</code></p>
+<div class="description"><p>A pair of coordinates.</p></div>
+<div class="children">
+<div id="name-X" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:50</span>Variable <code>X</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>X coordinate</p></div>
+</div>
+<div id="name-Y" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:51</span>Variable <code>Y</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>Y coordinate</p></div>
+</div>
+</div>
+</div>
+<div id="name-COORDINATES.COLOUR" class="declaration record">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:56</span>Record <code>COORDINATES.COLOUR</code>
+</h3>
+<p class="definition"><code>DATA TYPE COORDINATES.COLOUR</code></p>
+<div class="description"><p>A pair of coordinates and a colour.</p></div>
+<div class="children">
+<div id="name-X" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:58</span>Variable <code>X</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>X coordinate</p></div>
+</div>
+<div id="name-Y" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:59</span>Variable <code>Y</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>Y coordinate</p></div>
+</div>
+<div id="name-col" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:60</span>Variable <code>col</code>
+</h3>
+<p class="definition"><code>COLOUR</code></p>
+<div class="description"><p>Colour</p></div>
+</div>
+</div>
+</div>
+<div id="name-SCREEN.COMMAND" class="declaration group">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:64</span>Group <code>SCREEN.COMMAND</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Command tags for <a href="shared-screen.html#name-SCREEN.NODE"><code>SCREEN.NODE</code></a>.</p></div>
+</div>
+<div id="name-SCREEN.NODE" class="declaration record">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:91</span>Record <code>SCREEN.NODE</code>
+</h3>
+<p class="definition"><code>DATA TYPE SCREEN.NODE</code></p>
+<div class="description"><p>A batch instruction to the shared screen. This is really a union type; the argument tags have different meanings depending on the command.</p></div>
+<div class="children">
+<div id="name-tag" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:95</span>Variable <code>tag</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>The command to execute. See <a href="shared-screen.html#name-SCREEN.COMMAND"><code>SCREEN.COMMAND</code></a>.</p></div>
+</div>
+<div id="name-a" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:97</span>Variable <code>a</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>First argument</p></div>
+</div>
+<div id="name-b" class="declaration variable">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:99</span>Variable <code>b</code>
+</h3>
+<p class="definition"><code>BYTE</code></p>
+<div class="description"><p>Second argument</p></div>
+</div>
+</div>
+</div>
+<div id="name-SCREEN.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:106</span>Protocol <code>SCREEN.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL SCREEN.CONTROL</code></p>
+<div class="description"><p>Control protocol for <a href="shared-screen.html#name-screen.driver"><code>screen.driver</code></a>.</p></div>
+<div class="children">
+<div id="name-coordinates" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:109</span>Tag <code>coordinates</code>
+</h3>
+<p class="definition"><code>coordinates; COORDINATES</code></p>
+<div class="description"><p>Set coordinates</p></div>
+</div>
+<div id="name-colour" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:110</span>Tag <code>colour</code>
+</h3>
+<p class="definition"><code>colour; COLOUR</code></p>
+<div class="description"><p>Set colour</p></div>
+</div>
+<div id="name-string" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:111</span>Tag <code>string</code>
+</h3>
+<p class="definition"><code>string; BYTE::[]BYTE</code></p>
+<div class="description"><p>Draw a string</p></div>
+</div>
+<div id="name-integer" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:112</span>Tag <code>integer</code>
+</h3>
+<p class="definition"><code>integer; INT</code></p>
+<div class="description"><p>Draw an integer</p></div>
+</div>
+<div id="name-byte" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:113</span>Tag <code>byte</code>
+</h3>
+<p class="definition"><code>byte; BYTE</code></p>
+<div class="description"><p>Draw a byte</p></div>
+</div>
+<div id="name-character" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:114</span>Tag <code>character</code>
+</h3>
+<p class="definition"><code>character; BYTE</code></p>
+<div class="description"><p>Draw a character</p></div>
+</div>
+<div id="name-left" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:115</span>Tag <code>left</code>
+</h3>
+<p class="definition"><code>left; BYTE</code></p>
+<div class="description"><p>Move left</p></div>
+</div>
+<div id="name-right" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:116</span>Tag <code>right</code>
+</h3>
+<p class="definition"><code>right; BYTE</code></p>
+<div class="description"><p>Move right</p></div>
+</div>
+<div id="name-up" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:117</span>Tag <code>up</code>
+</h3>
+<p class="definition"><code>up; BYTE</code></p>
+<div class="description"><p>Move up</p></div>
+</div>
+<div id="name-down" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:118</span>Tag <code>down</code>
+</h3>
+<p class="definition"><code>down; BYTE</code></p>
+<div class="description"><p>Move down</p></div>
+</div>
+<div id="name-draw.left" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:119</span>Tag <code>draw.left</code>
+</h3>
+<p class="definition"><code>draw.left; BYTE; BYTE</code></p>
+<div class="description"><p>Move left drawing character</p></div>
+</div>
+<div id="name-draw.right" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:120</span>Tag <code>draw.right</code>
+</h3>
+<p class="definition"><code>draw.right; BYTE; BYTE</code></p>
+<div class="description"><p>Move right drawing character</p></div>
+</div>
+<div id="name-draw.up" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:121</span>Tag <code>draw.up</code>
+</h3>
+<p class="definition"><code>draw.up; BYTE; BYTE</code></p>
+<div class="description"><p>Move up drawing character</p></div>
+</div>
+<div id="name-draw.down" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:122</span>Tag <code>draw.down</code>
+</h3>
+<p class="definition"><code>draw.down; BYTE; BYTE</code></p>
+<div class="description"><p>Move down drawing character</p></div>
+</div>
+<div id="name-erase.eol" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:123</span>Tag <code>erase.eol</code>
+</h3>
+<p class="definition"><code>erase.eol</code></p>
+<div class="description"><p>Erase to end of line</p></div>
+</div>
+<div id="name-erase.bol" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:124</span>Tag <code>erase.bol</code>
+</h3>
+<p class="definition"><code>erase.bol</code></p>
+<div class="description"><p>Erase to beginning of line</p></div>
+</div>
+<div id="name-erase.line" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:125</span>Tag <code>erase.line</code>
+</h3>
+<p class="definition"><code>erase.line</code></p>
+<div class="description"><p>Erase whole line</p></div>
+</div>
+<div id="name-erase.eos" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:126</span>Tag <code>erase.eos</code>
+</h3>
+<p class="definition"><code>erase.eos</code></p>
+<div class="description"><p>Erase to end of screen</p></div>
+</div>
+<div id="name-erase.bos" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:127</span>Tag <code>erase.bos</code>
+</h3>
+<p class="definition"><code>erase.bos</code></p>
+<div class="description"><p>Erase to beginning of screen</p></div>
+</div>
+<div id="name-flush" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:128</span>Tag <code>flush</code>
+</h3>
+<p class="definition"><code>flush</code></p>
+<div class="description"><p>Force a screen update</p></div>
+</div>
+<div id="name-c.erase.eol" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:142</span>Tag <code>c.erase.eol</code>
+</h3>
+<p class="definition"><code>c.erase.eol; COORDINATES</code></p>
+<div class="description"><p>Move then erase to end of line</p></div>
+</div>
+<div id="name-c.erase.bol" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:143</span>Tag <code>c.erase.bol</code>
+</h3>
+<p class="definition"><code>c.erase.bol; COORDINATES</code></p>
+<div class="description"><p>Move then erase to beginning of line</p></div>
+</div>
+<div id="name-c.erase.line" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:144</span>Tag <code>c.erase.line</code>
+</h3>
+<p class="definition"><code>c.erase.line; COORDINATES</code></p>
+<div class="description"><p>Move then erase whole line</p></div>
+</div>
+<div id="name-c.erase.eos" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:145</span>Tag <code>c.erase.eos</code>
+</h3>
+<p class="definition"><code>c.erase.eos; COORDINATES</code></p>
+<div class="description"><p>Move then erase to end of screen</p></div>
+</div>
+<div id="name-c.erase.bos" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:146</span>Tag <code>c.erase.bos</code>
+</h3>
+<p class="definition"><code>c.erase.bos; COORDINATES</code></p>
+<div class="description"><p>Move then erase to beginning of screen</p></div>
+</div>
+<div id="name-erase.screen" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:147</span>Tag <code>erase.screen</code>
+</h3>
+<p class="definition"><code>erase.screen</code></p>
+<div class="description"><p>Clear the screen</p></div>
+</div>
+<div id="name-cursor.visible" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:148</span>Tag <code>cursor.visible</code>
+</h3>
+<p class="definition"><code>cursor.visible</code></p>
+<div class="description"><p>Make the cursor visible</p></div>
+</div>
+<div id="name-cursor.invisible" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:149</span>Tag <code>cursor.invisible</code>
+</h3>
+<p class="definition"><code>cursor.invisible</code></p>
+<div class="description"><p>Make the cursor invisible</p></div>
+</div>
+<div id="name-interpret" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:152</span>Tag <code>interpret</code>
+</h3>
+<p class="definition"><code>interpret; BYTE::[]SCREEN.NODE</code></p>
+<div class="description"><p>Interpret a list of commands. See <a href="shared-screen.html#name-SCREEN.NODE"><code>SCREEN.NODE</code></a>.</p></div>
+</div>
+<div id="name-poison" class="declaration tag">
+<h3>
+<span class="location"><code>shared_screen.inc</code>:153</span>Tag <code>poison</code>
+</h3>
+<p class="definition"><code>poison</code></p>
+<div class="description"><p>Exit</p></div>
+</div>
+</div>
+</div>
+<div id="name-fg.col" class="declaration proc">
+<h3>
+<span class="location"><code>shared_screen.occ</code>:39</span>Process <code>fg.col</code>
+</h3>
+<p class="definition"><code>PROC fg.col (VAL COLOUR c, CHAN BYTE out!)</code></p>
+<div class="description"><p>Set foreground colour. Generate a VT220 control sequence to set the terminal colour.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL COLOUR</code></td>
+<td class="param-name"><code>c</code></td>
+<td class="param-desc">Colour to set; see <a href="shared-screen.html#name-COLOURS"><code>COLOURS</code></a>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-screen.interpret" class="declaration proc">
+<h3>
+<span class="location"><code>shared_screen.occ</code>:74</span>Process <code>screen.interpret</code>
+</h3>
+<p class="definition"><code>PROC screen.interpret (VAL []SCREEN.NODE node, CHAN BYTE out!)</code></p>
+<div class="description"><p>Interpret an array of screen update commands.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []SCREEN.NODE</code></td>
+<td class="param-name"><code>node</code></td>
+<td class="param-desc">Commands to interpret; see <a href="shared-screen.html#name-SCREEN.NODE"><code>SCREEN.NODE</code></a>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-screen.driver" class="declaration proc">
+<h3>
+<span class="location"><code>shared_screen.occ</code>:185</span>Process <code>screen.driver</code>
+</h3>
+<p class="definition"><code>PROC screen.driver (CHAN SCREEN.CONTROL in?, CHAN BYTE out!)</code></p>
+<div class="description"><p>Shared screen process. Manage a VT220 terminal display.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN SCREEN.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Command input channel (see <a href="shared-screen.html#name-SCREEN.CONTROL"><code>SCREEN.CONTROL</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

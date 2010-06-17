@@ -1,0 +1,992 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Definitions available to all occam-pi programs</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-forall" class="module">
+<h1>Module <code>forall</code> - Definitions available to all occam-pi programs</h1>
+<div class="header"><div class="description">
+<p>Definitions available to all occam-pi programs.</p>
+<p> The definitions in this module are provided by the compiler or the support library, and are automatically made available for all programs. It is not necessary to explicitly include <code>forall.module</code>.</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="function" href="forall.html#name-ASHIFTLEFT">Function <code>ASHIFTLEFT</code></a> - Arithmetic left shift on a double length quantity</li>
+<li>
+<a class="function" href="forall.html#name-ASHIFTRIGHT">Function <code>ASHIFTRIGHT</code></a> - Arithmetic right shift on a double length quantity</li>
+<li>
+<a class="proc" href="forall.html#name-ASSERT">Process <code>ASSERT</code></a> - Causes an error if a condition is false</li>
+<li>
+<a class="proc" href="forall.html#name-BIND.MOBILE">Process <code>BIND.MOBILE</code></a> - Bind a piece of (virtual) memory to a mobile</li>
+<li>
+<a class="proc" href="forall.html#name-BIND.MOBILE.HW">Process <code>BIND.MOBILE.HW</code></a> - Bind a piece of physical memory to a mobile</li>
+<li>
+<a class="proc" href="forall.html#name-CAUSEERROR">Process <code>CAUSEERROR</code></a> - Set the error flag</li>
+<li>
+<a class="proc" href="forall.html#name-DECPRI">Process <code>DECPRI</code></a> - Obsolete synonym for   </li>
+<li>
+<a class="function" href="forall.html#name-DMA.CAPABLE">Function <code>DMA.CAPABLE</code></a> - Test whether a mobile is DMA capable</li>
+<li>
+<a class="proc" href="forall.html#name-GETAFF">Process <code>GETAFF</code></a> - Get the affinity of the current process</li>
+<li>
+<a class="proc" href="forall.html#name-GETPRI">Process <code>GETPRI</code></a> - Get the priority level of the current process</li>
+<li>
+<a class="proc" href="forall.html#name-INCPRI">Process <code>INCPRI</code></a> - Obsolete synonym for   </li>
+<li>
+<a class="proc" href="forall.html#name-KILLCALL">Process <code>KILLCALL</code></a> - Kill a blocking FFI call</li>
+<li>
+<a class="function" href="forall.html#name-LONGADD">Function <code>LONGADD</code></a> - Signed addition with a carry in</li>
+<li>
+<a class="function" href="forall.html#name-LONGDIFF">Function <code>LONGDIFF</code></a> - Unsigned subtraction with a borrow in and a borrow out</li>
+<li>
+<a class="function" href="forall.html#name-LONGDIV">Function <code>LONGDIV</code></a> - Unsigned division of a double length number, producing a single length result</li>
+<li>
+<a class="function" href="forall.html#name-LONGPROD">Function <code>LONGPROD</code></a> - Unsigned multiplication with a carry in, producing a double length result</li>
+<li>
+<a class="function" href="forall.html#name-LONGSUB">Function <code>LONGSUB</code></a> - Signed subtraction with a borrow in</li>
+<li>
+<a class="function" href="forall.html#name-LONGSUM">Function <code>LONGSUM</code></a> - Unsigned addition with a carry in and carry out</li>
+<li>
+<a class="proc" href="forall.html#name-LOWER.PRIORITY">Process <code>LOWER.PRIORITY</code></a> - Lower the priority of the current process by one level</li>
+<li>
+<a class="proc" href="forall.html#name-MAKE.DMA.CAPABLE">Process <code>MAKE.DMA.CAPABLE</code></a> - Move a mobile to DMA capable memory</li>
+<li>
+<a class="proc" href="forall.html#name-MEMORY.BARRIER">Process <code>MEMORY.BARRIER</code></a> - Generate a read-write memory barrier</li>
+<li>
+<a class="function" href="forall.html#name-NORMALISE">Function <code>NORMALISE</code></a> - Normalise a double length quantity</li>
+<li>
+<a class="proc" href="forall.html#name-RAISE.PRIORITY">Process <code>RAISE.PRIORITY</code></a> - Raise the priority of the current process by one level</li>
+<li>
+<a class="proc" href="forall.html#name-READ.MEMORY.BARRIER">Process <code>READ.MEMORY.BARRIER</code></a> - Generate a read memory barrier</li>
+<li>
+<a class="proc" href="forall.html#name-RESCHEDULE">Process <code>RESCHEDULE</code></a> - Force rescheduling</li>
+<li>
+<a class="proc" href="forall.html#name-RESIZE.MOBILE.ARRAY.1D">Process <code>RESIZE.MOBILE.ARRAY.1D</code></a> - Resize a 1D mobile array</li>
+<li>
+<a class="function" href="forall.html#name-ROTATELEFT">Function <code>ROTATELEFT</code></a> - Rotate a word left</li>
+<li>
+<a class="function" href="forall.html#name-ROTATERIGHT">Function <code>ROTATERIGHT</code></a> - Rotate a word right</li>
+<li>
+<a class="function" href="forall.html#name-RealIDiv">Function <code>RealIDiv</code></a> - Perform an unsigned part divide operation</li>
+<li>
+<a class="proc" href="forall.html#name-SETAFF">Process <code>SETAFF</code></a> - Set the affinity of the current process</li>
+<li>
+<a class="proc" href="forall.html#name-SETPRI">Process <code>SETPRI</code></a> - Set the priority level of the current process</li>
+<li>
+<a class="function" href="forall.html#name-SHIFTLEFT">Function <code>SHIFTLEFT</code></a> - Left shift on a double length quantity</li>
+<li>
+<a class="function" href="forall.html#name-SHIFTRIGHT">Function <code>SHIFTRIGHT</code></a> - Right shift on a double length quantity</li>
+<li>
+<a class="function" href="forall.html#name-UNPACKSN">Function <code>UNPACKSN</code></a> - Unpack a real number in IEEE single precision format</li>
+<li>
+<a class="function" href="forall.html#name-VSSIZEOF">Function <code>VSSIZEOF</code></a> - Calculate the vectorspace size (in words) of a process</li>
+<li>
+<a class="proc" href="forall.html#name-WAIT.FOR.INTERRUPT">Process <code>WAIT.FOR.INTERRUPT</code></a> - Wait for a hardware interrupt</li>
+<li>
+<a class="proc" href="forall.html#name-WRITE.MEMORY.BARRIER">Process <code>WRITE.MEMORY.BARRIER</code></a> - Generate a write memory barrier</li>
+<li>
+<a class="function" href="forall.html#name-WSSIZEOF">Function <code>WSSIZEOF</code></a> - Calculate the workspace size (in words) of a process</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-UNPACKSN" class="declaration function">
+<h3>
+<span class="location"><code>unpacksn.occ</code>:44</span>Function <code>UNPACKSN</code>
+</h3>
+<p class="definition"><code>INT, INT, INT FUNCTION UNPACKSN ( VAL INT X )</code></p>
+<div class="description">
+<p>Unpack a real number in IEEE single precision format</p>
+<p> The sign of X is ignored.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">a REAL32 which has been retyped to an INT</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the fractional part with the implicit bit before the binary point restored</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the biased exponent, i.e. the actual exponent + 127</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">0 if X is zero; 1 if X is a normalised or denormalised number; 2 if X is "infinity"; 3 if X is a Not-a-Number</td>
+</tr>
+</table></div>
+</div>
+<div id="name-LONGADD" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:44</span>Function <code>LONGADD</code>
+</h3>
+<p class="definition"><code>INT FUNCTION LONGADD (VAL INT a, b, carry)</code></p>
+<div class="description">
+<p>Signed addition with a carry in.</p>
+<p> (a + b) + carry</p>
+<p> Overflow is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to add.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>carry</code></td>
+<td class="param-desc">Carry flag.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Addition of a and b.</td>
+</tr></table></div>
+</div>
+<div id="name-LONGSUM" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:55</span>Function <code>LONGSUM</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION LONGSUM (VAL INT a, b, carry)</code></p>
+<div class="description">
+<p>Unsigned addition with a carry in and carry out.</p>
+<p> (a + b) + carry</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to add.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>carry</code></td>
+<td class="param-desc">Carry in flag.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The resulting carry out flag.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The sum of a and b.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-LONGSUB" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:67</span>Function <code>LONGSUB</code>
+</h3>
+<p class="definition"><code>INT FUNCTION LONGSUB (VAL INT a, b, borrow)</code></p>
+<div class="description">
+<p>Signed subtraction with a borrow in.</p>
+<p> (b - a) - borrow</p>
+<p> Overflow is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to subtract.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>borrow</code></td>
+<td class="param-desc">Borrow flag.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Subtraction of a and borrow from b.</td>
+</tr></table></div>
+</div>
+<div id="name-LONGDIFF" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:78</span>Function <code>LONGDIFF</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION LONGDIFF (VAL INT a, b, borrow)</code></p>
+<div class="description">
+<p>Unsigned subtraction with a borrow in and a borrow out.</p>
+<p> (b - a) - borrow</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to subtract.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>borrow</code></td>
+<td class="param-desc">Borrow in flag.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Borrow out flag.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Subtraction of a and borrow from b.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-LONGPROD" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:89</span>Function <code>LONGPROD</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION LONGPROD (VAL INT a, b, carry)</code></p>
+<div class="description">
+<p>Unsigned multiplication with a carry in, producing a double length result.</p>
+<p> (a * b) + carry</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">Integers to multiply.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>carry</code></td>
+<td class="param-desc">Carry in flag.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">High order word of result.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Low order word of result.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-LONGDIV" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:103</span>Function <code>LONGDIV</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION LONGDIV (VAL INT u1, u0, v)</code></p>
+<div class="description">
+<p>Unsigned division of a double length number, producing a single length result.</p>
+<p> [u1, u0] / v</p>
+<p> Overflow is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>u1</code></td>
+<td class="param-desc">High order word of quantity being divided.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>u0</code></td>
+<td class="param-desc">Low order word of quantity being divided.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>v</code></td>
+<td class="param-desc">Divisor.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">High order word of result.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Low order word of result.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-SHIFTRIGHT" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:115</span>Function <code>SHIFTRIGHT</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION SHIFTRIGHT (VAL INT a1, a0, shift)</code></p>
+<div class="description">
+<p>Right shift on a double length quantity.</p>
+<p> [a1, a0] &gt;&gt; shift</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a1</code></td>
+<td class="param-desc">High order word of quantity being shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a0</code></td>
+<td class="param-desc">Low order word of quantity being shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">Number of bit places to shift right.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">High order word of result.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Low order word of result.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-SHIFTLEFT" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:127</span>Function <code>SHIFTLEFT</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION SHIFTLEFT (VAL INT a1, a0, shift)</code></p>
+<div class="description">
+<p>Left shift on a double length quantity.</p>
+<p> [a1, a0] &lt;&lt; shift</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a1</code></td>
+<td class="param-desc">High order word of quantity being shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a0</code></td>
+<td class="param-desc">Low order word of quantity being shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">Number of bit places to shift left.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">High order word of result.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Low order word of result.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-NORMALISE" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:140</span>Function <code>NORMALISE</code>
+</h3>
+<p class="definition"><code>INT, INT, INT FUNCTION NORMALISE (VAL INT a1, a0)</code></p>
+<div class="description">
+<p>Normalise a double length quantity.</p>
+<p> Shift the double word quantity left until the most significant bit is one.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a1</code></td>
+<td class="param-desc">High order word of quantity being normalised.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a0</code></td>
+<td class="param-desc">Low order word of quantity being normalised.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Number of places shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">High order word of result.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Low order word of result.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ASHIFTRIGHT" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:151</span>Function <code>ASHIFTRIGHT</code>
+</h3>
+<p class="definition"><code>INT FUNCTION ASHIFTRIGHT (VAL INT a, shift)</code></p>
+<div class="description">
+<p>Arithmetic right shift on a double length quantity.</p>
+<p> The operand is expanded to a double length quantity, then arithmetically shifted right, and the low order word returned.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">The integer being shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">Number of bit places to shift right.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ASHIFTLEFT" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:162</span>Function <code>ASHIFTLEFT</code>
+</h3>
+<p class="definition"><code>INT FUNCTION ASHIFTLEFT (VAL INT a, shift)</code></p>
+<div class="description">
+<p>Arithmetic left shift on a double length quantity.</p>
+<p> The operand is expanded to a double length quantity, then arithmetically shifted left, and the low order word returned.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">The integer being shifted.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">Number of bit places to shift left.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ROTATERIGHT" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:170</span>Function <code>ROTATERIGHT</code>
+</h3>
+<p class="definition"><code>INT FUNCTION ROTATERIGHT (VAL INT val, shift)</code></p>
+<div class="description"><p>Rotate a word right.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>val</code></td>
+<td class="param-desc">The integer being rotated.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">Number of bit places to rotate right.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">val rotated shift places to the right.</td>
+</tr></table></div>
+</div>
+<div id="name-ROTATELEFT" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:178</span>Function <code>ROTATELEFT</code>
+</h3>
+<p class="definition"><code>INT FUNCTION ROTATELEFT (VAL INT val, shift)</code></p>
+<div class="description"><p>Rotate a word left.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>val</code></td>
+<td class="param-desc">The integer being rotated.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">Number of bit places to rotate left.</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">val rotated shift places to the left.</td>
+</tr></table></div>
+</div>
+<div id="name-CAUSEERROR" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:186</span>Process <code>CAUSEERROR</code>
+</h3>
+<p class="definition"><code>PROC CAUSEERROR ()</code></p>
+<div class="description">
+<p>Set the error flag.</p>
+<p> Sets the runtime error flag, causing either the runtime to error out or the current process to stop, depending on compile-time flags and runtime settings.</p>
+</div>
+</div>
+<div id="name-RESCHEDULE" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:195</span>Process <code>RESCHEDULE</code>
+</h3>
+<p class="definition"><code>PROC RESCHEDULE ()</code></p>
+<div class="description">
+<p>Force rescheduling.</p>
+<p> This gives the scheduler an opportunity to switch to another process. It may simply return control to the caller if no other process needs to run.</p>
+</div>
+</div>
+<div id="name-ASSERT" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:209</span>Process <code>ASSERT</code>
+</h3>
+<p class="definition"><code>PROC ASSERT (VAL BOOL condition)</code></p>
+<div class="description">
+<p>Causes an error if a condition is false.</p>
+<p> Asserts that a given condition is true. If the condition is false then the behaviour is that of <a href="forall.html#name-CAUSEERROR"><code>CAUSEERROR</code></a>.</p>
+<p> The compiler may detect false assertions at compile time through static analysis.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>condition</code></td>
+<td class="param-desc">The condition to test.</td>
+</tr></table></div>
+</div>
+<div id="name-WSSIZEOF" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:219</span>Function <code>WSSIZEOF</code>
+</h3>
+<p class="definition"><code>INT FUNCTION WSSIZEOF (PROC process)</code></p>
+<div class="description"><p>Calculate the workspace size (in words) of a process.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>PROC</code></td>
+<td class="param-name"><code>process</code></td>
+<td class="param-desc">Process for which the workspace size is to be calculated.</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Number of workspace words required by process.</td>
+</tr></table></div>
+</div>
+<div id="name-VSSIZEOF" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:227</span>Function <code>VSSIZEOF</code>
+</h3>
+<p class="definition"><code>INT FUNCTION VSSIZEOF (PROC process)</code></p>
+<div class="description"><p>Calculate the vectorspace size (in words) of a process.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>PROC</code></td>
+<td class="param-name"><code>process</code></td>
+<td class="param-desc">Process for which the vectorspace size is to be calculated.</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Number of vectorspace words required by process.</td>
+</tr></table></div>
+</div>
+<div id="name-GETPRI" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:251</span>Process <code>GETPRI</code>
+</h3>
+<p class="definition"><code>PROC GETPRI (RESULT INT pri)</code></p>
+<div class="description">
+<p>Get the priority level of the current process.</p>
+<p> Priority 0 is the highest priority available, and priority 31 is the lowest priority. Priorities are only hints to the scheduler; you must not assume that high-priority processes will always run before low-priority processes.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>pri</code></td>
+<td class="param-desc">The priority of the calling process.</td>
+</tr></table></div>
+</div>
+<div id="name-SETPRI" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:262</span>Process <code>SETPRI</code>
+</h3>
+<p class="definition"><code>PROC SETPRI (VAL INT pri)</code></p>
+<div class="description">
+<p>Set the priority level of the current process.</p>
+<p> See <a href="forall.html#name-GETPRI"><code>GETPRI</code></a> for the meanings of priority levels.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>pri</code></td>
+<td class="param-desc">The requested priority for the calling process. Invalid values will be ignored.</td>
+</tr></table></div>
+</div>
+<div id="name-INCPRI" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:270</span>Process <code>INCPRI</code>
+</h3>
+<p class="definition"><code>PROC INCPRI ()</code></p>
+<div class="description"><p>Obsolete synonym for <a href="forall.html#name-RAISE.PRIORITY"><code>RAISE.PRIORITY</code></a>.</p></div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+</div>
+<div id="name-DECPRI" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:278</span>Process <code>DECPRI</code>
+</h3>
+<p class="definition"><code>PROC DECPRI ()</code></p>
+<div class="description"><p>Obsolete synonym for <a href="forall.html#name-LOWER.PRIORITY"><code>LOWER.PRIORITY</code></a>.</p></div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+</div>
+<div id="name-RAISE.PRIORITY" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:286</span>Process <code>RAISE.PRIORITY</code>
+</h3>
+<p class="definition"><code>PROC RAISE.PRIORITY ()</code></p>
+<div class="description">
+<p>Raise the priority of the current process by one level.</p>
+<p> See <a href="forall.html#name-GETPRI"><code>GETPRI</code></a> for the meanings of priority levels.</p>
+</div>
+</div>
+<div id="name-LOWER.PRIORITY" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:294</span>Process <code>LOWER.PRIORITY</code>
+</h3>
+<p class="definition"><code>PROC LOWER.PRIORITY ()</code></p>
+<div class="description">
+<p>Lower the priority of the current process by one level.</p>
+<p> See <a href="forall.html#name-GETPRI"><code>GETPRI</code></a> for the meanings of priority levels.</p>
+</div>
+</div>
+<div id="name-GETAFF" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:306</span>Process <code>GETAFF</code>
+</h3>
+<p class="definition"><code>PROC GETAFF (RESULT INT aff)</code></p>
+<div class="description">
+<p>Get the affinity of the current process.</p>
+<p> The affinity is a bitmap of logical execution units on which this process may run. The value <code>-1</code> means that the process may run on any execution unit.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>aff</code></td>
+<td class="param-desc">The affinity of the calling process.</td>
+</tr></table></div>
+</div>
+<div id="name-SETAFF" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:317</span>Process <code>SETAFF</code>
+</h3>
+<p class="definition"><code>PROC SETAFF (VAL INT aff)</code></p>
+<div class="description">
+<p>Set the affinity of the current process.</p>
+<p> See <a href="forall.html#name-GETAFF"><code>GETAFF</code></a> for the meanings of affinity values.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>aff</code></td>
+<td class="param-desc">The requested affinity for the calling process. Invalid values will be ignored.</td>
+</tr></table></div>
+</div>
+<div id="name-KILLCALL" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:331</span>Process <code>KILLCALL</code>
+</h3>
+<p class="definition"><code>PROC KILLCALL (CHAN OF ANY chan, INT res)</code></p>
+<div class="description">
+<p>Kill a blocking FFI call.</p>
+<p> Kill a <code>BX.</code> blocking foreign-function-interface call associated with a channel.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF ANY</code></td>
+<td class="param-name"><code>chan</code></td>
+<td class="param-desc">The channel passed when making the blocking call.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>res</code></td>
+<td class="param-desc">
+<code>0</code> if termination was successfully initiated; <code>-1</code> if the call has not yet started; <code>1</code> if the call has already terminated.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-WAIT.FOR.INTERRUPT" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:344</span>Process <code>WAIT.FOR.INTERRUPT</code>
+</h3>
+<p class="definition"><code>PROC WAIT.FOR.INTERRUPT (VAL INT n, mask, RESULT INT count)</code></p>
+<div class="description">
+<p>Wait for a hardware interrupt.</p>
+<p> This call is specific to RMoX, and will not be useful for most occam-pi programs.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">The number of the interrupt to wait for.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>mask</code></td>
+<td class="param-desc">CPU or interrupt mask, implementation dependent.</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>count</code></td>
+<td class="param-desc">The number of missed interrupts.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-BIND.MOBILE" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:365</span>Process <code>BIND.MOBILE</code>
+</h3>
+<p class="definition"><code>PROC BIND.MOBILE (MOBILE.ANY mobile, VAL INT addr)</code></p>
+<div class="description">
+<p>Bind a piece of (virtual) memory to a mobile.</p>
+<p> Associates a piece of memory with a mobile. The memory at the given address becomes the backing store for the mobile. This is intended for use with <code>EMPTY</code> mobiles.</p>
+<p> For example, to associate a mobile with memory address <code>#1000</code>: <code>MOBILE []BYTE x:
+    SEQ
+      x := MOBILE EMPTY [1024]BYTE
+      BIND.MOBILE (x, #1000)</code></p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE.ANY</code></td>
+<td class="param-name"><code>mobile</code></td>
+<td class="param-desc">The mobile to bind.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">The address of the memory.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-BIND.MOBILE.HW" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:377</span>Process <code>BIND.MOBILE.HW</code>
+</h3>
+<p class="definition"><code>PROC BIND.MOBILE.HW (MOBILE.ANY mobile, VAL INT hw.addr)</code></p>
+<div class="description">
+<p>Bind a piece of physical memory to a mobile.</p>
+<p> Acts as <a href="forall.html#name-BIND.MOBILE"><code>BIND.MOBILE</code></a>, except a physical address is used. This may be converted to a virtual address by the runtime system.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE.ANY</code></td>
+<td class="param-name"><code>mobile</code></td>
+<td class="param-desc">The mobile to bind.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>hw.addr</code></td>
+<td class="param-desc">Hardware address of the memory.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-DMA.CAPABLE" class="declaration function">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:389</span>Function <code>DMA.CAPABLE</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION DMA.CAPABLE (MOBILE.ANY mobile)</code></p>
+<div class="description">
+<p>Test whether a mobile is DMA capable.</p>
+<p> Test to see if a mobile is backed by DMA-accessible memory. The <code>HWADDROF</code> operator is only valid on DMA-capable mobiles.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE.ANY</code></td>
+<td class="param-name"><code>mobile</code></td>
+<td class="param-desc">The mobile to test.</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Whether the mobile is DMA accessible by hardware.</td>
+</tr></table></div>
+</div>
+<div id="name-MAKE.DMA.CAPABLE" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:399</span>Process <code>MAKE.DMA.CAPABLE</code>
+</h3>
+<p class="definition"><code>PROC MAKE.DMA.CAPABLE (MOBILE.ANY mobile)</code></p>
+<div class="description">
+<p>Move a mobile to DMA capable memory.</p>
+<p> Make a mobile DMA-capable. If necessary, this will reallocate the mobile in DMA-accessible memory and copy the contents over. If the mobile is already DMA-capable, this is has no effect.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE.ANY</code></td>
+<td class="param-name"><code>mobile</code></td>
+<td class="param-desc">The mobile to upgrade.</td>
+</tr></table></div>
+</div>
+<div id="name-RESIZE.MOBILE.ARRAY.1D" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:416</span>Process <code>RESIZE.MOBILE.ARRAY.1D</code>
+</h3>
+<p class="definition"><code>PROC RESIZE.MOBILE.ARRAY.1D (MOBILE.ANY mobile, VAL INT count)</code></p>
+<div class="description">
+<p>Resize a 1D mobile array.</p>
+<p> Change the size of a one-dimensional mobile array. The memory associated with the mobile may or may not be reallocated by the runtime system depending on its memory allocator.</p>
+<p> All data within the bounds of the new size of the array, and present in the old bounds of the array will be preserved.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE.ANY</code></td>
+<td class="param-name"><code>mobile</code></td>
+<td class="param-desc">Mobile array to resize.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>count</code></td>
+<td class="param-desc">The new element count.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-MEMORY.BARRIER" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:430</span>Process <code>MEMORY.BARRIER</code>
+</h3>
+<p class="definition"><code>PROC MEMORY.BARRIER ()</code></p>
+<div class="description">
+<p>Generate a read-write memory barrier.</p>
+<p> A memory barrier is unrelated to occam-pi <code>BARRIER</code>s; it is a synchronisation point for memory operations within a computer system. After the completion of a memory barrier instruction, the affected memory operations are guaranteed to be visible to peripherals and other processors.</p>
+<p> This is equivalent to executing both <a href="forall.html#name-READ.MEMORY.BARRIER"><code>READ.MEMORY.BARRIER</code></a> and <a href="forall.html#name-WRITE.MEMORY.BARRIER"><code>WRITE.MEMORY.BARRIER</code></a>.</p>
+</div>
+</div>
+<div id="name-READ.MEMORY.BARRIER" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:438</span>Process <code>READ.MEMORY.BARRIER</code>
+</h3>
+<p class="definition"><code>PROC READ.MEMORY.BARRIER ()</code></p>
+<div class="description">
+<p>Generate a read memory barrier.</p>
+<p> See <a href="forall.html#name-MEMORY.BARRIER"><code>MEMORY.BARRIER</code></a> for the semantics of memory barriers.</p>
+</div>
+</div>
+<div id="name-WRITE.MEMORY.BARRIER" class="declaration proc">
+<h3>
+<span class="location"><code>intrinsics.occ</code>:446</span>Process <code>WRITE.MEMORY.BARRIER</code>
+</h3>
+<p class="definition"><code>PROC WRITE.MEMORY.BARRIER ()</code></p>
+<div class="description">
+<p>Generate a write memory barrier.</p>
+<p> See <a href="forall.html#name-MEMORY.BARRIER"><code>MEMORY.BARRIER</code></a> for the semantics of memory barriers.</p>
+</div>
+</div>
+<div id="name-RealIDiv" class="declaration function">
+<h3>
+<span class="location"><code>ridiv.occ</code>:40</span>Function <code>RealIDiv</code>
+</h3>
+<p class="definition"><code>INT, INT, INT FUNCTION RealIDiv (VAL INT Hi, Lo, Guard, VAL [2]INT Yfrac)</code></p>
+<div class="description"><p>Perform an unsigned part divide operation.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Hi</code></td>
+<td class="param-desc">the most significant word of the dividend</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Lo</code></td>
+<td class="param-desc">the middle word of the dividend</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Guard</code></td>
+<td class="param-desc">the least significant word of the dividend</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [2]INT</code></td>
+<td class="param-name"><code>Yfrac</code></td>
+<td class="param-desc">the two words of the divisor</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the quotient</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the most significant word of the remainder</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the least significant word of the remainder</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

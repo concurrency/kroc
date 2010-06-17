@@ -22,10 +22,14 @@ PROGS = \
 	exttimer \
 	hello \
 	ledmatrix \
+    motors \
 	nothing \
 	pwm-tests \
 	rawblink \
-	testdiv
+    servos \
+	testdiv \
+    test_motors \
+    test_servos
 
 all: $(addsuffix .hex,$(PROGS))
 
@@ -72,3 +76,4 @@ rawblink.hex: wiring.module
 testdiv.hex: wiring.module
 wiring.module: avr.module
 #}}}
+

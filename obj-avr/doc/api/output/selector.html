@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>IO selector</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-selector" class="module">
+<h1>Module <code>selector</code> - IO selector</h1>
+<div class="header"><div class="description">
+<p>IO selector.</p>
+<p> An IO selector is a server that waits in an efficient way for events on a set of file descriptors; it provides a process-oriented interface to the <code>poll(2)</code> system call (or an equivalent).</p>
+<p> To start an IO selector, call <a href="selector.html#name-selector.start"><code>selector.start</code></a>; see <a href="selector.html#name-SELECTOR.CT"><code>SELECTOR.CT</code></a> for the interface.</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="group" href="selector.html#name-SELECT">Group <code>SELECT</code></a> - Events to select upon<br><ul>
+<li>
+<a class="constant" href="selector.html#name-SELECT.READ">Constant <code>SELECT.READ</code></a> - A read will not block</li>
+<li>
+<a class="constant" href="selector.html#name-SELECT.WRITE">Constant <code>SELECT.WRITE</code></a> - A write will not block</li>
+</ul>
+</li>
+<li>
+<a class="chantype" href="selector.html#name-SELECTOR.CT">Channel type <code>SELECTOR.CT</code></a> - Interface to an IO selector</li>
+<li>
+<a class="protocol" href="selector.html#name-SELECTOR.REQ">Protocol <code>SELECTOR.REQ</code></a> - Requests to an IO selector<br><ul>
+<li>
+<a class="tag" href="selector.html#name-add">Tag <code>add</code></a> - Add a file descriptor to the set being waited upon</li>
+<li>
+<a class="tag" href="selector.html#name-shutdown">Tag <code>shutdown</code></a> - Shut down the selector</li>
+</ul>
+</li>
+<li>
+<a class="chantype" href="selector.html#name-SELECTOR.SIGNAL">Channel type <code>SELECTOR.SIGNAL</code></a> - Channel bundle used for the selector to signal back to the client</li>
+<li>
+<a class="protocol" href="selector.html#name-SELECTOR.SIGNAL.REQ">Protocol <code>SELECTOR.SIGNAL.REQ</code></a> - Requests from an IO selector to a waiting process<br><ul>
+<li>
+<a class="tag" href="selector.html#name-ready">Tag <code>ready</code></a> - The FD has become ready</li>
+<li>
+<a class="tag" href="selector.html#name-shutdown">Tag <code>shutdown</code></a> - The selector is shutting down</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="selector.html#name-SELECTOR.SIGNAL.RESP">Protocol <code>SELECTOR.SIGNAL.RESP</code></a> - Responses from a waiting process to an IO selector<br><ul>
+<li>
+<a class="tag" href="selector.html#name-again">Tag <code>again</code></a> - Wait for the FD again</li>
+<li>
+<a class="tag" href="selector.html#name-remove">Tag <code>remove</code></a> - Remove the FD from the waiting set</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="selector.html#name-selector.add">Process <code>selector.add</code></a> - Register a file descriptor with a selector</li>
+<li>
+<a class="proc" href="selector.html#name-selector.delayed.add">Process <code>selector.delayed.add</code></a> - Register a file descriptor with a selector, then send the new signal end down a shared channel</li>
+<li>
+<a class="proc" href="selector.html#name-selector.make.nonblocking">Process <code>selector.make.nonblocking</code></a> - Make a file descriptor non-blocking</li>
+<li>
+<a class="proc" href="selector.html#name-selector.start">Process <code>selector.start</code></a> - Start an IO selector</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-selector.make.nonblocking" class="declaration proc">
+<h3>
+<span class="location"><code>selector.occ</code>:34</span>Process <code>selector.make.nonblocking</code>
+</h3>
+<p class="definition"><code>PROC selector.make.nonblocking (VAL INT fd)</code></p>
+<div class="description"><p>Make a file descriptor non-blocking. This just sets the <a href="file.html#name-O.NONBLOCK"><code>O.NONBLOCK</code></a> flag on the FD.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">File descriptor</td>
+</tr></table></div>
+</div>
+<div id="name-selector.add" class="declaration proc">
+<h3>
+<span class="location"><code>selector.occ</code>:42</span>Process <code>selector.add</code>
+</h3>
+<p class="definition"><code>PROC selector.add (SHARED SELECTOR.CT! sel, VAL INT fd, events, RESULT SELECTOR.SIGNAL? svr)</code></p>
+<div class="description"><p>Register a file descriptor with a selector.</p></div>
+</div>
+<div id="name-selector.delayed.add" class="declaration proc">
+<h3>
+<span class="location"><code>selector.occ</code>:58</span>Process <code>selector.delayed.add</code>
+</h3>
+<p class="definition"><code>PROC selector.delayed.add (SHARED SELECTOR.CT! sel, VAL INT fd, events, SHARED CHAN SELECTOR.SIGNAL? svr.out!)</code></p>
+<div class="description">
+<p>Register a file descriptor with a selector, then send the new signal end down a shared channel.</p>
+<p> Why would you want to do this? It's to avoid a client-server loop if you've got a client that wants to change the set of FDs it selects on: rather than having it add the FD itself (which would mean switching the direction of the client-server relationship), have it fork off this process.</p>
+</div>
+</div>
+<div id="name-selector.start" class="declaration proc">
+<h3>
+<span class="location"><code>selector.occ</code>:68</span>Process <code>selector.start</code>
+</h3>
+<p class="definition"><code>PROC selector.start (RESULT SHARED SELECTOR.CT! sel)</code></p>
+<div class="description"><p>Start an IO selector.</p></div>
+</div>
+<div id="name-SELECT" class="declaration group">
+<h3>
+<span class="location"><code>selector.inc</code>:31</span>Group <code>SELECT</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Events to select upon.</p></div>
+<div class="children">
+<div id="name-SELECT.READ" class="declaration constant">
+<h3>
+<span class="location"><code>selector.inc</code>:32</span>Constant <code>SELECT.READ</code>
+</h3>
+<p class="definition"><code>VAL INT SELECT.READ</code></p>
+<div class="description"><p>A read will not block.</p></div>
+</div>
+<div id="name-SELECT.WRITE" class="declaration constant">
+<h3>
+<span class="location"><code>selector.inc</code>:33</span>Constant <code>SELECT.WRITE</code>
+</h3>
+<p class="definition"><code>VAL INT SELECT.WRITE</code></p>
+<div class="description"><p>A write will not block.</p></div>
+</div>
+</div>
+</div>
+<div id="name-SELECTOR.SIGNAL.REQ" class="declaration protocol">
+<h3>
+<span class="location"><code>selector.inc</code>:37</span>Protocol <code>SELECTOR.SIGNAL.REQ</code>
+</h3>
+<p class="definition"><code>PROTOCOL SELECTOR.SIGNAL.REQ</code></p>
+<div class="description"><p>Requests from an IO selector to a waiting process.</p></div>
+<div class="children">
+<div id="name-ready" class="declaration tag">
+<h3>
+<span class="location"><code>selector.inc</code>:40</span>Tag <code>ready</code>
+</h3>
+<p class="definition"><code>ready = 0</code></p>
+<div class="description"><p>The FD has become ready.</p></div>
+</div>
+<div id="name-shutdown" class="declaration tag">
+<h3>
+<span class="location"><code>selector.inc</code>:42</span>Tag <code>shutdown</code>
+</h3>
+<p class="definition"><code>shutdown = 1</code></p>
+<div class="description"><p>The selector is shutting down.</p></div>
+</div>
+</div>
+</div>
+<div id="name-SELECTOR.SIGNAL.RESP" class="declaration protocol">
+<h3>
+<span class="location"><code>selector.inc</code>:46</span>Protocol <code>SELECTOR.SIGNAL.RESP</code>
+</h3>
+<p class="definition"><code>PROTOCOL SELECTOR.SIGNAL.RESP</code></p>
+<div class="description"><p>Responses from a waiting process to an IO selector.</p></div>
+<div class="children">
+<div id="name-again" class="declaration tag">
+<h3>
+<span class="location"><code>selector.inc</code>:49</span>Tag <code>again</code>
+</h3>
+<p class="definition"><code>again = 0</code></p>
+<div class="description"><p>Wait for the FD again.</p></div>
+</div>
+<div id="name-remove" class="declaration tag">
+<h3>
+<span class="location"><code>selector.inc</code>:51</span>Tag <code>remove</code>
+</h3>
+<p class="definition"><code>remove = 1</code></p>
+<div class="description"><p>Remove the FD from the waiting set.</p></div>
+</div>
+</div>
+</div>
+<div id="name-SELECTOR.SIGNAL" class="declaration chantype">
+<h3>
+<span class="location"><code>selector.inc</code>:58</span>Channel type <code>SELECTOR.SIGNAL</code>
+</h3>
+<p class="definition"><code>CHAN TYPE SELECTOR.SIGNAL</code></p>
+<div class="description">
+<p>Channel bundle used for the selector to signal back to the client.</p>
+<p> This may look dodgy from a C-S perspective, but it should be OK: at any given time, the client-server relationship is only going one way...</p>
+</div>
+</div>
+<div id="name-SELECTOR.REQ" class="declaration protocol">
+<h3>
+<span class="location"><code>selector.inc</code>:65</span>Protocol <code>SELECTOR.REQ</code>
+</h3>
+<p class="definition"><code>PROTOCOL SELECTOR.REQ</code></p>
+<div class="description"><p>Requests to an IO selector.</p></div>
+<div class="children">
+<div id="name-add" class="declaration tag">
+<h3>
+<span class="location"><code>selector.inc</code>:71</span>Tag <code>add</code>
+</h3>
+<p class="definition"><code>add = 0; INT; INT; SELECTOR.SIGNAL!</code></p>
+<div class="description"><p>Add a file descriptor to the set being waited upon.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>fd</code></td>
+<td class="param-desc">File descriptor (usually non-blocking)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>events</code></td>
+<td class="param-desc">Bitwise OR of events to wait for; see <a href="selector.html#name-SELECT"><code>SELECT</code></a>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>SELECTOR.SIGNAL!</code></td>
+<td class="param-name"><code>signal</code></td>
+<td class="param-desc">Channel bundle to signal over when the event fires</td>
+</tr>
+</table></div>
+</div>
+<div id="name-shutdown" class="declaration tag">
+<h3>
+<span class="location"><code>selector.inc</code>:73</span>Tag <code>shutdown</code>
+</h3>
+<p class="definition"><code>shutdown = 1</code></p>
+<div class="description"><p>Shut down the selector.</p></div>
+</div>
+</div>
+</div>
+<div id="name-SELECTOR.CT" class="declaration chantype">
+<h3>
+<span class="location"><code>selector.inc</code>:77</span>Channel type <code>SELECTOR.CT</code>
+</h3>
+<p class="definition"><code>CHAN TYPE SELECTOR.CT</code></p>
+<div class="description"><p>Interface to an IO selector.</p></div>
+</div>
+</div></div></body>
+</html>

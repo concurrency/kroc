@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Time utilities</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-time" class="module">
+<h1>Module <code>time</code> - Time utilities</h1>
+<div class="header"><div class="description">
+<p>Time utilities.</p>
+<p> occam <code>TIMER</code>s measure a <code>INT</code> count of timer ticks that wraps around periodically. The length of a timer tick varies between platforms; on 32-bit platforms it's typically one microsecond (one million ticks per second), and on 16-bit platforms typically one millisecond (one thousand ticks per second).</p>
+<p> Using this module, you can write programs that are largely independent of the timer resolution.</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="time.html#name-delay">Process <code>delay</code></a> - Wait for a period of time</li>
+<li>
+<a class="proc" href="time.html#name-delay.ms">Process <code>delay.ms</code></a> - Wait for a period of time</li>
+<li>
+<a class="function" href="time.html#name-microseconds">Function <code>microseconds</code></a> - Convert microseconds to timer ticks</li>
+<li>
+<a class="function" href="time.html#name-milliseconds">Function <code>milliseconds</code></a> - Convert milliseconds to timer ticks</li>
+<li>
+<a class="function" href="time.html#name-seconds">Function <code>seconds</code></a> - Convert seconds to timer ticks</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-seconds" class="declaration function">
+<h3>
+<span class="location"><code>time.inc</code>:37</span>Function <code>seconds</code>
+</h3>
+<p class="definition"><code>INT INLINE FUNCTION seconds (VAL INT s)</code></p>
+<div class="description"><p>Convert seconds to timer ticks.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">Time in seconds</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Time in timer ticks</td>
+</tr></table></div>
+</div>
+<div id="name-milliseconds" class="declaration function">
+<h3>
+<span class="location"><code>time.inc</code>:52</span>Function <code>milliseconds</code>
+</h3>
+<p class="definition"><code>INT INLINE FUNCTION milliseconds (VAL INT ms)</code></p>
+<div class="description"><p>Convert milliseconds to timer ticks.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ms</code></td>
+<td class="param-desc">Time in milliseconds</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Time in timer ticks</td>
+</tr></table></div>
+</div>
+<div id="name-microseconds" class="declaration function">
+<h3>
+<span class="location"><code>time.inc</code>:67</span>Function <code>microseconds</code>
+</h3>
+<p class="definition"><code>INT INLINE FUNCTION microseconds (VAL INT us)</code></p>
+<div class="description"><p>Convert microseconds to timer ticks.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>us</code></td>
+<td class="param-desc">Time in microseconds</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Time in timer ticks</td>
+</tr></table></div>
+</div>
+<div id="name-delay" class="declaration proc">
+<h3>
+<span class="location"><code>time.occ</code>:27</span>Process <code>delay</code>
+</h3>
+<p class="definition"><code>PROC delay (VAL INT ticks)</code></p>
+<div class="description"><p>Wait for a period of time.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ticks</code></td>
+<td class="param-desc">The delay in timer ticks</td>
+</tr></table></div>
+</div>
+<div id="name-delay.ms" class="declaration proc">
+<h3>
+<span class="location"><code>time.occ</code>:44</span>Process <code>delay.ms</code>
+</h3>
+<p class="definition"><code>PROC delay.ms (VAL INT ms)</code></p>
+<div class="description"><p>Wait for a period of time.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ms</code></td>
+<td class="param-desc">The delay in milliseconds</td>
+</tr></table></div>
+</div>
+</div></div></body>
+</html>

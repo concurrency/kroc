@@ -1,0 +1,834 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-string" class="module">
+<h1>Module <code>string</code>
+</h1>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="string.html#name-append.char">Process <code>append.char</code></a> - Write a byte into a string</li>
+<li>
+<a class="proc" href="string.html#name-append.hex.int">Process <code>append.hex.int</code></a> - Convert an integer into its representation as ASCII hexadecimal characters and write this into a given string</li>
+<li>
+<a class="proc" href="string.html#name-append.hex.int64">Process <code>append.hex.int64</code></a> - Convert a 64-bit integer into its representation as ASCII hexadecimal characters and write this into a given string</li>
+<li>
+<a class="proc" href="string.html#name-append.int">Process <code>append.int</code></a> - Convert an integer into its representation as ASCII decimal digits, with leading spaces if desired, and write this into a given string</li>
+<li>
+<a class="proc" href="string.html#name-append.int64">Process <code>append.int64</code></a> - Convert a 64-bit integer into its representation as ASCII decimal digits, with leading spaces if desired, and write this into a given string</li>
+<li>
+<a class="proc" href="string.html#name-append.real32">Process <code>append.real32</code></a> - Write an ASCII representation of a single precision real number into a given string</li>
+<li>
+<a class="proc" href="string.html#name-append.real64">Process <code>append.real64</code></a> - Write an ASCII representation of a double precision real number into a given string</li>
+<li>
+<a class="proc" href="string.html#name-append.text">Process <code>append.text</code></a> - Concatenate two strings</li>
+<li>
+<a class="function" href="string.html#name-char.pos">Function <code>char.pos</code></a> - Determine where the first occurrence of a character is in a given string</li>
+<li>
+<a class="function" href="string.html#name-compare.strings">Function <code>compare.strings</code></a> - Determine the lexicographical ordering of two strings</li>
+<li>
+<a class="proc" href="string.html#name-delete.string">Process <code>delete.string</code></a> - Remove a substring from a string</li>
+<li>
+<a class="function" href="string.html#name-eqstr">Function <code>eqstr</code></a> - Determine if two strings are identical or not</li>
+<li>
+<a class="proc" href="string.html#name-insert.string">Process <code>insert.string</code></a> - Insert a string into another string</li>
+<li>
+<a class="function" href="string.html#name-is.digit">Function <code>is.digit</code></a> - Determine whether the value of a byte lies in the inclusive range that delimits ASCII decimal digits</li>
+<li>
+<a class="function" href="string.html#name-is.hex.digit">Function <code>is.hex.digit</code></a> - Determine whether the value of a byte corresponds to the ASCII value of any hexadecimal digit</li>
+<li>
+<a class="function" href="string.html#name-is.id.char">Function <code>is.id.char</code></a> - Determine whether the value of a byte corresponds to the ASCII code of any legal occam identifier character</li>
+<li>
+<a class="function" href="string.html#name-is.in.range">Function <code>is.in.range</code></a> - Determine whether the value of a byte lies in the inclusive range between two others</li>
+<li>
+<a class="function" href="string.html#name-is.lower">Function <code>is.lower</code></a> - Determine whether the value of a byte lies in the inclusive range that delimits lower case ASCII characters</li>
+<li>
+<a class="function" href="string.html#name-is.upper">Function <code>is.upper</code></a> - Determine whether the value of a byte lies in the inclusive range that delimits upper case ASCII characters</li>
+<li>
+<a class="proc" href="string.html#name-next.int.from.line">Process <code>next.int.from.line</code></a> - Determine the next integer in a given line, skipping leading spaces and tabs</li>
+<li>
+<a class="proc" href="string.html#name-next.word.from.line">Process <code>next.word.from.line</code></a> - Determine the next word in a given line, skipping leading spaces and tabs</li>
+<li>
+<a class="function" href="string.html#name-search.match">Function <code>search.match</code></a> - Search a string for the first occurrence of any one of a given number of characters</li>
+<li>
+<a class="function" href="string.html#name-search.no.match">Function <code>search.no.match</code></a> - Search a string for the first occurrence of a character which does not match any of a given number of characters</li>
+<li>
+<a class="proc" href="string.html#name-str.shift">Process <code>str.shift</code></a> - Shift a substring</li>
+<li>
+<a class="function" href="string.html#name-string.pos">Function <code>string.pos</code></a> - Determine where the first occurrence is of a string within another string</li>
+<li>
+<a class="proc" href="string.html#name-to.lower.case">Process <code>to.lower.case</code></a> - Convert all upper case alphabetic characters in a given string to lower case</li>
+<li>
+<a class="proc" href="string.html#name-to.upper.case">Process <code>to.upper.case</code></a> - Convert all lower case alphabetic characters in a given string to upper case</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-next.word.from.line" class="declaration proc">
+<h3>
+<span class="location"><code>string5.occ</code>:63</span>Process <code>next.word.from.line</code>
+</h3>
+<p class="definition"><code>PROC next.word.from.line (VAL []BYTE line, INT ptr, len, []BYTE word, BOOL ok)</code></p>
+<div class="description">
+<p>Determine the next word in a given line, skipping leading spaces and tabs.</p>
+<p> Leading spaces and ( horizontal ) tabs ( from line[ ptr ], ptr on entry ) are skipped. A word continues until a space or tab or the end of the string is encountered.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>line</code></td>
+<td class="param-desc">a string containing the line from which a word is desired to be noted. The string is considered to be of length (SIZE line).</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>ptr</code></td>
+<td class="param-desc">on entry: the index of line from which to start the search for a word, i.e. the search begins at line[ ptr ] with ptr increasing. On exit: if ok is FALSE on entry, then unchanged; if ok is TRUE on entry, then is either the index of the space or tab immediately after the found word or is &gt;= (SIZE line) ( where it is only ever greater than if it was passed in as such ), whether ok is subsequently set to FALSE or not.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">if ok is FALSE on entry, then 0; if ok is TRUE on entry then gives the length of the first word found after the given starting position ( whether ok is subsequently set to FALSE or not ), which in the case of no word found is 0</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>word</code></td>
+<td class="param-desc">if ok is FALSE on entry, then undefined; if ok is TRUE on entry, then this contains the found word from line in the first len bytes, the remaining bytes being undefined, or if not large enough to contain the word or no word found it is undefined and ok is set to FALSE, though len gives the correct length of the word found</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>ok</code></td>
+<td class="param-desc">on entry: if FALSE, then len is set to 0, ptr and ok remain unchanged, and word is undefined; otherwise a search for a word is carried out. On exit: if FALSE on entry then FALSE; if TRUE on entry: FALSE if no word found; FALSE if a word found that was too large to fit into word; otherwise TRUE</td>
+</tr>
+</table></div>
+</div>
+<div id="name-next.int.from.line" class="declaration proc">
+<h3>
+<span class="location"><code>string5.occ</code>:131</span>Process <code>next.int.from.line</code>
+</h3>
+<p class="definition"><code>PROC next.int.from.line (VAL []BYTE line, INT ptr, number, BOOL ok)</code></p>
+<div class="description">
+<p>Determine the next integer in a given line, skipping leading spaces and tabs.</p>
+<p> Leading spaces and ( horizontal ) tabs ( from line[ ptr ], ptr on entry ) are skipped. The first sequence of characters found after skipping spaces and tabs is taken to be the integer desired; the integer continues until a space or tab or the end of the string is encountered. A + or - are permissible as the first character of the integer.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>line</code></td>
+<td class="param-desc">a string containing the line from which an integer is desired to be noted. The string is considered to be of length (SIZE line).</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>ptr</code></td>
+<td class="param-desc">on entry: the index of line from which to start the search for an integer, i.e. the search begins at line[ ptr ] with ptr increasing. On exit: if ok is FALSE on entry, then unchanged; if ok is TRUE on entry, then is either the index of the space or tab immediately after the found integer or is &gt;= (SIZE line) ( where it is only ever greater than if it was passed in as such ), whether ok is subsequently set to FALSE or not.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">if ok is FALSE on entry, then undefined; if ok is TRUE on entry: if ok TRUE on exit, the integer read, otherwise, undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>ok</code></td>
+<td class="param-desc">on entry: if FALSE, ptr and ok remain unchanged, and number is undefined; otherwise a search for an integer is carried out. On exit: if FALSE on entry then FALSE; if TRUE on entry: FALSE if there were no non-space or non-tab characters before the end of the string; FALSE if the first sequence of non-space, non-tab characters do not form an integer; FALSE if an integer found that overflowed the range of INT; otherwise TRUE</td>
+</tr>
+</table></div>
+</div>
+<div id="name-is.in.range" class="declaration function">
+<h3>
+<span class="location"><code>string0.occ</code>:40</span>Function <code>is.in.range</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.in.range (VAL BYTE char, bottom, top)</code></p>
+<div class="description"><p>Determine whether the value of a byte lies in the inclusive range between two others.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte the value of which is to be tested to see whether it lies in a given range</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>bottom</code></td>
+<td class="param-desc">the lowermost limit of the test range</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>top</code></td>
+<td class="param-desc">the uppermost limit of the test range</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the value of char lies in the range [value of bottom, value of top]; FALSE otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-is.upper" class="declaration function">
+<h3>
+<span class="location"><code>string0.occ</code>:50</span>Function <code>is.upper</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.upper (VAL BYTE char)</code></p>
+<div class="description"><p>Determine whether the value of a byte lies in the inclusive range that delimits upper case ASCII characters.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte the value of which is to be tested</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the value of char corresponds to an upper case ASCII character; FALSE otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-is.lower" class="declaration function">
+<h3>
+<span class="location"><code>string0.occ</code>:59</span>Function <code>is.lower</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.lower (VAL BYTE char)</code></p>
+<div class="description"><p>Determine whether the value of a byte lies in the inclusive range that delimits lower case ASCII characters.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte the value of which is to be tested</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the value of char corresponds to a lower case ASCII character; FALSE otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-is.digit" class="declaration function">
+<h3>
+<span class="location"><code>string0.occ</code>:68</span>Function <code>is.digit</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.digit (VAL BYTE char)</code></p>
+<div class="description"><p>Determine whether the value of a byte lies in the inclusive range that delimits ASCII decimal digits.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte the value of which is to be tested</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the value of char corresponds to a decimal digit according to the ASCII code; FALSE otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-is.hex.digit" class="declaration function">
+<h3>
+<span class="location"><code>string0.occ</code>:78</span>Function <code>is.hex.digit</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.hex.digit (VAL BYTE char)</code></p>
+<div class="description"><p>Determine whether the value of a byte corresponds to the ASCII value of any hexadecimal digit.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte the value of which is to be tested</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the value of char corresponds to a hexadecimal digit according to the ASCII code, where upper or lower case letters are allowed; FALSE otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-is.id.char" class="declaration function">
+<h3>
+<span class="location"><code>string0.occ</code>:90</span>Function <code>is.id.char</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.id.char (VAL BYTE char)</code></p>
+<div class="description"><p>Determine whether the value of a byte corresponds to the ASCII code of any legal occam identifier character.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte the value of which is to be tested</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the value of char corresponds to the ASCII code of any legal occam identifier character</td>
+</tr></table></div>
+</div>
+<div id="name-to.upper.case" class="declaration proc">
+<h3>
+<span class="location"><code>string0.occ</code>:105</span>Process <code>to.upper.case</code>
+</h3>
+<p class="definition"><code>PROC to.upper.case ([]BYTE str)</code></p>
+<div class="description">
+<p>Convert all lower case alphabetic characters in a given string to upper case.</p>
+<p> Assumes the ASCII character set. Characters which are not lower case letters remain unchanged.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string the lower case characters of which are to be converted to upper case</td>
+</tr></table></div>
+</div>
+<div id="name-to.lower.case" class="declaration proc">
+<h3>
+<span class="location"><code>string0.occ</code>:125</span>Process <code>to.lower.case</code>
+</h3>
+<p class="definition"><code>PROC to.lower.case ([]BYTE str)</code></p>
+<div class="description">
+<p>Convert all upper case alphabetic characters in a given string to lower case.</p>
+<p> Assumes the ASCII character set. Characters which are not upper case letters remain unchanged.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string the upper case characters of which are to be converted to lower case</td>
+</tr></table></div>
+</div>
+<div id="name-append.char" class="declaration proc">
+<h3>
+<span class="location"><code>string2.occ</code>:46</span>Process <code>append.char</code>
+</h3>
+<p class="definition"><code>PROC append.char (INT len, []BYTE str, VAL BYTE char)</code></p>
+<div class="description">
+<p>Write a byte into a string.</p>
+<p> If accessing str[ len ], for len on entry, is invalid then this routine acts as an invalid process.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the byte char will be written at str[ len ]; on exit: len will be one greater than it was on entry</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string to write char to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the byte which is to be written into str</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.text" class="declaration proc">
+<h3>
+<span class="location"><code>string2.occ</code>:67</span>Process <code>append.text</code>
+</h3>
+<p class="definition"><code>PROC append.text (INT len, []BYTE str, VAL []BYTE text)</code></p>
+<div class="description">
+<p>Concatenate two strings.</p>
+<p> If str is not long enough to hold the concatenation then this routine acts as an invalid process.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str where the first character of text is to go; on exit: the index of str immediately after the last character of text inserted, or SIZE str if the last character of text was placed in the last position of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the concatenation of what str was on entry with text, where text is placed in positions str[ len ] to str[ len + (SIZE text) - 1 ] inclusive, where len here is that on entry</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>text</code></td>
+<td class="param-desc">the string to be concatenated with str, text being the second string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.int" class="declaration proc">
+<h3>
+<span class="location"><code>string2.occ</code>:95</span>Process <code>append.int</code>
+</h3>
+<p class="definition"><code>PROC append.int (INT len, []BYTE str, VAL INT number, width)</code></p>
+<div class="description">
+<p>Convert an integer into its representation as ASCII decimal digits, with leading spaces if desired, and write this into a given string.</p>
+<p> If str overflows then this routine acts as an invalid process. The conversion of number will include a minus sign if applicable.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str at which the first character of the ASCII conversion of number is to be written; on exit: the index of str immediately after where the last character of the ASCII conversion of number was written, or SIZE str if this last character was written into the last positon of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string into which the ASCII conversion of number is to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the integer to be converted to an ASCII representation and then written into str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width of the ASCII representation of number: if number cannot be represented in width characters then the representation is widened as necessary; if width is larger than necessary then padding spaces are added on the left; it is an error if width is negative</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.hex.int" class="declaration proc">
+<h3>
+<span class="location"><code>string2.occ</code>:139</span>Process <code>append.hex.int</code>
+</h3>
+<p class="definition"><code>PROC append.hex.int (INT len, []BYTE str, VAL INT number, width)</code></p>
+<div class="description">
+<p>Convert an integer into its representation as ASCII hexadecimal characters and write this into a given string.</p>
+<p> If str overflows then this routine acts as an invalid process. The conversion of number includes a # as the first character, so that the representation is always ( width + 1 ) characters. Any hexadecimal characters which are letters will be in upper case.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str at which the first character of the ASCII hexadecimal of number is to be written; on exit: the index of str immediately after where the last character of the ASCII hexadecimal of number was written, or SIZE str if this last character was written into the last positon of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string into which the hexadecimal ASCII form of number is to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the integer to be converted to an ASCII hexadecimal representation and then written into str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width of the ASCII hexadecimal representation of number: if number cannot be represented in width characters then the representation is truncated at the left as necessary; otherwise the representation is padded on the left with 0's or F's to make up width characters; it is an error if width is negative</td>
+</tr>
+</table></div>
+</div>
+<div id="name-compare.strings" class="declaration function">
+<h3>
+<span class="location"><code>string1.occ</code>:42</span>Function <code>compare.strings</code>
+</h3>
+<p class="definition"><code>INT FUNCTION compare.strings (VAL []BYTE str1, str2)</code></p>
+<div class="description">
+<p>Determine the lexicographical ordering of two strings.</p>
+<p> Lexicographical ordering is that which uses the ordinal values of the characters for comparison in sequence along the strings. Here the ordinal values are the ASCII values.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name">
+<code>str1</code>, <code>str2</code>
+</td>
+<td class="param-desc">the strings to be compared</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">0 for exact equality ( of both length and content ) 1 for str2 is leading substring of str1 -1 for str1 is leading substring of str2 2 for str1 "later" than str2 -2 for str2 "later" than str1</td>
+</tr></table></div>
+</div>
+<div id="name-eqstr" class="declaration function">
+<h3>
+<span class="location"><code>string1.occ</code>:81</span>Function <code>eqstr</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION eqstr (VAL []BYTE s1, s2)</code></p>
+<div class="description"><p>Determine if two strings are identical or not.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name">
+<code>s1</code>, <code>s2</code>
+</td>
+<td class="param-desc">the strings to be compared</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">TRUE if the two strings are identical in length and content; FALSE otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-str.shift" class="declaration proc">
+<h3>
+<span class="location"><code>string1.occ</code>:115</span>Process <code>str.shift</code>
+</h3>
+<p class="definition"><code>PROC str.shift ([]BYTE str, VAL INT start, len, shift, BOOL not.done)</code></p>
+<div class="description"><p>Shift a substring.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">on entry: a string containing the substring to be shifted in positions [str FROM start FOR len]; on exit: the string once the substring has been shifted, the only bytes of string that have changed being those that the substring was shifted into</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>start</code></td>
+<td class="param-desc">the index of str of the first character of the substring to be shifted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of characters in the substring to be shifted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>shift</code></td>
+<td class="param-desc">the number of places to the right to move the substring by, so that a negative number for shift will move the substring left</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>not.done</code></td>
+<td class="param-desc">TRUE if any elements of the substring are shifted off either end of str ( though no access is made to invalid locations of str ); FALSE if the shifted substring is entirely within str</td>
+</tr>
+</table></div>
+</div>
+<div id="name-delete.string" class="declaration proc">
+<h3>
+<span class="location"><code>string1.occ</code>:223</span>Process <code>delete.string</code>
+</h3>
+<p class="definition"><code>PROC delete.string (INT len, []BYTE str, VAL INT start, size, BOOL not.done)</code></p>
+<div class="description"><p>Remove a substring from a string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the number of significant characters in str; on exit: if not.done is FALSE, the number of significant characters in str, being size subtracted from the entry value of len; otherwise the same as it was on entry</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">on entry: the string from which it is desired to delete a substring; on exit: if not.done is FALSE, the original string with substring deleted, where deleted means that the gap created by the deletion is filled from the left with those significant characters left in str that were originally after the end of the deleted substring, and so that the number of significant characters remaining in str is len on exit; otherwise the same as it was on entry</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>start</code></td>
+<td class="param-desc">the index of str of the first character of the substring to be deleted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>size</code></td>
+<td class="param-desc">the number of characters in the substring to be deleted</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>not.done</code></td>
+<td class="param-desc">TRUE if size is less than zero, start is less than zero, or (start + size) is greater than the entry value of len; FALSE otherwise. If TRUE then len and str are unchanged from their original values.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-insert.string" class="declaration proc">
+<h3>
+<span class="location"><code>string1.occ</code>:257</span>Process <code>insert.string</code>
+</h3>
+<p class="definition"><code>PROC insert.string (VAL []BYTE new.str, INT len, []BYTE str, VAL INT start, BOOL not.done)</code></p>
+<div class="description">
+<p>Insert a string into another string.</p>
+<p> If new.str can be fully inserted from the desired starting position, then any significant characters in str that were originally after str[ start ] are moved to the right by SIZE new.str, with not.done being set to TRUE if any of these characters are moved off the end of str ( though no invalid accesses are made ), FALSE otherwise</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>new.str</code></td>
+<td class="param-desc">the string to be inserted</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the number of significant characters in str; on exit: the number of significant characters in str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">on entry: the string into which new.str is to be inserted; on exit: the original str with new.str inserted, where any overflow of str at the high index results in truncation at the high index</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>start</code></td>
+<td class="param-desc">the index of str at which the first character of new.str should go</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>not.done</code></td>
+<td class="param-desc">TRUE if start &lt; 0, start &gt; len, len &lt; 0, new.str had to be truncated to fit, or if any significant characters of the original str could not be retained within str after the insertion; otherwise FALSE</td>
+</tr>
+</table></div>
+</div>
+<div id="name-string.pos" class="declaration function">
+<h3>
+<span class="location"><code>string1.occ</code>:308</span>Function <code>string.pos</code>
+</h3>
+<p class="definition"><code>INT FUNCTION string.pos (VAL []BYTE search, str)</code></p>
+<div class="description">
+<p>Determine where the first occurrence is of a string within another string.</p>
+<p> The searching is case sensitive.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>search</code></td>
+<td class="param-desc">the string to search for in the string str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string in which to search for the string search</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the lowest index of str at which begins a substring exactly matching the string search was found, or -1 if no such substring found</td>
+</tr></table></div>
+</div>
+<div id="name-char.pos" class="declaration function">
+<h3>
+<span class="location"><code>string1.occ</code>:373</span>Function <code>char.pos</code>
+</h3>
+<p class="definition"><code>INT FUNCTION char.pos (VAL BYTE search, VAL []BYTE str)</code></p>
+<div class="description">
+<p>Determine where the first occurrence of a character is in a given string.</p>
+<p> The searching is case sensitive.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>search</code></td>
+<td class="param-desc">the character to search for in the string str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string in which to search for the character search</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">the lowest index of str at which a byte exactly matching search was found, or -1 if no such byte found</td>
+</tr></table></div>
+</div>
+<div id="name-search.match" class="declaration function">
+<h3>
+<span class="location"><code>string1.occ</code>:397</span>Function <code>search.match</code>
+</h3>
+<p class="definition"><code>INT, BYTE FUNCTION search.match (VAL []BYTE possibles, str)</code></p>
+<div class="description"><p>Search a string for the first occurrence of any one of a given number of characters.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>possibles</code></td>
+<td class="param-desc">a string each byte of which is to be individually checked for in str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string in which to search for any of the various bytes contained in possibles</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">if a match found, this gives the lowest index of str at which the match occurs; otherwise -1</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"></td>
+<td class="param-desc">if a match found, this gives the byte of possibles which was found; otherwise 255( BYTE )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-search.no.match" class="declaration function">
+<h3>
+<span class="location"><code>string1.occ</code>:427</span>Function <code>search.no.match</code>
+</h3>
+<p class="definition"><code>INT, BYTE FUNCTION search.no.match (VAL []BYTE possibles, str)</code></p>
+<div class="description"><p>Search a string for the first occurrence of a character which does not match any of a given number of characters.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>possibles</code></td>
+<td class="param-desc">a string each byte of which is to be individually checked for non-existence in str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string in which to search for a byte which is not identical to any of the various bytes contained in possibles</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">if no match found, this gives the lowest index of str at which the lack of a match occurs; otherwise -1</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"></td>
+<td class="param-desc">if no match found, this gives the byte of str which was found not to match; otherwise 255( BYTE )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.real32" class="declaration proc">
+<h3>
+<span class="location"><code>string3.occ</code>:47</span>Process <code>append.real32</code>
+</h3>
+<p class="definition"><code>PROC append.real32 (INT len, []BYTE str, VAL REAL32 number, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Write an ASCII representation of a single precision real number into a given string.</p>
+<p> If str overflows this routine acts as an invalid process.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str at which the first character of the representation of number is to be placed; on exit: the index of str of the byte immediately following the last character in str of the representation of number, or (SIZE str) if the last character of the representation was placed into the last byte of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string into which to place the ASCII representation of number</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">a single precision real number in IEEE format</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values for the real number; see REAL32TOSTRING for their effect</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.real64" class="declaration proc">
+<h3>
+<span class="location"><code>string3.occ</code>:73</span>Process <code>append.real64</code>
+</h3>
+<p class="definition"><code>PROC append.real64 (INT len, []BYTE str, VAL REAL64 number, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Write an ASCII representation of a double precision real number into a given string.</p>
+<p> If str overflows this routine acts as an invalid process.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str at which the first character of the representation of number is to be placed; on exit: the index of str of the byte immediately following the last character in str of the representation of number, or (SIZE str) if the last character of the representation was placed into the last byte of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string into which to place the ASCII representation of number</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">a double precision real number in IEEE format</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values for the real number; see REAL64TOSTRING for their effect</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.int64" class="declaration proc">
+<h3>
+<span class="location"><code>string4.occ</code>:59</span>Process <code>append.int64</code>
+</h3>
+<p class="definition"><code>PROC append.int64 (INT len, []BYTE str, VAL INT64 number, VAL INT width)</code></p>
+<div class="description">
+<p>Convert a 64-bit integer into its representation as ASCII decimal digits, with leading spaces if desired, and write this into a given string.</p>
+<p> If str overflows then this routine acts as an invalid process. The conversion of number will include a minus sign if applicable.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str at which the first character of the ASCII conversion of number is to be written; on exit: the index of str immediately after where the last character of the ASCII conversion of number was written, or SIZE str if this last character was written into the last positon of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string into which the ASCII conversion of number is to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the 64-bit integer to be converted to an ASCII representation and then written into str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width of the ASCII representation of number: if number cannot be represented in width characters then the representation is widened as necessary; if width is larger than necessary then padding spaces are added on the left; it is an error for width to be negative</td>
+</tr>
+</table></div>
+</div>
+<div id="name-append.hex.int64" class="declaration proc">
+<h3>
+<span class="location"><code>string4.occ</code>:104</span>Process <code>append.hex.int64</code>
+</h3>
+<p class="definition"><code>PROC append.hex.int64 (INT len, []BYTE str, VAL INT64 number, VAL INT width)</code></p>
+<div class="description">
+<p>Convert a 64-bit integer into its representation as ASCII hexadecimal characters and write this into a given string.</p>
+<p> If str overflows then this routine acts as an invalid process. The conversion of number includes a # as the first character, so that the representation is always ( width + 1 ) characters. Any hexadecimal characters which are letters will be in upper case.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">on entry: the index of str at which the first character of the ASCII hexadecimal of number is to be written; on exit: the index of str immediately after where the last character of the ASCII hexadecimal of number was written, or SIZE str if this last character was written into the last positon of str</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>str</code></td>
+<td class="param-desc">the string into which the hexadecimal ASCII form of number is to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>number</code></td>
+<td class="param-desc">the 64-bit integer to be converted to an ASCII hexadecimal representation and then written into str</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width of the ASCII hexadecimal representation of number: if number cannot be represented in width characters then the representation is truncated at the left as necessary; otherwise the representation is padded on the left with 0's or F's to make up width characters; a negative value for width is an error</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Process library</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-proc" class="module">
+<h1>Module <code>proc</code> - Process library</h1>
+<div class="header"><div class="description">
+<p>Process library.</p>
+<p> The process library provides facilities for running other OS programs and manipulating the environment.</p>
+<p> Some <code>PROC</code>s are also provided in <code>ALT</code>able versions; for more information on how to use these, see the <code>sock</code> module documentation.</p>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "proc.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="record" href="proc.html#name-ENVIRONMENT">Record <code>ENVIRONMENT</code></a> - An environment variable<br><ul>
+<li>
+<a class="variable" href="proc.html#name-ident">Variable <code>ident</code></a> - Variable name</li>
+<li>
+<a class="variable" href="proc.html#name-ident.size">Variable <code>ident.size</code></a> - Length of variable name</li>
+<li>
+<a class="variable" href="proc.html#name-value">Variable <code>value</code></a> - Variable value</li>
+<li>
+<a class="variable" href="proc.html#name-value.size">Variable <code>value.size</code></a> - Length of variable value</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="proc.html#name-proc.altable.run">Process <code>proc.altable.run</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="proc.html#name-proc.altable.wrapper">Process <code>proc.altable.wrapper</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="proc.html#name-proc.os.getenv">Process <code>proc.os.getenv</code></a> - Get an environment variable</li>
+<li>
+<a class="proc" href="proc.html#name-proc.os.setenv">Process <code>proc.os.setenv</code></a> - Set an environment variable</li>
+<li>
+<a class="proc" href="proc.html#name-proc.os.setenv.array">Process <code>proc.os.setenv.array</code></a> - Set several environment variables</li>
+<li>
+<a class="proc" href="proc.html#name-proc.run">Process <code>proc.run</code></a> - Run an external program</li>
+<li>
+<a class="proc" href="proc.html#name-proc.setenv">Process <code>proc.setenv</code></a> - Fill in an    record</li>
+<li>
+<a class="proc" href="proc.html#name-proc.wrapper">Process <code>proc.wrapper</code></a> - Run an external program with FDs connected to channels</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-ENVIRONMENT" class="declaration record">
+<h3>
+<span class="location"><code>proclib.inc</code>:24</span>Record <code>ENVIRONMENT</code>
+</h3>
+<p class="definition"><code>DATA TYPE ENVIRONMENT</code></p>
+<div class="description"><p>An environment variable</p></div>
+<div class="children">
+<div id="name-ident" class="declaration variable">
+<h3>
+<span class="location"><code>proclib.inc</code>:26</span>Variable <code>ident</code>
+</h3>
+<p class="definition"><code>[128]BYTE</code></p>
+<div class="description"><p>Variable name</p></div>
+</div>
+<div id="name-ident.size" class="declaration variable">
+<h3>
+<span class="location"><code>proclib.inc</code>:27</span>Variable <code>ident.size</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Length of variable name</p></div>
+</div>
+<div id="name-value" class="declaration variable">
+<h3>
+<span class="location"><code>proclib.inc</code>:28</span>Variable <code>value</code>
+</h3>
+<p class="definition"><code>[128]BYTE</code></p>
+<div class="description"><p>Variable value</p></div>
+</div>
+<div id="name-value.size" class="declaration variable">
+<h3>
+<span class="location"><code>proclib.inc</code>:29</span>Variable <code>value.size</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Length of variable value</p></div>
+</div>
+</div>
+</div>
+<div id="name-proc.run" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:77</span>Process <code>proc.run</code>
+</h3>
+<p class="definition"><code>PROC proc.run (VAL []ENVIRONMENT env, VAL [][]BYTE command, VAL INT kyb.fd, scr.fd, err.fd, INT result)</code></p>
+<div class="description">
+<p>Run an external program.</p>
+<p> The <code>command</code> array specifies the program name (the first element) and arguments (the remaining elements). The child process is executed using <code>execvp</code>, so the system path will be searched if the program name is not an absolute path to an executable. Elements of <code>command</code> must be padded with <code>'*0'</code> characters.</p>
+<p> If any of the file descriptors are specified as <code>-1</code>, that descriptor will be closed in the child process. Since many programs will behave unpredictably if the standard file descriptors are closed when they are invoked, making use of this feature is not recommended.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []ENVIRONMENT</code></td>
+<td class="param-name"><code>env</code></td>
+<td class="param-desc">Additional environment variables</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][]BYTE</code></td>
+<td class="param-name"><code>command</code></td>
+<td class="param-desc">The process name and arguments</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>kyb.fd</code></td>
+<td class="param-desc">File descriptor to connect to the child process's standard input</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>scr.fd</code></td>
+<td class="param-desc">File descriptor to connect to the child process's standard output</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>err.fd</code></td>
+<td class="param-desc">File descriptor to connect to the child process's standard error</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occurred, otherwise the exit status of the process</td>
+</tr>
+</table></div>
+</div>
+<div id="name-proc.altable.run" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:86</span>Process <code>proc.altable.run</code>
+</h3>
+<p class="definition"><code>PROC proc.altable.run (CHAN OF BOOL kill, CHAN OF INT response, VAL []ENVIRONMENT env, VAL [][]BYTE command, VAL INT kyb.fd, scr.fd, err.fd, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="proc.html#name-proc.run"><code>proc.run</code></a>.</p></div>
+</div>
+<div id="name-proc.wrapper" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:140</span>Process <code>proc.wrapper</code>
+</h3>
+<p class="definition"><code>PROC proc.wrapper (VAL []ENVIRONMENT env, VAL [][]BYTE command, CHAN OF BYTE kyb.in, scr.out, err.out, INT result)</code></p>
+<div class="description">
+<p>Run an external program with FDs connected to channels. Like <a href="proc.html#name-proc.run"><code>proc.run</code></a>, but the child process's standard input, output and error file descriptors are connected to the given occam channels.</p>
+<p> For example:</p>
+<pre><code>PROC lsdemo (CHAN BYTE kyb?, scr!, err!)
+   VAL [][]BYTE command IS ["/bin/ls", ['-', 'a', 'l', 0, 0, 0, 0]]:
+   INT result:
+   SEQ
+     proc.wrapper ([], command, kyb, scr, err, result)
+ :</code></pre>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []ENVIRONMENT</code></td>
+<td class="param-name"><code>env</code></td>
+<td class="param-desc">Additional environment variables</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][]BYTE</code></td>
+<td class="param-name"><code>command</code></td>
+<td class="param-desc">The process name and arguments</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BYTE</code></td>
+<td class="param-name"><code>kyb.in</code></td>
+<td class="param-desc">Channel to connect to the child process's standard input</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BYTE</code></td>
+<td class="param-name"><code>scr.out</code></td>
+<td class="param-desc">Channel to connect to the child process's standard output</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BYTE</code></td>
+<td class="param-name"><code>err.out</code></td>
+<td class="param-desc">Channel to connect to the child process's standard error</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occurred, otherwise the exit status of the process</td>
+</tr>
+</table></div>
+</div>
+<div id="name-proc.altable.wrapper" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:230</span>Process <code>proc.altable.wrapper</code>
+</h3>
+<p class="definition"><code>PROC proc.altable.wrapper (CHAN OF BOOL kill, CHAN OF INT response, VAL []ENVIRONMENT env, VAL [][]BYTE command, CHAN OF BYTE kyb.in, scr.out, err.out, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="proc.html#name-proc.wrapper"><code>proc.wrapper</code></a>.</p></div>
+</div>
+<div id="name-proc.setenv" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:306</span>Process <code>proc.setenv</code>
+</h3>
+<p class="definition"><code>PROC proc.setenv (ENVIRONMENT env, VAL []BYTE ident, value)</code></p>
+<div class="description"><p>Fill in an <a href="proc.html#name-ENVIRONMENT"><code>ENVIRONMENT</code></a> record. This copies the given values into the record, and also sets the size fields correctly.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>ENVIRONMENT</code></td>
+<td class="param-name"><code>env</code></td>
+<td class="param-desc">The <a href="proc.html#name-ENVIRONMENT"><code>ENVIRONMENT</code></a> to set</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>ident</code></td>
+<td class="param-desc">The variable name</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">The variable value</td>
+</tr>
+</table></div>
+</div>
+<div id="name-proc.os.getenv" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:321</span>Process <code>proc.os.getenv</code>
+</h3>
+<p class="definition"><code>PROC proc.os.getenv (ENVIRONMENT env, VAL []BYTE ident)</code></p>
+<div class="description"><p>Get an environment variable. This reads the environment of the occam program.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>ENVIRONMENT</code></td>
+<td class="param-name"><code>env</code></td>
+<td class="param-desc">Environment variable returned</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>ident</code></td>
+<td class="param-desc">The variable name to look up</td>
+</tr>
+</table></div>
+</div>
+<div id="name-proc.os.setenv" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:333</span>Process <code>proc.os.setenv</code>
+</h3>
+<p class="definition"><code>PROC proc.os.setenv (VAL ENVIRONMENT env)</code></p>
+<div class="description"><p>Set an environment variable. This sets a variable in the environment of the occam program (and thus in the environment of any programs it runs in the future).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL ENVIRONMENT</code></td>
+<td class="param-name"><code>env</code></td>
+<td class="param-desc">Environment variable to set</td>
+</tr></table></div>
+</div>
+<div id="name-proc.os.setenv.array" class="declaration proc">
+<h3>
+<span class="location"><code>proclib.occ</code>:345</span>Process <code>proc.os.setenv.array</code>
+</h3>
+<p class="definition"><code>PROC proc.os.setenv.array (VAL []ENVIRONMENT env)</code></p>
+<div class="description"><p>Set several environment variables. This is semantically equivalent to calling <a href="proc.html#name-proc.os.setenv"><code>proc.os.setenv</code></a> several times, but may be more efficient if you're setting several variables.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL []ENVIRONMENT</code></td>
+<td class="param-name"><code>env</code></td>
+<td class="param-desc">Environment variables to set</td>
+</tr></table></div>
+</div>
+</div></div></body>
+</html>

@@ -1,0 +1,606 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>A utility library for terminal-based input and output</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-ttyutil" class="module">
+<h1>Module <code>ttyutil</code> - A utility library for terminal-based input and output</h1>
+<div class="header"><div class="description">
+<p>A utility library for terminal-based input and output.</p>
+<p> This library provides various utilities for use with VT220 compatible terminals.</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="group" href="ttyutil.html#name-ANSI">Group <code>ANSI</code></a> - VT220/ANSI rendering attributes<br><ul>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.BLACK">Constant <code>ANSI.BG.BLACK</code></a> - Black background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.BLUE">Constant <code>ANSI.BG.BLUE</code></a> - Blue background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.CYAN">Constant <code>ANSI.BG.CYAN</code></a> - Cyan background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.GREEN">Constant <code>ANSI.BG.GREEN</code></a> - Green background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.MAGENTA">Constant <code>ANSI.BG.MAGENTA</code></a> - Magenta background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.RED">Constant <code>ANSI.BG.RED</code></a> - Red background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.WHITE">Constant <code>ANSI.BG.WHITE</code></a> - White background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BG.YELLOW">Constant <code>ANSI.BG.YELLOW</code></a> - Yellow background</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BLINK">Constant <code>ANSI.BLINK</code></a> - Blinking</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.BOLD">Constant <code>ANSI.BOLD</code></a> - Bold rendering</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.BLACK">Constant <code>ANSI.FG.BLACK</code></a> - Black foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.BLUE">Constant <code>ANSI.FG.BLUE</code></a> - Blue foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.CYAN">Constant <code>ANSI.FG.CYAN</code></a> - Cyan foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.GREEN">Constant <code>ANSI.FG.GREEN</code></a> - Green foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.MAGENTA">Constant <code>ANSI.FG.MAGENTA</code></a> - Magenta foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.RED">Constant <code>ANSI.FG.RED</code></a> - Red foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.WHITE">Constant <code>ANSI.FG.WHITE</code></a> - White foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.FG.YELLOW">Constant <code>ANSI.FG.YELLOW</code></a> - Yellow foreground</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.INVERSE">Constant <code>ANSI.INVERSE</code></a> - Inverse rendering</li>
+<li>
+<a class="constant" href="ttyutil.html#name-ANSI.NORMAL">Constant <code>ANSI.NORMAL</code></a> - Normal/reset</li>
+</ul>
+</li>
+<li>
+<a class="group" href="ttyutil.html#name-KEY">Group <code>KEY</code></a> - Key constants<br><ul>
+<li>
+<a class="constant" href="ttyutil.html#name-KEY.F1">Constant <code>KEY.F1</code></a> - Function keys</li>
+<li>
+<a class="constant" href="ttyutil.html#name-KEY.UP">Constant <code>KEY.UP</code></a> - Arrow keys</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="ttyutil.html#name-TTYUTIL.DPY">Protocol <code>TTYUTIL.DPY</code></a> - Basic display protocol<br><ul>
+<li>
+<a class="tag" href="ttyutil.html#name-clear.screen">Tag <code>clear.screen</code></a> - Clear the screen</li>
+<li>
+<a class="tag" href="ttyutil.html#name-colours">Tag <code>colours</code></a> - Set ANSI/VT220 attributes (see   )</li>
+<li>
+<a class="tag" href="ttyutil.html#name-following">Tag <code>following</code></a> - Number of outputs to follow (when dealing with an unshared</li>
+<li>
+<a class="tag" href="ttyutil.html#name-int.xy">Tag <code>int.xy</code></a> - Integer at specific position (x, y, value)</li>
+<li>
+<a class="tag" href="ttyutil.html#name-quit">Tag <code>quit</code></a> - Quit the display process</li>
+<li>
+<a class="tag" href="ttyutil.html#name-string.xy">Tag <code>string.xy</code></a> - String at specific position (x, y, string)</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="ttyutil.html#name-TTYUTIL.MENU">Protocol <code>TTYUTIL.MENU</code></a> - Menu control protocol<br><ul>
+<li>
+<a class="tag" href="ttyutil.html#name-add.item">Tag <code>add.item</code></a> - Add menu item</li>
+<li>
+<a class="tag" href="ttyutil.html#name-del.item">Tag <code>del.item</code></a> - Delete a particular item</li>
+<li>
+<a class="tag" href="ttyutil.html#name-insert.item">Tag <code>insert.item</code></a> - Add menu item at a specific position</li>
+<li>
+<a class="tag" href="ttyutil.html#name-key.in">Tag <code>key.in</code></a> - Incoming key press</li>
+<li>
+<a class="tag" href="ttyutil.html#name-quit">Tag <code>quit</code></a> - Shutdown menu</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="ttyutil.html#name-TTYUTIL.MENU.IN">Protocol <code>TTYUTIL.MENU.IN</code></a> - Menu item handler input protocol (menu -&gt; handler)<br><ul>
+<li>
+<a class="tag" href="ttyutil.html#name-get.text">Tag <code>get.text</code></a> - Get item text</li>
+<li>
+<a class="tag" href="ttyutil.html#name-key.left">Tag <code>key.left</code></a> - Key item left</li>
+<li>
+<a class="tag" href="ttyutil.html#name-key.other">Tag <code>key.other</code></a> - Other key (e.g</li>
+<li>
+<a class="tag" href="ttyutil.html#name-key.right">Tag <code>key.right</code></a> - Key item right</li>
+<li>
+<a class="tag" href="ttyutil.html#name-quit">Tag <code>quit</code></a> - Menu quit (signals handler to quit)</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="ttyutil.html#name-TTYUTIL.MENU.OUT">Protocol <code>TTYUTIL.MENU.OUT</code></a> - Menu item handler output protocol (handler -&gt; menu)<br><ul>
+<li>
+<a class="tag" href="ttyutil.html#name-remove">Tag <code>remove</code></a> - Remove this item (self)</li>
+<li>
+<a class="tag" href="ttyutil.html#name-text">Tag <code>text</code></a> - Text update for menu</li>
+</ul>
+</li>
+<li>
+<a class="chantype" href="ttyutil.html#name-TTYUTIL.MENUITEM">Channel type <code>TTYUTIL.MENUITEM</code></a> - Menu item channel type<br><ul>
+<li>
+<a class="variable" href="ttyutil.html#name-in-">Variable <code>in?</code></a> - Menu item handler requests</li>
+<li>
+<a class="variable" href="ttyutil.html#name-out-">Variable <code>out!</code></a> - Menu item handler responses</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="ttyutil.html#name-ttyutil.display">Process <code>ttyutil.display</code></a> - Basic display process</li>
+<li>
+<a class="proc" href="ttyutil.html#name-ttyutil.display.shared">Process <code>ttyutil.display.shared</code></a> - Display process for shared screen output</li>
+<li>
+<a class="proc" href="ttyutil.html#name-ttyutil.keyhandler">Process <code>ttyutil.keyhandler</code></a> - Keyboard handler</li>
+<li>
+<a class="proc" href="ttyutil.html#name-ttyutil.menu">Process <code>ttyutil.menu</code></a> - Produces a controllable on-screen menu</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-ANSI" class="declaration group">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:33</span>Group <code>ANSI</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>VT220/ANSI rendering attributes.</p></div>
+<div class="children">
+<div id="name-ANSI.NORMAL" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:34</span>Constant <code>ANSI.NORMAL</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.NORMAL</code></p>
+<div class="description"><p>Normal/reset.</p></div>
+</div>
+<div id="name-ANSI.BOLD" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:35</span>Constant <code>ANSI.BOLD</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BOLD</code></p>
+<div class="description"><p>Bold rendering.</p></div>
+</div>
+<div id="name-ANSI.INVERSE" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:36</span>Constant <code>ANSI.INVERSE</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.INVERSE</code></p>
+<div class="description"><p>Inverse rendering.</p></div>
+</div>
+<div id="name-ANSI.BLINK" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:37</span>Constant <code>ANSI.BLINK</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BLINK</code></p>
+<div class="description"><p>Blinking.</p></div>
+</div>
+<div id="name-ANSI.FG.BLACK" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:39</span>Constant <code>ANSI.FG.BLACK</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.BLACK</code></p>
+<div class="description"><p>Black foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.RED" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:40</span>Constant <code>ANSI.FG.RED</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.RED</code></p>
+<div class="description"><p>Red foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.GREEN" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:41</span>Constant <code>ANSI.FG.GREEN</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.GREEN</code></p>
+<div class="description"><p>Green foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.YELLOW" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:42</span>Constant <code>ANSI.FG.YELLOW</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.YELLOW</code></p>
+<div class="description"><p>Yellow foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.BLUE" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:43</span>Constant <code>ANSI.FG.BLUE</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.BLUE</code></p>
+<div class="description"><p>Blue foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.MAGENTA" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:44</span>Constant <code>ANSI.FG.MAGENTA</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.MAGENTA</code></p>
+<div class="description"><p>Magenta foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.CYAN" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:45</span>Constant <code>ANSI.FG.CYAN</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.CYAN</code></p>
+<div class="description"><p>Cyan foreground.</p></div>
+</div>
+<div id="name-ANSI.FG.WHITE" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:46</span>Constant <code>ANSI.FG.WHITE</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.FG.WHITE</code></p>
+<div class="description"><p>White foreground.</p></div>
+</div>
+<div id="name-ANSI.BG.BLACK" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:48</span>Constant <code>ANSI.BG.BLACK</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.BLACK</code></p>
+<div class="description"><p>Black background.</p></div>
+</div>
+<div id="name-ANSI.BG.RED" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:49</span>Constant <code>ANSI.BG.RED</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.RED</code></p>
+<div class="description"><p>Red background.</p></div>
+</div>
+<div id="name-ANSI.BG.GREEN" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:50</span>Constant <code>ANSI.BG.GREEN</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.GREEN</code></p>
+<div class="description"><p>Green background.</p></div>
+</div>
+<div id="name-ANSI.BG.YELLOW" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:51</span>Constant <code>ANSI.BG.YELLOW</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.YELLOW</code></p>
+<div class="description"><p>Yellow background.</p></div>
+</div>
+<div id="name-ANSI.BG.BLUE" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:52</span>Constant <code>ANSI.BG.BLUE</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.BLUE</code></p>
+<div class="description"><p>Blue background.</p></div>
+</div>
+<div id="name-ANSI.BG.MAGENTA" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:53</span>Constant <code>ANSI.BG.MAGENTA</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.MAGENTA</code></p>
+<div class="description"><p>Magenta background.</p></div>
+</div>
+<div id="name-ANSI.BG.CYAN" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:54</span>Constant <code>ANSI.BG.CYAN</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.CYAN</code></p>
+<div class="description"><p>Cyan background.</p></div>
+</div>
+<div id="name-ANSI.BG.WHITE" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:55</span>Constant <code>ANSI.BG.WHITE</code>
+</h3>
+<p class="definition"><code>VAL BYTE ANSI.BG.WHITE</code></p>
+<div class="description"><p>White background.</p></div>
+</div>
+</div>
+</div>
+<div id="name-KEY" class="declaration group">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:57</span>Group <code>KEY</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Key constants. Values of 0-255 represent ASCII/locale-specific characters.</p></div>
+<div class="children">
+<div id="name-KEY.UP" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:60</span>Constant <code>KEY.UP</code>
+</h3>
+<p class="definition"><code>VAL INT KEY.UP</code></p>
+<div class="description"><p>Arrow keys.</p></div>
+</div>
+<div id="name-KEY.F1" class="declaration constant">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:66</span>Constant <code>KEY.F1</code>
+</h3>
+<p class="definition"><code>VAL INT KEY.F1</code></p>
+<div class="description"><p>Function keys.</p></div>
+</div>
+</div>
+</div>
+<div id="name-TTYUTIL.DPY" class="declaration protocol">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:97</span>Protocol <code>TTYUTIL.DPY</code>
+</h3>
+<p class="definition"><code>PROTOCOL TTYUTIL.DPY</code></p>
+<div class="description"><p>Basic display protocol.</p></div>
+<div class="children">
+<div id="name-following" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:99</span>Tag <code>following</code>
+</h3>
+<p class="definition"><code>following; INT</code></p>
+<div class="description"><p>Number of outputs to follow (when dealing with an unshared</p></div>
+</div>
+<div id="name-clear.screen" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:103</span>Tag <code>clear.screen</code>
+</h3>
+<p class="definition"><code>clear.screen</code></p>
+<div class="description"><p>Clear the screen.</p></div>
+</div>
+<div id="name-int.xy" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:104</span>Tag <code>int.xy</code>
+</h3>
+<p class="definition"><code>int.xy; INT; INT; INT</code></p>
+<div class="description"><p>Integer at specific position (x, y, value).</p></div>
+</div>
+<div id="name-string.xy" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:105</span>Tag <code>string.xy</code>
+</h3>
+<p class="definition"><code>string.xy; INT; INT; MOBILE []BYTE</code></p>
+<div class="description"><p>String at specific position (x, y, string).</p></div>
+</div>
+<div id="name-colours" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:106</span>Tag <code>colours</code>
+</h3>
+<p class="definition"><code>colours; MOBILE []BYTE</code></p>
+<div class="description"><p>Set ANSI/VT220 attributes (see <a href="ttyutil.html#name-ANSI"><code>ANSI</code></a>).</p></div>
+</div>
+<div id="name-quit" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:108</span>Tag <code>quit</code>
+</h3>
+<p class="definition"><code>quit</code></p>
+<div class="description"><p>Quit the display process.</p></div>
+</div>
+</div>
+</div>
+<div id="name-TTYUTIL.MENU.IN" class="declaration protocol">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:112</span>Protocol <code>TTYUTIL.MENU.IN</code>
+</h3>
+<p class="definition"><code>PROTOCOL TTYUTIL.MENU.IN</code></p>
+<div class="description"><p>Menu item handler input protocol (menu -&gt; handler).</p></div>
+<div class="children">
+<div id="name-get.text" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:114</span>Tag <code>get.text</code>
+</h3>
+<p class="definition"><code>get.text</code></p>
+<div class="description"><p>Get item text.</p></div>
+</div>
+<div id="name-key.left" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:115</span>Tag <code>key.left</code>
+</h3>
+<p class="definition"><code>key.left</code></p>
+<div class="description"><p>Key item left.</p></div>
+</div>
+<div id="name-key.right" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:116</span>Tag <code>key.right</code>
+</h3>
+<p class="definition"><code>key.right</code></p>
+<div class="description"><p>Key item right.</p></div>
+</div>
+<div id="name-key.other" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:117</span>Tag <code>key.other</code>
+</h3>
+<p class="definition"><code>key.other; INT</code></p>
+<div class="description"><p>Other key (e.g. return).</p></div>
+</div>
+<div id="name-quit" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:119</span>Tag <code>quit</code>
+</h3>
+<p class="definition"><code>quit</code></p>
+<div class="description"><p>Menu quit (signals handler to quit).</p></div>
+</div>
+</div>
+</div>
+<div id="name-TTYUTIL.MENU.OUT" class="declaration protocol">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:123</span>Protocol <code>TTYUTIL.MENU.OUT</code>
+</h3>
+<p class="definition"><code>PROTOCOL TTYUTIL.MENU.OUT</code></p>
+<div class="description"><p>Menu item handler output protocol (handler -&gt; menu).</p></div>
+<div class="children">
+<div id="name-text" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:125</span>Tag <code>text</code>
+</h3>
+<p class="definition"><code>text; MOBILE []BYTE</code></p>
+<div class="description"><p>Text update for menu.</p></div>
+</div>
+<div id="name-remove" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:126</span>Tag <code>remove</code>
+</h3>
+<p class="definition"><code>remove</code></p>
+<div class="description"><p>Remove this item (self).</p></div>
+</div>
+</div>
+</div>
+<div id="name-TTYUTIL.MENUITEM" class="declaration chantype">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:130</span>Channel type <code>TTYUTIL.MENUITEM</code>
+</h3>
+<p class="definition"><code>CHAN TYPE TTYUTIL.MENUITEM</code></p>
+<div class="description"><p>Menu item channel type.</p></div>
+<div class="children">
+<div id="name-in-" class="declaration variable">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:132</span>Variable <code>in?</code>
+</h3>
+<p class="definition"><code>CHAN TTYUTIL.MENU.IN</code></p>
+<div class="description"><p>Menu item handler requests.</p></div>
+</div>
+<div id="name-out-" class="declaration variable">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:133</span>Variable <code>out!</code>
+</h3>
+<p class="definition"><code>CHAN TTYUTIL.MENU.OUT</code></p>
+<div class="description"><p>Menu item handler responses.</p></div>
+</div>
+</div>
+</div>
+<div id="name-TTYUTIL.MENU" class="declaration protocol">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:137</span>Protocol <code>TTYUTIL.MENU</code>
+</h3>
+<p class="definition"><code>PROTOCOL TTYUTIL.MENU</code></p>
+<div class="description"><p>Menu control protocol.</p></div>
+<div class="children">
+<div id="name-add.item" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:139</span>Tag <code>add.item</code>
+</h3>
+<p class="definition"><code>add.item; TTYUTIL.MENUITEM!</code></p>
+<div class="description"><p>Add menu item.</p></div>
+</div>
+<div id="name-insert.item" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:140</span>Tag <code>insert.item</code>
+</h3>
+<p class="definition"><code>insert.item; INT; TTYUTIL.MENUITEM!</code></p>
+<div class="description"><p>Add menu item at a specific position.</p></div>
+</div>
+<div id="name-del.item" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:141</span>Tag <code>del.item</code>
+</h3>
+<p class="definition"><code>del.item; INT</code></p>
+<div class="description"><p>Delete a particular item.</p></div>
+</div>
+<div id="name-quit" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:142</span>Tag <code>quit</code>
+</h3>
+<p class="definition"><code>quit</code></p>
+<div class="description"><p>Shutdown menu.</p></div>
+</div>
+<div id="name-key.in" class="declaration tag">
+<h3>
+<span class="location"><code>ttyutil.inc</code>:144</span>Tag <code>key.in</code>
+</h3>
+<p class="definition"><code>key.in; INT</code></p>
+<div class="description"><p>Incoming key press.</p></div>
+</div>
+</div>
+</div>
+<div id="name-ttyutil.display" class="declaration proc">
+<h3>
+<span class="location"><code>ttyutil.occ</code>:57</span>Process <code>ttyutil.display</code>
+</h3>
+<p class="definition"><code>PROC ttyutil.display (CHAN TTYUTIL.DPY in?, CHAN BYTE out!)</code></p>
+<div class="description"><p>Basic display process.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN TTYUTIL.DPY</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Display commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Screen output.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ttyutil.display.shared" class="declaration proc">
+<h3>
+<span class="location"><code>ttyutil.occ</code>:112</span>Process <code>ttyutil.display.shared</code>
+</h3>
+<p class="definition"><code>PROC ttyutil.display.shared (CHAN TTYUTIL.DPY in?, SHARED CHAN BYTE out!)</code></p>
+<div class="description"><p>Display process for shared screen output.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN TTYUTIL.DPY</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Display commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>SHARED CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Screen output.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ttyutil.keyhandler" class="declaration proc">
+<h3>
+<span class="location"><code>ttyutil.occ</code>:229</span>Process <code>ttyutil.keyhandler</code>
+</h3>
+<p class="definition"><code>PROC ttyutil.keyhandler (CHAN BYTE in?, CHAN INT kill?, CHAN INT out!)</code></p>
+<div class="description"><p>Keyboard handler.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Raw keyboard input in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>kill</code></td>
+<td class="param-desc">Kill channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Processed keystrokes (see <a href="ttyutil.html#name-KEY"><code>KEY</code></a>).</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ttyutil.menu" class="declaration proc">
+<h3>
+<span class="location"><code>ttyutil.occ</code>:285</span>Process <code>ttyutil.menu</code>
+</h3>
+<p class="definition"><code>PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.MENU in?, SHARED CHAN TTYUTIL.DPY out!)</code></p>
+<div class="description"><p>Produces a controllable on-screen menu. Expects the first inputs to be addition of new menu items.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>x</code></td>
+<td class="param-desc">X position on screen.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>y</code></td>
+<td class="param-desc">Y position on screen.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of menu.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of menu.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>border</code></td>
+<td class="param-desc">Whether or not to draw a border.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN TTYUTIL.MENU</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Menu control channel (including keys).</td>
+</tr>
+<tr>
+<td class="param-type"><code>SHARED CHAN TTYUTIL.DPY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Display output channel.</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

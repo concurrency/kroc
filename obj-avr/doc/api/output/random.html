@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Random number generation</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-random" class="module">
+<h1>Module <code>random</code> - Random number generation</h1>
+<div class="header"><div class="description"><p>Random number generation.</p></div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="record" href="random.html#name-RANDOM.STATE">Record <code>RANDOM.STATE</code></a> - The internal state of the random number generator</li>
+<li>
+<a class="function" href="random.html#name-random.gaussian.real32">Function <code>random.gaussian.real32</code></a> - Generate a random  REAL32  from a Gaussian distribution</li>
+<li>
+<a class="function" href="random.html#name-random.gaussian.real32s">Function <code>random.gaussian.real32s</code></a> - Generate two random  REAL32 s from a Gaussian distribution</li>
+<li>
+<a class="function" href="random.html#name-random.get">Function <code>random.get</code></a> - Generate 32 bits of random data</li>
+<li>
+<a class="function" href="random.html#name-random.init">Function <code>random.init</code></a> - Initialise RNG state given (up to) 32 bits of initial entropy</li>
+<li>
+<a class="proc" href="random.html#name-random.init.from.time">Process <code>random.init.from.time</code></a> - Initialise an RNG using the current time as initial entropy</li>
+<li>
+<a class="function" href="random.html#name-random.int">Function <code>random.int</code></a> - Generate a random  INT </li>
+<li>
+<a class="function" href="random.html#name-random.real32">Function <code>random.real32</code></a> - Generate a random  REAL32 </li>
+<li>
+<a class="function" href="random.html#name-random.split">Function <code>random.split</code></a> - Given an RNG state, compute two new states deterministically from it that have a low probability of generating overlapping sequences</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-RANDOM.STATE" class="declaration record">
+<h3>
+<span class="location"><code>random.inc</code>:25</span>Record <code>RANDOM.STATE</code>
+</h3>
+<p class="definition"><code>DATA TYPE RANDOM.STATE</code></p>
+<div class="description"><p>The internal state of the random number generator.</p></div>
+</div>
+<div id="name-random.init" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:30</span>Function <code>random.init</code>
+</h3>
+<p class="definition"><code>RANDOM.STATE FUNCTION random.init (VAL INT32 seed)</code></p>
+<div class="description"><p>Initialise RNG state given (up to) 32 bits of initial entropy.</p></div>
+</div>
+<div id="name-random.get" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:36</span>Function <code>random.get</code>
+</h3>
+<p class="definition"><code>INT32, RANDOM.STATE FUNCTION random.get (VAL RANDOM.STATE state)</code></p>
+<div class="description"><p>Generate 32 bits of random data. Returns the data and a new RNG state.</p></div>
+</div>
+<div id="name-random.init.from.time" class="declaration proc">
+<h3>
+<span class="location"><code>random.occ</code>:64</span>Process <code>random.init.from.time</code>
+</h3>
+<p class="definition"><code>PROC random.init.from.time (RESULT RANDOM.STATE state)</code></p>
+<div class="description"><p>Initialise an RNG using the current time as initial entropy.</p></div>
+</div>
+<div id="name-random.split" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:75</span>Function <code>random.split</code>
+</h3>
+<p class="definition"><code>RANDOM.STATE, RANDOM.STATE FUNCTION random.split (VAL RANDOM.STATE state)</code></p>
+<div class="description"><p>Given an RNG state, compute two new states deterministically from it that have a low probability of generating overlapping sequences.</p></div>
+</div>
+<div id="name-random.int" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:94</span>Function <code>random.int</code>
+</h3>
+<p class="definition"><code>INT, RANDOM.STATE FUNCTION random.int (VAL INT max, VAL RANDOM.STATE state)</code></p>
+<div class="description"><p>Generate a random <code>INT</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Upper limit</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL RANDOM.STATE</code></td>
+<td class="param-name"><code>state</code></td>
+<td class="param-desc">Current RNG state</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Output value, uniformly distributed in the range [0, <code>max</code>).</td>
+</tr>
+<tr>
+<td class="param-type"><code>RANDOM.STATE</code></td>
+<td class="param-name"></td>
+<td class="param-desc">New RNG state</td>
+</tr>
+</table></div>
+</div>
+<div id="name-random.real32" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:112</span>Function <code>random.real32</code>
+</h3>
+<p class="definition"><code>REAL32, RANDOM.STATE FUNCTION random.real32 (VAL REAL32 max, VAL RANDOM.STATE state)</code></p>
+<div class="description"><p>Generate a random <code>REAL32</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Upper limit</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL RANDOM.STATE</code></td>
+<td class="param-name"><code>state</code></td>
+<td class="param-desc">Current RNG state</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Output value, uniformly distributed in the range [0, <code>max</code>).</td>
+</tr>
+<tr>
+<td class="param-type"><code>RANDOM.STATE</code></td>
+<td class="param-name"></td>
+<td class="param-desc">New RNG state</td>
+</tr>
+</table></div>
+</div>
+<div id="name-random.gaussian.real32s" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:133</span>Function <code>random.gaussian.real32s</code>
+</h3>
+<p class="definition"><code>REAL32, REAL32, RANDOM.STATE FUNCTION random.gaussian.real32s (VAL RANDOM.STATE state)</code></p>
+<div class="description">
+<p>Generate two random <code>REAL32</code>s from a Gaussian distribution.</p>
+<p> This function exists because the Box-Muller transform used to generate Gaussian-distributed numbers in this module produces two results at a time.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL RANDOM.STATE</code></td>
+<td class="param-name"><code>state</code></td>
+<td class="param-desc">Current RNG state</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name">
+<code>value1</code>, <code>value2</code>
+</td>
+<td class="param-desc">Two output values from a Gaussian distribution with mean 0.0 and standard deviation 1.0</td>
+</tr>
+<tr>
+<td class="param-type"><code>RANDOM.STATE</code></td>
+<td class="param-name"><code>new.state</code></td>
+<td class="param-desc">New RNG state</td>
+</tr>
+</table></div>
+</div>
+<div id="name-random.gaussian.real32" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:171</span>Function <code>random.gaussian.real32</code>
+</h3>
+<p class="definition"><code>REAL32, RANDOM.STATE FUNCTION random.gaussian.real32 (VAL RANDOM.STATE state)</code></p>
+<div class="description"><p>Generate a random <code>REAL32</code> from a Gaussian distribution.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL RANDOM.STATE</code></td>
+<td class="param-name"><code>state</code></td>
+<td class="param-desc">Current RNG state</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">Output value from a Gaussian distribution with mean 0.0 and standard deviation 1.0</td>
+</tr>
+<tr>
+<td class="param-type"><code>RANDOM.STATE</code></td>
+<td class="param-name"><code>new.state</code></td>
+<td class="param-desc">New RNG state</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

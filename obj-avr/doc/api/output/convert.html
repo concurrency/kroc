@@ -1,0 +1,413 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-convert" class="module">
+<h1>Module <code>convert</code>
+</h1>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="convert.html#name-REAL32TOSTRING">Process <code>REAL32TOSTRING</code></a> - Take a binary representation of a real number and convert it into a string of characters that is the decimal representation of that number, formatted according to given rules ( see Notes below )<br><ul>
+<li>
+<a class="proc" href="convert.html#name-Round">Process <code>Round</code></a> - Round a real number to the nearest integer</li>
+<li>
+<a class="proc" href="convert.html#name-WriteDec">Process <code>WriteDec</code></a> - Take an unsigned integer and convert it to the corresponding ASCII string, with the caveat that trailing zeros are not written</li>
+<li>
+<a class="proc" href="convert.html#name-restrict">Process <code>restrict</code></a> - Round a number that is given in the form of a character string</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="convert.html#name-REAL64TOSTRING">Process <code>REAL64TOSTRING</code></a> - Take a binary representation of a real number and convert it into a string of characters that is the decimal representation of that number, formatted according to given rules ( see Notes below )<br><ul>
+<li>
+<a class="proc" href="convert.html#name-Round">Process <code>Round</code></a> - Round a real number to the nearest integer</li>
+<li>
+<a class="proc" href="convert.html#name-WriteDec">Process <code>WriteDec</code></a> - Take an unsigned integer and convert it to the corresponding ASCII string, with the caveat that trailing zeros are not written</li>
+<li>
+<a class="proc" href="convert.html#name-restrict">Process <code>restrict</code></a> - Round a number that is given in the form of a character string</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="convert.html#name-STRINGTOINT16">Process <code>STRINGTOINT16</code></a> - Convert to an INT16 the value represented by string</li>
+<li>
+<a class="proc" href="convert.html#name-STRINGTOREAL32">Process <code>STRINGTOREAL32</code></a> - Converts BYTE array string into a REAL32 number X</li>
+<li>
+<a class="proc" href="convert.html#name-STRINGTOREAL64">Process <code>STRINGTOREAL64</code></a> - Converts BYTE array string into a REAL64 number X</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-REAL64TOSTRING" class="declaration proc">
+<h3>
+<span class="location"><code>r64strta.occ</code>:93</span>Process <code>REAL64TOSTRING</code>
+</h3>
+<p class="definition"><code>PROC REAL64TOSTRING (INT len, []BYTE string, VAL REAL64 X, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Take a binary representation of a real number and convert it into a string of characters that is the decimal representation of that number, formatted according to given rules ( see Notes below ).</p>
+<p> Rounding mode is round to nearest. Which format is used depends on the combination of values of Ip, Dp and X. In all cases, any digits beyond the 9th significant digit for single precision or 17th significant digit for double precision will be given as 0 and cannot be considered accurate. If string overflows this routine acts as an invalid process.</p>
+<p> Case (i): Ip = 0, Dp = 0 =&gt; free format Where possible a fixed point representation is used. If it is not used then exponential form is used. It is not used if more than 9 | 17 significant digits of accuracy ( single | double ) would be required before the decimal point, or if there are more than 3 zeroes after the decimal point before the first significant digit. In any case, the maximum number of characters returned in string is 15 for a single precision X, and 24 for a double precision X. string is left justified. If X is infinity or a NaN, then the string will contain one of "Inf", "-Inf" or "NaN", but not the quotes.</p>
+<p> Case (ii): Ip = 0, Dp &gt; 0 =&gt; exponential format The form of exponential format is, firstly either a minus sign or a space ( this latter instead of an explicit plus sign ), a fraction in the form &lt;digit&gt;.&lt;digits&gt;, the exponential symbol ( E ), the sign of the exponent ( + or - ), then the exponent, which is two digits for a single precision X, three digits for a double precision X. Dp gives the number of digits in the fraction ( 1 before the point, and the others after, but not counting the point ). The total number of characters in string is ( Dp + 6 ) for a single precision X, and ( Dp + 7 ) for a double precision X. If Dp = 1 then the fraction is of the form &lt;space&gt;digit ( which, note, will not result in occam syntax for the real ). If X is infinity or a NaN, then the string will contain one of " Inf", "-Inf" or " NaN", but not the quotes, padded on the right to fill the field width.</p>
+<p> Case (iii): Ip &gt; 0, Dp &gt; 0 =&gt; fixed point if possible Ip gives the number of places before the point, not counting the sign place; Dp the number of places after the point. Padding spaces are added on the left as necessary. If the number will not fit the format, then an exponential format is used with the same field width as the fixed point representation would have had. If Ip and Dp are very small then an exponential representation may not fit in the field width so the special value "Ov" with a sign is returned. There are always ( Ip + Dp + 2 ) characters in string, the 2 being the decimal point and the sign ( - or space ). If X is infinity or a NaN, then the string will contain one of " Inf", "-Inf" or " NaN", but not the quotes, padded on the right to fill the field width.</p>
+<p> All other combinations of Ip and Dp are meaningless and will cause an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of characters ( BYTEs ) of string occupied by the formatted decimal representation of the real number</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">an array containing the formatted decimal representation of the real number in the first len bytes, the remaining bytes being undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">the real number, in IEEE format, to be converted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Ip</code></td>
+<td class="param-desc">the first of two formatting values</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Dp</code></td>
+<td class="param-desc">the second of two formatting values</td>
+</tr>
+</table></div>
+<div class="children">
+<div id="name-Round" class="declaration proc">
+<h3>
+<span class="location"><code>r64strta.occ</code>:373</span>Process <code>Round</code>
+</h3>
+<p class="definition"><code>PROC Round (INT Xexp, [2]INT Xfrac, Xint, INT direction)</code></p>
+<div class="description">
+<p>Round a real number to the nearest integer.</p>
+<p> ( Xexp on entry ) &lt; ( 2 * the number of bits per word ) is assumed. This procedure only caters for non-negative numbers.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Xexp</code></td>
+<td class="param-desc">actual exponent, not biased one: on entry, of the number to round; on exit, of the rounded number</td>
+</tr>
+<tr>
+<td class="param-type"><code>[2]INT</code></td>
+<td class="param-name"><code>Xfrac</code></td>
+<td class="param-desc">the fractional part of the real with implicit bit explicit: on entry, of the number to round; on exit, of the rounded number</td>
+</tr>
+<tr>
+<td class="param-type"><code>[2]INT</code></td>
+<td class="param-name"><code>Xint</code></td>
+<td class="param-desc">the nearest integer that the combination of Xexp and Xfrac on entry give</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>direction</code></td>
+<td class="param-desc">this parameter is applicable only for numbers ending in 5: equal to -1 if the exact value was rounded down; equal to 0 if the value on entry is exact; equal to +1 if the exact value was rounded up</td>
+</tr>
+</table></div>
+</div>
+<div id="name-WriteDec" class="declaration proc">
+<h3>
+<span class="location"><code>r64strta.occ</code>:488</span>Process <code>WriteDec</code>
+</h3>
+<p class="definition"><code>PROC WriteDec ([]BYTE Buf, INT Length, VAL []INT Num)</code></p>
+<div class="description">
+<p>Take an unsigned integer and convert it to the corresponding ASCII string, with the caveat that trailing zeros are not written.</p>
+<p> An example of what is meant by not writing trailing zeros to Buf: if Num = 30, Length will be 1 and Buf[ 0 ] = '3' will be the only defined character in Buf.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>Buf</code></td>
+<td class="param-desc">contains the ASCII string representing the integer ( Num ) ( apart from trailing zeros ); the string is [ Buf FROM 0 FOR Length ]</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Length</code></td>
+<td class="param-desc">the number of meaningful characters in Buf</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>Num</code></td>
+<td class="param-desc">the integer to be converted, assumed unsigned: numbers from 0 to 4,294,967,295 inclusive, for 32-bit processors, or 0 to 65535 inclusive, for 16-bit processors</td>
+</tr>
+</table></div>
+</div>
+<div id="name-restrict" class="declaration proc">
+<h3>
+<span class="location"><code>r64strta.occ</code>:542</span>Process <code>restrict</code>
+</h3>
+<p class="definition"><code>PROC restrict ([]BYTE Buf, INT Places, LogX, VAL INT digits, INT direction)</code></p>
+<div class="description">
+<p>Round a number that is given in the form of a character string.</p>
+<p> "... if the two nearest representable values are equally near, the one with its least significant bit zero shall be delivered." IEEE 754-1985, Sec 4.1. LSB zero &lt;=&gt; last digit is even. Any resultant trailing zeroes in Buf are elided.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>Buf</code></td>
+<td class="param-desc">the character string holding the number, assumed not to have trailing zeroes</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Places</code></td>
+<td class="param-desc">the actual number of characters in the string</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>LogX</code></td>
+<td class="param-desc">floor( log10( number in Buf ) )</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>digits</code></td>
+<td class="param-desc">the number of digits wanted in the rounded number; assumed greater than or equal to zero</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>direction</code></td>
+<td class="param-desc">this parameter is applicable only for numbers in Buf ending in 5: equal to -1 if the exact value was rounded down; equal to 0 if the value in Buf is exact; equal to +1 if the exact value was rounded up</td>
+</tr>
+</table></div>
+</div>
+</div>
+</div>
+<div id="name-STRINGTOREAL32" class="declaration proc">
+<h3>
+<span class="location"><code>strr32ta.occ</code>:44</span>Process <code>STRINGTOREAL32</code>
+</h3>
+<p class="definition"><code>PROC STRINGTOREAL32 (BOOL Error, REAL32 X, VAL []BYTE string)</code></p>
+<div class="description">
+<p>Converts BYTE array string into a REAL32 number X</p>
+<p> If the value represented by string overflows the REAL32 range then an appropriately signed infinity is returned in X. If the absolute value represented by string is in the range 2^-149 to just less than 2^-126, then a denormalised number is returned. If the absolute value represented by string is less than 2^-149 then zero is returned. If the syntax of string is incorrect then not only is Error set to TRUE, but a Not-a-Number ( NaN ) is returned for X. If there remain characters after the end of the longest correct string, although Error is set to TRUE, X is returned with the value of the correct part of string</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>Error</code></td>
+<td class="param-desc">TRUE if the syntax of string is not correct occam, or if there are any characters after the end of the longest correct string; otherwise it is FALSE</td>
+</tr>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">the binary representation in IEEE single precision format of the real decimal in string</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">a sequence of ASCII characters</td>
+</tr>
+</table></div>
+</div>
+<div id="name-STRINGTOINT16" class="declaration proc">
+<h3>
+<span class="location"><code>int16ta.occ</code>:51</span>Process <code>STRINGTOINT16</code>
+</h3>
+<p class="definition"><code>PROC STRINGTOINT16 (BOOL Error, INT16 n, VAL []BYTE string)</code></p>
+<div class="description">
+<p>Convert to an INT16 the value represented by string.</p>
+<p> A plus ( + ) or a minus ( - ) sign is allowed in the first position of string. An illegal character is any non-numeric character, other than + or - in the first position.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>Error</code></td>
+<td class="param-desc">TRUE if the value of string overflows the INT16 range; TRUE if there are any illegal characters in string; FALSE otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT16</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if the value that string represents does not overflow the INT16 range then n is the INT16 that string represents, with the convention that n is zero if string is empty; otherwise n will be the value of the portion of string up to any illegal character, where n is zero if an illegal character is in the first position of string, or if the INT16 range overflows n will contain the low order bits of the binary representation of string</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">the characters that are to be converted to an INT16</td>
+</tr>
+</table></div>
+</div>
+<div id="name-STRINGTOREAL64" class="declaration proc">
+<h3>
+<span class="location"><code>strr64ta.occ</code>:49</span>Process <code>STRINGTOREAL64</code>
+</h3>
+<p class="definition"><code>PROC STRINGTOREAL64 (BOOL Error, REAL64 X, VAL []BYTE string)</code></p>
+<div class="description">
+<p>Converts BYTE array string into a REAL64 number X</p>
+<p> A sign may start string. If the value represented by string overflows the REAL64 range then an appropriately signed infinity is returned in X. If the absolute value represented by string is in the range 2^-1074 to just less than 2^-1022, then a denormalised number is returned. If the absolute value represented by string is less than 2^-1074 then zero is returned. If the syntax of string is incorrect then not only is Error set to TRUE, but a Not-a-Number ( NaN ) is returned for X. If there remain characters after the end of the longest correct string, although Error is set to TRUE, X is returned with the value of the correct part of string</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>Error</code></td>
+<td class="param-desc">TRUE if the syntax of string is not correct occam, or if there are any characters after the end of the longest correct string; otherwise it is FALSE</td>
+</tr>
+<tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">the binary representation in IEEE double precision format of the real decimal in string</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">a sequence of ASCII characters</td>
+</tr>
+</table></div>
+</div>
+<div id="name-REAL32TOSTRING" class="declaration proc">
+<h3>
+<span class="location"><code>r32strta.occ</code>:90</span>Process <code>REAL32TOSTRING</code>
+</h3>
+<p class="definition"><code>PROC REAL32TOSTRING (INT len, []BYTE string, VAL REAL32 X, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Take a binary representation of a real number and convert it into a string of characters that is the decimal representation of that number, formatted according to given rules ( see Notes below ).</p>
+<p> Rounding mode is round to nearest. Which format is used depends on the combination of values of Ip, Dp and X. In all cases, any digits beyond the 9th significant digit for single precision or 17th significant digit for double precision will be given as 0 and cannot be considered accurate. If string overflows this routine acts as an invalid process.</p>
+<p> Case (i): Ip = 0, Dp = 0 =&gt; free format Where possible a fixed point representation is used. If it is not used then exponential form is used. It is not used if more than 9 | 17 significant digits of accuracy ( single | double ) would be required before the decimal point, or if there are more than 3 zeroes after the decimal point before the first significant digit. In any case, the maximum number of characters returned in string is 15 for a single precision X, and 24 for a double precision X. string is left justified. If X is infinity or a NaN, then the string will contain one of "Inf", "-Inf" or "NaN", but not the quotes.</p>
+<p> Case (ii): Ip = 0, Dp &gt; 0 =&gt; exponential format The form of exponential format is, firstly either a minus sign or a space ( this latter instead of an explicit plus sign ), a fraction in the form &lt;digit&gt;.&lt;digits&gt;, the exponential symbol ( E ), the sign of the exponent ( + or - ), then the exponent, which is two digits for a single precision X, three digits for a double precision X. Dp gives the number of digits in the fraction ( 1 before the point, and the others after, but not counting the point ). The total number of characters in string is ( Dp + 6 ) for a single precision X, and ( Dp + 7 ) for a double precision X.</p>
+<p> If Dp = 1 then the fraction is of the form &lt;space&gt;digit ( which, note, will not result in occam syntax for the real ). If X is infinity or a NaN, then the string will contain one of " Inf", "-Inf" or " NaN", but not the quotes, padded on the right to fill the field width.</p>
+<p> Case (iii): Ip &gt; 0, Dp &gt; 0 =&gt; fixed point if possible Ip gives the number of places before the point, not counting the sign place; Dp the number of places after the point. Padding spaces are added on the left as necessary. If the number will not fit the format, then an exponential format is used with the same field width as the fixed point representation would have had. If Ip and Dp are very small then an exponential representation may not fit in the field width so the special value "Ov" with a sign is returned. There are always ( Ip + Dp + 2 ) characters in string, the 2 being the decimal point and the sign ( - or space ). If X is infinity or a NaN, then the string will contain one of " Inf", "-Inf" or " NaN", but not the quotes, padded on the right to fill the field width.</p>
+<p> All other combinations of Ip and Dp are meaningless and will cause an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of characters ( BYTEs ) of string occupied by the formatted decimal representation of the real number</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">an array containing the formatted decimal representation of the real number in the first len bytes, the remaining bytes being undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">the real number, in IEEE format, to be converted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Ip</code></td>
+<td class="param-desc">the first of two formatting values</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Dp</code></td>
+<td class="param-desc">the second of two formatting values</td>
+</tr>
+</table></div>
+<div class="children">
+<div id="name-Round" class="declaration proc">
+<h3>
+<span class="location"><code>r32strta.occ</code>:349</span>Process <code>Round</code>
+</h3>
+<p class="definition"><code>PROC Round (INT Xexp, Xfrac, Xint, direction)</code></p>
+<div class="description">
+<p>Round a real number to the nearest integer.</p>
+<p> ( Xexp on entry ) &lt; ( number of bits per word ) is assumed. This procedure only caters for non-negative numbers.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Xexp</code></td>
+<td class="param-desc">actual exponent, not biased one: on entry, of the number to round; on exit, of the rounded number</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Xfrac</code></td>
+<td class="param-desc">the fractional part of the real with implicit bit explicit: on entry, of the number to round; on exit, of the rounded number</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Xint</code></td>
+<td class="param-desc">the nearest integer that the combination of Xexp and Xfrac on entry give</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>direction</code></td>
+<td class="param-desc">this parameter is applicable only for numbers ending in 5: equal to -1 if the exact value was rounded down; equal to 0 if the value on entry is exact; equal to +1 if the exact value was rounded up</td>
+</tr>
+</table></div>
+</div>
+<div id="name-WriteDec" class="declaration proc">
+<h3>
+<span class="location"><code>r32strta.occ</code>:404</span>Process <code>WriteDec</code>
+</h3>
+<p class="definition"><code>PROC WriteDec ( []BYTE Buf, INT Length, VAL INT Num )</code></p>
+<div class="description">
+<p>Take an unsigned integer and convert it to the corresponding ASCII string, with the caveat that trailing zeros are not written.</p>
+<p> An example of what is meant by not writing trailing zeros to Buf: if Num = 30, Length will be 1 and Buf[ 0 ] = '3' will be the only defined character in Buf.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>Buf</code></td>
+<td class="param-desc">contains the ASCII string representing the integer ( Num ) ( apart from trailing zeros ); the string is [ Buf FROM 0 FOR Length ]</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Length</code></td>
+<td class="param-desc">the number of meaningful characters in Buf</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Num</code></td>
+<td class="param-desc">the integer to be converted, assumed unsigned: numbers from 0 to 4,294,967,295 inclusive, for 32-bit processors, or 0 to 65535 inclusive, for 16-bit processors</td>
+</tr>
+</table></div>
+</div>
+<div id="name-restrict" class="declaration proc">
+<h3>
+<span class="location"><code>r32strta.occ</code>:453</span>Process <code>restrict</code>
+</h3>
+<p class="definition"><code>PROC restrict ([]BYTE Buf, INT Places, LogX, VAL INT digits, INT direction)</code></p>
+<div class="description">
+<p>Round a number that is given in the form of a character string.</p>
+<p> "... if the two nearest representable values are equally near, the one with its least significant bit zero shall be delivered." IEEE 754-1985, Sec 4.1. LSB zero &lt;=&gt; last digit is even. Any resultant trailing zeroes in Buf are elided.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>Buf</code></td>
+<td class="param-desc">the character string holding the number, assumed not to have trailing zeroes</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>Places</code></td>
+<td class="param-desc">the actual number of characters in the string</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>LogX</code></td>
+<td class="param-desc">floor( log10( number in Buf ) )</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>digits</code></td>
+<td class="param-desc">the number of digits wanted in the rounded number; assumed greater than or equal to zero</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>direction</code></td>
+<td class="param-desc">this parameter is applicable only for numbers in Buf ending in 5: equal to -1 if the exact value was rounded down; equal to 0 if the value in Buf is exact; equal to +1 if the exact value was rounded up</td>
+</tr>
+</table></div>
+</div>
+</div>
+</div>
+</div></div></body>
+</html>

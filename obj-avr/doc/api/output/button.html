@@ -1,0 +1,187 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>A Button library that uses OpenGL and SDL to render a window of clickable/configurable buttons</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-button" class="module">
+<h1>Module <code>button</code> - A Button library that uses OpenGL and SDL to render a window of clickable/configurable buttons</h1>
+<div class="header">
+<div class="description">
+<p>A Button library that uses OpenGL and SDL to render a window of clickable/configurable buttons. To use this library:</p>
+<pre><code>#INCLUDE "button.module"</code></pre>
+</div>
+<h4>Maintainer:</h4>
+<div class="maintainer"><p>Damian Dimmich &lt;djd20@kent.ac.uk&gt;</p></div>
+</div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="protocol" href="button.html#name-BUTTONCFG">Protocol <code>BUTTONCFG</code></a> - This is used for button setup<br><ul>
+<li>
+<a class="tag" href="button.html#name-colour">Tag <code>colour</code></a> - set the button color by specifying Red, Blue and Green values</li>
+<li>
+<a class="tag" href="button.html#name-disable">Tag <code>disable</code></a> - disable button</li>
+<li>
+<a class="tag" href="button.html#name-enable">Tag <code>enable</code></a> - enable button</li>
+<li>
+<a class="tag" href="button.html#name-name">Tag <code>name</code></a> - Change the name of the button</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="button.html#name-CLICK">Protocol <code>CLICK</code></a> - Sends a copy of the name of the button (when clicked)</li>
+<li>
+<a class="proc" href="button.html#name-makeRasterFont">Process <code>makeRasterFont</code></a> - This initialises the font included and must be called before any of the other PROC's can be used</li>
+<li>
+<a class="proc" href="button.html#name-printString">Process <code>printString</code></a> - Print a string in an OpenGL context</li>
+<li>
+<a class="proc" href="button.html#name-printStringi">Process <code>printStringi</code></a> - Print a string of a given length in an OpenGL context</li>
+<li>
+<a class="proc" href="button.html#name-setup.button.window">Process <code>setup.button.window</code></a> - Sets up and configures the button network</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-makeRasterFont" class="declaration proc">
+<h3>
+<span class="location"><code>font2.occ</code>:14</span>Process <code>makeRasterFont</code>
+</h3>
+<p class="definition"><code>PROC makeRasterFont(RESULT INT fontOffset)</code></p>
+<div class="description"><p>This initialises the font included and must be called before any of the other PROC's can be used.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>fontOffset</code></td>
+<td class="param-desc">will contain a value that is needed when calling the other PROC's. It should be passed uninitialised.</td>
+</tr></table></div>
+</div>
+<div id="name-printString" class="declaration proc">
+<h3>
+<span class="location"><code>font2.occ</code>:35</span>Process <code>printString</code>
+</h3>
+<p class="definition"><code>PROC printString(VAL []BYTE s, VAL INT fontOffset)</code></p>
+<div class="description"><p>Print a string in an OpenGL context. Once makeRasterFont has run, you can use this to print strings in an OpenGL context. Generally you will want to set the location you want to render the font by making a call to glRasterPos2i or similar.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">the string you want to render</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fontOffset</code></td>
+<td class="param-desc">the value that you recieved from calling makeRasterFont</td>
+</tr>
+</table></div>
+</div>
+<div id="name-printStringi" class="declaration proc">
+<h3>
+<span class="location"><code>font2.occ</code>:56</span>Process <code>printStringi</code>
+</h3>
+<p class="definition"><code>PROC printStringi(VAL []BYTE s, VAL INT fontOffset, VAL INT length)</code></p>
+<div class="description"><p>Print a string of a given length in an OpenGL context. Once makeRasterFont has run, you can use this to print strings in an OpenGL context. This PROC is like printString but it allows you to choose how many characters in a string you want to print. Generally you will want to set the location you want to render the font by making a call to glRasterPos2i or similar.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">the string you want to render</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fontOffset</code></td>
+<td class="param-desc">the value that you recieved from calling makeRasterFont</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">the number of characters you want to print</td>
+</tr>
+</table></div>
+</div>
+<div id="name-CLICK" class="declaration protocol">
+<h3>
+<span class="location"><code>button.inc</code>:34</span>Protocol <code>CLICK</code>
+</h3>
+<p class="definition"><code>PROTOCOL CLICK IS MOBILE []BYTE:</code></p>
+<div class="description"><p>Sends a copy of the name of the button (when clicked).</p></div>
+</div>
+<div id="name-BUTTONCFG" class="declaration protocol">
+<h3>
+<span class="location"><code>button.inc</code>:37</span>Protocol <code>BUTTONCFG</code>
+</h3>
+<p class="definition"><code>PROTOCOL BUTTONCFG</code></p>
+<div class="description"><p>This is used for button setup.</p></div>
+<div class="children">
+<div id="name-enable" class="declaration tag">
+<h3>
+<span class="location"><code>button.inc</code>:39</span>Tag <code>enable</code>
+</h3>
+<p class="definition"><code>enable</code></p>
+<div class="description"><p>enable button</p></div>
+</div>
+<div id="name-disable" class="declaration tag">
+<h3>
+<span class="location"><code>button.inc</code>:40</span>Tag <code>disable</code>
+</h3>
+<p class="definition"><code>disable</code></p>
+<div class="description"><p>disable button</p></div>
+</div>
+<div id="name-name" class="declaration tag">
+<h3>
+<span class="location"><code>button.inc</code>:41</span>Tag <code>name</code>
+</h3>
+<p class="definition"><code>name; MOBILE []BYTE</code></p>
+<div class="description"><p>Change the name of the button</p></div>
+</div>
+<div id="name-colour" class="declaration tag">
+<h3>
+<span class="location"><code>button.inc</code>:42</span>Tag <code>colour</code>
+</h3>
+<p class="definition"><code>colour; REAL32; REAL32; REAL32</code></p>
+<div class="description"><p>set the button color by specifying Red, Blue and Green values</p></div>
+</div>
+</div>
+</div>
+<div id="name-setup.button.window" class="declaration proc">
+<h3>
+<span class="location"><code>button.occ</code>:314</span>Process <code>setup.button.window</code>
+</h3>
+<p class="definition"><code>PROC setup.button.window([][]CHAN CLICK click!, [][]CHAN BUTTONCFG configure?, CHAN BYTE scr!, CHAN BYTE cntrl.quit!, VAL INT size.x, size.y)</code></p>
+<div class="description"><p>Sets up and configures the button network. This is the only proc that should be run in this library by a user.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[][]CHAN CLICK</code></td>
+<td class="param-name"><code>click</code></td>
+<td class="param-desc">this is the click notification channel. Buttons send down these channels when they are clicked.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]CHAN BUTTONCFG</code></td>
+<td class="param-name"><code>configure</code></td>
+<td class="param-desc">these are the button configuration channels - they can be used for changing channel color, text, etc..</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>scr</code></td>
+<td class="param-desc">generally one would pass the error (err) channel as a parameter here so that the library can notify the user in case graphics initialisation goes wrong.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>cntrl.quit</code></td>
+<td class="param-desc">this channel should be checked as it carries quit signals (like when someone closes the application window)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>size.x</code></td>
+<td class="param-desc">the window size in the X direction (nr of pixels)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>size.y</code></td>
+<td class="param-desc">the window size in the Y direction (nr of pixels) to the program. This allows a clean shutdown of the network.</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

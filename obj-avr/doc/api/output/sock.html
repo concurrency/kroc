@@ -1,0 +1,1633 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Socket library</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-sock" class="module">
+<h1>Module <code>sock</code> - Socket library</h1>
+<div class="header"><div class="description">
+<p>Socket library.</p>
+<p> The occam socket library uses the blocking system call functionality within KRoC to allow socket operations to be performed asynchronously.</p>
+<p> The interfaces in this module are wrappers around the POSIX sockets interface; see <code>socket(2)</code> and related manual pages for more information on their semantics. The wrappers are not complete; in particular, protocols other than IPv4 TCP and UDP are not currently supported.</p>
+<p> It is sometimes useful to be able to terminate a blocking call before it finishes, or to <code>ALT</code> on its completion. To support this, some <code>PROC</code>s are provided in both "normal" and "<code>ALT</code>able" versions. The <code>ALT</code>able versions have two extra channel parameters which may be used to terminate the call.</p>
+<p> To terminate a blocking call, the process running in parallel with the call sends a signal down the <code>kill</code> channel. It should then await a response from the <code>response</code> channel indicating the outcome of the kill:</p>
+<ul>
+<li> <code>-2</code>: the call had completed normally before it received the kill signal </li>
+<li> <code>-1</code>: the call had already finished, and the kill had no effect </li>
+<li> <code>0</code>: the call was terminated successfully </li>
+<li> <code>1</code>: the call was in the process of terminating, and the kill had no effect </li>
+<li> <code>2</code>: the call had started terminating, and the kill had no effect</li>
+</ul>
+<p> When the call terminates normally, i.e. upon completion, a value of <code>-2</code> is sent down the <code>response</code> channel. The process should indicate to the blocking call that it may terminate by sending a signal down the <code>kill</code> channel. The net result is that however the call terminates, a value should be expected from <code>response</code>, and a signal should be sent down <code>kill</code>.</p>
+<p> A read from a socket, with a timeout, may be implemented thus:</p>
+<pre><code>CHAN OF BOOL kill:
+ CHAN OF INT response:
+ PAR
+   --{{{  blocking call
+   socket.altable.read (kill, response, sock, buffer, bytes, result)
+   --}}}
+   --{{{  wait for response or timeout
+   TIMER tim:
+   INT t:
+   SEQ
+     tim ? t
+     ALT
+       --{{{  incoming response for normal termination
+       INT any:
+       response ? any
+         kill ! TRUE
+       --}}}
+       --{{{  timeout (after 1 second)
+       tim ? AFTER (t PLUS 1000000)
+         INT k.result:
+         SEQ
+           kill ! TRUE
+           response ? k.result
+           -- take action on k.result if necessary
+       --}}}
+   --}}}</code></pre>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "sock.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="group" href="sock.html#name-AF">Group <code>AF</code></a> - Address families<br><ul><li>
+<a class="constant" href="sock.html#name-AF.INET">Constant <code>AF.INET</code></a> - IPv4</li></ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-INADDR">Group <code>INADDR</code></a> - IPv4 addresses<br><ul>
+<li>
+<a class="constant" href="sock.html#name-INADDR.ANY">Constant <code>INADDR.ANY</code></a> - Any IPv4 address, when binding</li>
+<li>
+<a class="constant" href="sock.html#name-INADDR.BROADCAST">Constant <code>INADDR.BROADCAST</code></a> - Broadcast to all reachable hosts</li>
+<li>
+<a class="constant" href="sock.html#name-INADDR.LOOPBACK">Constant <code>INADDR.LOOPBACK</code></a> - The local machine, via the loopback interface</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-IPPORT">Group <code>IPPORT</code></a> - Well-known TCP and UDP ports</li>
+<li>
+<a class="group" href="sock.html#name-IPPROTO">Group <code>IPPROTO</code></a> - IP protocols<br><ul>
+<li>
+<a class="constant" href="sock.html#name-IPPROTO.TCP">Constant <code>IPPROTO.TCP</code></a> - TCP</li>
+<li>
+<a class="constant" href="sock.html#name-IPPROTO.UDP">Constant <code>IPPROTO.UDP</code></a> - UDP</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-MSG">Group <code>MSG</code></a> - Flag constants for    and  </li>
+<li>
+<a class="group" href="sock.html#name-OPTION">Group <code>OPTION</code></a> - Boolean values for  <br><ul>
+<li>
+<a class="constant" href="sock.html#name-OPTION.OFF">Constant <code>OPTION.OFF</code></a> - Boolean option turned off</li>
+<li>
+<a class="constant" href="sock.html#name-OPTION.ON">Constant <code>OPTION.ON</code></a> - Boolean option turned on</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-PF">Group <code>PF</code></a> - Protocol families<br><ul><li>
+<a class="constant" href="sock.html#name-PF.INET">Constant <code>PF.INET</code></a> - IPv4</li></ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-SHUT">Group <code>SHUT</code></a> - Mode constants for  <br><ul>
+<li>
+<a class="constant" href="sock.html#name-SHUT.RD">Constant <code>SHUT.RD</code></a> - Disallow further receives</li>
+<li>
+<a class="constant" href="sock.html#name-SHUT.RDWR">Constant <code>SHUT.RDWR</code></a> - Disallow further sends and receives</li>
+<li>
+<a class="constant" href="sock.html#name-SHUT.WR">Constant <code>SHUT.WR</code></a> - Disallow further sends</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-SO">Group <code>SO</code></a> - Generic options for  <br><ul>
+<li>
+<a class="constant" href="sock.html#name-SO.BROADCAST">Constant <code>SO.BROADCAST</code></a> - Allow transmission to broadcast addresses</li>
+<li>
+<a class="constant" href="sock.html#name-SO.DEBUG">Constant <code>SO.DEBUG</code></a> - Enable debug tracing</li>
+<li>
+<a class="constant" href="sock.html#name-SO.DONTROUTE">Constant <code>SO.DONTROUTE</code></a> - Bypass routing table lookup</li>
+<li>
+<a class="constant" href="sock.html#name-SO.ERROR">Constant <code>SO.ERROR</code></a> - Get pending error and clear</li>
+<li>
+<a class="constant" href="sock.html#name-SO.KEEPALIVE">Constant <code>SO.KEEPALIVE</code></a> - Send keep-alive messages periodically</li>
+<li>
+<a class="constant" href="sock.html#name-SO.OOBINLINE">Constant <code>SO.OOBINLINE</code></a> - Leave received out-of-band data inline</li>
+<li>
+<a class="constant" href="sock.html#name-SO.RCVBUF">Constant <code>SO.RCVBUF</code></a> - Receive buffer size</li>
+<li>
+<a class="constant" href="sock.html#name-SO.RCVLOWAT">Constant <code>SO.RCVLOWAT</code></a> - Receive buffer low-water mark</li>
+<li>
+<a class="constant" href="sock.html#name-SO.REUSEADDR">Constant <code>SO.REUSEADDR</code></a> - Allow addresses to be reused when binding</li>
+<li>
+<a class="constant" href="sock.html#name-SO.SNDBUF">Constant <code>SO.SNDBUF</code></a> - Send buffer size</li>
+<li>
+<a class="constant" href="sock.html#name-SO.SNDLOWAT">Constant <code>SO.SNDLOWAT</code></a> - Send buffer low-water mark</li>
+<li>
+<a class="constant" href="sock.html#name-SO.TYPE">Constant <code>SO.TYPE</code></a> - Get socket type</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-SOCK">Group <code>SOCK</code></a> - Socket types<br><ul>
+<li>
+<a class="constant" href="sock.html#name-SOCK.DGRAM">Constant <code>SOCK.DGRAM</code></a> - Datagram sockets (like UDP)</li>
+<li>
+<a class="constant" href="sock.html#name-SOCK.STREAM">Constant <code>SOCK.STREAM</code></a> - Stream sockets (like TCP)</li>
+</ul>
+</li>
+<li>
+<a class="record" href="sock.html#name-SOCKET">Record <code>SOCKET</code></a> - The information which is known about a socket<br><ul>
+<li>
+<a class="variable" href="sock.html#name-error">Variable <code>error</code></a> - The error code of the last operation on this socket, if it failed</li>
+<li>
+<a class="variable" href="sock.html#name-fd">Variable <code>fd</code></a> - File descriptor</li>
+<li>
+<a class="variable" href="sock.html#name-local.addr">Variable <code>local.addr</code></a> - Local IPv4 address, in host order</li>
+<li>
+<a class="variable" href="sock.html#name-local.port">Variable <code>local.port</code></a> - Local port number</li>
+<li>
+<a class="variable" href="sock.html#name-remote.addr">Variable <code>remote.addr</code></a> - Remote IPv4 address, in host order</li>
+<li>
+<a class="variable" href="sock.html#name-remote.port">Variable <code>remote.port</code></a> - Remote port number</li>
+<li>
+<a class="variable" href="sock.html#name-s.family">Variable <code>s.family</code></a> - Socket family (one of   )</li>
+<li>
+<a class="variable" href="sock.html#name-s.proto">Variable <code>s.proto</code></a> - IP protocol (one of   )</li>
+<li>
+<a class="variable" href="sock.html#name-s.type">Variable <code>s.type</code></a> - Socket type (one of   )</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-SOL">Group <code>SOL</code></a> - Option levels for  <br><ul>
+<li>
+<a class="constant" href="sock.html#name-SOL.SOCKET">Constant <code>SOL.SOCKET</code></a> - Options for sockets of all protocols</li>
+<li>
+<a class="constant" href="sock.html#name-SOL.TCP">Constant <code>SOL.TCP</code></a> - Options for TCP sockets</li>
+<li>
+<a class="constant" href="sock.html#name-SOL.UDP">Constant <code>SOL.UDP</code></a> - Options for UDP sockets</li>
+</ul>
+</li>
+<li>
+<a class="group" href="sock.html#name-TCP">Group <code>TCP</code></a> - TCP-related options for  <br><ul>
+<li>
+<a class="constant" href="sock.html#name-TCP.CORK">Constant <code>TCP.CORK</code></a> - While set, pause sending of partial frames</li>
+<li>
+<a class="constant" href="sock.html#name-TCP.DEFER.ACCEPT">Constant <code>TCP.DEFER.ACCEPT</code></a> - Defer accept until data arrives</li>
+<li>
+<a class="constant" href="sock.html#name-TCP.KEEPINTVL">Constant <code>TCP.KEEPINTVL</code></a> - Seconds between keep-alive messages</li>
+<li>
+<a class="constant" href="sock.html#name-TCP.NODELAY">Constant <code>TCP.NODELAY</code></a> - Disable Nagle algorithm (don't delay small packets)</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="sock.html#name-socket.accept">Process <code>socket.accept</code></a> - Accept an incoming connection on a listening socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.addr.of.host">Process <code>socket.addr.of.host</code></a> - Find the address of a host given its name</li>
+<li>
+<a class="proc" href="sock.html#name-socket.addrs.of.host">Process <code>socket.addrs.of.host</code></a> - Find all the addresses of a host given its name</li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.accept">Process <code>socket.altable.accept</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.connect">Process <code>socket.altable.connect</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.fullread">Process <code>socket.altable.fullread</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.fullwrite">Process <code>socket.altable.fullwrite</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.read">Process <code>socket.altable.read</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.recvfrom">Process <code>socket.altable.recvfrom</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.altable.write">Process <code>socket.altable.write</code></a> - ALT able version of   </li>
+<li>
+<a class="proc" href="sock.html#name-socket.bind">Process <code>socket.bind</code></a> - Bind a socket to a local address</li>
+<li>
+<a class="proc" href="sock.html#name-socket.close">Process <code>socket.close</code></a> - Close a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.connect">Process <code>socket.connect</code></a> - Connect a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.create">Process <code>socket.create</code></a> - Create a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.create.connect.tcp">Process <code>socket.create.connect.tcp</code></a> - Create a TCP socket and connect it</li>
+<li>
+<a class="proc" href="sock.html#name-socket.create.listen.tcp">Process <code>socket.create.listen.tcp</code></a> - Create a TCP socket and make it listen on a local port</li>
+<li>
+<a class="proc" href="sock.html#name-socket.create.listen.udp">Process <code>socket.create.listen.udp</code></a> - Create a UDP socket and bind it to a local port</li>
+<li>
+<a class="proc" href="sock.html#name-socket.create.tcp">Process <code>socket.create.tcp</code></a> - Create a TCP socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.create.udp">Process <code>socket.create.udp</code></a> - Create a UDP socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.error">Process <code>socket.error</code></a> - Get last error as a string</li>
+<li>
+<a class="proc" href="sock.html#name-socket.fullread">Process <code>socket.fullread</code></a> - Read a fixed number of bytes from a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.fullwrite">Process <code>socket.fullwrite</code></a> - Write a fixed number of bytes to a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.fullwrite.addr">Process <code>socket.fullwrite.addr</code></a> - Write a fixed amount of data from memory to a socket (unsafe)</li>
+<li>
+<a class="proc" href="sock.html#name-socket.getdomainname">Process <code>socket.getdomainname</code></a> - Get the NIS domain name of the local machine</li>
+<li>
+<a class="proc" href="sock.html#name-socket.gethostname">Process <code>socket.gethostname</code></a> - Get the hostname of the local machine</li>
+<li>
+<a class="proc" href="sock.html#name-socket.getpeername">Process <code>socket.getpeername</code></a> - Get the remote address of a connected socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.getsockname">Process <code>socket.getsockname</code></a> - Get the local address of a connected socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.getsockopt">Process <code>socket.getsockopt</code></a> - Get a socket option</li>
+<li>
+<a class="proc" href="sock.html#name-socket.host.of.addr">Process <code>socket.host.of.addr</code></a> - Find the name of a host given its address</li>
+<li>
+<a class="proc" href="sock.html#name-socket.ip.of.addr">Process <code>socket.ip.of.addr</code></a> - Format an IPv4 address as a dotted-decimal string</li>
+<li>
+<a class="proc" href="sock.html#name-socket.listen">Process <code>socket.listen</code></a> - Make a socket listen for incoming connections</li>
+<li>
+<a class="proc" href="sock.html#name-socket.naddrs.of.host">Process <code>socket.naddrs.of.host</code></a> - Find the number of addresses of a host given its name</li>
+<li>
+<a class="proc" href="sock.html#name-socket.read">Process <code>socket.read</code></a> - Read from a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.recvfrom">Process <code>socket.recvfrom</code></a> - Receive a datagram from a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.sendto">Process <code>socket.sendto</code></a> - Send a datagram message through a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.setdomainname">Process <code>socket.setdomainname</code></a> - Set the NIS domain name of the local machine</li>
+<li>
+<a class="proc" href="sock.html#name-socket.sethostname">Process <code>socket.sethostname</code></a> - Set the hostname of the local machine</li>
+<li>
+<a class="proc" href="sock.html#name-socket.setsockopt">Process <code>socket.setsockopt</code></a> - Set a socket option</li>
+<li>
+<a class="proc" href="sock.html#name-socket.shutdown">Process <code>socket.shutdown</code></a> - Close a socket in one or both directions</li>
+<li>
+<a class="proc" href="sock.html#name-socket.write">Process <code>socket.write</code></a> - Write to a socket</li>
+<li>
+<a class="proc" href="sock.html#name-socket.write.addr">Process <code>socket.write.addr</code></a> - Write data from memory to a socket (unsafe)</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-socket.create" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:181</span>Process <code>socket.create</code>
+</h3>
+<p class="definition"><code>PROC socket.create (RESULT SOCKET sock, VAL INT domain, VAL INT type, VAL INT protocol)</code></p>
+<div class="description">
+<p>Create a socket. If the socket is successfully created, a valid file descriptor will be in the <code>fd</code> field of the returned socket, otherwise it will contain <code>-1</code>. Example:</p>
+<pre><code>SOCKET sock:
+ SEQ
+   create.socket (sock, PF.INET, SOCK.STREAM, IPPROTO.TCP)
+   IF
+     sock[fd] = -1
+       SEQ
+         -- failed to create the socket
+         STOP
+     TRUE
+       SKIP</code></pre>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>RESULT SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The returned socket</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>domain</code></td>
+<td class="param-desc">Address family (one of <a href="sock.html#name-AF"><code>AF</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>type</code></td>
+<td class="param-desc">Socket type (one of <a href="sock.html#name-SOCK"><code>SOCK</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>protocol</code></td>
+<td class="param-desc">IP protocol (one of <a href="sock.html#name-IPPROTO"><code>IPPROTO</code></a>)</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.close" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:194</span>Process <code>socket.close</code>
+</h3>
+<p class="definition"><code>PROC socket.close (SOCKET sock)</code></p>
+<div class="description"><p>Close a socket. No result is provided. The socket is shut down before being closed to cause the return of any parallel readers/writers.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The socket to close</td>
+</tr></table></div>
+</div>
+<div id="name-socket.read" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:213</span>Process <code>socket.read</code>
+</h3>
+<p class="definition"><code>PROC socket.read (SOCKET sock, []BYTE buffer, VAL INT count, INT result)</code></p>
+<div class="description"><p>Read from a socket. Read as much data as is currently available from a socket into a buffer.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">Buffer to write data to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>count</code></td>
+<td class="param-desc">The maximum amount of data to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> on error, <code>0</code> on end-of-file (remote connection closed), otherwise the number of bytes read into <code>buffer</code> (which may be less than <code>count</code>)</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.fullread" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:230</span>Process <code>socket.fullread</code>
+</h3>
+<p class="definition"><code>PROC socket.fullread (SOCKET sock, []BYTE buffer, VAL INT count, INT result)</code></p>
+<div class="description"><p>Read a fixed number of bytes from a socket. Read exactly <code>count</code> bytes from a socket into a buffer. This is equivalent to repeatedly calling <a href="sock.html#name-socket.read"><code>socket.read</code></a> until the requested number of bytes have been read.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">Buffer to write data to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>count</code></td>
+<td class="param-desc">The amount of data to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> on error, <code>0</code> on end-of-file (remote connection closed), otherwise the number of bytes read into <code>buffer</code>
+</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.write" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:243</span>Process <code>socket.write</code>
+</h3>
+<p class="definition"><code>PROC socket.write (SOCKET sock, VAL []BYTE buffer, INT result)</code></p>
+<div class="description"><p>Write to a socket. Write as much data as possible from the buffer to the socket.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">Buffer to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> on error, otherwise the number of bytes written (which may be less than the length of <code>buffer</code>)</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.fullwrite" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:258</span>Process <code>socket.fullwrite</code>
+</h3>
+<p class="definition"><code>PROC socket.fullwrite (SOCKET sock, VAL []BYTE buffer, INT result)</code></p>
+<div class="description"><p>Write a fixed number of bytes to a socket. Write the entirety of <code>buffer</code> to a socket. This is equivalent to repeatedly calling <code>socket.write</code> until the entire buffer has been written.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">Buffer to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> on error, otherwise the number of bytes written</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.write.addr" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:277</span>Process <code>socket.write.addr</code>
+</h3>
+<p class="definition"><code>PROC socket.write.addr (SOCKET sock, VAL INT addr, size, INT result)</code></p>
+<div class="description">
+<p>Write data from memory to a socket (unsafe). Similar to <a href="sock.html#name-socket.write"><code>socket.write</code></a>, but reading data directly from the given memory address.</p>
+<p> As this operation accesses memory directly, it is inherently unsafe, and should not be used in most occam programs.</p>
+</div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">Memory address to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>size</code></td>
+<td class="param-desc">Maximum number of bytes to write</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> on error, otherwise the number of bytes written (which may be less than <code>size</code>)</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.fullwrite.addr" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:296</span>Process <code>socket.fullwrite.addr</code>
+</h3>
+<p class="definition"><code>PROC socket.fullwrite.addr (SOCKET sock, VAL INT addr, size, INT result)</code></p>
+<div class="description">
+<p>Write a fixed amount of data from memory to a socket (unsafe). Similar to <a href="sock.html#name-socket.fullwrite"><code>socket.fullwrite</code></a>, but reading data directly from the given memory address.</p>
+<p> As this operation accesses memory directly, it is inherently unsafe, and should not be used in most occam programs.</p>
+</div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">Memory address to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>size</code></td>
+<td class="param-desc">Number of bytes to write</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> on error, otherwise the number of bytes written</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.connect" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:308</span>Process <code>socket.connect</code>
+</h3>
+<p class="definition"><code>PROC socket.connect (SOCKET sock, INT result)</code></p>
+<div class="description"><p>Connect a socket. Attempt to make a connection to the remote port specified in <code>sock</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to connect</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.listen" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:326</span>Process <code>socket.listen</code>
+</h3>
+<p class="definition"><code>PROC socket.listen (SOCKET sock, VAL INT backlog, INT result)</code></p>
+<div class="description"><p>Make a socket listen for incoming connections. The socket should have already been bound to a host/port combination using <a href="sock.html#name-socket.bind"><code>socket.bind</code></a>. After this, <a href="sock.html#name-socket.accept"><code>socket.accept</code></a> can be used to accept incoming connections.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to listen</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>backlog</code></td>
+<td class="param-desc">The number of incoming connections that may be queued by the kernel while the program is not accepting them; most operating systems impose arbitrary limits on this, so changing it will have little effect</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, otherwise the file descriptor of the accepted socket</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.bind" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:340</span>Process <code>socket.bind</code>
+</h3>
+<p class="definition"><code>PROC socket.bind (SOCKET sock, INT result)</code></p>
+<div class="description"><p>Bind a socket to a local address. Set the local address of a socket from the fields in <code>sock</code>. <code>sock[local.addr]</code> should be a valid address for one of the host's interfaces, or the constant <code>INADDR.ANY</code> to specify all interfaces.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to bind</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.accept" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:355</span>Process <code>socket.accept</code>
+</h3>
+<p class="definition"><code>PROC socket.accept (SOCKET sock, SOCKET client, INT result)</code></p>
+<div class="description"><p>Accept an incoming connection on a listening socket. The socket must already have had <a href="sock.html#name-socket.bind"><code>socket.bind</code></a> and <a href="sock.html#name-socket.listen"><code>socket.listen</code></a> called on it successfully. The returned socket <code>client</code> is the newly-accepted connection; its fields are filled in with the details of the new connection.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to accept a connection from</td>
+</tr>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>client</code></td>
+<td class="param-desc">New socket for the accepted connection</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.sendto" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:374</span>Process <code>socket.sendto</code>
+</h3>
+<p class="definition"><code>PROC socket.sendto (SOCKET sock, VAL []BYTE message, VAL INT flags, INT result)</code></p>
+<div class="description"><p>Send a datagram message through a socket. This is used to send messages over connectionless protocols like UDP. The destination host and port are specified in the <code>sock</code> record; the host can be specified as <a href="sock.html#name-INADDR.BROADCAST"><code>INADDR.BROADCAST</code></a> to broadcast to all hosts on the local network, provided the <a href="sock.html#name-SO.BROADCAST"><code>SO.BROADCAST</code></a> option has been set on the socket.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to send datagram from</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>message</code></td>
+<td class="param-desc">Message to send</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>flags</code></td>
+<td class="param-desc">Bitwise or of <a href="sock.html#name-MSG"><code>MSG</code></a> flags (normally either <code>0</code> or <a href=".html#name-"><code></code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, otherwise the number of bytes sent</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.recvfrom" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:392</span>Process <code>socket.recvfrom</code>
+</h3>
+<p class="definition"><code>PROC socket.recvfrom (SOCKET sock, []BYTE message, VAL INT flags, INT result)</code></p>
+<div class="description"><p>Receive a datagram from a socket. This is used to receive messages over connectionless protocols like UDP. The socket must have been bound to a local address. The host and port from which the message was received are filled in in the <code>sock</code> record.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to receive datagram from</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>message</code></td>
+<td class="param-desc">Buffer for the received datagram</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>flags</code></td>
+<td class="param-desc">Bitwise or of <a href="sock.html#name-MSG"><code>MSG</code></a> flags (normally either <code>0</code> or <a href=".html#name-"><code></code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occurred, otherwise the number of bytes received</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.setsockopt" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:408</span>Process <code>socket.setsockopt</code>
+</h3>
+<p class="definition"><code>PROC socket.setsockopt (SOCKET sock, VAL INT level, VAL INT option, VAL INT value, INT result)</code></p>
+<div class="description"><p>Set a socket option. This only supports options with integer arguments, such as <a href="sock.html#name-SO.BROADCAST"><code>SO.BROADCAST</code></a> and <a href="sock.html#name-SO.REUSEADDR"><code>SO.REUSEADDR</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to set options upon</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>level</code></td>
+<td class="param-desc">Option level (one of <a href="sock.html#name-SOL"><code>SOL</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>option</code></td>
+<td class="param-desc">Option to set (protocol-dependent; usually one of <a href="sock.html#name-SO"><code>SO</code></a> or <a href="sock.html#name-TCP"><code>TCP</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">New value for the option</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.getsockopt" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:424</span>Process <code>socket.getsockopt</code>
+</h3>
+<p class="definition"><code>PROC socket.getsockopt (SOCKET sock, VAL INT level, VAL INT option, INT value, INT result)</code></p>
+<div class="description"><p>Get a socket option. This only supports options with integer arguments, such as <a href="sock.html#name-SO.BROADCAST"><code>SO.BROADCAST</code></a> and <a href="sock.html#name-SO.REUSEADDR"><code>SO.REUSEADDR</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to get options from</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>level</code></td>
+<td class="param-desc">Option level (one of <a href="sock.html#name-SOL"><code>SOL</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>option</code></td>
+<td class="param-desc">Option to get (protocol-dependent; usually one of <a href="sock.html#name-SO"><code>SO</code></a> or <a href="sock.html#name-TCP"><code>TCP</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">The current value of the option</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.error" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:441</span>Process <code>socket.error</code>
+</h3>
+<p class="definition"><code>PROC socket.error (SOCKET sock, []BYTE buffer, INT length)</code></p>
+<div class="description">
+<p>Get last error as a string. This returns a human-readable string describing the last error that occurred upon <code>sock</code>.</p>
+<p> The "not connected" error (<code>ENOTCONN</code>) can come as a result of attempting to use a <a href="sock.html#name-SOCKET"><code>SOCKET</code></a> where the <code>fd</code> field is set to <code>-1</code>.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to get error from</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buffer</code></td>
+<td class="param-desc">Buffer to write error string into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">The length of the string returned</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.shutdown" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:454</span>Process <code>socket.shutdown</code>
+</h3>
+<p class="definition"><code>PROC socket.shutdown (SOCKET sock, VAL INT how, INT result)</code></p>
+<div class="description"><p>Close a socket in one or both directions. This is like <a href="sock.html#name-socket.close"><code>socket.close</code></a>, but allows the socket to be closed only in one direction as well.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to close</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>how</code></td>
+<td class="param-desc">Direction(s) to close the socket in (one of <a href="sock.html#name-SHUT"><code>SHUT</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.getsockname" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:466</span>Process <code>socket.getsockname</code>
+</h3>
+<p class="definition"><code>PROC socket.getsockname (SOCKET sock, RESULT INT result)</code></p>
+<div class="description"><p>Get the local address of a connected socket. This fills in the <code>local.addr</code> and <code>local.port</code> fields of the given <a href="sock.html#name-SOCKET"><code>SOCKET</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to get local address of</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.getpeername" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:478</span>Process <code>socket.getpeername</code>
+</h3>
+<p class="definition"><code>PROC socket.getpeername (SOCKET sock, RESULT INT result)</code></p>
+<div class="description"><p>Get the remote address of a connected socket. This fills in the <code>remote.addr</code> and <code>remote.port</code> fields of the given <a href="sock.html#name-SOCKET"><code>SOCKET</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">Socket to get remote address of</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.gethostname" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:489</span>Process <code>socket.gethostname</code>
+</h3>
+<p class="definition"><code>PROC socket.gethostname (RESULT []BYTE name, RESULT INT result)</code></p>
+<div class="description"><p>Get the hostname of the local machine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>RESULT []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">Buffer to return the name in</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occurred, otherwise the length of the result in <code>name</code>
+</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.sethostname" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:500</span>Process <code>socket.sethostname</code>
+</h3>
+<p class="definition"><code>PROC socket.sethostname (VAL []BYTE name, RESULT INT result)</code></p>
+<div class="description"><p>Set the hostname of the local machine. This typically requires superuser privileges.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">The new hostname</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.getdomainname" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:513</span>Process <code>socket.getdomainname</code>
+</h3>
+<p class="definition"><code>PROC socket.getdomainname (RESULT []BYTE name, RESULT INT result)</code></p>
+<div class="description"><p>Get the NIS domain name of the local machine. Note that this is not the DNS domain name; on the vast majority of modern machines this will be unset.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>RESULT []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">Buffer to return the name in</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occurred, otherwise the length of the result in <code>name</code>
+</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.setdomainname" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:525</span>Process <code>socket.setdomainname</code>
+</h3>
+<p class="definition"><code>PROC socket.setdomainname (VAL []BYTE name, RESULT INT result)</code></p>
+<div class="description"><p>Set the NIS domain name of the local machine. This typically requires superuser privileges. Note that this is not the DNS domain name.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">The new domain name</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.altable.connect" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:535</span>Process <code>socket.altable.connect</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.connect (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.connect"><code>socket.connect</code></a>.</p></div>
+</div>
+<div id="name-socket.altable.read" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:567</span>Process <code>socket.altable.read</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.read (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE buffer, VAL INT count, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.read"><code>socket.read</code></a>.</p></div>
+</div>
+<div id="name-socket.altable.fullread" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:599</span>Process <code>socket.altable.fullread</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.fullread (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE buffer, VAL INT count, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.fullread"><code>socket.fullread</code></a>.</p></div>
+</div>
+<div id="name-socket.altable.write" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:631</span>Process <code>socket.altable.write</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.write (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, VAL []BYTE buffer, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.write"><code>socket.write</code></a>.</p></div>
+</div>
+<div id="name-socket.altable.fullwrite" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:663</span>Process <code>socket.altable.fullwrite</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.fullwrite (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, VAL []BYTE buffer, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.fullwrite"><code>socket.fullwrite</code></a>.</p></div>
+</div>
+<div id="name-socket.altable.accept" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:695</span>Process <code>socket.altable.accept</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.accept (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, SOCKET client, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.accept"><code>socket.accept</code></a>.</p></div>
+</div>
+<div id="name-socket.altable.recvfrom" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:727</span>Process <code>socket.altable.recvfrom</code>
+</h3>
+<p class="definition"><code>PROC socket.altable.recvfrom (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE message, VAL INT flags, INT result)</code></p>
+<div class="description"><p><code>ALT</code>able version of <a href="sock.html#name-socket.recvfrom"><code>socket.recvfrom</code></a>.</p></div>
+</div>
+<div id="name-socket.addr.of.host" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:770</span>Process <code>socket.addr.of.host</code>
+</h3>
+<p class="definition"><code>PROC socket.addr.of.host (VAL []BYTE hostname, INT addr, INT result)</code></p>
+<div class="description"><p>Find the address of a host given its name. This returns the address of the requested host; when there are several, it will pick an arbitrary one.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>hostname</code></td>
+<td class="param-desc">Hostname to look up; this can either be a DNS-style name, or an IPv4 address in decimal dot notation</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">The address found</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured (such as the hostname not being resolvable), <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.addrs.of.host" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:785</span>Process <code>socket.addrs.of.host</code>
+</h3>
+<p class="definition"><code>PROC socket.addrs.of.host (VAL []BYTE hostname, RESULT []INT addrs, RESULT INT result)</code></p>
+<div class="description"><p>Find all the addresses of a host given its name. Like <a href="sock.html#name-socket.addr.of.host"><code>socket.addr.of.host</code></a>, but this will find all the addresses rather than just the first.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>hostname</code></td>
+<td class="param-desc">Hostname to look up; this can either be a DNS-style name, or an IPv4 address in decimal dot notation</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT []INT</code></td>
+<td class="param-name"><code>addrs</code></td>
+<td class="param-desc">The addresses found</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured (such as the hostname not being resolvable), otherwise the number of addresses returned</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.naddrs.of.host" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:801</span>Process <code>socket.naddrs.of.host</code>
+</h3>
+<p class="definition"><code>PROC socket.naddrs.of.host (VAL []BYTE hostname, RESULT INT result)</code></p>
+<div class="description"><p>Find the number of addresses of a host given its name. This finds out how many addresses a host has, so it can be used before <a href="sock.html#name-socket.addrs.of.host"><code>socket.addrs.of.host</code></a> -- but bear in mind that the resolver's response might change between the two calls, so the result of this call should only be used as a hint.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>hostname</code></td>
+<td class="param-desc">Hostname to look up; this can either be a DNS-style name, or an IPv4 address in decimal dot notation</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured (such as the hostname not being resolvable), otherwise the number of addresses</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.host.of.addr" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:814</span>Process <code>socket.host.of.addr</code>
+</h3>
+<p class="definition"><code>PROC socket.host.of.addr (VAL INT addr, []BYTE hostname, INT length, INT result)</code></p>
+<div class="description"><p>Find the name of a host given its address. This returns the hostname associated with the given address.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">The address to look up</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>hostname</code></td>
+<td class="param-desc">Buffer to write the hostname into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Length of the returned hostname</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.ip.of.addr" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:826</span>Process <code>socket.ip.of.addr</code>
+</h3>
+<p class="definition"><code>PROC socket.ip.of.addr (VAL INT addr, []BYTE ip.addr, INT length, INT result)</code></p>
+<div class="description"><p>Format an IPv4 address as a dotted-decimal string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">The address to format</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>ip.addr</code></td>
+<td class="param-desc">Buffer to write the decimal address into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Length of the result</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.create.tcp" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:838</span>Process <code>socket.create.tcp</code>
+</h3>
+<p class="definition"><code>PROC socket.create.tcp (SOCKET sock)</code></p>
+<div class="description"><p>Create a TCP socket. On failure, <code>sock[fd]</code> will be set to <code>-1</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The newly-created socket</td>
+</tr></table></div>
+</div>
+<div id="name-socket.create.udp" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:848</span>Process <code>socket.create.udp</code>
+</h3>
+<p class="definition"><code>PROC socket.create.udp (SOCKET sock)</code></p>
+<div class="description"><p>Create a UDP socket. On failure, <code>sock[fd]</code> will be set to <code>-1</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The newly-created socket</td>
+</tr></table></div>
+</div>
+<div id="name-socket.create.connect.tcp" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:860</span>Process <code>socket.create.connect.tcp</code>
+</h3>
+<p class="definition"><code>PROC socket.create.connect.tcp (SOCKET sock, VAL INT addr, VAL INT port, INT result)</code></p>
+<div class="description"><p>Create a TCP socket and connect it.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The newly-created socket</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">IPv4 address to connect to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>port</code></td>
+<td class="param-desc">Port to connect to</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.create.listen.tcp" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:888</span>Process <code>socket.create.listen.tcp</code>
+</h3>
+<p class="definition"><code>PROC socket.create.listen.tcp (SOCKET sock, VAL INT addr, VAL INT port, INT result)</code></p>
+<div class="description"><p>Create a TCP socket and make it listen on a local port. The socket is set to listen with a backlog of 32 connections by default; you can use <a href="sock.html#name-socket.listen"><code>socket.listen</code></a> to change the backlog if necessary.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The newly-created socket</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">IPv4 address to listen on</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>port</code></td>
+<td class="param-desc">Port to listen on</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-socket.create.listen.udp" class="declaration proc">
+<h3>
+<span class="location"><code>socklib.occ</code>:919</span>Process <code>socket.create.listen.udp</code>
+</h3>
+<p class="definition"><code>PROC socket.create.listen.udp (SOCKET sock, VAL INT addr, VAL INT port, INT result)</code></p>
+<div class="description"><p>Create a UDP socket and bind it to a local port.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SOCKET</code></td>
+<td class="param-name"><code>sock</code></td>
+<td class="param-desc">The newly-created socket</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>addr</code></td>
+<td class="param-desc">IPv4 address to bind to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>port</code></td>
+<td class="param-desc">Port to bind to</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">
+<code>-1</code> if an error occured, <code>0</code> otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-SOCKET" class="declaration record">
+<h3>
+<span class="location"><code>socklib.inc</code>:36</span>Record <code>SOCKET</code>
+</h3>
+<p class="definition"><code>DATA TYPE SOCKET</code></p>
+<div class="description">
+<p>The information which is known about a socket.</p>
+<p> For most purposes, the address family will be <a href="sock.html#name-AF.INET"><code>AF.INET</code></a> for IPv4, the socket type will be either <a href="sock.html#name-SOCK.STREAM"><code>SOCK.STREAM</code></a> for TCP or <a href="sock.html#name-SOCK.DGRAM"><code>SOCK.DGRAM</code></a> for UDP, and the protocol will be <a href="sock.html#name-IPPROTO.TCP"><code>IPPROTO.TCP</code></a> for TCP or <a href="sock.html#name-IPPROTO.UDP"><code>IPPROTO.UDP</code></a> for UDP.</p>
+<p> This structure does not accurately reflect the true types of the two <code>port</code> and <code>addr</code> members. Ports are typically unsigned 16-bit numbers, while addresses are unsigned 32-bit numbers (for IPV4 at least). They are incorrect for ease of compatability with the corresponding structure in the C code; in addition, occam does not provide unsigned 16-bit or 32-bit types.</p>
+</div>
+<div class="children">
+<div id="name-fd" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:38</span>Variable <code>fd</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>File descriptor</p></div>
+</div>
+<div id="name-local.port" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:39</span>Variable <code>local.port</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Local port number</p></div>
+</div>
+<div id="name-remote.port" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:40</span>Variable <code>remote.port</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Remote port number</p></div>
+</div>
+<div id="name-local.addr" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:41</span>Variable <code>local.addr</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Local IPv4 address, in host order</p></div>
+</div>
+<div id="name-remote.addr" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:42</span>Variable <code>remote.addr</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Remote IPv4 address, in host order</p></div>
+</div>
+<div id="name-s.family" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:43</span>Variable <code>s.family</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Socket family (one of <a href="sock.html#name-AF"><code>AF</code></a>)</p></div>
+</div>
+<div id="name-s.type" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:44</span>Variable <code>s.type</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Socket type (one of <a href="sock.html#name-SOCK"><code>SOCK</code></a>)</p></div>
+</div>
+<div id="name-s.proto" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:45</span>Variable <code>s.proto</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>IP protocol (one of <a href="sock.html#name-IPPROTO"><code>IPPROTO</code></a>)</p></div>
+</div>
+<div id="name-error" class="declaration variable">
+<h3>
+<span class="location"><code>socklib.inc</code>:46</span>Variable <code>error</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>The error code of the last operation on this socket, if it failed</p></div>
+</div>
+</div>
+</div>
+<div id="name-SOCK" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:50</span>Group <code>SOCK</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Socket types</p></div>
+<div class="children">
+<div id="name-SOCK.STREAM" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:53</span>Constant <code>SOCK.STREAM</code>
+</h3>
+<p class="definition"><code>VAL SOCK.STREAM</code></p>
+<div class="description"><p>Stream sockets (like TCP)</p></div>
+</div>
+<div id="name-SOCK.DGRAM" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:55</span>Constant <code>SOCK.DGRAM</code>
+</h3>
+<p class="definition"><code>VAL SOCK.DGRAM</code></p>
+<div class="description"><p>Datagram sockets (like UDP)</p></div>
+</div>
+</div>
+</div>
+<div id="name-AF" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:62</span>Group <code>AF</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Address families</p></div>
+<div class="children"><div id="name-AF.INET" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:68</span>Constant <code>AF.INET</code>
+</h3>
+<p class="definition"><code>VAL AF.INET</code></p>
+<div class="description"><p>IPv4</p></div>
+</div></div>
+</div>
+<div id="name-PF" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:93</span>Group <code>PF</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Protocol families</p></div>
+<div class="children"><div id="name-PF.INET" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:99</span>Constant <code>PF.INET</code>
+</h3>
+<p class="definition"><code>VAL PF.INET</code></p>
+<div class="description"><p>IPv4</p></div>
+</div></div>
+</div>
+<div id="name-IPPROTO" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:124</span>Group <code>IPPROTO</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>IP protocols</p></div>
+<div class="children">
+<div id="name-IPPROTO.TCP" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:132</span>Constant <code>IPPROTO.TCP</code>
+</h3>
+<p class="definition"><code>VAL IPPROTO.TCP</code></p>
+<div class="description"><p>TCP</p></div>
+</div>
+<div id="name-IPPROTO.UDP" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:136</span>Constant <code>IPPROTO.UDP</code>
+</h3>
+<p class="definition"><code>VAL IPPROTO.UDP</code></p>
+<div class="description"><p>UDP</p></div>
+</div>
+</div>
+</div>
+<div id="name-IPPORT" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:157</span>Group <code>IPPORT</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Well-known TCP and UDP ports</p></div>
+</div>
+<div id="name-INADDR" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:187</span>Group <code>INADDR</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>IPv4 addresses</p></div>
+<div class="children">
+<div id="name-INADDR.ANY" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:190</span>Constant <code>INADDR.ANY</code>
+</h3>
+<p class="definition"><code>VAL INADDR.ANY</code></p>
+<div class="description"><p>Any IPv4 address, when binding</p></div>
+</div>
+<div id="name-INADDR.BROADCAST" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:192</span>Constant <code>INADDR.BROADCAST</code>
+</h3>
+<p class="definition"><code>VAL INADDR.BROADCAST</code></p>
+<div class="description"><p>Broadcast to all reachable hosts</p></div>
+</div>
+<div id="name-INADDR.LOOPBACK" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:195</span>Constant <code>INADDR.LOOPBACK</code>
+</h3>
+<p class="definition"><code>VAL INADDR.LOOPBACK</code></p>
+<div class="description"><p>The local machine, via the loopback interface</p></div>
+</div>
+</div>
+</div>
+<div id="name-OPTION" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:202</span>Group <code>OPTION</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Boolean values for <a href="sock.html#name-socket.setsockopt"><code>socket.setsockopt</code></a></p></div>
+<div class="children">
+<div id="name-OPTION.OFF" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:205</span>Constant <code>OPTION.OFF</code>
+</h3>
+<p class="definition"><code>VAL OPTION.OFF</code></p>
+<div class="description"><p>Boolean option turned off</p></div>
+</div>
+<div id="name-OPTION.ON" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:207</span>Constant <code>OPTION.ON</code>
+</h3>
+<p class="definition"><code>VAL OPTION.ON</code></p>
+<div class="description"><p>Boolean option turned on</p></div>
+</div>
+</div>
+</div>
+<div id="name-SOL" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:210</span>Group <code>SOL</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Option levels for <a href="sock.html#name-socket.setsockopt"><code>socket.setsockopt</code></a></p></div>
+<div class="children">
+<div id="name-SOL.SOCKET" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:214</span>Constant <code>SOL.SOCKET</code>
+</h3>
+<p class="definition"><code>VAL SOL.SOCKET</code></p>
+<div class="description"><p>Options for sockets of all protocols</p></div>
+</div>
+<div id="name-SOL.TCP" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:216</span>Constant <code>SOL.TCP</code>
+</h3>
+<p class="definition"><code>VAL SOL.TCP</code></p>
+<div class="description"><p>Options for TCP sockets</p></div>
+</div>
+<div id="name-SOL.UDP" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:218</span>Constant <code>SOL.UDP</code>
+</h3>
+<p class="definition"><code>VAL SOL.UDP</code></p>
+<div class="description"><p>Options for UDP sockets</p></div>
+</div>
+</div>
+</div>
+<div id="name-SO" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:234</span>Group <code>SO</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Generic options for <a href="sock.html#name-socket.setsockopt"><code>socket.setsockopt</code></a></p></div>
+<div class="children">
+<div id="name-SO.DEBUG" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:237</span>Constant <code>SO.DEBUG</code>
+</h3>
+<p class="definition"><code>VAL SO.DEBUG</code></p>
+<div class="description"><p>Enable debug tracing</p></div>
+</div>
+<div id="name-SO.REUSEADDR" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:239</span>Constant <code>SO.REUSEADDR</code>
+</h3>
+<p class="definition"><code>VAL SO.REUSEADDR</code></p>
+<div class="description"><p>Allow addresses to be reused when binding</p></div>
+</div>
+<div id="name-SO.TYPE" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:241</span>Constant <code>SO.TYPE</code>
+</h3>
+<p class="definition"><code>VAL SO.TYPE</code></p>
+<div class="description"><p>Get socket type</p></div>
+</div>
+<div id="name-SO.ERROR" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:243</span>Constant <code>SO.ERROR</code>
+</h3>
+<p class="definition"><code>VAL SO.ERROR</code></p>
+<div class="description"><p>Get pending error and clear</p></div>
+</div>
+<div id="name-SO.DONTROUTE" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:245</span>Constant <code>SO.DONTROUTE</code>
+</h3>
+<p class="definition"><code>VAL SO.DONTROUTE</code></p>
+<div class="description"><p>Bypass routing table lookup</p></div>
+</div>
+<div id="name-SO.BROADCAST" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:247</span>Constant <code>SO.BROADCAST</code>
+</h3>
+<p class="definition"><code>VAL SO.BROADCAST</code></p>
+<div class="description"><p>Allow transmission to broadcast addresses</p></div>
+</div>
+<div id="name-SO.SNDBUF" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:249</span>Constant <code>SO.SNDBUF</code>
+</h3>
+<p class="definition"><code>VAL SO.SNDBUF</code></p>
+<div class="description"><p>Send buffer size</p></div>
+</div>
+<div id="name-SO.RCVBUF" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:251</span>Constant <code>SO.RCVBUF</code>
+</h3>
+<p class="definition"><code>VAL SO.RCVBUF</code></p>
+<div class="description"><p>Receive buffer size</p></div>
+</div>
+<div id="name-SO.KEEPALIVE" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:253</span>Constant <code>SO.KEEPALIVE</code>
+</h3>
+<p class="definition"><code>VAL SO.KEEPALIVE</code></p>
+<div class="description"><p>Send keep-alive messages periodically</p></div>
+</div>
+<div id="name-SO.OOBINLINE" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:255</span>Constant <code>SO.OOBINLINE</code>
+</h3>
+<p class="definition"><code>VAL SO.OOBINLINE</code></p>
+<div class="description"><p>Leave received out-of-band data inline</p></div>
+</div>
+<div id="name-SO.RCVLOWAT" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:263</span>Constant <code>SO.RCVLOWAT</code>
+</h3>
+<p class="definition"><code>VAL SO.RCVLOWAT</code></p>
+<div class="description"><p>Receive buffer low-water mark</p></div>
+</div>
+<div id="name-SO.SNDLOWAT" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:265</span>Constant <code>SO.SNDLOWAT</code>
+</h3>
+<p class="definition"><code>VAL SO.SNDLOWAT</code></p>
+<div class="description"><p>Send buffer low-water mark</p></div>
+</div>
+</div>
+</div>
+<div id="name-TCP" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:270</span>Group <code>TCP</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>TCP-related options for <a href="sock.html#name-socket.setsockopt"><code>socket.setsockopt</code></a></p></div>
+<div class="children">
+<div id="name-TCP.NODELAY" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:273</span>Constant <code>TCP.NODELAY</code>
+</h3>
+<p class="definition"><code>VAL TCP.NODELAY</code></p>
+<div class="description"><p>Disable Nagle algorithm (don't delay small packets)</p></div>
+</div>
+<div id="name-TCP.CORK" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:276</span>Constant <code>TCP.CORK</code>
+</h3>
+<p class="definition"><code>VAL TCP.CORK</code></p>
+<div class="description"><p>While set, pause sending of partial frames</p></div>
+</div>
+<div id="name-TCP.KEEPINTVL" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:279</span>Constant <code>TCP.KEEPINTVL</code>
+</h3>
+<p class="definition"><code>VAL TCP.KEEPINTVL</code></p>
+<div class="description"><p>Seconds between keep-alive messages</p></div>
+</div>
+<div id="name-TCP.DEFER.ACCEPT" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:284</span>Constant <code>TCP.DEFER.ACCEPT</code>
+</h3>
+<p class="definition"><code>VAL TCP.DEFER.ACCEPT</code></p>
+<div class="description"><p>Defer accept until data arrives</p></div>
+</div>
+</div>
+</div>
+<div id="name-MSG" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:290</span>Group <code>MSG</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Flag constants for <a href="sock.html#name-socket.sendto"><code>socket.sendto</code></a> and <a href="sock.html#name-socket.recvfrom"><code>socket.recvfrom</code></a></p></div>
+</div>
+<div id="name-SHUT" class="declaration group">
+<h3>
+<span class="location"><code>socklib.inc</code>:310</span>Group <code>SHUT</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Mode constants for <a href="sock.html#name-socket.shutdown"><code>socket.shutdown</code></a></p></div>
+<div class="children">
+<div id="name-SHUT.RD" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:313</span>Constant <code>SHUT.RD</code>
+</h3>
+<p class="definition"><code>VAL SHUT.RD</code></p>
+<div class="description"><p>Disallow further receives</p></div>
+</div>
+<div id="name-SHUT.WR" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:315</span>Constant <code>SHUT.WR</code>
+</h3>
+<p class="definition"><code>VAL SHUT.WR</code></p>
+<div class="description"><p>Disallow further sends</p></div>
+</div>
+<div id="name-SHUT.RDWR" class="declaration constant">
+<h3>
+<span class="location"><code>socklib.inc</code>:317</span>Constant <code>SHUT.RDWR</code>
+</h3>
+<p class="definition"><code>VAL SHUT.RDWR</code></p>
+<div class="description"><p>Disallow further sends and receives</p></div>
+</div>
+</div>
+</div>
+</div></div></body>
+</html>

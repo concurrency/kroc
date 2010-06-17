@@ -16,11 +16,14 @@ noinst_PROGRAMS = tvm-arduino
 tvm_arduino_SOURCES = \
 	ffi.c \
 	interrupts.c \
+    pins_arduino.c \
 	serial.c \
+    servos.c \
 	tbc.c \
 	time.c \
 	tvm-arduino.h \
-	tvm.c
+	tvm.c \
+    wiring_digital.c
 
 tvm-arduino.hex: tvm-arduino
 	$(OBJCOPY) -O ihex -R .eeprom tvm-arduino tvm-arduino.hex

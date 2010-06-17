@@ -1,0 +1,800 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>A library for programming simple arcade games in occam-pi</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-occade" class="module">
+<h1>Module <code>occade</code> - A library for programming simple arcade games in occam-pi</h1>
+<div class="header"><div class="description">
+<p>A library for programming simple arcade games in occam-pi.</p>
+<p> This library provides facilities for occam programmers similar to those available on microcomputers of the early 1980s: a fixed playfield that's displayed in the background (see <a href="occade.html#name-occade.load.playfield"><code>occade.load.playfield</code></a>), a number of moving sprites on top of it with collision detection (see <a href="occade.html#name-occade.start.sprite"><code>occade.start.sprite</code></a>), and event-based input (see <a href="occade.html#name-occade.start.input"><code>occade.start.input</code></a>). Unlike 1980s micros, you've got a 24-bit display and potentially thousands of sprites to play with.</p>
+<p> Image files referenced below must either be in BMP format, or in any format supported by the <a href="rasterio.html"><code>rasterio</code></a> module (e.g. PNG). Any areas coloured <a href="occade.html#name-OCCADE.TRANSPARENT.COLOUR"><code>OCCADE.TRANSPARENT.COLOUR</code></a> will appear transparent. Note, however, that collision detection is currently done simply by using the bounding boxes of the sprites -- so don't leave big borders around your images unless you want them to be really easy to hit!</p>
+<p> Font image files, used for text rendering, must contain a 16x16 rectangular grid of characters. The font size will be computed automatically from the image size.</p>
+<p> There are some keypresses that all Occade programs will recognise regardless of whether you've written any input code: </p>
+<ul>
+<li> Alt-Return: toggles full-screen mode on platforms that support it. </li>
+<li> Alt-Backspace: cause the program to <code>STOP</code> immediately.</li>
+</ul>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "occade.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="chantype" href="occade.html#name-OCCADE">Channel type <code>OCCADE</code></a> - Channel bundle for communicating with Occade</li>
+<li>
+<a class="record" href="occade.html#name-OCCADE.COLLISION">Record <code>OCCADE.COLLISION</code></a> - Reports of collisions between sprites<br><ul>
+<li>
+<a class="variable" href="occade.html#name-id">Variable <code>id</code></a> - ID of the other sprite</li>
+<li>
+<a class="variable" href="occade.html#name-w">Variable <code>w</code>, <code>h</code></a> - Width and height of the other sprite</li>
+<li>
+<a class="variable" href="occade.html#name-x">Variable <code>x</code>, <code>y</code></a> - Position of the other sprite</li>
+</ul>
+</li>
+<li>
+<a class="chantype" href="occade.html#name-OCCADE.INPUT">Channel type <code>OCCADE.INPUT</code></a> - Channel bundle for carrying input events<br><ul>
+<li>
+<a class="variable" href="occade.html#name-events-">Variable <code>events!</code></a> - Input events</li>
+<li>
+<a class="variable" href="occade.html#name-req-">Variable <code>req?</code></a> - Commands to the event filter</li>
+<li>
+<a class="variable" href="occade.html#name-resp-">Variable <code>resp!</code></a> - Responses from the event filter</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="occade.html#name-OCCADE.INPUT.REQ">Protocol <code>OCCADE.INPUT.REQ</code></a> - Commands that can be sent to the event filter<br><ul>
+<li>
+<a class="tag" href="occade.html#name-enable">Tag <code>enable</code></a> - Pick the types of events you're interested in</li>
+<li>
+<a class="tag" href="occade.html#name-quit">Tag <code>quit</code></a> - Close this event filter</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="occade.html#name-OCCADE.INPUT.RESP">Protocol <code>OCCADE.INPUT.RESP</code></a> - Responses from the event filter</li>
+<li>
+<a class="record" href="occade.html#name-OCCADE.PARAMS">Record <code>OCCADE.PARAMS</code></a> - Startup parameters for Occade<br><ul>
+<li>
+<a class="variable" href="occade.html#name-depth">Variable <code>depth</code></a> - Pixel depth in bits</li>
+<li>
+<a class="variable" href="occade.html#name-width">Variable <code>width</code>, <code>height</code></a> - Screen width and height in pixels</li>
+</ul>
+</li>
+<li>
+<a class="chantype" href="occade.html#name-OCCADE.SPRITE">Channel type <code>OCCADE.SPRITE</code></a> - Channel bundle for controlling sprites<br><ul>
+<li>
+<a class="variable" href="occade.html#name-collisions-">Variable <code>collisions!</code></a> - Reports of collisions with other sprites</li>
+<li>
+<a class="variable" href="occade.html#name-req-">Variable <code>req?</code></a> - Commands to the sprite</li>
+<li>
+<a class="variable" href="occade.html#name-resp-">Variable <code>resp!</code></a> - Responses from the sprite</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="occade.html#name-OCCADE.SPRITE.REQ">Protocol <code>OCCADE.SPRITE.REQ</code></a> - Commands that can be sent to the sprite<br><ul>
+<li>
+<a class="tag" href="occade.html#name-collisions">Tag <code>collisions</code></a> - Enable or disable collision reports</li>
+<li>
+<a class="tag" href="occade.html#name-get.position">Tag <code>get.position</code></a> - Get the position of the sprite</li>
+<li>
+<a class="tag" href="occade.html#name-get.size">Tag <code>get.size</code></a> - Get the size of the sprite</li>
+<li>
+<a class="tag" href="occade.html#name-load.image">Tag <code>load.image</code></a> - Set the sprite's image from a file</li>
+<li>
+<a class="tag" href="occade.html#name-load.raster">Tag <code>load.raster</code></a> - Set the sprite's image from a raster</li>
+<li>
+<a class="tag" href="occade.html#name-load.text">Tag <code>load.text</code></a> - Set the sprite's image by rendering text</li>
+<li>
+<a class="tag" href="occade.html#name-move">Tag <code>move</code></a> - Set the sprite's position</li>
+<li>
+<a class="tag" href="occade.html#name-quit">Tag <code>quit</code></a> - Make the sprite exit</li>
+<li>
+<a class="tag" href="occade.html#name-visible">Tag <code>visible</code></a> - Show or hide the sprite</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="occade.html#name-OCCADE.SPRITE.RESP">Protocol <code>OCCADE.SPRITE.RESP</code></a> - Responses from the sprite<br><ul>
+<li>
+<a class="tag" href="occade.html#name-get.position">Tag <code>get.position</code></a> - The position of the sprite</li>
+<li>
+<a class="tag" href="occade.html#name-get.size">Tag <code>get.size</code></a> - The size of the sprite</li>
+<li>
+<a class="tag" href="occade.html#name-return.raster">Tag <code>return.raster</code></a> - Returning a used raster</li>
+</ul>
+</li>
+<li>
+<a class="constant" href="occade.html#name-OCCADE.TRANSPARENT.COLOUR">Constant <code>OCCADE.TRANSPARENT.COLOUR</code></a> - The colour in images that is considered transparent when drawing</li>
+<li>
+<a class="group" href="occade.html#name-PRI">Group <code>PRI</code></a> - Process priorities * Priority for buffer processes<br><ul>
+<li>
+<a class="constant" href="occade.html#name-PRI.DISPLAY">Constant <code>PRI.DISPLAY</code></a> - Priority for display server</li>
+<li>
+<a class="constant" href="occade.html#name-PRI.INPUT">Constant <code>PRI.INPUT</code></a> - Priority for input filters</li>
+<li>
+<a class="constant" href="occade.html#name-PRI.SPRITES">Constant <code>PRI.SPRITES</code></a> - Priority for sprite servers</li>
+<li>
+<a class="constant" href="occade.html#name-PRI.USER">Constant <code>PRI.USER</code></a> - Priority for user processes</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="occade.html#name-occade.append.int">Process <code>occade.append.int</code></a> - Append a number to a string</li>
+<li>
+<a class="proc" href="occade.html#name-occade.append.string">Process <code>occade.append.string</code></a> - Append a string to a string</li>
+<li>
+<a class="function" href="occade.html#name-occade.clamp.int">Function <code>occade.clamp.int</code></a> - Limit an integer to a particular range</li>
+<li>
+<a class="constant" href="occade.html#name-occade.default.params">Constant <code>occade.default.params</code></a> - Default parameters for Occade</li>
+<li>
+<a class="proc" href="occade.html#name-occade.delay">Process <code>occade.delay</code></a> - Wait for a period of time</li>
+<li>
+<a class="proc" href="occade.html#name-occade.draw.playfield">Process <code>occade.draw.playfield</code></a> - Draw a raster image onto the playfield at the given position</li>
+<li>
+<a class="proc" href="occade.html#name-occade.finish.input">Process <code>occade.finish.input</code></a> - Make an input filter quit, and consume any remaining input events</li>
+<li>
+<a class="proc" href="occade.html#name-occade.finish.sprite">Process <code>occade.finish.sprite</code></a> - Make a sprite quit, and consume any remaining collision reports</li>
+<li>
+<a class="proc" href="occade.html#name-occade.load.playfield">Process <code>occade.load.playfield</code></a> - Load an image onto the playfield at the given position</li>
+<li>
+<a class="proc" href="occade.html#name-occade.random">Process <code>occade.random</code></a> - Generate a random integer</li>
+<li>
+<a class="proc" href="occade.html#name-occade.start">Process <code>occade.start</code></a> - Start up the display and return a handle for communicating with it</li>
+<li>
+<a class="proc" href="occade.html#name-occade.start.input">Process <code>occade.start.input</code></a> - Start up a new input filter and return its control interface</li>
+<li>
+<a class="proc" href="occade.html#name-occade.start.sprite">Process <code>occade.start.sprite</code></a> - Start up a new sprite and return its control interface</li>
+<li>
+<a class="proc" href="occade.html#name-occade.write">Process <code>occade.write</code></a> - Write a string to stderr</li>
+<li>
+<a class="proc" href="occade.html#name-occade.write.int">Process <code>occade.write.int</code></a> - Write an integer to stderr</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-PRI" class="declaration group">
+<h3>
+<span class="location"><code>occade.occ</code>:34</span>Group <code>PRI</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Process priorities * Priority for buffer processes.</p></div>
+<div class="children">
+<div id="name-PRI.DISPLAY" class="declaration constant">
+<h3>
+<span class="location"><code>occade.occ</code>:38</span>Constant <code>PRI.DISPLAY</code>
+</h3>
+<p class="definition"><code>VAL INT PRI.DISPLAY</code></p>
+<div class="description"><p>Priority for display server.</p></div>
+</div>
+<div id="name-PRI.SPRITES" class="declaration constant">
+<h3>
+<span class="location"><code>occade.occ</code>:40</span>Constant <code>PRI.SPRITES</code>
+</h3>
+<p class="definition"><code>VAL INT PRI.SPRITES</code></p>
+<div class="description"><p>Priority for sprite servers.</p></div>
+</div>
+<div id="name-PRI.INPUT" class="declaration constant">
+<h3>
+<span class="location"><code>occade.occ</code>:42</span>Constant <code>PRI.INPUT</code>
+</h3>
+<p class="definition"><code>VAL INT PRI.INPUT</code></p>
+<div class="description"><p>Priority for input filters.</p></div>
+</div>
+<div id="name-PRI.USER" class="declaration constant">
+<h3>
+<span class="location"><code>occade.occ</code>:44</span>Constant <code>PRI.USER</code>
+</h3>
+<p class="definition"><code>VAL INT PRI.USER</code></p>
+<div class="description"><p>Priority for user processes.</p></div>
+</div>
+</div>
+</div>
+<div id="name-occade.write" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:52</span>Process <code>occade.write</code>
+</h3>
+<p class="definition"><code>PROC occade.write (VAL []BYTE s)</code></p>
+<div class="description"><p>Write a string to stderr. This uses direct filelib calls rather than the TLP channel interface, so it can be used anywhere in your code, which may be useful for debugging.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">String to print</td>
+</tr></table></div>
+</div>
+<div id="name-occade.write.int" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:65</span>Process <code>occade.write.int</code>
+</h3>
+<p class="definition"><code>PROC occade.write.int (VAL INT n)</code></p>
+<div class="description"><p>Write an integer to stderr. See <a href="occade.html#name-occade.write"><code>occade.write</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer to print</td>
+</tr></table></div>
+</div>
+<div id="name-occade.clamp.int" class="declaration function">
+<h3>
+<span class="location"><code>occade.occ</code>:122</span>Function <code>occade.clamp.int</code>
+</h3>
+<p class="definition"><code>INT FUNCTION occade.clamp.int (VAL INT in, left, width)</code></p>
+<div class="description"><p>Limit an integer to a particular range. For example, if you call this with <code>left = 3</code> and <code>width = 3</code>, then the output value will be in the range <code>3 .. 5</code>. You can use this with a sprite's coordinates to limit it to a particular part of the screen.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Input value</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>left</code></td>
+<td class="param-desc">The lowest value in the range</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">The width of the range</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.append.string" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:159</span>Process <code>occade.append.string</code>
+</h3>
+<p class="definition"><code>PROC occade.append.string (MOBILE []BYTE out, VAL []BYTE in)</code></p>
+<div class="description"><p>Append a string to a string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">String to append to.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">String that will be appended to <code>out</code>.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.append.int" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:173</span>Process <code>occade.append.int</code>
+</h3>
+<p class="definition"><code>PROC occade.append.int (MOBILE []BYTE out, VAL INT n)</code></p>
+<div class="description"><p>Append a number to a string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">String to which the decimal representation of <code>n</code> will be appended.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer to format.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.start" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:853</span>Process <code>occade.start</code>
+</h3>
+<p class="definition"><code>PROC occade.start (RESULT SHARED OCCADE! handle, VAL OCCADE.PARAMS params, VAL []BYTE app.name)</code></p>
+<div class="description"><p>Start up the display and return a handle for communicating with it. This must be the first call your program makes into the library.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>RESULT SHARED OCCADE!</code></td>
+<td class="param-name"><code>handle</code></td>
+<td class="param-desc">Occade handle, returned for other library PROCs to use</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL OCCADE.PARAMS</code></td>
+<td class="param-name"><code>params</code></td>
+<td class="param-desc">Display parameters (see <a href="occade.html#name-OCCADE.PARAMS"><code>OCCADE.PARAMS</code></a>)</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>app.name</code></td>
+<td class="param-desc">The application name</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.load.playfield" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:870</span>Process <code>occade.load.playfield</code>
+</h3>
+<p class="definition"><code>PROC occade.load.playfield (SHARED OCCADE! handle, VAL []BYTE name, VAL INT x, y)</code></p>
+<div class="description"><p>Load an image onto the playfield at the given position. This is intended for static background images; if you want things to overlap or move around, use sprites instead.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SHARED OCCADE!</code></td>
+<td class="param-name"><code>handle</code></td>
+<td class="param-desc">Occade handle</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">Image filename</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Top left corner coordinates</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.draw.playfield" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:881</span>Process <code>occade.draw.playfield</code>
+</h3>
+<p class="definition"><code>PROC occade.draw.playfield (SHARED OCCADE! handle, RASTER raster, VAL INT x, y)</code></p>
+<div class="description"><p>Draw a raster image onto the playfield at the given position.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SHARED OCCADE!</code></td>
+<td class="param-name"><code>handle</code></td>
+<td class="param-desc">Occade handle</td>
+</tr>
+<tr>
+<td class="param-type"><code>RASTER</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster image</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Top left corner coordinates</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.start.sprite" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:1019</span>Process <code>occade.start.sprite</code>
+</h3>
+<p class="definition"><code>PROC occade.start.sprite (SHARED OCCADE! handle, RESULT OCCADE.SPRITE! control, VAL INT id)</code></p>
+<div class="description">
+<p>Start up a new sprite and return its control interface. Sprites are graphical objects that can move around and change appearance; you should use them for any moving or changing graphical elements.</p>
+<p> Sprites can report collisions with other sprites. So that you know which sprites have run into each other, you must give your sprites ID numbers if you want them to partiticipate in collision detection. For example, if you give your player's missile sprites the ID number 5, then you know that whenever an enemy collides with ID 5 it's been hit by a missile. (You can give more than one sprite the same ID.)</p>
+<p> If you've got a sprite where you don't care about collisions -- for example, one that's displaying the number of lives the player has left -- then pass <code>-1</code> as the ID and Occade won't bother doing collision detection on it.</p>
+<p> Sprites are invisible with no image loaded by default; you must set up your sprite and make it visible before you can see it on the screen.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SHARED OCCADE!</code></td>
+<td class="param-name"><code>handle</code></td>
+<td class="param-desc">Occade handle</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT OCCADE.SPRITE!</code></td>
+<td class="param-name"><code>control</code></td>
+<td class="param-desc">Control interface for the sprite</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>id</code></td>
+<td class="param-desc">ID number for the sprite. If this is negative, the sprite won't participate in collision detection.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.finish.sprite" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:1030</span>Process <code>occade.finish.sprite</code>
+</h3>
+<p class="definition"><code>PROC occade.finish.sprite (OCCADE.SPRITE! sprite)</code></p>
+<div class="description"><p>Make a sprite quit, and consume any remaining collision reports.</p></div>
+</div>
+<div id="name-occade.start.input" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:1124</span>Process <code>occade.start.input</code>
+</h3>
+<p class="definition"><code>PROC occade.start.input (SHARED OCCADE! handle, RESULT OCCADE.INPUT! control)</code></p>
+<div class="description">
+<p>Start up a new input filter and return its control interface. Input filters look at all the events coming in to the program and pick out the ones you've told them you're interested in. You can have multiple input filters listening for the same or different events; for example, in a two-player game you might want to have an input filter for each player.</p>
+<p> Filters don't report any events by default; you must enable the types of event you're interested in.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SHARED OCCADE!</code></td>
+<td class="param-name"><code>handle</code></td>
+<td class="param-desc">Occade handle</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT OCCADE.INPUT!</code></td>
+<td class="param-name"><code>control</code></td>
+<td class="param-desc">Control interface for the filter</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.finish.input" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:1134</span>Process <code>occade.finish.input</code>
+</h3>
+<p class="definition"><code>PROC occade.finish.input (OCCADE.INPUT! input)</code></p>
+<div class="description"><p>Make an input filter quit, and consume any remaining input events.</p></div>
+</div>
+<div id="name-occade.random" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:1155</span>Process <code>occade.random</code>
+</h3>
+<p class="definition"><code>PROC occade.random (SHARED OCCADE! handle, VAL INT max, RESULT INT n)</code></p>
+<div class="description"><p>Generate a random integer.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>SHARED OCCADE!</code></td>
+<td class="param-name"><code>handle</code></td>
+<td class="param-desc">Occade handle</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Limit</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Number generated, in the range <code>0</code> to <code>max - 1</code>.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-occade.delay" class="declaration proc">
+<h3>
+<span class="location"><code>occade.occ</code>:1166</span>Process <code>occade.delay</code>
+</h3>
+<p class="definition"><code>PROC occade.delay (VAL INT time)</code></p>
+<div class="description"><p>Wait for a period of time.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>time</code></td>
+<td class="param-desc">The delay in microseconds</td>
+</tr></table></div>
+</div>
+<div id="name-OCCADE.TRANSPARENT.COLOUR" class="declaration constant">
+<h3>
+<span class="location"><code>occade.inc</code>:59</span>Constant <code>OCCADE.TRANSPARENT.COLOUR</code>
+</h3>
+<p class="definition"><code>VAL [3]BYTE OCCADE.TRANSPARENT.COLOUR</code></p>
+<div class="description"><p>The colour in images that is considered transparent when drawing. RGB <code>#EE66EE</code>, which is a sort of pinkish purple.</p></div>
+</div>
+<div id="name-OCCADE.PARAMS" class="declaration record">
+<h3>
+<span class="location"><code>occade.inc</code>:66</span>Record <code>OCCADE.PARAMS</code>
+</h3>
+<p class="definition"><code>DATA TYPE OCCADE.PARAMS</code></p>
+<div class="description"><p>Startup parameters for Occade. You should initialise this from <a href="occade.html#name-occade.default.params"><code>occade.default.params</code></a> and then just change the fields you want.</p></div>
+<div class="children">
+<div id="name-width" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:68</span>Variable <code>width</code>, <code>height</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Screen width and height in pixels.</p></div>
+</div>
+<div id="name-depth" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:69</span>Variable <code>depth</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Pixel depth in bits.</p></div>
+</div>
+</div>
+</div>
+<div id="name-occade.default.params" class="declaration constant">
+<h3>
+<span class="location"><code>occade.inc</code>:73</span>Constant <code>occade.default.params</code>
+</h3>
+<p class="definition"><code>VAL OCCADE.PARAMS occade.default.params</code></p>
+<div class="description"><p>Default parameters for Occade.</p></div>
+</div>
+<div id="name-OCCADE.COLLISION" class="declaration record">
+<h3>
+<span class="location"><code>occade.inc</code>:100</span>Record <code>OCCADE.COLLISION</code>
+</h3>
+<p class="definition"><code>DATA TYPE OCCADE.COLLISION</code></p>
+<div class="description"><p>Reports of collisions between sprites.</p></div>
+<div class="children">
+<div id="name-id" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:102</span>Variable <code>id</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>ID of the other sprite</p></div>
+</div>
+<div id="name-x" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:103</span>Variable <code>x</code>, <code>y</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Position of the other sprite</p></div>
+</div>
+<div id="name-w" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:104</span>Variable <code>w</code>, <code>h</code>
+</h3>
+<p class="definition"><code>INT</code></p>
+<div class="description"><p>Width and height of the other sprite</p></div>
+</div>
+</div>
+</div>
+<div id="name-OCCADE.SPRITE.REQ" class="declaration protocol">
+<h3>
+<span class="location"><code>occade.inc</code>:108</span>Protocol <code>OCCADE.SPRITE.REQ</code>
+</h3>
+<p class="definition"><code>PROTOCOL OCCADE.SPRITE.REQ</code></p>
+<div class="description"><p>Commands that can be sent to the sprite.</p></div>
+<div class="children">
+<div id="name-load.image" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:112</span>Tag <code>load.image</code>
+</h3>
+<p class="definition"><code>load.image; MOBILE []BYTE</code></p>
+<div class="description"><p>Set the sprite's image from a file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">Image filename</td>
+</tr></table></div>
+</div>
+<div id="name-load.raster" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:115</span>Tag <code>load.raster</code>
+</h3>
+<p class="definition"><code>load.raster; RASTER</code></p>
+<div class="description"><p>Set the sprite's image from a raster. Returns <code>return.raster</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>RASTER</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster image</td>
+</tr></table></div>
+</div>
+<div id="name-load.text" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:119</span>Tag <code>load.text</code>
+</h3>
+<p class="definition"><code>load.text; MOBILE []BYTE; MOBILE []BYTE</code></p>
+<div class="description"><p>Set the sprite's image by rendering text.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>text</code></td>
+<td class="param-desc">String to render</td>
+</tr>
+<tr>
+<td class="param-type"><code>MOBILE []BYTE</code></td>
+<td class="param-name"><code>font</code></td>
+<td class="param-desc">Font image filename</td>
+</tr>
+</table></div>
+</div>
+<div id="name-move" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:125</span>Tag <code>move</code>
+</h3>
+<p class="definition"><code>move; INT; INT; BOOL</code></p>
+<div class="description"><p>Set the sprite's position.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>centre</code></td>
+<td class="param-desc">Whether to centre the sprite on these coordinates. If this is <code>FALSE</code>, the coordinates are the top left corner of the sprite; if <code>TRUE</code>, they are the centre of the sprite.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-visible" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:127</span>Tag <code>visible</code>
+</h3>
+<p class="definition"><code>visible; BOOL</code></p>
+<div class="description"><p>Show or hide the sprite.</p></div>
+</div>
+<div id="name-collisions" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:129</span>Tag <code>collisions</code>
+</h3>
+<p class="definition"><code>collisions; BOOL</code></p>
+<div class="description"><p>Enable or disable collision reports.</p></div>
+</div>
+<div id="name-get.size" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:131</span>Tag <code>get.size</code>
+</h3>
+<p class="definition"><code>get.size</code></p>
+<div class="description"><p>Get the size of the sprite. Returns <code>get.size</code>.</p></div>
+</div>
+<div id="name-get.position" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:133</span>Tag <code>get.position</code>
+</h3>
+<p class="definition"><code>get.position</code></p>
+<div class="description"><p>Get the position of the sprite. Returns <code>get.position</code>.</p></div>
+</div>
+<div id="name-quit" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:137</span>Tag <code>quit</code>
+</h3>
+<p class="definition"><code>quit</code></p>
+<div class="description"><p>Make the sprite exit. Use <a href="occade.html#name-occade.finish.input"><code>occade.finish.input</code></a> rather than sending this by hand, since that'll mop up any remaining collision reports too.</p></div>
+</div>
+</div>
+</div>
+<div id="name-OCCADE.SPRITE.RESP" class="declaration protocol">
+<h3>
+<span class="location"><code>occade.inc</code>:141</span>Protocol <code>OCCADE.SPRITE.RESP</code>
+</h3>
+<p class="definition"><code>PROTOCOL OCCADE.SPRITE.RESP</code></p>
+<div class="description"><p>Responses from the sprite.</p></div>
+<div class="children">
+<div id="name-return.raster" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:144</span>Tag <code>return.raster</code>
+</h3>
+<p class="definition"><code>return.raster; RASTER</code></p>
+<div class="description"><p>Returning a used raster.</p></div>
+</div>
+<div id="name-get.size" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:147</span>Tag <code>get.size</code>
+</h3>
+<p class="definition"><code>get.size; INT; INT</code></p>
+<div class="description"><p>The size of the sprite.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>w</code>, <code>h</code>
+</td>
+<td class="param-desc">Width and height in pixels</td>
+</tr></table></div>
+</div>
+<div id="name-get.position" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:151</span>Tag <code>get.position</code>
+</h3>
+<p class="definition"><code>get.position; INT; INT; BOOL</code></p>
+<div class="description"><p>The position of the sprite.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>centre</code></td>
+<td class="param-desc">Whether the sprite is centred on those coordinates</td>
+</tr>
+</table></div>
+</div>
+</div>
+</div>
+<div id="name-OCCADE.SPRITE" class="declaration chantype">
+<h3>
+<span class="location"><code>occade.inc</code>:155</span>Channel type <code>OCCADE.SPRITE</code>
+</h3>
+<p class="definition"><code>CHAN TYPE OCCADE.SPRITE</code></p>
+<div class="description"><p>Channel bundle for controlling sprites.</p></div>
+<div class="children">
+<div id="name-req-" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:158</span>Variable <code>req?</code>
+</h3>
+<p class="definition"><code>CHAN OCCADE.SPRITE.REQ</code></p>
+<div class="description"><p>Commands to the sprite.</p></div>
+</div>
+<div id="name-resp-" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:160</span>Variable <code>resp!</code>
+</h3>
+<p class="definition"><code>CHAN OCCADE.SPRITE.RESP</code></p>
+<div class="description"><p>Responses from the sprite.</p></div>
+</div>
+<div id="name-collisions-" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:177</span>Variable <code>collisions!</code>
+</h3>
+<p class="definition"><code>CHAN OCCADE.COLLISION</code></p>
+<div class="description">
+<p>Reports of collisions with other sprites. You'll only get messages on this channel if you've enabled them by sending the <code>collisions; TRUE</code> command first.</p>
+<p> Messages can arrive at any time; you must be prepared to handle them interleaved with communications on other channels, and you must be prepared to handle some collisions arriving after you disable collisions or tell the sprite to exit. (See <a href="occade.html#name-occade.finish.input"><code>occade.finish.input</code></a>.)</p>
+<p> This channel comes from a limited-capacity overwriting buffer, so you will lose events (rather than deadlocking the system) if you persist in ignoring it.</p>
+<p> Each sprite will only be told about each collision once -- once two objects are in contact with each other, no more collision reports will be sent about that pair of objects until they move apart again.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="name-OCCADE.INPUT.REQ" class="declaration protocol">
+<h3>
+<span class="location"><code>occade.inc</code>:183</span>Protocol <code>OCCADE.INPUT.REQ</code>
+</h3>
+<p class="definition"><code>PROTOCOL OCCADE.INPUT.REQ</code></p>
+<div class="description"><p>Commands that can be sent to the event filter</p></div>
+<div class="children">
+<div id="name-enable" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:187</span>Tag <code>enable</code>
+</h3>
+<p class="definition"><code>enable; INT</code></p>
+<div class="description"><p>Pick the types of events you're interested in. This should be the bitwise OR of values from <a href="raster.html#name-RASTER.ET"><code>RASTER.ET</code></a>.</p></div>
+</div>
+<div id="name-quit" class="declaration tag">
+<h3>
+<span class="location"><code>occade.inc</code>:191</span>Tag <code>quit</code>
+</h3>
+<p class="definition"><code>quit</code></p>
+<div class="description"><p>Close this event filter. Use <a href="occade.html#name-occade.finish.input"><code>occade.finish.input</code></a> rather than sending this by hand, since that'll mop up any remaining input events too.</p></div>
+</div>
+</div>
+</div>
+<div id="name-OCCADE.INPUT.RESP" class="declaration protocol">
+<h3>
+<span class="location"><code>occade.inc</code>:195</span>Protocol <code>OCCADE.INPUT.RESP</code>
+</h3>
+<p class="definition"><code>PROTOCOL OCCADE.INPUT.RESP</code></p>
+<div class="description"><p>Responses from the event filter.</p></div>
+</div>
+<div id="name-OCCADE.INPUT" class="declaration chantype">
+<h3>
+<span class="location"><code>occade.inc</code>:200</span>Channel type <code>OCCADE.INPUT</code>
+</h3>
+<p class="definition"><code>CHAN TYPE OCCADE.INPUT</code></p>
+<div class="description"><p>Channel bundle for carrying input events.</p></div>
+<div class="children">
+<div id="name-req-" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:203</span>Variable <code>req?</code>
+</h3>
+<p class="definition"><code>CHAN OCCADE.INPUT.REQ</code></p>
+<div class="description"><p>Commands to the event filter.</p></div>
+</div>
+<div id="name-resp-" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:205</span>Variable <code>resp!</code>
+</h3>
+<p class="definition"><code>CHAN OCCADE.INPUT.RESP</code></p>
+<div class="description"><p>Responses from the event filter.</p></div>
+</div>
+<div id="name-events-" class="declaration variable">
+<h3>
+<span class="location"><code>occade.inc</code>:210</span>Variable <code>events!</code>
+</h3>
+<p class="definition"><code>CHAN RASTER.EVENT</code></p>
+<div class="description"><p>Input events. You won't receive any events until you turn some on using the <code>enable; N</code> command. Once you've done that, events can arrive at any time.</p></div>
+</div>
+</div>
+</div>
+<div id="name-OCCADE" class="declaration chantype">
+<h3>
+<span class="location"><code>occade.inc</code>:292</span>Channel type <code>OCCADE</code>
+</h3>
+<p class="definition"><code>CHAN TYPE OCCADE</code></p>
+<div class="description"><p>Channel bundle for communicating with Occade. You shouldn't use the channels inside this in your own code; you can treat the shared client end of this as an opaque "handle" for Occade PROCs to use.</p></div>
+</div>
+</div></div></body>
+</html>

@@ -1,0 +1,1412 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-hostsp" class="module">
+<h1>Module <code>hostsp</code>
+</h1>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="hostsp.html#name-so.close">Process <code>so.close</code></a> - Close a stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.commandline">Process <code>so.commandline</code></a> - Return the command line passed to the server on invocation</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.exit">Process <code>so.exit</code></a> - Terminate the server</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.exit">Process <code>so.exit</code></a> - Terminate the server</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.flush">Process <code>so.flush</code></a> - Flush the specified output stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.getenv">Process <code>so.getenv</code></a> - Return the contents of an environment variable from whatever host is being used</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.gets">Process <code>so.gets</code></a> - Read a line from the specified input stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.open">Process <code>so.open</code></a> - Open a file</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.putblock">Process <code>so.putblock</code></a> - Write a limited number of bytes to a stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.read">Process <code>so.read</code></a> - Read an unlimited number of bytes from a stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.remove">Process <code>so.remove</code></a> - Delete the specified file</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.rename">Process <code>so.rename</code></a> - Rename the specified file</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.seek">Process <code>so.seek</code></a> - Set the file position for the specified stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.system">Process <code>so.system</code></a> - Execute a command on the host system</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.tell">Process <code>so.tell</code></a> - Return the current file position for the specified stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.time">Process <code>so.time</code></a> - Retrieve the local and UTC time from the host system</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.time">Process <code>so.time</code></a> - Retrieve the local and UTC time from the host system</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.version">Process <code>so.version</code></a> - Return identification information about the server and the host that it is running on</li>
+<li>
+<a class="proc" href="hostsp.html#name-so.write">Process <code>so.write</code></a> - Write an unlimited number of bytes to a stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.close">Process <code>sp.close</code></a> - Close a stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.commandline">Process <code>sp.commandline</code></a> - Return the command line passed to the server on invocation</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.exit">Process <code>sp.exit</code></a> - Terminate the server</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.flush">Process <code>sp.flush</code></a> - Flush the specified output stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.getenv">Process <code>sp.getenv</code></a> - Return the contents of an environment variable from whatever host is being used</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.getkey">Process <code>sp.getkey</code></a> - Read a single character from the keyboard, waiting for one if there is none</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.gets">Process <code>sp.gets</code></a> - Read a line from the specified input stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.open">Process <code>sp.open</code></a> - Open a file</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.pollkey">Process <code>sp.pollkey</code></a> - Read a single character from the keyboard, without waiting for one if there is none</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.read">Process <code>sp.read</code></a> - Read a limited number of bytes from a stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.remove">Process <code>sp.remove</code></a> - Delete the specified file</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.rename">Process <code>sp.rename</code></a> - Rename the specified file</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.seek">Process <code>sp.seek</code></a> - Set the file position for the specified stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.system">Process <code>sp.system</code></a> - Execute a command on the host system</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.tell">Process <code>sp.tell</code></a> - Return the current file position for the specified stream</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.time">Process <code>sp.time</code></a> - Retrieve the local and UTC time from the host system</li>
+<li>
+<a class="proc" href="hostsp.html#name-sp.write">Process <code>sp.write</code></a> - Write a limited number of bytes to a stream</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-sp.seek" class="declaration proc">
+<h3>
+<span class="location"><code>seek.occ</code>:46</span>Process <code>sp.seek</code>
+</h3>
+<p class="definition"><code>PROC sp.seek (CHAN OF SP fs, ts, VAL INT32 streamid, offset, origin, BYTE result)</code></p>
+<div class="description"><p>Set the file position for the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream associated with the file the position of which is to be set</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>offset</code></td>
+<td class="param-desc">the offset from origin of the new position for reading or writing. For a binary file the new position will be offset bytes, perhaps negative, from the position defined by origin. For a text file offset must be zero or a value returned by so.tell; in the latter case origin must be spo.start, and offset greater than or equal to zero.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>origin</code></td>
+<td class="param-desc">one of spo.start the start of the file spo.current the current position in the file spo.end the end of the file</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the file position was successfully set; otherwise takes on a value indicating what the problem was: spr.bad.origin invalid origin &gt;=spr.operation.failed the seek failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.getkey" class="declaration proc">
+<h3>
+<span class="location"><code>getkey.occ</code>:38</span>Process <code>sp.getkey</code>
+</h3>
+<p class="definition"><code>PROC sp.getkey (CHAN OF SP fs, ts, BYTE key, result)</code></p>
+<div class="description">
+<p>Read a single character from the keyboard, waiting for one if there is none.</p>
+<p> The key is not echoed to the screen.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>key</code></td>
+<td class="param-desc">the key that was read</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the read was successful; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.gets" class="declaration proc">
+<h3>
+<span class="location"><code>gets.occ</code>:60</span>Process <code>sp.gets</code>
+</h3>
+<p class="definition"><code>PROC sp.gets (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data, BYTE result)</code></p>
+<div class="description">
+<p>Read a line from the specified input stream.</p>
+<p> Characters are read until a newline sequence is found, the end of the file is reached, or the number of characters is not less than sp.max.readbuffer.size. If a newline sequence is found, it is not included in data.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">if result is spr.ok this is the number of bytes read; if result is spr.buffer.overflow then this will be (SIZE data) and will be less than the actual number of bytes read from the file; otherwise zero.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">an array of bytes holding line read if result is spr.ok; or holding a truncation of the line if result is spr.buffer.overflow. It is undefined otherwise. If result is spr.ok or spr.buffer.overflow then the bytes will be [data FROM 0 FOR bytes.read].</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if line was successfully read; otherwise takes on a value indicating what went wrong: spr.bad.packet.size data is too large, (SIZE data) &gt; sp.max.readbuffer.size spr.buffer.overflow data not large enough to hold the line, in which case the line is truncated to fit &gt;=spr.operation.failed the read failed, either because the end of the file has been reached or some error occurred - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.flush" class="declaration proc">
+<h3>
+<span class="location"><code>flush.occ</code>:39</span>Process <code>sp.flush</code>
+</h3>
+<p class="definition"><code>PROC sp.flush (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Flush the specified output stream.</p>
+<p> To flush means to write out any internally buffered data to the stream that it is associated with. The stream remains open.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be flushed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok stream successfully flushed; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.getenv" class="declaration proc">
+<h3>
+<span class="location"><code>getenv.occ</code>:53</span>Process <code>sp.getenv</code>
+</h3>
+<p class="definition"><code>PROC sp.getenv (CHAN OF SP fs, ts, VAL []BYTE name, INT length, []BYTE value, BYTE result)</code></p>
+<div class="description">
+<p>Return the contents of an environment variable from whatever host is being used.</p>
+<p> The largest size the returned contents of an environment variable can be is limited by the functionality of the server, not by this routine.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">a string containing the name of the desired environment variable. name should not have more than sp.max.getenvname.size characters in it.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">if result is spr.ok, the number of bytes in value, starting at value[ 0 ]; (SIZE value) if result is spr.buffer.overflow; zero otherwise.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">the contents of the environment variable, if result is spr.ok; truncated environment variable if result is spr.buffer.overflow; undefined otherwise.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the environment string successfully returned; some other value otherwise, indicating the sort of problem: spr.bad.name the specified name is a null string spr.bad.packet.size (SIZE name) &gt; sp.max.getenvname.size spr.buffer.overflow environment string too large for value; it is truncated to fit &gt;=spr.operation.failed could not read environment string - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.time" class="declaration proc">
+<h3>
+<span class="location"><code>time.occ</code>:43</span>Process <code>sp.time</code>
+</h3>
+<p class="definition"><code>PROC sp.time (CHAN OF SP fs, ts, INT32 localtime, UTCtime, BYTE result)</code></p>
+<div class="description">
+<p>Retrieve the local and UTC time from the host system.</p>
+<p> Both times are expressed as the number of seconds that have elapsed since midnight on the 1st of January, 1970, and are given as unsigned INT32s UTC time used to be known as Greenwich Mean Time ( GMT )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>localtime</code></td>
+<td class="param-desc">the local time</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>UTCtime</code></td>
+<td class="param-desc">the Coordinated Universal Time, if available; zero if not available</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if operation successful; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.time" class="declaration proc">
+<h3>
+<span class="location"><code>time.occ</code>:79</span>Process <code>so.time</code>
+</h3>
+<p class="definition"><code>PROC so.time (CHAN OF SP fs, ts, INT32 localtime, UTCtime)</code></p>
+<div class="description">
+<p>Retrieve the local and UTC time from the host system.</p>
+<p> Both times are expressed as the number of seconds that have elapsed since midnight on the 1st of January, 1970, and are given as unsigned INT32s UTC time used to be known as Greenwich Mean Time ( GMT )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>localtime</code></td>
+<td class="param-desc">the local time</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>UTCtime</code></td>
+<td class="param-desc">the Coordinated Universal Time, if available; zero if not available</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.read" class="declaration proc">
+<h3>
+<span class="location"><code>spread.occ</code>:46</span>Process <code>sp.read</code>
+</h3>
+<p class="definition"><code>PROC sp.read (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data, BYTE result)</code></p>
+<div class="description"><p>Read a limited number of bytes from a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">if result is spr.ok then this gives the number of bytes read from the file; these bytes will be [data FROM 0 FOR bytes.read]; if bytes.read &lt;&gt; (SIZE data) then either an error occurred or the end of the file was reached. If result is not spr.ok then bytes.read will be zero. 0 &lt;= bytes.read &lt;= sp.max.readbuffer.size</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">if result is spr.ok then this contains the bytes read from the file; otherwise it is undefined. The number of bytes requested to be read is (SIZE data); the limit to this is sp.max.readbuffer.size.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.bad.packet.size if too many bytes asked for ie (SIZE data) &gt; sp.max.readbuffer.size, otherwise it is equal to spr.ok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.open" class="declaration proc">
+<h3>
+<span class="location"><code>open.occ</code>:60</span>Process <code>sp.open</code>
+</h3>
+<p class="definition"><code>PROC sp.open (CHAN OF SP fs, ts, VAL []BYTE name, VAL BYTE type, mode, INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Open a file.</p>
+<p> No path environment variable is used to locate the file; what is in name is all that is used ( cf. so.popen.read )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">the name of the file to be opened. The name of the file must fit exactly into name, i.e. there are (SIZE name) characters in the name of the file. A directory specification may form part of name.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>type</code></td>
+<td class="param-desc">either spt.binary, for a file containing raw bytes only or spt.text, for a file stored as text records separated by newlines</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>mode</code></td>
+<td class="param-desc">one of spm.input open existing file for reading spm.output open new file, or truncate existing one, for writing spm.append open new file, or append to existing one, for writing spm.existing.update open existing file for update ( reading and writing ), starting at the beginning of the file spm.new.update open new file, or truncate existing one, for update spm.append.update open new file, or append to existing one, for update When a file is opened for update then the resulting stream may be used for input and output.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">if result is spr.ok, the identification number of the stream associated with the file that was opened; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the file was successfully opened; otherwise it takes on a value indicating what went wrong: spr.bad.packet.size name too large: (SIZE name) &gt; sp.max.openname.size spr.bad.name null file name spr.bad.type invalid type spr.bad.mode invalid mode &gt;=spr.operation.failed the open failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.write" class="declaration proc">
+<h3>
+<span class="location"><code>spwrite.occ</code>:41</span>Process <code>sp.write</code>
+</h3>
+<p class="definition"><code>PROC sp.write (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE data, INT length.written, BYTE result)</code></p>
+<div class="description"><p>Write a limited number of bytes to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">a string of bytes ALL of which are to be written to the stream</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length.written</code></td>
+<td class="param-desc">this gives the number of bytes written. If length.written &lt;&gt; (SIZE data) then an error occurred. 0 &lt;= length.written &lt;= sp.max.writebuffer.size</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">if not equal to spr.bad.packet.size meaning that too many bytes were requested, ie (SIZE data) &gt; sp.max.writebuffer.size, then it is equal to spr.ok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.close" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:82</span>Process <code>so.close</code>
+</h3>
+<p class="definition"><code>PROC so.close (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Close a stream.</p>
+<p> Before closing the stream unwritten data is flushed or any unread buffered input is discarded.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be closed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the stream closed properly; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.commandline" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:130</span>Process <code>so.commandline</code>
+</h3>
+<p class="definition"><code>PROC so.commandline (CHAN OF SP fs, ts, VAL BYTE all, INT length, []BYTE string, BYTE result)</code></p>
+<div class="description"><p>Return the command line passed to the server on invocation.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>all</code></td>
+<td class="param-desc">either sp.short.commandline, remove the server's own name, its recognised options and their parameters or sp.whole.commandline, the entire command line</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">the number of bytes returned in string, starting from string[ 0 ], being zero in the case of result &gt;= spr.operation.failed</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">contains the requested command line if result = spr.ok; contains a truncation of the requested command line if result = spr.buffer.overflow; is undefined otherwise. There is no restriction on the size of string.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the command line was successfully returned; otherwise takes on a value indicating what went wrong: spr.buffer.overflow string is not long enough to contain the command line, but the latter has been truncated to fit &gt;=spr.operation.failed the operation failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.flush" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:155</span>Process <code>so.flush</code>
+</h3>
+<p class="definition"><code>PROC so.flush (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Flush the specified output stream.</p>
+<p> To flush means to write out any internally buffered data to the stream that it is associated with. The stream remains open.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be flushed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok stream successfully flushed; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.getenv" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:216</span>Process <code>so.getenv</code>
+</h3>
+<p class="definition"><code>PROC so.getenv (CHAN OF SP fs, ts, VAL []BYTE name, INT length, []BYTE value, BYTE result)</code></p>
+<div class="description">
+<p>Return the contents of an environment variable from whatever host is being used.</p>
+<p> The largest size the returned contents of an environment variable can be is limited by the functionality of the server, not by this routine.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">a string containing the name of the desired environment variable. name should not have more than sp.max.getenvname.size characters in it.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">if result is spr.ok, the number of bytes in value, starting at value[ 0 ]; (SIZE value) if result is spr.buffer.overflow; zero otherwise.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">the contents of the environment variable, if result is spr.ok; truncated environment variable if result is spr.buffer.overflow; undefined otherwise.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the environment string successfully returned; some other value otherwise, indicating the sort of problem: spr.bad.name the specified name is a null string spr.bad.packet.size (SIZE name) &gt; sp.max.getenvname.size spr.buffer.overflow environment string too large for value; it is truncated to fit &gt;=spr.operation.failed could not read environment string - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.gets" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:281</span>Process <code>so.gets</code>
+</h3>
+<p class="definition"><code>PROC so.gets (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data, BYTE result)</code></p>
+<div class="description">
+<p>Read a line from the specified input stream.</p>
+<p> Characters are read until a newline sequence is found, the end of the file is reached, or the number of characters is not less than sp.max.readbuffer.size. If a newline sequence is found, it is not included in data.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">if result is spr.ok this is the number of bytes read; if result is spr.buffer.overflow then this will be (SIZE data) and will be less than the actual number of bytes read from the file; otherwise zero.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">an array of bytes holding line read if result is spr.ok; or holding a truncation of the line if result is spr.buffer.overflow. It is undefined otherwise. If result is spr.ok or spr.buffer.overflow then the bytes will be [data FROM 0 FOR bytes.read].</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if line was successfully read; otherwise takes on a value indicating what went wrong: spr.bad.packet.size data is too large, (SIZE data) &gt; sp.max.readbuffer.size spr.buffer.overflow data not large enough to hold the line, in which case the line is truncated to fit &gt;=spr.operation.failed the read failed, either because the end of the file has been reached or some error occurred - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.open" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:345</span>Process <code>so.open</code>
+</h3>
+<p class="definition"><code>PROC so.open (CHAN OF SP fs, ts, VAL []BYTE fname, VAL BYTE type, mode, INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Open a file.</p>
+<p> No path environment variable is used to locate the file; what is in name is all that is used ( cf. so.popen.read )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>fname</code></td>
+<td class="param-desc">the name of the file to be opened. The name of the file must fit exactly into name, i.e. there are (SIZE name) characters in the name of the file. A directory specification may form part of name.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>type</code></td>
+<td class="param-desc">either spt.binary, for a file containing raw bytes only or spt.text, for a file stored as text records separated by newlines</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>mode</code></td>
+<td class="param-desc">one of spm.input open existing file for reading spm.output open new file, or truncate existing one, for writing spm.append open new file, or append to existing one, for writing spm.existing.update open existing file for update ( reading and writing ), starting at the beginning of the file spm.new.update open new file, or truncate existing one, for update spm.append.update open new file, or append to existing one, for update When a file is opened for update then the resulting stream may be used for input and output.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">if result is spr.ok, the identification number of the stream associated with the file that was opened; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the file was successfully opened; otherwise it takes on a value indicating what went wrong: spr.bad.packet.size name too large: (SIZE name) &gt; sp.max.openname.size spr.bad.name null file name spr.bad.type invalid type spr.bad.mode invalid mode &gt;=spr.operation.failed the open failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.putblock" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:396</span>Process <code>so.putblock</code>
+</h3>
+<p class="definition"><code>PROC so.putblock (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE data, INT length.written, BYTE result)</code></p>
+<div class="description"><p>Write a limited number of bytes to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">a string of bytes ALL of which are to be written to the stream</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length.written</code></td>
+<td class="param-desc">this gives the number of bytes written. If length.written &lt;&gt; (SIZE data) then an error occurred. 0 &lt;= length.written &lt;= sp.max.writebuffer.size</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">if not equal to spr.bad.packet.size meaning that too many bytes were requested, ie (SIZE data) &gt; sp.max.writebuffer.size, then it is equal to spr.ok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.remove" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:443</span>Process <code>so.remove</code>
+</h3>
+<p class="definition"><code>PROC so.remove (CHAN OF SP fs, ts, VAL []BYTE fname, BYTE result)</code></p>
+<div class="description">
+<p>Delete the specified file.</p>
+<p> No path environment variable is used; what is in name is all that is considered.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>fname</code></td>
+<td class="param-desc">the name of the file to be deleted; the filename must fill all of the bytes of name</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the file was removed; otherwise takes on a value indicating what went wrong: spr.bad.packet.size name too large, (SIZE name) &gt; sp.max.removename.size spr.bad.name name is null &gt;=spr.operation.failed the delete failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.rename" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:485</span>Process <code>so.rename</code>
+</h3>
+<p class="definition"><code>PROC so.rename (CHAN OF SP fs, ts, VAL []BYTE oldfname, newfname, BYTE result)</code></p>
+<div class="description"><p>Rename the specified file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>oldfname</code></td>
+<td class="param-desc">the present name of the file to be renamed</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>newfname</code></td>
+<td class="param-desc">the desired name of the file to be renamed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the renaming was successful; otherwise takes on a value indicating what went wrong: spr.bad.packet.size the combined lengths of oldname and newname is too large - it must be less than sp.max.renamename.size spr.bad.name either or both of the filenames are null &gt;=spr.operation.failed the renaming failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.seek" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:524</span>Process <code>so.seek</code>
+</h3>
+<p class="definition"><code>PROC so.seek (CHAN OF SP fs, ts, VAL INT32 streamid, offset, origin, BYTE result)</code></p>
+<div class="description"><p>Set the file position for the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream associated with the file the position of which is to be set</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>offset</code></td>
+<td class="param-desc">the offset from origin of the new position for reading or writing. For a binary file the new position will be offset bytes, perhaps negative, from the position defined by origin. For a text file offset must be zero or a value returned by so.tell; in the latter case origin must be spo.start, and offset greater than or equal to zero.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>origin</code></td>
+<td class="param-desc">one of spo.start the start of the file spo.current the current position in the file spo.end the end of the file</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the file position was successfully set; otherwise takes on a value indicating what the problem was: spr.bad.origin invalid origin &gt;=spr.operation.failed the seek failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:565</span>Process <code>so.read</code>
+</h3>
+<p class="definition"><code>PROC so.read (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data)</code></p>
+<div class="description"><p>Read an unlimited number of bytes from a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">this gives the number of bytes read from the file; these bytes will be [data FROM 0 FOR bytes.read]; if bytes.read &lt;&gt; (SIZE data) then either an error occurred or the end of the file was reached.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">this contains the bytes read from the file; the number of bytes requested to be read is (SIZE data).</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:625</span>Process <code>so.write</code>
+</h3>
+<p class="definition"><code>PROC so.write (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE data, INT length)</code></p>
+<div class="description"><p>Write an unlimited number of bytes to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">a string of bytes ALL of which are to be written to the file</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">this gives the number of bytes written; if length &lt;&gt; (SIZE data) then an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.system" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:683</span>Process <code>so.system</code>
+</h3>
+<p class="definition"><code>PROC so.system (CHAN OF SP fs, ts, VAL []BYTE command, INT32 status, BYTE result)</code></p>
+<div class="description"><p>Execute a command on the host system.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>command</code></td>
+<td class="param-desc">the command to be executed, which may be null</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">if command is not null and result is spr.ok then this is the return value of the command, which is host dependent</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if a host command processor exists; otherwise: spr.bad.packet.size command too large, (SIZE command) &gt; sp.max.systemcommand.size &gt;=spr.operation.failed the operation failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.tell" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:713</span>Process <code>so.tell</code>
+</h3>
+<p class="definition"><code>PROC so.tell (CHAN OF SP fs, ts, VAL INT32 streamid, INT32 position, BYTE result)</code></p>
+<div class="description"><p>Return the current file position for the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream associated whith the file the reading/writing position of which is desired</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>position</code></td>
+<td class="param-desc">the current file position</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the file position determined; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.time" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:737</span>Process <code>so.time</code>
+</h3>
+<p class="definition"><code>PROC so.time (CHAN OF SP fs, ts, INT32 localtime, UTCtime)</code></p>
+<div class="description">
+<p>Retrieve the local and UTC time from the host system.</p>
+<p> Both times are expressed as the number of seconds that have elapsed since midnight on the 1st of January, 1970 UTC, and are given as unsigned INT32s.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>localtime</code></td>
+<td class="param-desc">the local time</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>UTCtime</code></td>
+<td class="param-desc">the Coordinated Universal Time, if available; zero if not available</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.version" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:757</span>Process <code>so.version</code>
+</h3>
+<p class="definition"><code>PROC so.version (CHAN OF SP fs, ts, BYTE version, host, os, board)</code></p>
+<div class="description">
+<p>Return identification information about the server and the host that it is running on.</p>
+<p> If any of the information ( except result ) has the value zero then that information is not available. The parameter version cannot distinguish between e.g. 1.41 and 1.42.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>version</code></td>
+<td class="param-desc">on division by 10 this gives the version of the server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>host</code></td>
+<td class="param-desc">identifies the host via sph. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>os</code></td>
+<td class="param-desc">identifies the host environment via spo. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>board</code></td>
+<td class="param-desc">identifies the interface board via spb. constants</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.exit" class="declaration proc">
+<h3>
+<span class="location"><code>hostunix.occ</code>:778</span>Process <code>so.exit</code>
+</h3>
+<p class="definition"><code>PROC so.exit (CHAN OF SP fs, ts, VAL INT32 status, BYTE result)</code></p>
+<div class="description"><p>Terminate the server.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">a value which the server passes directly on to the host environment, except in the following two cases: sps.success - a host specific success result is passed on sps.failure - a host specific failure result is passed on</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the operation succeeded; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.tell" class="declaration proc">
+<h3>
+<span class="location"><code>tell.occ</code>:38</span>Process <code>sp.tell</code>
+</h3>
+<p class="definition"><code>PROC sp.tell (CHAN OF SP fs, ts, VAL INT32 streamid, INT32 position, BYTE result)</code></p>
+<div class="description"><p>Return the current file position for the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream associated whith the file the reading/writing position of which is desired</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>position</code></td>
+<td class="param-desc">the current file position</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the file position determined; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.commandline" class="declaration proc">
+<h3>
+<span class="location"><code>command.occ</code>:47</span>Process <code>sp.commandline</code>
+</h3>
+<p class="definition"><code>PROC sp.commandline (CHAN OF SP fs, ts, VAL BYTE all, INT length, []BYTE string, BYTE result)</code></p>
+<div class="description"><p>Return the command line passed to the server on invocation.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>all</code></td>
+<td class="param-desc">either sp.short.commandline, remove the server's own name, its recognised options and their parameters or sp.whole.commandline, the entire command line</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">the number of bytes returned in string, starting from string[ 0 ], being zero in the case of result &gt;= spr.operation.failed</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">contains the requested command line if result = spr.ok; contains a truncation of the requested command line if result = spr.buffer.overflow; is undefined otherwise. There is no restriction on the size of string.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the command line was successfully returned; otherwise takes on a value indicating what went wrong: spr.buffer.overflow string is not long enough to contain the command line, but the latter has been truncated to fit &gt;=spr.operation.failed the operation failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.remove" class="declaration proc">
+<h3>
+<span class="location"><code>remove.occ</code>:41</span>Process <code>sp.remove</code>
+</h3>
+<p class="definition"><code>PROC sp.remove (CHAN OF SP fs, ts, VAL []BYTE name, BYTE result)</code></p>
+<div class="description">
+<p>Delete the specified file.</p>
+<p> No path environment variable is used; what is in name is all that is considered.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">the name of the file to be deleted; the filename must fill all of the bytes of name</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the file was removed; otherwise takes on a value indicating what went wrong: spr.bad.packet.size name too large, (SIZE name) &gt; sp.max.removename.size spr.bad.name name is null &gt;=spr.operation.failed the delete failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.rename" class="declaration proc">
+<h3>
+<span class="location"><code>rename.occ</code>:40</span>Process <code>sp.rename</code>
+</h3>
+<p class="definition"><code>PROC sp.rename (CHAN OF SP fs, ts, VAL []BYTE oldname, newname, BYTE result)</code></p>
+<div class="description"><p>Rename the specified file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>oldname</code></td>
+<td class="param-desc">the present name of the file to be renamed</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>newname</code></td>
+<td class="param-desc">the desired name of the file to be renamed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the renaming was successful; otherwise takes on a value indicating what went wrong: spr.bad.packet.size the combined lengths of oldname and newname is too large - it must be less than sp.max.renamename.size spr.bad.name either or both of the filenames are null &gt;=spr.operation.failed the renaming failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.system" class="declaration proc">
+<h3>
+<span class="location"><code>system.occ</code>:39</span>Process <code>sp.system</code>
+</h3>
+<p class="definition"><code>PROC sp.system (CHAN OF SP fs, ts, VAL []BYTE command, INT32 status, BYTE result)</code></p>
+<div class="description"><p>Execute a command on the host system.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>command</code></td>
+<td class="param-desc">the command to be executed, which may be null</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">if command is not null and result is spr.ok then this is the return value of the command, which is host dependent</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if a host command processor exists; otherwise: spr.bad.packet.size command too large, (SIZE command) &gt; sp.max.systemcommand.size &gt;=spr.operation.failed the operation failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.close" class="declaration proc">
+<h3>
+<span class="location"><code>close.occ</code>:39</span>Process <code>sp.close</code>
+</h3>
+<p class="definition"><code>PROC sp.close (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Close a stream.</p>
+<p> Before closing the stream unwritten data is flushed or any unread buffered input is discarded.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be closed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the stream closed properly; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.pollkey" class="declaration proc">
+<h3>
+<span class="location"><code>pollkey.occ</code>:38</span>Process <code>sp.pollkey</code>
+</h3>
+<p class="definition"><code>PROC sp.pollkey (CHAN OF SP fs, ts, BYTE key, result)</code></p>
+<div class="description">
+<p>Read a single character from the keyboard, without waiting for one if there is none.</p>
+<p> The key is not echoed to the screen.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>key</code></td>
+<td class="param-desc">the key that was read</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if there was a key to read and the read was successful; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.exit" class="declaration proc">
+<h3>
+<span class="location"><code>exit.occ</code>:38</span>Process <code>sp.exit</code>
+</h3>
+<p class="definition"><code>PROC sp.exit (CHAN OF SP fs, ts, VAL INT32 status, BYTE result)</code></p>
+<div class="description"><p>Terminate the server.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">a value which the server passes directly on to the host environment, except in the following two cases: sps.success - a host specific success result is passed on sps.failure - a host specific failure result is passed on</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the operation succeeded; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.exit" class="declaration proc">
+<h3>
+<span class="location"><code>exit.occ</code>:67</span>Process <code>so.exit</code>
+</h3>
+<p class="definition"><code>PROC so.exit (CHAN OF SP fs, ts, VAL INT32 status)</code></p>
+<div class="description"><p>Terminate the server.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">a value which the server passes directly on to the host environment, except in the following two cases: sps.success - a host specific success result is passed on sps.failure - a host specific failure result is passed on</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

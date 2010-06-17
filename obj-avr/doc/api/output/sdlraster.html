@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>SDL raster interface</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-sdlraster" class="module">
+<h1>Module <code>sdlraster</code> - SDL raster interface</h1>
+<div class="header"><div class="description">
+<p>SDL raster interface.</p>
+<p> This module provides an SDL-based portable bitmap ("raster") display.</p>
+<p> sdlraster uses the ring pattern. <a href="raster.html#name-RASTER"><code>RASTER</code></a> arrays cycle around a ring of processes. One of the processes is <a href="sdlraster.html#name-raster.display"><code>raster.display</code></a> (or <a href="sdlraster.html#name-raster.display.simple"><code>raster.display.simple</code></a>), which generates fresh rasters on startup, and draws rasters it receives to the display before passing them around the ring again. The other processes in the ring can do whatever they like to the rasters before passing them on.</p>
+<p> To shut down the ring, a raster of height zero is sent around the ring, replacing one of the existing rasters. Each process passes it on and then exits, aside from the process that sent it which just waits to receive it again before exiting. (You can use <a href="sdlraster.html#name-raster.shutdown"><code>raster.shutdown</code></a> to do this.)</p>
+<p> To avoid races with multiple shutdown messages, only one process is permitted to initiate shutdown; that is, if you're using <a href="sdlraster.html#name-raster.display.simple"><code>raster.display.simple</code></a>, then you mustn't try to shut down the ring from any other process.</p>
+<p> Programs that don't care about input events can use <a href="sdlraster.html#name-raster.display.simple"><code>raster.display.simple</code></a>, which simply shuts down the ring when the user closes the window. If you want to handle keyboard or mouse input, <a href="sdlraster.html#name-raster.display"><code>raster.display</code></a> provides an extra channel which delivers SDL events as <a href="raster.html#name-RASTER.EVENT"><code>RASTER.EVENT</code></a> structures; in that case, you must shut down the ring using <a href="sdlraster.html#name-raster.shutdown"><code>raster.shutdown</code></a> when you want to exit.</p>
+<p> (This module also provides the old <code>SDLRaster</code> and <code>miniraster</code> interfaces for backwards compatibility, but you should not use them in new code.)</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="constant" href="sdlraster.html#name-EVENT.CHECK.TIME">Constant <code>EVENT.CHECK.TIME</code></a> - The time between event checks, in nanoseconds</li>
+<li>
+<a class="constant" href="sdlraster.html#name-MAX.RASTERS">Constant <code>MAX.RASTERS</code></a> - The maximum number of initial rasters allowed in the ring</li>
+<li>
+<a class="proc" href="sdlraster.html#name-raster.clear">Process <code>raster.clear</code></a> - Clear a raster to a solid colour</li>
+<li>
+<a class="proc" href="sdlraster.html#name-raster.convert.event">Process <code>raster.convert.event</code></a> - Convert an    into a   </li>
+<li>
+<a class="proc" href="sdlraster.html#name-raster.display">Process <code>raster.display</code></a> - Raster display process</li>
+<li>
+<a class="proc" href="sdlraster.html#name-raster.display.simple">Process <code>raster.display.simple</code></a> - Simple interface for programs that don't need to handle events</li>
+<li>
+<a class="proc" href="sdlraster.html#name-raster.shutdown">Process <code>raster.shutdown</code></a> - Shut down a raster ring</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-MAX.RASTERS" class="declaration constant">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:65</span>Constant <code>MAX.RASTERS</code>
+</h3>
+<p class="definition"><code>VAL INT MAX.RASTERS</code></p>
+<div class="description"><p>The maximum number of initial rasters allowed in the ring.</p></div>
+</div>
+<div id="name-EVENT.CHECK.TIME" class="declaration constant">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:68</span>Constant <code>EVENT.CHECK.TIME</code>
+</h3>
+<p class="definition"><code>VAL INT EVENT.CHECK.TIME</code></p>
+<div class="description"><p>The time between event checks, in nanoseconds.</p></div>
+</div>
+<div id="name-raster.clear" class="declaration proc">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:74</span>Process <code>raster.clear</code>
+</h3>
+<p class="definition"><code>PROC raster.clear (RASTER r, VAL INT colour)</code></p>
+<div class="description"><p>Clear a raster to a solid colour.</p></div>
+</div>
+<div id="name-raster.convert.event" class="declaration proc">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:107</span>Process <code>raster.convert.event</code>
+</h3>
+<p class="definition"><code>PROC raster.convert.event (SDL.Event event, RESULT RASTER.EVENT ev)</code></p>
+<div class="description"><p>Convert an <a href="occSDL.html#name-SDL.Event"><code>SDL.Event</code></a> into a <a href="raster.html#name-RASTER.EVENT"><code>RASTER.EVENT</code></a>.</p></div>
+</div>
+<div id="name-raster.display" class="declaration proc">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:283</span>Process <code>raster.display</code>
+</h3>
+<p class="definition"><code>PROC raster.display (VAL []BYTE title, VAL INT width, height, num.rasters, CHAN RASTER in?, out!, CHAN RASTER.EVENT events!)</code></p>
+<div class="description">
+<p>Raster display process. Generate a number of rasters on startup, and draw incoming rasters to the display. In addition, report any events received on the display.</p>
+<p> This process provides <code>num.rasters + 1</code> places of buffering in the ring.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>title</code></td>
+<td class="param-desc">Window title</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of window</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of window</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>num.rasters</code></td>
+<td class="param-desc">Initial number of rasters to inject into the ring. This must be at least 1, and no more than <a href="sdlraster.html#name-MAX.RASTERS"><code>MAX.RASTERS</code></a>.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Raster input</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Raster output</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER.EVENT</code></td>
+<td class="param-name"><code>events</code></td>
+<td class="param-desc">Input events. When it shuts down, the raster will send a <a href="raster.html#name-RASTER.ET.SHUTDOWN"><code>RASTER.ET.SHUTDOWN</code></a> event as its last message, so you know when to stop reading from this channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.shutdown" class="declaration proc">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:354</span>Process <code>raster.shutdown</code>
+</h3>
+<p class="definition"><code>PROC raster.shutdown (CHAN RASTER in?, out!)</code></p>
+<div class="description"><p>Shut down a raster ring. You must have read a raster from the ring yourself before calling this. This outputs an empty raster, and then discards incoming rasters until the empty one's received again.</p></div>
+</div>
+<div id="name-raster.display.simple" class="declaration proc">
+<h3>
+<span class="location"><code>sdlraster.occ</code>:415</span>Process <code>raster.display.simple</code>
+</h3>
+<p class="definition"><code>PROC raster.display.simple (VAL []BYTE title, VAL INT width, height, num.buffers, CHAN RASTER in?, out!)</code></p>
+<div class="description"><p>Simple interface for programs that don't need to handle events. This automatically shuts down the ring when the window is closed; otherwise it behaves like <a href="sdlraster.html#name-raster.display"><code>raster.display</code></a>.</p></div>
+</div>
+</div></div></body>
+</html>

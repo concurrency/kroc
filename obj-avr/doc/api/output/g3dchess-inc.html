@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-g3dchess-inc" class="module">
+<h1>Module <code>g3dchess.inc</code>
+</h1>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="group" href="g3dchess-inc.html#name-G3D.CP">Group <code>G3D.CP</code></a> - Chess piece constants<br><ul>
+<li>
+<a class="constant" href="g3dchess-inc.html#name-G3D.CP.BISHOP">Constant <code>G3D.CP.BISHOP</code></a> - Bishop</li>
+<li>
+<a class="constant" href="g3dchess-inc.html#name-G3D.CP.KING">Constant <code>G3D.CP.KING</code></a> - King</li>
+<li>
+<a class="constant" href="g3dchess-inc.html#name-G3D.CP.KNIGHT">Constant <code>G3D.CP.KNIGHT</code></a> - Knight</li>
+<li>
+<a class="constant" href="g3dchess-inc.html#name-G3D.CP.PAWN">Constant <code>G3D.CP.PAWN</code></a> - Pawn</li>
+<li>
+<a class="constant" href="g3dchess-inc.html#name-G3D.CP.QUEEN">Constant <code>G3D.CP.QUEEN</code></a> - Queen</li>
+<li>
+<a class="constant" href="g3dchess-inc.html#name-G3D.CP.ROOK">Constant <code>G3D.CP.ROOK</code></a> - Rook/castle</li>
+</ul>
+</li>
+<li>
+<a class="chantype" href="g3dchess-inc.html#name-G3DC.PIECE.CTL">Channel type <code>G3DC.PIECE.CTL</code></a> - Used to control a particular piece<br><ul>
+<li>
+<a class="variable" href="g3dchess-inc.html#name-gen.ctl-">Variable <code>gen.ctl?</code></a> - Piece generator control</li>
+<li>
+<a class="variable" href="g3dchess-inc.html#name-in-">Variable <code>in?</code></a> - Piece control</li>
+<li>
+<a class="variable" href="g3dchess-inc.html#name-pgn.ctl-">Variable <code>pgn.ctl?</code></a> - Polygon convert control</li>
+<li>
+<a class="variable" href="g3dchess-inc.html#name-prj.ctl-">Variable <code>prj.ctl?</code></a> - Projector control</li>
+<li>
+<a class="variable" href="g3dchess-inc.html#name-rdr.ctl-">Variable <code>rdr.ctl?</code></a> - Render control</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="g3dchess-inc.html#name-G3DC.PIECE.CTL.IN">Protocol <code>G3DC.PIECE.CTL.IN</code></a> - Chess piece control<br><ul>
+<li>
+<a class="tag" href="g3dchess-inc.html#name-hide">Tag <code>hide</code></a> - Whether to make hidden</li>
+<li>
+<a class="tag" href="g3dchess-inc.html#name-move.pos">Tag <code>move.pos</code></a> - Move piece to specified position (animate!)</li>
+<li>
+<a class="tag" href="g3dchess-inc.html#name-set.pos">Tag <code>set.pos</code></a> - Set piece position on board (0-7,0-7)</li>
+</ul>
+</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-G3D.CP" class="declaration group">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:23</span>Group <code>G3D.CP</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Chess piece constants.</p></div>
+<div class="children">
+<div id="name-G3D.CP.PAWN" class="declaration constant">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:24</span>Constant <code>G3D.CP.PAWN</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.CP.PAWN</code></p>
+<div class="description"><p>Pawn.</p></div>
+</div>
+<div id="name-G3D.CP.KNIGHT" class="declaration constant">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:25</span>Constant <code>G3D.CP.KNIGHT</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.CP.KNIGHT</code></p>
+<div class="description"><p>Knight.</p></div>
+</div>
+<div id="name-G3D.CP.BISHOP" class="declaration constant">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:26</span>Constant <code>G3D.CP.BISHOP</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.CP.BISHOP</code></p>
+<div class="description"><p>Bishop.</p></div>
+</div>
+<div id="name-G3D.CP.ROOK" class="declaration constant">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:27</span>Constant <code>G3D.CP.ROOK</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.CP.ROOK</code></p>
+<div class="description"><p>Rook/castle.</p></div>
+</div>
+<div id="name-G3D.CP.QUEEN" class="declaration constant">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:28</span>Constant <code>G3D.CP.QUEEN</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.CP.QUEEN</code></p>
+<div class="description"><p>Queen.</p></div>
+</div>
+<div id="name-G3D.CP.KING" class="declaration constant">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:29</span>Constant <code>G3D.CP.KING</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.CP.KING</code></p>
+<div class="description"><p>King.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3DC.PIECE.CTL.IN" class="declaration protocol">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:34</span>Protocol <code>G3DC.PIECE.CTL.IN</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3DC.PIECE.CTL.IN</code></p>
+<div class="description"><p>Chess piece control.</p></div>
+<div class="children">
+<div id="name-set.pos" class="declaration tag">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:36</span>Tag <code>set.pos</code>
+</h3>
+<p class="definition"><code>set.pos; INT; INT</code></p>
+<div class="description"><p>Set piece position on board (0-7,0-7).</p></div>
+</div>
+<div id="name-move.pos" class="declaration tag">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:37</span>Tag <code>move.pos</code>
+</h3>
+<p class="definition"><code>move.pos; INT; INT</code></p>
+<div class="description"><p>Move piece to specified position (animate!).</p></div>
+</div>
+<div id="name-hide" class="declaration tag">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:38</span>Tag <code>hide</code>
+</h3>
+<p class="definition"><code>hide; BOOL</code></p>
+<div class="description"><p>Whether to make hidden.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3DC.PIECE.CTL" class="declaration chantype">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:42</span>Channel type <code>G3DC.PIECE.CTL</code>
+</h3>
+<p class="definition"><code>CHAN TYPE G3DC.PIECE.CTL</code></p>
+<div class="description"><p>Used to control a particular piece.</p></div>
+<div class="children">
+<div id="name-in-" class="declaration variable">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:44</span>Variable <code>in?</code>
+</h3>
+<p class="definition"><code>CHAN G3DC.PIECE.CTL.IN</code></p>
+<div class="description"><p>Piece control.</p></div>
+</div>
+<div id="name-gen.ctl-" class="declaration variable">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:45</span>Variable <code>gen.ctl?</code>
+</h3>
+<p class="definition"><code>CHAN G3D.GEN.CONTROL</code></p>
+<div class="description"><p>Piece generator control.</p></div>
+</div>
+<div id="name-prj.ctl-" class="declaration variable">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:46</span>Variable <code>prj.ctl?</code>
+</h3>
+<p class="definition"><code>CHAN G3D.PRJ.CONTROL</code></p>
+<div class="description"><p>Projector control.</p></div>
+</div>
+<div id="name-pgn.ctl-" class="declaration variable">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:47</span>Variable <code>pgn.ctl?</code>
+</h3>
+<p class="definition"><code>CHAN G3D.PGN.CONTROL</code></p>
+<div class="description"><p>Polygon convert control.</p></div>
+</div>
+<div id="name-rdr.ctl-" class="declaration variable">
+<h3>
+<span class="location"><code>g3dchess.inc</code>:48</span>Variable <code>rdr.ctl?</code>
+</h3>
+<p class="definition"><code>CHAN G3D.RDR.CONTROL</code></p>
+<div class="description"><p>Render control.</p></div>
+</div>
+</div>
+</div>
+</div></div></body>
+</html>

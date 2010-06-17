@@ -1,0 +1,1374 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Graphics primitives for rasters</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-rastergraphics" class="module">
+<h1>Module <code>rastergraphics</code> - Graphics primitives for rasters</h1>
+<div class="header">
+<div class="description"><p>Graphics primitives for rasters.</p></div>
+<h4>Maintainer:</h4>
+<div class="maintainer"><p>David Wood &lt;D.C.Wood@kent.ac.uk&gt;</p></div>
+</div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="datatype" href="rastergraphics.html#name-ANGLE">Data type <code>ANGLE</code></a> - ANGLE data type</li>
+<li>
+<a class="group" href="rastergraphics.html#name-ANGLE">Group <code>ANGLE</code></a> - constants<br><ul>
+<li>
+<a class="constant" href="rastergraphics.html#name-ANGLE.DEGREE">Constant <code>ANGLE.DEGREE</code></a> - 2^32 / 360 (approx.)</li>
+<li>
+<a class="constant" href="rastergraphics.html#name-ANGLE.GRADE">Constant <code>ANGLE.GRADE</code></a> - 2^32 / 400 (approx.)</li>
+<li>
+<a class="constant" href="rastergraphics.html#name-ANGLE.RADIAN">Constant <code>ANGLE.RADIAN</code></a> - 2^31 / pi (approx.)</li>
+<li>
+<a class="constant" href="rastergraphics.html#name-ANGLE.RIGHT">Constant <code>ANGLE.RIGHT</code></a> - 2^30 (exact)</li>
+<li>
+<a class="constant" href="rastergraphics.html#name-ANGLE.STRAIGHT">Constant <code>ANGLE.STRAIGHT</code></a> - 2^31 (exact)</li>
+</ul>
+</li>
+<li>
+<a class="function" href="rastergraphics.html#name-CIDROC">Function <code>CIDROC</code></a> - Inverse    algorithm; Converts Cartesian  (X, Y)  to polar coordinates<br><ul><li>
+<a class="constant" href="rastergraphics.html#name-CORDIC.CONST">Constant <code>CORDIC.CONST</code></a> - Magic constant</li></ul>
+</li>
+<li>
+<a class="group" href="rastergraphics.html#name-COLOUR">Group <code>COLOUR</code></a> - Common colours<br><ul>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.BLACK">Constant <code>COLOUR.BLACK</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.BLUE">Constant <code>COLOUR.BLUE</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.BROWN">Constant <code>COLOUR.BROWN</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.CYAN">Constant <code>COLOUR.CYAN</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.GREEN">Constant <code>COLOUR.GREEN</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.GREY">Constant <code>COLOUR.GREY</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.MAGENTA">Constant <code>COLOUR.MAGENTA</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.MAROON">Constant <code>COLOUR.MAROON</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.NAVY">Constant <code>COLOUR.NAVY</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.OCTARINE">Constant <code>COLOUR.OCTARINE</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.ORANGE">Constant <code>COLOUR.ORANGE</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.PINK">Constant <code>COLOUR.PINK</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.PURPLE">Constant <code>COLOUR.PURPLE</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.RED">Constant <code>COLOUR.RED</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.SKY">Constant <code>COLOUR.SKY</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.VIOLET">Constant <code>COLOUR.VIOLET</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.WHITE">Constant <code>COLOUR.WHITE</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-COLOUR.YELLOW">Constant <code>COLOUR.YELLOW</code></a></li>
+</ul>
+</li>
+<li>
+<a class="function" href="rastergraphics.html#name-CORDIC">Function <code>CORDIC</code></a> - CORDIC rotation algorithm<br><ul><li>
+<a class="constant" href="rastergraphics.html#name-CORDIC.CONST">Constant <code>CORDIC.CONST</code></a> - Magic constant</li></ul>
+</li>
+<li>
+<a class="group" href="rastergraphics.html#name-PALETTE">Group <code>PALETTE</code></a> - Codes for  permute  arguments<br><ul>
+<li><a class="constant" href="rastergraphics.html#name-PALETTE.BGR">Constant <code>PALETTE.BGR</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-PALETTE.BRG">Constant <code>PALETTE.BRG</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-PALETTE.GBR">Constant <code>PALETTE.GBR</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-PALETTE.GRB">Constant <code>PALETTE.GRB</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-PALETTE.RBG">Constant <code>PALETTE.RBG</code></a></li>
+<li><a class="constant" href="rastergraphics.html#name-PALETTE.RGB">Constant <code>PALETTE.RGB</code></a></li>
+</ul>
+</li>
+<li>
+<a class="function" href="rastergraphics.html#name-circle.hits">Function <code>circle.hits</code></a> - Does circle hit anything?</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-copy.raster">Process <code>copy.raster</code></a> - Copy one raster onto another</li>
+<li>
+<a class="function" href="rastergraphics.html#name-desaturate.colour">Function <code>desaturate.colour</code></a> - Desaturate a colour value</li>
+<li>
+<a class="function" href="rastergraphics.html#name-dither">Function <code>dither</code></a> - Dither</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.arc">Process <code>draw.arc</code></a> - Draws a circular arc<br><ul><li>
+<a class="proc" href="rastergraphics.html#name-arc">Process <code>arc</code></a> - Basic PROC;  arc &lt;= ANGLE.RIGHT</li></ul>
+</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.circle">Process <code>draw.circle</code></a> - Draws a circle<br><ul>
+<li>
+<a class="proc" href="rastergraphics.html#name-points">Process <code>points</code></a> - Decide how to plot points</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-points.1">Process <code>points.1</code></a> - Plots eight points at  (+/-x, +/-y)  relative to centre  (x.0, y0) , all within raster (fast)</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-points.2">Process <code>points.2</code></a> - Plots eight points at  (+/-x, +/-y)  relative to centre  (x.0, y0) , some outside raster (slow)<br><ul><li>
+<a class="proc" href="rastergraphics.html#name-point">Process <code>point</code></a> - Plot point if inside raster</li></ul>
+</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.horizontal.line">Process <code>draw.horizontal.line</code></a> - Draws a horizontal line</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.line">Process <code>draw.line</code></a> - Draw a straight line</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.rectangle">Process <code>draw.rectangle</code></a> - Draws a rectangular box</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.vertical.line">Process <code>draw.vertical.line</code></a> - Draws a vertical line</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-draw.wallpaper">Process <code>draw.wallpaper</code></a> - Cover  dst  with copies of  dst</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-fill.circle">Process <code>fill.circle</code></a> - Draws a solid circle</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-fill.circle.diameter">Process <code>fill.circle.diameter</code></a> - Draws a solid circle</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-fill.ellipse.radii">Process <code>fill.ellipse.radii</code></a> - Draws a solid ellipse</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-fill.rectangle">Process <code>fill.rectangle</code></a> - Draws a solid rectangle</li>
+<li>
+<a class="proc" href="rastergraphics.html#name-fill.square">Process <code>fill.square</code></a> - Draw a solid square</li>
+<li>
+<a class="function" href="rastergraphics.html#name-hsv.to.rgb">Function <code>hsv.to.rgb</code></a> - Convert a colour from HSV to RGB</li>
+<li>
+<a class="function" href="rastergraphics.html#name-map.colour.spectrum">Function <code>map.colour.spectrum</code></a> - Maps  x  ( 0.0 &lt;= x &lt; 1.0 ) to  INT  representing a colour, according to the code  permute </li>
+<li>
+<a class="function" href="rastergraphics.html#name-map.colour.wheel">Function <code>map.colour.wheel</code></a> - Maps  x  ( 0.0 &lt;= x &lt; 1.0 ) to  INT  representing a colour, according to the code  permute </li>
+<li>
+<a class="function" href="rastergraphics.html#name-map.to.components.spectrum">Function <code>map.to.components.spectrum</code></a> - Maps code value into three  BYTEs  representing primary colours (not necessarily RGB), with smooth transitions<br><ul><li>
+<a class="function" href="rastergraphics.html#name-smooth">Function <code>smooth</code></a> - Smooth transition</li></ul>
+</li>
+<li>
+<a class="function" href="rastergraphics.html#name-map.to.components.wheel">Function <code>map.to.components.wheel</code></a> - As   , but without mapping through black</li>
+<li>
+<a class="operator" href="rastergraphics.html#name-operator2b.ANGLE.ANGLE.ANGLE">Operator <code>+ (ANGLE, ANGLE)</code></a> - Addition operator</li>
+<li>
+<a class="operator" href="rastergraphics.html#name-operator7e.ANGLE.ANGLE">Operator <code>~ (ANGLE)</code></a> - Reverse operator</li>
+<li>
+<a class="function" href="rastergraphics.html#name-pack.colour">Function <code>pack.colour</code></a> - Pack RGB  BYTEs  to an  INT </li>
+<li>
+<a class="function" href="rastergraphics.html#name-pack.colour.float">Function <code>pack.colour.float</code></a> - As   , but taking  REAL32  arguments</li>
+<li>
+<a class="function" href="rastergraphics.html#name-pack.colour.permuted">Function <code>pack.colour.permuted</code></a> - Maps three  BYTEs  representing colours to an  INT , according to the code  permute </li>
+<li>
+<a class="function" href="rastergraphics.html#name-undither">Function <code>undither</code></a> - Reverse Dither</li>
+<li>
+<a class="function" href="rastergraphics.html#name-unpack.colour">Function <code>unpack.colour</code></a> - Unpack an  INT  to RGB  BYTEs </li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-CORDIC" class="declaration function">
+<h3>
+<span class="location"><code>cordic.occ</code>:55</span>Function <code>CORDIC</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION CORDIC (VAL INT X, Y, VAL ANGLE theta)</code></p>
+<div class="description">
+<p>CORDIC rotation algorithm.</p>
+<p> See <a href="http://en.wikipedia.org/wiki/CORDIC,">here</a> for details.</p>
+<p> Rotates vector through angle</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>X</code>, <code>Y</code>
+</td>
+<td class="param-desc">Coordinates of vector</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL ANGLE</code></td>
+<td class="param-name"><code>theta</code></td>
+<td class="param-desc">Angle</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>X</code>, <code>Y</code>
+</td>
+<td class="param-desc">Rotated through <code>theta</code>
+</td>
+</tr></table></div>
+<div class="children"><div id="name-CORDIC.CONST" class="declaration constant">
+<h3>
+<span class="location"><code>cordic.occ</code>:65</span>Constant <code>CORDIC.CONST</code>
+</h3>
+<p class="definition"><code>VAL INT CORDIC.CONST</code></p>
+<div class="description"><p>Magic constant</p></div>
+</div></div>
+</div>
+<div id="name-CIDROC" class="declaration function">
+<h3>
+<span class="location"><code>cordic.occ</code>:101</span>Function <code>CIDROC</code>
+</h3>
+<p class="definition"><code>INT, ANGLE FUNCTION CIDROC (VAL INT X, Y)</code></p>
+<div class="description"><p>Inverse <a href="rastergraphics.html#name-CORDIC"><code>CORDIC</code></a> algorithm; Converts Cartesian <code>(X, Y)</code> to polar coordinates.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>X</code>, <code>Y</code>
+</td>
+<td class="param-desc">Coordinate of vector</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">radius <code>sqrt(X^2 + Y^2)</code>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>ANGLE</code></td>
+<td class="param-name"></td>
+<td class="param-desc">angle <code>arctan(Y/X)</code>
+</td>
+</tr>
+</table></div>
+<div class="children"><div id="name-CORDIC.CONST" class="declaration constant">
+<h3>
+<span class="location"><code>cordic.occ</code>:105</span>Constant <code>CORDIC.CONST</code>
+</h3>
+<p class="definition"><code>VAL INT CORDIC.CONST</code></p>
+<div class="description"><p>Magic constant</p></div>
+</div></div>
+</div>
+<div id="name-copy.raster" class="declaration proc">
+<h3>
+<span class="location"><code>copy.occ</code>:41</span>Process <code>copy.raster</code>
+</h3>
+<p class="definition"><code>PROC copy.raster (VAL [][]INT src, VAL INT x, y, c, f, [][]INT dst)</code></p>
+<div class="description">
+<p>Copy one raster onto another.</p>
+<p> One corner of <code>src</code> always maps to <code>(x, y)</code> of <code>dst</code>.</p>
+<p> Let the least significant three bits of <code>f</code> be abc:</p>
+<ul>
+<li> a = 1: flip about <code>\</code>, then </li>
+<li> b = 1: flip about <code>|</code> </li>
+<li> c = 1: flip about <code>-</code>
+</li>
+</ul>
+<p> Hence </p>
+<ul><li> f = 7: flip about <code>/</code>
+</li></ul>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL [][]INT</code></td>
+<td class="param-name"><code>src</code></td>
+<td class="param-desc">Source raster</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Top left of target in <code>dst</code>
+</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>c</code></td>
+<td class="param-desc">Transparent colour -- don't copy</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>f</code></td>
+<td class="param-desc">Orientation</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>dst</code></td>
+<td class="param-desc">Destination raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-draw.wallpaper" class="declaration proc">
+<h3>
+<span class="location"><code>wallpaper.occ</code>:27</span>Process <code>draw.wallpaper</code>
+</h3>
+<p class="definition"><code>PROC draw.wallpaper (VAL [][]INT src, [][]INT dst)</code></p>
+<div class="description"><p>Cover <code>dst</code> with copies of <code>dst</code></p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL [][]INT</code></td>
+<td class="param-name"><code>src</code></td>
+<td class="param-desc">Source raster</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>dst</code></td>
+<td class="param-desc">Destination raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-draw.arc" class="declaration proc">
+<h3>
+<span class="location"><code>arc.occ</code>:33</span>Process <code>draw.arc</code>
+</h3>
+<p class="definition"><code>PROC draw.arc (VAL INT x.0, y.0, radius, VAL ANGLE t.0, t.1, VAL INT colour, [][]INT raster)</code></p>
+<div class="description"><p>Draws a circular arc.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x.0</code>, <code>y.0</code>
+</td>
+<td class="param-desc">Coordinates of centre</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>radius</code></td>
+<td class="param-desc">Radius</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL ANGLE</code></td>
+<td class="param-name">
+<code>t.0</code>, <code>t.1</code>
+</td>
+<td class="param-desc">Range of <a href="rastergraphics.html#name-ANGLE"><code>ANGLE</code></a>s</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+<div class="children"><div id="name-arc" class="declaration proc">
+<h3>
+<span class="location"><code>arc.occ</code>:39</span>Process <code>arc</code>
+</h3>
+<p class="definition"><code>PROC arc (VAL ANGLE t.0, t.1)</code></p>
+<div class="description"><p>Basic PROC; <code>arc &lt;= ANGLE.RIGHT</code></p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL ANGLE</code></td>
+<td class="param-name">
+<code>t.0</code>, <code>t.1</code>
+</td>
+<td class="param-desc">Range of <a href="rastergraphics.html#name-ANGLE"><code>ANGLE</code></a>s</td>
+</tr></table></div>
+</div></div>
+</div>
+<div id="name-draw.circle" class="declaration proc">
+<h3>
+<span class="location"><code>circle.occ</code>:34</span>Process <code>draw.circle</code>
+</h3>
+<p class="definition"><code>PROC draw.circle (VAL INT x.0, y.0, radius, VAL INT colour, [][]INT raster)</code></p>
+<div class="description">
+<p>Draws a circle.</p>
+<p> Clips as necessary.</p>
+<p> Based on Foley &amp; van Dam, Computer Graphics Principles and Practice, Second Edition in C, Fig. 3.16.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x.0</code>, <code>y.0</code>
+</td>
+<td class="param-desc">Centre</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>radius</code></td>
+<td class="param-desc">Radius</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+<div class="children">
+<div id="name-points.1" class="declaration proc">
+<h3>
+<span class="location"><code>circle.occ</code>:42</span>Process <code>points.1</code>
+</h3>
+<p class="definition"><code>INLINE PROC points.1 (VAL INT x, y)</code></p>
+<div class="description"><p>Plots eight points at <code>(+/-x, +/-y)</code> relative to centre <code>(x.0, y0)</code>, all within raster (fast).</p></div>
+</div>
+<div id="name-points.2" class="declaration proc">
+<h3>
+<span class="location"><code>circle.occ</code>:59</span>Process <code>points.2</code>
+</h3>
+<p class="definition"><code>PROC points.2 (VAL INT x, y)</code></p>
+<div class="description"><p>Plots eight points at <code>(+/-x, +/-y)</code> relative to centre <code>(x.0, y0)</code>, some outside raster (slow).</p></div>
+<div class="children"><div id="name-point" class="declaration proc">
+<h3>
+<span class="location"><code>circle.occ</code>:65</span>Process <code>point</code>
+</h3>
+<p class="definition"><code>PROC point (VAL INT x, y)</code></p>
+<div class="description"><p>Plot point if inside raster</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates</td>
+</tr></table></div>
+</div></div>
+</div>
+<div id="name-points" class="declaration proc">
+<h3>
+<span class="location"><code>circle.occ</code>:93</span>Process <code>points</code>
+</h3>
+<p class="definition"><code>INLINE PROC points (VAL INT x, y, VAL BOOL b)</code></p>
+<div class="description"><p>Decide how to plot points</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">How to plot</td>
+</tr>
+</table></div>
+</div>
+</div>
+</div>
+<div id="name-fill.circle.diameter" class="declaration proc">
+<h3>
+<span class="location"><code>disc2.occ</code>:30</span>Process <code>fill.circle.diameter</code>
+</h3>
+<p class="definition"><code>PROC fill.circle.diameter (VAL INT x, y, d, VAL INT colour, [][]INT raster)</code></p>
+<div class="description"><p>Draws a solid circle. Clips as necessary.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates of centre</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>d</code></td>
+<td class="param-desc">Diameter</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-desaturate.colour" class="declaration function">
+<h3>
+<span class="location"><code>colourspace.occ</code>:34</span>Function <code>desaturate.colour</code>
+</h3>
+<p class="definition"><code>INT FUNCTION desaturate.colour (VAL INT colour, amount)</code></p>
+<div class="description">
+<p>Desaturate a colour value.</p>
+<p> This adds <code>amount</code> to each of the colour's components, capping them at <code>#FF</code>.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>amount</code></td>
+<td class="param-desc">Amount to add</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The new colour</td>
+</tr></table></div>
+</div>
+<div id="name-hsv.to.rgb" class="declaration function">
+<h3>
+<span class="location"><code>colourspace.occ</code>:69</span>Function <code>hsv.to.rgb</code>
+</h3>
+<p class="definition"><code>INT FUNCTION hsv.to.rgb (VAL REAL32 h, s, v)</code></p>
+<div class="description">
+<p>Convert a colour from HSV to RGB.</p>
+<p> The HSV colourspace specifies colour shades in terms of hue (basic colour), saturation and value (brightness), each a real value between 0 and 1. It's useful if you want to turn a continuous range of values into a smooth series of colours: fix the saturation and value and vary the hue.</p>
+<p> This is an implementation of <a href="http://www.cs.rit.edu/~ncs/color/t_convert.html">N.  Schaller's algorithm</a>.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>h</code></td>
+<td class="param-desc">Hue</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">Saturation</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>v</code></td>
+<td class="param-desc">Value</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>#rrggbb</code></td>
+</tr></table></div>
+</div>
+<div id="name-COLOUR" class="declaration group">
+<h3>
+<span class="location"><code>graphics.inc</code>:27</span>Group <code>COLOUR</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description">
+<p>Common colours</p>
+<p> Assume coded as <code>#rrggbb</code>, which ain't necessarily so.</p>
+</div>
+<div class="children">
+<div id="name-COLOUR.BLACK" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:31</span>Constant <code>COLOUR.BLACK</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.BLACK</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.WHITE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:32</span>Constant <code>COLOUR.WHITE</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.WHITE</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.RED" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:33</span>Constant <code>COLOUR.RED</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.RED</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.GREEN" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:34</span>Constant <code>COLOUR.GREEN</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.GREEN</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.BLUE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:35</span>Constant <code>COLOUR.BLUE</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.BLUE</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.YELLOW" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:36</span>Constant <code>COLOUR.YELLOW</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.YELLOW</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.CYAN" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:37</span>Constant <code>COLOUR.CYAN</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.CYAN</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.MAGENTA" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:38</span>Constant <code>COLOUR.MAGENTA</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.MAGENTA</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.GREY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:39</span>Constant <code>COLOUR.GREY</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.GREY</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.ORANGE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:40</span>Constant <code>COLOUR.ORANGE</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.ORANGE</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.PINK" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:41</span>Constant <code>COLOUR.PINK</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.PINK</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.SKY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:42</span>Constant <code>COLOUR.SKY</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.SKY</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.MAROON" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:43</span>Constant <code>COLOUR.MAROON</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.MAROON</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.BROWN" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:44</span>Constant <code>COLOUR.BROWN</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.BROWN</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.NAVY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:45</span>Constant <code>COLOUR.NAVY</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.NAVY</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.PURPLE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:46</span>Constant <code>COLOUR.PURPLE</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.PURPLE</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.VIOLET" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:47</span>Constant <code>COLOUR.VIOLET</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.VIOLET</code></p>
+<div class="description"></div>
+</div>
+<div id="name-COLOUR.OCTARINE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:49</span>Constant <code>COLOUR.OCTARINE</code>
+</h3>
+<p class="definition"><code>VAL INT COLOUR.OCTARINE</code></p>
+<div class="description"></div>
+</div>
+</div>
+</div>
+<div id="name-pack.colour" class="declaration function">
+<h3>
+<span class="location"><code>graphics.inc</code>:61</span>Function <code>pack.colour</code>
+</h3>
+<p class="definition"><code>INT INLINE FUNCTION pack.colour (VAL BYTE r, g, b)</code></p>
+<div class="description">
+<p>Pack RGB <code>BYTEs</code> to an <code>INT</code>.</p>
+<p> Assume coded as <code>#rrggbb</code>, which ain't necessarily so.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name">
+<code>r</code>, <code>g</code>, <code>b</code>
+</td>
+<td class="param-desc">Primary colour components</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>#rrggbb</code></td>
+</tr></table></div>
+</div>
+<div id="name-pack.colour.float" class="declaration function">
+<h3>
+<span class="location"><code>graphics.inc</code>:69</span>Function <code>pack.colour.float</code>
+</h3>
+<p class="definition"><code>INT INLINE FUNCTION pack.colour.float (VAL REAL32 r, g, b)</code></p>
+<div class="description"><p>As <a href="rastergraphics.html#name-pack.colour"><code>pack.colour</code></a>, but taking <code>REAL32</code> arguments.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name">
+<code>r</code>, <code>g</code>, <code>b</code>
+</td>
+<td class="param-desc">Primary colour components in the range 0.0 to 1.0</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>#rrggbb</code></td>
+</tr></table></div>
+</div>
+<div id="name-unpack.colour" class="declaration function">
+<h3>
+<span class="location"><code>graphics.inc</code>:78</span>Function <code>unpack.colour</code>
+</h3>
+<p class="definition"><code>BYTE, BYTE, BYTE INLINE FUNCTION unpack.colour (VAL INT c)</code></p>
+<div class="description"><p>Unpack an <code>INT</code> to RGB <code>BYTEs</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>c</code></td>
+<td class="param-desc"><code>#rrggbb</code></td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name">
+<code>r</code>, <code>g</code>, <code>b</code>
+</td>
+<td class="param-desc">Primary colour components</td>
+</tr></table></div>
+</div>
+<div id="name-PALETTE" class="declaration group">
+<h3>
+<span class="location"><code>graphics.inc</code>:82</span>Group <code>PALETTE</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Codes for <code>permute</code> arguments.</p></div>
+<div class="children">
+<div id="name-PALETTE.RGB" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:86</span>Constant <code>PALETTE.RGB</code>
+</h3>
+<p class="definition"><code>VAL INT PALETTE.RGB</code></p>
+<div class="description"></div>
+</div>
+<div id="name-PALETTE.BGR" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:87</span>Constant <code>PALETTE.BGR</code>
+</h3>
+<p class="definition"><code>VAL INT PALETTE.BGR</code></p>
+<div class="description"></div>
+</div>
+<div id="name-PALETTE.RBG" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:88</span>Constant <code>PALETTE.RBG</code>
+</h3>
+<p class="definition"><code>VAL INT PALETTE.RBG</code></p>
+<div class="description"></div>
+</div>
+<div id="name-PALETTE.BRG" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:89</span>Constant <code>PALETTE.BRG</code>
+</h3>
+<p class="definition"><code>VAL INT PALETTE.BRG</code></p>
+<div class="description"></div>
+</div>
+<div id="name-PALETTE.GRB" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:90</span>Constant <code>PALETTE.GRB</code>
+</h3>
+<p class="definition"><code>VAL INT PALETTE.GRB</code></p>
+<div class="description"></div>
+</div>
+<div id="name-PALETTE.GBR" class="declaration constant">
+<h3>
+<span class="location"><code>graphics.inc</code>:91</span>Constant <code>PALETTE.GBR</code>
+</h3>
+<p class="definition"><code>VAL INT PALETTE.GBR</code></p>
+<div class="description"></div>
+</div>
+</div>
+</div>
+<div id="name-fill.circle" class="declaration proc">
+<h3>
+<span class="location"><code>disc.occ</code>:30</span>Process <code>fill.circle</code>
+</h3>
+<p class="definition"><code>PROC fill.circle (VAL INT x, y, r, VAL INT colour, [][]INT raster)</code></p>
+<div class="description"><p>Draws a solid circle. Clips as necessary.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates of centre</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>r</code></td>
+<td class="param-desc">Radius</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-draw.line" class="declaration proc">
+<h3>
+<span class="location"><code>line.occ</code>:37</span>Process <code>draw.line</code>
+</h3>
+<p class="definition"><code>PROC draw.line (INT x.0, y.0, VAL INT d.x, d.y, VAL INT c.0, c.1, [][]INT raster)</code></p>
+<div class="description">
+<p>Draw a straight line.</p>
+<p> Returns end point in <code>(x.0, y.0)</code>.</p>
+<p> Does nothing if <code>(x.0, y.0)</code> is outside <code>raster</code>.</p>
+<p> Based on Foley &amp; van Dam, Computer Graphics Principles and Practice, Second Edition in C, Fig. 3.8.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>x.0</code>, <code>y.0</code>
+</td>
+<td class="param-desc">Starting point</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>d.x</code>, <code>d.y</code>
+</td>
+<td class="param-desc">Relative position of end point</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>c.0</code></td>
+<td class="param-desc">Stop when line hits this colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>c.1</code></td>
+<td class="param-desc">Draw in this colour ...</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">... on this raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ANGLE" class="declaration datatype">
+<h3>
+<span class="location"><code>angle.inc</code>:28</span>Data type <code>ANGLE</code>
+</h3>
+<p class="definition"><code>DATA TYPE ANGLE</code></p>
+<div class="description">
+<p>ANGLE data type</p>
+<p> An <code>ANGLE</code> is measured in units of 2^32 bits = 1 turn = 4 right angles = 2 pi radians = 360 degrees = 400 grades. Like times, angles wrap round without overflowing.</p>
+</div>
+</div>
+<div id="name-ANGLE" class="declaration group">
+<h3>
+<span class="location"><code>angle.inc</code>:30</span>Group <code>ANGLE</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>constants</p></div>
+<div class="children">
+<div id="name-ANGLE.STRAIGHT" class="declaration constant">
+<h3>
+<span class="location"><code>angle.inc</code>:32</span>Constant <code>ANGLE.STRAIGHT</code>
+</h3>
+<p class="definition"><code>VAL ANGLE ANGLE.STRAIGHT</code></p>
+<div class="description"><p>2^31 (exact)</p></div>
+</div>
+<div id="name-ANGLE.RIGHT" class="declaration constant">
+<h3>
+<span class="location"><code>angle.inc</code>:33</span>Constant <code>ANGLE.RIGHT</code>
+</h3>
+<p class="definition"><code>VAL ANGLE ANGLE.RIGHT</code></p>
+<div class="description"><p>2^30 (exact)</p></div>
+</div>
+<div id="name-ANGLE.RADIAN" class="declaration constant">
+<h3>
+<span class="location"><code>angle.inc</code>:34</span>Constant <code>ANGLE.RADIAN</code>
+</h3>
+<p class="definition"><code>VAL ANGLE ANGLE.RADIAN</code></p>
+<div class="description"><p>2^31 / pi (approx.)</p></div>
+</div>
+<div id="name-ANGLE.DEGREE" class="declaration constant">
+<h3>
+<span class="location"><code>angle.inc</code>:35</span>Constant <code>ANGLE.DEGREE</code>
+</h3>
+<p class="definition"><code>VAL ANGLE ANGLE.DEGREE</code></p>
+<div class="description"><p>2^32 / 360 (approx.)</p></div>
+</div>
+<div id="name-ANGLE.GRADE" class="declaration constant">
+<h3>
+<span class="location"><code>angle.inc</code>:38</span>Constant <code>ANGLE.GRADE</code>
+</h3>
+<p class="definition"><code>VAL ANGLE ANGLE.GRADE</code></p>
+<div class="description"><p>2^32 / 400 (approx.)</p></div>
+</div>
+</div>
+</div>
+<div id="name-operator2b.ANGLE.ANGLE.ANGLE" class="declaration operator">
+<h3>
+<span class="location"><code>angle.inc</code>:48</span>Operator <code>+ (ANGLE, ANGLE)</code>
+</h3>
+<p class="definition"><code>ANGLE INLINE FUNCTION "+" (VAL ANGLE X, Y)</code></p>
+<div class="description"><p>Addition operator</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL ANGLE</code></td>
+<td class="param-name">
+<code>X</code>, <code>Y</code>
+</td>
+<td class="param-desc">Operands</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>ANGLE</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>X + Y</code></td>
+</tr></table></div>
+</div>
+<div id="name-operator7e.ANGLE.ANGLE" class="declaration operator">
+<h3>
+<span class="location"><code>angle.inc</code>:64</span>Operator <code>~ (ANGLE)</code>
+</h3>
+<p class="definition"><code>ANGLE INLINE FUNCTION "~" (VAL ANGLE X)</code></p>
+<div class="description"><p>Reverse operator</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL ANGLE</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Operands</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>ANGLE</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Opposite direction</td>
+</tr></table></div>
+</div>
+<div id="name-draw.horizontal.line" class="declaration proc">
+<h3>
+<span class="location"><code>lines.occ</code>:31</span>Process <code>draw.horizontal.line</code>
+</h3>
+<p class="definition"><code>PROC draw.horizontal.line (VAL INT x, y, l, VAL INT colour, [][]INT raster)</code></p>
+<div class="description">
+<p>Draws a horizontal line.</p>
+<p> Clips as necessary.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Starting point</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>l</code></td>
+<td class="param-desc">Length</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-draw.vertical.line" class="declaration proc">
+<h3>
+<span class="location"><code>lines.occ</code>:67</span>Process <code>draw.vertical.line</code>
+</h3>
+<p class="definition"><code>PROC draw.vertical.line (VAL INT x, y, l, VAL INT colour, [][]INT raster)</code></p>
+<div class="description">
+<p>Draws a vertical line.</p>
+<p> Clips as necessary.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Starting point</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>l</code></td>
+<td class="param-desc">Length</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-draw.rectangle" class="declaration proc">
+<h3>
+<span class="location"><code>lines.occ</code>:104</span>Process <code>draw.rectangle</code>
+</h3>
+<p class="definition"><code>PROC draw.rectangle (VAL INT x, y, w, h, VAL INT colour, [][]INT raster)</code></p>
+<div class="description">
+<p>Draws a rectangular box.</p>
+<p> Clips as necessary.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Top left corner</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>w</code></td>
+<td class="param-desc">Width</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>h</code></td>
+<td class="param-desc">Height/depth</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-fill.rectangle" class="declaration proc">
+<h3>
+<span class="location"><code>rectangle.occ</code>:32</span>Process <code>fill.rectangle</code>
+</h3>
+<p class="definition"><code>PROC fill.rectangle (VAL INT x.0, y.0, w.0, h.0, VAL INT colour, [][]INT raster)</code></p>
+<div class="description">
+<p>Draws a solid rectangle.</p>
+<p> Clips as necessary.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x.0</code>, <code>y.0</code>
+</td>
+<td class="param-desc">Top left corner</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>w.0</code></td>
+<td class="param-desc">Width</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>h.0</code></td>
+<td class="param-desc">Height/depth</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-fill.square" class="declaration proc">
+<h3>
+<span class="location"><code>rectangle.occ</code>:78</span>Process <code>fill.square</code>
+</h3>
+<p class="definition"><code>PROC fill.square (VAL INT x, y, s, VAL INT colour, [][]INT raster)</code></p>
+<div class="description"><p>Draw a solid square.</p></div>
+</div>
+<div id="name-circle.hits" class="declaration function">
+<h3>
+<span class="location"><code>hit.occ</code>:29</span>Function <code>circle.hits</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION circle.hits (VAL INT X, Y, radius, colour, VAL [][]INT raster)</code></p>
+<div class="description"><p>Does circle hit anything?</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>X</code>, <code>Y</code>
+</td>
+<td class="param-desc">Centre of circle</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>radius</code></td>
+<td class="param-desc">Radius</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour of target</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-dither" class="declaration function">
+<h3>
+<span class="location"><code>dither.occ</code>:28</span>Function <code>dither</code>
+</h3>
+<p class="definition"><code>INT FUNCTION dither (VAL INT n, i, j)</code></p>
+<div class="description"><p>Dither</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Order</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>i</code>, <code>j</code>
+</td>
+<td class="param-desc">Coordinates</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Dither</td>
+</tr></table></div>
+</div>
+<div id="name-undither" class="declaration function">
+<h3>
+<span class="location"><code>dither.occ</code>:51</span>Function <code>undither</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION undither (VAL INT n, k)</code></p>
+<div class="description"><p>Reverse Dither</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Order</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>k</code></td>
+<td class="param-desc">Count</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>i</code>, <code>j</code>
+</td>
+<td class="param-desc">Coordinates</td>
+</tr></table></div>
+</div>
+<div id="name-fill.ellipse.radii" class="declaration proc">
+<h3>
+<span class="location"><code>ellipse.occ</code>:31</span>Process <code>fill.ellipse.radii</code>
+</h3>
+<p class="definition"><code>PROC fill.ellipse.radii (VAL INT x, y, a, b, VAL INT colour, [][]INT raster)</code></p>
+<div class="description"><p>Draws a solid ellipse. Clips as necessary.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Coordinates of centre</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>a</code>, <code>b</code>
+</td>
+<td class="param-desc">X and Y radii</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+<div id="name-map.to.components.spectrum" class="declaration function">
+<h3>
+<span class="location"><code>spectrum.occ</code>:31</span>Function <code>map.to.components.spectrum</code>
+</h3>
+<p class="definition"><code>BYTE, BYTE, BYTE FUNCTION map.to.components.spectrum (VAL REAL64 x)</code></p>
+<div class="description"><p>Maps code value into three <code>BYTEs</code> representing primary colours (not necessarily RGB), with smooth transitions.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>x</code></td>
+<td class="param-desc">Value <code>(0.0 &lt;= x &lt; 1.0)</code>
+</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name">
+<code>"red"</code>, <code>"green"</code>, <code>"blue"</code>
+</td>
+<td class="param-desc"></td>
+</tr></table></div>
+<div class="children"><div id="name-smooth" class="declaration function">
+<h3>
+<span class="location"><code>spectrum.occ</code>:41</span>Function <code>smooth</code>
+</h3>
+<p class="definition"><code>BYTE INLINE FUNCTION smooth (VAL REAL64 x)</code></p>
+<div class="description"><p>Smooth transition.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>x</code></td>
+<td class="param-desc">Argument; <code>0.0 &lt;= x &lt;= 1.0</code>
+</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>0 &lt;= "colour" &lt;= #FF</code></td>
+</tr></table></div>
+</div></div>
+</div>
+<div id="name-map.to.components.wheel" class="declaration function">
+<h3>
+<span class="location"><code>spectrum.occ</code>:75</span>Function <code>map.to.components.wheel</code>
+</h3>
+<p class="definition"><code>BYTE, BYTE, BYTE FUNCTION map.to.components.wheel (VAL REAL64 x)</code></p>
+<div class="description"><p>As <a href="rastergraphics.html#name-map.to.components.spectrum"><code>map.to.components.spectrum</code></a>, but without mapping through black.</p></div>
+</div>
+<div id="name-pack.colour.permuted" class="declaration function">
+<h3>
+<span class="location"><code>spectrum.occ</code>:115</span>Function <code>pack.colour.permuted</code>
+</h3>
+<p class="definition"><code>INT FUNCTION pack.colour.permuted (VAL BYTE r, g, b, VAL INT permute)</code></p>
+<div class="description"><p>Maps three <code>BYTEs</code> representing colours to an <code>INT</code>, according to the code <code>permute</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name">
+<code>r</code>, <code>g</code>, <code>b</code>
+</td>
+<td class="param-desc">"red", "green", "blue"</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>permute</code></td>
+<td class="param-desc">Permutation code</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">#rrggbb</td>
+</tr></table></div>
+</div>
+<div id="name-map.colour.spectrum" class="declaration function">
+<h3>
+<span class="location"><code>spectrum.occ</code>:159</span>Function <code>map.colour.spectrum</code>
+</h3>
+<p class="definition"><code>INT FUNCTION map.colour.spectrum (VAL REAL64 x, VAL INT permute)</code></p>
+<div class="description">
+<p>Maps <code>x</code> (<code>0.0 &lt;= x &lt; 1.0</code>) to <code>INT</code> representing a colour, according to the code <code>permute</code>. Shades from black through "red", "yellow", "green", "cyan", "magenta", back to "red", and finally black.</p>
+<p> <code>x &gt;= 1.0</code> shown as black; <code>x &lt;  0.0</code> shown as dark grey.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>x</code></td>
+<td class="param-desc"><code>(0.0 &lt;= x &lt; 1.0)</code></td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>permute</code></td>
+<td class="param-desc">Permutation code</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>#rrggbb</code></td>
+</tr></table></div>
+</div>
+<div id="name-map.colour.wheel" class="declaration function">
+<h3>
+<span class="location"><code>spectrum.occ</code>:188</span>Function <code>map.colour.wheel</code>
+</h3>
+<p class="definition"><code>INT FUNCTION map.colour.wheel (VAL REAL64 x, VAL INT permute)</code></p>
+<div class="description">
+<p>Maps <code>x</code> (<code>0.0 &lt;= x &lt; 1.0</code>) to <code>INT</code> representing a colour, according to the code <code>permute</code>. Shades from "red" through "yellow", "green", "cyan", "magenta", back to "red".</p>
+<p> <code>x &gt;= 1.0</code> shown as black; <code>x &lt;  0.0</code> shown as white.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>x</code></td>
+<td class="param-desc"><code>(0.0 &lt;= x &lt; 1.0)</code></td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>permute</code></td>
+<td class="param-desc">Permutation code</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc"><code>#rrggbb</code></td>
+</tr></table></div>
+</div>
+</div></div></body>
+</html>

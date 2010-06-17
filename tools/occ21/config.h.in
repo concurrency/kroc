@@ -1,0 +1,169 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* define if back-end debugging required */
+#undef BACKENDTRACE
+
+/* define if can inline */
+#undef CAN_USE_INLINE
+
+/* define to target KRoC ETC */
+#undef CODE_GEN_KROC_ASM
+
+/* define if using gcc */
+#undef COMPILER_IS_GCC
+
+/* define to enable debugging */
+#undef DEBUG
+
+/* define for next-symb debugging */
+#undef DEBUG_NEXTSYMB
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+#undef HAVE_DOPRNT
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strrchr' function. */
+#undef HAVE_STRRCHR
+
+/* Define to 1 if you have the `strspn' function. */
+#undef HAVE_STRSPN
+
+/* Define to 1 if you have the `strstr' function. */
+#undef HAVE_STRSTR
+
+/* Define to 1 if you have the `strtol' function. */
+#undef HAVE_STRTOL
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
+
+/* define if the host OS is UNIX */
+#undef HOST_OS_IS_UNIX
+
+/* define to support INITIAL decls */
+#undef INITIAL_DECL
+
+/* define to support MOBILEs */
+#undef MOBILES
+
+/* define if quad alignment needed */
+#undef NEED_QUAD_ALIGNMENT
+
+/* define to build occam compiler */
+#undef OC
+
+/* define to include occam 2.1 support */
+#undef OCCAM2_5
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* define if process-priority desired */
+#undef PROCESS_PRIORITY
+
+/* Define to 1 if the C compiler supports function prototypes. */
+#undef PROTOTYPES
+
+/* The size of `signed int', as computed by sizeof. */
+#undef SIZEOF_SIGNED_INT
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* define if memory accesses must be aligned */
+#undef TARGET_ACCESSALIGNED
+
+/* define target alias */
+#undef TARGET_ALIAS
+
+/* define target */
+#undef TARGET_CANONICAL
+
+/* define target CPU */
+#undef TARGET_CPU
+
+/* define if i386 processor family */
+#undef TARGET_CPU_IS_I386
+
+/* define if generating code for a big-endian machine */
+#undef TARGET_IS_BIGENDIAN
+
+/* define target OS */
+#undef TARGET_OS
+
+/* define target vendor */
+#undef TARGET_VENDOR
+
+/* define to enable user-defined-operators */
+#undef USER_DEFINED_OPERATORS
+
+/* Version number of package */
+#undef VERSION
+
+/* Define like PROTOTYPES; this can be used by system headers. */
+#undef __PROTOTYPES
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t

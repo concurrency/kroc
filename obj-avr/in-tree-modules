@@ -1,0 +1,49 @@
+button.module -
+cdx.module -
+cif.module -
+convert.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/convert 
+course.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/course/libsrc 
+cspdrv.module -
+dblmath.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/maths 
+dynproc.module -
+file.module -
+fmtout.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/fmtoutlib/libsrc  convert.module
+forall.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/forall 
+graphics3d.module -
+hostio.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/hostio convert.module
+hostsp.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/hostsp hostio.module
+http.module -
+ioconv.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/convert 
+maths.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/maths dblmath.module snglmath.module
+miniraster.module -
+moa.module -
+netbar.module -
+occGL.module -
+occSDL.module -
+occSDLsound.module -
+occade.module -
+occplayer.module -
+player.module -
+pony.module -
+proc.module -
+random.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/random/libsrc  maths.module
+raster.module -
+rastergraphics.module -
+rasterio.module -
+rastertext.module -
+sdlraster.module -
+selector.module -
+shared_screen.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/course/libsrc 
+snglmath.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/maths 
+sock.module -
+solib.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/hostio convert.module splib.module
+splib.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/hostio convert.module
+ss.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/course/libsrc 
+stream.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/streamio convert.module hostio.module
+string.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/inmoslibs/libsrc/string convert.module
+time.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/time/libsrc 
+trap.module -
+ttyutil.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/ttyutil/libsrc  course.module
+udc.module -
+useful.module /home/dennis/eclipse-projs/avr-servo/obj-avr/modules/useful/libsrc  course.module maths.module time.module
+video.module -

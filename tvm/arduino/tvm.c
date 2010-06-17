@@ -9,6 +9,7 @@ static WORDPTR memory;
 
 /* The bytecode file, loaded into flash at a fixed address. */
 static const prog_char *tbc_data = (prog_char *) BYTECODE_ADDR;
+static BYTEPTR initial_iptr;
 
 /* Time is in milliseconds, since microseconds wrap round too fast in
    16 bits to be useful. */
@@ -22,13 +23,54 @@ static void arduino_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
 	sei ();
 }
 
-void terminate (const char *message, const int *status) {
-	/* FIXME: offer other behaviours as options */
-	printf ("tvm-arduino: %s", message);
-	if (status != NULL) {
-		printf ("%c", *status);
+static void dump_machine_state () {
+	WORDPTR wp;
+	BYTEPTR bp;
+	const prog_char *file;
+	UWORD line;
+	const UWORD iptr_offset = (UWORD) (context.iptr - initial_iptr);
+
+	if (tbc_file_and_line (tbc_data, iptr_offset, &file, &line) == 0) {
+		printf_P (PSTR ("\nfile=%S line=%d"), file, (int) line);
 	}
-	printf ("\n");
+
+	printf_P (PSTR ("\nwptr=%04x (rel=%04x)  iptr=%04x (rel=%04x)  "
+	                "eflags=%04x sflags=%04x\n"
+	                "areg=%04x breg=%04x creg=%04x  oreg=%04x\n"),
+	          (int) context.wptr, (int) (context.wptr - memory),
+	          (int) context.iptr, (int) (context.iptr - initial_iptr),
+	          context.eflags, context.sflags,
+	          context.areg, context.breg, context.creg, context.oreg);
+
+	for (wp = context.wptr - 7; wp < context.wptr + 7; ++wp) {
+		if (wp == context.wptr) {
+			printf_P (PSTR ("wptr>"));
+		}
+		printf_P (PSTR ("%04x "), read_word (wp));
+	}
+	printf_P (PSTR ("\n"));
+
+	for (bp = context.iptr - 12; bp < context.iptr + 12; ++bp) {
+		if (bp == context.iptr) {
+			printf_P (PSTR ("iptr>"));
+		}
+		printf_P (PSTR ("%02x "), read_byte (bp));
+	}
+	printf_P (PSTR ("\n"));
+}
+
+void terminate (const prog_char *message, const int *status) {
+	/* FIXME: offer other behaviours as options */
+	printf_P (PSTR ("tvm-arduino: %S"), message);
+	if (status != NULL) {
+		printf_P (PSTR ("%c"), *status);
+	}
+	printf_P (PSTR ("\n"));
+
+	if (status != NULL) {
+		printf_P (PSTR ("\nFinal machine state:"));
+		dump_machine_state ();
+	}
 
 	while (1) {}
 }
@@ -45,7 +87,7 @@ int main () {
 	serial_stdout_init (57600);
 
 #ifdef DEBUG
-	printf ("Arduino-TVM starting...\n");
+	printf_P (PSTR ("Arduino-TVM starting...\n"));
 #endif
 
 	/* The Transputer memory must be word-aligned. */
@@ -59,8 +101,9 @@ int main () {
 	tvm_ectx_init (&tvm, &context);
 
 	if (init_context_from_tbc (&context, tbc_data, memory, MEM_WORDS) != 0) {
-		terminate ("program loading failed", NULL);
+		terminate (PSTR ("program loading failed"), NULL);
 	}
+	initial_iptr = context.iptr;
 
 	context.get_time = arduino_get_time;
 	context.modify_sync_flags = arduino_modify_sync_flags;
@@ -68,22 +111,18 @@ int main () {
 	context.sffi_table_length = sffi_table_length;
 
 #ifdef DEBUG
-	int a;
-	printf ("stack pointer is (more or less) %04x\n", (int) &a);
-	printf ("memory is %04x\n", (int) &memory[0]);
-	printf ("context is %04x\n", (int) &context);
-	printf ("wptr is %04x\n", (int) context.wptr);
-	printf ("iptr is %04x\n", (int) context.iptr);
-	printf ("GO!\n");
+	dump_machine_state ();
 #endif
 
 	while (1) {
 #ifdef DEBUG
-		printf ("before tvm_run: sflags=%04x eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", (int) context.sflags, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
+		printf_P (PSTR ("Before tvm_run:"));
+		dump_machine_state ();
 
 		int ret = tvm_run_count (&context, 1);
 
-		printf ("after tvm_run = %d (%c): sflags=%04x eflags=%04x iptr=%04x wptr=%04x inst=%02x\n", ret, ret, (int) context.sflags, (int) context.eflags, (int) context.iptr, (int) context.wptr, (int) read_byte (context.iptr));
+		printf_P (PSTR ("After tvm_run = %d (%c):"), ret, ret);
+		dump_machine_state ();
 #else
 		int ret = tvm_run (&context);
 #endif
@@ -108,15 +147,15 @@ int main () {
 			}
 			case ECTX_EMPTY: {
 				if (!waiting_on_interrupts ()) {
-					terminate("deadlock", NULL);
+					terminate(PSTR ("deadlock"), NULL);
 				}
 				break;
 			}
 			case ECTX_SHUTDOWN: {
-				terminate("end of program", NULL);
+				terminate(PSTR ("end of program"), NULL);
 			}
 			default: {
-				terminate("error status ", &ret);
+				terminate(PSTR ("error status "), &ret);
 			}
 		}
 	}

@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>V4L(2) frame-grabber interface</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-video" class="module">
+<h1>Module <code>video</code> - V4L(2) frame-grabber interface</h1>
+<div class="header"><div class="description">
+<p>V4L(2) frame-grabber interface.</p>
+<p> This library allows an application to open a V4L(2) device and interact with it. This currently only supports frame-grabbing from devices.</p>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "video.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="chantype" href="video.html#name-CT.VIDEO">Channel type <code>CT.VIDEO</code></a> - Channel-type used for communicating with a video-server process</li>
+<li>
+<a class="protocol" href="video.html#name-P.VIDEO.REQ">Protocol <code>P.VIDEO.REQ</code></a> - Protocol used for communicating with a video-server process</li>
+<li>
+<a class="protocol" href="video.html#name-P.VIDEO.RESP">Protocol <code>P.VIDEO.RESP</code></a> - Protocol used for communicating with a video-server process</li>
+<li>
+<a class="record" href="video.html#name-VIDEO.FRAMEINFO">Record <code>VIDEO.FRAMEINFO</code></a> - Generic video frame information/settings</li>
+<li>
+<a class="record" href="video.html#name-VIDEO.IDENTITY">Record <code>VIDEO.IDENTITY</code></a> - Generic video device identity</li>
+<li>
+<a class="constant" href="video.html#name-VIDEO.IDENTITY.NAMEMAX">Constant <code>VIDEO.IDENTITY.NAMEMAX</code></a> - Maximum length of a video identity</li>
+<li>
+<a class="record" href="video.html#name-VIDEO.INPUT">Record <code>VIDEO.INPUT</code></a> - Generic video input information</li>
+<li>
+<a class="constant" href="video.html#name-VIDEO.INPUT.NAMEMAX">Constant <code>VIDEO.INPUT.NAMEMAX</code></a> - Maximum length of a input name</li>
+<li>
+<a class="record" href="video.html#name-VIDEO.PICTURE">Record <code>VIDEO.PICTURE</code></a> - Generic video picture information/settings</li>
+<li>
+<a class="proc" href="video.html#name-video.server">Process <code>video.server</code></a> - This process implements a video server for a particular V4L device</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-video.server" class="declaration proc">
+<h3>
+<span class="location"><code>video.occ</code>:61</span>Process <code>video.server</code>
+</h3>
+<p class="definition"><code>PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)</code></p>
+<div class="description"><p>This process implements a video server for a particular V4L device. Once initialised, this will output either 'ok' or 'error' to the client.</p></div>
+</div>
+<div id="name-VIDEO.IDENTITY.NAMEMAX" class="declaration constant">
+<h3>
+<span class="location"><code>video.inc</code>:42</span>Constant <code>VIDEO.IDENTITY.NAMEMAX</code>
+</h3>
+<p class="definition"><code>VAL INT VIDEO.IDENTITY.NAMEMAX</code></p>
+<div class="description"><p>Maximum length of a video identity.</p></div>
+</div>
+<div id="name-VIDEO.IDENTITY" class="declaration record">
+<h3>
+<span class="location"><code>video.inc</code>:45</span>Record <code>VIDEO.IDENTITY</code>
+</h3>
+<p class="definition"><code>DATA TYPE VIDEO.IDENTITY</code></p>
+<div class="description"><p>Generic video device identity</p></div>
+</div>
+<div id="name-VIDEO.INPUT.NAMEMAX" class="declaration constant">
+<h3>
+<span class="location"><code>video.inc</code>:54</span>Constant <code>VIDEO.INPUT.NAMEMAX</code>
+</h3>
+<p class="definition"><code>VAL INT VIDEO.INPUT.NAMEMAX</code></p>
+<div class="description"><p>Maximum length of a input name.</p></div>
+</div>
+<div id="name-VIDEO.INPUT" class="declaration record">
+<h3>
+<span class="location"><code>video.inc</code>:57</span>Record <code>VIDEO.INPUT</code>
+</h3>
+<p class="definition"><code>DATA TYPE VIDEO.INPUT</code></p>
+<div class="description"><p>Generic video input information.</p></div>
+</div>
+<div id="name-VIDEO.PICTURE" class="declaration record">
+<h3>
+<span class="location"><code>video.inc</code>:73</span>Record <code>VIDEO.PICTURE</code>
+</h3>
+<p class="definition"><code>DATA TYPE VIDEO.PICTURE</code></p>
+<div class="description"><p>Generic video picture information/settings.</p></div>
+</div>
+<div id="name-VIDEO.FRAMEINFO" class="declaration record">
+<h3>
+<span class="location"><code>video.inc</code>:84</span>Record <code>VIDEO.FRAMEINFO</code>
+</h3>
+<p class="definition"><code>DATA TYPE VIDEO.FRAMEINFO</code></p>
+<div class="description"><p>Generic video frame information/settings.</p></div>
+</div>
+<div id="name-P.VIDEO.REQ" class="declaration protocol">
+<h3>
+<span class="location"><code>video.inc</code>:127</span>Protocol <code>P.VIDEO.REQ</code>
+</h3>
+<p class="definition"><code>PROTOCOL P.VIDEO.REQ</code></p>
+<div class="description"><p>Protocol used for communicating with a video-server process.</p></div>
+</div>
+<div id="name-P.VIDEO.RESP" class="declaration protocol">
+<h3>
+<span class="location"><code>video.inc</code>:144</span>Protocol <code>P.VIDEO.RESP</code>
+</h3>
+<p class="definition"><code>PROTOCOL P.VIDEO.RESP</code></p>
+<div class="description"><p>Protocol used for communicating with a video-server process.</p></div>
+</div>
+<div id="name-CT.VIDEO" class="declaration chantype">
+<h3>
+<span class="location"><code>video.inc</code>:159</span>Channel type <code>CT.VIDEO</code>
+</h3>
+<p class="definition"><code>REC CHAN TYPE CT.VIDEO</code></p>
+<div class="description"><p>Channel-type used for communicating with a video-server process.</p></div>
+</div>
+</div></div></body>
+</html>

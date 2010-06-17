@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Support for saving and loading rasters as graphics files</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-rasterio" class="module">
+<h1>Module <code>rasterio</code> - Support for saving and loading rasters as graphics files</h1>
+<div class="header"><div class="description"><p>Support for saving and loading rasters as graphics files.</p></div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="rasterio.html#name-read.raster">Process <code>read.raster</code></a> - Load an image file as a raster, with the format determined automatically based on the extension</li>
+<li>
+<a class="proc" href="rasterio.html#name-read.raster.png">Process <code>read.raster.png</code></a> - Load a PNG file as a raster</li>
+<li>
+<a class="proc" href="rasterio.html#name-read.raster.ppm">Process <code>read.raster.ppm</code></a> - Load a PPM file as a raster<br><ul>
+<li>
+<a class="proc" href="rasterio.html#name-get.char">Process <code>get.char</code></a> - Read a character from the file into ch, skipping comments</li>
+<li>
+<a class="proc" href="rasterio.html#name-get.number">Process <code>get.number</code></a> - Read a decimal number terminated by a single whitespace character from the file into n, skipping any preceding whitespace</li>
+<li>
+<a class="function" href="rasterio.html#name-is.whitespace">Function <code>is.whitespace</code></a> - Is a character whitespace, as defined by the PPM spec?</li>
+<li>
+<a class="proc" href="rasterio.html#name-raw.char">Process <code>raw.char</code></a> - Read a character from the file into ch</li>
+</ul>
+</li>
+<li>
+<a class="proc" href="rasterio.html#name-write.raster">Process <code>write.raster</code></a> - Write a raster to a file, with the format determined automatically based on the extension</li>
+<li>
+<a class="proc" href="rasterio.html#name-write.raster.png">Process <code>write.raster.png</code></a> - Write a raster out as a PNG file</li>
+<li>
+<a class="proc" href="rasterio.html#name-write.raster.ppm">Process <code>write.raster.ppm</code></a> - Write a raster out as a PPM file</li>
+<li>
+<a class="proc" href="rasterio.html#name-write.rasters">Process <code>write.rasters</code></a> - Write rasters to files</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-read.raster.png" class="declaration proc">
+<h3>
+<span class="location"><code>png.occ</code>:32</span>Process <code>read.raster.png</code>
+</h3>
+<p class="definition"><code>PROC read.raster.png (VAL []BYTE filename, RESULT RASTER raster)</code></p>
+<div class="description"><p>Load a PNG file as a raster.</p></div>
+</div>
+<div id="name-write.raster.png" class="declaration proc">
+<h3>
+<span class="location"><code>png.occ</code>:44</span>Process <code>write.raster.png</code>
+</h3>
+<p class="definition"><code>PROC write.raster.png (VAL []BYTE filename, VAL [][]INT raster)</code></p>
+<div class="description"><p>Write a raster out as a PNG file.</p></div>
+</div>
+<div id="name-read.raster" class="declaration proc">
+<h3>
+<span class="location"><code>rasterio.occ</code>:39</span>Process <code>read.raster</code>
+</h3>
+<p class="definition"><code>PROC read.raster (VAL []BYTE filename, RESULT RASTER raster)</code></p>
+<div class="description">
+<p>Load an image file as a raster, with the format determined automatically based on the extension.</p>
+<p> The following extensions are currently supported: </p>
+<ul>
+<li> <code>.png</code> (if your occam system was built with PNG support) </li>
+<li> <code>.ppm</code>
+</li>
+</ul>
+</div>
+</div>
+<div id="name-write.raster" class="declaration proc">
+<h3>
+<span class="location"><code>rasterio.occ</code>:59</span>Process <code>write.raster</code>
+</h3>
+<p class="definition"><code>PROC write.raster (VAL []BYTE filename, VAL [][]INT raster)</code></p>
+<div class="description">
+<p>Write a raster to a file, with the format determined automatically based on the extension.</p>
+<p> The following extensions are currently supported: </p>
+<ul>
+<li> <code>.png</code> (if your occam system was built with PNG support) </li>
+<li> <code>.ppm</code>
+</li>
+</ul>
+</div>
+</div>
+<div id="name-write.rasters" class="declaration proc">
+<h3>
+<span class="location"><code>rasterio.occ</code>:83</span>Process <code>write.rasters</code>
+</h3>
+<p class="definition"><code>PROC write.rasters (VAL []BYTE prefix, suffix, CHAN RASTER in?, out!)</code></p>
+<div class="description">
+<p>Write rasters to files.</p>
+<p> As each raster passes through, it's written to a file named <code>prefix000000suffix</code>, with the number incrementing by one for each frame. The files can be in any format supported by <a href="rasterio.html#name-write.raster"><code>write.raster</code></a>.</p>
+<p> You can convert the resulting files into a video using <code>mencoder</code> or a similar tool; see <a href="http://www.mplayerhq.hu/DOCS/HTML/en/menc-feat-enc-images.html">the mencoder
+ manual</a> for more details.</p>
+</div>
+</div>
+<div id="name-write.raster.ppm" class="declaration proc">
+<h3>
+<span class="location"><code>ppmwrite.occ</code>:27</span>Process <code>write.raster.ppm</code>
+</h3>
+<p class="definition"><code>PROC write.raster.ppm (VAL []BYTE filename, VAL [][]INT raster)</code></p>
+<div class="description"><p>Write a raster out as a PPM file.</p></div>
+</div>
+<div id="name-read.raster.ppm" class="declaration proc">
+<h3>
+<span class="location"><code>ppmread.occ</code>:28</span>Process <code>read.raster.ppm</code>
+</h3>
+<p class="definition"><code>PROC read.raster.ppm (VAL []BYTE filename, RESULT RASTER raster)</code></p>
+<div class="description"><p>Load a PPM file as a raster.</p></div>
+<div class="children">
+<div id="name-is.whitespace" class="declaration function">
+<h3>
+<span class="location"><code>ppmread.occ</code>:35</span>Function <code>is.whitespace</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION is.whitespace (VAL BYTE ch)</code></p>
+<div class="description"><p>Is a character whitespace, as defined by the PPM spec?</p></div>
+</div>
+<div id="name-raw.char" class="declaration proc">
+<h3>
+<span class="location"><code>ppmread.occ</code>:48</span>Process <code>raw.char</code>
+</h3>
+<p class="definition"><code>PROC raw.char ()</code></p>
+<div class="description"><p>Read a character from the file into ch.</p></div>
+</div>
+<div id="name-get.char" class="declaration proc">
+<h3>
+<span class="location"><code>ppmread.occ</code>:58</span>Process <code>get.char</code>
+</h3>
+<p class="definition"><code>PROC get.char ()</code></p>
+<div class="description"><p>Read a character from the file into ch, skipping comments.</p></div>
+</div>
+<div id="name-get.number" class="declaration proc">
+<h3>
+<span class="location"><code>ppmread.occ</code>:76</span>Process <code>get.number</code>
+</h3>
+<p class="definition"><code>PROC get.number (RESULT INT n)</code></p>
+<div class="description"><p>Read a decimal number terminated by a single whitespace character from the file into n, skipping any preceding whitespace.</p></div>
+</div>
+</div>
+</div>
+</div></div></body>
+</html>

@@ -1,0 +1,154 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <math.h> header file. */
+#undef HAVE_MATH_H
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* define for big-endian TVM */
+#undef TVM_BIG_ENDIAN
+
+/* define to enable memcpy/memset overriding */
+#undef TVM_CUSTOM_MEM_OPS
+
+/* define to dispatch instructions using switch rather than a jump table */
+#undef TVM_DISPATCH_SWITCH
+
+/* define to alloc dynamic memory allocation */
+#undef TVM_DYNAMIC_MEMORY
+
+/* define to emulate a T2 processor */
+#undef TVM_EMULATE_T2
+
+/* define to emulate a T4 processor */
+#undef TVM_EMULATE_T4
+
+/* define to emulate a T8 processor */
+#undef TVM_EMULATE_T8
+
+/* define for external channel bundles */
+#undef TVM_EXTERNAL_CHANNEL_BUNDLES
+
+/* define if C compiler supports maths on double words */
+#undef TVM_HAVE_TWOWORD
+
+/* define for little-endian TVM */
+#undef TVM_LITTLE_ENDIAN
+
+/* define to use the AVR memory interface */
+#undef TVM_MEM_INTF_AVR
+
+/* define to enable occam-pi support */
+#undef TVM_OCCAM_PI
+
+/* define for Darwin TVM */
+#undef TVM_OS_DARWIN
+
+/* define for FreeBSD TVM */
+#undef TVM_OS_FREEBSD
+
+/* define for Linux TVM */
+#undef TVM_OS_LINUX
+
+/* define for OS independent TVM */
+#undef TVM_OS_NONE
+
+/* define for Solaris TVM */
+#undef TVM_OS_SOLARIS
+
+/* define for Windows TVM */
+#undef TVM_OS_WINDOWS
+
+/* define to enable packed execution context */
+#undef TVM_PACKED_ECTX
+
+/* define to enable profiling */
+#undef TVM_PROFILING
+
+/* define to T9000 short ops */
+#undef TVM_SHORT_OPS
+
+/* define for type shadowing */
+#undef TVM_TYPE_SHADOW
+
+/* define to allow FPU usage */
+#undef TVM_USE_FPU
+
+/* define to allow inline keyword usage */
+#undef TVM_USE_INLINE
+
+/* define to allow malloc usage */
+#undef TVM_USE_MALLOC
+
+/* define to use memcpy */
+#undef TVM_USE_MEMCPY
+
+/* define to use memset */
+#undef TVM_USE_MEMSET
+
+/* define to use TLSF dynamic memory allocator */
+#undef TVM_USE_TLSF
+
+/* define emulated word length */
+#undef TVM_WORD_LENGTH
+
+/* Version number of package */
+#undef VERSION
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif

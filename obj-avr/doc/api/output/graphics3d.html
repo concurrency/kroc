@@ -1,0 +1,3197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>A library for programming simple 3D graphics in occam-pi</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-graphics3d" class="module">
+<h1>Module <code>graphics3d</code> - A library for programming simple 3D graphics in occam-pi</h1>
+<div class="header"><div class="description">
+<p>A library for programming simple 3D graphics in occam-pi.</p>
+<p> This library provides for simple 3D graphics in occam-pi, using simple rasters.</p>
+<p> Note: the general [serial] techniques/algorithms used in this library are based on code from lightsrc.cpp and glenz.cpp by Marcus Lindblom.</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.ALL.CONTROL">Protocol <code>G3D.ALL.CONTROL</code></a> - Overall control for graphics pipeline<br><ul><li>
+<a class="tag" href="graphics3d.html#name-reset.all">Tag <code>reset.all</code></a> - Reset all components to default state</li></ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.GEN.CONTROL">Protocol <code>G3D.GEN.CONTROL</code></a> - Polygon points generator control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-add.scale">Tag <code>add.scale</code></a> - Add to the current scale</li>
+<li>
+<a class="tag" href="graphics3d.html#name-add.trans">Tag <code>add.trans</code></a> - Add to the current translation</li>
+<li>
+<a class="tag" href="graphics3d.html#name-relink">Tag <code>relink</code></a> - Reconnect I/O channels</li>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset generator to default state</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.scale">Tag <code>set.scale</code></a> - Absolutely set the scale</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.trans">Tag <code>set.trans</code></a> - Absolutely set the translation</li>
+</ul>
+</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.MAX.POLY.POINTS">Constant <code>G3D.MAX.POLY.POINTS</code></a> - Maximum number of points in a polygon (see   )</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.MAX.SCAN.HEIGHT">Constant <code>G3D.MAX.SCAN.HEIGHT</code></a> - Maximum height of any particular polygon</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.PGN.CONTROL">Protocol <code>G3D.PGN.CONTROL</code></a> - Polygon generator control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset polygon generator to default state</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.backfaces">Tag <code>set.backfaces</code></a> - Whether back faces of solid objects should be generated</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.face.colour">Tag <code>set.face.colour</code></a> - Set individual face colour</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.face.colours">Tag <code>set.face.colours</code></a> - Set all face colours</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.polyid">Tag <code>set.polyid</code></a> - Set polygon ID (0-255)</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.trimap">Tag <code>set.trimap</code></a> - Generate triangular polygons only</li>
+</ul>
+</li>
+<li>
+<a class="record" href="graphics3d.html#name-G3D.POINT2">Record <code>G3D.POINT2</code></a> - Integer point in 2D space</li>
+<li>
+<a class="record" href="graphics3d.html#name-G3D.POINT2.3">Record <code>G3D.POINT2.3</code></a> - Integer point in 2D space, original Z multiplied up</li>
+<li>
+<a class="record" href="graphics3d.html#name-G3D.POINT3">Record <code>G3D.POINT3</code></a> - Real point in 3D space (REAL32s)</li>
+<li>
+<a class="record" href="graphics3d.html#name-G3D.POLY">Record <code>G3D.POLY</code></a> - General polygon in 2D space, orignal Z multiplied up</li>
+<li>
+<a class="record" href="graphics3d.html#name-G3D.POLY.SCAN">Record <code>G3D.POLY.SCAN</code></a> - Scan-line converted polygon in 2D space</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.PRJ.CONTROL">Protocol <code>G3D.PRJ.CONTROL</code></a> - Polygon points 3D-to-2D projection control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset projector to default state</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.2dshift">Tag <code>set.2dshift</code></a> - Set 2D translation</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.3dshift">Tag <code>set.3dshift</code></a> - Set 3D translation (applied before projection)</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.scaling">Tag <code>set.scaling</code></a> - Set 2D scaling</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.zdepth">Tag <code>set.zdepth</code></a> - Set Z depth offset (pushes scene away from camera)</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.PSC.CONTROL">Protocol <code>G3D.PSC.CONTROL</code></a> - Polygon scan-line generator control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Resets scan-line generator to default state</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.zcolour">Tag <code>set.zcolour</code></a> - Whether the pixel colour used is adjusted for Z depth</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.RDR.CONTROL">Protocol <code>G3D.RDR.CONTROL</code></a> - Polygon render (shader) control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Resets shader to default state</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.mode">Tag <code>set.mode</code></a> - Set shader mode (see   )</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.RENDER.ENGINE.LINK">Protocol <code>G3D.RENDER.ENGINE.LINK</code></a> - Graphics pipeline link protocol<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-raster">Tag <code>raster</code></a> - Raster to render on and forward</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.next">Tag <code>set.next</code></a> - Set the next renderer in the pipeline</li>
+</ul>
+</li>
+<li>
+<a class="group" href="graphics3d.html#name-G3D.RENDER.MODE">Group <code>G3D.RENDER.MODE</code></a> - polygon rendering modes<br><ul>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.RENDER.MODE.GLENZ">Constant <code>G3D.RENDER.MODE.GLENZ</code></a> - Glenz-effect shading</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.RENDER.MODE.NONE">Constant <code>G3D.RENDER.MODE.NONE</code></a> - Constant shading</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.RENDER.MODE.NORM">Constant <code>G3D.RENDER.MODE.NORM</code></a> - Normal vector based shading</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.ROT.CONTROL">Protocol <code>G3D.ROT.CONTROL</code></a> - Points rotation control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-add.increment">Tag <code>add.increment</code></a> - Add to the increment</li>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset rotation to default state</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.angle">Tag <code>set.angle</code></a> - Absolutely set the angle of rotation</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.increment">Tag <code>set.increment</code></a> - Absolutely set the increment</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.mode">Tag <code>set.mode</code></a> - Set the rotation mode (see   )</li>
+</ul>
+</li>
+<li>
+<a class="group" href="graphics3d.html#name-G3D.ROTATE.MODE">Group <code>G3D.ROTATE.MODE</code></a> - point/polygon rotation modes<br><ul>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.DEMO">Constant <code>G3D.ROTATE.MODE.DEMO</code></a> - Demo-effect rotations</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.NONE">Constant <code>G3D.ROTATE.MODE.NONE</code></a> - No rotation</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.NX">Constant <code>G3D.ROTATE.MODE.NX</code></a> - Negative rotate on X axis</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.NY">Constant <code>G3D.ROTATE.MODE.NY</code></a> - Negative rotate on Y axis</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.NZ">Constant <code>G3D.ROTATE.MODE.NZ</code></a> - Negative rotate on Z axis</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.X">Constant <code>G3D.ROTATE.MODE.X</code></a> - Rotate on X axis</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.Y">Constant <code>G3D.ROTATE.MODE.Y</code></a> - Rotate on Y axis</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.ROTATE.MODE.Z">Constant <code>G3D.ROTATE.MODE.Z</code></a> - Rotate on Z axis</li>
+</ul>
+</li>
+<li>
+<a class="group" href="graphics3d.html#name-G3D.SCENE.RO">Group <code>G3D.SCENE.RO</code></a> - Scene rotation ordering<br><ul>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.NONE">Constant <code>G3D.SCENE.RO.NONE</code></a> - No rotations applied</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.X">Constant <code>G3D.SCENE.RO.X</code></a> - Rotate on X axis only</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.XY">Constant <code>G3D.SCENE.RO.XY</code></a> - Rotate on X then Y</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.XYZ">Constant <code>G3D.SCENE.RO.XYZ</code></a> - Rotate on X then Y then Z</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.XZ">Constant <code>G3D.SCENE.RO.XZ</code></a> - Rotate on X then Z</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.XZY">Constant <code>G3D.SCENE.RO.XZY</code></a> - Rotate on X then Z then Y</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.Y">Constant <code>G3D.SCENE.RO.Y</code></a> - Rotate on Y axis only</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.YX">Constant <code>G3D.SCENE.RO.YX</code></a> - Rotate on Y then X</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.YXZ">Constant <code>G3D.SCENE.RO.YXZ</code></a> - Rotate on Y then X then Z</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.YZ">Constant <code>G3D.SCENE.RO.YZ</code></a> - Rotate on Y then Z</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.YZX">Constant <code>G3D.SCENE.RO.YZX</code></a> - Rotate on Y then Z then X</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.Z">Constant <code>G3D.SCENE.RO.Z</code></a> - Rotate on Z axis only</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.ZX">Constant <code>G3D.SCENE.RO.ZX</code></a> - Rotate on Z then X</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.ZXY">Constant <code>G3D.SCENE.RO.ZXY</code></a> - Rotate on Z then X then Y</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.ZY">Constant <code>G3D.SCENE.RO.ZY</code></a> - Rotate on Z then Y</li>
+<li>
+<a class="constant" href="graphics3d.html#name-G3D.SCENE.RO.ZYX">Constant <code>G3D.SCENE.RO.ZYX</code></a> - Rotate on Z then Y then X</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.SCENE.TRANS.LINK">Protocol <code>G3D.SCENE.TRANS.LINK</code></a> - Scene rotate pipeline link protocol<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset to default settings</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.next">Tag <code>set.next</code></a> - Set the next scene transformer in a pipeline</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.post.3dshift">Tag <code>set.post.3dshift</code></a> - Set 3D shift (after rotation, determines camera position)</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.pre.3dshift">Tag <code>set.pre.3dshift</code></a> - Set 3D shift (before rotation, determines centre of scene)</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.rot.angles">Tag <code>set.rot.angles</code></a> - Set rotations in X, Y and Z planes</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.rot.diffs">Tag <code>set.rot.diffs</code></a> - Set differences for continuous rotation</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.rot.order">Tag <code>set.rot.order</code></a> - Set rotation order (see   )</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.xyscale">Tag <code>set.xyscale</code></a> - Set X-Y scaling (lens angle)</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.SCL.CONTROL">Protocol <code>G3D.SCL.CONTROL</code></a> - Points scaler control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset scale to default state (1, 1, 1)</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.3dscale">Tag <code>set.3dscale</code></a> - Set 3D scaling</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.TMR.CONTROL">Protocol <code>G3D.TMR.CONTROL</code></a> - Graphics pipeline speed control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-faster">Tag <code>faster</code></a> - Go faster</li>
+<li>
+<a class="tag" href="graphics3d.html#name-pause">Tag <code>pause</code></a> - Pause/unpause the rasters flowing through the network</li>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Resets the timer control</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.fps">Tag <code>set.fps</code></a> - Set frames-per-second absolutely</li>
+<li>
+<a class="tag" href="graphics3d.html#name-slower">Tag <code>slower</code></a> - Go slower</li>
+</ul>
+</li>
+<li>
+<a class="protocol" href="graphics3d.html#name-G3D.TRN.CONTROL">Protocol <code>G3D.TRN.CONTROL</code></a> - Points translation control<br><ul>
+<li>
+<a class="tag" href="graphics3d.html#name-reset">Tag <code>reset</code></a> - Reset translation to default state (0, 0, 0)</li>
+<li>
+<a class="tag" href="graphics3d.html#name-set.3dshift">Tag <code>set.3dshift</code></a> - Set 3D translation</li>
+</ul>
+</li>
+<li>
+<a class="datatype" href="graphics3d.html#name-ZBUFFER">Data type <code>ZBUFFER</code></a> - Z-buffer is a 2D array of integers, passed around with rasters</li>
+<li>
+<a class="proc" href="graphics3d.html#name-butterfly.network">Process <code>butterfly.network</code></a> - Implements a butterfly that flaps around a particular path</li>
+<li>
+<a class="proc" href="graphics3d.html#name-butterfly.network.spawn">Process <code>butterfly.network.spawn</code></a> - Dynamically spawns a new 'butterfly.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chessboard.network">Process <code>chessboard.network</code></a> - Implements a basic chess board (zdepth style)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chessboard.network.spawn">Process <code>chessboard.network.spawn</code></a> - Spawns a new 'chessboard.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chessboardify.points">Process <code>chessboardify.points</code></a> - Turns chessboard points into polygons</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chessboardpoints.generator">Process <code>chessboardpoints.generator</code></a> - Chess board points generator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chessify.points">Process <code>chessify.points</code></a> - Generates chess-style polygons from points</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chesspiece.network">Process <code>chesspiece.network</code></a> - Implements a basic chess piece (zdepth style)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chesspiece.network.spawn">Process <code>chesspiece.network.spawn</code></a> - Dynamically spawns a new 'chesspiece.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-chesspoints.generator">Process <code>chesspoints.generator</code></a> - Chess piece points generator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-cogify.points">Process <code>cogify.points</code></a> - Generates cog polygons from cog-points</li>
+<li>
+<a class="proc" href="graphics3d.html#name-cogpoints.generator">Process <code>cogpoints.generator</code></a> - Cog points generator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-cubepoints.generator">Process <code>cubepoints.generator</code></a> - Cube point generator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-cubify.points">Process <code>cubify.points</code></a> - Generates cube polygons from cube points</li>
+<li>
+<a class="proc" href="graphics3d.html#name-fbypoints.generator">Process <code>fbypoints.generator</code></a> - Inmos butterfly logo generator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-flatpolify.points">Process <code>flatpolify.points</code></a> - Generates flat polygons from poly-points</li>
+<li>
+<a class="proc" href="graphics3d.html#name-flatpolypoints.generator">Process <code>flatpolypoints.generator</code></a> - Flat 3D polygon generator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-flutterby.points">Process <code>flutterby.points</code></a> - Generates polygons representing the Inmos style butterfly logo</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.gen.control.delta">Process <code>g3d.gen.control.delta</code></a> - Delta for    protocol</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.pgn.control.delta">Process <code>g3d.pgn.control.delta</code></a> - Delta for    protocol</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.point2.3.delta">Process <code>g3d.point2.3.delta</code></a> - Delta for mobile arrays of the    type</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.point2.delta">Process <code>g3d.point2.delta</code></a> - Delta for mobile arrays of the    type</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.point3.delta">Process <code>g3d.point3.delta</code></a> - Delta for mobile arrays of the    type</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.poly.delta">Process <code>g3d.poly.delta</code></a> - Delta for mobile arrays of the    type</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.poly.scan.delta">Process <code>g3d.poly.scan.delta</code></a> - Delta for mobile arrays of the    type</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.prj.control.delta">Process <code>g3d.prj.control.delta</code></a> - Delta for    protocol</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.psc.control.delta">Process <code>g3d.psc.control.delta</code></a> - Delta for    protocol</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.rdr.control.delta">Process <code>g3d.rdr.control.delta</code></a> - Delta for    protocol</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.rot.control.delta">Process <code>g3d.rot.control.delta</code></a> - Delta for    protocol</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.scene.camera">Process <code>g3d.scene.camera</code></a> - Implements a standard camera, controlled by the user</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.scene.head">Process <code>g3d.scene.head</code></a> - Provides a scene "head", for combined rotation/translation/etc</li>
+<li>
+<a class="proc" href="graphics3d.html#name-g3d.scene.spawn">Process <code>g3d.scene.spawn</code></a> - Dynamically spawns a new scene head</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.cog.network">Process <code>glenz.cog.network</code></a> - Implements a basic "Glenz cog"</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.cog.network.spawn">Process <code>glenz.cog.network.spawn</code></a> - Dynamically spawns a new 'glenz.cog.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.flatpoly.network">Process <code>glenz.flatpoly.network</code></a> - Implements a basic regular polygon (glenz style)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.flatpoly.network.spawn">Process <code>glenz.flatpoly.network.spawn</code></a> - Dynamically spawns a new 'glenz.flatpoly.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.network">Process <code>glenz.network</code></a> - Implements a basic "Glenz cube"</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.network.spawn">Process <code>glenz.network.spawn</code></a> - Dynamically spawns a new 'glenz.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.network2">Process <code>glenz.network2</code></a> - Implements a basic "Glenz cube"</li>
+<li>
+<a class="proc" href="graphics3d.html#name-glenz.network2.spawn">Process <code>glenz.network2.spawn</code></a> - Dynamically spawns a new 'glenz.network2'</li>
+<li>
+<a class="variable" href="graphics3d.html#name-link-">Variable <code>link?</code></a> - Link channel</li>
+<li>
+<a class="variable" href="graphics3d.html#name-link-">Variable <code>link?</code></a> - Link channel</li>
+<li>
+<a class="proc" href="graphics3d.html#name-normal.network">Process <code>normal.network</code></a> - Implements a basic "Normal cube"</li>
+<li>
+<a class="proc" href="graphics3d.html#name-normal.network.spawn">Process <code>normal.network.spawn</code></a> - Dynamically spawns a new 'normal.network'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-normal.network2">Process <code>normal.network2</code></a> - Implements a basic "Glenz cube"</li>
+<li>
+<a class="proc" href="graphics3d.html#name-normal.network2.spawn">Process <code>normal.network2.spawn</code></a> - Dynamically spawns a new 'normal.network2'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-planar.path">Process <code>planar.path</code></a> - Moves a 3D object around a plane following an elliptical path</li>
+<li>
+<a class="proc" href="graphics3d.html#name-points.3d.to.2d3">Process <code>points.3d.to.2d3</code></a> - Projects 3D points into 2D, preserves Z information</li>
+<li>
+<a class="proc" href="graphics3d.html#name-points3d.rotate">Process <code>points3d.rotate</code></a> - Point rotator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-points3d.scale">Process <code>points3d.scale</code></a> - Point scaler</li>
+<li>
+<a class="proc" href="graphics3d.html#name-points3d.translate">Process <code>points3d.translate</code></a> - Point translator</li>
+<li>
+<a class="proc" href="graphics3d.html#name-points3d.transrotate">Process <code>points3d.transrotate</code></a> - Performs translation and rotation on 3D points (used in camera/scene handling)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-points3d.transrotate.prj">Process <code>points3d.transrotate.prj</code></a> - Performs translation and rotation on 3D points (used in camera/scene handling)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-poly.scanlines">Process <code>poly.scanlines</code></a> - Converts polygons to scan-line data</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.buffer">Process <code>raster.buffer</code></a> - Simple raster buffer</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.chain">Process <code>raster.chain</code></a> - Implements raster render chain</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.chain.head">Process <code>raster.chain.head</code></a> - Head of the raster render chain</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.chain.tail">Process <code>raster.chain.tail</code></a> - Tail of the raster render chain</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.clearer">Process <code>raster.clearer</code></a> - Clears rasters</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.fader">Process <code>raster.fader</code></a> - Fades rasters</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.polyidclick">Process <code>raster.polyidclick</code></a> - Connects into the raster chain and event pipeline to extract IDs (0-255) of polygons</li>
+<li>
+<a class="proc" href="graphics3d.html#name-raster.timed.buffer">Process <code>raster.timed.buffer</code></a> - Timed raster buffer</li>
+<li>
+<a class="proc" href="graphics3d.html#name-render.polyframe">Process <code>render.polyframe</code></a> - Renders polygons as a series of lines (wireframe)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-render.polyframe.trigger">Process <code>render.polyframe.trigger</code></a> - Renders polygons as a series of lines (wireframe)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-render.polyscans">Process <code>render.polyscans</code></a> - Renders polygon scan-line data onto a raster</li>
+<li>
+<a class="proc" href="graphics3d.html#name-render.polyscans.trigger">Process <code>render.polyscans.trigger</code></a> - Renders polygon scan-line data onto a raster, sends triggers back to generator process</li>
+<li>
+<a class="proc" href="graphics3d.html#name-rotate.orchestra1">Process <code>rotate.orchestra1</code></a> - Orchestrates components</li>
+<li>
+<a class="proc" href="graphics3d.html#name-screen.cube">Process <code>screen.cube</code></a> - Implements an on-screen cube showing the image boundary</li>
+<li>
+<a class="proc" href="graphics3d.html#name-screen.cube.spawn">Process <code>screen.cube.spawn</code></a> - Dynamically spawns a new 'screen.cube'</li>
+<li>
+<a class="proc" href="graphics3d.html#name-zdepth.flatpoly.network">Process <code>zdepth.flatpoly.network</code></a> - Implements a basic regular polygon (zdepth style)</li>
+<li>
+<a class="proc" href="graphics3d.html#name-zdepth.flatpoly.network.spawn">Process <code>zdepth.flatpoly.network.spawn</code></a> - Dynamically spawns a new 'zdepth.flatpoly.network'</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-G3D.MAX.POLY.POINTS" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:41</span>Constant <code>G3D.MAX.POLY.POINTS</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.MAX.POLY.POINTS</code></p>
+<div class="description"><p>Maximum number of points in a polygon (see <a href="graphics3d.html#name-G3D.POLY"><code>G3D.POLY</code></a>).</p></div>
+</div>
+<div id="name-G3D.MAX.SCAN.HEIGHT" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:44</span>Constant <code>G3D.MAX.SCAN.HEIGHT</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.MAX.SCAN.HEIGHT</code></p>
+<div class="description"><p>Maximum height of any particular polygon.</p></div>
+</div>
+<div id="name-G3D.RENDER.MODE" class="declaration group">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:46</span>Group <code>G3D.RENDER.MODE</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>polygon rendering modes.</p></div>
+<div class="children">
+<div id="name-G3D.RENDER.MODE.NONE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:47</span>Constant <code>G3D.RENDER.MODE.NONE</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.RENDER.MODE.NONE</code></p>
+<div class="description"><p>Constant shading.</p></div>
+</div>
+<div id="name-G3D.RENDER.MODE.GLENZ" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:48</span>Constant <code>G3D.RENDER.MODE.GLENZ</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.RENDER.MODE.GLENZ</code></p>
+<div class="description"><p>Glenz-effect shading.</p></div>
+</div>
+<div id="name-G3D.RENDER.MODE.NORM" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:49</span>Constant <code>G3D.RENDER.MODE.NORM</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.RENDER.MODE.NORM</code></p>
+<div class="description"><p>Normal vector based shading.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.ROTATE.MODE" class="declaration group">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:51</span>Group <code>G3D.ROTATE.MODE</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>point/polygon rotation modes.</p></div>
+<div class="children">
+<div id="name-G3D.ROTATE.MODE.NONE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:52</span>Constant <code>G3D.ROTATE.MODE.NONE</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.NONE</code></p>
+<div class="description"><p>No rotation.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.DEMO" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:53</span>Constant <code>G3D.ROTATE.MODE.DEMO</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.DEMO</code></p>
+<div class="description"><p>Demo-effect rotations.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.X" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:54</span>Constant <code>G3D.ROTATE.MODE.X</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.X</code></p>
+<div class="description"><p>Rotate on X axis.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.NX" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:55</span>Constant <code>G3D.ROTATE.MODE.NX</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.NX</code></p>
+<div class="description"><p>Negative rotate on X axis.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.Y" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:56</span>Constant <code>G3D.ROTATE.MODE.Y</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.Y</code></p>
+<div class="description"><p>Rotate on Y axis.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.NY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:57</span>Constant <code>G3D.ROTATE.MODE.NY</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.NY</code></p>
+<div class="description"><p>Negative rotate on Y axis.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.Z" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:58</span>Constant <code>G3D.ROTATE.MODE.Z</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.Z</code></p>
+<div class="description"><p>Rotate on Z axis.</p></div>
+</div>
+<div id="name-G3D.ROTATE.MODE.NZ" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:59</span>Constant <code>G3D.ROTATE.MODE.NZ</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.ROTATE.MODE.NZ</code></p>
+<div class="description"><p>Negative rotate on Z axis.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.POINT3" class="declaration record">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:65</span>Record <code>G3D.POINT3</code>
+</h3>
+<p class="definition"><code>DATA TYPE G3D.POINT3</code></p>
+<div class="description"><p>Real point in 3D space (REAL32s).</p></div>
+</div>
+<div id="name-G3D.POINT2.3" class="declaration record">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:71</span>Record <code>G3D.POINT2.3</code>
+</h3>
+<p class="definition"><code>DATA TYPE G3D.POINT2.3</code></p>
+<div class="description"><p>Integer point in 2D space, original Z multiplied up.</p></div>
+</div>
+<div id="name-G3D.POINT2" class="declaration record">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:77</span>Record <code>G3D.POINT2</code>
+</h3>
+<p class="definition"><code>DATA TYPE G3D.POINT2</code></p>
+<div class="description"><p>Integer point in 2D space.</p></div>
+</div>
+<div id="name-G3D.POLY" class="declaration record">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:84</span>Record <code>G3D.POLY</code>
+</h3>
+<p class="definition"><code>DATA TYPE G3D.POLY</code></p>
+<div class="description"><p>General polygon in 2D space, orignal Z multiplied up.</p></div>
+</div>
+<div id="name-G3D.POLY.SCAN" class="declaration record">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:96</span>Record <code>G3D.POLY.SCAN</code>
+</h3>
+<p class="definition"><code>DATA TYPE G3D.POLY.SCAN</code></p>
+<div class="description"><p>Scan-line converted polygon in 2D space.</p></div>
+</div>
+<div id="name-ZBUFFER" class="declaration datatype">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:112</span>Data type <code>ZBUFFER</code>
+</h3>
+<p class="definition"><code>DATA TYPE ZBUFFER</code></p>
+<div class="description"><p>Z-buffer is a 2D array of integers, passed around with rasters.</p></div>
+</div>
+<div id="name-G3D.GEN.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:120</span>Protocol <code>G3D.GEN.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.GEN.CONTROL</code></p>
+<div class="description"><p>Polygon points generator control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:122</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset generator to default state.</p></div>
+</div>
+<div id="name-add.scale" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:123</span>Tag <code>add.scale</code>
+</h3>
+<p class="definition"><code>add.scale; [3]REAL32</code></p>
+<div class="description"><p>Add to the current scale.</p></div>
+</div>
+<div id="name-set.scale" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:124</span>Tag <code>set.scale</code>
+</h3>
+<p class="definition"><code>set.scale; [3]REAL32</code></p>
+<div class="description"><p>Absolutely set the scale.</p></div>
+</div>
+<div id="name-add.trans" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:125</span>Tag <code>add.trans</code>
+</h3>
+<p class="definition"><code>add.trans; [3]REAL32</code></p>
+<div class="description"><p>Add to the current translation.</p></div>
+</div>
+<div id="name-set.trans" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:126</span>Tag <code>set.trans</code>
+</h3>
+<p class="definition"><code>set.trans; [3]REAL32</code></p>
+<div class="description"><p>Absolutely set the translation.</p></div>
+</div>
+<div id="name-relink" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:127</span>Tag <code>relink</code>
+</h3>
+<p class="definition"><code>relink; G3D.GEN.LINK?</code></p>
+<div class="description"><p>Reconnect I/O channels.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.ROT.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:131</span>Protocol <code>G3D.ROT.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.ROT.CONTROL</code></p>
+<div class="description"><p>Points rotation control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:133</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset rotation to default state.</p></div>
+</div>
+<div id="name-add.increment" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:134</span>Tag <code>add.increment</code>
+</h3>
+<p class="definition"><code>add.increment; REAL32</code></p>
+<div class="description"><p>Add to the increment.</p></div>
+</div>
+<div id="name-set.increment" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:135</span>Tag <code>set.increment</code>
+</h3>
+<p class="definition"><code>set.increment; REAL32</code></p>
+<div class="description"><p>Absolutely set the increment.</p></div>
+</div>
+<div id="name-set.angle" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:136</span>Tag <code>set.angle</code>
+</h3>
+<p class="definition"><code>set.angle; REAL32</code></p>
+<div class="description"><p>Absolutely set the angle of rotation.</p></div>
+</div>
+<div id="name-set.mode" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:137</span>Tag <code>set.mode</code>
+</h3>
+<p class="definition"><code>set.mode; INT</code></p>
+<div class="description"><p>Set the rotation mode (see <a href="graphics3d.html#name-G3D.ROTATE.MODE"><code>G3D.ROTATE.MODE</code></a>).</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.TRN.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:141</span>Protocol <code>G3D.TRN.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.TRN.CONTROL</code></p>
+<div class="description"><p>Points translation control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:143</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset translation to default state (0, 0, 0).</p></div>
+</div>
+<div id="name-set.3dshift" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:144</span>Tag <code>set.3dshift</code>
+</h3>
+<p class="definition"><code>set.3dshift; [3]REAL32</code></p>
+<div class="description"><p>Set 3D translation.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.SCL.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:148</span>Protocol <code>G3D.SCL.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.SCL.CONTROL</code></p>
+<div class="description"><p>Points scaler control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:150</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset scale to default state (1, 1, 1)</p></div>
+</div>
+<div id="name-set.3dscale" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:151</span>Tag <code>set.3dscale</code>
+</h3>
+<p class="definition"><code>set.3dscale; [3]REAL32</code></p>
+<div class="description"><p>Set 3D scaling.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.PRJ.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:155</span>Protocol <code>G3D.PRJ.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.PRJ.CONTROL</code></p>
+<div class="description"><p>Polygon points 3D-to-2D projection control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:157</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset projector to default state.</p></div>
+</div>
+<div id="name-set.scaling" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:158</span>Tag <code>set.scaling</code>
+</h3>
+<p class="definition"><code>set.scaling; [2]REAL32</code></p>
+<div class="description"><p>Set 2D scaling.</p></div>
+</div>
+<div id="name-set.zdepth" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:159</span>Tag <code>set.zdepth</code>
+</h3>
+<p class="definition"><code>set.zdepth; REAL32</code></p>
+<div class="description"><p>Set Z depth offset (pushes scene away from camera).</p></div>
+</div>
+<div id="name-set.2dshift" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:160</span>Tag <code>set.2dshift</code>
+</h3>
+<p class="definition"><code>set.2dshift; [2]INT</code></p>
+<div class="description"><p>Set 2D translation.</p></div>
+</div>
+<div id="name-set.3dshift" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:161</span>Tag <code>set.3dshift</code>
+</h3>
+<p class="definition"><code>set.3dshift; [3]REAL32</code></p>
+<div class="description"><p>Set 3D translation (applied before projection).</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.PGN.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:165</span>Protocol <code>G3D.PGN.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.PGN.CONTROL</code></p>
+<div class="description"><p>Polygon generator control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:167</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset polygon generator to default state.</p></div>
+</div>
+<div id="name-set.trimap" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:168</span>Tag <code>set.trimap</code>
+</h3>
+<p class="definition"><code>set.trimap; BOOL</code></p>
+<div class="description"><p>Generate triangular polygons only.</p></div>
+</div>
+<div id="name-set.backfaces" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:169</span>Tag <code>set.backfaces</code>
+</h3>
+<p class="definition"><code>set.backfaces; BOOL</code></p>
+<div class="description"><p>Whether back faces of solid objects should be generated.</p></div>
+</div>
+<div id="name-set.face.colour" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:170</span>Tag <code>set.face.colour</code>
+</h3>
+<p class="definition"><code>set.face.colour; INT; INT</code></p>
+<div class="description"><p>Set individual face colour.</p></div>
+</div>
+<div id="name-set.face.colours" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:171</span>Tag <code>set.face.colours</code>
+</h3>
+<p class="definition"><code>set.face.colours; MOBILE []INT</code></p>
+<div class="description"><p>Set all face colours.</p></div>
+</div>
+<div id="name-set.polyid" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:172</span>Tag <code>set.polyid</code>
+</h3>
+<p class="definition"><code>set.polyid; INT</code></p>
+<div class="description"><p>Set polygon ID (0-255).</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.PSC.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:176</span>Protocol <code>G3D.PSC.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.PSC.CONTROL</code></p>
+<div class="description"><p>Polygon scan-line generator control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:178</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Resets scan-line generator to default state.</p></div>
+</div>
+<div id="name-set.zcolour" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:179</span>Tag <code>set.zcolour</code>
+</h3>
+<p class="definition"><code>set.zcolour; BOOL</code></p>
+<div class="description"><p>Whether the pixel colour used is adjusted for Z depth.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.RDR.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:183</span>Protocol <code>G3D.RDR.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.RDR.CONTROL</code></p>
+<div class="description"><p>Polygon render (shader) control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:185</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Resets shader to default state.</p></div>
+</div>
+<div id="name-set.mode" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:186</span>Tag <code>set.mode</code>
+</h3>
+<p class="definition"><code>set.mode; INT</code></p>
+<div class="description"><p>Set shader mode (see <a href="graphics3d.html#name-G3D.RENDER.MODE"><code>G3D.RENDER.MODE</code></a>).</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.ALL.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:190</span>Protocol <code>G3D.ALL.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.ALL.CONTROL</code></p>
+<div class="description"><p>Overall control for graphics pipeline.</p></div>
+<div class="children"><div id="name-reset.all" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:192</span>Tag <code>reset.all</code>
+</h3>
+<p class="definition"><code>reset.all</code></p>
+<div class="description"><p>Reset all components to default state.</p></div>
+</div></div>
+</div>
+<div id="name-G3D.TMR.CONTROL" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:196</span>Protocol <code>G3D.TMR.CONTROL</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.TMR.CONTROL</code></p>
+<div class="description"><p>Graphics pipeline speed control.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:198</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Resets the timer control.</p></div>
+</div>
+<div id="name-pause" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:199</span>Tag <code>pause</code>
+</h3>
+<p class="definition"><code>pause</code></p>
+<div class="description"><p>Pause/unpause the rasters flowing through the network.</p></div>
+</div>
+<div id="name-faster" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:200</span>Tag <code>faster</code>
+</h3>
+<p class="definition"><code>faster</code></p>
+<div class="description"><p>Go faster.</p></div>
+</div>
+<div id="name-slower" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:201</span>Tag <code>slower</code>
+</h3>
+<p class="definition"><code>slower</code></p>
+<div class="description"><p>Go slower.</p></div>
+</div>
+<div id="name-set.fps" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:202</span>Tag <code>set.fps</code>
+</h3>
+<p class="definition"><code>set.fps; INT</code></p>
+<div class="description"><p>Set frames-per-second absolutely.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.RENDER.ENGINE.LINK" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:220</span>Protocol <code>G3D.RENDER.ENGINE.LINK</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.RENDER.ENGINE.LINK</code></p>
+<div class="description"><p>Graphics pipeline link protocol.</p></div>
+<div class="children">
+<div id="name-raster" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:222</span>Tag <code>raster</code>
+</h3>
+<p class="definition"><code>raster; RASTER; ZBUFFER</code></p>
+<div class="description"><p>Raster to render on and forward.</p></div>
+</div>
+<div id="name-set.next" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:223</span>Tag <code>set.next</code>
+</h3>
+<p class="definition"><code>set.next; INT; G3D.RENDER.ENGINE!</code></p>
+<div class="description"><p>Set the next renderer in the pipeline.</p></div>
+</div>
+</div>
+</div>
+<div id="name-link-" class="declaration variable">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:230</span>Variable <code>link?</code>
+</h3>
+<p class="definition"><code>CHAN G3D.RENDER.ENGINE.LINK</code></p>
+<div class="description"><p>Link channel.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO" class="declaration group">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:236</span>Group <code>G3D.SCENE.RO</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Scene rotation ordering.</p></div>
+<div class="children">
+<div id="name-G3D.SCENE.RO.NONE" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:237</span>Constant <code>G3D.SCENE.RO.NONE</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.NONE</code></p>
+<div class="description"><p>No rotations applied</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.X" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:238</span>Constant <code>G3D.SCENE.RO.X</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.X</code></p>
+<div class="description"><p>Rotate on X axis only.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.Y" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:239</span>Constant <code>G3D.SCENE.RO.Y</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.Y</code></p>
+<div class="description"><p>Rotate on Y axis only.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.Z" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:240</span>Constant <code>G3D.SCENE.RO.Z</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.Z</code></p>
+<div class="description"><p>Rotate on Z axis only.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.YX" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:241</span>Constant <code>G3D.SCENE.RO.YX</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.YX</code></p>
+<div class="description"><p>Rotate on Y then X.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.ZX" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:242</span>Constant <code>G3D.SCENE.RO.ZX</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.ZX</code></p>
+<div class="description"><p>Rotate on Z then X.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.XY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:243</span>Constant <code>G3D.SCENE.RO.XY</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.XY</code></p>
+<div class="description"><p>Rotate on X then Y.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.ZY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:244</span>Constant <code>G3D.SCENE.RO.ZY</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.ZY</code></p>
+<div class="description"><p>Rotate on Z then Y.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.XZ" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:245</span>Constant <code>G3D.SCENE.RO.XZ</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.XZ</code></p>
+<div class="description"><p>Rotate on X then Z.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.YZ" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:246</span>Constant <code>G3D.SCENE.RO.YZ</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.YZ</code></p>
+<div class="description"><p>Rotate on Y then Z.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.ZYX" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:247</span>Constant <code>G3D.SCENE.RO.ZYX</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.ZYX</code></p>
+<div class="description"><p>Rotate on Z then Y then X.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.YZX" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:248</span>Constant <code>G3D.SCENE.RO.YZX</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.YZX</code></p>
+<div class="description"><p>Rotate on Y then Z then X.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.ZXY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:249</span>Constant <code>G3D.SCENE.RO.ZXY</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.ZXY</code></p>
+<div class="description"><p>Rotate on Z then X then Y.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.XZY" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:250</span>Constant <code>G3D.SCENE.RO.XZY</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.XZY</code></p>
+<div class="description"><p>Rotate on X then Z then Y.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.YXZ" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:251</span>Constant <code>G3D.SCENE.RO.YXZ</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.YXZ</code></p>
+<div class="description"><p>Rotate on Y then X then Z.</p></div>
+</div>
+<div id="name-G3D.SCENE.RO.XYZ" class="declaration constant">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:252</span>Constant <code>G3D.SCENE.RO.XYZ</code>
+</h3>
+<p class="definition"><code>VAL INT G3D.SCENE.RO.XYZ</code></p>
+<div class="description"><p>Rotate on X then Y then Z.</p></div>
+</div>
+</div>
+</div>
+<div id="name-G3D.SCENE.TRANS.LINK" class="declaration protocol">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:262</span>Protocol <code>G3D.SCENE.TRANS.LINK</code>
+</h3>
+<p class="definition"><code>PROTOCOL G3D.SCENE.TRANS.LINK</code></p>
+<div class="description"><p>Scene rotate pipeline link protocol.</p></div>
+<div class="children">
+<div id="name-reset" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:264</span>Tag <code>reset</code>
+</h3>
+<p class="definition"><code>reset</code></p>
+<div class="description"><p>Reset to default settings.</p></div>
+</div>
+<div id="name-set.pre.3dshift" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:265</span>Tag <code>set.pre.3dshift</code>
+</h3>
+<p class="definition"><code>set.pre.3dshift; [3]REAL32</code></p>
+<div class="description"><p>Set 3D shift (before rotation, determines centre of scene).</p></div>
+</div>
+<div id="name-set.rot.angles" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:266</span>Tag <code>set.rot.angles</code>
+</h3>
+<p class="definition"><code>set.rot.angles; [3]REAL32</code></p>
+<div class="description"><p>Set rotations in X, Y and Z planes.</p></div>
+</div>
+<div id="name-set.rot.order" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:267</span>Tag <code>set.rot.order</code>
+</h3>
+<p class="definition"><code>set.rot.order; INT</code></p>
+<div class="description"><p>Set rotation order (see <a href="graphics3d.html#name-G3D.SCENE.RO"><code>G3D.SCENE.RO</code></a>).</p></div>
+</div>
+<div id="name-set.rot.diffs" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:268</span>Tag <code>set.rot.diffs</code>
+</h3>
+<p class="definition"><code>set.rot.diffs; [3]REAL32</code></p>
+<div class="description"><p>Set differences for continuous rotation.</p></div>
+</div>
+<div id="name-set.post.3dshift" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:269</span>Tag <code>set.post.3dshift</code>
+</h3>
+<p class="definition"><code>set.post.3dshift; [3]REAL32</code></p>
+<div class="description"><p>Set 3D shift (after rotation, determines camera position).</p></div>
+</div>
+<div id="name-set.xyscale" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:270</span>Tag <code>set.xyscale</code>
+</h3>
+<p class="definition"><code>set.xyscale; [2]REAL32</code></p>
+<div class="description"><p>Set X-Y scaling (lens angle).</p></div>
+</div>
+<div id="name-set.next" class="declaration tag">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:272</span>Tag <code>set.next</code>
+</h3>
+<p class="definition"><code>set.next; INT; G3D.SCENE.TRANS!</code></p>
+<div class="description"><p>Set the next scene transformer in a pipeline.</p></div>
+</div>
+</div>
+</div>
+<div id="name-link-" class="declaration variable">
+<h3>
+<span class="location"><code>graphics3d.inc</code>:279</span>Variable <code>link?</code>
+</h3>
+<p class="definition"><code>CHAN G3D.SCENE.TRANS.LINK</code></p>
+<div class="description"><p>Link channel.</p></div>
+</div>
+<div id="name-rotate.orchestra1" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:35</span>Process <code>rotate.orchestra1</code>
+</h3>
+<p class="definition"><code>PROC rotate.orchestra1 (CHAN G3D.ROT.CONTROL rot.out!)</code></p>
+<div class="description"><p>Orchestrates components.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN G3D.ROT.CONTROL</code></td>
+<td class="param-name"><code>rot.out</code></td>
+<td class="param-desc">Rotation control out.</td>
+</tr></table></div>
+</div>
+<div id="name-planar.path" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:71</span>Process <code>planar.path</code>
+</h3>
+<p class="definition"><code>PROC planar.path (CHAN G3D.PRJ.CONTROL out!, VAL REAL32 xrad, zrad, pangle, iangle, VAL INT islow, VAL [3]REAL32 pos)</code></p>
+<div class="description"><p>Moves a 3D object around a plane following an elliptical path.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Projection control.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>xrad</code></td>
+<td class="param-desc">X-radius of path.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>zrad</code></td>
+<td class="param-desc">Z-radius of path.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>pangle</code></td>
+<td class="param-desc">Tilt in XY plane of the path.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>iangle</code></td>
+<td class="param-desc">Tilt in XZ plane of the path.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>islow</code></td>
+<td class="param-desc">Slow-down setting</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [3]REAL32</code></td>
+<td class="param-name"><code>pos</code></td>
+<td class="param-desc">Initial position.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:101</span>Process <code>glenz.network</code>
+</h3>
+<p class="definition"><code>PROC glenz.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)</code></p>
+<div class="description"><p>Implements a basic "Glenz cube".</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:139</span>Process <code>glenz.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC glenz.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)</code></p>
+<div class="description"><p>Dynamically spawns a new 'glenz.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-normal.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:155</span>Process <code>normal.network</code>
+</h3>
+<p class="definition"><code>PROC normal.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)</code></p>
+<div class="description"><p>Implements a basic "Normal cube".</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-normal.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:193</span>Process <code>normal.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC normal.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)</code></p>
+<div class="description"><p>Dynamically spawns a new 'normal.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.network2" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:209</span>Process <code>glenz.network2</code>
+</h3>
+<p class="definition"><code>PROC glenz.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)</code></p>
+<div class="description"><p>Implements a basic "Glenz cube".</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.network2.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:252</span>Process <code>glenz.network2.spawn</code>
+</h3>
+<p class="definition"><code>PROC glenz.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)</code></p>
+<div class="description"><p>Dynamically spawns a new 'glenz.network2'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-normal.network2" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:268</span>Process <code>normal.network2</code>
+</h3>
+<p class="definition"><code>PROC normal.network2 (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)</code></p>
+<div class="description"><p>Implements a basic "Glenz cube".</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-normal.network2.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:309</span>Process <code>normal.network2.spawn</code>
+</h3>
+<p class="definition"><code>PROC normal.network2.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)</code></p>
+<div class="description"><p>Dynamically spawns a new 'normal.network2'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-screen.cube" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:325</span>Process <code>screen.cube</code>
+</h3>
+<p class="definition"><code>PROC screen.cube (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height)</code></p>
+<div class="description"><p>Implements an on-screen cube showing the image boundary</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-screen.cube.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:358</span>Process <code>screen.cube.spawn</code>
+</h3>
+<p class="definition"><code>PROC screen.cube.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!)</code></p>
+<div class="description"><p>Dynamically spawns a new 'screen.cube'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-butterfly.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:375</span>Process <code>butterfly.network</code>
+</h3>
+<p class="definition"><code>PROC butterfly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL BOOL rpix)</code></p>
+<div class="description"><p>Implements a butterfly that flaps around a particular path.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>rpix</code></td>
+<td class="param-desc">Random initial placement.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-butterfly.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:476</span>Process <code>butterfly.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC butterfly.network.spawn (VAL INT width, height, VAL BOOL rpix, CHAN G3D.RENDER.ENGINE! new.link!)</code></p>
+<div class="description"><p>Dynamically spawns a new 'butterfly.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>rpix</code></td>
+<td class="param-desc">Random initial placement.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.cog.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:497</span>Process <code>glenz.cog.network</code>
+</h3>
+<p class="definition"><code>PROC glenz.cog.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, nteeth, VAL REAL32 i.rad, o.rad, i.ang, o.ang)</code></p>
+<div class="description"><p>Implements a basic "Glenz cog".</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>nteeth</code></td>
+<td class="param-desc">Number of teeth.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>i.rad</code></td>
+<td class="param-desc">Inner radius.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>o.rad</code></td>
+<td class="param-desc">Outer radius.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>i.ang</code></td>
+<td class="param-desc">Inner angle.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>o.ang</code></td>
+<td class="param-desc">Outer angle.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.cog.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:541</span>Process <code>glenz.cog.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC glenz.cog.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT nteeth, VAL REAL32 i.rad, o.rad, i.ang, o.ang)</code></p>
+<div class="description"><p>Dynamically spawns a new 'glenz.cog.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>nteeth</code></td>
+<td class="param-desc">Number of teeth.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>i.rad</code></td>
+<td class="param-desc">Inner radius.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>o.rad</code></td>
+<td class="param-desc">Outer radius.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>i.ang</code></td>
+<td class="param-desc">Inner angle.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>o.ang</code></td>
+<td class="param-desc">Outer angle.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.flatpoly.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:559</span>Process <code>glenz.flatpoly.network</code>
+</h3>
+<p class="definition"><code>PROC glenz.flatpoly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, npoints, VAL REAL32 rad)</code></p>
+<div class="description"><p>Implements a basic regular polygon (glenz style).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>rad</code></td>
+<td class="param-desc">Radius.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-glenz.flatpoly.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:600</span>Process <code>glenz.flatpoly.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC glenz.flatpoly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT npoints, VAL REAL32 rad)</code></p>
+<div class="description"><p>Dynamically spawns a new 'glenz.flatpoly.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>rad</code></td>
+<td class="param-desc">Radius.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-zdepth.flatpoly.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:618</span>Process <code>zdepth.flatpoly.network</code>
+</h3>
+<p class="definition"><code>PROC zdepth.flatpoly.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, npoints, VAL REAL32 rad)</code></p>
+<div class="description"><p>Implements a basic regular polygon (zdepth style).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>rad</code></td>
+<td class="param-desc">Radius.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-zdepth.flatpoly.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dnets.occ</code>:660</span>Process <code>zdepth.flatpoly.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC zdepth.flatpoly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT npoints, VAL REAL32 rad)</code></p>
+<div class="description"><p>Dynamically spawns a new 'zdepth.flatpoly.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>rad</code></td>
+<td class="param-desc">Radius.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chesspoints.generator" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:197</span>Process <code>chesspoints.generator</code>
+</h3>
+<p class="definition"><code>PROC chesspoints.generator (CHAN INT trigger?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Chess piece points generator.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points around the outside.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>piece</code></td>
+<td class="param-desc">Particular piece (defines how the topping is handled, see <a href="g3dchess-inc.html#name-G3D.CP"><code>G3D.CP</code></a>).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][2]REAL32</code></td>
+<td class="param-name"><code>profile</code></td>
+<td class="param-desc">Y/rad pairs for the piece.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Generated points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chessboardpoints.generator" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:322</span>Process <code>chessboardpoints.generator</code>
+</h3>
+<p class="definition"><code>PROC chessboardpoints.generator (CHAN INT trigger?, VAL INT dim, VAL REAL32 width, height, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Chess board points generator.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dim</code></td>
+<td class="param-desc">Number of squares along one edge.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of each square.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of the board.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Generated points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chessify.points" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:343</span>Process <code>chessify.points</code>
+</h3>
+<p class="definition"><code>PROC chessify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, piece, VAL [][2]REAL32 profile, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?, CHAN BOOL hide?)</code></p>
+<div class="description"><p>Generates chess-style polygons from points.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points around the base of the object.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>piece</code></td>
+<td class="param-desc">Particular piece (defines how the topping is handled, see <a href="g3dchess-inc.html#name-G3D.CP"><code>G3D.CP</code></a>).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][2]REAL32</code></td>
+<td class="param-name"><code>profile</code></td>
+<td class="param-desc">Profile for the piece.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BOOL</code></td>
+<td class="param-name"><code>hide</code></td>
+<td class="param-desc">Hide control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chessboardify.points" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:739</span>Process <code>chessboardify.points</code>
+</h3>
+<p class="definition"><code>PROC chessboardify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT dim, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Turns chessboard points into polygons.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dim</code></td>
+<td class="param-desc">Number of squares along one edge.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Generated points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chesspiece.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:764</span>Process <code>chesspiece.network</code>
+</h3>
+<p class="definition"><code>PROC chesspiece.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, piece, npoints, bdim, VAL REAL32 sqw, bh, G3DC.PIECE.CTL? svr, G3D.SCENE.TRANS? sct)</code></p>
+<div class="description"><p>Implements a basic chess piece (zdepth style).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>piece</code></td>
+<td class="param-desc">Particular piece (see <a href="g3dchess-inc.html#name-G3D.CP"><code>G3D.CP</code></a>).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points around the circumference.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>bdim</code></td>
+<td class="param-desc">Board dimension.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>sqw</code></td>
+<td class="param-desc">Board square width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>bh</code></td>
+<td class="param-desc">Board height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3DC.PIECE.CTL?</code></td>
+<td class="param-name"><code>svr</code></td>
+<td class="param-desc">Piece control channel-end.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.SCENE.TRANS?</code></td>
+<td class="param-name"><code>sct</code></td>
+<td class="param-desc">Scene transform control channel-end.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chesspiece.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:915</span>Process <code>chesspiece.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC chesspiece.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT piece, npoints, bdim, VAL REAL32 sqw, bh, RESULT G3DC.PIECE.CTL! pctl, RESULT G3D.SCENE.TRANS! sti)</code></p>
+<div class="description"><p>Dynamically spawns a new 'chesspiece.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>piece</code></td>
+<td class="param-desc">Particular piece (see <a href="g3dchess-inc.html#name-G3D.CP"><code>G3D.CP</code></a>).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points around the circumference.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>bdim</code></td>
+<td class="param-desc">Board dimension.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>sqw</code></td>
+<td class="param-desc">Board square width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>bh</code></td>
+<td class="param-desc">Board height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT G3DC.PIECE.CTL!</code></td>
+<td class="param-name"><code>pctl</code></td>
+<td class="param-desc">Piece control channel-end (returned).</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT G3D.SCENE.TRANS!</code></td>
+<td class="param-name"><code>sti</code></td>
+<td class="param-desc">Returned scene transform client channel-end.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chessboard.network" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:941</span>Process <code>chessboard.network</code>
+</h3>
+<p class="definition"><code>PROC chessboard.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, dim, polyid, VAL REAL32 sqw, bh, G3D.SCENE.TRANS? sct)</code></p>
+<div class="description"><p>Implements a basic chess board (zdepth style).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Render link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Width of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Height of raster.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dim</code></td>
+<td class="param-desc">Board dimension.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>polyid</code></td>
+<td class="param-desc">Polygon id (0-255 or +256 for incrementing).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>sqw</code></td>
+<td class="param-desc">Width of each square.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>bh</code></td>
+<td class="param-desc">Board height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.SCENE.TRANS?</code></td>
+<td class="param-name"><code>sct</code></td>
+<td class="param-desc">Scene transform control.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-chessboard.network.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>g3dchess.occ</code>:981</span>Process <code>chessboard.network.spawn</code>
+</h3>
+<p class="definition"><code>PROC chessboard.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT dim, polyid, VAL REAL32 sqw, bh, RESULT G3D.SCENE.TRANS! sti)</code></p>
+<div class="description"><p>Spawns a new 'chessboard.network'.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">Raster width.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>height</code></td>
+<td class="param-desc">Raster height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel to communicate new object link.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dim</code></td>
+<td class="param-desc">Board dimension.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>polyid</code></td>
+<td class="param-desc">Polygon id (0-255 or +256 for incrementing).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>sqw</code></td>
+<td class="param-desc">Size of each square.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>bh</code></td>
+<td class="param-desc">Board height.</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT G3D.SCENE.TRANS!</code></td>
+<td class="param-name"><code>sti</code></td>
+<td class="param-desc">Returned scene-transform client channel-end.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.buffer" class="declaration proc">
+<h3>
+<span class="location"><code>rasterutil.occ</code>:30</span>Process <code>raster.buffer</code>
+</h3>
+<p class="definition"><code>PROC raster.buffer (CHAN RASTER in?, out!)</code></p>
+<div class="description"><p>Simple raster buffer. Basic raster buffer process.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.timed.buffer" class="declaration proc">
+<h3>
+<span class="location"><code>rasterutil.occ</code>:46</span>Process <code>raster.timed.buffer</code>
+</h3>
+<p class="definition"><code>PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps, CHAN G3D.TMR.CONTROL ctrl?)</code></p>
+<div class="description"><p>Timed raster buffer. Basic raster buffer process, but limits speed through at specified number of frames-per-second.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>fps</code></td>
+<td class="param-desc">Frames per second</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.TMR.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.fader" class="declaration proc">
+<h3>
+<span class="location"><code>rasterutil.occ</code>:104</span>Process <code>raster.fader</code>
+</h3>
+<p class="definition"><code>PROC raster.fader (CHAN RASTER in?, out!)</code></p>
+<div class="description"><p>Fades rasters. Raster buffer that reduces the colour level of each of the components.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.clearer" class="declaration proc">
+<h3>
+<span class="location"><code>rasterutil.occ</code>:126</span>Process <code>raster.clearer</code>
+</h3>
+<p class="definition"><code>PROC raster.clearer (CHAN RASTER in?, out!)</code></p>
+<div class="description"><p>Clears rasters. Raster buffer that clears rasters as they go through.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out</td>
+</tr>
+</table></div>
+</div>
+<div id="name-flatpolypoints.generator" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:95</span>Process <code>flatpolypoints.generator</code>
+</h3>
+<p class="definition"><code>PROC flatpolypoints.generator (CHAN INT trigger?, VAL INT npoints, VAL REAL32 rad, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Flat 3D polygon generator. Generates a regular N-sided polygon in 3D space (laying down flat by default).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>rad</code></td>
+<td class="param-desc">Radius (of points from centre).</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Generated points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cogpoints.generator" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:190</span>Process <code>cogpoints.generator</code>
+</h3>
+<p class="definition"><code>PROC cogpoints.generator (CHAN INT trigger?, VAL INT nteeth, VAL REAL32 i.rad, o.rad, i.ang, o.ang, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Cog points generator. Generates a stream of points that represent a cog in 3D space (laying down flat by default).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>nteeth</code></td>
+<td class="param-desc">Number of teeth on the cog.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>i.rad</code></td>
+<td class="param-desc">Inner radius (where teeth start).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>o.rad</code></td>
+<td class="param-desc">Outer raduis (where teeth end).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>i.ang</code></td>
+<td class="param-desc">Inner tooth angle (between teeth bottoms).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>o.ang</code></td>
+<td class="param-desc">Outer tooth angle (of teeth ends).</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Generated points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cubepoints.generator" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:295</span>Process <code>cubepoints.generator</code>
+</h3>
+<p class="definition"><code>PROC cubepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Cube point generator. Generates a constant stream of points that represent a cube in 3D space.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Points generated.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-fbypoints.generator" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:379</span>Process <code>fbypoints.generator</code>
+</h3>
+<p class="definition"><code>PROC fbypoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Inmos butterfly logo generator. The pixel positions were generated by tracing from an Inmos promotional video showing the butterflies running on a Transputer network.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Points generated.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-points3d.rotate" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:570</span>Process <code>points3d.rotate</code>
+</h3>
+<p class="definition"><code>PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)</code></p>
+<div class="description"><p>Point rotator. Rotates an arbitrary set of points around the origin, such that it passes through the same sequence of moves repeatedly (e.g. for a spinning cube). Can also be used for static rotation when set with a zero increment.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">3D points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">3D points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.ROT.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-points3d.translate" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:703</span>Process <code>points3d.translate</code>
+</h3>
+<p class="definition"><code>PROC points3d.translate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.TRN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Point translator. Translates an arbitrary set of points in 3D space.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">3D points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">3D points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.TRN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-points3d.scale" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:742</span>Process <code>points3d.scale</code>
+</h3>
+<p class="definition"><code>PROC points3d.scale (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.SCL.CONTROL ctrl?)</code></p>
+<div class="description"><p>Point scaler. Scales an arbitrary set of points in 3D space.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">3D points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">3D points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.SCL.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-points3d.transrotate" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1041</span>Process <code>points3d.transrotate</code>
+</h3>
+<p class="definition"><code>PROC points3d.transrotate (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl)</code></p>
+<div class="description"><p>Performs translation and rotation on 3D points (used in camera/scene handling).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">3D points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">3D points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.SCENE.TRANS?</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel-bundle end.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-points3d.transrotate.prj" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1055</span>Process <code>points3d.transrotate.prj</code>
+</h3>
+<p class="definition"><code>PROC points3d.transrotate.prj (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)</code></p>
+<div class="description"><p>Performs translation and rotation on 3D points (used in camera/scene handling).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">3D points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">3D points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.SCENE.TRANS?</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel-bundle end.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>prj.in</code></td>
+<td class="param-desc">Projector control in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>prj.out</code></td>
+<td class="param-desc">Projector control out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.scene.head" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1064</span>Process <code>g3d.scene.head</code>
+</h3>
+<p class="definition"><code>PROC g3d.scene.head (G3D.SCENE.TRANS? ctrl)</code></p>
+<div class="description"><p>Provides a scene "head", for combined rotation/translation/etc.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>G3D.SCENE.TRANS?</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel-end.</td>
+</tr></table></div>
+</div>
+<div id="name-g3d.scene.spawn" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1190</span>Process <code>g3d.scene.spawn</code>
+</h3>
+<p class="definition"><code>PROC g3d.scene.spawn (RESULT G3D.SCENE.TRANS! rctl)</code></p>
+<div class="description"><p>Dynamically spawns a new scene head.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>RESULT G3D.SCENE.TRANS!</code></td>
+<td class="param-name"><code>rctl</code></td>
+<td class="param-desc">Returned control channel-end.</td>
+</tr></table></div>
+</div>
+<div id="name-g3d.scene.camera" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1205</span>Process <code>g3d.scene.camera</code>
+</h3>
+<p class="definition"><code>PROC g3d.scene.camera (CHAN RASTER.EVENT ev.in?, CHAN G3D.SCENE.TRANS! sc.in?, G3D.SCENE.TRANS! sc.ctl)</code></p>
+<div class="description"><p>Implements a standard camera, controlled by the user.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER.EVENT</code></td>
+<td class="param-name"><code>ev.in</code></td>
+<td class="param-desc">Raster events.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.SCENE.TRANS!</code></td>
+<td class="param-name"><code>sc.in</code></td>
+<td class="param-desc">Scene control channel-ends in (added to chain).</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.SCENE.TRANS!</code></td>
+<td class="param-name"><code>sc.ctl</code></td>
+<td class="param-desc">Scene control channel-end.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-points.3d.to.2d3" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1361</span>Process <code>points.3d.to.2d3</code>
+</h3>
+<p class="definition"><code>PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)</code></p>
+<div class="description"><p>Projects 3D points into 2D, preserves Z information. Maps a set of 3D points down into a set of 2D points, preserving the Z depth information for later operations.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">3D points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">2D3 points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Display dimensions.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-flatpolify.points" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1443</span>Process <code>flatpolify.points</code>
+</h3>
+<p class="definition"><code>PROC flatpolify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT npoints, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Generates flat polygons from poly-points. Expects to receive ((npoints * 2) + 2) points at a time, and from these generates a set of polygons that represents a flat 3D regular polygon.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>npoints</code></td>
+<td class="param-desc">Number of polygon points.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cogify.points" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1600</span>Process <code>cogify.points</code>
+</h3>
+<p class="definition"><code>PROC cogify.points (CHAN MOBILE []G3D.POINT2.3 in?, VAL INT nteeth, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Generates cog polygons from cog-points. Expects to receive ((nteeth * 8) + 2) points at a time, and from these generates a set of polygons that represent a solid cog.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>nteeth</code></td>
+<td class="param-desc">Number of cog teeth.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cubify.points" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1959</span>Process <code>cubify.points</code>
+</h3>
+<p class="definition"><code>PROC cubify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Generates cube polygons from cube points. Expects to receive 8 points at a time, and from these generates a set of polygons that represent a cube. Characteristics are controllable through the control channel (e.g. skip hidden surfaces).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in (2D with Z-depth).</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-flutterby.points" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:1979</span>Process <code>flutterby.points</code>
+</h3>
+<p class="definition"><code>PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)</code></p>
+<div class="description"><p>Generates polygons representing the Inmos style butterfly logo. Expects to receive 30 points at a time, and from these generates a set of polygons that represent the butterfly. Only the colour is controllable through the <code>ctrl?</code> channel.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in (2D with Z-depth).</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-poly.scanlines" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:2317</span>Process <code>poly.scanlines</code>
+</h3>
+<p class="definition"><code>PROC poly.scanlines (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, VAL INT width, height)</code></p>
+<div class="description"><p>Converts polygons to scan-line data. Expects to receive sets of polygons on its input, which it then transforms into a set of G3D.POLY.SCAN structures.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Polygons input.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY.SCAN</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Scan-line data output.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PSC.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Display dimensions.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-render.polyscans" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:2656</span>Process <code>render.polyscans</code>
+</h3>
+<p class="definition"><code>PROC render.polyscans (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)</code></p>
+<div class="description"><p>Renders polygon scan-line data onto a raster.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY.SCAN</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">Polygon scan-line data input.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Raster I/O.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Display dimensions.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-render.polyscans.trigger" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:2676</span>Process <code>render.polyscans.trigger</code>
+</h3>
+<p class="definition"><code>PROC render.polyscans.trigger (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)</code></p>
+<div class="description"><p>Renders polygon scan-line data onto a raster, sends triggers back to generator process.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY.SCAN</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">Polygon scan-line data input.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Raster I/O.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Triggers for generator.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Display dimensions.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-render.polyframe" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:2965</span>Process <code>render.polyframe</code>
+</h3>
+<p class="definition"><code>PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)</code></p>
+<div class="description"><p>Renders polygons as a series of lines (wireframe).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">Polygons input.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Raster I/O.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Display dimensions.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-render.polyframe.trigger" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:2980</span>Process <code>render.polyframe.trigger</code>
+</h3>
+<p class="definition"><code>PROC render.polyframe.trigger (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)</code></p>
+<div class="description"><p>Renders polygons as a series of lines (wireframe).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">Polygons input.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>rlink.in</code></td>
+<td class="param-desc">Raster I/O.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>ctrl</code></td>
+<td class="param-desc">Control channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>trigger</code></td>
+<td class="param-desc">Generator trigger channel.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Display dimensions.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.chain.head" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:2994</span>Process <code>raster.chain.head</code>
+</h3>
+<p class="definition"><code>PROC raster.chain.head (CHAN RASTER in?, G3D.RENDER.ENGINE! head, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)</code></p>
+<div class="description"><p>Head of the raster render chain.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>head</code></td>
+<td class="param-desc">Head of raster render chain.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel on which new rendering engines are added.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>fade</code></td>
+<td class="param-desc">Whether to fade (TRUE) or clear (FALSE) rasters.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.chain.tail" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:3048</span>Process <code>raster.chain.tail</code>
+</h3>
+<p class="definition"><code>PROC raster.chain.tail (CHAN RASTER out!, G3D.RENDER.ENGINE? tail)</code></p>
+<div class="description"><p>Tail of the raster render chain.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>G3D.RENDER.ENGINE?</code></td>
+<td class="param-name"><code>tail</code></td>
+<td class="param-desc">Tail of raster render chain.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.chain" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:3070</span>Process <code>raster.chain</code>
+</h3>
+<p class="definition"><code>PROC raster.chain (CHAN RASTER in?, out!, CHAN G3D.RENDER.ENGINE! new.link?, VAL BOOL fade)</code></p>
+<div class="description"><p>Implements raster render chain.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RENDER.ENGINE!</code></td>
+<td class="param-name"><code>new.link</code></td>
+<td class="param-desc">Channel on which new rendering engines are added.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>fade</code></td>
+<td class="param-desc">Whether to fade (TRUE) or clear (FALSE) rasters.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-raster.polyidclick" class="declaration proc">
+<h3>
+<span class="location"><code>graphics3d.occ</code>:3093</span>Process <code>raster.polyidclick</code>
+</h3>
+<p class="definition"><code>PROC raster.polyidclick (CHAN RASTER in?, out!, CHAN RASTER.EVENT ev.in?, ev.out!, CHAN INT ids.out!, VAL INT dclk)</code></p>
+<div class="description"><p>Connects into the raster chain and event pipeline to extract IDs (0-255) of polygons. Responds to single or double click.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Rasters in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Rasters out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER.EVENT</code></td>
+<td class="param-name"><code>ev.in</code></td>
+<td class="param-desc">Events in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN RASTER.EVENT</code></td>
+<td class="param-name"><code>ev.out</code></td>
+<td class="param-desc">Events out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN INT</code></td>
+<td class="param-name"><code>ids.out</code></td>
+<td class="param-desc">Polygon IDs out (extracted from high 8 bits of the rendered pixel).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dclk</code></td>
+<td class="param-desc">Double click time (0 = single click).</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.point3.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:32</span>Process <code>g3d.point3.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.point3.delta (CHAN MOBILE []G3D.POINT3 in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for mobile arrays of the <a href="graphics3d.html#name-G3D.POINT3"><code>G3D.POINT3</code></a> type.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT3</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Points out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.point2.3.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:49</span>Process <code>g3d.point2.3.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.point2.3.delta (CHAN MOBILE []G3D.POINT2.3 in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for mobile arrays of the <a href="graphics3d.html#name-G3D.POINT2.3"><code>G3D.POINT2.3</code></a> type.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2.3</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Points out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.point2.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:65</span>Process <code>g3d.point2.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.point2.delta (CHAN MOBILE []G3D.POINT2 in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for mobile arrays of the <a href="graphics3d.html#name-G3D.POINT2"><code>G3D.POINT2</code></a> type.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Points in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Points out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POINT2</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Points out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.poly.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:81</span>Process <code>g3d.poly.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.poly.delta (CHAN MOBILE []G3D.POLY in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for mobile arrays of the <a href="graphics3d.html#name-G3D.POLY"><code>G3D.POLY</code></a> type.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Polygons in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Polygons out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.poly.scan.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:97</span>Process <code>g3d.poly.scan.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.poly.scan.delta (CHAN MOBILE []G3D.POLY.SCAN in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for mobile arrays of the <a href="graphics3d.html#name-G3D.POLY.SCAN"><code>G3D.POLY.SCAN</code></a> type.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY.SCAN</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Polygon scans in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY.SCAN</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Polygon scans out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN MOBILE []G3D.POLY.SCAN</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Polygon scans out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.gen.control.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:114</span>Process <code>g3d.gen.control.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.gen.control.delta (CHAN G3D.GEN.CONTROL in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for <a href="graphics3d.html#name-G3D.GEN.CONTROL"><code>G3D.GEN.CONTROL</code></a> protocol.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.GEN.CONTROL</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.rot.control.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:150</span>Process <code>g3d.rot.control.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.rot.control.delta (CHAN G3D.ROT.CONTROL in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for <a href="graphics3d.html#name-G3D.ROT.CONTROL"><code>G3D.ROT.CONTROL</code></a> protocol.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.ROT.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.ROT.CONTROL</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.ROT.CONTROL</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.prj.control.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:186</span>Process <code>g3d.prj.control.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.prj.control.delta (CHAN G3D.PRJ.CONTROL in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for <a href="graphics3d.html#name-G3D.PRJ.CONTROL"><code>G3D.PRJ.CONTROL</code></a> protocol.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PRJ.CONTROL</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.pgn.control.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:222</span>Process <code>g3d.pgn.control.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.pgn.control.delta (CHAN G3D.PGN.CONTROL in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for <a href="graphics3d.html#name-G3D.PGN.CONTROL"><code>G3D.PGN.CONTROL</code></a> protocol.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PGN.CONTROL</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.psc.control.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:258</span>Process <code>g3d.psc.control.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.psc.control.delta (CHAN G3D.PSC.CONTROL in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for <a href="graphics3d.html#name-G3D.PSC.CONTROL"><code>G3D.PSC.CONTROL</code></a> protocol.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.PSC.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PSC.CONTROL</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.PSC.CONTROL</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-g3d.rdr.control.delta" class="declaration proc">
+<h3>
+<span class="location"><code>g3dutil.occ</code>:274</span>Process <code>g3d.rdr.control.delta</code>
+</h3>
+<p class="definition"><code>PROC g3d.rdr.control.delta (CHAN G3D.RDR.CONTROL in?, out.0!, out.1!)</code></p>
+<div class="description"><p>Delta for <a href="graphics3d.html#name-G3D.RDR.CONTROL"><code>G3D.RDR.CONTROL</code></a> protocol.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Commands in.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>out.0</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN G3D.RDR.CONTROL</code></td>
+<td class="param-name"><code>out.1</code></td>
+<td class="param-desc">Commands out.</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

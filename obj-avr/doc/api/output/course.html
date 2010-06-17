@@ -1,0 +1,1752 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Course library</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-course" class="module">
+<h1>Module <code>course</code> - Course library</h1>
+<div class="header"><div class="description">
+<p>Course library.</p>
+<p> The course library provides various simple utilities for occam programmers.</p>
+<p> Strings (as handled by this library) are <code>BYTE</code> arrays left-justified with trailing <a href="course.html#name-NULL"><code>NULL</code></a>s. It is usually preferably to use mobile byte arrays (<code>MOBILE []BYTE</code>) to represent strings in modern occam-pi programs; the string features in this library exist for backwards compatibility.</p>
+<p> To use this library:</p>
+<pre><code>#INCLUDE "course.module"</code></pre>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="group" href="course.html#name-ASCII">Group <code>ASCII</code></a> - Character values<br><ul>
+<li>
+<a class="constant" href="course.html#name-BACK">Constant <code>BACK</code></a> - ASCII BS - backspace key</li>
+<li>
+<a class="constant" href="course.html#name-BELL">Constant <code>BELL</code></a> - ASCII BEL - terminal bell</li>
+<li>
+<a class="constant" href="course.html#name-DELETE">Constant <code>DELETE</code></a> - ASCII DEL - delete key</li>
+<li>
+<a class="constant" href="course.html#name-ESCAPE">Constant <code>ESCAPE</code></a> - ASCII ESC - escape key</li>
+<li>
+<a class="constant" href="course.html#name-NULL">Constant <code>NULL</code></a> - ASCII NUL</li>
+</ul>
+</li>
+<li>
+<a class="group" href="course.html#name-COMPARE.STRING">Group <code>COMPARE.STRING</code></a> - Return values from   <br><ul>
+<li>
+<a class="constant" href="course.html#name-string.less">Constant <code>string.less</code></a> - Left less than right</li>
+<li>
+<a class="constant" href="course.html#name-string.more">Constant <code>string.more</code></a> - Left more than right</li>
+<li>
+<a class="constant" href="course.html#name-string.same">Constant <code>string.same</code></a> - Left and right the same</li>
+</ul>
+</li>
+<li>
+<a class="constant" href="course.html#name-END.OF.FILE">Constant <code>END.OF.FILE</code></a> - End of file</li>
+<li>
+<a class="constant" href="course.html#name-FLUSH">Constant <code>FLUSH</code></a> - Flush output buffer</li>
+<li>
+<a class="proc" href="course.html#name-ask.bool">Process <code>ask.bool</code></a> - Read a boolean with a prompt</li>
+<li>
+<a class="proc" href="course.html#name-ask.byte">Process <code>ask.byte</code></a> - Read a byte value in decimal with a prompt</li>
+<li>
+<a class="proc" href="course.html#name-ask.int">Process <code>ask.int</code></a> - Read an integer value in decimal with a prompt</li>
+<li>
+<a class="proc" href="course.html#name-ask.string">Process <code>ask.string</code></a> - Read a string with a prompt</li>
+<li>
+<a class="proc" href="course.html#name-black.hole">Process <code>black.hole</code></a> - Discard characters forever</li>
+<li>
+<a class="proc" href="course.html#name-buffer.set.bin8">Process <code>buffer.set.bin8</code></a> - Adds a BYTE-sized integer to a string buffer in binary format</li>
+<li>
+<a class="proc" href="course.html#name-buffer.set.hex">Process <code>buffer.set.hex</code></a> - Adds an integer to a string buffer in hexadecimal format</li>
+<li>
+<a class="proc" href="course.html#name-buffer.set.int">Process <code>buffer.set.int</code></a> - Adds an integer to a string buffer</li>
+<li>
+<a class="proc" href="course.html#name-buffer.set.real32">Process <code>buffer.set.real32</code></a> - Adds a REAL32 value to a string buffer</li>
+<li>
+<a class="proc" href="course.html#name-buffer.set.string">Process <code>buffer.set.string</code></a> - Adds a string to a string buffer</li>
+<li>
+<a class="function" href="course.html#name-byte.in.string">Function <code>byte.in.string</code></a> - Check if a string contains the given byte</li>
+<li>
+<a class="function" href="course.html#name-compare.string">Function <code>compare.string</code></a> - Compares two strings for lexicographic ordering</li>
+<li>
+<a class="proc" href="course.html#name-copy.string">Process <code>copy.string</code></a> - Copy a string</li>
+<li>
+<a class="proc" href="course.html#name-course.HEXTOSTRING">Process <code>course.HEXTOSTRING</code></a> - Format an  INT  as a hexadecimal string</li>
+<li>
+<a class="proc" href="course.html#name-course.REAL32TOSTRING">Process <code>course.REAL32TOSTRING</code></a> - Format a  REAL32  number as a decimal string</li>
+<li>
+<a class="proc" href="course.html#name-course.REAL64TOSTRING">Process <code>course.REAL64TOSTRING</code></a> - Format a  REAL64  number as a decimal string</li>
+<li>
+<a class="proc" href="course.html#name-cursor.down">Process <code>cursor.down</code></a> - Move the cursor down</li>
+<li>
+<a class="proc" href="course.html#name-cursor.invisible">Process <code>cursor.invisible</code></a> - Make cursor invisible</li>
+<li>
+<a class="proc" href="course.html#name-cursor.left">Process <code>cursor.left</code></a> - Move the cursor left</li>
+<li>
+<a class="proc" href="course.html#name-cursor.right">Process <code>cursor.right</code></a> - Move the cursor right</li>
+<li>
+<a class="proc" href="course.html#name-cursor.up">Process <code>cursor.up</code></a> - Move the cursor up</li>
+<li>
+<a class="proc" href="course.html#name-cursor.visible">Process <code>cursor.visible</code></a> - Make cursor visible</li>
+<li>
+<a class="proc" href="course.html#name-cursor.x.y">Process <code>cursor.x.y</code></a> - Place the cursor</li>
+<li>
+<a class="function" href="course.html#name-ends.with.string">Function <code>ends.with.string</code></a> - Check if one string is a suffix of another</li>
+<li>
+<a class="function" href="course.html#name-equal.string">Function <code>equal.string</code></a> - Compare two strings for equality</li>
+<li>
+<a class="proc" href="course.html#name-erase.bol">Process <code>erase.bol</code></a> - Erase to beginning of line</li>
+<li>
+<a class="proc" href="course.html#name-erase.bos">Process <code>erase.bos</code></a> - Erase to beginning of screen</li>
+<li>
+<a class="proc" href="course.html#name-erase.eol">Process <code>erase.eol</code></a> - Erase to end of line</li>
+<li>
+<a class="proc" href="course.html#name-erase.eos">Process <code>erase.eos</code></a> - Erase to end of screen</li>
+<li>
+<a class="proc" href="course.html#name-erase.line">Process <code>erase.line</code></a> - Erase whole line</li>
+<li>
+<a class="proc" href="course.html#name-erase.screen">Process <code>erase.screen</code></a> - Erase whole screen</li>
+<li>
+<a class="proc" href="course.html#name-file.in.int">Process <code>file.in.int</code></a> - Read an integer from a channel non-interactively</li>
+<li>
+<a class="proc" href="course.html#name-file.in.number">Process <code>file.in.number</code></a> - Synonym for   </li>
+<li>
+<a class="proc" href="course.html#name-file.in.string">Process <code>file.in.string</code></a> - Read a string from a channel non-interactively</li>
+<li>
+<a class="proc" href="course.html#name-file.in.token">Process <code>file.in.token</code></a> - Read a token from a channel non-interactively</li>
+<li>
+<a class="proc" href="course.html#name-flush">Process <code>flush</code></a> - Flush an output channel</li>
+<li>
+<a class="proc" href="course.html#name-goto.x.y">Process <code>goto.x.y</code></a> - Synonym for   </li>
+<li>
+<a class="proc" href="course.html#name-in.bool">Process <code>in.bool</code></a> - Read a boolean</li>
+<li>
+<a class="proc" href="course.html#name-in.byte">Process <code>in.byte</code></a> - Read a byte value in decimal</li>
+<li>
+<a class="proc" href="course.html#name-in.digit">Process <code>in.digit</code></a> - Read a digit</li>
+<li>
+<a class="proc" href="course.html#name-in.int">Process <code>in.int</code></a> - Read an integer value in decimal</li>
+<li>
+<a class="proc" href="course.html#name-in.skip">Process <code>in.skip</code></a> - Discard whitespace</li>
+<li>
+<a class="proc" href="course.html#name-in.string">Process <code>in.string</code></a> - Read a string</li>
+<li>
+<a class="proc" href="course.html#name-make.string">Process <code>make.string</code></a> - Converts a  BYTE  array into a string</li>
+<li>
+<a class="proc" href="course.html#name-out.bool">Process <code>out.bool</code></a> - Write a Boolean value to a channel (as  TRUE / FALSE )</li>
+<li>
+<a class="proc" href="course.html#name-out.byte">Process <code>out.byte</code></a> - Write a byte in decimal to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.ch">Process <code>out.ch</code></a> - Write a character to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.hex">Process <code>out.hex</code></a> - Write an integer in hexadecimal to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.int">Process <code>out.int</code></a> - Write an integer in decimal to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.number">Process <code>out.number</code></a> - Synonym for   </li>
+<li>
+<a class="proc" href="course.html#name-out.real32">Process <code>out.real32</code></a> - Write a  REAL32  to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.real64">Process <code>out.real64</code></a> - Write a  REAL64  to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.repeat">Process <code>out.repeat</code></a> - Write a character repeatedly to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.string">Process <code>out.string</code></a> - Write a string to a channel</li>
+<li>
+<a class="proc" href="course.html#name-out.yes.no">Process <code>out.yes.no</code></a> - Write a Boolean value to a channel (as  yes / no )</li>
+<li>
+<a class="proc" href="course.html#name-pos.int">Process <code>pos.int</code></a> - Move cursor and write an integer</li>
+<li>
+<a class="proc" href="course.html#name-pos.yes.no">Process <code>pos.yes.no</code></a> - Move cursor and write a Boolean value (as yes/no)</li>
+<li>
+<a class="function" href="course.html#name-random">Function <code>random</code></a> - Pseudorandom number generator</li>
+<li>
+<a class="function" href="course.html#name-starts.with.string">Function <code>starts.with.string</code></a> - Check if one string is a prefix of another</li>
+<li>
+<a class="function" href="course.html#name-string.to.int">Function <code>string.to.int</code></a> - Convert a string containing a decimal integer to an  INT </li>
+<li>
+<a class="proc" href="course.html#name-write.string">Process <code>write.string</code></a> - Write a   -padded string to a channel</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-course.REAL32TOSTRING" class="declaration proc">
+<h3>
+<span class="location"><code>float_io.occ</code>:47</span>Process <code>course.REAL32TOSTRING</code>
+</h3>
+<p class="definition"><code>PROC course.REAL32TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL32 X, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Format a <code>REAL32</code> number as a decimal string.</p>
+<p> <code>Ip</code> and <code>Dp</code> control how the number is formatted. If <code>Ip &gt; 0</code> and <code>Dp &gt; 0</code>, fixed-point format will be used with <code>Ip</code> digits before the point and <code>Dp</code> digits after the point. If <code>Ip = 0</code> and <code>Dp &gt; 0</code>, exponential format will be used with <code>Dp</code> digits in the fraction. If <code>Ip = 0</code> and <code>Dp = 0</code>, a "reasonable" format will be chosen automatically.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">The number of characters (<code>BYTE</code>s) of string occupied by the formatted decimal representation of the real number</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">An array containing the formatted decimal representation of the real number in the first <code>len</code> bytes, the remaining bytes being undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">The real number, in IEEE format, to be converted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Ip</code></td>
+<td class="param-desc">The first of two formatting values</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Dp</code></td>
+<td class="param-desc">The second of two formatting values</td>
+</tr>
+</table></div>
+</div>
+<div id="name-course.REAL64TOSTRING" class="declaration proc">
+<h3>
+<span class="location"><code>float_io.occ</code>:1015</span>Process <code>course.REAL64TOSTRING</code>
+</h3>
+<p class="definition"><code>PROC course.REAL64TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL64 X, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Format a <code>REAL64</code> number as a decimal string.</p>
+<p> <code>Ip</code> and <code>Dp</code> are interpreted as for <a href="course.html#name-course.REAL32TOSTRING"><code>course.REAL32TOSTRING</code></a>.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>RESULT INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">The number of characters (<code>BYTE</code>s) of string occupied by the formatted decimal representation of the real number</td>
+</tr>
+<tr>
+<td class="param-type"><code>RESULT []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">An array containing the formatted decimal representation of the real number in the first <code>len</code> bytes, the remaining bytes being undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">The real number, in IEEE format, to be converted</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Ip</code></td>
+<td class="param-desc">The first of two formatting values</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>Dp</code></td>
+<td class="param-desc">The second of two formatting values</td>
+</tr>
+</table></div>
+</div>
+<div id="name-course.HEXTOSTRING" class="declaration proc">
+<h3>
+<span class="location"><code>float_io.occ</code>:2200</span>Process <code>course.HEXTOSTRING</code>
+</h3>
+<p class="definition"><code>PROC course.HEXTOSTRING (INT len, []BYTE string, VAL INT n)</code></p>
+<div class="description"><p>Format an <code>INT</code> as a hexadecimal string.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">The number of characters written</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">Buffer to write into</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">The number to write</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.real32" class="declaration proc">
+<h3>
+<span class="location"><code>float_io.occ</code>:2245</span>Process <code>out.real32</code>
+</h3>
+<p class="definition"><code>PROC out.real32 (VAL REAL32 num, VAL INT ip, dp, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a <code>REAL32</code> to a channel. For the meaning of <code>ip</code> and <code>dp</code>, see <a href="course.html#name-course.REAL32TOSTRING"><code>course.REAL32TOSTRING</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>num</code></td>
+<td class="param-desc">The number to write</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ip</code></td>
+<td class="param-desc">First formatting parameter</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dp</code></td>
+<td class="param-desc">Second formatting parameter</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">The channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.real64" class="declaration proc">
+<h3>
+<span class="location"><code>float_io.occ</code>:2260</span>Process <code>out.real64</code>
+</h3>
+<p class="definition"><code>PROC out.real64 (VAL REAL64 num, VAL INT ip, dp, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a <code>REAL64</code> to a channel. For the meaning of <code>ip</code> and <code>dp</code>, see <a href="course.html#name-course.REAL32TOSTRING"><code>course.REAL32TOSTRING</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>num</code></td>
+<td class="param-desc">The number to write</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ip</code></td>
+<td class="param-desc">First formatting parameter</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dp</code></td>
+<td class="param-desc">Second formatting parameter</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">The channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.repeat" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:34</span>Process <code>out.repeat</code>
+</h3>
+<p class="definition"><code>PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a character repeatedly to a channel. This outputs <code>ch</code> down the channel <code>out</code> <code>n</code> times. If <code>n</code> is negative, nothing happens.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>ch</code></td>
+<td class="param-desc">Character</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Number of times to output (negative values result in no output)</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.ch" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:55</span>Process <code>out.ch</code>
+</h3>
+<p class="definition"><code>PROC out.ch (VAL BYTE ch, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a character to a channel. This outputs <code>ch</code> in a fieldwidth <code>field</code> down <code>out</code>. If the fieldwidth is too wide for <code>ch</code>, it right-justifies <code>ch</code> with spaces on the left. If the field is not wide enough, it prints the <code>ch</code> anyway. These rules for fieldwidth are the same as those used by the Pascal <code>write</code> procedure.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>ch</code></td>
+<td class="param-desc">Character</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.string" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:69</span>Process <code>out.string</code>
+</h3>
+<p class="definition"><code>PROC out.string (VAL []BYTE s, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a string to a channel. This outputs <code>s</code> in a fieldwidth <code>field</code> down <code>out</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">String</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.byte" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:89</span>Process <code>out.byte</code>
+</h3>
+<p class="definition"><code>PROC out.byte (VAL BYTE b, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a byte in decimal to a channel. This outputs <code>b</code> in a fieldwidth <code>field</code> down <code>out</code>. If the fieldwidth is too wide for <code>b</code>, it right-justifies <code>b</code> with spaces on the left. If the field is not wide enough, it prints the <code>b</code> anyway. These rules for fieldwidth are the same as those used by the Pascal <code>write</code> procedure.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Byte</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.int" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:121</span>Process <code>out.int</code>
+</h3>
+<p class="definition"><code>PROC out.int (VAL INT n, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write an integer in decimal to a channel. This outputs <code>n</code> in a fieldwidth <code>field</code> down <code>out</code>. The rules for fieldwidth are as <a href="course.html#name-out.byte"><code>out.byte</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.hex" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:186</span>Process <code>out.hex</code>
+</h3>
+<p class="definition"><code>PROC out.hex (VAL INT n, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write an integer in hexadecimal to a channel. Aside from the output base, this behaves like <a href="course.html#name-out.int"><code>out.int</code></a>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.bool" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:223</span>Process <code>out.bool</code>
+</h3>
+<p class="definition"><code>PROC out.bool (VAL BOOL b, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a Boolean value to a channel (as <code>TRUE</code>/<code>FALSE</code>). This outputs <code>b</code> as the string <code>TRUE</code> or <code>FALSE</code> in a fieldwidth <code>field</code> down <code>out</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Boolean</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.yes.no" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:240</span>Process <code>out.yes.no</code>
+</h3>
+<p class="definition"><code>PROC out.yes.no (VAL BOOL b, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a Boolean value to a channel (as <code>yes</code>/<code>no</code>). This outputs <code>b</code> as the string <code>yes</code> or <code>no</code> in a fieldwidth <code>field</code> down <code>out</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Boolean</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-flush" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:257</span>Process <code>flush</code>
+</h3>
+<p class="definition"><code>PROC flush (CHAN BYTE out!)</code></p>
+<div class="description"><p>Flush an output channel. If <code>out</code> is (ultimately) connected to the external <code>stdout</code> or <code>stderr</code> channel, this forces UNIX to flush all outstanding output to that file descriptor. UNIX normally buffers this character output on a line-by-line basis.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-in.skip" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:271</span>Process <code>in.skip</code>
+</h3>
+<p class="definition"><code>PROC in.skip (BYTE ch, CHAN BYTE in?)</code></p>
+<div class="description"><p>Discard whitespace. This inputs from <code>in</code> until a non-space character is found. The non-space character is returned in <code>ch</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>ch</code></td>
+<td class="param-desc">The non-whitespace character</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+</table></div>
+</div>
+<div id="name-in.digit" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:288</span>Process <code>in.digit</code>
+</h3>
+<p class="definition"><code>PROC in.digit (BYTE d, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a digit. This inputs a digit from <code>in</code> into <code>d</code>. Non-digit characters are ignored and the <code>out</code> channel is beeped. The accepted digit is not echoed down <code>out</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>d</code></td>
+<td class="param-desc">The digit read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-in.string" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:314</span>Process <code>in.string</code>
+</h3>
+<p class="definition"><code>PROC in.string ([]BYTE s, INT length, VAL INT max, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a string. This inputs a string of up to <code>max</code> characters from <code>in</code> into <code>s</code>. Input is terminated by a carriage-return or new-line (which is not included in <code>s</code>. The number of characters actually input is recorded in <code>length</code>. The string <code>s</code> is padded on the right with <a href="course.html#name-NULL"><code>NULL</code></a>s if necessary. All characters are echoed on <code>out</code>. The backspace (<a href="course.html#name-BACK"><code>BACK</code></a>) and delete (<a href="course.html#name-DELETE"><code>DELETE</code></a>) characters are processed sensibly.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">Buffer to read into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Number of bytes read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-in.bool" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:388</span>Process <code>in.bool</code>
+</h3>
+<p class="definition"><code>PROC in.bool (BOOL b, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a boolean. This reads a Boolean value as the characters <code>y</code> or <code>n</code> (or <code>Y</code> or <code>N</code>). Any other characters result in a <a href="course.html#name-BELL"><code>BELL</code></a> being sent to <code>out</code>. The value read is echoed as <code>yes</code> or <code>no</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">The Boolean read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-in.byte" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:515</span>Process <code>in.byte</code>
+</h3>
+<p class="definition"><code>PROC in.byte (BYTE b, VAL INT max, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a byte value in decimal. This routine is used for inputting a BYTE value expressed as decimal digits. It inputs a string of up to <code>max</code> digits from <code>in</code> into <code>s</code>. If <code>max</code> is more than 3, it is truncated to 3. Input is terminated by a carriage-return, new-line or space. Input strings converting to values greater than 255 are rejected.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Value read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-in.int" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:735</span>Process <code>in.int</code>
+</h3>
+<p class="definition"><code>PROC in.int (INT n, VAL INT max, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read an integer value in decimal. This routine is used for inputting an INT value expressed as decimal digits. It inputs a string of up to <code>max</code> characters from <code>in</code> into <code>s</code>. If <code>max</code> is more than 20, it is truncated to 20. The first character may be <code>+</code> or <code>-</code>. Input is terminated by a carriage-return, new-line or space. It does guard against overflow.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Value read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-black.hole" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:783</span>Process <code>black.hole</code>
+</h3>
+<p class="definition"><code>PROC black.hole (CHAN BYTE in?)</code></p>
+<div class="description"><p>Discard characters forever. This inputs characters from <code>in</code> forever. It is used to mask off unwanted <code>BYTE</code> streams.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr></table></div>
+</div>
+<div id="name-ask.string" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:802</span>Process <code>ask.string</code>
+</h3>
+<p class="definition"><code>PROC ask.string (VAL []BYTE prompt, []BYTE s, INT length, VAL INT max, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a string with a prompt. This prints a prompt, calls <a href="course.html#name-in.string"><code>in.string</code></a>, then prints a newline.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>prompt</code></td>
+<td class="param-desc">Prompt to print</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">Buffer to read into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Number of bytes read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ask.bool" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:822</span>Process <code>ask.bool</code>
+</h3>
+<p class="definition"><code>PROC ask.bool (VAL []BYTE prompt, BOOL b, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a boolean with a prompt. This prints a prompt, calls <a href="course.html#name-in.bool"><code>in.bool</code></a>, then prints a newline.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>prompt</code></td>
+<td class="param-desc">Prompt to print</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">The Boolean read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ask.byte" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:842</span>Process <code>ask.byte</code>
+</h3>
+<p class="definition"><code>PROC ask.byte (VAL []BYTE prompt, BYTE b, VAL INT max, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read a byte value in decimal with a prompt. This prints a prompt, calls <a href="course.html#name-in.byte"><code>in.byte</code></a>, then prints a newline.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>prompt</code></td>
+<td class="param-desc">Prompt to print</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Value read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ask.int" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:861</span>Process <code>ask.int</code>
+</h3>
+<p class="definition"><code>PROC ask.int (VAL []BYTE prompt, INT n, VAL INT max, CHAN BYTE in?, out!)</code></p>
+<div class="description"><p>Read an integer value in decimal with a prompt. This prints a prompt, calls <a href="course.html#name-in.int"><code>in.int</code></a>, then prints a newline.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>prompt</code></td>
+<td class="param-desc">Prompt to print</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Value read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cursor.x.y" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:881</span>Process <code>cursor.x.y</code>
+</h3>
+<p class="definition"><code>PROC cursor.x.y (VAL BYTE x, y, CHAN BYTE out!)</code></p>
+<div class="description"><p>Place the cursor. This outputs a VT220 control sequence down channel <code>out</code> to place the cursor at screen coordinates (<code>x</code>, <code>y</code>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>x</code></td>
+<td class="param-desc">X coordinate</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>y</code></td>
+<td class="param-desc">Y coordinate</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cursor.up" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:899</span>Process <code>cursor.up</code>
+</h3>
+<p class="definition"><code>PROC cursor.up (VAL BYTE n, CHAN BYTE out!)</code></p>
+<div class="description"><p>Move the cursor up. This outputs a VT220 control sequence down channel <code>out</code> to move the cursor up <code>n</code> positions.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Number of positions to move</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cursor.down" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:915</span>Process <code>cursor.down</code>
+</h3>
+<p class="definition"><code>PROC cursor.down (VAL BYTE n, CHAN BYTE out!)</code></p>
+<div class="description"><p>Move the cursor down. This outputs a VT220 control sequence down channel <code>out</code> to move the cursor down <code>n</code> positions.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Number of positions to move</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cursor.right" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:931</span>Process <code>cursor.right</code>
+</h3>
+<p class="definition"><code>PROC cursor.right (VAL BYTE n, CHAN BYTE out!)</code></p>
+<div class="description"><p>Move the cursor right. This outputs a VT220 control sequence down channel <code>out</code> to move the cursor right <code>n</code> positions.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Number of positions to move</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-cursor.left" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:947</span>Process <code>cursor.left</code>
+</h3>
+<p class="definition"><code>PROC cursor.left (VAL BYTE n, CHAN BYTE out!)</code></p>
+<div class="description"><p>Move the cursor left. This outputs a VT220 control sequence down channel <code>out</code> to move the cursor left <code>n</code> positions.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Number of positions to move</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-erase.eol" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:962</span>Process <code>erase.eol</code>
+</h3>
+<p class="definition"><code>PROC erase.eol (CHAN BYTE out!)</code></p>
+<div class="description"><p>Erase to end of line. This outputs a VT220 control sequence to erase characters from the current cursor position to the end of the screen line.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-erase.bol" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:977</span>Process <code>erase.bol</code>
+</h3>
+<p class="definition"><code>PROC erase.bol (CHAN BYTE out!)</code></p>
+<div class="description"><p>Erase to beginning of line. This outputs a VT220 control sequence to erase characters from the current cursor position to the beginning of the screen line.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-erase.line" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:992</span>Process <code>erase.line</code>
+</h3>
+<p class="definition"><code>PROC erase.line (CHAN BYTE out!)</code></p>
+<div class="description"><p>Erase whole line. This outputs a VT220 control sequence to erase all characters on the current screen line.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-erase.eos" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1007</span>Process <code>erase.eos</code>
+</h3>
+<p class="definition"><code>PROC erase.eos (CHAN BYTE out!)</code></p>
+<div class="description"><p>Erase to end of screen. This outputs a VT220 control sequence to erase characters from the current cursor position to the end of the screen.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-erase.bos" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1022</span>Process <code>erase.bos</code>
+</h3>
+<p class="definition"><code>PROC erase.bos (CHAN BYTE out!)</code></p>
+<div class="description"><p>Erase to beginning of screen. This outputs a VT220 control sequence to erase characters from the current cursor position backwards to the start of the screen.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-erase.screen" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1037</span>Process <code>erase.screen</code>
+</h3>
+<p class="definition"><code>PROC erase.screen (CHAN BYTE out!)</code></p>
+<div class="description"><p>Erase whole screen. This outputs a VT220 control sequence to erase all characters from the screen.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-cursor.visible" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1051</span>Process <code>cursor.visible</code>
+</h3>
+<p class="definition"><code>PROC cursor.visible (CHAN BYTE out!)</code></p>
+<div class="description"><p>Make cursor visible. This outputs a VT220 control sequence to make the cursor visible.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-cursor.invisible" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1067</span>Process <code>cursor.invisible</code>
+</h3>
+<p class="definition"><code>PROC cursor.invisible (CHAN BYTE out!)</code></p>
+<div class="description"><p>Make cursor invisible. This outputs a VT220 control sequence to make the cursor invisible.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr></table></div>
+</div>
+<div id="name-pos.int" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1089</span>Process <code>pos.int</code>
+</h3>
+<p class="definition"><code>PROC pos.int (VAL INT col, row, n, field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Move cursor and write an integer. This outputs a VT220 control sequence to place the cursor at screen coordinates (<code>col</code>, <code>row</code>) and output <code>n</code> in a fieldwidth of <code>field</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>col</code></td>
+<td class="param-desc">X coordinate</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>row</code></td>
+<td class="param-desc">Y coordinate</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-pos.yes.no" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1107</span>Process <code>pos.yes.no</code>
+</h3>
+<p class="definition"><code>PROC pos.yes.no (VAL INT col, row, VAL BOOL b, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Move cursor and write a Boolean value (as yes/no). This outputs a VT220 control sequence to place the cursor at screen coordinates (<code>col</code>, <code>row</code>) and output <code>b</code> in a fieldwidth of <code>field</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>col</code></td>
+<td class="param-desc">X coordinate</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>row</code></td>
+<td class="param-desc">Y coordinate</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Boolean</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-out.number" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1122</span>Process <code>out.number</code>
+</h3>
+<p class="definition"><code>PROC out.number (VAL INT n, w, CHAN BYTE o!)</code></p>
+<div class="description"><p>Synonym for <a href="course.html#name-out.int"><code>out.int</code></a>.</p></div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+</div>
+<div id="name-goto.x.y" class="declaration proc">
+<h3>
+<span class="location"><code>utils.occ</code>:1127</span>Process <code>goto.x.y</code>
+</h3>
+<p class="definition"><code>PROC goto.x.y (VAL INT x, y, CHAN BYTE o!)</code></p>
+<div class="description"><p>Synonym for <a href="course.html#name-cursor.x.y"><code>cursor.x.y</code></a>.</p></div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+</div>
+<div id="name-make.string" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:34</span>Process <code>make.string</code>
+</h3>
+<p class="definition"><code>PROC make.string ([]BYTE a, VAL INT length)</code></p>
+<div class="description"><p>Converts a <code>BYTE</code> array into a string. This is needed for strings that have been input using a counted-array protocol (where we know the length, but the string characters have been left-justified and the elements of the array after the string need setting to <a href="course.html#name-NULL"><code>NULL</code></a>).</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">Array to convert</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Length of string in <code>a</code>
+</td>
+</tr>
+</table></div>
+</div>
+<div id="name-copy.string" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:52</span>Process <code>copy.string</code>
+</h3>
+<p class="definition"><code>PROC copy.string (VAL []BYTE a, []BYTE b)</code></p>
+<div class="description"><p>Copy a string. This copies the string from <code>a</code> into <code>b</code>. If <code>a</code> is shorter than <code>b</code>, the string gets padded with <a href="course.html#name-NULL"><code>NULL</code></a>s. If <code>b</code> is shorter than <code>a</code>, the string gets truncated.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">Source string</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Destination string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-equal.string" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:78</span>Function <code>equal.string</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION equal.string (VAL []BYTE a, b)</code></p>
+<div class="description"><p>Compare two strings for equality.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">One string</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Other string</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Whether the two strings are equal</td>
+</tr></table></div>
+</div>
+<div id="name-compare.string" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:127</span>Function <code>compare.string</code>
+</h3>
+<p class="definition"><code>INT FUNCTION compare.string (VAL []BYTE a, b)</code></p>
+<div class="description"><p>Compares two strings for lexicographic ordering.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">Left string</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>b</code></td>
+<td class="param-desc">Right string</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<a href="course.html#name-string.less"><code>string.less</code></a> if <code>a</code> &lt; <code>b</code>; <a href="course.html#name-string.same"><code>string.same</code></a> if <code>a</code> = <code>b</code>; <a href="course.html#name-string.more"><code>string.more</code></a> otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-starts.with.string" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:191</span>Function <code>starts.with.string</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION starts.with.string (VAL []BYTE needle, haystack)</code></p>
+<div class="description"><p>Check if one string is a prefix of another.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>needle</code></td>
+<td class="param-desc">Possible prefix</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>haystack</code></td>
+<td class="param-desc">String to test</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>TRUE</code> if <code>needle</code> is prefix of <code>haystack</code>, <code>FALSE</code> otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-ends.with.string" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:212</span>Function <code>ends.with.string</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION ends.with.string (VAL []BYTE needle, haystack)</code></p>
+<div class="description"><p>Check if one string is a suffix of another.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>needle</code></td>
+<td class="param-desc">Possible suffix</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>haystack</code></td>
+<td class="param-desc">String to test</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>TRUE</code> if <code>needle</code> is suffix of <code>haystack</code>, <code>FALSE</code> otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-byte.in.string" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:233</span>Function <code>byte.in.string</code>
+</h3>
+<p class="definition"><code>BOOL FUNCTION byte.in.string (VAL BYTE needle, VAL []BYTE haystack)</code></p>
+<div class="description"><p>Check if a string contains the given byte.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>needle</code></td>
+<td class="param-desc">Byte to search for</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>haystack</code></td>
+<td class="param-desc">String to search</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>TRUE</code> if <code>needle</code> is in <code>haystack</code>, <code>FALSE</code> otherwise</td>
+</tr></table></div>
+</div>
+<div id="name-string.to.int" class="declaration function">
+<h3>
+<span class="location"><code>string.occ</code>:251</span>Function <code>string.to.int</code>
+</h3>
+<p class="definition"><code>BOOL, INT FUNCTION string.to.int (VAL []BYTE s)</code></p>
+<div class="description"><p>Convert a string containing a decimal integer to an <code>INT</code>.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">String to convert</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"></td>
+<td class="param-desc">
+<code>TRUE</code> if the conversion succeeded, <code>FALSE</code> otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The decimal number represented by the string, or <code>0</code> if the string could not be converted</td>
+</tr>
+</table></div>
+</div>
+<div id="name-write.string" class="declaration proc">
+<h3>
+<span class="location"><code>string.occ</code>:275</span>Process <code>write.string</code>
+</h3>
+<p class="definition"><code>PROC write.string (VAL []BYTE a, VAL INT field, CHAN BYTE out!)</code></p>
+<div class="description"><p>Write a <a href="course.html#name-NULL"><code>NULL</code></a>-padded string to a channel. This is similar to <a href="course.html#name-out.string"><code>out.string</code></a>, but correctly right-justifies the string when trailing <a href="course.html#name-NULL"><code>NULL</code></a>s are present.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>a</code></td>
+<td class="param-desc">String to write</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>field</code></td>
+<td class="param-desc">Field width to right-justify in</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>out</code></td>
+<td class="param-desc">Channel to write to</td>
+</tr>
+</table></div>
+</div>
+<div id="name-ASCII" class="declaration group">
+<h3>
+<span class="location"><code>consts.inc</code>:37</span>Group <code>ASCII</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Character values.</p></div>
+<div class="children">
+<div id="name-NULL" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:38</span>Constant <code>NULL</code>
+</h3>
+<p class="definition"><code>VAL BYTE NULL</code></p>
+<div class="description"><p>ASCII NUL</p></div>
+</div>
+<div id="name-BELL" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:39</span>Constant <code>BELL</code>
+</h3>
+<p class="definition"><code>VAL BYTE BELL</code></p>
+<div class="description"><p>ASCII BEL - terminal bell</p></div>
+</div>
+<div id="name-BACK" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:40</span>Constant <code>BACK</code>
+</h3>
+<p class="definition"><code>VAL BYTE BACK</code></p>
+<div class="description"><p>ASCII BS - backspace key</p></div>
+</div>
+<div id="name-ESCAPE" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:41</span>Constant <code>ESCAPE</code>
+</h3>
+<p class="definition"><code>VAL BYTE ESCAPE</code></p>
+<div class="description"><p>ASCII ESC - escape key</p></div>
+</div>
+<div id="name-DELETE" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:42</span>Constant <code>DELETE</code>
+</h3>
+<p class="definition"><code>VAL BYTE DELETE</code></p>
+<div class="description"><p>ASCII DEL - delete key</p></div>
+</div>
+</div>
+</div>
+<div id="name-FLUSH" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:46</span>Constant <code>FLUSH</code>
+</h3>
+<p class="definition"><code>VAL BYTE FLUSH</code></p>
+<div class="description"><p>Flush output buffer</p></div>
+</div>
+<div id="name-END.OF.FILE" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:47</span>Constant <code>END.OF.FILE</code>
+</h3>
+<p class="definition"><code>VAL BYTE END.OF.FILE</code></p>
+<div class="description"><p>End of file</p></div>
+</div>
+<div id="name-COMPARE.STRING" class="declaration group">
+<h3>
+<span class="location"><code>consts.inc</code>:50</span>Group <code>COMPARE.STRING</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Return values from <a href="course.html#name-compare.string"><code>compare.string</code></a>.</p></div>
+<div class="children">
+<div id="name-string.less" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:51</span>Constant <code>string.less</code>
+</h3>
+<p class="definition"><code>VAL INT string.less</code></p>
+<div class="description"><p>Left less than right</p></div>
+</div>
+<div id="name-string.same" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:52</span>Constant <code>string.same</code>
+</h3>
+<p class="definition"><code>VAL INT string.same</code></p>
+<div class="description"><p>Left and right the same</p></div>
+</div>
+<div id="name-string.more" class="declaration constant">
+<h3>
+<span class="location"><code>consts.inc</code>:53</span>Constant <code>string.more</code>
+</h3>
+<p class="definition"><code>VAL INT string.more</code></p>
+<div class="description"><p>Left more than right</p></div>
+</div>
+</div>
+</div>
+<div id="name-buffer.set.string" class="declaration proc">
+<h3>
+<span class="location"><code>stringbuf.occ</code>:31</span>Process <code>buffer.set.string</code>
+</h3>
+<p class="definition"><code>PROC buffer.set.string ([]BYTE buf, INT len, VAL []BYTE to.add)</code></p>
+<div class="description"><p>Adds a string to a string buffer.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buf</code></td>
+<td class="param-desc">String buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">Length of valid data in buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>to.add</code></td>
+<td class="param-desc">String to add.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-buffer.set.int" class="declaration proc">
+<h3>
+<span class="location"><code>stringbuf.occ</code>:51</span>Process <code>buffer.set.int</code>
+</h3>
+<p class="definition"><code>PROC buffer.set.int ([]BYTE buf, INT len, VAL INT n)</code></p>
+<div class="description"><p>Adds an integer to a string buffer.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buf</code></td>
+<td class="param-desc">String buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">Length of valid data in buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Value of integer.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-buffer.set.hex" class="declaration proc">
+<h3>
+<span class="location"><code>stringbuf.occ</code>:115</span>Process <code>buffer.set.hex</code>
+</h3>
+<p class="definition"><code>PROC buffer.set.hex ([]BYTE buf, INT len, VAL INT n)</code></p>
+<div class="description"><p>Adds an integer to a string buffer in hexadecimal format.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buf</code></td>
+<td class="param-desc">String buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">Length of valid data in buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Value of integer.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-buffer.set.bin8" class="declaration proc">
+<h3>
+<span class="location"><code>stringbuf.occ</code>:159</span>Process <code>buffer.set.bin8</code>
+</h3>
+<p class="definition"><code>PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)</code></p>
+<div class="description"><p>Adds a BYTE-sized integer to a string buffer in binary format.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buf</code></td>
+<td class="param-desc">String buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">Length of valid data in buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Value of byte.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-buffer.set.real32" class="declaration proc">
+<h3>
+<span class="location"><code>stringbuf.occ</code>:185</span>Process <code>buffer.set.real32</code>
+</h3>
+<p class="definition"><code>PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)</code></p>
+<div class="description"><p>Adds a REAL32 value to a string buffer.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>buf</code></td>
+<td class="param-desc">String buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">Length of valid data in buffer.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>ip</code></td>
+<td class="param-desc">integer portion alignment.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>dp</code></td>
+<td class="param-desc">decimal portion alignment.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Value to put in buffer.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.in.string" class="declaration proc">
+<h3>
+<span class="location"><code>file_in.occ</code>:31</span>Process <code>file.in.string</code>
+</h3>
+<p class="definition"><code>PROC file.in.string ([]BYTE s, INT length, VAL INT max, CHAN BYTE in?)</code></p>
+<div class="description"><p>Read a string from a channel non-interactively. Lines are terminated by newline characters.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>s</code></td>
+<td class="param-desc">Buffer to read into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Number of bytes read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.in.token" class="declaration proc">
+<h3>
+<span class="location"><code>file_in.occ</code>:84</span>Process <code>file.in.token</code>
+</h3>
+<p class="definition"><code>PROC file.in.token ([]BYTE t, INT length, VAL INT max, CHAN BYTE in?)</code></p>
+<div class="description"><p>Read a token from a channel non-interactively. Tokens are terminated by whitespace.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>t</code></td>
+<td class="param-desc">Buffer to read into</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">Number of bytes read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.in.int" class="declaration proc">
+<h3>
+<span class="location"><code>file_in.occ</code>:229</span>Process <code>file.in.int</code>
+</h3>
+<p class="definition"><code>PROC file.in.int (INT n, VAL INT max, BOOL ok, CHAN BYTE in?)</code></p>
+<div class="description"><p>Read an integer from a channel non-interactively.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">Integer read</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>max</code></td>
+<td class="param-desc">Maximum number of bytes to read</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>ok</code></td>
+<td class="param-desc">Whether a number was successfully read</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN BYTE</code></td>
+<td class="param-name"><code>in</code></td>
+<td class="param-desc">Channel to read from</td>
+</tr>
+</table></div>
+</div>
+<div id="name-file.in.number" class="declaration proc">
+<h3>
+<span class="location"><code>file_in.occ</code>:257</span>Process <code>file.in.number</code>
+</h3>
+<p class="definition"><code>PROC file.in.number (INT n, VAL INT max, BOOL ok, CHAN BYTE in?)</code></p>
+<div class="description"><p>Synonym for <a href="course.html#name-file.in.int"><code>file.in.int</code></a>.</p></div>
+<p class="deprecated">
+		Deprecated: do not use in new code.
+	</p>
+</div>
+<div id="name-random" class="declaration function">
+<h3>
+<span class="location"><code>random.occ</code>:46</span>Function <code>random</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION random (VAL INT upto, seed)</code></p>
+<div class="description">
+<p>Pseudorandom number generator. On 32-bit platforms, this is an implementation by David Morse of the "minimal standard" described in "<a href="http://portal.acm.org/citation.cfm?id=63042">Random number
+ generators:  Good ones are hard to find</a>", Park, K.P. &amp; Miller, K.W. (1988), Comm. ACM, 31(10), 1192-1201.</p>
+<p> The routine must be called with a valid seed: an integer of between 1 and 2 147 483 647. The value of the seed must be preserved from one call of the function to the next. This implementation of the random number generator returns an integer lying between 0 and (<code>upto</code> - 1) inclusive as its first result, the seed is the second result.</p>
+<p> The random number is full period, with a period of 2 ** 31, that is 2 147 483 647.</p>
+<p> On 16-bit platforms, this is a much less impressive LFSR, with a period of (2 ** 16) - 1.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>upto</code></td>
+<td class="param-desc">The upper bound (exclusive) of the output value</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>seed</code></td>
+<td class="param-desc">The input seed</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The output value</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"></td>
+<td class="param-desc">The output seed</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

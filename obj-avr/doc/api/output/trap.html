@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>An asynchronous network messaging system for occam-pi</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-trap" class="module">
+<h1>Module <code>trap</code> - An asynchronous network messaging system for occam-pi</h1>
+<div class="header"><div class="description">
+<p>An asynchronous network messaging system for occam-pi.</p>
+<p> The Trap nameserver <code>trapns</code> must be running in order for Trap programs to find each other. By default, it will assume the nameserver is running on <code>localhost</code>; to specify where it really is, create a file called <code>.trap.ns</code> in the current directory containing the hostname.</p>
+</div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="chantype" href="trap.html#name-TRAP.CHANNEL.CT">Channel type <code>TRAP.CHANNEL.CT</code></a> - Interface for a listening Trap port<br><ul><li>
+<a class="variable" href="trap.html#name-msg-">Variable <code>msg?</code></a> - Messages received from the port</li></ul>
+</li>
+<li>
+<a class="chantype" href="trap.html#name-TRAP.CT">Channel type <code>TRAP.CT</code></a> - Handle to the Trap server</li>
+<li>
+<a class="tag" href="trap.html#name-open">Tag <code>open</code></a> - Replies   </li>
+<li>
+<a class="proc" href="trap.html#name-trap.open">Process <code>trap.open</code></a> - Open a Trap port</li>
+<li>
+<a class="proc" href="trap.html#name-trap.send">Process <code>trap.send</code></a> - Send data to a Trap port</li>
+<li>
+<a class="proc" href="trap.html#name-trap.start">Process <code>trap.start</code></a> - Start the Trap server</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-trap.start" class="declaration proc">
+<h3>
+<span class="location"><code>trap.occ</code>:464</span>Process <code>trap.start</code>
+</h3>
+<p class="definition"><code>PROC trap.start (VAL INT node, RESULT SHARED TRAP.CT! control)</code></p>
+<div class="description"><p>Start the Trap server.</p></div>
+</div>
+<div id="name-trap.open" class="declaration proc">
+<h3>
+<span class="location"><code>trap.occ</code>:473</span>Process <code>trap.open</code>
+</h3>
+<p class="definition"><code>PROC trap.open (SHARED TRAP.CT! trap, VAL INT port, RESULT TRAP.CHANNEL.CT? chan)</code></p>
+<div class="description"><p>Open a Trap port.</p></div>
+</div>
+<div id="name-trap.send" class="declaration proc">
+<h3>
+<span class="location"><code>trap.occ</code>:483</span>Process <code>trap.send</code>
+</h3>
+<p class="definition"><code>PROC trap.send (SHARED TRAP.CT! trap, VAL INT node, port, MOBILE []BYTE data)</code></p>
+<div class="description"><p>Send data to a Trap port.</p></div>
+</div>
+<div id="name-TRAP.CHANNEL.CT" class="declaration chantype">
+<h3>
+<span class="location"><code>trap.inc</code>:43</span>Channel type <code>TRAP.CHANNEL.CT</code>
+</h3>
+<p class="definition"><code>CHAN TYPE TRAP.CHANNEL.CT</code></p>
+<div class="description"><p>Interface for a listening Trap port.</p></div>
+<div class="children"><div id="name-msg-" class="declaration variable">
+<h3>
+<span class="location"><code>trap.inc</code>:45</span>Variable <code>msg?</code>
+</h3>
+<p class="definition"><code>CHAN MOBILE []BYTE</code></p>
+<div class="description"><p>Messages received from the port.</p></div>
+</div></div>
+</div>
+<div id="name-open" class="declaration tag">
+<h3>
+<span class="location"><code>trap.inc</code>:52</span>Tag <code>open</code>
+</h3>
+<p class="definition"><code>open; INT</code></p>
+<div class="description"><p>Replies <a href=".html#name-"><code></code></a>.</p></div>
+</div>
+<div id="name-TRAP.CT" class="declaration chantype">
+<h3>
+<span class="location"><code>trap.inc</code>:62</span>Channel type <code>TRAP.CT</code>
+</h3>
+<p class="definition"><code>CHAN TYPE TRAP.CT</code></p>
+<div class="description"><p>Handle to the Trap server.</p></div>
+</div>
+</div></div></body>
+</html>

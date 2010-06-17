@@ -1,0 +1,726 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Mathematical functions and constants</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-maths" class="module">
+<h1>Module <code>maths</code> - Mathematical functions and constants</h1>
+<div class="header"><div class="description"><p>Mathematical functions and constants.</p></div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="function" href="maths.html#name-ACOS">Function <code>ACOS</code></a> - Single-precision arccosine</li>
+<li>
+<a class="function" href="maths.html#name-ALOG">Function <code>ALOG</code></a> - Single-precision natural logarithm</li>
+<li>
+<a class="function" href="maths.html#name-ALOG10">Function <code>ALOG10</code></a> - Single-precision base-10 logarithm</li>
+<li>
+<a class="function" href="maths.html#name-ASIN">Function <code>ASIN</code></a> - Single-precision arcsine</li>
+<li>
+<a class="function" href="maths.html#name-ATAN">Function <code>ATAN</code></a> - Single-precision arctangent</li>
+<li>
+<a class="function" href="maths.html#name-ATAN2">Function <code>ATAN2</code></a> - Single-precision divide and arctangent</li>
+<li>
+<a class="function" href="maths.html#name-COS">Function <code>COS</code></a> - Single-precision cosine</li>
+<li>
+<a class="function" href="maths.html#name-COSH">Function <code>COSH</code></a> - Single-precision hyperbolic cosine</li>
+<li>
+<a class="function" href="maths.html#name-DACOS">Function <code>DACOS</code></a> - Double-precision arccosine</li>
+<li>
+<a class="function" href="maths.html#name-DALOG">Function <code>DALOG</code></a> - Double-precision natural logarithm</li>
+<li>
+<a class="function" href="maths.html#name-DALOG10">Function <code>DALOG10</code></a> - Double-precision base-10 logarithm</li>
+<li>
+<a class="function" href="maths.html#name-DASIN">Function <code>DASIN</code></a> - Double-precision arcsine</li>
+<li>
+<a class="function" href="maths.html#name-DATAN">Function <code>DATAN</code></a> - Double-precision arctangent</li>
+<li>
+<a class="function" href="maths.html#name-DATAN2">Function <code>DATAN2</code></a> - Double-precision divide and arctangent</li>
+<li>
+<a class="function" href="maths.html#name-DCOS">Function <code>DCOS</code></a> - Double-precision cosine</li>
+<li>
+<a class="function" href="maths.html#name-DCOSH">Function <code>DCOSH</code></a> - Double-precision hyperbolic cosine</li>
+<li>
+<a class="constant" href="maths.html#name-DE">Constant <code>DE</code></a> - Double-precision e</li>
+<li>
+<a class="function" href="maths.html#name-DEXP">Function <code>DEXP</code></a> - Double-precision exponent</li>
+<li>
+<a class="constant" href="maths.html#name-DPI">Constant <code>DPI</code></a> - Double-precision pi</li>
+<li>
+<a class="function" href="maths.html#name-DPOWER">Function <code>DPOWER</code></a> - Double-precision power</li>
+<li>
+<a class="function" href="maths.html#name-DRAN">Function <code>DRAN</code></a> - Double-precision pseudo-random number generator</li>
+<li>
+<a class="function" href="maths.html#name-DSIN">Function <code>DSIN</code></a> - Double-precision sine</li>
+<li>
+<a class="function" href="maths.html#name-DSINH">Function <code>DSINH</code></a> - Double-precision hyperbolic sine</li>
+<li>
+<a class="function" href="maths.html#name-DTAN">Function <code>DTAN</code></a> - Double-precision tangent</li>
+<li>
+<a class="function" href="maths.html#name-DTANH">Function <code>DTANH</code></a> - Double-precision hyperbolic tangent</li>
+<li>
+<a class="constant" href="maths.html#name-E">Constant <code>E</code></a> - Single-precision e</li>
+<li>
+<a class="function" href="maths.html#name-EXP">Function <code>EXP</code></a> - Single-precision exponent</li>
+<li>
+<a class="constant" href="maths.html#name-PI">Constant <code>PI</code></a> - Single-precision pi</li>
+<li>
+<a class="function" href="maths.html#name-POWER">Function <code>POWER</code></a> - Single-precision power</li>
+<li>
+<a class="function" href="maths.html#name-RAN">Function <code>RAN</code></a> - Single-precision pseudo-random number generator</li>
+<li>
+<a class="function" href="maths.html#name-SIN">Function <code>SIN</code></a> - Single-precision sine</li>
+<li>
+<a class="function" href="maths.html#name-SINH">Function <code>SINH</code></a> - Single-precision hyperbolic sine</li>
+<li>
+<a class="function" href="maths.html#name-TAN">Function <code>TAN</code></a> - Single-precision tangent</li>
+<li>
+<a class="function" href="maths.html#name-TANH">Function <code>TANH</code></a> - Single-precision hyperbolic tangent</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-DRAN" class="declaration function">
+<h3>
+<span class="location"><code>dranfl.occ</code>:31</span>Function <code>DRAN</code>
+</h3>
+<p class="definition"><code>REAL64, INT64 FUNCTION DRAN (VAL INT64 DSeedIn)</code></p>
+<div class="description"><p>Double-precision pseudo-random number generator.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>DSeedIn</code></td>
+<td class="param-desc">Input seed value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Pseudo-random value in the range [0.0, 1.0)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Output seed value</td>
+</tr>
+</table></div>
+</div>
+<div id="name-DASIN" class="declaration function">
+<h3>
+<span class="location"><code>dasinfl.occ</code>:31</span>Function <code>DASIN</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DASIN (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision arcsine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value in the range <code>[-1.0, 1.0]</code>
+</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arcsine of X in radians</td>
+</tr></table></div>
+</div>
+<div id="name-DACOS" class="declaration function">
+<h3>
+<span class="location"><code>dacosfl.occ</code>:31</span>Function <code>DACOS</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DACOS (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision arccosine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value in the range <code>[-1.0, 1.0]</code>
+</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arccosine of X in radians</td>
+</tr></table></div>
+</div>
+<div id="name-EXP" class="declaration function">
+<h3>
+<span class="location"><code>expfl.occ</code>:31</span>Function <code>EXP</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION EXP (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision exponent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">e raised to the power X</td>
+</tr></table></div>
+</div>
+<div id="name-SIN" class="declaration function">
+<h3>
+<span class="location"><code>sinfl.occ</code>:33</span>Function <code>SIN</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION SIN (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision sine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Angle in radians</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Sine of X</td>
+</tr></table></div>
+</div>
+<div id="name-ATAN" class="declaration function">
+<h3>
+<span class="location"><code>atanfl.occ</code>:54</span>Function <code>ATAN</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION ATAN (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision arctangent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arctangent of X</td>
+</tr></table></div>
+</div>
+<div id="name-ATAN2" class="declaration function">
+<h3>
+<span class="location"><code>atanfl.occ</code>:150</span>Function <code>ATAN2</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION ATAN2 (VAL REAL32 U, V)</code></p>
+<div class="description">
+<p>Single-precision divide and arctangent.</p>
+<p> This can be used to convert a 2D coordinate to a polar angle. It is more accurate than doing the equivalent division and call to <a href="maths.html#name-ATAN"><code>ATAN</code></a>.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name">
+<code>U</code>, <code>V</code>
+</td>
+<td class="param-desc">Input values</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arctangent of <code>U / V</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-DATAN" class="declaration function">
+<h3>
+<span class="location"><code>datanfl.occ</code>:49</span>Function <code>DATAN</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DATAN (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision arctangent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arctangent of X</td>
+</tr></table></div>
+</div>
+<div id="name-DATAN2" class="declaration function">
+<h3>
+<span class="location"><code>datanfl.occ</code>:147</span>Function <code>DATAN2</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DATAN2 (VAL REAL64 U, V)</code></p>
+<div class="description">
+<p>Double-precision divide and arctangent.</p>
+<p> See <a href="maths.html#name-ATAN2"><code>ATAN2</code></a> for more details.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name">
+<code>U</code>, <code>V</code>
+</td>
+<td class="param-desc">Input values</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arctangent of <code>U / V</code>
+</td>
+</tr></table></div>
+</div>
+<div id="name-DALOG" class="declaration function">
+<h3>
+<span class="location"><code>dalogfl.occ</code>:36</span>Function <code>DALOG</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DALOG (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision natural logarithm.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Natural logarithm of X</td>
+</tr></table></div>
+</div>
+<div id="name-DALOG10" class="declaration function">
+<h3>
+<span class="location"><code>dalogfl.occ</code>:96</span>Function <code>DALOG10</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DALOG10 (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision base-10 logarithm.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Base-10 logarithm of X</td>
+</tr></table></div>
+</div>
+<div id="name-DTAN" class="declaration function">
+<h3>
+<span class="location"><code>dtanfl.occ</code>:33</span>Function <code>DTAN</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DTAN (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision tangent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Angle in radians</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Tangent of X</td>
+</tr></table></div>
+</div>
+<div id="name-SINH" class="declaration function">
+<h3>
+<span class="location"><code>hyperfl.occ</code>:76</span>Function <code>SINH</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION SINH (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision hyperbolic sine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Hyperbolic angle</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Hyperbolic sine of X</td>
+</tr></table></div>
+</div>
+<div id="name-COSH" class="declaration function">
+<h3>
+<span class="location"><code>hyperfl.occ</code>:127</span>Function <code>COSH</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION COSH (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision hyperbolic cosine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Hyperbolic angle</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Hyperbolic cosine of X</td>
+</tr></table></div>
+</div>
+<div id="name-TANH" class="declaration function">
+<h3>
+<span class="location"><code>hyperfl.occ</code>:158</span>Function <code>TANH</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION TANH (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision hyperbolic tangent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Hyperbolic angle</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Hyperbolic tangent of X</td>
+</tr></table></div>
+</div>
+<div id="name-ACOS" class="declaration function">
+<h3>
+<span class="location"><code>acosfl.occ</code>:31</span>Function <code>ACOS</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION ACOS (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision arccosine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value in the range <code>[-1.0, 1.0]</code>
+</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arccosine of X in radians</td>
+</tr></table></div>
+</div>
+<div id="name-ALOG" class="declaration function">
+<h3>
+<span class="location"><code>alogfl.occ</code>:36</span>Function <code>ALOG</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION ALOG (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision natural logarithm.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Natural logarithm of X</td>
+</tr></table></div>
+</div>
+<div id="name-ALOG10" class="declaration function">
+<h3>
+<span class="location"><code>alogfl.occ</code>:88</span>Function <code>ALOG10</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION ALOG10 (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision base-10 logarithm.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Base-10 logarithm of X</td>
+</tr></table></div>
+</div>
+<div id="name-ASIN" class="declaration function">
+<h3>
+<span class="location"><code>asinfl.occ</code>:31</span>Function <code>ASIN</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION ASIN (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision arcsine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value in the range <code>[-1.0, 1.0]</code>
+</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Arcsine of X in radians</td>
+</tr></table></div>
+</div>
+<div id="name-DPOWER" class="declaration function">
+<h3>
+<span class="location"><code>dpowfl.occ</code>:32</span>Function <code>DPOWER</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DPOWER (VAL REAL64 Base.r, Expn.r)</code></p>
+<div class="description"><p>Double-precision power.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>Base.r</code></td>
+<td class="param-desc">Base</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>Expn.r</code></td>
+<td class="param-desc">Exponent</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Base.r raised to the power Expn.r</td>
+</tr></table></div>
+</div>
+<div id="name-DSIN" class="declaration function">
+<h3>
+<span class="location"><code>dsinfl.occ</code>:33</span>Function <code>DSIN</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DSIN (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision sine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Angle in radians</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Sine of X</td>
+</tr></table></div>
+</div>
+<div id="name-RAN" class="declaration function">
+<h3>
+<span class="location"><code>ranfl.occ</code>:31</span>Function <code>RAN</code>
+</h3>
+<p class="definition"><code>REAL32, INT32 FUNCTION RAN (VAL INT32 SeedRan)</code></p>
+<div class="description"><p>Single-precision pseudo-random number generator.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>SeedRan</code></td>
+<td class="param-desc">Input seed value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Pseudo-random value in the range [0.0, 1.0)</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Output seed value</td>
+</tr>
+</table></div>
+</div>
+<div id="name-COS" class="declaration function">
+<h3>
+<span class="location"><code>cosfl.occ</code>:33</span>Function <code>COS</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION COS (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision cosine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Angle in radians</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Cosine of X</td>
+</tr></table></div>
+</div>
+<div id="name-DSINH" class="declaration function">
+<h3>
+<span class="location"><code>dhyperfl.occ</code>:79</span>Function <code>DSINH</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DSINH (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision hyperbolic sine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Hyperbolic angle</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Hyperbolic sine of X</td>
+</tr></table></div>
+</div>
+<div id="name-DCOSH" class="declaration function">
+<h3>
+<span class="location"><code>dhyperfl.occ</code>:134</span>Function <code>DCOSH</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DCOSH (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision hyperbolic cosine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Hyperbolic angle</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Hyperbolic cosine of X</td>
+</tr></table></div>
+</div>
+<div id="name-DTANH" class="declaration function">
+<h3>
+<span class="location"><code>dhyperfl.occ</code>:165</span>Function <code>DTANH</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DTANH (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision hyperbolic tangent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Hyperbolic angle</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Hyperbolic tangent of X</td>
+</tr></table></div>
+</div>
+<div id="name-DEXP" class="declaration function">
+<h3>
+<span class="location"><code>dexpfl.occ</code>:31</span>Function <code>DEXP</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DEXP (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision exponent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Input value</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">e raised to the power X</td>
+</tr></table></div>
+</div>
+<div id="name-TAN" class="declaration function">
+<h3>
+<span class="location"><code>tanfl.occ</code>:33</span>Function <code>TAN</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION TAN (VAL REAL32 X)</code></p>
+<div class="description"><p>Single-precision tangent.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Angle in radians</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Tangent of X</td>
+</tr></table></div>
+</div>
+<div id="name-E" class="declaration constant">
+<h3>
+<span class="location"><code>mathvals.inc</code>:33</span>Constant <code>E</code>
+</h3>
+<p class="definition"><code>VAL REAL32 E</code></p>
+<div class="description"><p>Single-precision e.</p></div>
+</div>
+<div id="name-PI" class="declaration constant">
+<h3>
+<span class="location"><code>mathvals.inc</code>:35</span>Constant <code>PI</code>
+</h3>
+<p class="definition"><code>VAL REAL32 PI</code></p>
+<div class="description"><p>Single-precision pi.</p></div>
+</div>
+<div id="name-DE" class="declaration constant">
+<h3>
+<span class="location"><code>mathvals.inc</code>:56</span>Constant <code>DE</code>
+</h3>
+<p class="definition"><code>VAL REAL64 DE</code></p>
+<div class="description"><p>Double-precision e.</p></div>
+</div>
+<div id="name-DPI" class="declaration constant">
+<h3>
+<span class="location"><code>mathvals.inc</code>:58</span>Constant <code>DPI</code>
+</h3>
+<p class="definition"><code>VAL REAL64 DPI</code></p>
+<div class="description"><p>Double-precision pi.</p></div>
+</div>
+<div id="name-POWER" class="declaration function">
+<h3>
+<span class="location"><code>powfl.occ</code>:32</span>Function <code>POWER</code>
+</h3>
+<p class="definition"><code>REAL32 FUNCTION POWER (VAL REAL32 Base.r, Expn.r)</code></p>
+<div class="description"><p>Single-precision power.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>Base.r</code></td>
+<td class="param-desc">Base</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>Expn.r</code></td>
+<td class="param-desc">Exponent</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Base.r raised to the power Expn.r</td>
+</tr></table></div>
+</div>
+<div id="name-DCOS" class="declaration function">
+<h3>
+<span class="location"><code>dcosfl.occ</code>:33</span>Function <code>DCOS</code>
+</h3>
+<p class="definition"><code>REAL64 FUNCTION DCOS (VAL REAL64 X)</code></p>
+<div class="description"><p>Double-precision cosine.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table><tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>X</code></td>
+<td class="param-desc">Angle in radians</td>
+</tr></table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"></td>
+<td class="param-desc">Cosine of X</td>
+</tr></table></div>
+</div>
+</div></div></body>
+</html>

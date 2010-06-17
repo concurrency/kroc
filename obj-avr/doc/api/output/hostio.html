@@ -1,0 +1,3025 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title></title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-hostio" class="module">
+<h1>Module <code>hostio</code>
+</h1>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="proc" href="hostio.html#name-so.ask">Process <code>so.ask</code></a> - Provide a general purpose routine for interactively asking a user of a program a question requiring only a one character answer</li>
+<li>
+<a class="proc" href="hostio.html#name-so.date.to.ascii">Process <code>so.date.to.ascii</code></a> - Format a time and date given in the form of six integers</li>
+<li>
+<a class="proc" href="hostio.html#name-so.exit">Process <code>so.exit</code></a> - Terminate the server</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.char">Process <code>so.fwrite.char</code></a> - Write a single character to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.hex.int">Process <code>so.fwrite.hex.int</code></a> - Write an integer as hexadecimal ASCII characters preceded by the '#' character to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.hex.int32">Process <code>so.fwrite.hex.int32</code></a> - Write a 32-bit integer as hexadecimal ASCII characters preceded by the '#' character to a file</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.hex.int64">Process <code>so.fwrite.hex.int64</code></a> - Write a 64-bit integer as hexadecimal ASCII characters preceded by the '#' character to a file</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.int">Process <code>so.fwrite.int</code></a> - Write to the specified file stream an integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.int32">Process <code>so.fwrite.int32</code></a> - Write to the specified file stream a 32-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.int64">Process <code>so.fwrite.int64</code></a> - Write to the specified file stream a 64-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.nl">Process <code>so.fwrite.nl</code></a> - Write a newline to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.real32">Process <code>so.fwrite.real32</code></a> - Write a single precision real as decimal ASCII characters to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.real64">Process <code>so.fwrite.real64</code></a> - Write a double precision real as decimal ASCII characters to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.string">Process <code>so.fwrite.string</code></a> - Write a string to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.fwrite.string.nl">Process <code>so.fwrite.string.nl</code></a> - Write a string appended by a newline to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.open.temp">Process <code>so.open.temp</code></a> - Open a temporary file in spm.new.update mode</li>
+<li>
+<a class="proc" href="hostio.html#name-so.parse.command.line">Process <code>so.parse.command.line</code></a> - Read the server command line and parse it for specified options and associated parameters</li>
+<li>
+<a class="proc" href="hostio.html#name-so.popen.read">Process <code>so.popen.read</code></a> - Perform a general purpose open file for reading</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read">Process <code>so.read</code></a> - Read an unlimited number of bytes from a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.any.int">Process <code>so.read.echo.any.int</code></a> - Read an integer in either ( two's complement ) hexadecimal form or in decimal form from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.hex.int">Process <code>so.read.echo.hex.int</code></a> - Read an integer in ( two's complement ) hexadecimal form from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.hex.int32">Process <code>so.read.echo.hex.int32</code></a> - Read a 32-bit integer in ( two's complement ) hexadecimal form from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.hex.int64">Process <code>so.read.echo.hex.int64</code></a> - Read a 64-bit integer in ( two's complement ) hexadecimal form from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.int">Process <code>so.read.echo.int</code></a> - Read a string containing a representation of a decimal integer from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.int32">Process <code>so.read.echo.int32</code></a> - Read a string containing a representation of a 32-bit decimal integer from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.int64">Process <code>so.read.echo.int64</code></a> - Read a string containing a representation of a 64-bit decimal integer from the keyboard, and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.line">Process <code>so.read.echo.line</code></a> - Read a line from the keyboard, echoing it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.real32">Process <code>so.read.echo.real32</code></a> - Read a string containing a representation of a single precision real in occam syntax ( though a + or - is allowed as first character ) from the keyboard and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.echo.real64">Process <code>so.read.echo.real64</code></a> - Read a string containing a representation of a double precision real in occam syntax ( though a + or - is allowed as first character ) from the keyboard and to echo it to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.read.line">Process <code>so.read.line</code></a> - Read a line from the keyboard without echoing it</li>
+<li>
+<a class="proc" href="hostio.html#name-so.test.exists">Process <code>so.test.exists</code></a> - Test for the existence of a file</li>
+<li>
+<a class="proc" href="hostio.html#name-so.time">Process <code>so.time</code></a> - Retrieve the local and UTC time from the host system</li>
+<li>
+<a class="proc" href="hostio.html#name-so.time.to.ascii">Process <code>so.time.to.ascii</code></a> - Convert the number of seconds since the midnight before 1st January 1970 into a formatted time and date</li>
+<li>
+<a class="proc" href="hostio.html#name-so.time.to.date">Process <code>so.time.to.date</code></a> - Convert the number of seconds since the midnight before 1st January 1970 into the associated time and date</li>
+<li>
+<a class="proc" href="hostio.html#name-so.today.ascii">Process <code>so.today.ascii</code></a> - Give the time and date, in formatted form, of when this routine was called</li>
+<li>
+<a class="proc" href="hostio.html#name-so.today.date">Process <code>so.today.date</code></a> - Give the time and date, in the form of six integers, of when this routine was called</li>
+<li>
+<a class="proc" href="hostio.html#name-so.version">Process <code>so.version</code></a> - Return identification information about the server and the host that it is running on</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write">Process <code>so.write</code></a> - Write an unlimited number of bytes to a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.char">Process <code>so.write.char</code></a> - Write a single character to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.hex.int">Process <code>so.write.hex.int</code></a> - Write an integer as hexadecimal ASCII characters preceded by the '#' character to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.hex.int32">Process <code>so.write.hex.int32</code></a> - Write a 32-bit integer as hexadecimal ASCII characters preceded by the '#' character to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.hex.int64">Process <code>so.write.hex.int64</code></a> - Write a 64-bit integer as hexadecimal ASCII characters preceded by the '#' character to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.int">Process <code>so.write.int</code></a> - Write to standard out an integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.int32">Process <code>so.write.int32</code></a> - Write to standard out a 32-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.int64">Process <code>so.write.int64</code></a> - Write to standard out a 64-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.nl">Process <code>so.write.nl</code></a> - Write a newline to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.real32">Process <code>so.write.real32</code></a> - Write a single precision real as decimal ASCII characters to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.real64">Process <code>so.write.real64</code></a> - Write a double precision real as decimal ASCII characters to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.string">Process <code>so.write.string</code></a> - Write a string to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-so.write.string.nl">Process <code>so.write.string.nl</code></a> - Write a string appended by a newline to standard out</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.buffer">Process <code>sp.buffer</code></a> - Act as a communication buffer</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.close">Process <code>sp.close</code></a> - Close a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.commandline">Process <code>sp.commandline</code></a> - Return the command line passed to the server on invocation</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.core">Process <code>sp.core</code></a> - Return the contents of the root transputer's memory as peeked from the transputer when the server was invoked with the analyse option</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.eof">Process <code>sp.eof</code></a> - Test whether the specified stream has end of file status or not</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.exit">Process <code>sp.exit</code></a> - Terminate the server</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.ferror">Process <code>sp.ferror</code></a> - Test for the occurrence of an error on the specified stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.flush">Process <code>sp.flush</code></a> - Flush the specified output stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.getenv">Process <code>sp.getenv</code></a> - Return the contents of an environment variable from whatever host is being used</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.gets">Process <code>sp.gets</code></a> - Read a line from the specified input stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.multiplexor">Process <code>sp.multiplexor</code></a> - Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.open">Process <code>sp.open</code></a> - Open a file</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.overlapped.buffer">Process <code>sp.overlapped.buffer</code></a> - Act as two almost independent buffers</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.overlapped.multiplexor">Process <code>sp.overlapped.multiplexor</code></a> - Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels, where the multiplexing is overlapped so that output through this routine can continue independently of the receipt of replies</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.overlapped.pri.multiplexor">Process <code>sp.overlapped.pri.multiplexor</code></a> - Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels, where the multiplexing is overlapped so that output through this routine can continue independently of the receipt of replies</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.pollkey">Process <code>sp.pollkey</code></a> - Read a single character from the keyboard, without waiting for one if there is none</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.pri.multiplexor">Process <code>sp.pri.multiplexor</code></a> - Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.puts">Process <code>sp.puts</code></a> - Write a line to the specified output stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.read">Process <code>sp.read</code></a> - Read a limited number of bytes from a stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.receive.packet">Process <code>sp.receive.packet</code></a> - Receive an SP protocol packet</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.remove">Process <code>sp.remove</code></a> - Delete the specified file</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.rename">Process <code>sp.rename</code></a> - Rename the specified file</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.seek">Process <code>sp.seek</code></a> - Set the file position for the specified stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.send.packet">Process <code>sp.send.packet</code></a> - Send an SP protocol packet</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.system">Process <code>sp.system</code></a> - Execute a command on the host system</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.tell">Process <code>sp.tell</code></a> - Return the current file position for the specified stream</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.time">Process <code>sp.time</code></a> - Retrieve the local and UTC time from the host system</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.version">Process <code>sp.version</code></a> - Return identification information about the server and the host that it is running on</li>
+<li>
+<a class="proc" href="hostio.html#name-sp.write">Process <code>sp.write</code></a> - Write an unlimited number of bytes to a stream</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-sp.core" class="declaration proc">
+<h3>
+<span class="location"><code>spsocore.occ</code>:51</span>Process <code>sp.core</code>
+</h3>
+<p class="definition"><code>PROC sp.core (CHAN OF SP fs, ts, VAL INT32 offset, INT bytes.read, []BYTE data, BYTE result)</code></p>
+<div class="description">
+<p>Return the contents of the root transputer's memory as peeked from the transputer when the server was invoked with the analyse option.</p>
+<p> If offset + (SIZE data) is larger than the total memory peeked then only those bytes from offset up to the end of that memory peeked are returned in data. If both offset and SIZE data are zero, the routine fails if the memory was not peeked, succeeds otherwise.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>offset</code></td>
+<td class="param-desc">this gives the offset from base of memory ( (MOSTNEG INT) ) of the memory segment to be read ( so offset should be non-negative ); result will be &gt;= spr.operation.failed if offset is larger than the amount of memory that was peeked</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">the number of bytes read, which will be [data FROM 0 FOR bytes.read], if result = spr.ok; otherwise will be zero</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">contains the contents of the memory read; (SIZE data) is the amount of memory in bytes that is requested to be read</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the peeked memory was successfully returned; otherwise takes on a value indicating what the problem was: spr.bad.packet.size data is too large, (SIZE data) &gt; sp.max.corerequest.size &gt;=spr.operation.failed the operation failed or the transputer was not analysed when the server was invoked or offset is greater than the amount of memory peeked - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.send.packet" class="declaration proc">
+<h3>
+<span class="location"><code>packet.occ</code>:34</span>Process <code>sp.send.packet</code>
+</h3>
+<p class="definition"><code>PROC sp.send.packet (CHAN OF SP ts, VAL []BYTE packet, BOOL error)</code></p>
+<div class="description"><p>Send an SP protocol packet.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">the channel on which to send the packet</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>packet</code></td>
+<td class="param-desc">the packet to send</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if the packet size is greater than or equal to sp.min.packet.data.size, and is less than or equal to sp.max.packet.data.size, and is even; TRUE otherwise, in which case the packet is not sent</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.receive.packet" class="declaration proc">
+<h3>
+<span class="location"><code>packet.occ</code>:54</span>Process <code>sp.receive.packet</code>
+</h3>
+<p class="definition"><code>PROC sp.receive.packet (CHAN OF SP fs, INT16 length, []BYTE packet, BOOL error)</code></p>
+<div class="description"><p>Receive an SP protocol packet.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">the channel on which to receive the packet</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT16</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">the number of bytes in the received packet</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>packet</code></td>
+<td class="param-desc">the received packet, left justified</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">TRUE if length is greater than sp.max.packet.data.size; FALSE otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.popen.read" class="declaration proc">
+<h3>
+<span class="location"><code>popen.occ</code>:66</span>Process <code>so.popen.read</code>
+</h3>
+<p class="definition"><code>PROC so.popen.read (CHAN OF SP fs, ts, VAL []BYTE filename, path.variable.name, VAL BYTE open.type, INT full.len, []BYTE full.name, INT32 stream.id, BYTE result)</code></p>
+<div class="description">
+<p>Perform a general purpose open file for reading.</p>
+<p> This procedure performs the following actions: 1. An attempt is made to open the file as given by filename ( so if there is no directory part to filename the current directory will be tried ); 2. If the attempt in 1 is not successful and there is no explicit directory part to filename, the path is searched for the file.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">a string with the name of the file to be opened. There may be an explicit directory part to the file's name.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>path.variable.name</code></td>
+<td class="param-desc">a string holding the name of a path environment variable; there is a limit imposed on the number of characters accepted from sp.getenv for the environment variable contents: the limit is imposed by this routine and is given by 507 ( called path.string.size in the program text ).</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>open.type</code></td>
+<td class="param-desc">either spt.binary, for a file containing raw bytes only or spt.text, for a file stored as text records separated by newlines</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>full.len</code></td>
+<td class="param-desc">the number of characters in full.name if result is spr.ok; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>full.name</code></td>
+<td class="param-desc">if result is spr.ok, [full.name FROM 0 FOR full.len] is the name of the file that was successfully opened; undefined otherwise. full.name clearly should be at least as large as filename.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>stream.id</code></td>
+<td class="param-desc">if result is spr.ok, the identification number of the stream associated with the file that was opened; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if a file was opened successfully; otherwise some value indicating what went wrong: spr.bad.packet.size (SIZE filename) &gt; sp.max.openname.size or (SIZE path.variable.name) &gt; sp.max.getenvname.size spr.bad.name null file name supplied spr.bad.type invalid file type specified spr.full.name.too.short (SIZE full.name) not large enough to hold name of a file to open spr.buffer.overflow length of environment string &gt; 507 &gt;=spr.operation.failed the open failed or could not read environment string - see hostio.inc or iserver documentation for more details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.line" class="declaration proc">
+<h3>
+<span class="location"><code>readline.occ</code>:46</span>Process <code>so.read.line</code>
+</h3>
+<p class="definition"><code>PROC so.read.line (CHAN OF SP fs, ts, INT len, []BYTE line, BYTE result)</code></p>
+<div class="description">
+<p>Read a line from the keyboard without echoing it.</p>
+<p> The line to be read is considered terminated by a carriage return, ie ASCII ^M, which has value #0D = 13. This carriage return is not included in the line, and nor is a newline ( ASCII ^J, #0A = 10 ) if present in the input. If an error occurs whilst reading the line this routine terminates immediately.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of bytes in the parameter line that form the line that was read</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>line</code></td>
+<td class="param-desc">if result = spr.ok, the line that was read is in the first len bytes, the remaining bytes being undefined or if the supplied byte array was not large enough for the read line, the read line is truncated to fit; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the line was successfully read; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.int64" class="declaration proc">
+<h3>
+<span class="location"><code>wint64.occ</code>:45</span>Process <code>so.fwrite.int64</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.int64 (CHAN OF SP fs, ts, VAL INT32 streamid, VAL INT64 n, VAL INT width, BYTE result)</code></p>
+<div class="description">
+<p>Write to the specified file stream a 64-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to which the string representing the integer is to be sent</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 64-bit integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the string was written all right; otherwise not all of the string could be written, in which case result takes on a value of spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.int64" class="declaration proc">
+<h3>
+<span class="location"><code>wint64.occ</code>:95</span>Process <code>so.write.int64</code>
+</h3>
+<p class="definition"><code>PROC so.write.int64 (CHAN OF SP fs, ts, VAL INT64 n, VAL INT width)</code></p>
+<div class="description">
+<p>Write to standard out a 64-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 64-bit integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.real32" class="declaration proc">
+<h3>
+<span class="location"><code>wreal32.occ</code>:43</span>Process <code>so.fwrite.real32</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.real32 (CHAN OF SP fs, ts, VAL INT32 streamid, VAL REAL32 r, VAL INT Ip, Dp, BYTE result)</code></p>
+<div class="description">
+<p>Write a single precision real as decimal ASCII characters to a stream.</p>
+<p> Behaves as an invalid process if the string to write is longer than 24 characters.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write the real to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>r</code></td>
+<td class="param-desc">a single precision real</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values; see REAL32TOSTRING for their effect</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the string representing the real was written; otherwise not all of the characters were written in which case spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.real32" class="declaration proc">
+<h3>
+<span class="location"><code>wreal32.occ</code>:75</span>Process <code>so.write.real32</code>
+</h3>
+<p class="definition"><code>PROC so.write.real32 (CHAN OF SP fs, ts, VAL REAL32 r, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Write a single precision real as decimal ASCII characters to standard out.</p>
+<p> Behaves as an invalid process if the string to write is longer than 24 characters.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL32</code></td>
+<td class="param-name"><code>r</code></td>
+<td class="param-desc">a single precision real</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values; see REAL32TOSTRING for their effect</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.line" class="declaration proc">
+<h3>
+<span class="location"><code>echoline.occ</code>:47</span>Process <code>so.read.echo.line</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.line (CHAN OF SP fs, ts, INT len, []BYTE line, BYTE result)</code></p>
+<div class="description">
+<p>Read a line from the keyboard, echoing it to standard out.</p>
+<p> The line to be read is considered terminated by a carriage return, ie ASCII ^M, which has value #0D = 13. This carriage return is not included in the line, and nor is a newline ( ASCII ^J, #0A = 10 ) if present in the input. Carriage return and newline are not echoed. If an error occurs whilst reading the line this routine terminates immediately.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>len</code></td>
+<td class="param-desc">the number of bytes in line that form the line that was read</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>line</code></td>
+<td class="param-desc">if result = spr.ok, the line that was read is in the first len bytes, the remaining bytes being undefined or if the supplied byte array was not large enough for the read line, the read line is truncated to fit; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if no problems encountered; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.hex.int64" class="declaration proc">
+<h3>
+<span class="location"><code>rehint64.occ</code>:47</span>Process <code>so.read.echo.hex.int64</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.hex.int64 (CHAN OF SP fs, ts, INT64 n, BOOL error)</code></p>
+<div class="description">
+<p>Read a 64-bit integer in ( two's complement ) hexadecimal form from the keyboard, and to echo it to standard out.</p>
+<p> The hexadecimal number must begin with one of '#', '$' or '%'; a sign is not allowed ( nor necessary since the most significant bit indicates the sign ). A '#' and '$' mean exactly the same thing: the following digits form a hex integer. A '%' means add the given hex integer to MOSTNEG INT64 using modulo arithmetic to give the result. Both upper and lower case hex digits are permissible. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the hexadecimal number read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if everything was in order; TRUE otherwise: 1) if the integer overflows the INT64 range; 2) if there is a non-hex character in the string read from the keyboard ( other than #, $, or % in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.overlapped.pri.multiplexor" class="declaration proc">
+<h3>
+<span class="location"><code>ovprimux.occ</code>:68</span>Process <code>sp.overlapped.pri.multiplexor</code>
+</h3>
+<p class="definition"><code>PROC sp.overlapped.pri.multiplexor (CHAN OF SP fs, ts, []CHAN OF SP from.user, to.user, CHAN OF BOOL stopper, []INT queue)</code></p>
+<div class="description">
+<p>Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels, where the multiplexing is overlapped so that output through this routine can continue independently of the receipt of replies.</p>
+<p> There is a relative priority to the input channels: from.user[ i ] is of higher priority than from.user[ j ] where i &lt; j.</p>
+<p> It is an error if the size of from.user is different to that of to.user. It is permissible for the size of from.user ( and hence to.user ) to be zero. The maximum number of bytes that can be channelled through this routine in each direction is sp.max.packet.data.size. It is assumed that replies for messages are received in the same sequence as the messages are sent.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>from.user</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>to.user</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine: TRUE or FALSE received on this channel will cause the routine to stop listening on the from.user channels and wait until all replies have been received before terminating; this channel has the highest priority of all input channels</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>queue</code></td>
+<td class="param-desc">the values in queue on entry are irrelevant but the size of it is the maximum number of communications that can be output through this routine before a reply is received and to be passed back; the values in queue on termination are equally irrelevant; queue is used for storage only; if it is of zero length then no communication can be done and the routine simply waits on stopper for an input which immediately causes termination of this routine</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.overlapped.multiplexor" class="declaration proc">
+<h3>
+<span class="location"><code>ovmux.occ</code>:69</span>Process <code>sp.overlapped.multiplexor</code>
+</h3>
+<p class="definition"><code>PROC sp.overlapped.multiplexor (CHAN OF SP fs, ts, []CHAN OF SP from.user, to.user, CHAN OF BOOL stopper, []INT queue)</code></p>
+<div class="description">
+<p>Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels, where the multiplexing is overlapped so that output through this routine can continue independently of the receipt of replies.</p>
+<p> It is an error if the size of from.user is different to that of to.user. It is permissible for the size of from.user ( and hence to.user ) to be zero. The maximum number of bytes that can be channelled through this routine in each direction is sp.max.packet.data.size. It is assumed that replies for messages are received in the same sequence as the messages are sent. To attempt some degree of fairness, there is a heirarchy of priorities from from.user with index i for SIZE from.user, using modulo SIZE from.user on the indexes, with i starting from 0 and incrementing by one after each input accepted.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>from.user</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>to.user</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine: TRUE or FALSE received on this channel will cause the routine to stop listening on the from.user channels and wait until all replies have been received before terminating; stopper has the highest priority amongst the channels</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]INT</code></td>
+<td class="param-name"><code>queue</code></td>
+<td class="param-desc">the values in queue on entry are irrelevant but the size of it is the maximum number of communications that can be output through this routine before a reply is received and to be passed back; the values in queue on termination are equally irrelevant; queue is used for storage only; if it is of zero length then no communication can be done and the routine simply waits on stopper for an input which immediately causes termination of this routine</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.int" class="declaration proc">
+<h3>
+<span class="location"><code>reint.occ</code>:42</span>Process <code>so.read.echo.int</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.int (CHAN OF SP fs, ts, INT n, BOOL error)</code></p>
+<div class="description">
+<p>Read a string containing a representation of a decimal integer from the keyboard, and to echo it to standard out.</p>
+<p> The integer may commence with a + or a - sign. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the integer read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if nothing went wrong in the operation; otherwise TRUE: 1) if the integer read overflows the INT range 2) if a non-numeric character is found in the input string ( other than a + or - in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.seek" class="declaration proc">
+<h3>
+<span class="location"><code>seek.occ</code>:46</span>Process <code>sp.seek</code>
+</h3>
+<p class="definition"><code>PROC sp.seek (CHAN OF SP fs, ts, VAL INT32 streamid, offset, origin, BYTE result)</code></p>
+<div class="description"><p>Set the file position for the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream associated with the file the position of which is to be set</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>offset</code></td>
+<td class="param-desc">the offset from origin of the new position for reading or writing. For a binary file the new position will be offset bytes, perhaps negative, from the position defined by origin. For a text file offset must be zero or a value returned by so.tell; in the latter case origin must be spo.start, and offset greater than or equal to zero.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>origin</code></td>
+<td class="param-desc">one of spo.start the start of the file spo.current the current position in the file spo.end the end of the file</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the file position was successfully set; otherwise takes on a value indicating what the problem was: spr.bad.origin invalid origin &gt;=spr.operation.failed the seek failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.real32" class="declaration proc">
+<h3>
+<span class="location"><code>rereal32.occ</code>:43</span>Process <code>so.read.echo.real32</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.real32 (CHAN OF SP fs, ts, REAL32 n, BOOL error)</code></p>
+<div class="description">
+<p>Read a string containing a representation of a single precision real in occam syntax ( though a + or - is allowed as first character ) from the keyboard and to echo it to standard out.</p>
+<p> The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>REAL32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the IEEE single precision format of the real that was read, otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if the real was read and converted to binary without problem; TRUE otherwise - if the string read does not conform to the syntax of an occam real number, other than the fact that a plus or minus sign is allowed as the first character</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.gets" class="declaration proc">
+<h3>
+<span class="location"><code>gets.occ</code>:79</span>Process <code>sp.gets</code>
+</h3>
+<p class="definition"><code>PROC sp.gets (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data, BYTE result)</code></p>
+<div class="description">
+<p>Read a line from the specified input stream.</p>
+<p> Characters are read until a newline sequence is found, the end of the file is reached, or the number of characters is not less than sp.max.readbuffer.size. If a newline sequence is found, it is not included in data.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">if result is spr.ok this is the number of bytes read; if result is spr.buffer.overflow then this will be (SIZE data) and will be less than the actual number of bytes read from the file; otherwise zero.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">an array of bytes holding line read if result is spr.ok; or holding a truncation of the line if result is spr.buffer.overflow. It is undefined otherwise. If result is spr.ok or spr.buffer.overflow then the bytes will be [data FROM 0 FOR bytes.read].</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if line was successfully read; otherwise takes on a value indicating what went wrong: spr.bad.packet.size data is too large, (SIZE data) &gt; sp.max.readbuffer.size spr.buffer.overflow data not large enough to hold the line, in which case the line is truncated to fit &gt;=spr.operation.failed the read failed, either because the end of the file has been reached or some error occurred - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.buffer" class="declaration proc">
+<h3>
+<span class="location"><code>buffer.occ</code>:42</span>Process <code>sp.buffer</code>
+</h3>
+<p class="definition"><code>PROC sp.buffer (CHAN OF SP fs, ts, from.user, to.user, CHAN OF BOOL stopper)</code></p>
+<div class="description">
+<p>Act as a communication buffer.</p>
+<p> No more than sp.max.packet.data.size bytes can be buffered. Primary input to this routine must be on the guard input channels from.user or stopper. Input on from.user is stored, output on ts, then a reply is expected on fs; this reply is stored and then output on to.user, and all this must finish before any new input can be received on from.user or stopper.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>from.user</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>to.user</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine; TRUE or FALSE received will terminate this routine</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.version" class="declaration proc">
+<h3>
+<span class="location"><code>version.occ</code>:45</span>Process <code>sp.version</code>
+</h3>
+<p class="definition"><code>PROC sp.version (CHAN OF SP fs, ts, BYTE version, host, os, board, result)</code></p>
+<div class="description">
+<p>Return identification information about the server and the host that it is running on.</p>
+<p> If any of the information ( except result ) has the value zero then that information is not available. The parameter version cannot distinguish between e.g. 1.41 and 1.42.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>version</code></td>
+<td class="param-desc">on division by 10 this gives the version of the server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>host</code></td>
+<td class="param-desc">identifies the host via sph. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>os</code></td>
+<td class="param-desc">identifies the host environment via spo. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>board</code></td>
+<td class="param-desc">identifies the interface board via spb. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the request was successful; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.version" class="declaration proc">
+<h3>
+<span class="location"><code>version.occ</code>:70</span>Process <code>so.version</code>
+</h3>
+<p class="definition"><code>PROC so.version (CHAN OF SP fs, ts, BYTE version, host, os, board)</code></p>
+<div class="description">
+<p>Return identification information about the server and the host that it is running on.</p>
+<p> If any of the information has the value zero then that information is not available. The parameter version cannot distinguish between e.g. 1.41 and 1.42.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>version</code></td>
+<td class="param-desc">on division by 10 this gives the version of the server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>host</code></td>
+<td class="param-desc">identifies the host via sph. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>os</code></td>
+<td class="param-desc">identifies the host environment via spo. constants</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>board</code></td>
+<td class="param-desc">identifies the interface board via spb. constants</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.ask" class="declaration proc">
+<h3>
+<span class="location"><code>ask.occ</code>:53</span>Process <code>so.ask</code>
+</h3>
+<p class="definition"><code>PROC so.ask (CHAN OF SP fs, ts, VAL []BYTE prompt, replies, VAL BOOL display.possible.replies, echo.reply, INT reply.number)</code></p>
+<div class="description">
+<p>Provide a general purpose routine for interactively asking a user of a program a question requiring only a one character answer.</p>
+<p> After the prompt and possibly the printable replies, " ? " is output and a valid key is waited for from the keyboard; invalid keys are ignored.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>prompt</code></td>
+<td class="param-desc">the prompt to be displayed on the screen to the user, but any list of possible replies and a question mark will be taken care of outside of this prompt</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>replies</code></td>
+<td class="param-desc">the possible single character replies allowed, which do not necessarily need to be printable</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>display.possible.replies</code></td>
+<td class="param-desc">if TRUE the printable replies are displayed ( in upper case ) inside round brackets with commas inbetween each character, this display being one space after the given prompt; if FALSE then this is not done</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>echo.reply</code></td>
+<td class="param-desc">if TRUE then the reply typed at the keyboard by the user is echoed if it is printable, and it is echoed as an upper case letter if a letter; if FALSE the reply typed is not echoed</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>reply.number</code></td>
+<td class="param-desc">an integer corresponding to the reply typed, where 0 is associated with the first possible reply, 1 with the second possible reply, etc., where the order is as in replies</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.hex.int32" class="declaration proc">
+<h3>
+<span class="location"><code>rehint32.occ</code>:47</span>Process <code>so.read.echo.hex.int32</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.hex.int32 (CHAN OF SP fs, ts, INT32 n, BOOL error)</code></p>
+<div class="description">
+<p>Read a 32-bit integer in ( two's complement ) hexadecimal form from the keyboard, and to echo it to standard out.</p>
+<p> The hexadecimal number must begin with one of '#', '$' or '%'; a sign is not allowed ( nor necessary since the most significant bit indicates the sign ). A '#' and '$' mean exactly the same thing: the following digits form a hex integer. A '%' means add the given hex integer to MOSTNEG INT32 using modulo arithmetic to give the result. Both upper and lower case hex digits are permissible. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the hexadecimal number read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if everything was in order; TRUE otherwise: 1) if the integer overflows the INT32 range; 2) if there is a non-hex character in the string read from the keyboard ( other than #, $, or % in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.flush" class="declaration proc">
+<h3>
+<span class="location"><code>flush.occ</code>:41</span>Process <code>sp.flush</code>
+</h3>
+<p class="definition"><code>PROC sp.flush (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Flush the specified output stream.</p>
+<p> To flush means to write out any internally buffered data to the stream that it is associated with. The stream remains open.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be flushed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok stream successfully flushed; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.int32" class="declaration proc">
+<h3>
+<span class="location"><code>reint32.occ</code>:42</span>Process <code>so.read.echo.int32</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.int32 (CHAN OF SP fs, ts, INT32 n, BOOL error)</code></p>
+<div class="description">
+<p>Read a string containing a representation of a 32-bit decimal integer from the keyboard, and to echo it to standard out.</p>
+<p> The integer may commence with a + or a - sign. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the integer read; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if nothing went wrong in the operation; otherwise TRUE: 1) if the integer read overflows the INT32 range 2) if a non-numeric character is found in the input string ( other than a + or - in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.getenv" class="declaration proc">
+<h3>
+<span class="location"><code>getenv.occ</code>:75</span>Process <code>sp.getenv</code>
+</h3>
+<p class="definition"><code>PROC sp.getenv (CHAN OF SP fs, ts, VAL []BYTE name, INT length, []BYTE value, BYTE result)</code></p>
+<div class="description">
+<p>Return the contents of an environment variable from whatever host is being used.</p>
+<p> The largest size the returned contents of an environment variable can be is limited by the functionality of the server, not by this routine.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>name</code></td>
+<td class="param-desc">a string containing the name of the desired environment variable. name should not have more than sp.max.getenvname.size characters in it.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">if result is spr.ok, the number of bytes in value, starting at value[ 0 ]; (SIZE value) if result is spr.buffer.overflow; zero otherwise.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>value</code></td>
+<td class="param-desc">the contents of the environment variable, if result is spr.ok; truncated environment variable if result is spr.buffer.overflow; undefined otherwise.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the environment string successfully returned; some other value otherwise, indicating the sort of problem: spr.bad.name the specified name is a null string spr.bad.packet.size (SIZE name) &gt; sp.max.getenvname.size spr.buffer.overflow environment string too large for value; it is truncated to fit &gt;=spr.operation.failed could not read environment string - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.real64" class="declaration proc">
+<h3>
+<span class="location"><code>wreal64.occ</code>:43</span>Process <code>so.fwrite.real64</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.real64 (CHAN OF SP fs, ts, VAL INT32 streamid, VAL REAL64 r, VAL INT Ip, Dp, BYTE result)</code></p>
+<div class="description">
+<p>Write a double precision real as decimal ASCII characters to a stream.</p>
+<p> Behaves as an invalid process if the string to write is longer than 30 characters.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write the real to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>r</code></td>
+<td class="param-desc">a double precision real</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values; see REAL64TOSTRING for their effect</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the string representing the real was written; otherwise not all of the characters were written in which case spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.real64" class="declaration proc">
+<h3>
+<span class="location"><code>wreal64.occ</code>:75</span>Process <code>so.write.real64</code>
+</h3>
+<p class="definition"><code>PROC so.write.real64 (CHAN OF SP fs, ts, VAL REAL64 r, VAL INT Ip, Dp)</code></p>
+<div class="description">
+<p>Write a double precision real as decimal ASCII characters to standard out.</p>
+<p> Behaves as an invalid process if the string to write is longer than 30 characters.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL REAL64</code></td>
+<td class="param-name"><code>r</code></td>
+<td class="param-desc">a double precision real</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>Ip</code>, <code>Dp</code>
+</td>
+<td class="param-desc">formatting values; see REAL64TOSTRING for their effect</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.time" class="declaration proc">
+<h3>
+<span class="location"><code>time.occ</code>:43</span>Process <code>sp.time</code>
+</h3>
+<p class="definition"><code>PROC sp.time (CHAN OF SP fs, ts, INT32 localtime, UTCtime, BYTE result)</code></p>
+<div class="description">
+<p>Retrieve the local and UTC time from the host system.</p>
+<p> Both times are expressed as the number of seconds that have elapsed since midnight on the 1st of January, 1970, and are given as unsigned INT32s UTC time used to be known as Greenwich Mean Time ( GMT )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>localtime</code></td>
+<td class="param-desc">the local time</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>UTCtime</code></td>
+<td class="param-desc">the Coordinated Universal Time, if available; zero if not available</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if operation successful; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.time" class="declaration proc">
+<h3>
+<span class="location"><code>time.occ</code>:62</span>Process <code>so.time</code>
+</h3>
+<p class="definition"><code>PROC so.time (CHAN OF SP fs, ts, INT32 localtime, UTCtime)</code></p>
+<div class="description">
+<p>Retrieve the local and UTC time from the host system.</p>
+<p> Both times are expressed as the number of seconds that have elapsed since midnight on the 1st of January, 1970, and are given as unsigned INT32s UTC time used to be known as Greenwich Mean Time ( GMT )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>localtime</code></td>
+<td class="param-desc">the local time</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>UTCtime</code></td>
+<td class="param-desc">the Coordinated Universal Time, if available; zero if not available</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.read" class="declaration proc">
+<h3>
+<span class="location"><code>spread.occ</code>:67</span>Process <code>sp.read</code>
+</h3>
+<p class="definition"><code>PROC sp.read (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data, BYTE result)</code></p>
+<div class="description"><p>Read a limited number of bytes from a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">if result is spr.ok then this gives the number of bytes read from the file; these bytes will be [data FROM 0 FOR bytes.read]; if bytes.read &lt;&gt; (SIZE data) then either an error occurred or the end of the file was reached. If result is not spr.ok then bytes.read will be zero. 0 &lt;= bytes.read &lt;= sp.max.readbuffer.size</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">if result is spr.ok then this contains the bytes read from the file; otherwise it is undefined. The number of bytes requested to be read is (SIZE data); the limit to this is sp.max.readbuffer.size.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.bad.packet.size if too many bytes asked for ie (SIZE data) &gt; sp.max.readbuffer.size, otherwise it is equal to spr.ok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.open" class="declaration proc">
+<h3>
+<span class="location"><code>open.occ</code>:78</span>Process <code>sp.open</code>
+</h3>
+<p class="definition"><code>PROC sp.open (CHAN OF SP fs, ts, VAL []BYTE fname, VAL BYTE type, mode, INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Open a file.</p>
+<p> No path environment variable is used to locate the file; what is in name is all that is used ( cf. so.popen.read )</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>fname</code></td>
+<td class="param-desc">the name of the file to be opened. The name of the file must fit exactly into name, i.e. there are (SIZE name) characters in the name of the file. A directory specification may form part of name.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>type</code></td>
+<td class="param-desc">either spt.binary, for a file containing raw bytes only or spt.text, for a file stored as text records separated by newlines</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>mode</code></td>
+<td class="param-desc">one of spm.input open existing file for reading spm.output open new file, or truncate existing one, for writing spm.append open new file, or append to existing one, for writing spm.existing.update open existing file for update ( reading and writing ), starting at the beginning of the file spm.new.update open new file, or truncate existing one, for update spm.append.update open new file, or append to existing one, for update When a file is opened for update then the resulting stream may be used for input and output.</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">if result is spr.ok, the identification number of the stream associated with the file that was opened; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the file was successfully opened; otherwise it takes on a value indicating what went wrong: spr.bad.packet.size name too large: (SIZE name) &gt; sp.max.openname.size spr.bad.name null file name spr.bad.type invalid type spr.bad.mode invalid mode &gt;=spr.operation.failed the open failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.write" class="declaration proc">
+<h3>
+<span class="location"><code>spwrite.occ</code>:57</span>Process <code>sp.write</code>
+</h3>
+<p class="definition"><code>PROC sp.write (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE data, INT length, BYTE result)</code></p>
+<div class="description"><p>Write an unlimited number of bytes to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">a string of bytes ALL of which are to be written to the file</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">this gives the number of bytes written; if length &lt;&gt; (SIZE data) then an error occurred</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the request was successful; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.hex.int" class="declaration proc">
+<h3>
+<span class="location"><code>rehint.occ</code>:47</span>Process <code>so.read.echo.hex.int</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.hex.int (CHAN OF SP fs, ts, INT n, BOOL error)</code></p>
+<div class="description">
+<p>Read an integer in ( two's complement ) hexadecimal form from the keyboard, and to echo it to standard out.</p>
+<p> The hexadecimal number must begin with one of '#', '$' or '%'; a sign is not allowed ( nor necessary since the most significant bit indicates the sign ). A '#' and '$' mean exactly the same thing: the following digits form a hex integer. A '%' means add the given hex integer to MOSTNEG INT using modulo arithmetic to give the result. Both upper and lower case hex digits are permissible. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the hexadecimal number read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if everything was in order; TRUE otherwise: 1) if the integer overflows the INT range; 2) if there is a non-hex character in the string read from the keyboard ( other than #, $, or % in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.parse.command.line" class="declaration proc">
+<h3>
+<span class="location"><code>parse.occ</code>:62</span>Process <code>so.parse.command.line</code>
+</h3>
+<p class="definition"><code>PROC so.parse.command.line (CHAN OF SP fs, ts, VAL [][]BYTE option.strings, VAL []INT option.parameters.required, []BOOL option.exists, [][2]INT option.parameters, INT error.len, []BYTE line)</code></p>
+<div class="description"><p>Read the server command line and parse it for specified options and associated parameters.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL [][]BYTE</code></td>
+<td class="param-name"><code>option.strings</code></td>
+<td class="param-desc">a list of all possible options. These options must not be longer than 256 bytes and any letters should be in upper case, even though the options as given by the user on the command line are case insensitive. To read a parameter that has no preceding option ( such as a filename ) then the first option string should contain only spaces. Because all of these option strings must be the same length, trailing spaces should be used to pad.</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>option.parameters.required</code></td>
+<td class="param-desc">indicates if the corresponding option ( in option.strings ) requires a parameter. The permissible values are: spopt.never never takes a parameter spopt.maybe optionally takes a parameter spopt.always must take a parameter</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BOOL</code></td>
+<td class="param-name"><code>option.exists</code></td>
+<td class="param-desc">TRUE if the corresponding option was present on the command line; otherwise FALSE</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][2]INT</code></td>
+<td class="param-name"><code>option.parameters</code></td>
+<td class="param-desc">if an option was followed by a parameter then the position in the array line where the parameter starts and the length of the parameter are given by the first and second elements respectively in the corresponding element of this parameter, as long as an error did not occur</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>error.len</code></td>
+<td class="param-desc">zero if no error occurs whilst the command line is being parsed; otherwise greater than zero and is the number of bytes in line ( which will contain an error message )</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>line</code></td>
+<td class="param-desc">contains the command line as supplied by the server if there was no error ( in which case error.len is zero ); otherwise contains an error message ( the length of which is given by error.len ). There is no limitation on the size of line - if it is not long enough for an error message then that message is truncated to fit; if not long enough for the command line, then an error message is put into line.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.tell" class="declaration proc">
+<h3>
+<span class="location"><code>tell.occ</code>:39</span>Process <code>sp.tell</code>
+</h3>
+<p class="definition"><code>PROC sp.tell (CHAN OF SP fs, ts, VAL INT32 streamid, INT32 position, BYTE result)</code></p>
+<div class="description"><p>Return the current file position for the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream associated whith the file the reading/writing position of which is desired</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>position</code></td>
+<td class="param-desc">the current file position</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the file position determined; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.int32" class="declaration proc">
+<h3>
+<span class="location"><code>wint32.occ</code>:45</span>Process <code>so.fwrite.int32</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.int32 (CHAN OF SP fs, ts, VAL INT32 streamid, n, VAL INT width, BYTE result)</code></p>
+<div class="description">
+<p>Write to the specified file stream a 32-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to which the string representing the integer is to be sent</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 32-bit integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the string was written all right; otherwise not all of the string could be written, in which case result takes on a value of spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.int32" class="declaration proc">
+<h3>
+<span class="location"><code>wint32.occ</code>:94</span>Process <code>so.write.int32</code>
+</h3>
+<p class="definition"><code>PROC so.write.int32 (CHAN OF SP fs, ts, VAL INT32 n, VAL INT width)</code></p>
+<div class="description">
+<p>Write to standard out a 32-bit integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 32-bit integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.commandline" class="declaration proc">
+<h3>
+<span class="location"><code>command.occ</code>:66</span>Process <code>sp.commandline</code>
+</h3>
+<p class="definition"><code>PROC sp.commandline (CHAN OF SP fs, ts, VAL BYTE all, INT length, []BYTE string, BYTE result)</code></p>
+<div class="description"><p>Return the command line passed to the server on invocation.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>all</code></td>
+<td class="param-desc">either sp.short.commandline, remove the server's own name, its recognised options and their parameters or sp.whole.commandline, the entire command line</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">the number of bytes returned in string, starting from string[ 0 ], being zero in the case of result &gt;= spr.operation.failed</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">contains the requested command line if result = spr.ok; contains a truncation of the requested command line if result = spr.buffer.overflow; is undefined otherwise. There is no restriction on the size of string.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the command line was successfully returned; otherwise takes on a value indicating what went wrong: spr.buffer.overflow string is not long enough to contain the command line, but the latter has been truncated to fit &gt;=spr.operation.failed the operation failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.multiplexor" class="declaration proc">
+<h3>
+<span class="location"><code>mux.occ</code>:60</span>Process <code>sp.multiplexor</code>
+</h3>
+<p class="definition"><code>PROC sp.multiplexor (CHAN OF SP fs, ts, []CHAN OF SP from.user, to.user, CHAN OF BOOL stopper)</code></p>
+<div class="description">
+<p>Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels.</p>
+<p> It is an error if the number of channels in from.user is not equal to that in to.user. It is permissible for from.user ( and hence to.user ) to be null arrays. No more than sp.max.packet.data.size bytes can be buffered as they passes through this routine. Primary input to this routine must be on the guard input channels from.user[ i ] or stopper. Input on from.user[ i ] is stored, output on ts, then a reply is expected on fs; this reply is stored and then output on to.user[ i ], and all this must finish before any new input can be received on any of the from.user channels or stopper. To attempt some degree of fairness, there is a heirarchy of priorities from from.user with index i for SIZE from.user, using modulo SIZE from.user on the indexes, with i starting from 0 and incrementing by one after each input accepted.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>from.user</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>to.user</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine: TRUE or FALSE received on this channel will cause the routine to terminate; this channel has the highest priority amongst the channels</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.remove" class="declaration proc">
+<h3>
+<span class="location"><code>remove.occ</code>:55</span>Process <code>sp.remove</code>
+</h3>
+<p class="definition"><code>PROC sp.remove (CHAN OF SP fs, ts, VAL []BYTE fname, BYTE result)</code></p>
+<div class="description">
+<p>Delete the specified file.</p>
+<p> No path environment variable is used; what is in name is all that is considered.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>fname</code></td>
+<td class="param-desc">the name of the file to be deleted; the filename must fill all of the bytes of name</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the file was removed; otherwise takes on a value indicating what went wrong: spr.bad.packet.size name too large, (SIZE name) &gt; sp.max.removename.size spr.bad.name name is null &gt;=spr.operation.failed the delete failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.hex.int32" class="declaration proc">
+<h3>
+<span class="location"><code>whint32.occ</code>:44</span>Process <code>so.fwrite.hex.int32</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.hex.int32 (CHAN OF SP fs, ts, VAL INT32 streamid, n, VAL INT width, BYTE result)</code></p>
+<div class="description"><p>Write a 32-bit integer as hexadecimal ASCII characters preceded by the '#' character to a file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 32-bit integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account; a negative field width is an error</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the integer was successfully written; otherwise not all of the string could be written, in which case result takes on a value of spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.hex.int32" class="declaration proc">
+<h3>
+<span class="location"><code>whint32.occ</code>:118</span>Process <code>so.write.hex.int32</code>
+</h3>
+<p class="definition"><code>PROC so.write.hex.int32 (CHAN OF SP fs, ts, VAL INT32 n, VAL INT width)</code></p>
+<div class="description"><p>Write a 32-bit integer as hexadecimal ASCII characters preceded by the '#' character to standard out.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 32-bit integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account; a negative field width is an error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.test.exists" class="declaration proc">
+<h3>
+<span class="location"><code>exists.occ</code>:36</span>Process <code>so.test.exists</code>
+</h3>
+<p class="definition"><code>PROC so.test.exists (CHAN OF SP fs, ts, VAL []BYTE filename, BOOL exists)</code></p>
+<div class="description"><p>Test for the existence of a file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">the name of the file to test for the existence of. The name of the file must fit exactly into filename, i.e. there are (SIZE filename) characters in the name of the file. A directory specification may form part of filename.</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>exists</code></td>
+<td class="param-desc">TRUE if the file exists; FALSE otherwise</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.string" class="declaration proc">
+<h3>
+<span class="location"><code>fwstring.occ</code>:54</span>Process <code>so.fwrite.string</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.string (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE string, BYTE result)</code></p>
+<div class="description"><p>Write a string to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write the string to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">the string to be written, which can be any length</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the string was written; spr.notok if not all of the string was written</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.char" class="declaration proc">
+<h3>
+<span class="location"><code>fwstring.occ</code>:107</span>Process <code>so.fwrite.char</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.char (CHAN OF SP fs, ts, VAL INT32 streamid, VAL BYTE char, BYTE result)</code></p>
+<div class="description"><p>Write a single character to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the single character to write</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the character was written; otherwise spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.string.nl" class="declaration proc">
+<h3>
+<span class="location"><code>fwstring.occ</code>:139</span>Process <code>so.fwrite.string.nl</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.string.nl (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE string, BYTE result)</code></p>
+<div class="description">
+<p>Write a string appended by a newline to a stream.</p>
+<p> The newline sequence is appended by this routine.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write the string to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">the string to be written, which can be any length</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the string was successfully written; spr.notok if not all of the string was written; if &gt;= spr.operation.failed refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.nl" class="declaration proc">
+<h3>
+<span class="location"><code>fwstring.occ</code>:194</span>Process <code>so.fwrite.nl</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.nl (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description"><p>Write a newline to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the newline was successfully written; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.pri.multiplexor" class="declaration proc">
+<h3>
+<span class="location"><code>primux.occ</code>:59</span>Process <code>sp.pri.multiplexor</code>
+</h3>
+<p class="definition"><code>PROC sp.pri.multiplexor (CHAN OF SP fs, ts, []CHAN OF SP from.user, to.user, CHAN OF BOOL stopper)</code></p>
+<div class="description">
+<p>Multiplex any number of pairs of SP protocol channels onto a single pair of SP protocol channels.</p>
+<p> There is a relative priority to the input channels: from.user[ i ] is of higher priority than from.user[ j ] where i &lt; j.</p>
+<p> It is an error if the number of channels in from.user is different to that in to.user. It is permissible for the number of channels in from.user ( and hence also to.user ) to be zero. No more than sp.max.packet.data.size bytes can be buffered as they passes through this routine. Primary input to this routine must be on the guard input channels from.user[ i ] or stopper. Input on from.user[ i ] is stored, output on ts, then a reply is expected on fs; this reply is stored and then output on to.user[ i ], and all this must finish before any new input can be received on any of the from.user channels or stopper.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>from.user</code></td>
+<td class="param-desc">input to this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]CHAN OF SP</code></td>
+<td class="param-name"><code>to.user</code></td>
+<td class="param-desc">output from this routine</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine: TRUE or FALSE received on this channel will cause the routine to terminate; this channel has the lowest priority of all input channels.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.int64" class="declaration proc">
+<h3>
+<span class="location"><code>reint64.occ</code>:42</span>Process <code>so.read.echo.int64</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.int64 (CHAN OF SP fs, ts, INT64 n, BOOL error)</code></p>
+<div class="description">
+<p>Read a string containing a representation of a 64-bit decimal integer from the keyboard, and to echo it to standard out.</p>
+<p> The integer may commence with a + or a - sign. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the integer read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if nothing went wrong in the operation; otherwise TRUE: 1) if the integer read overflows the INT64 range 2) if a non-numeric character is found in the input string ( other than a + or - in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.any.int" class="declaration proc">
+<h3>
+<span class="location"><code>reaint.occ</code>:52</span>Process <code>so.read.echo.any.int</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.any.int (CHAN OF SP fs, ts, INT n, BOOL error)</code></p>
+<div class="description">
+<p>Read an integer in either ( two's complement ) hexadecimal form or in decimal form from the keyboard, and to echo it to standard out.</p>
+<p> The hexadecimal number must begin with one of '#', '$' or '%'; a sign is not allowed ( nor necessary since the most significant bit indicates the sign ). A '#' and '$' mean exactly the same thing: the following digits form a hex integer. A '%' means add the given hex integer to MOSTNEG INT using modulo arithmetic to give the result. Both upper and lower case hex digits are permissible. A sign is allowed in the first character position if it is a decimal integer that is entered. The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the value of the integer read; otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if everything was in order; TRUE otherwise: 1) if the integer overflows the INT range; 2a) if it is a hex integer, if there is a non-hex character in the string read from the keyboard ( other than #, $, or % in the first character position ) 2b) if it is a decimal integer, if there is a non-numeric character in the string read from the keyboard ( other than a + or - in the first character position )</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.hex.int" class="declaration proc">
+<h3>
+<span class="location"><code>whint.occ</code>:48</span>Process <code>so.fwrite.hex.int</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.hex.int (CHAN OF SP fs, ts, VAL INT32 streamid, VAL INT n, width, BYTE result)</code></p>
+<div class="description"><p>Write an integer as hexadecimal ASCII characters preceded by the '#' character to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account; a negative field width is an error</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the integer was successfully written; otherwise not all of the string could be written, in which case result takes on a value of spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.hex.int" class="declaration proc">
+<h3>
+<span class="location"><code>whint.occ</code>:122</span>Process <code>so.write.hex.int</code>
+</h3>
+<p class="definition"><code>PROC so.write.hex.int (CHAN OF SP fs, ts, VAL INT n, width)</code></p>
+<div class="description"><p>Write an integer as hexadecimal ASCII characters preceded by the '#' character to standard out.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account; a negative field width is an error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.ferror" class="declaration proc">
+<h3>
+<span class="location"><code>ferror.occ</code>:45</span>Process <code>sp.ferror</code>
+</h3>
+<p class="definition"><code>PROC sp.ferror (CHAN OF SP fs, ts, VAL INT32 streamid, INT32 error.no, INT length, []BYTE message, BYTE result)</code></p>
+<div class="description"><p>Test for the occurrence of an error on the specified stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to be tested for error</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>error.no</code></td>
+<td class="param-desc">a host defined error number</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">the number of bytes in message. Equal to zero if result &gt;= spr.operation.failed.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>message</code></td>
+<td class="param-desc">if result is not spr.operation.failed then this contains a ( possibly null ) message corresponding to the last file error on the specified stream; this message is [message FROM 0 FOR length]</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if there was an error on the specified stream and the message corresponding to it fits into message; equals spr.buffer.overflow if there was an error on the specified stream but the message corresponding to it is too large to fit into message, in which case it is truncated to fit; &gt;= spr.operation.failed if there was no error on the specified stream</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.int" class="declaration proc">
+<h3>
+<span class="location"><code>wint.occ</code>:45</span>Process <code>so.fwrite.int</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.int (CHAN OF SP fs, ts, VAL INT32 streamid, VAL INT n, width, BYTE result)</code></p>
+<div class="description">
+<p>Write to the specified file stream an integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative value is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to which the string representing the integer is to be sent</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the string was written all right; otherwise not all of the string could be written, in which case result takes on a value of spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.int" class="declaration proc">
+<h3>
+<span class="location"><code>wint.occ</code>:95</span>Process <code>so.write.int</code>
+</h3>
+<p class="definition"><code>PROC so.write.int (CHAN OF SP fs, ts, VAL INT n, width)</code></p>
+<div class="description">
+<p>Write to standard out an integer as decimal ASCII digits, padded out with leading spaces and an optional sign to the specified field width.</p>
+<p> If the field width is too small for the number, then it is widened as necessary; a zero value for the field width will give minimum width; a negative field width is an error.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the integer that is desired to be written</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the desired field width of the string</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.time.to.date" class="declaration proc">
+<h3>
+<span class="location"><code>times.occ</code>:38</span>Process <code>so.time.to.date</code>
+</h3>
+<p class="definition"><code>PROC so.time.to.date (VAL INT32 input.time, [so.date.len]INT date)</code></p>
+<div class="description"><p>Convert the number of seconds since the midnight before 1st January 1970 into the associated time and date.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>input.time</code></td>
+<td class="param-desc">the number of seconds since the midnight before 1st January 1970</td>
+</tr>
+<tr>
+<td class="param-type"><code>[so.date.len]INT</code></td>
+<td class="param-name"><code>date</code></td>
+<td class="param-desc">an array of six integers where the elements are, index data 0 seconds past the minute 1 minutes past the hour 2 the hour in the 24 hour clock 3 the day of the month 4 the month, where January is 1 5 the year expressed fully, i.e. 4 digits</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.date.to.ascii" class="declaration proc">
+<h3>
+<span class="location"><code>times.occ</code>:183</span>Process <code>so.date.to.ascii</code>
+</h3>
+<p class="definition"><code>PROC so.date.to.ascii (VAL [so.date.len]INT date, VAL BOOL long.years, VAL BOOL days.first, [so.time.string.len]BYTE string)</code></p>
+<div class="description"><p>Format a time and date given in the form of six integers.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL [so.date.len]INT</code></td>
+<td class="param-name"><code>date</code></td>
+<td class="param-desc">an array of six integers where the elements are, index data 0 seconds past the minute 1 minutes past the hour 2 the hour in the 24 hour clock 3 the day of the month 4 the month, where January is 1 5 the year expressed fully, i.e. 4 digits</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>long.years</code></td>
+<td class="param-desc">TRUE if a four digit year is desired; FALSE if a two digit year is desired, the digits being the tens and units, followed by two spaces</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>days.first</code></td>
+<td class="param-desc">TRUE if date to be written with the days preceding the month ( i.e. British format ); FALSE if the month is to precede the days ( i.e. U.S. format )</td>
+</tr>
+<tr>
+<td class="param-type"><code>[so.time.string.len]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">an ASCII string representing the time and date as follows: "HH:MM:SS DD/MM/YY " -- long.years = FALSE; days.first = TRUE "HH:MM:SS DD/MM/YYYY" -- long.years = TRUE; days.first = TRUE "HH:MM:SS MM/DD/YY " -- long.years = FALSE; days.first = FALSE "HH:MM:SS MM/DD/YYYY" -- long.years = TRUE; days.first = FALSE where HH:MM:SS is hours, minutes and seconds, and DD/MM/YY is day, month and year</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.time.to.ascii" class="declaration proc">
+<h3>
+<span class="location"><code>times.occ</code>:249</span>Process <code>so.time.to.ascii</code>
+</h3>
+<p class="definition"><code>PROC so.time.to.ascii (VAL INT32 time, VAL BOOL long.years, VAL BOOL days.first, [so.time.string.len]BYTE string)</code></p>
+<div class="description"><p>Convert the number of seconds since the midnight before 1st January 1970 into a formatted time and date</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>time</code></td>
+<td class="param-desc">the number of seconds since the midnight before 1st January 1970</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>long.years</code></td>
+<td class="param-desc">TRUE if a four digit year is desired; FALSE if a two digit year is desired, the digits being the tens and units, followed by two spaces</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>days.first</code></td>
+<td class="param-desc">TRUE if date to be written with the days preceding the month ( i.e. British format ); FALSE if the month is to precede the days ( i.e. U.S. format )</td>
+</tr>
+<tr>
+<td class="param-type"><code>[so.time.string.len]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">an ASCII string representing the time and date as follows: "HH:MM:SS DD/MM/YY " -- long.years = FALSE; days.first = TRUE "HH:MM:SS DD/MM/YYYY" -- long.years = TRUE; days.first = TRUE "HH:MM:SS MM/DD/YY " -- long.years = FALSE; days.first = FALSE "HH:MM:SS MM/DD/YYYY" -- long.years = TRUE; days.first = FALSE where HH:MM:SS is hours, minutes and seconds, and DD/MM/YY is day, month and year</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.today.date" class="declaration proc">
+<h3>
+<span class="location"><code>times.occ</code>:272</span>Process <code>so.today.date</code>
+</h3>
+<p class="definition"><code>PROC so.today.date (CHAN OF SP fs, ts, [so.date.len]INT date)</code></p>
+<div class="description">
+<p>Give the time and date, in the form of six integers, of when this routine was called.</p>
+<p> If the time and date are unavailable all elements of date are set to zero. Local time is used.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>[so.date.len]INT</code></td>
+<td class="param-name"><code>date</code></td>
+<td class="param-desc">an array of six integers where the elements are, index data 0 seconds past the minute 1 minutes past the hour 2 the hour in the 24 hour clock 3 the day of the month 4 the month, where January is 1 5 the year expressed fully, i.e. 4 digits</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.today.ascii" class="declaration proc">
+<h3>
+<span class="location"><code>times.occ</code>:308</span>Process <code>so.today.ascii</code>
+</h3>
+<p class="definition"><code>PROC so.today.ascii (CHAN OF SP fs, ts, VAL BOOL long.years, days.first, [so.time.string.len]BYTE string)</code></p>
+<div class="description">
+<p>Give the time and date, in formatted form, of when this routine was called.</p>
+<p> If the time and date are unavailable string is filled with spaces. Local time is used.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>long.years</code></td>
+<td class="param-desc">TRUE if a four digit year is desired; FALSE if a two digit year is desired, the digits being the tens and units, followed by two spaces</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BOOL</code></td>
+<td class="param-name"><code>days.first</code></td>
+<td class="param-desc">TRUE if date to be written with the days preceding the month ( i.e. British format ); FALSE if the month is to precede the days ( i.e. U.S. format )</td>
+</tr>
+<tr>
+<td class="param-type"><code>[so.time.string.len]BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">an ASCII string representing the time and date as follows: "HH:MM:SS DD/MM/YY " -- long.years = FALSE; days.first = TRUE "HH:MM:SS DD/MM/YYYY" -- long.years = TRUE; days.first = TRUE "HH:MM:SS MM/DD/YY " -- long.years = FALSE; days.first = FALSE "HH:MM:SS MM/DD/YYYY" -- long.years = TRUE; days.first = FALSE where HH:MM:SS is hours, minutes and seconds, and DD/MM/YY is day, month and year</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write" class="declaration proc">
+<h3>
+<span class="location"><code>sowrite.occ</code>:37</span>Process <code>so.write</code>
+</h3>
+<p class="definition"><code>PROC so.write (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE data, INT length)</code></p>
+<div class="description"><p>Write an unlimited number of bytes to a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">a string of bytes ALL of which are to be written to the file</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>length</code></td>
+<td class="param-desc">this gives the number of bytes written; if length &lt;&gt; (SIZE data) then an error occurred</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.rename" class="declaration proc">
+<h3>
+<span class="location"><code>rename.occ</code>:56</span>Process <code>sp.rename</code>
+</h3>
+<p class="definition"><code>PROC sp.rename (CHAN OF SP fs, ts, VAL []BYTE oldfname, newfname, BYTE result)</code></p>
+<div class="description"><p>Rename the specified file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>oldfname</code></td>
+<td class="param-desc">the present name of the file to be renamed</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>newfname</code></td>
+<td class="param-desc">the desired name of the file to be renamed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the renaming was successful; otherwise takes on a value indicating what went wrong: spr.bad.packet.size the combined lengths of oldname and newname is too large - it must be less than sp.max.renamename.size spr.bad.name either or both of the filenames are null &gt;=spr.operation.failed the renaming failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.puts" class="declaration proc">
+<h3>
+<span class="location"><code>puts.occ</code>:42</span>Process <code>sp.puts</code>
+</h3>
+<p class="definition"><code>PROC sp.puts (CHAN OF SP fs, ts, VAL INT32 streamid, VAL []BYTE data, BYTE result)</code></p>
+<div class="description">
+<p>Write a line to the specified output stream.</p>
+<p> A newline sequence is added to the end of the bytes to be written.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to be written to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">the line to be written ( without a terminating newline sequence )</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the line was successfully written; otherwise takes on a value indicating what was wrong: spr.bad.packet.size too many bytes supplied, (SIZE data) &gt; sp.max.writebuffer.size &gt;=spr.operation.failed the write failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.system" class="declaration proc">
+<h3>
+<span class="location"><code>system.occ</code>:54</span>Process <code>sp.system</code>
+</h3>
+<p class="definition"><code>PROC sp.system (CHAN OF SP fs, ts, VAL []BYTE command, INT32 status, BYTE result)</code></p>
+<div class="description"><p>Execute a command on the host system.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>command</code></td>
+<td class="param-desc">the command to be executed, which may be null</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">if command is not null and result is spr.ok then this is the return value of the command, which is host dependent</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if a host command processor exists; otherwise: spr.bad.packet.size command too large, (SIZE command) &gt; sp.max.systemcommand.size &gt;=spr.operation.failed the operation failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read" class="declaration proc">
+<h3>
+<span class="location"><code>soread.occ</code>:39</span>Process <code>so.read</code>
+</h3>
+<p class="definition"><code>PROC so.read (CHAN OF SP fs, ts, VAL INT32 streamid, INT bytes.read, []BYTE data)</code></p>
+<div class="description"><p>Read an unlimited number of bytes from a stream.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be read from</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name"><code>bytes.read</code></td>
+<td class="param-desc">this gives the number of bytes read from the file; these bytes will be [data FROM 0 FOR bytes.read]; if bytes.read &lt;&gt; (SIZE data) then either an error occurred or the end of the file was reached.</td>
+</tr>
+<tr>
+<td class="param-type"><code>[]BYTE</code></td>
+<td class="param-name"><code>data</code></td>
+<td class="param-desc">this contains the bytes read from the file; the number of bytes requested to be read is (SIZE data).</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.read.echo.real64" class="declaration proc">
+<h3>
+<span class="location"><code>rereal64.occ</code>:43</span>Process <code>so.read.echo.real64</code>
+</h3>
+<p class="definition"><code>PROC so.read.echo.real64 (CHAN OF SP fs, ts, REAL64 n, BOOL error)</code></p>
+<div class="description">
+<p>Read a string containing a representation of a double precision real in occam syntax ( though a + or - is allowed as first character ) from the keyboard and to echo it to standard out.</p>
+<p> The number typed at the keyboard must be terminated by pressing 'RETURN'.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>REAL64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">if error is FALSE, the IEEE double precision format of the real that was read, otherwise undefined</td>
+</tr>
+<tr>
+<td class="param-type"><code>BOOL</code></td>
+<td class="param-name"><code>error</code></td>
+<td class="param-desc">FALSE if the real was read and converted to binary without problem; TRUE otherwise - if the string read does not conform to the syntax of an occam real number, other than the fact that a plus or minus sign is allowed as the first character</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.close" class="declaration proc">
+<h3>
+<span class="location"><code>close.occ</code>:41</span>Process <code>sp.close</code>
+</h3>
+<p class="definition"><code>PROC sp.close (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Close a stream.</p>
+<p> Before closing the stream unwritten data is flushed or any unread buffered input is discarded.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the open stream to be closed</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equal to spr.ok if the stream closed properly; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.overlapped.buffer" class="declaration proc">
+<h3>
+<span class="location"><code>ovbuffer.occ</code>:44</span>Process <code>sp.overlapped.buffer</code>
+</h3>
+<p class="definition"><code>PROC sp.overlapped.buffer (CHAN OF SP fs, ts, from.user, to.user, CHAN OF BOOL stopper)</code></p>
+<div class="description">
+<p>Act as two almost independent buffers.</p>
+<p> The dependence of the buffers is given by the fact that the number of communications through one buffer ( buffer2 ) must match the number through the other buffer ( buffer1 ) before the routine will terminate. No more than sp.max.packet.data.size bytes can be buffered in each of the buffers.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">input to this routine and to buffer2</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">output from this routine and from buffer1</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>from.user</code></td>
+<td class="param-desc">input to this routine and to buffer1</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>to.user</code></td>
+<td class="param-desc">output from this routine and from buffer2</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF BOOL</code></td>
+<td class="param-name"><code>stopper</code></td>
+<td class="param-desc">input to this routine; TRUE or FALSE received will cause buffer1 to stop listening on the ts channel and to terminate when buffer2 has passed through the same number of reply communications on the fs/to.user channels as buffer1 sent on the from.user/ts channels. buffer1 terminates immediately after buffer1; the whole routine then terminates.</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.string" class="declaration proc">
+<h3>
+<span class="location"><code>wstring.occ</code>:50</span>Process <code>so.write.string</code>
+</h3>
+<p class="definition"><code>PROC so.write.string (CHAN OF SP fs, ts, VAL []BYTE string)</code></p>
+<div class="description"><p>Write a string to standard out.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">the string to be written, which can be any length</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.char" class="declaration proc">
+<h3>
+<span class="location"><code>wstring.occ</code>:68</span>Process <code>so.write.char</code>
+</h3>
+<p class="definition"><code>PROC so.write.char (CHAN OF SP fs, ts, VAL BYTE char)</code></p>
+<div class="description"><p>Write a single character to standard out.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>char</code></td>
+<td class="param-desc">the single character to write</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.string.nl" class="declaration proc">
+<h3>
+<span class="location"><code>wstring.occ</code>:82</span>Process <code>so.write.string.nl</code>
+</h3>
+<p class="definition"><code>PROC so.write.string.nl (CHAN OF SP fs, ts, VAL []BYTE string)</code></p>
+<div class="description">
+<p>Write a string appended by a newline to standard out.</p>
+<p> The newline sequence is appended by this routine.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>string</code></td>
+<td class="param-desc">the string to be written, which can be any length</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.nl" class="declaration proc">
+<h3>
+<span class="location"><code>wstring.occ</code>:127</span>Process <code>so.write.nl</code>
+</h3>
+<p class="definition"><code>PROC so.write.nl (CHAN OF SP fs, ts)</code></p>
+<div class="description"><p>Write a newline to standard out.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.fwrite.hex.int64" class="declaration proc">
+<h3>
+<span class="location"><code>whint64.occ</code>:48</span>Process <code>so.fwrite.hex.int64</code>
+</h3>
+<p class="definition"><code>PROC so.fwrite.hex.int64 (CHAN OF SP fs, ts, VAL INT32 streamid, VAL INT64 n, VAL INT width, BYTE result)</code></p>
+<div class="description"><p>Write a 64-bit integer as hexadecimal ASCII characters preceded by the '#' character to a file.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to write to</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 64-bit integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account; a negative field width is an error</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if the integer was successfully written; otherwise not all of the string could be written, in which case result takes on a value of spr.notok</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.write.hex.int64" class="declaration proc">
+<h3>
+<span class="location"><code>whint64.occ</code>:129</span>Process <code>so.write.hex.int64</code>
+</h3>
+<p class="definition"><code>PROC so.write.hex.int64 (CHAN OF SP fs, ts, VAL INT64 n, VAL INT width)</code></p>
+<div class="description"><p>Write a 64-bit integer as hexadecimal ASCII characters preceded by the '#' character to standard out.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT64</code></td>
+<td class="param-name"><code>n</code></td>
+<td class="param-desc">the 64-bit integer to write out</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>width</code></td>
+<td class="param-desc">the field width to use when writing the hex; if width is larger than the size of the number then the number is padded with leading 0's or F's as appropriate; if width is smaller than the size of the number then the number is truncated at the left to width characters; width does not take the '#' into account; a negative field width is an error</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.pollkey" class="declaration proc">
+<h3>
+<span class="location"><code>pollkey.occ</code>:45</span>Process <code>sp.pollkey</code>
+</h3>
+<p class="definition"><code>PROC sp.pollkey (CHAN OF SP fs, ts, BYTE key, result)</code></p>
+<div class="description">
+<p>Read a single character from the keyboard, without waiting for one if there is none.</p>
+<p> The key is not echoed to the screen.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>key</code></td>
+<td class="param-desc">the key that was read</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if there was a key to read and the read was successful; otherwise &gt;= spr.operation.failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.eof" class="declaration proc">
+<h3>
+<span class="location"><code>eof.occ</code>:33</span>Process <code>sp.eof</code>
+</h3>
+<p class="definition"><code>PROC sp.eof (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)</code></p>
+<div class="description"><p>Test whether the specified stream has end of file status or not.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">the identification number of the stream to test</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if end of file status is set; &gt;= spr.operation.failed if the end of file status has not been set</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.open.temp" class="declaration proc">
+<h3>
+<span class="location"><code>opentemp.occ</code>:51</span>Process <code>so.open.temp</code>
+</h3>
+<p class="definition"><code>PROC so.open.temp (CHAN OF SP fs, ts, VAL BYTE type, [so.temp.filename.length]BYTE filename, INT32 streamid, BYTE result)</code></p>
+<div class="description">
+<p>Open a temporary file in spm.new.update mode.</p>
+<p> The file will be opened in the current directory. The file name of the temporary file is chosen as follows: the first name tried is TEMP00; if there already exists such a file then TEMP01 is tried; if there already exists such a file then TEMP02 is tried; etc. up to TEMP99 when, if such a file exists then TEM100 is tried, and so on up to TEM999, at which point, if such a file exists, TE1000 is tried, and so on up to TE9999, which is the last name tried, i.e. a maximum of 10,000 possible temporary files can be created by this routine.</p>
+</div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL BYTE</code></td>
+<td class="param-name"><code>type</code></td>
+<td class="param-desc">either spt.binary or spt.text</td>
+</tr>
+<tr>
+<td class="param-type"><code>[so.temp.filename.length]BYTE</code></td>
+<td class="param-name"><code>filename</code></td>
+<td class="param-desc">the name of the file opened</td>
+</tr>
+<tr>
+<td class="param-type"><code>INT32</code></td>
+<td class="param-name"><code>streamid</code></td>
+<td class="param-desc">if result is spr.ok, the identification number of the stream associated with the file that was opened; undefined otherwise</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">spr.ok if all went well; otherwise takes on a value indicating what went wrong: spr.bad.type invalid type spr.notok there are already 10,000 such temp files &gt;=spr.operation.failed the open failed - refer to hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-sp.exit" class="declaration proc">
+<h3>
+<span class="location"><code>exit.occ</code>:39</span>Process <code>sp.exit</code>
+</h3>
+<p class="definition"><code>PROC sp.exit (CHAN OF SP fs, ts, VAL INT32 status, BYTE result)</code></p>
+<div class="description"><p>Terminate the server.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">a value which the server passes directly on to the host environment, except in the following two cases: sps.success - a host specific success result is passed on sps.failure - a host specific failure result is passed on</td>
+</tr>
+<tr>
+<td class="param-type"><code>BYTE</code></td>
+<td class="param-name"><code>result</code></td>
+<td class="param-desc">equals spr.ok if the operation succeeded; otherwise &gt;= spr.operation.failed - see hostio.inc or iserver documentation for further details</td>
+</tr>
+</table></div>
+</div>
+<div id="name-so.exit" class="declaration proc">
+<h3>
+<span class="location"><code>exit.occ</code>:61</span>Process <code>so.exit</code>
+</h3>
+<p class="definition"><code>PROC so.exit (CHAN OF SP fs, ts, VAL INT32 status)</code></p>
+<div class="description"><p>Terminate the server.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>fs</code></td>
+<td class="param-desc">from server</td>
+</tr>
+<tr>
+<td class="param-type"><code>CHAN OF SP</code></td>
+<td class="param-name"><code>ts</code></td>
+<td class="param-desc">to server</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT32</code></td>
+<td class="param-name"><code>status</code></td>
+<td class="param-desc">a value which the server passes directly on to the host environment, except in the following two cases: sps.success - a host specific success result is passed on sps.failure - a host specific failure result is passed on</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

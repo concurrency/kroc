@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Support for drawing text onto a raster</title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-rastertext" class="module">
+<h1>Module <code>rastertext</code> - Support for drawing text onto a raster</h1>
+<div class="header"><div class="description"><p>Support for drawing text onto a raster.</p></div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="constant" href="rastertext.html#name-FONT.10X20">Constant <code>FONT.10X20</code></a> - 10-by-20 pixel bitmap font for use with   </li>
+<li>
+<a class="constant" href="rastertext.html#name-FONT.6X13">Constant <code>FONT.6X13</code></a> - 6-by-13 pixel bitmap font for use with   </li>
+<li>
+<a class="proc" href="rastertext.html#name-draw.text">Process <code>draw.text</code></a> - Draw a string on a raster</li>
+<li>
+<a class="function" href="rastertext.html#name-measure.text">Function <code>measure.text</code></a> - Measure the dimensions of some text</li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-FONT.6X13" class="declaration constant">
+<h3>
+<span class="location"><code>font6x13.inc</code>:11</span>Constant <code>FONT.6X13</code>
+</h3>
+<p class="definition"><code>VAL []INT FONT.6X13</code></p>
+<div class="description"><p>6-by-13 pixel bitmap font for use with <a href="rastertext.html#name-draw.text"><code>draw.text</code></a>. This is the X11 <code>6x13</code> font.</p></div>
+</div>
+<div id="name-FONT.10X20" class="declaration constant">
+<h3>
+<span class="location"><code>font10x20.inc</code>:11</span>Constant <code>FONT.10X20</code>
+</h3>
+<p class="definition"><code>VAL []INT FONT.10X20</code></p>
+<div class="description"><p>10-by-20 pixel bitmap font for use with <a href="rastertext.html#name-draw.text"><code>draw.text</code></a>. This is the X11 <code>10x20</code> font.</p></div>
+</div>
+<div id="name-measure.text" class="declaration function">
+<h3>
+<span class="location"><code>text.occ</code>:33</span>Function <code>measure.text</code>
+</h3>
+<p class="definition"><code>INT, INT FUNCTION measure.text (VAL []BYTE text, VAL []INT font)</code></p>
+<div class="description"><p>Measure the dimensions of some text. This will return the amount of space that the text will occupy when drawn using <a href="rastertext.html#name-draw.text"><code>draw.text</code></a> in the given font.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>text</code></td>
+<td class="param-desc">String</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>font</code></td>
+<td class="param-desc">Font</td>
+</tr>
+</table></div>
+<h4>Returns:</h4>
+<div class="returns"><table><tr>
+<td class="param-type"><code>INT</code></td>
+<td class="param-name">
+<code>width</code>, <code>height</code>
+</td>
+<td class="param-desc">Dimensions of the text in pixels</td>
+</tr></table></div>
+</div>
+<div id="name-draw.text" class="declaration proc">
+<h3>
+<span class="location"><code>text.occ</code>:45</span>Process <code>draw.text</code>
+</h3>
+<p class="definition"><code>PROC draw.text (VAL INT x, y, VAL []BYTE text, VAL []INT font, VAL INT colour, [][]INT raster)</code></p>
+<div class="description"><p>Draw a string on a raster.</p></div>
+<h4>Parameters:</h4>
+<div class="params"><table>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name">
+<code>x</code>, <code>y</code>
+</td>
+<td class="param-desc">Top left corner coordinates</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []BYTE</code></td>
+<td class="param-name"><code>text</code></td>
+<td class="param-desc">String to draw</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL []INT</code></td>
+<td class="param-name"><code>font</code></td>
+<td class="param-desc">Font</td>
+</tr>
+<tr>
+<td class="param-type"><code>VAL INT</code></td>
+<td class="param-name"><code>colour</code></td>
+<td class="param-desc">Colour</td>
+</tr>
+<tr>
+<td class="param-type"><code>[][]INT</code></td>
+<td class="param-name"><code>raster</code></td>
+<td class="param-desc">Raster</td>
+</tr>
+</table></div>
+</div>
+</div></div></body>
+</html>

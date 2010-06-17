@@ -1,0 +1,610 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Interface to foreign library  occSDLsound </title>
+<link rel="stylesheet" href="occamdoc.css" type="text/css">
+</head>
+<body><div id="content"><div id="module-occSDLsound" class="module">
+<h1>Module <code>occSDLsound</code> - Interface to foreign library  occSDLsound </h1>
+<div class="header"><div class="description"><p>Interface to foreign library <code>occSDLsound</code>. Generated automatically using SWIG 1.3.31.</p></div></div>
+<h2>Index</h2>
+<ul>
+<li>
+<a class="constant" href="occSDLsound.html#name-SOUND.VER.MAJOR">Constant <code>SOUND.VER.MAJOR</code></a> - Foreign constant  SOUND_VER_MAJOR </li>
+<li>
+<a class="constant" href="occSDLsound.html#name-SOUND.VER.MINOR">Constant <code>SOUND.VER.MINOR</code></a> - Foreign constant  SOUND_VER_MINOR </li>
+<li>
+<a class="constant" href="occSDLsound.html#name-SOUND.VER.PATCH">Constant <code>SOUND.VER.PATCH</code></a> - Foreign constant  SOUND_VER_PATCH </li>
+<li>
+<a class="datatype" href="occSDLsound.html#name-Sound.AudioInfo">Data type <code>Sound.AudioInfo</code></a> - Foreign struct type  Sound_AudioInfo </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AudioInfo.channels.get">Process <code>Sound.AudioInfo.channels.get</code></a> - Foreign function  Sound_AudioInfo_channels_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AudioInfo.channels.set">Process <code>Sound.AudioInfo.channels.set</code></a> - Foreign function  Sound_AudioInfo_channels_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AudioInfo.format.get">Process <code>Sound.AudioInfo.format.get</code></a> - Foreign function  Sound_AudioInfo_format_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AudioInfo.format.set">Process <code>Sound.AudioInfo.format.set</code></a> - Foreign function  Sound_AudioInfo_format_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AudioInfo.rate.get">Process <code>Sound.AudioInfo.rate.get</code></a> - Foreign function  Sound_AudioInfo_rate_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AudioInfo.rate.set">Process <code>Sound.AudioInfo.rate.set</code></a> - Foreign function  Sound_AudioInfo_rate_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.AvailableDecoders">Process <code>Sound.AvailableDecoders</code></a> - Foreign function  Sound_AvailableDecoders </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.ClearError">Process <code>Sound.ClearError</code></a> - Foreign function  Sound_ClearError </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Decode">Process <code>Sound.Decode</code></a> - Foreign function  Sound_Decode </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecodeAll">Process <code>Sound.DecodeAll</code></a> - Foreign function  Sound_DecodeAll </li>
+<li>
+<a class="datatype" href="occSDLsound.html#name-Sound.DecoderInfo">Data type <code>Sound.DecoderInfo</code></a> - Foreign struct type  Sound_DecoderInfo </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.author.get">Process <code>Sound.DecoderInfo.author.get</code></a> - Foreign function  Sound_DecoderInfo_author_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.author.set">Process <code>Sound.DecoderInfo.author.set</code></a> - Foreign function  Sound_DecoderInfo_author_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.description.get">Process <code>Sound.DecoderInfo.description.get</code></a> - Foreign function  Sound_DecoderInfo_description_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.description.set">Process <code>Sound.DecoderInfo.description.set</code></a> - Foreign function  Sound_DecoderInfo_description_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.extensions.get">Process <code>Sound.DecoderInfo.extensions.get</code></a> - Foreign function  Sound_DecoderInfo_extensions_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.extensions.set">Process <code>Sound.DecoderInfo.extensions.set</code></a> - Foreign function  Sound_DecoderInfo_extensions_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.url.get">Process <code>Sound.DecoderInfo.url.get</code></a> - Foreign function  Sound_DecoderInfo_url_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.DecoderInfo.url.set">Process <code>Sound.DecoderInfo.url.set</code></a> - Foreign function  Sound_DecoderInfo_url_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.FreeSample">Process <code>Sound.FreeSample</code></a> - Foreign function  Sound_FreeSample </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.GetError">Process <code>Sound.GetError</code></a> - Foreign function  Sound_GetError </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.GetLinkedVersion">Process <code>Sound.GetLinkedVersion</code></a> - Foreign function  Sound_GetLinkedVersion </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Init">Process <code>Sound.Init</code></a> - Foreign function  Sound_Init </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.NewSample">Process <code>Sound.NewSample</code></a> - Foreign function  Sound_NewSample </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.NewSampleFromFile">Process <code>Sound.NewSampleFromFile</code></a> - Foreign function  Sound_NewSampleFromFile </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Quit">Process <code>Sound.Quit</code></a> - Foreign function  Sound_Quit </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Rewind">Process <code>Sound.Rewind</code></a> - Foreign function  Sound_Rewind </li>
+<li>
+<a class="datatype" href="occSDLsound.html#name-Sound.Sample">Data type <code>Sound.Sample</code></a> - Foreign struct type  Sound_Sample </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.actual.get">Process <code>Sound.Sample.actual.get</code></a> - Foreign function  Sound_Sample_actual_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.actual.set">Process <code>Sound.Sample.actual.set</code></a> - Foreign function  Sound_Sample_actual_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.buffer.get">Process <code>Sound.Sample.buffer.get</code></a> - Foreign function  Sound_Sample_buffer_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.buffer.set">Process <code>Sound.Sample.buffer.set</code></a> - Foreign function  Sound_Sample_buffer_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.buffer.size.get">Process <code>Sound.Sample.buffer.size.get</code></a> - Foreign function  Sound_Sample_buffer_size_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.buffer.size.set">Process <code>Sound.Sample.buffer.size.set</code></a> - Foreign function  Sound_Sample_buffer_size_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.decoder.get">Process <code>Sound.Sample.decoder.get</code></a> - Foreign function  Sound_Sample_decoder_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.decoder.set">Process <code>Sound.Sample.decoder.set</code></a> - Foreign function  Sound_Sample_decoder_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.desired.get">Process <code>Sound.Sample.desired.get</code></a> - Foreign function  Sound_Sample_desired_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.desired.set">Process <code>Sound.Sample.desired.set</code></a> - Foreign function  Sound_Sample_desired_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.flags.get">Process <code>Sound.Sample.flags.get</code></a> - Foreign function  Sound_Sample_flags_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Sample.flags.set">Process <code>Sound.Sample.flags.set</code></a> - Foreign function  Sound_Sample_flags_set </li>
+<li>
+<a class="datatype" href="occSDLsound.html#name-Sound.SampleFlags">Data type <code>Sound.SampleFlags</code></a> - Foreign enumeration type  Sound_SampleFlags </li>
+<li>
+<a class="group" href="occSDLsound.html#name-Sound.SampleFlags">Group <code>Sound.SampleFlags</code></a> - Foreign enumeration  Sound_SampleFlags </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Seek">Process <code>Sound.Seek</code></a> - Foreign function  Sound_Seek </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.SetBufferSize">Process <code>Sound.SetBufferSize</code></a> - Foreign function  Sound_SetBufferSize </li>
+<li>
+<a class="datatype" href="occSDLsound.html#name-Sound.Version">Data type <code>Sound.Version</code></a> - Foreign struct type  Sound_Version </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Version.major.get">Process <code>Sound.Version.major.get</code></a> - Foreign function  Sound_Version_major_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Version.major.set">Process <code>Sound.Version.major.set</code></a> - Foreign function  Sound_Version_major_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Version.minor.get">Process <code>Sound.Version.minor.get</code></a> - Foreign function  Sound_Version_minor_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Version.minor.set">Process <code>Sound.Version.minor.set</code></a> - Foreign function  Sound_Version_minor_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Version.patch.get">Process <code>Sound.Version.patch.get</code></a> - Foreign function  Sound_Version_patch_get </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-Sound.Version.patch.set">Process <code>Sound.Version.patch.set</code></a> - Foreign function  Sound_Version_patch_set </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-check.if.done.playing">Process <code>check.if.done.playing</code></a> - Foreign function  check_if_done_playing </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-delete.Sound.AudioInfo">Process <code>delete.Sound.AudioInfo</code></a> - Foreign function  delete_Sound_AudioInfo </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-delete.Sound.DecoderInfo">Process <code>delete.Sound.DecoderInfo</code></a> - Foreign function  delete_Sound_DecoderInfo </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-delete.Sound.Sample">Process <code>delete.Sound.Sample</code></a> - Foreign function  delete_Sound_Sample </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-delete.Sound.Version">Process <code>delete.Sound.Version</code></a> - Foreign function  delete_Sound_Version </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-get.audio.callback.ptr">Process <code>get.audio.callback.ptr</code></a> - Foreign function  get_audio_callback_ptr </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-new.Sound.AudioInfo">Process <code>new.Sound.AudioInfo</code></a> - Foreign function  new_Sound_AudioInfo </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-new.Sound.DecoderInfo">Process <code>new.Sound.DecoderInfo</code></a> - Foreign function  new_Sound_DecoderInfo </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-new.Sound.Sample">Process <code>new.Sound.Sample</code></a> - Foreign function  new_Sound_Sample </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-new.Sound.Version">Process <code>new.Sound.Version</code></a> - Foreign function  new_Sound_Version </li>
+<li>
+<a class="proc" href="occSDLsound.html#name-occ.Sound.GetError">Process <code>occ.Sound.GetError</code></a> - Foreign function  occ_Sound_GetError </li>
+</ul>
+<h2>Declarations</h2>
+<div id="name-Sound.SampleFlags" class="declaration datatype">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:17</span>Data type <code>Sound.SampleFlags</code>
+</h3>
+<p class="definition"><code>DATA TYPE Sound.SampleFlags</code></p>
+<div class="description"><p>Foreign enumeration type <code>Sound_SampleFlags</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo" class="declaration datatype">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:19</span>Data type <code>Sound.AudioInfo</code>
+</h3>
+<p class="definition"><code>DATA TYPE Sound.AudioInfo</code></p>
+<div class="description"><p>Foreign struct type <code>Sound_AudioInfo</code>.</p></div>
+</div>
+<div id="name-Sound.Version" class="declaration datatype">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:21</span>Data type <code>Sound.Version</code>
+</h3>
+<p class="definition"><code>DATA TYPE Sound.Version</code></p>
+<div class="description"><p>Foreign struct type <code>Sound_Version</code>.</p></div>
+</div>
+<div id="name-Sound.Sample" class="declaration datatype">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:23</span>Data type <code>Sound.Sample</code>
+</h3>
+<p class="definition"><code>DATA TYPE Sound.Sample</code></p>
+<div class="description"><p>Foreign struct type <code>Sound_Sample</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo" class="declaration datatype">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:25</span>Data type <code>Sound.DecoderInfo</code>
+</h3>
+<p class="definition"><code>DATA TYPE Sound.DecoderInfo</code></p>
+<div class="description"><p>Foreign struct type <code>Sound_DecoderInfo</code>.</p></div>
+</div>
+<div id="name-SOUND.VER.MAJOR" class="declaration constant">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:35</span>Constant <code>SOUND.VER.MAJOR</code>
+</h3>
+<p class="definition"><code>VAL INT SOUND.VER.MAJOR</code></p>
+<div class="description"><p>Foreign constant <code>SOUND_VER_MAJOR</code>.</p></div>
+</div>
+<div id="name-SOUND.VER.MINOR" class="declaration constant">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:39</span>Constant <code>SOUND.VER.MINOR</code>
+</h3>
+<p class="definition"><code>VAL INT SOUND.VER.MINOR</code></p>
+<div class="description"><p>Foreign constant <code>SOUND_VER_MINOR</code>.</p></div>
+</div>
+<div id="name-SOUND.VER.PATCH" class="declaration constant">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:43</span>Constant <code>SOUND.VER.PATCH</code>
+</h3>
+<p class="definition"><code>VAL INT SOUND.VER.PATCH</code></p>
+<div class="description"><p>Foreign constant <code>SOUND_VER_PATCH</code>.</p></div>
+</div>
+<div id="name-Sound.SampleFlags" class="declaration group">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:46</span>Group <code>Sound.SampleFlags</code>
+</h3>
+<p class="definition"><code></code></p>
+<div class="description"><p>Foreign enumeration <code>Sound_SampleFlags</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo.format.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:58</span>Process <code>Sound.AudioInfo.format.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AudioInfo.format.set (VAL Sound.AudioInfo self, VAL INT16 format)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AudioInfo_format_set</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo.format.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:65</span>Process <code>Sound.AudioInfo.format.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AudioInfo.format.get (VAL Sound.AudioInfo self, RESULT INT16 return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AudioInfo_format_get</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo.channels.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:72</span>Process <code>Sound.AudioInfo.channels.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AudioInfo.channels.set (VAL Sound.AudioInfo self, VAL BYTE channels)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AudioInfo_channels_set</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo.channels.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:79</span>Process <code>Sound.AudioInfo.channels.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AudioInfo.channels.get (VAL Sound.AudioInfo self, RESULT BYTE return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AudioInfo_channels_get</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo.rate.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:86</span>Process <code>Sound.AudioInfo.rate.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AudioInfo.rate.set (VAL Sound.AudioInfo self, VAL INT rate)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AudioInfo_rate_set</code>.</p></div>
+</div>
+<div id="name-Sound.AudioInfo.rate.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:93</span>Process <code>Sound.AudioInfo.rate.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AudioInfo.rate.get (VAL Sound.AudioInfo self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AudioInfo_rate_get</code>.</p></div>
+</div>
+<div id="name-new.Sound.AudioInfo" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:100</span>Process <code>new.Sound.AudioInfo</code>
+</h3>
+<p class="definition"><code>INLINE PROC new.Sound.AudioInfo (RESULT Sound.AudioInfo return.value)</code></p>
+<div class="description"><p>Foreign function <code>new_Sound_AudioInfo</code>.</p></div>
+</div>
+<div id="name-delete.Sound.AudioInfo" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:107</span>Process <code>delete.Sound.AudioInfo</code>
+</h3>
+<p class="definition"><code>INLINE PROC delete.Sound.AudioInfo (VAL Sound.AudioInfo self)</code></p>
+<div class="description"><p>Foreign function <code>delete_Sound_AudioInfo</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.extensions.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:116</span>Process <code>Sound.DecoderInfo.extensions.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.extensions.set (VAL Sound.DecoderInfo self, VAL INT extensions)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_extensions_set</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.extensions.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:123</span>Process <code>Sound.DecoderInfo.extensions.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.extensions.get (VAL Sound.DecoderInfo self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_extensions_get</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.description.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:130</span>Process <code>Sound.DecoderInfo.description.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.description.set (VAL Sound.DecoderInfo self, VAL []BYTE description)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_description_set</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.description.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:137</span>Process <code>Sound.DecoderInfo.description.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.description.get (VAL Sound.DecoderInfo self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_description_get</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.author.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:144</span>Process <code>Sound.DecoderInfo.author.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.author.set (VAL Sound.DecoderInfo self, VAL []BYTE author)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_author_set</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.author.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:151</span>Process <code>Sound.DecoderInfo.author.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.author.get (VAL Sound.DecoderInfo self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_author_get</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.url.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:158</span>Process <code>Sound.DecoderInfo.url.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.url.set (VAL Sound.DecoderInfo self, VAL []BYTE url)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_url_set</code>.</p></div>
+</div>
+<div id="name-Sound.DecoderInfo.url.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:165</span>Process <code>Sound.DecoderInfo.url.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecoderInfo.url.get (VAL Sound.DecoderInfo self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecoderInfo_url_get</code>.</p></div>
+</div>
+<div id="name-new.Sound.DecoderInfo" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:172</span>Process <code>new.Sound.DecoderInfo</code>
+</h3>
+<p class="definition"><code>INLINE PROC new.Sound.DecoderInfo (RESULT Sound.DecoderInfo return.value)</code></p>
+<div class="description"><p>Foreign function <code>new_Sound_DecoderInfo</code>.</p></div>
+</div>
+<div id="name-delete.Sound.DecoderInfo" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:179</span>Process <code>delete.Sound.DecoderInfo</code>
+</h3>
+<p class="definition"><code>INLINE PROC delete.Sound.DecoderInfo (VAL Sound.DecoderInfo self)</code></p>
+<div class="description"><p>Foreign function <code>delete_Sound_DecoderInfo</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.decoder.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:188</span>Process <code>Sound.Sample.decoder.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.decoder.set (VAL Sound.Sample self, VAL Sound.DecoderInfo decoder)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_decoder_set</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.decoder.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:195</span>Process <code>Sound.Sample.decoder.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.decoder.get (VAL Sound.Sample self, RESULT Sound.DecoderInfo return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_decoder_get</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.desired.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:202</span>Process <code>Sound.Sample.desired.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.desired.set (VAL Sound.Sample self, VAL Sound.AudioInfo desired)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_desired_set</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.desired.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:209</span>Process <code>Sound.Sample.desired.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.desired.get (VAL Sound.Sample self, RESULT Sound.AudioInfo return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_desired_get</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.actual.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:216</span>Process <code>Sound.Sample.actual.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.actual.set (VAL Sound.Sample self, VAL Sound.AudioInfo actual)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_actual_set</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.actual.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:223</span>Process <code>Sound.Sample.actual.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.actual.get (VAL Sound.Sample self, RESULT Sound.AudioInfo return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_actual_get</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.buffer.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:230</span>Process <code>Sound.Sample.buffer.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.buffer.set (VAL Sound.Sample self, VAL INT buffer)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_buffer_set</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.buffer.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:237</span>Process <code>Sound.Sample.buffer.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.buffer.get (VAL Sound.Sample self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_buffer_get</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.buffer.size.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:244</span>Process <code>Sound.Sample.buffer.size.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.buffer.size.set (VAL Sound.Sample self, VAL INT buffer.size)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_buffer_size_set</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.buffer.size.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:251</span>Process <code>Sound.Sample.buffer.size.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.buffer.size.get (VAL Sound.Sample self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_buffer_size_get</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.flags.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:258</span>Process <code>Sound.Sample.flags.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.flags.set (VAL Sound.Sample self, VAL Sound.SampleFlags flags)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_flags_set</code>.</p></div>
+</div>
+<div id="name-Sound.Sample.flags.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:265</span>Process <code>Sound.Sample.flags.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Sample.flags.get (VAL Sound.Sample self, RESULT Sound.SampleFlags return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Sample_flags_get</code>.</p></div>
+</div>
+<div id="name-new.Sound.Sample" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:272</span>Process <code>new.Sound.Sample</code>
+</h3>
+<p class="definition"><code>INLINE PROC new.Sound.Sample (RESULT Sound.Sample return.value)</code></p>
+<div class="description"><p>Foreign function <code>new_Sound_Sample</code>.</p></div>
+</div>
+<div id="name-delete.Sound.Sample" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:279</span>Process <code>delete.Sound.Sample</code>
+</h3>
+<p class="definition"><code>INLINE PROC delete.Sound.Sample (VAL Sound.Sample self)</code></p>
+<div class="description"><p>Foreign function <code>delete_Sound_Sample</code>.</p></div>
+</div>
+<div id="name-Sound.Version.major.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:288</span>Process <code>Sound.Version.major.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Version.major.set (VAL Sound.Version self, VAL INT major)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Version_major_set</code>.</p></div>
+</div>
+<div id="name-Sound.Version.major.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:295</span>Process <code>Sound.Version.major.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Version.major.get (VAL Sound.Version self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Version_major_get</code>.</p></div>
+</div>
+<div id="name-Sound.Version.minor.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:302</span>Process <code>Sound.Version.minor.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Version.minor.set (VAL Sound.Version self, VAL INT minor)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Version_minor_set</code>.</p></div>
+</div>
+<div id="name-Sound.Version.minor.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:309</span>Process <code>Sound.Version.minor.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Version.minor.get (VAL Sound.Version self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Version_minor_get</code>.</p></div>
+</div>
+<div id="name-Sound.Version.patch.set" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:316</span>Process <code>Sound.Version.patch.set</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Version.patch.set (VAL Sound.Version self, VAL INT patch)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Version_patch_set</code>.</p></div>
+</div>
+<div id="name-Sound.Version.patch.get" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:323</span>Process <code>Sound.Version.patch.get</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Version.patch.get (VAL Sound.Version self, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Version_patch_get</code>.</p></div>
+</div>
+<div id="name-new.Sound.Version" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:330</span>Process <code>new.Sound.Version</code>
+</h3>
+<p class="definition"><code>INLINE PROC new.Sound.Version (RESULT Sound.Version return.value)</code></p>
+<div class="description"><p>Foreign function <code>new_Sound_Version</code>.</p></div>
+</div>
+<div id="name-delete.Sound.Version" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:337</span>Process <code>delete.Sound.Version</code>
+</h3>
+<p class="definition"><code>INLINE PROC delete.Sound.Version (VAL Sound.Version self)</code></p>
+<div class="description"><p>Foreign function <code>delete_Sound_Version</code>.</p></div>
+</div>
+<div id="name-Sound.GetLinkedVersion" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:345</span>Process <code>Sound.GetLinkedVersion</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.GetLinkedVersion (VAL Sound.Version ver)</code></p>
+<div class="description"><p>Foreign function <code>Sound_GetLinkedVersion</code>.</p></div>
+</div>
+<div id="name-Sound.Init" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:352</span>Process <code>Sound.Init</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Init (RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Init</code>.</p></div>
+</div>
+<div id="name-Sound.Quit" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:359</span>Process <code>Sound.Quit</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Quit (RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Quit</code>.</p></div>
+</div>
+<div id="name-Sound.AvailableDecoders" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:366</span>Process <code>Sound.AvailableDecoders</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.AvailableDecoders (RESULT Sound.DecoderInfo return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_AvailableDecoders</code>.</p></div>
+</div>
+<div id="name-Sound.GetError" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:373</span>Process <code>Sound.GetError</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.GetError (RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_GetError</code>.</p></div>
+</div>
+<div id="name-occ.Sound.GetError" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:380</span>Process <code>occ.Sound.GetError</code>
+</h3>
+<p class="definition"><code>INLINE PROC occ.Sound.GetError ([]BYTE err.str, VAL INT err.str.len, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>occ_Sound_GetError</code>.</p></div>
+</div>
+<div id="name-Sound.ClearError" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:387</span>Process <code>Sound.ClearError</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.ClearError ()</code></p>
+<div class="description"><p>Foreign function <code>Sound_ClearError</code>.</p></div>
+</div>
+<div id="name-Sound.NewSample" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:394</span>Process <code>Sound.NewSample</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.NewSample (VAL INT rw, VAL []BYTE ext, VAL Sound.AudioInfo desired, VAL INT bufferSize, RESULT Sound.Sample return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_NewSample</code>.</p></div>
+</div>
+<div id="name-Sound.NewSampleFromFile" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:401</span>Process <code>Sound.NewSampleFromFile</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.NewSampleFromFile (VAL []BYTE fname, VAL Sound.AudioInfo desired, VAL INT bufferSize, RESULT Sound.Sample return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_NewSampleFromFile</code>.</p></div>
+</div>
+<div id="name-Sound.FreeSample" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:408</span>Process <code>Sound.FreeSample</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.FreeSample (VAL Sound.Sample sample)</code></p>
+<div class="description"><p>Foreign function <code>Sound_FreeSample</code>.</p></div>
+</div>
+<div id="name-Sound.SetBufferSize" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:415</span>Process <code>Sound.SetBufferSize</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.SetBufferSize (VAL Sound.Sample sample, VAL INT new.size, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_SetBufferSize</code>.</p></div>
+</div>
+<div id="name-Sound.Decode" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:422</span>Process <code>Sound.Decode</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Decode (VAL Sound.Sample sample, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Decode</code>.</p></div>
+</div>
+<div id="name-Sound.DecodeAll" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:429</span>Process <code>Sound.DecodeAll</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.DecodeAll (VAL Sound.Sample sample, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_DecodeAll</code>.</p></div>
+</div>
+<div id="name-Sound.Rewind" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:436</span>Process <code>Sound.Rewind</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Rewind (VAL Sound.Sample sample, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Rewind</code>.</p></div>
+</div>
+<div id="name-Sound.Seek" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:443</span>Process <code>Sound.Seek</code>
+</h3>
+<p class="definition"><code>INLINE PROC Sound.Seek (VAL Sound.Sample sample, VAL INT ms, RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>Sound_Seek</code>.</p></div>
+</div>
+<div id="name-get.audio.callback.ptr" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:450</span>Process <code>get.audio.callback.ptr</code>
+</h3>
+<p class="definition"><code>INLINE PROC get.audio.callback.ptr (RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>get_audio_callback_ptr</code>.</p></div>
+</div>
+<div id="name-check.if.done.playing" class="declaration proc">
+<h3>
+<span class="location"><code>occSDLsound.inc</code>:457</span>Process <code>check.if.done.playing</code>
+</h3>
+<p class="definition"><code>INLINE PROC check.if.done.playing (RESULT INT return.value)</code></p>
+<div class="description"><p>Foreign function <code>check_if_done_playing</code>.</p></div>
+</div>
+</div></div></body>
+</html>
