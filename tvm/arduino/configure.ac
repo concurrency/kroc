@@ -17,11 +17,15 @@ UPLOAD_RATE=57600
 
 AC_ARG_WITH([target-board],
             AC_HELP_STRING([--with-target-board=...],
-                           [target board (arduino, sanguino)]),
+                           [target board (arduino, sanguino, arduinomega, seeedmega)]),
             [target_board=$withval], [target_board=arduino])
 if test "x$target_board" = "xsanguino"; then
 	MCU=atmega644p
 	UPLOAD_RATE=38400
+if test "x$target_board" = "xarduinomega"; then
+	MCU=atmega1280
+if test "x$target_board" = "xseeedmega"; then
+	MCU=atmega1280
 else
 	# Defaults above are suitable for Arduino.
 	if test "x$target_board" != "xarduino"; then
