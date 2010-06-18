@@ -1,0 +1,10 @@
+--** occam header for Arduino Duemilanove specific pin mappins.
+-- @module pinmapping
+#IF NOT (DEFINED (PINMAPPING.MODULE))
+#DEFINE PINMAPPING.MODULE
+
+-- Register constants for 328p, which we can expect
+-- to find on the Duemilanove board.
+#INCLUDE "iom328p.inc"
+
+#ENDIF
