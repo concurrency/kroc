@@ -1,0 +1,24 @@
+#INCLUDE "plumbing.module"
+
+PROC gps.com ()
+  WHILE TRUE
+    SEQ
+      digitalWrite (1, #A0A1)
+:
+
+PROC read ()
+  INT query:
+  
+  WHILE TRUE
+    SEQ
+      digitalRead (1, query)
+      serialWriteInt (query)
+:
+
+PROC main ()
+  SEQ
+    gps.com()
+    read()
+    
+    
+:
