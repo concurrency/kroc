@@ -45,6 +45,29 @@ copy()
 	cp $1 $2
 }
 
+# Yes, I know, I am using rsync to copy directories...
+# but I don't want the Subversion bits.
+copydir()
+{
+	echo "COPYING DIR [$1] to [$2]"
+	if [ -d $2 ]; then
+		rsync -vaz \
+			--exclude=*svn* \
+			--exclude=.svn \
+			--exclude=*.in \
+			$1/ $2/
+	fi
+} 
+
+if [ "$CHECKOUT" = "" ]; then
+	echo
+	echo "Please set the environment variable CHECKOUT before running m-d-p."
+	echo
+	exit
+fi
+
+PLATFORMS="arduino arduinomega seeedmega"
+
 # Where this should happen in the filesystem
 TEMP=/tmp
 
@@ -83,11 +106,9 @@ if [ "$1" = "checkout" ]; then
 	remove $SVN
 
   #######
-  header "Checking out fresh SVN trunk"
+  header "Checking out fresh SVN tree"
   #######
-  svn co \
-		http://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk \
-		$SVN
+  svn co $CHECKOUT $SVN
 fi
 
 if [ "$1" = "autoreconf" ]; then
@@ -145,32 +166,6 @@ if [ "$1" = "install" ]; then
 	popd
 fi
 
-if [ "$1" = "copy" ]; then
-  #######
-  header "Copying Plumbing files"
-  #######
-  
-  pushd $SVN/tvm/arduino
-    create $DEST_FIN/bin
-    copy binary-to-ihex          $DEST_BIN
-    copy reset-arduino           $DEST_BIN
-    copy arduinocc               $DEST_BIN
-    copy io-header-to-occam      $DEST_BIN
-    copy reset-arduino           $DEST_BIN
-    copy read-arduino            $DEST_BIN
-		
-    copy tvm-arduino.hex         $DEST_ROOT
-    copy avrdude.conf            $DEST_ROOT
-  
-    create $DEST_FIN/lib
-    copy occam/avr.module        $DEST_LIB 
-    copy occam/font8x8.inc       $DEST_LIB 
-    copy occam/iom328p.inc       $DEST_LIB
-    copy occam/plumbing.module   $DEST_LIB
-    copy occam/wiring.module     $DEST_LIB 
-  popd
-fi
-
 if [ "$1" = "writeconfig" ]; then
 
   config ()
@@ -181,24 +176,15 @@ if [ "$1" = "writeconfig" ]; then
   #######
   header "Writing conf script"
   #######
-  pushd $DEST_BIN
-    CONFIG="arduinocc-environment.sh"
-    FINALARDUINO="$FINAL"
-    echo > $CONFIG
-    config $CONFIG "TVM_INST_ROOT=$FINALARDUINO" 
-    config $CONFIG "TVM_BYTECODE_ADDR=0x5000"
-    config $CONFIG "TVM_F_CPU=16000000"
-    config $CONFIG "TVM_UPLOAD_RATE=57600"
-    config $CONFIG "TVM_MCU=m328p"
-    config $CONFIG ""  
-    config $CONFIG "# avrdude"
-    config $CONFIG "TVM_AVRDUDE_FIRMWARE_FLAGS=\"-V -F -p \$TVM_MCU\""
-    config $CONFIG "TVM_AVRDUDE_CODE_FLAGS=\"-V -F -p \$TVM_MCU -b \$TVM_UPLOAD_RATE -c stk500v1\""
-    config $CONFIG "TVM_AVRDUDE_CONF=$FINALARDUINO/avrdude.conf"
-    config $CONFIG ""
-    config $CONFIG "TVM_ARDUINO_FIRMWARE=$FINALARDUINO/tvm-arduino.hex"
+  pushd $SVN/tvm/arduino/scripts
+		for P in $PLATFORMS
+		do
+			echo $P
+			sed -e s#@FINAL@#$FINAL#g \
+					-e s#@PLATFORM@#$P#g \
+					$P.conf.in > $DEST_BIN/$P.conf
+		done
   
-    chmod 755 $CONFIG
   popd
   
   #######
@@ -207,6 +193,23 @@ if [ "$1" = "writeconfig" ]; then
   pushd $DEST_ROOT
     VER="deployment.version"
     echo "$YMDHMS" > $VER
+  popd
+fi
+
+if [ "$1" = "copy" ]; then
+  #######
+  header "Copying Plumbing files"
+  #######
+  
+  pushd $SVN/tvm/arduino
+    create $DEST_FIN/bin
+		copydir scripts $DEST_BIN
+		
+    copy tvm-arduino.hex         $DEST_ROOT
+    copy avrdude.conf            $DEST_ROOT
+  
+    create $DEST_FIN/lib
+		copydir occam/include $DEST_LIB
   popd
 fi
 
