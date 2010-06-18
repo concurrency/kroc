@@ -1,17 +1,24 @@
 #!/bin/bash 
 
-# Source in everything we need--both the KRoC env and 
-# variables for Arduino compilation and upload.
-PLUMB=plumb
+# App name
+PLUMB="plumb"
 
+usage()
+{
+	echo
+	echo "Usage: $PLUMB <platform> <port> <file>"
+	echo
+}
+
+# Source in everything we need--both the KRoC env and 
 source avr-kroc-setup.sh
 
 # This is now plaform-specificly sourced.
 # source arduinocc-environment.sh
-PLATFORMS=arduino arduinomega seeedmega
+PLATFORMS="arduino arduinomega seeedmega"
 
 if [ "$1" == "" ]; then
-	echo
+	usage
 	echo "Choose a platform:"
 	for P in $PLATFORMS
 	do
@@ -26,7 +33,7 @@ source $PLATFORM.conf
 # Sanity check
 if [ "$2" == "" ]; then
   # Print reasonable documentation for the students
-  echo
+  usage
   echo "No port provided. On Ubuntu Linux, this is probably '/dev/ttyUSB0'."
   echo
   exit
@@ -45,7 +52,7 @@ fi
 
 if [ "$3" == "" ]; then
   # Print that they need the filename
-  echo
+  usage
   echo "You need to provide an occam program after the port."
   echo "For example:"
   echo
