@@ -1,0 +1,6 @@
+--** occam header for Arduino Duemilanove specific pin mappins.
+-- @module pinmapping
+#IF NOT (DEFINED (PINMAPPING.MODULE))
+#DEFINE PINMAPPING.MODULE
+
+#ENDIF
