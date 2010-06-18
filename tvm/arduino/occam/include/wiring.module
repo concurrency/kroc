@@ -44,19 +44,6 @@ PROC delay (VAL INT millis)
 :
 --}}}
 
---{{{ PROC die
---* Kills everything and reports an error back to the user.
--- @param error A string containing the error message.
-INLINE PROC die (VAL []BYTE error)
-  SEQ
-    --{{{  force error to be used
-    INT n:
-    n := SIZE error
-    --}}}
-    CAUSEERROR ()
-:
---}}}
-
 --{{{  PROC digitalWrite
 --* Sets the state of a pin to either HIGH or LOW.
 -- @param pin The Arduino pin number.

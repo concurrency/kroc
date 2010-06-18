@@ -6,6 +6,7 @@
 -- Register constants for 328p, which we can expect
 -- to find on the Duemilanove board.
 #INCLUDE "iom328p.inc"
+#INCLUDE "base.module"
 
 -- Mappings for pin.location
 VAL []INT DDR.MAP IS
