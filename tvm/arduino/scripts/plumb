@@ -96,6 +96,7 @@ avr-occbuild \
   --search $TVM_INST_ROOT/share/tvm/avr-vtinclude \
   --search $TVM_INST_ROOT/share/tvm/avr-vtlib \
   --search $TVM_INST_ROOT/lib \
+  --search $TVM_INST_ROOT/lib/arch \
   --search $TVM_INST_ROOT/lib/platforms/$PLATFORM \
   -DF.CPU=$TVM_F_CPU --program $FILENAME
 
