@@ -1,0 +1,26 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "maths.module"
+PROC calculator (CHAN REAL32 output!)
+
+  REAL32 val:
+  
+  SEQ
+    val := 85.0
+    val := REAL32 COS (val)
+    output ! val
+:
+PROC show (CHAN REAL32 output?)
+  REAL32 val:
+  BYTE shows:
+  
+  SEQ
+    output ? val
+    shows := BYTE (val)
+    serialWrite ([shows])
+:
+PROC main ()
+  CHAN REAL32 output:
+  PAR
+    calculator (output!)
+    show (output?)
+:

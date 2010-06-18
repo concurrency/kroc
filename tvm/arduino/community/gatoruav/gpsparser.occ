@@ -1,0 +1,74 @@
+#INCLUDE "plumbing.module"
+VAL [1]BYTE com IS ",":
+PROC part (VAL []BYTE gps.in, []BYTE section, VAL INT comma)
+  INITIAL INT i, j, num.comma IS 0,0,0:
+  --WHILE i < (SIZE (gps.in))
+  SEQ 
+    WHILE num.comma < comma
+      IF
+        gps.in [i] = com[0]
+          SEQ
+            num.comma := num.comma + 1
+            i := i + 1
+        TRUE
+          SEQ
+            i := i + 1
+            --serialWrite ("true")
+            
+    WHILE num.comma = comma
+      IF 
+        gps.in [i] = com[0]
+          num.comma := num.comma + 1
+        gps.in [i] <> com [0]
+          SEQ
+            section [j] := gps.in [i]
+            j := j + 1
+            i := i + 1
+        TRUE
+          i := i + 1
+          
+:    
+    
+
+VAL []BYTE string IS "$GPRMC,183731,A,3907.482,N,12102.436,W,000.0,360.0,080301,015.5,E**67":
+PROC gps.treasure ()
+  [6]BYTE nmea.tag:
+  [6]BYTE time:
+  [1]BYTE validity:
+  [8]BYTE latitude: 
+  [1]BYTE lat.dir:
+  [9]BYTE longitude:
+  [1]BYTE long.dir:
+  [4]BYTE speed:
+  [4]BYTE course:
+  INITIAL INT pos IS 0:
+  
+  SEQ
+    part (string, nmea.tag, 0)
+    SEQ i=0 FOR (SIZE nmea.tag)
+      serialWrite ([nmea.tag [i]])
+    serialWrite("*n")
+    
+    part(string, time, 1)
+    SEQ i=0 FOR (SIZE time)
+      serialWrite ([time [i]])
+    serialWrite("*n")  
+    
+    part(string, validity, 2)
+    SEQ i=0 FOR (SIZE validity)
+      serialWrite ([validity [i]])      
+    serialWrite("*n")
+    
+    part(string, latitude, 3)
+    SEQ i=0 FOR (SIZE latitude)
+      serialWrite ([latitude [i]])      
+    serialWrite("*n")
+:
+   
+PROC main ()
+  SEQ
+    gps.treasure()
+        
+:
+
+
