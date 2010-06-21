@@ -277,12 +277,15 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
     ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
     -- Disable digital inputs on all six ADC pins
     ports[DIDR0] := #3F
+    -- Hacking to try and get the 1280 to read from all adc pins.
+    -- FIXME
+    ports[DIDR2] := #3F
     WHILE TRUE
       SEQ
         req ? SIGNAL
         
         -- Select the channel
-        ports[ADMUX] := (1 << REFS0) \/ (BYTE pin)
+        ports[ADMUX] := (1 << REFS0) \/ (INT16 pin)
         
         -- Start conversion
         ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
