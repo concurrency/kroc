@@ -88,6 +88,7 @@ fi
 
 
 echo "Compiling..."
+#echo "Compiling for $PLATFORM with a $TVM_MCU"
 
 # These values come in from arduiniocc-enironment.sh
 # I think ISEARCH, being set in the .conf, should do

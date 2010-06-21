@@ -3,4 +3,99 @@
 #IF NOT (DEFINED (PINMAPPING.MODULE))
 #DEFINE PINMAPPING.MODULE
 
+#INCLUDE "base.module"
+
+-- {{{ Mappings for pin.location
+VAL []INT DDR.MAP IS
+  [DDRE, DDRE, DDRE, DDRE, DDRG, DDRE, DDRH, DDRH, 
+   DDRH, DDRH, DDRB, DDRB, DDRB, DDRB, DDRJ, DDRJ, 
+   DDRH, DDRH, DDRD, DDRD, DDRD, DDRD, DDRA, DDRA, 
+   DDRA, DDRA, DDRA, DDRA, DDRA, DDRA, DDRC, DDRC, 
+   DDRC, DDRC, DDRC, DDRC, DDRC, DDRC, DDRD, DDRG, 
+   DDRG, DDRG, DDRL, DDRL, DDRL, DDRL, DDRL, DDRL, 
+   DDRL, DDRL, DDRB, DDRB, DDRB, DDRB, DDRF, DDRF, 
+   DDRF, DDRF, DDRF, DDRF, DDRF, DDRF, DDRK, DDRK, 
+   DDRK, DDRK, DDRK, DDRK, DDRK, DDRK]:
+
+VAL []INT PORT.MAP IS
+  [PORTE, PORTE, PORTE, PORTE, PORTG, PORTE, PORTH, PORTH, 
+   PORTH, PORTH, PORTB, PORTB, PORTB, PORTB, PORTJ, PORTJ, 
+   PORTH, PORTH, PORTD, PORTD, PORTD, PORTD, PORTA, PORTA, 
+   PORTA, PORTA, PORTA, PORTA, PORTA, PORTA, PORTC, PORTC, 
+   PORTC, PORTC, PORTC, PORTC, PORTC, PORTC, PORTD, PORTG, 
+   PORTG, PORTG, PORTL, PORTL, PORTL, PORTL, PORTL, PORTL, 
+   PORTL, PORTL, PORTB, PORTB, PORTB, PORTB, PORTF, PORTF, 
+   PORTF, PORTF, PORTF, PORTF, PORTF, PORTF, PORTK, PORTK, 
+   PORTK, PORTK, PORTK, PORTK, PORTK, PORTK]:
+
+VAL []INT PIN.MAP IS
+  [PINE, PINE, PINE, PINE, PING, PINE, PINH, PINH, 
+   PINH, PINH, PINB, PINB, PINB, PINB, PINJ, PINJ, 
+   PINH, PINH, PIND, PIND, PIND, PIND, PINA, PINA, 
+   PINA, PINA, PINA, PINA, PINA, PINA, PINC, PINC, 
+   PINC, PINC, PINC, PINC, PINC, PINC, PIND, PING, 
+   PING, PING, PINL, PINL, PINL, PINL, PINL, PINL, 
+   PINL, PINL, PINB, PINB, PINB, PINB, PINF, PINF, 
+   PINF, PINF, PINF, PINF, PINF, PINF, PINK, PINK, 
+   PINK, PINK, PINK, PINK, PINK, PINK]:
+
+VAL []INT BIT.MAP IS
+  [0, 1, 4, 5, 5, 3, 3, 4, 
+   5, 6, 4, 5, 6, 7, 1, 0, 
+   1, 0, 3, 2, 1, 0, 0, 1, 
+   2, 3, 4, 5, 6, 7, 7, 6, 
+   5, 4, 3, 2, 1, 0, 7, 2, 
+   1, 0, 7, 6, 5, 4, 3, 2, 
+   1, 0, 3, 2, 1, 0, 0, 1, 
+   2, 3, 4, 5, 6, 7, 0, 1, 
+   2, 3, 4, 5, 6, 7]:
+--}}}
+
+--{{{  FUNCTION pin.location
+--* Map an Arduino pin number to a DDR register, PORT register, PIN register
+-- and bit number.
+--
+-- On the Mega, it seems slightly non-linear.
+--
+-- A request for a pin out of range will result in an unrecoverable error.
+--
+-- @param pin Arduino pin number, as marked on the board
+-- @returns ddr.reg The [@text DDR] register
+-- @returns port.reg The [@text PORT] register
+-- @returns pin.reg The [@text PIN] register
+-- @returns bit The bit number in all the above registers    
+
+VAL []INT ADC.DDR IS [DDRK, DDRK, DDRK, DDRK, DDRK, DDRK, DDRK, DDRK,
+                      DDRF, DDRF, DDRF, DDRF, DDRF, DDRF, DDRF, DDRF]:
+VAL []INT ADC.PORT IS [PORTK, PORTK, PORTK, PORTK, PORTK, PORTK, PORTK, PORTK,
+                       PORTF, PORTF, PORTF, PORTF, PORTF, PORTF, PORTF, PORTF]:
+VAL []INT ADC.PIN IS [PINK, PINK, PINK, PINK, PINK, PINK, PINK, PINK,
+                      PINF, PINF, PINF, PINF, PINF, PINF, PINF, PINF]:
+VAL []INT ADC.BIT IS [7, 6, 5, 4, 3, 2, 1, 0, 7, 6, 5, 4, 3, 2, 1, 0]:
+
+INT, INT, INT, INT INLINE FUNCTION pin.location (VAL INT pin)
+  INT rddr, rport, rpin, rbit:
+  VALOF
+    IF
+      (pin < 0) OR (pin > 98)
+        die ("requested pin number is not valid (must be between 0 and 98)")
+      TRUE
+        IF
+          (pin > 81)
+            SEQ
+              rddr  := ADC.DDR[(pin - 82)]
+              rport := ADC.PORT[(pin - 82)]
+              rpin  := ADC.PIN[(pin - 82)]
+              rbit  := ADC.BIT[(pin - 82)]
+          TRUE
+            SEQ
+              rddr  := DDR.MAP[pin]
+              rport := PORT.MAP[pin]
+              rpin  := PIN.MAP[pin]
+              rbit  := BIT.MAP[pin]
+    RESULT rddr, rport, rpin, rbit
+    -- RESULT DDR.MAP[pin], PORT.MAP[pin], PIN.MAP[pin], BIT.MAP[pin]
+:
+--}}}
+
 #ENDIF
