@@ -1,3 +1,9 @@
+--** Input/output routines for the AVR.
+-- @module io
+
+#IF NOT (DEFINED (IO.MODULE))
+#DEFINE IO.MODULE
+
 #INCLUDE "avr.module"
 #INCLUDE "base.module"
 
@@ -121,3 +127,4 @@ PROC serial.intr.read (RESULT BYTE b)
 :
 --}}}
 
+#ENDIF

@@ -1,3 +1,9 @@
+--** Input/output routines for the ATmega1280 series.
+-- @module io
+
+#IF NOT (DEFINED (IO.MODULE))
+#DEFINE IO.MODULE
+
 #INCLUDE "avr.module"
 #INCLUDE "base.module"
 
@@ -36,37 +42,51 @@ PROC adc.io (VAL INT pin, RESULT INT v)
     v := (INT result)
 :
 
+-- Baud Rate Registers (low/high bites)
+VAL []INT UBRRL IS [UBRR0L, UBRR1L, UBRR2L, UBRR3L]:
+VAL []INT UBRRH IS [UBRR0H, UBRR1H, UBRR2H, UBRR3H]:
+-- UCSR -- Control and status register
+VAL []INT UCSRC IS [UCSR0C, USCR1C, USCR2C, USCR3C]:
+VAL []INT UCSRB IS [UCSR0B, USCR1B, USCR2B, USCR3B]:
 
--- STUFF FOR SERIAL PORT 0
 --* Initialise the serial port.
+-- @param port Serial port (0, 1, 2, or 3)
 -- @param baud Baud rate
-PROC serial.setup (VAL INT32 baud)
+PROC serial.setup (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
-
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   SEQ
-    ports[UBRR0H] := factor.bytes[1]
-    ports[UBRR0L] := factor.bytes[0]
+    ports[UBRRH[port]] := factor.bytes[1]
+    ports[UBRRL[port]] := factor.bytes[0]
 
-    ports[UCSR0C] := 3 << UCSZ00
-    ports[UCSR0B] := BV (TXEN0)
+    ports[UCSRC[port]] := 3 << UCSZ00
+    ports[UCSRB[port]] := BV (TXEN0)
 :
---* Initialise iterrupt-driven serial IO for port1.
---* Lifted from ledmatrix.occ
+
+--* Initialise iterrupt-driven serial IO
+-- @param port Serial port (0, 1, 2, or 3)
 -- @param baud Baud rate
-PROC serial.intr.setup (VAL INT32 baud)
+PROC serial.intr.setup (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
-
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   SEQ
-    ports[UBRR0H] := factor.bytes[1]
-    ports[UBRR0L] := factor.bytes[0]
+    ports[UBRRH[port]] := factor.bytes[1]
+    ports[UBRRL[port]] := factor.bytes[0]
 
-    ports[UCSR0C] := 3 << UCSZ00
-    ports[UCSR0B] := BV (TXEN0) \/ BV (RXEN0)
+    ports[UCSRC[port]] := 3 << UCSZ00
+    ports[UCSRB[port]] := BV (TXEN0) \/ BV (RXEN0)
 :
+
+-----------------------------
+-----------------------------
+-- FIXME: Update rest of serial code to use
+-- port numbers, so there is less/no repetition of
+-- code for each serial port.
+
 
 --* Write a string to the serial port.
 -- @param string Bytes to write
@@ -359,3 +379,5 @@ PROC serial3.intr.read (RESULT BYTE b)
         SKIP
     b := ports[UDR3]
 :
+
+#ENDIF
