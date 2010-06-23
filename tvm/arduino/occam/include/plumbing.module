@@ -284,7 +284,7 @@ PROC serial.tx (CHAN BYTE in?)
     BYTE b:
     SEQ
       in ? b
-      serial.write (b)
+      serial.write.byte (0, b)
 :
 
 -- Comments please?
@@ -293,7 +293,7 @@ PROC serial.intr.tx (CHAN BYTE in?)
     BYTE b:
     SEQ
       in ? b
-      serial.intr.write (b)
+      serial.write.byte (0, b)
 :
 
 -- Comments please?
@@ -301,7 +301,7 @@ PROC serial.intr.rx (CHAN BYTE out!)
   WHILE TRUE
     BYTE b:
     SEQ
-      serial.intr.read (b)
+      serial.read.byte (0, b)
       out ! b
 :
 

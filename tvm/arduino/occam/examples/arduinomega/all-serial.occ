@@ -32,13 +32,14 @@ PROC write.to.all.ports ()
 -- Output something on TX0. Bounce it through until we send it out TX3 to the PC.
 PROC bounce ()
   SEQ
+    
     -- Set everyone up.
     SEQ serial = 0 FOR 4
       serial.setup(serial, 57600)
     INITIAL BYTE b IS 0:
     WHILE TRUE
       SEQ
-        b := ((b + 1) \ 26)
+        --b := ((b + 1) \ 26)
         serial.write.byte(1, b)
         serial.read.byte(2, b)
         serial.write.byte(2, b)
