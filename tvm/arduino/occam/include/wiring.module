@@ -5,6 +5,7 @@
 #DEFINE WIRING.MODULE
 
 #INCLUDE "avr.module"
+#INCLUDE "io.module"
 #INCLUDE "pinmapping.module"
 
 --{{{  constants
@@ -31,6 +32,10 @@ VAL INT DEFAULT IS 1:
 VAL INT EXTERNAL IS 0:
 
 --}}}
+
+-- Most of the methods below are, at this point, pass-through methods.
+-- Probably wants to change pretty soon, but this way neither wiring nor
+--  plumbing are touching ports[..]
 
 --{{{  PROC delay
 --* Wait for a period of time.
@@ -84,19 +89,19 @@ PROC pinMode (VAL INT pin, mode)
 --}}}
 
 --{{{  PROC beginSerial
---* Initialise the serial port.
+--* Initialise serial port 1.
 -- @param baud Baud rate
 PROC beginSerial (VAL INT32 baud)
-  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
-  VAL [4]BYTE factor.bytes RETYPES factor:
+  serial.setup (baud)
+:
+--}}}
 
-  PLACED [MAX.PORT]BYTE ports 0:
-  SEQ
-    ports[UBRR0H] := factor.bytes[1]
-    ports[UBRR0L] := factor.bytes[0]
-
-    ports[UCSR0C] := 3 << UCSZ00
-    ports[UCSR0B] := BV (TXEN0)
+--{{{  PROC beginSerialInerrupt
+--* Initialise iterrupt-driven serial IO for port 1.
+--* Lifted from ledmatrix.occ
+-- @param baud Baud rate
+PROC beginInterruptSerial (VAL INT32 baud)
+  serial.intr.setup (baud)
 :
 --}}}
 --{{{  PROC serialWrite
@@ -104,12 +109,7 @@ PROC beginSerial (VAL INT32 baud)
 -- @param string Bytes to write
 PROC serialWrite (VAL []BYTE string)
   SEQ i = 0 FOR SIZE string
-    PLACED [MAX.PORT]BYTE ports 0:
-    #PRAGMA DEFINED ports
-    SEQ
-      WHILE (ports[UCSR0A] /\ BV (UDRE0)) = 0
-        SKIP
-      ports[UDR0] := string[i]
+    serial.write (string[i])
 :
 --}}}
 --{{{  PROC serialWriteInt
@@ -130,6 +130,10 @@ PROC serialWriteInt32 (VAL INT32 n)
     serialWrite ([digits[INT ((n >> (i * 4)) /\ #F)]])
 :
 --}}}
+
+
+-- As of June 22, haven't touched the code below.
+-- Still trying to figure out io.module, so not sure what to do about analog
 
 VAL INT NO.MAP IS (- 1):
 VAL INT INDEX.OFFSET IS 3:
