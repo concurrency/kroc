@@ -1,0 +1,22 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL ping:
+  CHAN INT val:
+  INT tmp:
+  CHAN BYTE b:
+  VAL []BYTE digits IS "0123456789abcdef":
+
+  PAR
+    serial.intr.setup (57600)
+    tick (100, ping!)
+    adc (5, ping?, val!)
+    serial.intr.tx (b?)
+    WHILE TRUE
+      SEQ
+        val ? tmp
+        SEQ i = 3 FOR 4 STEP -1
+          b ! digits[(tmp >> (i * 4)) /\ #F]
+        b ! '*n'
+    blink (13, 500)
+:
