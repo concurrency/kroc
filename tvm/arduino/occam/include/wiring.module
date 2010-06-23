@@ -92,24 +92,16 @@ PROC pinMode (VAL INT pin, mode)
 --* Initialise serial port 1.
 -- @param baud Baud rate
 PROC beginSerial (VAL INT32 baud)
-  serial.setup (baud)
+  beginSerial.blocking (0, baud)
 :
 --}}}
 
---{{{  PROC beginSerialInerrupt
---* Initialise iterrupt-driven serial IO for port 1.
---* Lifted from ledmatrix.occ
--- @param baud Baud rate
-PROC beginInterruptSerial (VAL INT32 baud)
-  serial.intr.setup (baud)
-:
---}}}
 --{{{  PROC serialWrite
 --* Write a string to the serial port.
 -- @param string Bytes to write
 PROC serialWrite (VAL []BYTE string)
   SEQ i = 0 FOR SIZE string
-    serial.write (string[i])
+    serialWriteByte.blocking (0, string[i])
 :
 --}}}
 --{{{  PROC serialWriteInt
@@ -118,7 +110,7 @@ PROC serialWrite (VAL []BYTE string)
 PROC serialWriteInt (VAL INT n)
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 3 FOR 4 STEP -1
-    serialWrite ([digits[(n >> (i * 4)) /\ #F]])
+    serialWriteByte.blocking (0, digits[(n >> (i * 4)) /\ #F])
 :
 --}}}
 --{{{  PROC serialWriteInt32
@@ -127,7 +119,7 @@ PROC serialWriteInt (VAL INT n)
 PROC serialWriteInt32 (VAL INT32 n)
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 7 FOR 8 STEP -1
-    serialWrite ([digits[INT ((n >> (i * 4)) /\ #F)]])
+    serialWriteByte.blocking (0, digits[INT ((n >> (i * 4)) /\ #F)])
 :
 --}}}
 
