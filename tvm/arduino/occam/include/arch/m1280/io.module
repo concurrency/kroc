@@ -52,33 +52,33 @@ VAL []INT UCSRB IS [UCSR0B, USCR1B, USCR2B, USCR3B]:
 --* Initialise the serial port.
 -- @param port Serial port (0, 1, 2, or 3)
 -- @param baud Baud rate
-PROC serial.setup (VAL INT port, VAL INT32 baud)
+PROC serial.setup (VAL INT reg, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    ports[UBRRH[port]] := factor.bytes[1]
-    ports[UBRRL[port]] := factor.bytes[0]
+    ports[UBRRH[reg]] := factor.bytes[1]
+    ports[UBRRL[reg]] := factor.bytes[0]
 
-    ports[UCSRC[port]] := 3 << UCSZ00
-    ports[UCSRB[port]] := BV (TXEN0)
+    ports[UCSRC[reg]] := 3 << UCSZ00
+    ports[UCSRB[reg]] := BV (TXEN0)
 :
 
 --* Initialise iterrupt-driven serial IO
 -- @param port Serial port (0, 1, 2, or 3)
 -- @param baud Baud rate
-PROC serial.intr.setup (VAL INT port, VAL INT32 baud)
+PROC serial.intr.setup (VAL INT reg, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    ports[UBRRH[port]] := factor.bytes[1]
-    ports[UBRRL[port]] := factor.bytes[0]
+    ports[UBRRH[reg]] := factor.bytes[1]
+    ports[UBRRL[reg]] := factor.bytes[0]
 
-    ports[UCSRC[port]] := 3 << UCSZ00
-    ports[UCSRB[port]] := BV (TXEN0) \/ BV (RXEN0)
+    ports[UCSRC[reg]] := 3 << UCSZ00
+    ports[UCSRB[reg]] := BV (TXEN0) \/ BV (RXEN0)
 :
 
 -----------------------------
