@@ -1,15 +1,15 @@
 #INCLUDE "plumbing.module"
-VAL []REAL32 powers IS [10000.0, 1000.0, 100.0, 10.0, 1.0]:
-PROC serialWriteDecInt (VAL REAL32 n)
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
   INITIAL INT index IS 0:
-  INITIAL REAL32 number IS n:
+  INITIAL INT number IS n:
   INITIAL BOOL neg IS FALSE:
   SEQ
     IF
-      n < 0.0
+      n < 0
         SEQ
           neg := TRUE
-          number := n * (- 1.0)
+          number := n * (- 1)
       TRUE
         SKIP
     IF 
@@ -18,38 +18,52 @@ PROC serialWriteDecInt (VAL REAL32 n)
       TRUE 
         SKIP
     WHILE (index < 5)
-      REAL32 digit:
+      INT digit:
       SEQ
         digit := number / powers[index]
         number := number REM powers[index]
-        --digit := digit + (INT '0')
+        digit := digit + (INT '0')
         serialWrite([BYTE digit])
         index := index + 1
     
 :
 
-PROC show (CHAN REAL32 position?, rate?)
-  INITIAL REAL32 pos, rat IS 0.0,0.0:
+PROC show (CHAN INT position?, rate?, BYTE axis)
+  INITIAL INT pos, rat IS 0,0:
   WHILE TRUE
     SEQ      
       rate ? rat
+      serialWrite([axis])
       serialWrite("Rate:")
       serialWriteDecInt(rat)
       serialWrite ("*n")
       
+      serialWrite([axis])
       position ? pos
       serialWrite ("Pos:")
       serialWriteDecInt(pos)
       serialWrite ("*n")
 :
-PROC to.degrees (CHAN REAL32 input?, CHAN REAL32 output!)
-  REAL32 n:
+PROC to.degrees (CHAN INT input?, CHAN INT output!)
+
+  INITIAL INT counter, shift, n IS 0, 0, 0:
   WHILE TRUE
     SEQ
+      --SEQ
       input ? n
-      n := n - 331.0
-      n := n * 1.48
-      -- in milliseconds
+        --IF  
+          --counter = 0
+          
+            --SEQ
+              --serialWriteInt (counter)
+              --shift := n
+              --counter := counter + 1
+              --IF statement used to initially zero the reading to whatever the first value is
+          --TRUE
+            --SEQ
+      n := n-252
+              --n := n * 2
+              -- in milliseconds
       output ! n
       
 :
@@ -61,9 +75,9 @@ PROC ping (CHAN SIGNAL request!)
         delay(1000)
 :
 
-PROC filter (CHAN REAL32 input?, CHAN REAL32 position!, rate!, drift?)
-  [4]REAL32 filter.arr:
-  INITIAL REAL32 current, current.pos, past.pos, error IS 0.0, 0.0, 0.0, 0.0:
+PROC filter (CHAN INT input?, CHAN INT position!, rate!, drift?)
+  [4]INT filter.arr:
+  INITIAL INT current, current.pos, past.pos, error IS 0, 0, 0, 0:
   
   INITIAL INT start,end, dt IS 0, 0, 0:
   SEQ
@@ -84,19 +98,15 @@ PROC filter (CHAN REAL32 input?, CHAN REAL32 position!, rate!, drift?)
         -- and "current" (rate) by the "+" time between sensor readings to make goodness 
         
         time ? start
-        dt := start - end
+        dt := 1 --start - end
         
         current.pos := past.pos + ((error * (-dt)) + (current * dt))
         past.pos := current.pos
         position ! current.pos
-        
-        serialWrite ("dt: ")
-        serialWriteDecInt (dt)
-        serialWrite ("*n")
-        
+
         time ? end 
         
-        serialWriteDecInt (end-start)
+        --serialWriteDecInt (end-start)
         
         filter.arr [0] := filter.arr [1]
         filter.arr [1] := filter.arr [2]
@@ -104,22 +114,54 @@ PROC filter (CHAN REAL32 input?, CHAN REAL32 position!, rate!, drift?)
         filter.arr [3] := current
         input ? current
 :
-PROC gyro.drift (CHAN REAL32 drift!)
+PROC gyro.drift (CHAN INT drift!)
   WHILE TRUE  
     SEQ
       drift ! 0
 :
 
 PROC main()
-  CHAN REAL32 degree:
-  CHAN REAL32 position, rate, input, drift:
-  CHAN SIGNAL signal:
-  PAR
-    adc(1,signal?, input!)
-    ping(signal!)
-    filter(degree?, position!, rate!, drift?)
-    show(position?, rate?)
-    to.degrees(input?, degree!)
-    gyro.drift(drift!)
+  CHAN INT position.gyro0, rate.gyro0, input.gyro0, drift.gyro0, degree.gyro0:
+  CHAN INT position.gyro1, rate.gyro1, input.gyro1, drift.gyro1, degree.gyro1:
+  CHAN INT position.gyro2, rate.gyro2, input.gyro2, drift.gyro2, degree.gyro2:
+  CHAN SIGNAL signal.gyro0, signal.gyro1, signal.gyro2:
+  BYTE axis.x, axis.y, axis.z: 
+  SEQ
+    axis.x := 'x'
+    axis.y := 'y'
+    axis.z := 'z'
+    PAR
+      SEQ
+        --gryo 0 "x"
+        ping(signal.gyro0!)
+        adc(0,signal.gyro0?, input.gyro0!)
+        to.degrees(input.gyro0?, degree.gyro0!)
+        gyro.drift(drift.gyro0!)
+        filter(degree.gyro0?, position.gyro0!, rate.gyro0!, drift.gyro0?)
+        show(position.gyro0?, rate.gyro0?, axis.x)
+      
+      
+      SEQ
+        
+        --gyro 1 "y"
+        ping(signal.gyro1!)
+        adc(1,signal.gyro1?, input.gyro1!)
+        to.degrees(input.gyro1?, degree.gyro1!)
+        gyro.drift(drift.gyro1!)
+        filter(degree.gyro1?, position.gyro1!, rate.gyro1!, drift.gyro1?)
+        show(position.gyro1?, rate.gyro1?, axis.y)
+        
+      SEQ
+        
+        --gyro 2 "z"
+        ping(signal.gyro2!)
+        adc(2,signal.gyro2?, input.gyro2!)
+        to.degrees(input.gyro2?, degree.gyro2!)
+        gyro.drift(drift.gyro2!)
+        filter(degree.gyro2?, position.gyro2!, rate.gyro2!, drift.gyro2?)
+        show(position.gyro2?, rate.gyro2?, axis.z)
+        
+        
+        
 :
     

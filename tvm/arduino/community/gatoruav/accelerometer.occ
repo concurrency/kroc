@@ -9,18 +9,59 @@ PROC calculator (CHAN REAL32 output!)
     val := REAL32 COS (val)
     output ! val
 :
-PROC show (CHAN REAL32 output?)
-  REAL32 val:
-  BYTE shows:
-  
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
   SEQ
-    output ? val
-    shows := BYTE (val)
-    serialWrite ([shows])
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+
+PROC show (CHAN INT output?)
+  INT val:
+  
+  WHILE TRUE
+    SEQ
+      output ? val
+      serialWriteDecInt(val)
+      serialWrite("*n")
+    
+:
+PROC pinger(CHAN SIGNAL ping!)
+  WHILE TRUE
+    SEQ
+      ping ! SIGNAL
+      delay(150)
 :
 PROC main ()
-  CHAN REAL32 output:
-  PAR
-    calculator (output!)
-    show (output?)
+  CHAN INT output:
+  CHAN SIGNAL ping:
+  SEQ
+    serialWrite("Hi*n")
+    PAR
+      heartbeat()
+      pinger(ping!)
+      show(output?)
+      adc(0,ping?,output!)
 :
