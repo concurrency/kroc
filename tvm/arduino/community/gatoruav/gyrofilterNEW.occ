@@ -31,41 +31,39 @@ PROC serialWriteDecInt (VAL INT n)
 PROC show (CHAN INT position?, rate?, BYTE axis)
   INITIAL INT pos, rat IS 0,0:
   WHILE TRUE
-    SEQ      
+    SEQ
       rate ? rat
       serialWrite([axis])
       serialWrite("Rate:")
       serialWriteDecInt(rat)
       serialWrite ("*n")
       
-      serialWrite([axis])
       position ? pos
+      serialWrite([axis])
       serialWrite ("Pos:")
       serialWriteDecInt(pos)
       serialWrite ("*n")
+      serialWrite ("*n*n")
 :
 PROC to.degrees (CHAN INT input?, CHAN INT output!)
 
   INITIAL INT counter, shift, n IS 0, 0, 0:
   WHILE TRUE
     SEQ
-      --SEQ
       input ? n
-        --IF  
-          --counter = 0
-          
-            --SEQ
-              --serialWriteInt (counter)
-              --shift := n
-              --counter := counter + 1
-              --IF statement used to initially zero the reading to whatever the first value is
-          --TRUE
-            --SEQ
-      n := n-252
-              --n := n * 2
+      IF  
+        counter = 0
+          SEQ
+            serialWriteInt (counter)
+            shift := n
+            counter := counter + 1
+            --IF statement used to initially zero the reading to whatever the first value is
+        TRUE
+          SKIP
+      n := n-shift
+              --n := n * 2 (adc units to degrees per second.)
               -- in milliseconds
       output ! n
-      
 :
 PROC ping (CHAN SIGNAL request!)
   SEQ
@@ -77,42 +75,42 @@ PROC ping (CHAN SIGNAL request!)
 
 PROC filter (CHAN INT input?, CHAN INT position!, rate!, drift?)
   [4]INT filter.arr:
-  INITIAL INT current, current.pos, past.pos, error IS 0, 0, 0, 0:
+  INITIAL INT current.rate, current.pos, past.pos, error IS 0, 0, 0, 0:
   
   INITIAL INT start,end, dt IS 0, 0, 0:
   SEQ
-    SEQ i=0 FOR 4
+    SEQ i=0 FOR 4   -- Initialize the filter with the first 4 values
       SEQ  
         input ? filter.arr[i]
     SEQ
-      input ? current
+      input ? current.rate
     WHILE TRUE
-      TIMER time:
+      --TIMER time:
       SEQ
         
-        current := ((current) + ((((filter.arr[0]+ (filter.arr[1] *2)) + ((filter.arr[2] *2) + filter.arr[3])))/6))/2
-        rate ! current
+        current.rate := ((current.rate) + ((((filter.arr[0]+ (filter.arr[1] *2)) + ((filter.arr[2] *2) + filter.arr[3])))/6))/2
+        rate ! current.rate
         
-        drift ? error
+        --drift ? error
         -- We need to multiply the error by the "-" time 
         -- and "current" (rate) by the "+" time between sensor readings to make goodness 
         
-        time ? start
+        --time ? start
         dt := 1 --start - end
         
-        current.pos := past.pos + ((error * (-dt)) + (current * dt))
+        current.pos := past.pos + ((error * (-dt)) + (current.rate * dt))
         past.pos := current.pos
         position ! current.pos
 
-        time ? end 
+        --time ? end 
         
         --serialWriteDecInt (end-start)
         
         filter.arr [0] := filter.arr [1]
         filter.arr [1] := filter.arr [2]
         filter.arr [2] := filter.arr [3]
-        filter.arr [3] := current
-        input ? current
+        filter.arr [3] := current.rate
+        input ? current.rate
 :
 PROC gyro.drift (CHAN INT drift!)
   WHILE TRUE  
@@ -131,7 +129,7 @@ PROC main()
     axis.y := 'y'
     axis.z := 'z'
     PAR
-      SEQ
+      PAR
         --gryo 0 "x"
         ping(signal.gyro0!)
         adc(0,signal.gyro0?, input.gyro0!)
@@ -139,10 +137,8 @@ PROC main()
         gyro.drift(drift.gyro0!)
         filter(degree.gyro0?, position.gyro0!, rate.gyro0!, drift.gyro0?)
         show(position.gyro0?, rate.gyro0?, axis.x)
-      
-      
-      SEQ
-        
+    
+      PAR
         --gyro 1 "y"
         ping(signal.gyro1!)
         adc(1,signal.gyro1?, input.gyro1!)
@@ -150,9 +146,8 @@ PROC main()
         gyro.drift(drift.gyro1!)
         filter(degree.gyro1?, position.gyro1!, rate.gyro1!, drift.gyro1?)
         show(position.gyro1?, rate.gyro1?, axis.y)
-        
-      SEQ
-        
+    
+      PAR
         --gyro 2 "z"
         ping(signal.gyro2!)
         adc(2,signal.gyro2?, input.gyro2!)

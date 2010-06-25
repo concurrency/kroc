@@ -1,14 +1,5 @@
 #INCLUDE "plumbing.module"
 #INCLUDE "maths.module"
-PROC calculator (CHAN REAL32 output!)
-
-  REAL32 val:
-  
-  SEQ
-    val := 85.0
-    val := REAL32 COS (val)
-    output ! val
-:
 VAL []INT powers IS [10000, 1000, 100, 10, 1]:
 PROC serialWriteDecInt (VAL INT n)
   INITIAL INT index IS 0:
@@ -37,7 +28,42 @@ PROC serialWriteDecInt (VAL INT n)
         index := index + 1
     
 :
+PROC calculator (CHAN REAL32 input?)
+  REAL32 input.val:
+  REAL32 angle:
+  INT32 value:
+  REAL32 test:
+  WHILE TRUE
+    SEQ
+      test := 1.5
+      --serialWrite("listening for input*n")
+      input ? input.val
+      --serialWrite("Doing calculation*n")
+      angle := (100.0 * (ACOS (268.0/(input.val))))
+      --serialWrite("Converting*n")
+      value := INT32 ROUND angle
+      --serialWrite("Done with convert")
+      serialWriteDecInt (INT value)
+      serialWrite("*n")
+      
+:
 
+PROC magic (CHAN INT adc.input?, CHAN REAL32 out!)
+  INT value:
+  REAL32 val32:
+  
+  
+  WHILE TRUE
+    SEQ
+      adc.input ? value
+      --serialWrite("before round")
+      val32 := REAL32 ROUND value
+      --serialWrite("after round")
+      out ! val32
+      
+      
+:
+    
 PROC show (CHAN INT output?)
   INT val:
   
@@ -57,11 +83,13 @@ PROC pinger(CHAN SIGNAL ping!)
 PROC main ()
   CHAN INT output:
   CHAN SIGNAL ping:
+  CHAN REAL32 output.32:
   SEQ
     serialWrite("Hi*n")
     PAR
-      heartbeat()
       pinger(ping!)
-      show(output?)
-      adc(0,ping?,output!)
+      --show(output?)
+      adc.io(0,ping?,output!)
+      magic(output?,output.32!)
+      calculator(output.32?)
 :
