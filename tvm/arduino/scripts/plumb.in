@@ -1,4 +1,5 @@
 #!/bin/bash 
+# An auto-version tag here would be good.
 
 # App name
 PLUMB="plumb"
@@ -13,10 +14,6 @@ usage()
 
 # Source in everything we need--both the KRoC env and 
 source avr-kroc-setup.sh
-
-# This is now plaform-specificly sourced.
-# source arduinocc-environment.sh
-PLATFORMS="arduino arduinomega seeedmega"
 
 if [ "$1" == "" ]; then
 	usage
@@ -46,7 +43,7 @@ if [ "$3" == "firmware" ]; then
   echo "Uploading Transterpreter Virtual Machine"
   avrdude -C $TVM_AVRDUDE_CONF \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
-    -P $1 -b $TVM_UPLOAD_RATE -c stk500v1 \
+    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c stk500v1 \
     -U flash:w:$TVM_INST_ROOT/share/firmwares/$TVM_ARDUINO_FIRMWARE
   exit
 fi
