@@ -175,17 +175,17 @@ fi
 if [ "$1" = "writeconfig" ]; then
   
   #######
-  header "Writing conf script"
+  header "Copying per-platform configuration files."
   #######
   pushd $SVN/tvm/arduino/occam/share/conf
 		create $DEST_CONF
 		for P in `ls *.in`
 		do
-			P=`basename $P .conf.in`
-			echo $P
+			Q=`basename $P .conf.in`
+			echo $Q
 			sed -e s#@FINAL@#$FINAL#g \
-					-e s#@PLATFORM@#$P#g \
-					$P.conf.in > $DEST_CONF/$P.conf
+					-e s#@PLATFORM@#$Q#g \
+					$Q.conf.in > $DEST_CONF/$Q.conf
 		done
   popd
   
@@ -206,13 +206,15 @@ if [ "$1" = "copy" ]; then
   pushd $SVN/tvm/arduino
     create $DEST_FIN/bin
 		copydir scripts $DEST_BIN
-	
+
+		create $DEST_SHARE/firmwares	
 		for firm in `ls tvm-avr-*.hex` 
-		do	
+		do
+			echo "Copying firmware $firm"	
     	copy $firm  $DEST_SHARE/firmwares/
 		done
 
-    copy avrdude.conf            $DEST_ROOT
+    copy avrdude.conf            $DEST_CONF
 
 		# Copy occam-pi library code for AVR into lib/...  
     create $DEST_FIN/lib
