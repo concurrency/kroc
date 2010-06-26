@@ -56,6 +56,8 @@ copydir()
 			--exclude=.svn \
 			--exclude=*.in \
 			$1/ $2/
+	else
+		echo "[ERROR] Destination [$2] does not exist. Cannot copy dir."
 	fi
 } 
 
@@ -66,7 +68,9 @@ if [ "$CHECKOUT" = "" ]; then
 	exit
 fi
 
-PLATFORMS="arduino arduinomega seeedmega"
+# Currently, not necessary...
+# Used for copying config scripts... can be done better.
+# PLATFORMS="arduino arduinomega seeedmega"
 
 # Where this should happen in the filesystem
 TEMP=/tmp
@@ -84,7 +88,8 @@ SVN="$TEMP/dpkg-$YMD"
 OBJ="$SVN/obj"
 
 # Where things end up
-FIN=usr/local/occam/arduino
+# Changed to /opt, to be closer to a "reasonable" package...
+FIN=opt/occam/arduino
 # Where things think they end up
 FINAL=/$FIN
 
@@ -149,11 +154,10 @@ if [ "$1" = "build" ]; then
   popd
   
   #######
-  header "Building Arduino wrapper"
+  header "Building Arduino wrappers"
   #######
   pushd $SVN/tvm/arduino
     ./build.sh
-    make tvm-arduino.hex
   popd
   
 #
@@ -174,14 +178,15 @@ if [ "$1" = "writeconfig" ]; then
   header "Writing conf script"
   #######
   pushd $SVN/tvm/arduino/occam/share/conf
-		for P in $PLATFORMS
+		create $DEST_CONF
+		for P in `ls *.in`
 		do
+			P=`basename $P .conf.in`
 			echo $P
 			sed -e s#@FINAL@#$FINAL#g \
 					-e s#@PLATFORM@#$P#g \
 					$P.conf.in > $DEST_CONF/$P.conf
 		done
-  
   popd
   
   #######
@@ -202,7 +207,7 @@ if [ "$1" = "copy" ]; then
     create $DEST_FIN/bin
 		copydir scripts $DEST_BIN
 	
-		for firm in `ls *.hex` 
+		for firm in `ls tvm-avr-*.hex` 
 		do	
     	copy $firm  $DEST_SHARE/firmwares/
 		done
