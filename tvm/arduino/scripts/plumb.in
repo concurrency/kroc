@@ -40,7 +40,7 @@ fi
 UPLOAD_PORT=$2
 
 if [ "$3" == "firmware" ]; then
-  echo "Uploading Transterpreter Virtual Machine"
+  echo "Uploading firmware version [$TVM_ARDUINO_FIRMWARE]."
   avrdude -C $TVM_AVRDUDE_CONF \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
     -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c stk500v1 \
