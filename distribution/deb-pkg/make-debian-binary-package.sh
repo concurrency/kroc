@@ -76,9 +76,9 @@ fi
 TEMP=/tmp
 
 # Package variables
-PACKAGE_NAME=concurrency-avr
+PACKAGE_NAME=concurrency
 PACKAGE_VERSION=1
-PACKAGE_OUTPUT="$PACKAGE_NAME"_"$PACKAGE_VERSION"_"all.deb"
+PACKAGE_OUTPUT="$PACKAGE_NAME-$PACKAGE_VERSION-all.deb"
 PACKAGE_BUILD=$TEMP/$PACKAGE_NAME
 
 # Where we check the code out to
@@ -170,15 +170,29 @@ if [ "$1" = "install" ]; then
 		make
 		make install DESTDIR=$FINAL
 	popd
+
+
+fi
+
+if [ "$1" = "destdirs" ]; then
+	###
+	header "Create destination directories"
+	###
+	create $DEST_CONF
+	create $DEST_BIN
+	create $DEST_SHARE
+	create $DEST_SHARE/firmwares
+	create $DEST_CONF
+	create $DEST_LIB
 fi
 
 if [ "$1" = "writeconfig" ]; then
-  
+
   #######
   header "Copying per-platform configuration files."
   #######
   pushd $SVN/tvm/arduino/occam/share/conf
-		create $DEST_CONF
+
 		for P in `ls *.in`
 		do
 			Q=`basename $P .conf.in`
@@ -204,7 +218,6 @@ if [ "$1" = "copy" ]; then
   #######
   
   pushd $SVN/tvm/arduino
-    create $DEST_BIN
 
 		copydir scripts $DEST_BIN
 
@@ -217,17 +230,16 @@ if [ "$1" = "copy" ]; then
 		
 		chmod 755 $DEST_BIN/plumb
 
-		create $DEST_SHARE/firmwares	
 		for firm in `ls tvm-avr-*.hex` 
 		do
-			echo "Copying firmware $firm"	
-    	copy $firm  $DEST_SHARE/firmwares/
+			header "Copying firmware $firm"	
+    	copy $firm  $DEST_SHARE/firmwares/$firm
 		done
-
+		
+		header "Copying avrdude.conf"
     copy avrdude.conf            $DEST_CONF/avrdude.conf
 
 		# Copy occam-pi library code for AVR into lib/...  
-    create $DEST_LIB
 		copydir occam/include $DEST_LIB
   popd
 fi
@@ -309,6 +321,7 @@ if [ "$1" = "all" ]; then
 	$0 configure
   $0 build
 	$0 install
+	$0 destdirs
   $0 copy
   $0 writeconfig
   $0 bundle
@@ -322,6 +335,7 @@ if [ "$1" = "reinstall" ]; then
 	#######
 	header "Re-running on existing tree"
 	$0 install
+	$0 destdirs
 	$0 copy
 	$0 writeconfig
 	$0 bundle
