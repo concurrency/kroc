@@ -1,4 +1,4 @@
-Package: concurrency-avr
+Package: concurrency
 Version: @PACKAGEVERSION@
 Section: base
 Priority: optional
