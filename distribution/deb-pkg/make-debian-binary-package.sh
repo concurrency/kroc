@@ -205,7 +205,14 @@ if [ "$1" = "copy" ]; then
   
   pushd $SVN/tvm/arduino
     create $DEST_FIN/bin
+
 		copydir scripts $DEST_BIN
+
+		# 'plumb' needs to be processed...
+		# Specifically, to set $TVM_INST_ROOT
+		sed -e s#@TVM_INST_DIR@#$FINAL#g \
+				plumb.in > $DEST_FIN/bin/plumb
+		
 
 		create $DEST_SHARE/firmwares	
 		for firm in `ls tvm-avr-*.hex` 
@@ -214,7 +221,7 @@ if [ "$1" = "copy" ]; then
     	copy $firm  $DEST_SHARE/firmwares/
 		done
 
-    copy avrdude.conf            $DEST_CONF
+    copy avrdude.conf            $DEST_CONF/avrdude.conf
 
 		# Copy occam-pi library code for AVR into lib/...  
     create $DEST_FIN/lib
