@@ -204,15 +204,18 @@ if [ "$1" = "copy" ]; then
   #######
   
   pushd $SVN/tvm/arduino
-    create $DEST_FIN/bin
+    create $DEST_BIN
 
 		copydir scripts $DEST_BIN
 
 		# 'plumb' needs to be processed...
 		# Specifically, to set $TVM_INST_ROOT
-		sed -e s#@TVM_INST_DIR@#$FINAL#g \
-				plumb.in > $DEST_FIN/bin/plumb
+		header "Processing plumb.in"
+
+		sed -e s#@TVM_INST_ROOT@#$FINAL#g \
+				scripts/plumb.in > $DEST_BIN/plumb
 		
+		chmod 755 $DEST_BIN/plumb
 
 		create $DEST_SHARE/firmwares	
 		for firm in `ls tvm-avr-*.hex` 
@@ -224,7 +227,7 @@ if [ "$1" = "copy" ]; then
     copy avrdude.conf            $DEST_CONF/avrdude.conf
 
 		# Copy occam-pi library code for AVR into lib/...  
-    create $DEST_FIN/lib
+    create $DEST_LIB
 		copydir occam/include $DEST_LIB
   popd
 fi
@@ -259,6 +262,7 @@ if [ "$1" = "bundle" ]; then
 	popd
 	
 	# Get into temp		
+	header "Running dpkg in $TEMP"
 	pushd $TEMP
 		dpkg --build $PACKAGE_NAME ./
 	popd
