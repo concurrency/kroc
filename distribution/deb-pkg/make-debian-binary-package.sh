@@ -91,6 +91,8 @@ FINAL=/$FIN
 DEST=$TEMP/$PACKAGE_NAME
 DEST_ROOT=$DEST/$FIN
 DEST_BIN=$DEST_ROOT/bin
+DEST_SHARE=$DEST_ROOT/share
+DEST_CONF=$DEST_SHARE/conf
 DEST_LIB=$DEST_ROOT/lib
 
 if [ "$1" = "checkout" ]; then
@@ -167,22 +169,17 @@ if [ "$1" = "install" ]; then
 fi
 
 if [ "$1" = "writeconfig" ]; then
-
-  config ()
-  {
-    echo $2 >> $1
-  }
   
   #######
   header "Writing conf script"
   #######
-  pushd $SVN/tvm/arduino/scripts
+  pushd $SVN/tvm/arduino/occam/share/conf
 		for P in $PLATFORMS
 		do
 			echo $P
 			sed -e s#@FINAL@#$FINAL#g \
 					-e s#@PLATFORM@#$P#g \
-					$P.conf.in > $DEST_BIN/$P.conf
+					$P.conf.in > $DEST_CONF/$P.conf
 		done
   
   popd
@@ -204,10 +201,15 @@ if [ "$1" = "copy" ]; then
   pushd $SVN/tvm/arduino
     create $DEST_FIN/bin
 		copydir scripts $DEST_BIN
-		
-    copy tvm-arduino.hex         $DEST_ROOT
+	
+		for firm in `ls *.hex` 
+		do	
+    	copy $firm  $DEST_SHARE/firmwares/
+		done
+
     copy avrdude.conf            $DEST_ROOT
-  
+
+		# Copy occam-pi library code for AVR into lib/...  
     create $DEST_FIN/lib
 		copydir occam/include $DEST_LIB
   popd
@@ -298,6 +300,15 @@ if [ "$1" = "all" ]; then
   fi 
 fi  
 
+if [ "$1" = "reinstall" ]; then
+	#######
+	header "Re-running on existing tree"
+	$0 install
+	$0 copy
+	$0 writeconfig
+	$0 bundle
+fi
+
 if [ "$1" = "" ]; then
   header "Build options"
 	echo " [ checkout    ]  Checkout a fresh tree."
@@ -308,6 +319,7 @@ if [ "$1" = "" ]; then
   echo " [ copy        ]  Copy Arduino scripts into binary path."
   echo " [ writeconfig ]  Generate Arduino support config."
   echo " [ bundle      ]  Generate tarball."
+	echo " [ reinstall   ]  Reruns install, copy, writeconfig, and bundle."
   echo " [ all         ]  From source checkout to tarballing. "
   echo " [ all <uname> ]  Upload after completion."
   echo
