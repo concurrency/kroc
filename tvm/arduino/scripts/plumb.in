@@ -2,6 +2,7 @@
 
 # App name
 PLUMB="plumb"
+TVM_INST_ROOT=@TVM_INST_ROOT@
 
 usage()
 {
