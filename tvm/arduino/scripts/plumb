@@ -28,7 +28,7 @@ if [ "$1" == "" ]; then
 fi	
 
 PLATFORM=$1
-source $PLATFORM.conf
+source $TVM_INST_ROOT/share/conf/$PLATFORM.conf
 
 # Sanity check
 if [ "$2" == "" ]; then
@@ -46,7 +46,7 @@ if [ "$3" == "firmware" ]; then
   avrdude -C $TVM_AVRDUDE_CONF \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
     -P $1 -b $TVM_UPLOAD_RATE -c stk500v1 \
-    -U flash:w:$TVM_ARDUINO_FIRMWARE
+    -U flash:w:$TVM_INST_ROOT/share/firmwares/$TVM_ARDUINO_FIRMWARE
   exit
 fi
 
