@@ -78,7 +78,6 @@ TEMP=/tmp
 # Package variables
 PACKAGE_NAME=concurrency
 PACKAGE_VERSION=1
-PACKAGE_OUTPUT="$PACKAGE_NAME-$PACKAGE_VERSION-all.deb"
 PACKAGE_BUILD=$TEMP/$PACKAGE_NAME
 
 # Where we check the code out to
