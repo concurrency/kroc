@@ -2,7 +2,7 @@ Package: concurrency
 Version: @PACKAGEVERSION@
 Section: base
 Priority: optional
-Architecture: all
+Architecture: i386
 Depends: bash
 Maintainer: matt@concurrency.cc
 Description: occam-pi for the AVR/Arduino
