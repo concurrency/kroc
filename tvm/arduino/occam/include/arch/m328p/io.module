@@ -14,7 +14,7 @@ PROC adc.io (VAL INT pin, RESULT INT v)
   INT16 result:
   SEQ
     -- Enable ADC; enable interrupt; clock prescale 128
-    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ BV (ADPS0)
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
     -- Disable digital inputs on all 6 (well, 8, really) ADC pins.
     -- FIXME: Seems a bit much? Perhaps we should pinpoint which pin to switch?
     ports[DIDR0] := #3F
