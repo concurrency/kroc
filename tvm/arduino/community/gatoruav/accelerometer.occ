@@ -28,24 +28,29 @@ PROC serialWriteDecInt (VAL INT n)
         index := index + 1
     
 :
-PROC calculator (CHAN REAL32 input?)
-  REAL32 input.val:
+PROC calculator (CHAN REAL32 input.z?, input.y?, input.x?)
+  REAL32 val.z, val.y, val.x, sum, pitch,roll:
   REAL32 angle:
-  INT32 value:
+  INT32 value.pitch, value.roll:
   REAL32 test:
   WHILE TRUE
     SEQ
-      test := 1.5
-      --serialWrite("listening for input*n")
-      input ? input.val
-      --serialWrite("Doing calculation*n")
-      angle := (100.0 * (ACOS (268.0/(input.val))))
-      --serialWrite("Converting*n")
-      value := INT32 ROUND angle
-      --serialWrite("Done with convert")
-      serialWriteDecInt (INT value)
-      serialWrite("*n")
-      
+      input.z ? val.z
+      input.x ? val.x
+      input.y ? val.y
+      sum := (val.z * val.z)
+      sum := sum + (val.x * val.x)
+      sum := sum + (val.y * val.y)
+      pitch :=((100.0) * ATAN2 ((val.x/268.0), (val.z/268.0)))
+      roll := ((100.0) * ATAN2 ((val.y/268.0), (val.z/268.0)))
+      value.pitch := INT32 ROUND pitch
+      value.roll := INT32 ROUND roll
+      serialWrite ("Pitch: ")
+      serialWriteDecInt (INT value.pitch)
+      serialWrite ("       ")
+      serialWrite ("Roll: ")
+      serialWriteDecInt (INT value.roll)
+      serialWrite ("*n")
 :
 
 PROC magic (CHAN INT adc.input?, CHAN REAL32 out!)
@@ -80,16 +85,21 @@ PROC pinger(CHAN SIGNAL ping!)
       ping ! SIGNAL
       delay(150)
 :
+
 PROC main ()
-  CHAN INT output:
-  CHAN SIGNAL ping:
-  CHAN REAL32 output.32:
-  SEQ
-    serialWrite("Hi*n")
-    PAR
-      pinger(ping!)
-      --show(output?)
-      adc.io(0,ping?,output!)
-      magic(output?,output.32!)
-      calculator(output.32?)
+  CHAN INT output.z,output.y, output.x:
+  CHAN SIGNAL ping.x, ping.y, ping.z:
+  CHAN REAL32 output.z.32, output.y.32, output.x.32:
+  PAR
+    pinger(ping.x!)
+    pinger(ping.y!)
+    pinger(ping.z!)
+    adc(5,ping.z?,output.z!)
+    adc(3,ping.y?,output.y!)
+    adc(1,ping.x?,output.x!)
+    magic(output.z?,output.z.32!)
+    magic(output.y?, output.y.32!)
+    magic(output.x?,output.x.32!)
+    calculator(output.z.32?, output.y.32?, output.x.32?)
+    --show(output?)
 :
