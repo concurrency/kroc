@@ -36,14 +36,13 @@ PROC show (CHAN INT position?, rate?, BYTE axis)
       serialWrite([axis])
       serialWrite("Rate:")
       serialWriteDecInt(rat)
-      serialWrite ("*n")
+      serialWrite ("      ")
       
       position ? pos
       serialWrite([axis])
       serialWrite ("Pos:")
       serialWriteDecInt(pos)
       serialWrite ("*n")
-      serialWrite ("*n*n")
 :
 PROC to.degrees (CHAN INT input?, CHAN INT output!)
 
@@ -52,15 +51,15 @@ PROC to.degrees (CHAN INT input?, CHAN INT output!)
     SEQ
       input ? n
       IF  
-        counter = 0
+        counter < 11
           SEQ
             serialWriteInt (counter)
-            shift := n
+            shift := n  
             counter := counter + 1
             --IF statement used to initially zero the reading to whatever the first value is
         TRUE
           SKIP
-      n := n-shift
+      n := n - shift
               --n := n * 2 (adc units to degrees per second.)
               -- in milliseconds
       output ! n
@@ -70,7 +69,7 @@ PROC ping (CHAN SIGNAL request!)
     WHILE TRUE
       SEQ
         request ! SIGNAL
-        delay(1000)
+        delay(200)
 :
 
 PROC filter (CHAN INT input?, CHAN INT position!, rate!, drift?)
@@ -128,6 +127,7 @@ PROC main()
     axis.x := 'x'
     axis.y := 'y'
     axis.z := 'z'
+    delay (5000)
     PAR
       PAR
         --gryo 0 "x"
@@ -137,6 +137,7 @@ PROC main()
         gyro.drift(drift.gyro0!)
         filter(degree.gyro0?, position.gyro0!, rate.gyro0!, drift.gyro0?)
         show(position.gyro0?, rate.gyro0?, axis.x)
+        
     
       PAR
         --gyro 1 "y"
@@ -146,7 +147,7 @@ PROC main()
         gyro.drift(drift.gyro1!)
         filter(degree.gyro1?, position.gyro1!, rate.gyro1!, drift.gyro1?)
         show(position.gyro1?, rate.gyro1?, axis.y)
-    
+        
       PAR
         --gyro 2 "z"
         ping(signal.gyro2!)
