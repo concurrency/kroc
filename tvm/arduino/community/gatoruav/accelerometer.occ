@@ -41,8 +41,8 @@ PROC calculator (CHAN REAL32 input.z?, input.y?, input.x?)
       sum := (val.z * val.z)
       sum := sum + (val.x * val.x)
       sum := sum + (val.y * val.y)
-      pitch :=((100.0) * ATAN2 ((val.x/268.0), (val.z/268.0)))
-      roll := ((100.0) * ATAN2 ((val.y/268.0), (val.z/268.0)))
+      pitch :=((100.0) * ATAN2 ((val.x/330.0), (val.z/400.0)))
+      roll := ((100.0) * ATAN2 ((val.y/325.0), (val.z/400.0)))
       value.pitch := INT32 ROUND pitch
       value.roll := INT32 ROUND roll
       serialWrite ("Pitch: ")
@@ -75,6 +75,7 @@ PROC show (CHAN INT output?)
   WHILE TRUE
     SEQ
       output ? val
+      
       serialWriteDecInt(val)
       serialWrite("*n")
     
@@ -101,5 +102,5 @@ PROC main ()
     magic(output.y?, output.y.32!)
     magic(output.x?,output.x.32!)
     calculator(output.z.32?, output.y.32?, output.x.32?)
-    --show(output?)
+    --show(output.x?)
 :
