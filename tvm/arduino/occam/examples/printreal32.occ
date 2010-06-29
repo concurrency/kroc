@@ -1,0 +1,86 @@
+#INCLUDE "plumbing.module"
+
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+
+VAL INT32 sI IS 10000:
+VAL REAL32 sR IS 10000.0:
+
+PROC clearArr([]BYTE arr)
+  SEQ i = 0 FOR (SIZE arr)
+    arr[i] := '0'
+:
+
+PROC trimTrailingZeros (VAL []BYTE arr, INT total)
+  SEQ
+    total := (SIZE arr)
+    INITIAL BOOL REMOVING IS TRUE:
+    SEQ i = ((SIZE arr) - 1) FOR (SIZE arr) STEP (- 1)
+      SEQ
+        IF
+          REMOVING AND (arr[i] = '0')
+            total := total - 1
+          TRUE
+            REMOVING := FALSE
+:
+
+PROC real32toa.b (VAL INT lhs, []BYTE arr, INT length)
+  [(SIZE powers)]BYTE dest:
+  INITIAL INT number IS lhs:
+  SEQ
+    SEQ i = 0 FOR (SIZE powers)
+      INT digit:
+      SEQ
+        digit := number / powers[i]
+        number := number REM powers[i]
+        dest[i] := (BYTE digit) + (BYTE '0')
+
+    INITIAL BOOL LEADING IS TRUE:
+    SEQ index = 0 FOR (SIZE dest)
+      SEQ
+        IF 
+          LEADING AND (dest[index] = '0')
+            SKIP
+          LEADING AND (dest[index] <> '0')
+            SEQ
+              arr[length] := dest[index]
+              length := length + 1
+              LEADING := FALSE
+          TRUE
+            SEQ
+              arr[length] := dest[index]
+              length := length + 1
+:
+
+PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
+  INITIAL REAL32 scaled IS n * sR:
+  INT32 lhs32:
+  INT lhs:
+  INITIAL INT length IS 0:
+  SEQ
+    clearArr(arr)
+    scaled := n * sR
+    lhs32 := INT32 TRUNC scaled
+    lhs := INT (lhs32 / sI)
+    real32toa.b(lhs, arr, length)
+    arr[length] := '.'
+    lhs32 := lhs32 - ((INT32 lhs) * sI)
+    INITIAL INT start IS (length + 1):
+    SEQ
+      real32toa.b((INT lhs32), arr, start)
+      trimTrailingZeros(arr, total)
+:
+
+VAL []REAL32 tests IS [0.12345, 1.2345, 12.345, 123.45, 1234.5, 101.101]: 
+PROC  main ()
+  [16]BYTE arr:
+  INT total:
+  SEQ i = 0 FOR (SIZE tests)
+    SEQ
+      real32toa(tests[i], arr, total)
+      serialWrite("Test ")
+      serialWriteInt(i)
+      serialWrite(": ")
+      SEQ i = 0 FOR total
+        serialWrite([arr[i]])
+      serialWrite("*n")
+:
