@@ -276,7 +276,10 @@ if [ "$1" = "bundle" ]; then
 	header "Running dpkg in $TEMP"
 	pushd $TEMP
 		dpkg --build $PACKAGE_NAME ./
+		header "Running 'alien' on $PACKAGE_NAME"
+		alien --scripts -r $PACKAGE_NAME"_"$YMD"_i386.deb"
 	popd
+
 		
 fi
 
