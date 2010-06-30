@@ -12,6 +12,7 @@
 #DEFINE PLUMBING.MODULE
 
 #INCLUDE "wiring.module"
+#INCLUDE "printing.module"
 
 VAL INT LED.PIN IS 13:
 
