@@ -1,0 +1,94 @@
+--** Printing support for Plumbing
+--
+-- [@code PROC]s in this module generally have arguments in this order:
+--
+-- [@item] non-channels;
+-- [@item] input channels;
+-- [@item] output channels.
+--
+-- @module printing
+
+#IF NOT (DEFINED (printing.MODULE))
+#DEFINE PRINTING.MODULE
+
+VAL []INT dec.powers IS [10000, 1000, 100, 10, 1]:
+
+VAL INT32 scaling.INT32 IS 10000:
+VAL REAL32 scaling.REAL32 IS 10000.0:
+
+PROC printing.zeroArray([]BYTE arr)
+  SEQ i = 0 FOR (SIZE arr)
+    arr[i] := '0'
+:
+
+PROC printing.trimTrailing0s (VAL []BYTE arr, INT total)
+  SEQ
+    total := (SIZE arr)
+    INITIAL BOOL REMOVING IS TRUE:
+    SEQ i = ((SIZE arr) - 1) FOR (SIZE arr) STEP (- 1)
+      SEQ
+        IF
+          REMOVING AND (arr[i] = '0')
+            total := total - 1
+          TRUE
+            REMOVING := FALSE
+:
+
+PROC printing.real32toa.helper (VAL INT lhs, []BYTE arr, INT length)
+  [(SIZE dec.powers)]BYTE dest:
+  INITIAL INT number IS lhs:
+  SEQ
+    SEQ i = 0 FOR (SIZE dec.powers)
+      INT digit:
+      SEQ
+        digit := number / dec.powers[i]
+        number := number REM dec.powers[i]
+        dest[i] := (BYTE digit) + (BYTE '0')
+
+    INITIAL BOOL LEADING IS TRUE:
+    SEQ index = 0 FOR (SIZE dest)
+      SEQ
+        IF 
+          LEADING AND (dest[index] = '0')
+            SKIP
+          LEADING AND (dest[index] <> '0')
+            SEQ
+              arr[length] := dest[index]
+              length := length + 1
+              LEADING := FALSE
+          TRUE
+            SEQ
+              arr[length] := dest[index]
+              length := length + 1
+:
+
+PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
+  INITIAL REAL32 scaled IS n * scaling.REAL32:
+  INT32 lhs32:
+  INT lhs:
+  INITIAL INT length IS 0:
+  SEQ
+    printing.zeroArray(arr)
+    scaled := n * scaling.REAL32
+    lhs32 := INT32 TRUNC scaled
+    lhs := INT (lhs32 / scaling.INT32)
+    printing.real32toa.helper(lhs, arr, length)
+    arr[length] := '.'
+    lhs32 := lhs32 - ((INT32 lhs) * scaling.INT32)
+    INITIAL INT start IS (length + 1):
+    SEQ
+      printing.real32toa.helper((INT lhs32), arr, start)
+      printing.trimTrailing0s(arr, total)
+:
+
+PROC print.real32 (VAL REAL32 n, CHAN BYTE b!)
+  [16]BYTE arr:
+  INT total:
+  SEQ i = 0 FOR (SIZE tests)
+    SEQ
+      real32toa(tests[i], arr, total)
+      SEQ i = 0 FOR total
+        b ! arr[i]
+:
+
+#ENDIF
