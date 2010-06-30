@@ -12,7 +12,8 @@
 #DEFINE PLUMBING.MODULE
 
 #INCLUDE "wiring.module"
-#INCLUDE "printing.module"
+--#INCLUDE "printing.module"
+--FIXME: Not sure what printing.module is, but it's borked.
 
 VAL INT LED.PIN IS 13:
 
