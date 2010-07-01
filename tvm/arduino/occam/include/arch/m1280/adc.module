@@ -9,12 +9,14 @@ PROC adc.base (VAL INT pin, VAL BOOL USE.VCC, RESULT INT v)
   INT16 result:
   SEQ
     -- Enable ADC; enable interrupt; clock prescale 128
-    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
-    -- FIXME: ADPS0 is.. 0. Why are we filling the register with 1s?
-    -- Disable digital inputs on all 16 ADC pins.
-    -- FIXME: Seems a bit much? Perhaps we should pinpoint which pin to switch?
-    ports[DIDR0] := #3F
-    ports[DIDR2] := #3F
+    -- The '7' is == ADPS2 \/ ADPS1 \/ ADPS0 which sest the prescale to 128
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ 7
+    -- Disable digital inputs on the ADC pin.
+    IF
+      pin < 8
+        ports[DIDR0] := ports[DIDR0] \/ BV (pin)
+      TRUE
+        ports[DIDR2] := ports[DIDR2] \/ BV (pin -8)
 
     -- Select the channel
     IF
