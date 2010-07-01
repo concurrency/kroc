@@ -1,0 +1,14 @@
+--** Foreign functions ofr hte 1280 wrapper
+-- @module ffi
+
+#IF NOT (DEFINED (FFI.MODULE))
+#DEFINE FFI.MODULE
+
+--{{{  SFFI PROCs
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.wait.for.interrupt (VAL INT interrupt, INT time) = 0"
+INLINE PROC wait.for.interrupt (VAL INT interrupt, INT time)
+  C.tvmspecial.0.wait.for.interrupt (interrupt, time)
+:
+--}}}
+
+#ENDIF
