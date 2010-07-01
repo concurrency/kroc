@@ -9,10 +9,10 @@ PROC adc.base (VAL INT pin, VAL BOOL USE.VCC, RESULT INT v)
   INT16 result:
   SEQ
     -- Enable ADC; enable interrupt; clock prescale 128
-    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
-    -- Disable digital inputs on all 6 (well, 8, really) ADC pins.
-    -- FIXME: Seems a bit much? Perhaps we should pinpoint which pin to switch?
-    ports[DIDR0] := #3F
+    -- The '7' is == ADPS2 \/ ADPS1 \/ ADPS0 which sest the prescale to 128
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ 7
+    -- Disable digital inputs on the ADC pin.
+    ports[DIDR0] := ports[DIDR0] \/ BV (pin)
 
     -- Select the channel
     -- If we are using Vcc as our reference, set bit REFS0.
