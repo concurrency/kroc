@@ -276,7 +276,7 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
     WHILE TRUE
       SEQ
         req ? SIGNAL
-        adc.io (pin, v)
+        adc.vcc (pin, v)
         val ! v
 :
 
