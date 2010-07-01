@@ -39,7 +39,7 @@ INLINE PROC adc.aref (VAL INT pin, RESULT INT v)
   adc.base (pin, TRUE, v)
 :
 
-INLINE PROC adc (VAL INT pin, RESULT INT v)
+INLINE PROC adc.vcc (VAL INT pin, RESULT INT v)
   adc.base (pin, FALSE, v)
 :
 
