@@ -1,0 +1,92 @@
+--** occam definitions for AVR processors.
+-- @module avr
+
+#IF NOT (DEFINED (CONSTANTS.MODULE))
+#DEFINE CONSTANTS.MODULE
+
+--{{{  per-MCU configuration
+#DEFINE AVR.ATMEGA1280
+
+#IF DEFINED (AVR.ATMEGA1280)
+#INCLUDE "iomxx0_1.inc"
+#ENDIF
+--}}}
+
+--* The CPU frequency in Hz.
+VAL INT32 F.CPU IS ##F.CPU:
+
+--* A value that's guaranteed to be higher than the highest port value defined
+-- by this module.
+--
+-- This is for placing an array over all the ports:
+--
+-- [@code
+-- PLACED [MAX.PORT]BYTE ports 0:
+-- ports[PORTB] := 42
+-- ]
+-- FIXME: This has not yet been checked against the 1280.
+VAL INT MAX.PORT IS #200:
+
+--{{{  interrupt numbers
+-- From Page 105 of the 1280 manual.
+
+-- From ATmega328p
+-- VAL INT VINTR.TIMER1 IS 12:
+-- VAL INT VINTR.TIMER2 IS 6:
+
+VAL INT VINTR.INT0          IS  #0002:  -- External Interrupt Request 0
+VAL INT VINTR.INT1          IS  #0004:  --
+VAL INT VINTR.INT2          IS  #0006:  --
+VAL INT VINTR.INT3          IS  #0008:  --
+VAL INT VINTR.INT4          IS  #000A:  --
+VAL INT VINTR.INT5          IS  #000C:  --
+VAL INT VINTR.INT6          IS  #000E:  --
+VAL INT VINTR.INT7          IS  #0010:  --
+VAL INT VINTR.PCINT0        IS  #0012:  -- Pin Change Interrupt Request 0
+VAL INT VINTR.PCINT1        IS  #0014:  -- 
+VAL INT VINTR.PCINT2        IS  #0016:  -- 
+VAL INT VINTR.ADC           IS  #003A:  -- ADC Conversion Complete
+VAL INT VINTR.USART.RX0     IS  #0032:  -- Rx Complete
+VAL INT VINTR.USART.RX1     IS  #0048:  --
+VAL INT VINTR.USART.RX2     IS  #0066:  --
+VAL INT VINTR.USART.RX3     IS  #006C:  --
+VAL INT VINTR.USART.UDRE0   IS  #0034:  -- Data Register Empty
+VAL INT VINTR.USART.UDRE1   IS  #004A:  --
+VAL INT VINTR.USART.UDRE2   IS  #0068:  --
+VAL INT VINTR.USART.UDRE3   IS  #006E:  --
+VAL INT VINTR.USART.TX0     IS  #0038:  -- Tx Complete
+VAL INT VINTR.USART.TX1     IS  #004C:  --
+VAL INT VINTR.USART.TX2     IS  #006A:  --
+VAL INT VINTR.USART.TX3     IS  #0070:  --
+--}}}
+
+--{{{ serial constants
+-- Because we are working with multiple serial ports, we place
+-- all of the critical registers into arrays that can be indexed
+-- by the serial port. 0, 1, 2, or 3
+
+-- Baud Rate Registers (low/high bites)
+VAL []INT UBRRL IS [UBRR0L, UBRR1L, UBRR2L, UBRR3L]:
+VAL []INT UBRRH IS [UBRR0H, UBRR1H, UBRR2H, UBRR3H]:
+-- UCSR -- Control and status register
+VAL []INT UCSRC IS [UCSR0C, UCSR1C, UCSR2C, UCSR3C]:
+VAL []INT UCSRB IS [UCSR0B, UCSR1B, UCSR2B, UCSR3B]:
+VAL []INT UCSRA IS [UCSR0A, UCSR1A, UCSR2A, UCSR3A]:
+
+VAL []INT UDRE IS [UDRE0, UDRE1, UDRE2, UDRE3]:
+VAL []INT UDR  IS [UDR0, UDR1, UDR2, UDR3]:
+
+VAL []INT UDRIE IS [UDRIE0, UDRIE1, UDRIE2, UDRIE3]:
+VAL []INT VINTR.UDRE IS [VINTR.USART.UDRE0, VINTR.USART.UDRE1, VINTR.USART.UDRE2, VINTR.USART.UDRE3]:
+
+VAL []INT TXEN IS [TXEN0, TXEN1, TXEN2, TXEN3]:
+VAL []INT RXEN IS [RXEN0, RXEN1, RXEN2, RXEN3]:
+
+VAL []INT UCSZ IS [UCSZ00, UCSZ10, UCSZ20, UCSZ30]:
+
+VAL []INT RXC IS [RXC0, RXC1, RXC2, RXC3]:
+VAL []INT RXCIE IS [RXCIE0, RXCIE1, RXCIE2, RXCIE3]:
+VAL []INT VINTR.RX IS [VINTR.USART.RX0, VINTR.USART.RX1, VINTR.USART.RX2, VINTR.USART.RX3]:
+--}}}
+
+#ENDIF
