@@ -1,8 +1,13 @@
 #INCLUDE "plumbing.module"
 
 PROC main ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   PAR
-    blink(42, 1000)
-    --blink(10, 300)
-    --blink(11, 133)
+    SEQ
+      ports[DDRH] := (ports[DDRH] /\ (~BV (2))) \/ (#1 << 2)
+      ports[PORTH] := (ports[PORTH] /\ (~BV (2))) \/ (#1 << 2)
+    blink(44, 1000)
+    blink(45, 500)
+    blink(46, 750)
 :
