@@ -208,11 +208,13 @@ PROC beginAnalog16 (VAL INT pin)
     ports[TCCR1B] := BV (WGM13) \/ BV (CS10)
     IF
       pin = 9
-        ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1A1)
-        ports[OCR1A] := 0
+        SEQ
+          ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1A1)
+          ports[OCR1A] := 0
       pin = 10
-        ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1B1)
-        ports[OCR1B] := 0
+        SEQ
+          ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1B1)
+          ports[OCR1B] := 0
       TRUE
         SKIP
 :
