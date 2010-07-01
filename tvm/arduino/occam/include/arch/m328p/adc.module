@@ -1,0 +1,46 @@
+--** ADC routines for the 328
+-- @module adc
+
+#IF NOT (DEFINED (ADC.MODULE))
+#DEFINE ADC.MODULE
+
+PROC adc.base (VAL INT pin, VAL BOOL USE.VCC, RESULT INT v)
+  PLACED [MAX.PORT]BYTE ports 0:
+  INT16 result:
+  SEQ
+    -- Enable ADC; enable interrupt; clock prescale 128
+    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
+    -- Disable digital inputs on all 6 (well, 8, really) ADC pins.
+    -- FIXME: Seems a bit much? Perhaps we should pinpoint which pin to switch?
+    ports[DIDR0] := #3F
+
+    -- Select the channel
+    -- If we are using Vcc as our reference, set bit REFS0.
+    IF
+      USE.VCC
+        ports[ADMUX] := BV (REFS0) \/ (BYTE pin)
+      TRUE
+        ports[ADMUX] := (BYTE pin)
+
+    -- Start conversion
+    ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
+    WHILE ((ports[ADCSRA] /\ BV(ADSC)) = BV (ADSC))
+      SKIP
+
+    -- Read value
+    -- (We can't do this by retyping ports, since that does a 16-bit read)
+    [2]BYTE bytes RETYPES result:
+    bytes[0], bytes[1] := ports[ADCL], ports[ADCH]
+
+    v := (INT result)
+:
+
+INLINE PROC adc.aref (VAL INT pin, RESULT INT v)
+  adc.base (pin, TRUE, v)
+:
+
+INLINE PROC adc (VAL INT pin, RESULT INT v)
+  adc.base (pin, FALSE, v)
+:
+
+#ENDIF

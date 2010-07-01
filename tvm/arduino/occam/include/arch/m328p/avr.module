@@ -1,50 +1,15 @@
---** occam definitions for AVR processors.
+--** A wrapper for platform-specific code on the 328
 -- @module avr
 
 #IF NOT (DEFINED (AVR.MODULE))
 #DEFINE AVR.MODULE
 
---{{{  per-MCU configuration
-#DEFINE AVR.ATMEGA328P
-
-#IF DEFINED (AVR.ATMEGA328P)
-#INCLUDE "iom328p.inc"
-#ENDIF
---}}}
-
---* The CPU frequency in Hz.
-VAL INT32 F.CPU IS ##F.CPU:
-
---* A value that's guaranteed to be higher than the highest port value defined
--- by this module.
---
--- This is for placing an array over all the ports:
---
--- [@code
--- PLACED [MAX.PORT]BYTE ports 0:
--- ports[PORTB] := 42
--- ]
-VAL INT MAX.PORT IS #200:
-
---{{{  SFFI PROCs
-#PRAGMA EXTERNAL "PROC C.tvmspecial.0.wait.for.interrupt (VAL INT interrupt, INT time) = 0"
-INLINE PROC wait.for.interrupt (VAL INT interrupt, INT time)
-  C.tvmspecial.0.wait.for.interrupt (interrupt, time)
-:
---}}}
-
---{{{  interrupt numbers
-VAL INT VINTR.INT0 IS 0:
-VAL INT VINTR.INT1 IS 1:
-VAL INT VINTR.PCINT0 IS 2:
-VAL INT VINTR.PCINT1 IS 3:
-VAL INT VINTR.PCINT2 IS 4:
-VAL INT VINTR.TIMER1 IS 5:
-VAL INT VINTR.TIMER2 IS 6:
-VAL INT VINTR.ADC IS 7:
-VAL INT VINTR.USART.RX IS 8:
-VAL INT VINTR.USART.UDRE IS 9:
-VAL INT VINTR.USART.TX IS 10:
---}}}
+-- base, constants, and FFI must come first
+#INCLUDE "base.module"
+#INCLUDE "constants.module"
+#INCLUDE "ffi.module"
+-- These modules depend on base, constants, and FFI
+#INCLUDE "usart.module"
+#INCLUDE "adc.module"
 
 #ENDIF

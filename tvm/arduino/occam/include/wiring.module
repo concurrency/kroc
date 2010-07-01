@@ -5,7 +5,6 @@
 #DEFINE WIRING.MODULE
 
 #INCLUDE "avr.module"
-#INCLUDE "io.module"
 #INCLUDE "pinmapping.module"
 
 --{{{  constants
