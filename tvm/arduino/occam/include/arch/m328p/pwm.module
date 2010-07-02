@@ -1,0 +1,101 @@
+--** Pulse width modulation for the ATmega328
+-- @module pwm
+
+#IF NOT (DEFINED (PWM.MODULE))
+#DEFINE PWM.MODULE
+
+--{{{  PROC beginAnalog
+--* Initialize analog input.
+-- Only works on PWM pins. 
+-- @param pin The Arduino pin number.
+PROC beginAnalog (VAL INT pin)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
+  SEQ
+    pinMode(pin, OUTPUT) 
+    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
+    -- Set prescale to 64... don't change that. The VM is using that
+    -- for TCCR2, and we'll (for the moment) use the same everywhere.
+    ports[TCR.PRESCALE[index]] := BV(CS1[index]) \/ BV(CS0[index])
+    ports[OCR[index]] := 0
+:
+--}}}
+
+--{{{  PROC analogWrite
+--* Write an analog value to a pin.
+-- @param pin The Arduino pin number.
+-- @param level A [@code BYTE] representing the analog level (0 -> 255)
+PROC analogWrite (VAL INT pin, VAL BYTE level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
+  SEQ
+    ports[OCR[index]] := level
+:
+--}}}
+
+--{{{  PROC endAnalog
+--* Disable analog output on Arduino.
+-- Only works on PWM pins.
+-- @param pin The Arduino pin number.
+PROC endAnalog (VAL INT pin)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
+  SEQ
+    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] /\ (~ BV(COM[index]))
+:
+--}}}
+
+
+-- FIXME: I'm thinking the only pins that can queue into the 16 bit
+--  timer are 9 and 10... Can they run simultaniously? Yes. Yes they can.
+
+INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    -- It looks like the high byte is always one greater
+    -- than the low byte. For example:
+    -- OCR1A = OCR1AL
+    -- OCR1AL + 1 = OCR1AH
+    -- According to the datasheet, we have to write the high byte first.
+    ports[reg+1] := (BYTE (val >> 8)) 
+    ports[reg] := (BYTE (val BITAND #FF))
+:
+
+-- Pin can only be 9 or 10
+PROC beginAnalog16 (VAL INT pin)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    pinMode(pin, OUTPUT)
+    ports[TCCR1B] := BV (WGM13) \/ BV (CS10)
+    IF
+      pin = 9
+        SEQ
+          ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1A1)
+          ports[OCR1A] := 0
+      pin = 10
+        SEQ
+          ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1B1)
+          ports[OCR1B] := 0
+      TRUE
+        SKIP
+:
+
+-- Again, pin can only be 9 or 10. I think.
+PROC analogWrite16 (VAL INT pin, VAL INT16 level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  IF
+    pin = 9
+      set16breg (OCR1A, level)
+    pin = 10
+      set16breg (OCR1B, level)
+    TRUE
+      SKIP
+:
+
+#ENDIF

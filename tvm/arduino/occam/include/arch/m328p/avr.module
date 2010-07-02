@@ -11,5 +11,6 @@
 -- These modules depend on base, constants, and FFI
 #INCLUDE "usart.module"
 #INCLUDE "adc.module"
+#INCLUDE "pwm.module"
 
 #ENDIF
