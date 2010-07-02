@@ -1,0 +1,51 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  SEQ
+    beginAnalog16 (9)
+    pinMode (10, OUTPUT) -- Begin Analog on port 10
+    set16breg (ICR1, 20000)
+    VAL INT MAX IS 20000:
+    VAL INT INCREMENT IS  1000:
+    INITIAL INT width IS 0:
+    INITIAL INT width9 IS 0:
+    INITIAL BOOL up IS TRUE:
+    INITIAL BOOL up9 IS TRUE:
+
+    PAR
+      WHILE TRUE
+        SEQ   
+          IF
+            up
+              width := width + INCREMENT
+            TRUE
+              width := width - INCREMENT
+          IF
+            width = 0
+              up := TRUE
+            width > (MAX - 1)
+              up := FALSE
+            TRUE
+              SKIP
+
+          analogWrite16(10, INT16 (width))
+          delay(70)
+
+      WHILE TRUE
+        SEQ   
+          IF
+            up9
+              width9 := width9 + INCREMENT
+            TRUE
+              width9 := width9 - INCREMENT
+          IF
+            width9 = 0
+              up9 := TRUE
+            width9 > (MAX - 1)
+              up9 := FALSE
+            TRUE
+              SKIP
+
+          analogWrite16(9, INT16 (width9))
+          delay(100)
+:
