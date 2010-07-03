@@ -2838,8 +2838,9 @@ PUBLIC treenode *foldexp (treenode * tptr)
 				chkreport (CHK_INV_SHIFT, /*chklocn */ LocnOf (tptr));
 			}
 
-			if (isconst (LeftOpOf (tptr)) && rightisconst)
+			if (isconst (LeftOpOf (tptr)) && rightisconst) {
 				tptr = newconstexp (tptr);
+			}
 		}
 		break;
 #ifdef OCCAM2_5
