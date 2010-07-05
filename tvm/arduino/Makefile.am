@@ -26,8 +26,7 @@ tvm-arduino.hex: tvm-arduino
 	$(OBJCOPY) -O ihex -R .eeprom tvm-arduino tvm-arduino.hex
 
 upload: tvm-arduino.hex
-	./reset-arduino $(UPLOAD_PORT)
-	$(AVRDUDE) -C avrdude.conf $(AVRDUDE_FLAGS) -U flash:w:tvm-arduino.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:tvm-arduino.hex
 	./read-arduino $(UPLOAD_PORT)
 
 # All the source files need libtvm to be built first.

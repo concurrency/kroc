@@ -53,7 +53,6 @@ makedir "$arduino_fw_dir"
 copyfile "build/kroc-tvm-avr-wrapper/tvm-arduino.hex" "$arduino_fw_dir"
 copyfile "../../tvm/arduino/binary-to-ihex" "$bin_dir"
 copyfile "../../tvm/arduino/read-arduino" "$bin_dir"
-copyfile "../../tvm/arduino/reset-arduino" "$bin_dir"
 arduino_inc_dir="$app_dir/arduino/include"
 makedir "$arduino_inc_dir"
 copyfile "../../tvm/arduino/occam/plumbing.module" "$arduino_inc_dir"
@@ -77,7 +76,6 @@ copydir "install-avr/share/tvm/avr-vtlib" "$arduino_lib_dir"
 
 # avrdude
 copyfile "install-avrdude/bin/avrdude.exe" "$bin_dir"
-# FIXME: copy config file somewhere
 # FIXME: Figure out if we are going to include the giveio stuff
 
 # jEdit
