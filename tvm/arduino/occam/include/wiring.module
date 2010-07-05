@@ -8,10 +8,11 @@
 #INCLUDE "pinmapping.module"
 
 --{{{  constants
+DATA TYPE LEVEL IS INT
 --* Symbolic constant for digital LOW on an Arduino pin.
-VAL INT LOW IS #0:
+VAL LEVEL LOW IS #0:
 --* Symbolic constant for digital HIGH on an Arduino pin.
-VAL INT HIGH IS #1:
+VAL LEVEL HIGH IS #1:
 
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
@@ -52,7 +53,7 @@ PROC delay (VAL INT millis)
 --* Sets the state of a pin to either HIGH or LOW.
 -- @param pin The Arduino pin number.
 -- @param state Either HIGH or LOW.
-PROC digitalWrite (VAL INT pin, state)
+PROC digitalWrite (VAL INT pin, LEVEL state)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
