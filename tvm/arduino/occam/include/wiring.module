@@ -8,7 +8,6 @@
 #INCLUDE "pinmapping.module"
 
 --{{{  constants
-DATA TYPE LEVEL IS INT
 --* Symbolic constant for digital LOW on an Arduino pin.
 VAL LEVEL LOW IS #0:
 --* Symbolic constant for digital HIGH on an Arduino pin.
