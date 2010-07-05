@@ -3,10 +3,11 @@
 #IF NOT (DEFINED (PINMAPPING.MODULE))
 #DEFINE PINMAPPING.MODULE
 
--- Register constants for 328p, which we can expect
--- to find on the Duemilanove board.
-#INCLUDE "iom328p.inc"
+#INCLUDE "constants.module"
 #INCLUDE "base.module"
+
+--* LED pin for the Duemilanove. To be used with heartbeat.
+VAL INT LED.PIN IS 13:
 
 -- Mappings for pin.location
 VAL []INT DDR.MAP IS

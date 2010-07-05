@@ -12,14 +12,11 @@
 #DEFINE PLUMBING.MODULE
 
 #INCLUDE "wiring.module"
---#INCLUDE "printing.module"
---FIXME: Not sure what printing.module is, but it's borked.
+#INCLUDE "printing.module"
 
-VAL INT LED.PIN IS 13:
-
-DATA TYPE LEVEL IS BOOL:
-VAL LEVEL HIGH IS TRUE:
-VAL LEVEL LOW IS FALSE:
+DATA TYPE LEVEL IS INT:
+VAL LEVEL HIGH IS #1:
+VAL LEVEL LOW IS #0:
 
 --* Set digital levels on a pin.
 -- Reads LEVEL values (LOW or HIGH) on the input 
@@ -35,10 +32,11 @@ PROC digital.output (VAL INT pin, CHAN LEVEL in?)
     pinMode (pin, OUTPUT)
     WHILE TRUE
       SEQ
-        digitalWrite (pin, INT v)
+        digitalWrite (pin, v)
         in ? v
 :
 
+--FIXME: digital.input is so much specific to the arduino, which needs to change.
 --* Read digital levels on pin 2 or 3.
 -- For only pin 2 or pin 3 on the Arduino, this procedure
 -- will output a LEVEL (either LOW or HIGH) whenever the
@@ -141,7 +139,11 @@ PROC invert.level (CHAN LEVEL in?, out!)
     LEVEL v:
     SEQ
       in ? v
-      out ! NOT v
+      IF
+        v = HGIH
+          out ! LOW
+        ELSE -- If v = LOW
+          out ! HIGH
 :
 
 --* Watches for button presses on pin 2 or 3.
@@ -185,7 +187,11 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
     SEQ
       out ! level
       in ? SIGNAL
-      level := NOT level
+      IF
+        level = HGIH
+          level := LOW
+        ELSE -- If level = LOW
+          level := HIGH
 :
 
 --* Drives a pin alternately LOW and HIGH.
@@ -214,9 +220,14 @@ PROC blink (VAL INT pin, delay.time)
 :
 
 --* A parallel health monitor.
--- Blinks the LED.PIN (or pin 13) on the Arduino every 500 ms.
+-- Blinks the LED.PIN  every 500 ms.
+--FIXME: If there is no LED.PIN, I'd like to see a board-specific die(..)
 PROC heartbeat ()
-  blink (LED.PIN, 500)
+  IF
+    LED.PIN = -1
+      die("This board does not have an LED pin. Sorry.")
+    ELSE
+      blink (LED.PIN, 500)
 :
 
 --* Limits the range of values in a stream.
@@ -280,26 +291,15 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
         val ! v
 :
 
--- Comments please?
-PROC serial.tx (CHAN BYTE in?)
+PROC serial.write (CHAN BYTE in?)
   WHILE TRUE
-    BYTE b:
-    SEQ
-      in ? b
-      serial.write.byte (0, b)
+  BYTE b:
+  SEQ
+    in ? b
+    serial.write.byte (0, b)
 :
 
--- Comments please?
-PROC serial.intr.tx (CHAN BYTE in?)
-  WHILE TRUE
-    BYTE b:
-    SEQ
-      in ? b
-      serial.write.byte (0, b)
-:
-
--- Comments please?
-PROC serial.intr.rx (CHAN BYTE out!)
+PROC serial.read (CHAN BYTE out!)
   WHILE TRUE
     BYTE b:
     SEQ
@@ -308,10 +308,74 @@ PROC serial.intr.rx (CHAN BYTE out!)
 :
 
 
+PROC serial.tx (VAL INT port, CHAN BYTE in?)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      in ? b
+      serial.write.byte (port, b)
+:
+
+PROC serial.rx (VAL INT port, CHAN BYTE out!)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      serial.read.byte (port, b)
+      out ! b
+:
+
+--{{{  PROC serial.write.int
+--* Write an [@code INT] to the serial port in hex.
+--
+-- @param n The integer to write.
+PROC serial.write.int (VAL INT n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serial.write.byte (0, digits[(n >> (i * 4)) /\ #F])
+:
+--}}}
+
+--{{{  PROC serial.write.int32
+--* Write an [@code INT32] to the serial port in hex.
+--
+-- @param n The long integer ([@code INT32]) to write.
+PROC serial.write.int32 (VAL INT32 n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 7 FOR 8 STEP -1
+    serial.write.byte (0, digits[INT ((n >> (i * 4)) /\ #F)])
+:
+--}}}
+
+--{{{  PROC serial.rx.int
+--* Write an [@code INT] to the serial port in hex.
+--
+-- @param port The serial port to write to.
+-- @param n The integer to write.
+PROC serial.tx.int (VAL INT port, VAL INT n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serial.write.byte (port, digits[(n >> (i * 4)) /\ #F])
+:
+--}}}
+
+--{{{  PROC serial.tx.int32
+--* Write an [@code INT32] to the serial port in hex.
+--
+-- @oaram port The serial port to write to.
+-- @param n The long integer ([@code INT32]) to write.
+PROC serial.tx.int32 (VAL INT port, VAL INT32 n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 7 FOR 8 STEP -1
+    serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
+:
+--}}}
+
+
+
 #IF FALSE
 -- While this is a nice interrupt-driven approach to ADC,
 -- it is not parallel-safe. Because we deschedule when doing a reading,
--- someone else can come in and start anothe1. I have replaced this 
+-- someone else can come in and start another. I have replaced this 
 -- with a busywait version until I can come up with a better solution.
 --
 -- The busywait obviously blocks our runtime until a reading finishes.

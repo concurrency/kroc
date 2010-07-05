@@ -4,28 +4,15 @@
 #IF NOT (DEFINED (USART.MODULE))
 #DEFINE USART.MODULE
 
---{{{  PROC beginSerial
---* Initialise the serial port.
---* Not tested for the 1280.
--- @param baud Baud rate
-PROC beginSerial.blocking (VAL INT reg, VAL INT32 baud)
-  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
-  VAL [4]BYTE factor.bytes RETYPES factor:
-
-  PLACED [MAX.PORT]BYTE ports 0:
-  SEQ
-    ports[UBRR0H] := factor.bytes[1]
-    ports[UBRR0L] := factor.bytes[0]
-
-    ports[UCSR0C] := 3 << UCSZ00
-    ports[UCSR0B] := BV (TXEN0)
-:
---}}}
 --{{{  PROC beginSerialInerrupt
---* Initialise iterrupt-driven serial IO for port1.
---* Lifted from ledmatrix.occ & not tested for the 1280
--- @param baud Baud rate
-PROC serial.setup (VAL INT reg, VAL INT32 baud)
+--* Initialize iterrupt-driven serial IO for port7.
+-- Because the Arduino only has one serial port,
+-- [@code port] is, in this case, a passthrough.
+--
+--
+-- @param port Passthrough val for the serial port.
+-- @param baud Baud rate.
+PROC serial.setup (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
 
@@ -34,27 +21,20 @@ PROC serial.setup (VAL INT reg, VAL INT32 baud)
     ports[UBRR0H] := factor.bytes[1]
     ports[UBRR0L] := factor.bytes[0]
 
-    ports[UCSR0C] := 3 << UCSZ00
+    ports[UCSR0C] := 3 -- << UCSZ00
+              -- This is the same as := UCSZ00 \/ UCSZ01
     ports[UCSR0B] := BV (TXEN0) \/ BV (RXEN0)
 :
 --}}}
 
---{{{  PROC serialWrite
---* Write a string to the serial port.
--- @param string Bytes to write
-PROC serialWriteByte.blocking (VAL INT reg, VAL BYTE b)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    WHILE (ports[UCSR0A] /\ BV (UDRE0)) = 0
-      SKIP
-    ports[UDR0] := b
-:
---}}}
-
 --{{{  PROC serial.write
--- Not tested for the 1280
-PROC serial.write.byte (VAL INT reg, VAL BYTE b)
+--* Write a byte to the serial port. (iterrupt driven) 
+-- Because the Arduino only has one serial port,
+-- [@code port] is, in this case, a passthrough.
+--
+-- @param port Passthrough val for the serial port.
+-- @param b Byte to be written.
+PROC serial.write.byte (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
@@ -73,28 +53,15 @@ PROC serial.write.byte (VAL INT reg, VAL BYTE b)
     ports[UDR0] := b
 :
 --}}}
---{{{  PROC serialWriteInt
---* Write an [@code INT] to the serial port in hex.
--- @param n The integer to write.
-PROC serial.write.int (VAL INT usart, VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (usart, digits[(n >> (i * 4)) /\ #F])
-:
---}}}
---{{{  PROC serialWriteInt32
---* Write an [@code INT32] to the serial port in hex.
--- @param n The long integer ([@code INT32]) to write.
-PROC serial.write.int32 (VAL INT usart, VAL INT32 n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (usart, digits[INT ((n >> (i * 4)) /\ #F)])
-:
---}}}
 
 --{{{  PROC serial.read
--- Not tested for the 1280
-PROC serial.read.byte (VAL INT reg, RESULT BYTE b)
+--* Read a byte from the serial port. 
+-- Because the Arduino only has one serial port,
+-- [@code port] is, in this case, a passthrough.
+--
+-- @param port Passthrough val for the serial port.
+-- @param b Byte to be read.
+PROC serial.read.byte (VAL INT port, RESULT BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
@@ -114,5 +81,40 @@ PROC serial.read.byte (VAL INT reg, RESULT BYTE b)
 :
 --}}}
 
+--{{{  PROC beginSerial
+--* Initialize blocking driven serial IO for the serial port.
+--
+-- @param baud Baud rate
+PROC serial.setup.blocking (VAL INT reg, VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+
+  PLACED [MAX.PORT]BYTE ports 0:
+  SEQ
+    ports[UBRR0H] := factor.bytes[1]
+    ports[UBRR0L] := factor.bytes[0]
+
+    ports[UCSR0C] := 3 -- << UCSZ00
+              --This is the same as := UCSZ00 \/ UCSZ01. 
+    ports[UCSR0B] := BV (TXEN0)
+:
+--}}}
+
+--{{{  PROC serialWrite
+--* Write a string to the serial port. (blocking driven)
+-- Because the Arduino only had one serial port,
+-- port is, in this case, essentially a passthrough
+--
+-- @param port Passthrough val for the serial port
+-- @param b Byte to be written
+PROC serial.write.byte.blocking (VAL INT port, VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    WHILE (ports[UCSR0A] /\ BV (UDRE0)) = 0
+      SKIP
+    ports[UDR0] := b
+:
+--}}}
 
 #ENDIF

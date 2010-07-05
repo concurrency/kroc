@@ -4,122 +4,97 @@
 #IF NOT (DEFINED (USART.MODULE))
 #DEFINE USART.MODULE
 
--- BLOCKING SERIAL PROCEDURES
--- These PROCs implement blocking reads and writes on the serial ports.
-
---* Initialise the serial port.
---  Although it takes an additional parameter on the 1280, this
---  takes its naming from the Wiring library. It sets up for blocking use
---  of the serial port.
--- @param port Serial port (0, 1, 2, or 3)
--- @param baud Baud rate
-PROC beginSerial.blocking (VAL INT reg, VAL INT32 baud)
-  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
-  VAL [4]BYTE factor.bytes RETYPES factor:
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    ports[UBRRH[reg]] := factor.bytes[1]
-    ports[UBRRL[reg]] := factor.bytes[0]
-
-    ports[UCSRC[reg]] := 3 << UCSZ00
-    ports[UCSRB[reg]] := BV (TXEN[reg])
-:
-
---* Write a byte to the serial port (blocking).
---  Again, we use the Wiring naming convention for the blocking
---  write to the serial port.
--- @param VAL INT Serial port (0, 1, 2, or 3)
--- @param VAL BYTE Byte to write
-
-PROC serialWriteByte.blocking (VAL INT reg, VAL BYTE b)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    WHILE (ports[UCSRA[reg]] /\ BV (UDRE[reg])) = 0
-      SKIP
-    ports[UDR[reg]] := b
-:
-
--- INTERRUPT-DRIVEN SERIAL I/O PROCEDURES
--- These PROCs implement non-blocking, interrupt-driven serial I/O on 
--- each of the serial ports.
-
 --* Initialise iterrupt-driven serial IO
+--
 -- @param port Serial port (0, 1, 2, or 3)
 -- @param baud Baud rate
-PROC serial.setup (VAL INT reg, VAL INT32 baud)
+PROC serial.setup (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    ports[UBRRH[reg]] := factor.bytes[1]
-    ports[UBRRL[reg]] := factor.bytes[0]
+    ports[UBRRH[port]] := factor.bytes[1]
+    ports[UBRRL[port]] := factor.bytes[0]
 
-    ports[UCSRC[reg]] := 3 << UCSZ[reg]
-    ports[UCSRB[reg]] := BV (TXEN[reg]) \/ BV (RXEN[reg])
+    ports[UCSRC[port]] := 3 << UCSZ[port]
+    ports[UCSRB[port]] := BV (TXEN[port]) \/ BV (RXEN[port])
 :
 
 --* Write a byte to the serial port (interrupt-driven)
+--
 -- @param VAL INT Serial port (0, 1, 2, or 3)
 -- @param VAL BYTE Byte to write
-PROC serial.write.byte (VAL INT reg, VAL BYTE b)
+PROC serial.write.byte (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
     IF
-      (ports[UCSRA[reg]] /\ BV (UDRE[reg])) = 0
+      (ports[UCSRA[port]] /\ BV (UDRE[port])) = 0
         --{{{  transmit buffer full; wait for it to empty
         SEQ
           -- Enable the interrupt; UDRIE0 will be cleared by the (C-side)
           -- interrupt handler.
-          ports[UCSRB[reg]] := ports[UCSRB[reg]] \/ BV (UDRIE[reg])
+          ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (UDRIE[port])
           INT dummy:
-          wait.for.interrupt (VINTR.UDRE[reg], dummy)
+          wait.for.interrupt (VINTR.UDRE[port], dummy)
         --}}}
       TRUE
         SKIP
-    ports[UDR[reg]] := b
+    ports[UDR[port]] := b
 :
 
---{{{  PROC serialWriteInt
---* Write an [@code INT] to the serial port in hex.
--- @param n The integer to write.
-PROC serial.write.int (VAL INT usart, VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (usart, digits[(n >> (i * 4)) /\ #F])
-:
---}}}
---{{{  PROC serialWriteInt32
---* Write an [@code INT32] to the serial port in hex.
--- @param n The long integer ([@code INT32]) to write.
-PROC serial.write.int32 (VAL INT usart, VAL INT32 n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (usart, digits[INT ((n >> (i * 4)) /\ #F)])
-:
---}}}
-PROC serial.read.byte (VAL INT reg, RESULT BYTE b)
+--* Read a byte from the serial port (interrupt-driven)
+--
+-- @param VAL INT Serial port (0, 1, 2, or 3)
+-- @param VAL BYTE Byte to be read
+PROC serial.read.byte (VAL INT port, RESULT BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
     IF
-      -- FIXME: Again, this was RXC1?
-      (ports[UCSRA[reg]] /\ BV (RXC[reg])) = 0
+      (ports[UCSRA[port]] /\ BV (RXC[port])) = 0
         --{{{  receive buffer empty; wait for something to come in
         SEQ
           -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
           -- interrupt handler. (FIXME: This was RXCIE1... for port zero? Was that wrong?)
-          ports[UCSRB[reg]] := ports[UCSRB[reg]] \/ BV (RXCIE[reg])
+          ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (RXCIE[port])
           INT dummy:
-          wait.for.interrupt (VINTR.RX[reg], dummy)
+          wait.for.interrupt (VINTR.RX[port], dummy)
         --}}}
       TRUE
         SKIP
-    -- FIXME: This was UDR1?
-    b := ports[UDR[reg]]
+    b := ports[UDR[port]]
+:
+
+--* Initialise the serial port (blocking).
+--
+-- @param port Serial port (0, 1, 2, or 3)
+-- @param baud Baud rate
+PROC serial.setup.blocking (VAL INT port, VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[UBRRH[port]] := factor.bytes[1]
+    ports[UBRRL[port]] := factor.bytes[0]
+
+    ports[UCSRC[port]] := 3 << UCSZ00
+    ports[UCSRB[port]] := BV (TXEN[port])
+:
+
+--* Write a byte to the serial port (blocking).
+--
+-- @param VAL INT Serial port (0, 1, 2, or 3)
+-- @param VAL BYTE Byte to write
+PROC serial.write.byte.blocking (VAL INT port, VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    WHILE (ports[UCSRA[port]] /\ BV (UDRE[port])) = 0
+      SKIP
+    ports[UDR[port]] := b
 :
 
 #ENDIF

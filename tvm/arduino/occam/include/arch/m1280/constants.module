@@ -62,13 +62,12 @@ VAL INT VINTR.USART.TX3     IS  #0070:  --
 
 --{{{ serial constants
 -- Because we are working with multiple serial ports, we place
--- all of the critical registers into arrays that can be indexed
--- by the serial port. 0, 1, 2, or 3
-
+--  all of the critical registers into arrays that can be indexed
+--  by the serial port. 0, 1, 2, or 3
 -- Baud Rate Registers (low/high bites)
 VAL []INT UBRRL IS [UBRR0L, UBRR1L, UBRR2L, UBRR3L]:
 VAL []INT UBRRH IS [UBRR0H, UBRR1H, UBRR2H, UBRR3H]:
--- UCSR -- Control and status register
+-- UCSR -- Control and Status register
 VAL []INT UCSRC IS [UCSR0C, UCSR1C, UCSR2C, UCSR3C]:
 VAL []INT UCSRB IS [UCSR0B, UCSR1B, UCSR2B, UCSR3B]:
 VAL []INT UCSRA IS [UCSR0A, UCSR1A, UCSR2A, UCSR3A]:
