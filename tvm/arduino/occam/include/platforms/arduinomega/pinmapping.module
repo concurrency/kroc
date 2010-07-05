@@ -1,9 +1,14 @@
---** occam header for Arduino Duemilanove specific pin mappins.
+--** occam header for Arduion Mega specific pin mappins.
 -- @module pinmapping
 #IF NOT (DEFINED (PINMAPPING.MODULE))
 #DEFINE PINMAPPING.MODULE
 
+#INCLUDE "constants.module"
 #INCLUDE "base.module"
+
+-- There is no LED pin on the Arduino Mega, so this
+-- is a signal to heartbeat to die.
+VAL INT LED.PIN IS -1 
 
 -- {{{ Mappings for pin.location
 VAL []INT DDR.MAP IS
