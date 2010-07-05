@@ -16,7 +16,7 @@ PROC beginAnalog (VAL INT pin)
   #PRAGMA DEFINED ports
   INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
   SEQ
-    pinMode(pin, OUTPUT) 
+    pinMode (pin, OUTPUT) 
     ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
     -- Set prescale to 64... don't change that. The VM is using that
     -- for TCCR2, and we'll (for the moment) use the same everywhere.
@@ -73,7 +73,7 @@ PROC beginAnalog16 (VAL INT pin)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    pinMode(pin, OUTPUT)
+    pinMode (pin, OUTPUT)
     ports[TCCR1B] := BV (WGM13) \/ BV (CS10)
     IF
       pin = 9

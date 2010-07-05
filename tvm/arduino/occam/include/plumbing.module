@@ -26,7 +26,7 @@ VAL LEVEL LOW IS #0:
 -- @param pin The Arduino pin number
 -- @param in Pin levels (LOW or HIGH)
 PROC digital.output (VAL INT pin, CHAN LEVEL in?)
-  LEVEL v:
+  INT v:
   SEQ
     in ? v
     pinMode (pin, OUTPUT)
@@ -140,7 +140,7 @@ PROC invert.level (CHAN LEVEL in?, out!)
     SEQ
       in ? v
       IF
-        v = HGIH
+        v = HIGH
           out ! LOW
         TRUE -- If v = LOW
           out ! HIGH
@@ -224,10 +224,10 @@ PROC blink (VAL INT pin, delay.time)
 --FIXME: If there is no LED.PIN, I'd like to see a board-specific die(..)
 PROC heartbeat ()
   IF
-    LED.PIN = -1
-      die("This board does not have an LED pin. Sorry.")
-    TRUE
+    LED.PIN > 0
       blink (LED.PIN, 500)
+    TRUE
+      die("This board does not have an LED pin. Sorry.")
 :
 
 --* Limits the range of values in a stream.
