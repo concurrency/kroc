@@ -52,7 +52,7 @@ PROC delay (VAL INT millis)
 --* Sets the state of a pin to either HIGH or LOW.
 -- @param pin The Arduino pin number.
 -- @param state Either HIGH or LOW.
-PROC digitalWrite (VAL INT pin, LEVEL state)
+PROC digitalWrite (VAL INT pin, state)
   INT r.ddr, r.port, r.pin, bit:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
