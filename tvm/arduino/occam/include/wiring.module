@@ -93,7 +93,7 @@ PROC pinMode (VAL INT pin, mode)
 -- @para, port Serial port to initialize.
 -- @param baud Baud rate.
 PROC beginSerial (VAL INT port, VAL INT32 baud)
-  beginSerial.blocking (port, baud)
+  serial.setup.blocking (port, baud)
 :
 --}}}
 
