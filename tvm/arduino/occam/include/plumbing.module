@@ -26,7 +26,7 @@ VAL LEVEL LOW IS #0:
 -- @param pin The Arduino pin number
 -- @param in Pin levels (LOW or HIGH)
 PROC digital.output (VAL INT pin, CHAN LEVEL in?)
-  INT v:
+  LEVEL v:
   SEQ
     in ? v
     pinMode (pin, OUTPUT)
@@ -188,7 +188,7 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
       out ! level
       in ? SIGNAL
       IF
-        level = HGIH
+        level = HIGH
           level := LOW
         TRUE -- If level = LOW
           level := HIGH
