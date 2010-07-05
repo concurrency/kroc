@@ -9,9 +9,9 @@
 
 --{{{  constants
 --* Symbolic constant for digital LOW on an Arduino pin.
-VAL LEVEL LOW IS #0:
+VAL INT LOW IS #0:
 --* Symbolic constant for digital HIGH on an Arduino pin.
-VAL LEVEL HIGH IS #1:
+VAL INT HIGH IS #1:
 
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
