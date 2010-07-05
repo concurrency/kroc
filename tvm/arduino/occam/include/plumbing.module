@@ -32,7 +32,7 @@ PROC digital.output (VAL INT pin, CHAN LEVEL in?)
     pinMode (pin, OUTPUT)
     WHILE TRUE
       SEQ
-        digitalWrite (pin, v)
+        digitalWrite (pin, INT v)
         in ? v
 :
 

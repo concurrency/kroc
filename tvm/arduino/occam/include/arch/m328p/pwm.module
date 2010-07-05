@@ -4,9 +4,6 @@
 #IF NOT (DEFINED (PWM.MODULE))
 #DEFINE PWM.MODULE
 
-#INCLUDE "wiring.module"
---FIXME: This is a super hack. pinMode should be moved out of wiring.module, not to mention that it's a pretty board-specific PROC at this point.
-
 --{{{  PROC beginAnalog
 --* Initialize analog input.
 -- Only works on PWM pins. 
@@ -16,7 +13,9 @@ PROC beginAnalog (VAL INT pin)
   #PRAGMA DEFINED ports
   INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
   SEQ
-    pinMode (pin, OUTPUT) 
+    --pinMode (pin, OUTPUT)
+    --FIXME: So, we need to set this to OUTPUT, but pinMode is part of wiring.
+    --Honstely not sure how to rectify this...
     ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
     -- Set prescale to 64... don't change that. The VM is using that
     -- for TCCR2, and we'll (for the moment) use the same everywhere.
@@ -73,7 +72,7 @@ PROC beginAnalog16 (VAL INT pin)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    pinMode (pin, OUTPUT)
+    --pinMode (pin, OUTPUT)
     ports[TCCR1B] := BV (WGM13) \/ BV (CS10)
     IF
       pin = 9
