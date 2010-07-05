@@ -4,6 +4,9 @@
 #IF NOT (DEFINED (PWM.MODULE))
 #DEFINE PWM.MODULE
 
+#INCLUDE "wiring.module"
+--FIXME: This is a super hack. pinMode should be moved out of wiring.module, not to mention that it's a pretty board-specific PROC at this point.
+
 --{{{  PROC beginAnalog
 --* Initialize analog input.
 -- Only works on PWM pins. 

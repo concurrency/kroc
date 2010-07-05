@@ -142,7 +142,7 @@ PROC invert.level (CHAN LEVEL in?, out!)
       IF
         v = HGIH
           out ! LOW
-        ELSE -- If v = LOW
+        TRUE -- If v = LOW
           out ! HIGH
 :
 
@@ -190,7 +190,7 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
       IF
         level = HGIH
           level := LOW
-        ELSE -- If level = LOW
+        TRUE -- If level = LOW
           level := HIGH
 :
 
@@ -226,7 +226,7 @@ PROC heartbeat ()
   IF
     LED.PIN = -1
       die("This board does not have an LED pin. Sorry.")
-    ELSE
+    TRUE
       blink (LED.PIN, 500)
 :
 
@@ -293,10 +293,10 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
 
 PROC serial.write (CHAN BYTE in?)
   WHILE TRUE
-  BYTE b:
-  SEQ
-    in ? b
-    serial.write.byte (0, b)
+    BYTE b:
+    SEQ
+      in ? b
+      serial.write.byte (0, b)
 :
 
 PROC serial.read (CHAN BYTE out!)
