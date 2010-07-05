@@ -17,9 +17,8 @@ fi
 
 if [ "$2" == "firmware" ]; then
   echo "Uploading Transterpreter Virtual Machine"
-  avrdude -C $TVM_AVRDUDE_CONF \
-     $TVM_AVRDUDE_FIRMWARE_FLAGS \
-    -P $1 -b $TVM_UPLOAD_RATE -c stk500v1 \
+  avrdude $TVM_AVRDUDE_FIRMWARE_FLAGS \
+    -P $1 -b $TVM_UPLOAD_RATE -c arduino \
     -U flash:w:$TVM_ARDUINO_FIRMWARE
   exit
 fi
@@ -90,8 +89,7 @@ if [ $? -eq 0 ]; then
   if [ $? -eq 0 ]; then
     if [ -f $HEX ]; then
       echo "Uploading..."
-      reset-arduino $UPLOAD_PORT
-      avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+      avrdude $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
     else
       echo ".hex file not generated or not found."
       exit
