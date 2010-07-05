@@ -8,7 +8,7 @@
 
 -- There is no LED pin on the ArduPilotMega, so this
 -- is a signal to heartbeat to die.
-VAL INT LED.PIN IS -1 
+VAL INT LED.PIN IS -1:
 
 -- {{{ Mappings for pin.location
 VAL []INT DDR.MAP IS
