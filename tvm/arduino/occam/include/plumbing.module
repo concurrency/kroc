@@ -324,6 +324,7 @@ PROC serial.rx (VAL INT port, CHAN BYTE out!)
       out ! b
 :
 
+--FIXME: The int/int32 helper methods don't use any chanels or signals. Methinks this should change.
 --{{{  PROC serial.write.int
 --* Write an [@code INT] to the serial port in hex.
 --

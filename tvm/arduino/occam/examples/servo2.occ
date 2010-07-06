@@ -2,8 +2,10 @@
 
 PROC main ()
   SEQ
+    pinMode (10, OUTPUT)
+    pinMode (9, OUTPUT)
     beginAnalog16 (9)
-    pinMode (10, OUTPUT) -- Begin Analog on port 10
+    beginAnalog16 (10)
     set16breg (ICR1, 20000)
     VAL INT MAX IS 20000:
     VAL INT INCREMENT IS  1000:
@@ -13,6 +15,7 @@ PROC main ()
     INITIAL BOOL up9 IS TRUE:
 
     PAR
+      heartbeat ()
       WHILE TRUE
         SEQ   
           IF
