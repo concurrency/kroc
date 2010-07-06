@@ -6,4 +6,12 @@
 
 --This is a stub. It will change soon.
 
+PROC beginAnalog (VAL INT pin)
+  SKIP
+:
+
+PROC analogWrite (VAL INT pin, VAL BYTE level)
+  SKIP
+:
+
 #ENDIF
