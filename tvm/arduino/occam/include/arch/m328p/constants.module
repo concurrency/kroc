@@ -52,4 +52,36 @@ VAL []INT WGM IS [WGM00, WGM00, WGM10, WGM10, WGM20, WGM20]:
 VAL []INT OCR IS [OCR0A, OCR0B, OCR1A, OCR1B, OCR2A, OCR2B]:
 --}}}
 
+--{{{ serial constants
+-- Because we are working only working with one serial port, we place
+--  the critical register into arrays that can be indexed the same way
+--  critical registers are accessed by boards with multiple serial ports.
+
+-- Baud Rate Registers (low/high bites)
+VAL []INT UBRRL IS [UBRR0L]:
+VAL []INT UBRRH IS [UBRR0H]:
+-- UCSR -- Control and Status register
+VAL []INT UCSRC IS [UCSR0C]:
+VAL []INT UCSRB IS [UCSR0B]:
+VAL []INT UCSRA IS [UCSR0A]:
+
+VAL []INT UDRE IS [UDRE0]:
+VAL []INT UDR  IS [UDR0]:
+
+VAL []INT UDRIE IS [UDRIE0]:
+VAL []INT VINTR.UDRE IS [VINTR.USART.UDRE0]:
+
+VAL []INT TXEN IS [TXEN0]:
+VAL []INT RXEN IS [RXEN0]:
+
+VAL []INT UCSZ IS [UCSZ00]:
+
+VAL []INT RXC IS [RXC0]:
+VAL []INT RXCIE IS [RXCIE0]:
+VAL []INT VINTR.RX IS [VINTR.USART.RX0]:
+
+VAL INT TX0 IS 0:
+VAL INT RX0 IS 0:
+--}}}
+
 #ENDIF
