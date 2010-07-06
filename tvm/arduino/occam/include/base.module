@@ -18,4 +18,16 @@ INLINE PROC die (VAL []BYTE error)
 -- This is just [@code 1 << bit], like [@text _BV] in the C headers.
 BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
 
+--{{{  PROC delay
+--* Wait for a period of time.
+-- @param millis Time in wait, in milliseconds
+PROC delay (VAL INT millis)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS millis
+:
+--}}}
+
 #ENDIF
