@@ -4,11 +4,6 @@
 #IF NOT (DEFINED (USART.MODULE))
 #DEFINE USART.MODULE
 
---FIXME: This is a helper method I'm not comfortable putting in plumbing. I just want something that takes care of the whole baud setup though, so I'm throwing it here in the 328 specific stuffs. Maybe there should be a constant?
-PROC start.serial ()
-  serial.setup (0, 57600)
-:
-
 --{{{  PROC beginSerialInerrupt
 --* Initialize iterrupt-driven serial IO for port7.
 -- Because the Arduino only has one serial port,
