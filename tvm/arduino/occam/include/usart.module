@@ -17,7 +17,8 @@ PROC serial.setup (VAL INT port, VAL INT32 baud)
     ports[UBRRH[port]] := factor.bytes[1]
     ports[UBRRL[port]] := factor.bytes[0]
 
-    ports[UCSRC[port]] := 3 << UCSZ[port]
+    ports[UCSRC[port]] := 3 << UCSZN0[port]
+        --This is the same as := UCSZN0[port] \/ UCSZN1[port]
     ports[UCSRB[port]] := BV (TXEN[port]) \/ BV (RXEN[port])
 :
 
