@@ -4,6 +4,11 @@
 #IF NOT (DEFINED (USART.MODULE))
 #DEFINE USART.MODULE
 
+--FIXME: This is a helper method I'm not comfortable putting in plumbing. I just want something that takes care of the whole baud setup though, so I'm throwing it here in the 328 specific stuffs. Maybe there should be a constant?
+PROC start.serial ()
+  serial.setup (0, 57600)
+:
+
 --{{{  PROC beginSerialInerrupt
 --* Initialize iterrupt-driven serial IO for port7.
 -- Because the Arduino only has one serial port,
@@ -21,7 +26,7 @@ PROC serial.setup (VAL INT port, VAL INT32 baud)
     ports[UBRR0H] := factor.bytes[1]
     ports[UBRR0L] := factor.bytes[0]
 
-    ports[UCSR0C] := 3 -- << UCSZ00
+    ports[UCSR0C] := 3 << UCSZ00
               -- This is the same as := UCSZ00 \/ UCSZ01
     ports[UCSR0B] := BV (TXEN0) \/ BV (RXEN0)
 :
@@ -94,7 +99,7 @@ PROC serial.setup.blocking (VAL INT reg, VAL INT32 baud)
     ports[UBRR0H] := factor.bytes[1]
     ports[UBRR0L] := factor.bytes[0]
 
-    ports[UCSR0C] := 3 -- << UCSZ00
+    ports[UCSR0C] := 3 << UCSZ00
               --This is the same as := UCSZ00 \/ UCSZ01. 
     ports[UCSR0B] := BV (TXEN0)
 :

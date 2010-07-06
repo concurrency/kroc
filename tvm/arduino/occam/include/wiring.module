@@ -92,7 +92,7 @@ PROC pinMode (VAL INT pin, mode)
 --
 -- @para, port Serial port to initialize.
 -- @param baud Baud rate.
-PROC beginSerial (VAL INT port, VAL INT32 baud)
+PROC serialSetup (VAL INT port, VAL INT32 baud)
   serial.setup.blocking (port, baud)
 :
 --}}}
@@ -138,7 +138,7 @@ PROC serialWriteInt (VAL INT port, VAL INT n)
 PROC serialWriteInt32 (VAL INT port, VAL INT32 n)
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (0, digits[INT ((n >> (i * 4)) /\ #F)])
+    serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
 :
 --}}}
 
