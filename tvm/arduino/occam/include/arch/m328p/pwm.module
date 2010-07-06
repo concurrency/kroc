@@ -9,17 +9,35 @@
 -- Only works on PWM pins. 
 -- @param pin The Arduino pin number.
 PROC beginAnalog (VAL INT pin)
+  --Begins PWM for an 8 bit timer.
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
+
   INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
+  -- Double-lookup tables are a gross way of doing this..
+  -- I'm not 100% on how it should be done, but if we just look up the constants
+  --  depending on a case w/ and element per PWM pin, we can easily add
+  --  saftey-checking when we get around to it... Maybe...
+
   SEQ
+    -- FIXME: So, we need to set this to OUTPUT, but pinMode is part of wiring.
+    --  Honstely not sure how to rectify this...
     --pinMode (pin, OUTPUT)
-    --FIXME: So, we need to set this to OUTPUT, but pinMode is part of wiring.
-    --Honstely not sure how to rectify this...
+
+    -- Here WGM sets the mode to PWM, phase correct, TOP=0xFF (perhaps
+    --  should change to TOP=OCRAn?) (pg. 109,137,161)
+    -- COM sets the behavior of OCxn (the output pin connected to the given
+    --  timer, OCRxn compare and ICRn TOP (if applicable))
     ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
+
+
     -- Set prescale to 64... don't change that. The VM is using that
-    -- for TCCR2, and we'll (for the moment) use the same everywhere.
+    --  for TCCR2, and we'll (for the moment) use the same everywhere.
+    --  It should be noted that for some timers, CS1[index] and CS0[index]
+    --  are the same bit...
     ports[TCR.PRESCALE[index]] := BV(CS1[index]) \/ BV(CS0[index])
+
+    -- This justs sets the compare number to 0. It's really just a saftey thing.
     ports[OCR[index]] := 0
 :
 --}}}

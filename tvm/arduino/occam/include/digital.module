@@ -1,0 +1,47 @@
+--** Procs for fiddling with digital pin things
+--FIXME: Rewrite that.
+-- @module digital
+
+#IF NOT (DEFINED (DIGITAL.MODULE))
+#DEFINE DIGITAL.MODULE
+
+--{{{  PROC digitalWrite
+--* Sets the state of a pin to either HIGH or LOW.
+-- @param pin The Arduino pin number.
+-- @param state Either HIGH or LOW.
+PROC digital.write (VAL INT pin, state)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    ports[r.port] := (ports[r.port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
+:
+--}}}
+
+--{{{  PROC digitalRead
+--* Read the value of a digital pin. Either HIGH or LOW.
+-- @param pin The Arduino pin number.
+-- @param state The state of the pin will be stored in this variable.
+PROC digital.read (VAL INT pin, RESULT INT state)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
+:
+--}}}
+
+--{{{  PROC pinMode
+PROC pin.mode (VAL INT pin, mode)
+  INT r.ddr, r.port, r.pin, bit:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
+:
+--}}}
+
+#ENDIF
