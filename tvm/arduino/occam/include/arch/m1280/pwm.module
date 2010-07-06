@@ -1,0 +1,9 @@
+--** Pulse width modulation for the ATmega1280
+-- @module pwm
+
+#IF NOT (DEFINED (PWM.MODULE))
+#DEFINE PWM.MODULE
+
+--This is a stub. It will change soon.
+
+#ENDIF
