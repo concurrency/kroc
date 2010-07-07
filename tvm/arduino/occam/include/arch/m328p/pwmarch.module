@@ -5,8 +5,10 @@
 #IF NOT (DEFINED (PWMARCH.MODULE))
 #DEFINE PWMARCH.MODULE
 
+-- Should TCCRnA.bits be a BYTE?
 INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
-  INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx:
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits:
   VALOF
     SEQ
       CASE pin
@@ -17,11 +19,11 @@ INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
             IF
               pin = 6
                 SEQ
-                  TCCRnA.bits := BV (WGM00) \/ BV (COM0A1)
+                  TCCRnA.bits := (BV (WGM00) \/ BV (COM0A1))
                   OCRnx := OCR0A
               TRUE --pin = 5
                 SEQ
-                  TCCRnA.bits := BV (WGM00) \/ BV (COM0B1)
+                  TCCRnA.bits := (BV (WGM00) \/ BV (COM0B1))
                   OCRnx := OCR0B
         9, 10
           SEQ
@@ -30,11 +32,11 @@ INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
             IF
               pin = 9
                 SEQ
-                  TCCRnA.bits := BV (WGM10) \/ BV (COM1A1)
+                  TCCRnA.bits := (BV (WGM10) \/ BV (COM1A1))
                   OCRnx := OCR1A
               TRUE --pin = 10
                 SEQ
-                  TCCRnA.bits := BV (WGM10) \/ BV (COM1B1)
+                  TCCRnA.bits := (BV (WGM10) \/ BV (COM1B1))
                   OCRnx := OCR1B
         3, 11
           SEQ
@@ -43,19 +45,21 @@ INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
             IF
               pin = 11
                 SEQ
-                  TCCRnA.bits := BV (WGM20) \/ BV (COM2A1)
+                  TCCRnA.bits := (BV (WGM20) \/ BV (COM2A1))
                   OCRnx := OCR2A
               TRUE --pin = 3
                 SEQ
-                  TCCRnA.bits := BV (WGM20) \/ BV (COM2B1)
+                  TCCRnA.bits := (BV (WGM20) \/ BV (COM2B1))
                   OCRnx := OCR2B
         ELSE
           die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
-    RESULT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx
+    RESULT TCCRnA, TCCRnB, INT TCCRnA.bits, OCRnx
 :
 
+-- Should TCCRnA.bits be a BYTE?
 INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
-  INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx:
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits:
   VALOF
     SEQ
       TCCRnA := TCCR1A
@@ -63,54 +67,56 @@ INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
       CASE pin
         9
           SEQ
-            TCCRnA.bits := BV (COM1A1)
+            TCCRnA.bits := (BV (COM1A1))
             OCRnx := OCR1A
         10
           SEQ
-            TCCRmA.bits := BV (COM1B1)
+            TCCRnA.bits := (BV (COM1B1))
             OCRnx := OCR1B
         ELSE
           die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
-    RESULT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx
+    RESULT TCCRnA, TCCRnB, INT TCCRnA.bits, OCRnx
 :
 
+-- Should this be "BYTE"?
 INT FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
-  INT bits:
+  BYTE bits:
   VALOF
     SEQ
       CASE prescale
         0
-          bits := 1 -- := BV (CSn0)
+          bits := #01 -- := BV (CSn0)
         8
-          bits := 2 -- := BV (CSn1)
+          bits := #02 -- := BV (CSn1)
         64
-          bits := 3 -- := BV (CSn0) \/ BV (CSn1)
+          bits := #03 -- := BV (CSn0) \/ BV (CSn1)
         256
-          bits := 4 -- := BV (CSn2)
+          bits := #04 -- := BV (CSn2)
         1024
-          bits := 5 -- := BV (CSn2) \/ BV (CSn0)
+          bits := #05 -- := BV (CSn2) \/ BV (CSn0)
         ELSE
           die ("Invalid clock prescale value")
-    RESULT bits
+    RESULT INT bits
 :
 
+-- SHould this be a BYTE return?
 INT FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
-  INT bits:
+  BYTE bits:
   VALOF
     CASE prescale
       0
-        bits := BV (WGM13) \/ 1 -- := BV (CSn0)
+        bits := BV (WGM13) \/ #01 -- := BV (CSn0)
       8
-        bits := BV (WGM13) \/ 2 -- := BV (CSn1)
+        bits := BV (WGM13) \/ #02 -- := BV (CSn1)
       64
-        bits := BV (WGM13) \/ 3 -- := BV (CSn0) \/ BV (CSn1)
+        bits := BV (WGM13) \/ #03 -- := BV (CSn0) \/ BV (CSn1)
       256
-        bits := BV (WGM13) \/ 4 -- := BV (CSn2)
+        bits := BV (WGM13) \/ #04 -- := BV (CSn2)
       1024
-        bits := BV (WGM13) \/ 5 -- := BV (CSn2) \/ BV (CSn0)
+        bits := BV (WGM13) \/ #05 -- := BV (CSn2) \/ BV (CSn0)
       ELSE
         die ("Invalid clock prescale value")
-  RESULT bits
+    RESULT INT bits
 :
 
 INT FUNCTION pwm8.compare.lookup (VAL INT pin)
@@ -131,7 +137,7 @@ INT FUNCTION pwm8.compare.lookup (VAL INT pin)
         OCRnx := OCR2A
       ELSE
         die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
-  RESULT OCRnx
+    RESULT OCRnx
 :
 
 INT FUNCTION pwm16.compare.lookup (VAL INT pin)
@@ -144,16 +150,18 @@ INT FUNCTION pwm16.compare.lookup (VAL INT pin)
         OCRnx := OCR1B
       ELSE
         die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
-  RESULT OCRnx
+    RESULT OCRnx
 :
 
 INT FUNCTION pwm16.ICRn.lookup (VAL INT pin)
   INT ICRn:
-  IF
-    pin = 9 OR 10
-      ICRn := IRC1
-    TRUE
-      die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
+  VALOF
+    CASE pin
+      9, 10
+        ICRn := ICR1
+      ELSE
+        die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
+    RESULT ICRn
 : 
 
 #ENDIF

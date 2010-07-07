@@ -20,6 +20,8 @@ INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
 :
 
 PROC pwm8.setup (VAL INT pin, prescale)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   INITIAL INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx IS pwm8.lookup (pin):
   INITIAL INT TCCRnB.bits IS pwm8.TCCRnB.helper (prescale):
 
@@ -28,38 +30,52 @@ PROC pwm8.setup (VAL INT pin, prescale)
     -- This is simplest to call from a level up, honestly, let the user do it.
     --  To automate it here would involve reinventing the logic of digital.mode
     --  for every possible PWM pin, which, on the Mega, would be a royal pain.
-    ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
-    ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
+    -- FIXME 20100706 MCJ
+    -- This is dangerous. The lookup returns an INT for the bitfield, but
+    -- it should probably be a BYTE. We're downcasting here, and if something goes
+    -- wrong, then we have an overflow...
+    ports[TCCRnA] := ports[TCCRnA] \/ (BYTE TCCRnA.bits)
+    ports[TCCRnB] := ports[TCCRnB] \/ (BYTE TCCRnB.bits)
     ports[OCRnx]  := 0
 :
 
 PROC pwm16.setup (VAL INT pin, prescale)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   INITIAL INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx IS pwm16.lookup (pin):
   INITIAL INT TCCRnB.bits IS pwm16.TCCRnB.helper (prescale):
 
   SEQ
     --digital.mode (pin, OUTPUT)
-    ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
-    ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
+    ports[TCCRnA] := ports[TCCRnA] \/ (BYTE TCCRnA.bits)
+    ports[TCCRnB] := ports[TCCRnB] \/ (BYTE TCCRnB.bits)
     ports[OCRnx]  := 0
 :
 
 PROC pwm8.set.compare (VAL INT pin, VAL BYTE level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   INITIAL INT OCRnx IS pwm8.compare.lookup (pin):
   ports[OCRnx] := level
 :
 
 PROC pwm16.set.compare (VAL INT pin, VAL INT16 level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   INITIAL INT OCRnx IS pwm16.compare.lookup (pin):
   -- Not sure if this is the way to do it...
   -- Not sure if I'm a fan of relying on the highs being one up from the lows..
   set16breg (OCRnx, level)
 :
 
+#IF FALSE
+-- FIXME 20100706 MCJ
+-- This is broken, but Drew wrote it, so he knows how to fix it.
 PROC pwm16.set.top (VAL INT pin, VAL INT16 top)
   INITIAL INT ICRn IS pwm16.top.lookup (pin):
   set16breg (ICRn, top)
 :
+#ENDIF
 
 
 

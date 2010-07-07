@@ -81,13 +81,4 @@ PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
       printing.trimTrailing0s(arr, total)
 :
 
-PROC print.real32 (VAL REAL32 n, CHAN BYTE b!)
-  [16]BYTE arr:
-  INT total:
-  SEQ
-    real32toa(n, arr, total)
-    SEQ i = 0 FOR total
-      b ! arr[i]
-:
-
 #ENDIF

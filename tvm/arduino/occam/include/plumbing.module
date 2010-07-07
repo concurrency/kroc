@@ -293,26 +293,6 @@ PROC clamp (VAL INT low, high, CHAN INT in?, out!)
       out ! v
 :
 
---* Writes an analog value to a pin.
--- For a given (analog) pin, sets the level to a value between
--- 0 and 255. Negative values are treated as 0, and values greater
--- than 255 are treated as 255.
---
--- @param pin The Arduino pin number
--- @param level The input level.
-PROC pwm (VAL INT pin, CHAN INT level?)
-  INITIAL INT lvl IS 0:
-  SEQ
-    beginAnalog (pin)
-    CHAN INT clamped:
-    PAR
-      clamp (0, 255, level?, clamped!)
-      WHILE TRUE
-        SEQ
-          clamped ? lvl
-          analogWrite (pin, (BYTE lvl))
-:
-
 --* Read an analog value.
 -- For the given pin, will do an analog read of that pin
 -- and emit the value upon request. Currently not parallel safe.
@@ -329,6 +309,12 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
         adc.vcc (pin, v)
         val ! v
 :
+
+#IF FALSE
+-- FIXME 20100706 MCJ
+-- I think the USART.MODULE now has a lot of this functionality.
+-- I'm commenting this out until I double-check and bring in 
+-- the appropriate high-level interface.
 
 PROC serial.write (CHAN BYTE in?)
   WHILE TRUE
@@ -409,8 +395,33 @@ PROC serial.tx.int32 (VAL INT port, VAL INT32 n)
     serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
 :
 --}}}
+#ENDIF
 
+#IF FALSE
+-- FIXME 20100706 MCJ
+-- These are PROCs that now need to be rewritten or removed. They no 
+-- longer work/fit within the lower-level framework we've built on top of plumbing.
 
+--* Writes an analog value to a pin.
+-- For a given (analog) pin, sets the level to a value between
+-- 0 and 255. Negative values are treated as 0, and values greater
+-- than 255 are treated as 255.
+--
+-- @param pin The Arduino pin number
+-- @param level The input level.
+PROC pwm (VAL INT pin, CHAN INT level?)
+  INITIAL INT lvl IS 0:
+  SEQ
+    beginAnalog (pin)
+    CHAN INT clamped:
+    PAR
+      clamp (0, 255, level?, clamped!)
+      WHILE TRUE
+        SEQ
+          clamped ? lvl
+          analogWrite (pin, (BYTE lvl))
+:
+#ENDIF
 
 #IF FALSE
 -- While this is a nice interrupt-driven approach to ADC,
