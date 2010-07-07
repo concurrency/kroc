@@ -17,148 +17,6 @@ INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
     ports[reg] := (BYTE (val /\ #FF))
 :
 
-INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
-  INT TCCRnA, TCCRnB, OCRnx:
-  VALOF
-    CASE pin
-      5, 6
-        SEQ
-          TCCRnA := TCCR0A
-          TCCRnB := TCCR0B
-          IF
-            pin = 6
-              SEQ
-                TCCRnA.bits := BV (WGM00) \/ BV (COM0A1)
-                OCRnx := OCR0A
-            TRUE --pin = 5
-              SEQ
-                TCCRnA.bits := BV (WGM00) \/ BV (COM0B1)
-                OCRnx := OCR0B
-      9, 10
-        SEQ
-          TCCRnA := TCCR1A
-          TCCRnB := TCCR1B
-          IF
-            pin = 9
-              SEQ
-                TCCRnA.bits := BV (WGM10) \/ BV (COM1A1)
-                OCRnx := OCR1A
-            TRUE --pin = 10
-              SEQ
-                TCCRnA.bits := BV (WGM10) \/ BV (COM1B1)
-                OCRnx := OCR1B
-      3, 11
-        SEQ
-          TCCRnA := TCCR2A
-          TCCRnB := TCCR2B
-          IF
-            pin = 11
-              SEQ
-                TCCRnA.bits := BV (WGM20) \/ BV (COM2A1)
-                OCRnx := OCR2A
-            TRUE --pin = 3
-              SEQ
-                TCCRnA.bits := BV (WGM20) \/ BV (COM2B1)
-                OCRnx := OCR2B
-      ELSE
-        die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
-    RESULT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx
-:
-
-INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
-  INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx:
-  VALOF
-    SEQ
-      TCCRnA := TCCR1A
-      TCCRnB := TCCR1B
-      IF
-        pin = 9
-          SEQ
-            TCCRnA.bits := BV (COM1A1)
-            OCRnx := OCR1A
-        pin = 10
-          SEQ
-            TCCRmA.bits := BV (COM1B1)
-            OCRnx := OCR1B
-        TRUE
-          die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
-  RESULT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx
-:
-
-INT FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
-  INT bits:
-  VALOF
-    CASE prescale
-      0
-        bits := 1 -- := BV (CSn0)
-      8
-        bits := 2 -- := BV (CSn1)
-      64
-        bits := 3 -- := BV (CSn0) \/ BV (CSn1)
-      256
-        bits := 4 -- := BV (CSn2)
-      1024
-        bits := 5 -- := BV (CSn2) \/ BV (CSn0)
-      ELSE
-        die ("Invalid clock prescale value")
-  RESULT bits
-:
-
-INT FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
-  INT bits:
-  VALOF
-    CASE prescale
-      0
-        bits := BV (WGM13) \/ 1 -- := BV (CSn0)
-      8
-        bits := BV (WGM13) \/ 2 -- := BV (CSn1)
-      64
-        bits := BV (WGM13) \/ 3 -- := BV (CSn0) \/ BV (CSn1)
-      256
-        bits := BV (WGM13) \/ 4 -- := BV (CSn2)
-      1024
-        bits := BV (WGM13) \/ 5 -- := BV (CSn2) \/ BV (CSn0)
-      ELSE
-        die ("Invalid clock prescale value")
-  RESULT bits
-:
-
-INT FUNCTION pwm8.compare.lookup (VAL INT pin)
-  INT OCRnx:
-  VALOF
-    CASE pin
-      3
-        OCRnx := OCR2B
-      5
-        OCRnx := OCR0B
-      6
-        OCRnx := OCR0A
-      9
-        OCRnx := OCR1A
-      10
-        OCRnx := OCR1B
-      11
-        OCRnx := OCR2A
-      ELSE
-        die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
-  RESULT OCRnx
-:
-
-INT FUNCTION pwm16.compare.lookup (VAL INT pin)
-  INT OCRnx:
-  VALOF
-    IF
-      pin = 9
-        OCRnx := OCR1A
-      pin = 10
-        OCRnx := OCR1B
-      ELSE
-        die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
-  RESULT OCRnx
-:
-
-
-
 PROC pwm8.setup (VAL INT pin, prescale)
   INITIAL INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx IS pwm8.lookup (pin):
   INITIAL INT TCCRnB.bits IS pwm8.TCCRnB.helper (prescale):
@@ -196,12 +54,16 @@ PROC pwm16.set.compare (VAL INT pin, VAL INT16 level)
   set16breg (OCRnx, level)
 :
 
+PROC pwm16.set.top (VAL INT pin, VAL INT16 top)
+  INITIAL INT ICRn IS pwm16.top.lookup (pin):
+  set16breg (ICRn, top)
+:
+
 
 
 #IF FALSE
 --These are (probably) deprecated methods. I'm leaving them so I have them for
 -- reference when I find out how not-deprecated they are.
-
 
 
 --{{{  PROC beginAnalog
@@ -318,7 +180,6 @@ PROC analogWrite16 (VAL INT pin, VAL INT16 level)
     TRUE
       SKIP
 :
-
 #ENDIF
 
 #ENDIF

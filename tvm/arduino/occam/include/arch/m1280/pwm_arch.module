@@ -1,0 +1,38 @@
+--** Pulse Width Modulation board-specific helper functions for the ATmega1280
+-- @module pwm_arch
+
+
+#IF NOT (DEFINED (PWM_ARCH.MODULE))
+#DEFINE PWM_ARCH.MODULE
+
+--This is a stub. It will change soon.
+
+INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
+  SKIP
+:
+
+INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
+  SKIP
+:
+
+INT FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
+  SKIP
+:
+
+INT FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
+  SKIP
+:
+
+INT FUNCTION pwm8.compare.lookup (VAL INT pin)
+  SKIP
+:
+
+INT FUNCTION pwm16.compare.lookup (VAL INT pin)
+  SKIP
+:
+
+INT FUNCTION pwm16.ICRn.lookup (VAL INT pin)
+  SKIP
+: 
+
+#ENDIF
