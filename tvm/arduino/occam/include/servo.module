@@ -4,23 +4,80 @@
 #IF NOT (DEFINED (SERVO.MODULE))
 #DEFINE SERVO.MODULE
 
+PROTOCOL SERVO
+  CASE
+    max ; INT
+    min ; INT
+    div ; INT
+    pos ; INT
+    refresh ; INT32
+    start
+    stop
+:
+
+PROC servo (VAL INT pin, CHAN SERVO s?)
+  PROC set.increment ()
+    increment := (max - min) / div
+  :
+  INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
+  INITIAL INT max IS 2300:
+  INITIAL INT min IS 700:
+  INITIAL INT div IS 180:
+  INITIAL INT pos IS (max - min) / 2:
+  INITIAL INT32 refresh IS 20000:
+  INITIAL INT increment IS (max - min) / div:
+  WHILE TRUE
+    s ? CASE
+      max ; max
+        SKIP
+      min ; min
+        SKIP
+      div ; div
+        set.increment()
+      pos ; _pos
+        SEQ
+          pos := (_pos * increment) + min
+          IF
+            RUNNING
+              pwm16.set.compare (pin, pos)
+            TRUE
+              SKIP
+      refresh ; refresh
+        SKIP
+      start
+        SEQ
+          RUNNING := TRUE
+          pwm16.setup (pin, 8)
+          pwm16.set.top (pin, refresh)
+          pwm16.set.compare (pin, pos)
+      stop
+        SKIP
+:
+
+#IF FALSE
+-- Reworked the servo UI into a protocol-based awesome town.
+-- Again, the code below isn't going to be what we're using, but it's good
+--  to keep around in case something goes pear-shaped.
 
 -- Kay. So this is so far from parallel safe. That should maybe change?
 -- It also locks users into 180 values of percision, and doesn't perform
 --  any bounds checking.
 -- Not even sure if it works...
-PROC servo.start (VAL INT pin, VAL INT32 servo.pulse, servo.min, servo.max, CHAN INT32 deg?)
-  INT32 incriment IS ((max - min) / 180):
-  INT32 new.deg
+VAL INT32 SERVO.REFRESH IS 20000:
+PROC servo.start (VAL INT pin, servo.min, servo.max, CHAN INT deg?)
+  INT increment IS ((max - min) / 180):
+  INT new.degree
   SEQ
     --Still gonna leave it to the user to call digital.mode (pin, OUTPUT)
     pwm16.setup (pin, 8)
-    pwm16.set.top (pin, servo.pulse)
+    pwm16.set.top (pin, SERVO.REFRESH)
     pwm16.set.compare (pin, servo.min)
     WHILE TRUE
       SEQ
-        new.deg ? deg
-        pwm16.set.compare (pin, new.deg * 180)
+        new.degree ? deg
+        pwm16.set.compare (pin, new.deg * increment)
 :
+#ENDIF
+
 
 #ENDIF
