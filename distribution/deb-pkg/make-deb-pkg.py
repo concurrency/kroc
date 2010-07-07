@@ -230,12 +230,12 @@ def subst_and_copy(file, source_dir, dest_dir):
 				# After replacements, write the line
 				output.write(line)
 
-def copy_config():
+def copy_config(path=SOURCE_CONF()):
 	with pushd():
 		cd(SOURCE_CONF())
-		for filename in os.listdir(SOURCE_CONF()):
+		for filename in os.listdir(SOURCE_CONF(path)):
 			if re.search(".*conf.in$", filename):
-				subst_and_copy(filename, SOURCE_CONF(), DEST_CONF)
+				subst_and_copy(filename, SOURCE_CONF(path), DEST_CONF)
 
 def deployment_version():
 	with pushd():
@@ -312,7 +312,7 @@ def all(url):
 	deb()
 
 def refresh_libs(path):
-	copy_config()
+	copy_config(path)
 	deployment_version()
 	copy(path)
 	deb()
