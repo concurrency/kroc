@@ -185,7 +185,7 @@ public class OccPlugUtil {
 			} catch (java.net.MalformedURLException mfue) {
 				// return openWebBrowser(new File(url));
 				try {
-					return openWebBrowser(new File(url).toURL());
+					return openWebBrowser(new File(url).toURI().toURL());
 				} catch (java.net.MalformedURLException mfuexxx) {
 					throw new RuntimeException(mfuexxx);
 				}
