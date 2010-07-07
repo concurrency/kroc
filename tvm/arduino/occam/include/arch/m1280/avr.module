@@ -10,7 +10,7 @@
 #INCLUDE "ffi.module"
 -- These modules depend on base, constants, and FFI
 #INCLUDE "digital.module"
-#INCLUDE "pwm.moudle"
+#INCLUDE "pwm.module"
 #INCLUDE "usart.module"
 #INCLUDE "adc.module"
 
