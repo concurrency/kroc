@@ -4,6 +4,8 @@
 #IF NOT (DEFINED (PWM.MODULE))
 #DEFINE PWM.MODULE
 
+#INCLUDE "pwmarch.module"
+
 INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
