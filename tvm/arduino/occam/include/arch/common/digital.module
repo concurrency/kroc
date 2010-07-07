@@ -5,10 +5,15 @@
 #IF NOT (DEFINED (DIGITAL.MODULE))
 #DEFINE DIGITAL.MODULE
 
---{{{  PROC digitalWrite
+-- In this module, we use "pin" to denote an actual AVR pin.
+-- We will provide digital.write at a higher level to 
+-- denote a board's pins (which are mapped to the AVR's pins.)
+
+--{{{  PROC pin.write
 --* Sets the state of a pin to either HIGH or LOW.
--- @param pin The Arduino pin number.
--- @param state Either HIGH or LOW.
+-- @param r.port The port (PORTB, PORTC, etc.) on the ATmega
+-- @param bit The bit in the port (0 - 7)
+-- @param state Either HIGH or LOW
 INLINE PROC pin.write (VAL INT r.port, bit, state)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -17,66 +22,16 @@ INLINE PROC pin.write (VAL INT r.port, bit, state)
 --}}}
 
 
---{{{  PROC digitalRead
---* Read the value of a digital pin. Either HIGH or LOW.
--- @param pin The Arduino pin number.
--- @param state The state of the pin will be stored in this variable.
 INLINE PROC pin.read (VAL INT r.pin, bit, RESULT INT state)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
 :
---}}}
 
---{{{  PROC pinMode
 INLINE PROC pin.mode (VAL INT r.ddr, bit, mode)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
 :
---}}}
-
-#IF FALSE
--- Splitting these PROCs into a high-level and a low level thingers. Want to keep this proc as a reference till I know the new ones are right.
---{{{  PROC digitalWrite
---* Sets the state of a pin to either HIGH or LOW.
--- @param pin The Arduino pin number.
--- @param state Either HIGH or LOW.
-PROC digital.write (VAL INT pin, state)
-  INT r.ddr, r.port, r.pin, bit:
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    r.ddr, r.port, r.pin, bit := pin.location (pin)
-    ports[r.port] := (ports[r.port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
-:
---}}}
-
-
---{{{  PROC digitalRead
---* Read the value of a digital pin. Either HIGH or LOW.
--- @param pin The Arduino pin number.
--- @param state The state of the pin will be stored in this variable.
-PROC digital.read (VAL INT pin, RESULT INT state)
-  INT r.ddr, r.port, r.pin, bit:
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    r.ddr, r.port, r.pin, bit := pin.location (pin)
-    state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
-:
---}}}
-
---{{{  PROC pinMode
-PROC pin.mode (VAL INT pin, mode)
-  INT r.ddr, r.port, r.pin, bit:
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    r.ddr, r.port, r.pin, bit := pin.location (pin)
-    ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
-:
---}}}
-#ENDIF
 
 #ENDIF

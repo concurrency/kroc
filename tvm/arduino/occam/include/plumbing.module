@@ -11,12 +11,51 @@
 #IF NOT (DEFINED (PLUMBING.MODULE))
 #DEFINE PLUMBING.MODULE
 
-#INCLUDE "wiring.module"
+#INCLUDE "avr.module"
+#INCLUDE "pinmapping.module"
 #INCLUDE "printing.module"
 
 DATA TYPE LEVEL IS INT:
-VAL LEVEL HIGH IS #1:
 VAL LEVEL LOW IS #0:
+VAL LEVEL HIGH IS #1:
+
+--{{{  constants
+--* Symbolic constant for digital LOW on an Arduino pin.
+-- VAL INT LOW IS #0:
+--* Symbolic constant for digital HIGH on an Arduino pin.
+-- VAL INT HIGH IS #1:
+
+VAL INT INPUT IS #0:
+VAL INT OUTPUT IS #1:
+--}}}
+
+--{{{  PROC digital.write
+PROC digital.write (VAL INT pin, state)
+  INT r.ddr, r.port, r.pin, bit:
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    pin.write(r.port, bit, state)
+:
+--}}}
+
+--{{{  PROC digital.read
+PROC digital.read (VAL INT pin, RESULT INT state)
+  INT r.ddr, r.port, r.pin, bit:
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    pin.read(r.pin, bit, state)
+:
+--}}}
+
+--{{{  PROC digital.mode
+PROC digital.mode (VAL INT pin, mode)
+  INT r.ddr, r.port, r.pin, bit:
+  SEQ
+    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    pin.mode(r.ddr, bit, mode)
+:
+--}}}
+
 
 --* Set digital levels on a pin.
 -- Reads LEVEL values (LOW or HIGH) on the input 
@@ -29,10 +68,10 @@ PROC digital.output (VAL INT pin, CHAN LEVEL in?)
   LEVEL v:
   SEQ
     in ? v
-    pinMode (pin, OUTPUT)
+    digital.mode (pin, OUTPUT)
     WHILE TRUE
       SEQ
-        digitalWrite (pin, INT v)
+        digital.write (pin, INT v)
         in ? v
 :
 
@@ -52,7 +91,7 @@ PROC digital.input (VAL INT pin, CHAN LEVEL out!)
   LEVEL level, last.level:
   PROC read ()
     SEQ
-      digitalRead (pin, wl)
+      digital.read (pin, wl)
       level := LEVEL wl
   :
   SEQ
