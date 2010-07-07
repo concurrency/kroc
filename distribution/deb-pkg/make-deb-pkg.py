@@ -64,12 +64,25 @@ SVN  = "%s/dpkg-%s" % (TEMP, YMD)
 OBJ  = "%s/obj" % (SVN)
 
 # For use when referencing into the source tree
-SOURCE_ARDUINO  = "%s/%s" % (SVN, "/tvm/arduino")
-SOURCE_CONF     = "%s/%s" % (SVN, "/tvm/arduino/occam/share/conf")
-SOURCE_SCRIPTS  = "%s/%s" % (SVN, "/tvm/arduino/scripts")
-SOURCE_FIRMWARE = "%s/%s" % (SVN, "/tvm/arduino")
-SOURCE_LIB      = "%s/%s" % (SVN, "/tvm/arduino/occam/include")
-SOURCE_DEBIAN   = "%s/%s" % (SVN, "/distribution/deb-pkg/DEBIAN.in")
+# Functions, because I want to be able to change the 
+# root path for the SVN tree.
+def SOURCE_ARDUINO(url=SVN):
+	return "%s/%s" % (url, "/tvm/arduino")
+
+def SOURCE_CONF(url=SVN):
+	return "%s/%s" % (url, "/tvm/arduino/occam/share/conf")
+
+def SOURCE_SCRIPTS(url=SVN):
+	return "%s/%s" % (url, "/tvm/arduino/scripts")
+
+def SOURCE_FIRMWARE(url=SVN):
+	return "%s/%s" % (url, "/tvm/arduino")
+
+def SOURCE_LIB(url=SVN):
+	return "%s/%s" % (url, "/tvm/arduino/occam/include")
+
+def SOURCE_DEBIAN(url=SVN):
+	return "%s/%s" % (url, "/distribution/deb-pkg/DEBIAN.in")
 
 # Desired filesystem path for installation
 INSTPATH = "opt/occam/arduino"
@@ -152,10 +165,10 @@ def mkdir(dir):
 
 # MEAT AND POTATOES
 
-def checkout(SOURCE_URL):
+def checkout(url):
 	remove_and_create_dir(SVN)
 	print "In %s" % os.getcwd()
-	cmd(build_command(["svn", "co", SOURCE_URL, SVN]))
+	cmd(build_command(["svn", "co", url, SVN]))
 
 def autoreconf():
 	with pushd():
@@ -219,10 +232,10 @@ def subst_and_copy(file, source_dir, dest_dir):
 
 def copy_config():
 	with pushd():
-		cd(SOURCE_CONF)
-		for filename in os.listdir(SOURCE_CONF):
+		cd(SOURCE_CONF())
+		for filename in os.listdir(SOURCE_CONF()):
 			if re.search(".*conf.in$", filename):
-				subst_and_copy(filename, SOURCE_CONF, DEST_CONF)
+				subst_and_copy(filename, SOURCE_CONF(), DEST_CONF)
 
 def deployment_version():
 	with pushd():
@@ -233,43 +246,43 @@ def deployment_version():
 def chmod(mode, path, file):
 	cmd(build_command(["chmod", mode, "%s/%s" % (path, file)]))
 
-def copy():
+def copy(url=SVN):
 	# Copy scripts directory to destination
-	copy_dir(SOURCE_SCRIPTS, DEST_BIN)
+	copy_dir(SOURCE_SCRIPTS(url), DEST_BIN)
 
-	subst_and_copy("plumb.in", SOURCE_SCRIPTS, DEST_BIN)
+	subst_and_copy("plumb.in", SOURCE_SCRIPTS(url), DEST_BIN)
 	chmod("755", DEST_BIN, "plumb")
 
-	copy_files(".*.hex", SOURCE_FIRMWARE, DEST_FIRMWARE)
+	copy_files(".*.hex", SOURCE_FIRMWARE(), DEST_FIRMWARE)
 	
-	copy_files("avrdude.conf", SOURCE_ARDUINO, DEST_CONF)
+	copy_files("avrdude.conf", SOURCE_ARDUINO(), DEST_CONF)
 	
-	copy_dir(SOURCE_LIB, DEST_LIB)	
+	copy_dir(SOURCE_LIB(url), DEST_LIB)	
 
 def deb():
 	remove_and_create_dir(DEST_DEBIAN)
 
-	for filename in os.listdir(SOURCE_DEBIAN):
+	for filename in os.listdir(SOURCE_DEBIAN()):
 		if not re.search("in$", filename):
-			copy_files(filename, SOURCE_DEBIAN, DEST_DEBIAN)
+			copy_files(filename, SOURCE_DEBIAN(), DEST_DEBIAN)
 			chmod("755", DEST_DEBIAN, filename)
 	
-	copy_files("preinst", SOURCE_DEBIAN, DEST_DEBIAN)
+	copy_files("preinst", SOURCE_DEBIAN(), DEST_DEBIAN)
 	chmod("755", DEST_DEBIAN, "preinst")
 
-	copy_files("postrm", SOURCE_DEBIAN, DEST_DEBIAN)
+	copy_files("postrm", SOURCE_DEBIAN(), DEST_DEBIAN)
 	chmod("755", DEST_DEBIAN, "postrm")
 
-	copy_files("preinst", SOURCE_DEBIAN, DEST_DEBIAN)
+	copy_files("preinst", SOURCE_DEBIAN(), DEST_DEBIAN)
 	chmod("755", DEST_DEBIAN, "preinst")
 
-	copy_files("prerm", SOURCE_DEBIAN, DEST_DEBIAN)
+	copy_files("prerm", SOURCE_DEBIAN(), DEST_DEBIAN)
 	chmod("755", DEST_DEBIAN, "prerm")
 
-	subst_and_copy("control.in", SOURCE_DEBIAN, DEST_DEBIAN)
+	subst_and_copy("control.in", SOURCE_DEBIAN(), DEST_DEBIAN)
 	chmod("755", DEST_DEBIAN, "control")
 
-	subst_and_copy("postinst.in", SOURCE_DEBIAN, DEST_DEBIAN)
+	subst_and_copy("postinst.in", SOURCE_DEBIAN(), DEST_DEBIAN)
 	chmod("755", DEST_DEBIAN, "postinst")
 
 	with pushd():
@@ -286,8 +299,8 @@ def rpm():
 											 "%s_%s_i386.deb" % (PACKAGE_NAME, YMD)]))
 
 
-def all():
-	checkout(options.ALL)
+def all(url):
+	checkout(url)
 	autoreconf()
 	configure()
 	build()
@@ -297,20 +310,18 @@ def all():
 	deployment_version()
 	copy()
 	deb()
-	rpm()
 
-def refresh_libs():
+def refresh_libs(path):
 	copy_config()
 	deployment_version()
-	copy()
+	copy(path)
 	deb()
-	rpm()
 
 #############################################
 # COMMAND LINE PARSING
 
 OPTIONS = [
-	["checkout", "store", "Checkout a fresh tree from this Subversion URL.", 
+	["checkout", "store", "CHECKOUT_SVN_URL", "Checkout a fresh tree from this Subversion URL.", 
 		checkout ],
 	["autoreconf", "store_true", "Run 'autoreconf -vfi' on the tree.",
 		autoreconf ],
@@ -330,19 +341,21 @@ OPTIONS = [
 		copy],
 	["deb", "store_true", "Build the Debian package (.deb).",
 		deb],
-	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).",
-		rpm],
-	["all", "store", "Do everything up to this point.",
+	["all", "store", "ALL_SVN_URL", "Do everything up to this point.",
 		all],
-	["refresh-libs", "store_true", "Re-run copy-config, copy, deb, and rpm.",
-		refresh_libs]
+	["refresh-libs", "store", "LIB_PATH", "Re-run copy-config, copy, deb, and rpm.",
+		refresh_libs],
+	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).",
+		rpm]
 	] 
 	
 parser = OptionParser()
 
 for OPT in OPTIONS:
-	parser.add_option("--%s" % OPT[0], action=OPT[1],
-										dest=OPT[0].upper(), help=OPT[2])
+	if OPT[1] == "store_true":
+		parser.add_option("--%s" % OPT[0], action=OPT[1], dest=OPT[0].upper(), help=OPT[2])
+	elif OPT[1] == "store":
+		parser.add_option("--%s" % OPT[0], action=OPT[1], dest=OPT[2], help=OPT[3])
 
 # DO THE PARSE
 (options, args) = parser.parse_args()
@@ -355,12 +368,18 @@ def call_handler(str):
 	tag = str.lower()
 	for OPT in OPTIONS:
 		if tag == OPT[0]:
-			OPT[3]()
+			# Invoke the last element of the list
+			OPT[len(OPT) - 1]()
 
 
 for key, val in props(options).iteritems():
-	if (key == "CHECKOUT") and (val != None):
-		checkout(options.CHECKOUT)
+	if (key == "CHECKOUT_SVN_URL") and (val != None):
+		checkout(options.CHECKOUT_SVN_URL)
+	if (key == "ALL_SVN_URL") and (val != None):
+		all(options.ALL_SVN_URL)
+	if (key == "LIB_PATH") and (val != None):
+		print "PATH IS %s" % options.LIB_PATH
+		refresh_libs(options.LIB_PATH)
 	elif val:
 		print "*** RUNNING [ %s ] ***" % key
 		call_handler(re.sub("_", "-", key))
