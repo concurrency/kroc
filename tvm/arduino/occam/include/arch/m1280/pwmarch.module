@@ -8,31 +8,52 @@
 --This is a stub. It will change soon.
 
 INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
-  SKIP
+  INT a, b, c, d:
+  VALOF
+    a, b, c, d := 1, 2, 3, 4
+    RESULT a, b, c, d
 :
 
 INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
-  SKIP
+  INT a, b, c, d:
+  VALOF
+    a, b, c, d := 1, 2, 3, 4
+    RESULT a, b, c, d
 :
 
 INT FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
-  SKIP
+  INT a:
+  VALOF
+    a := 1
+    RESULT a
 :
 
 INT FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
-  SKIP
+  INT a:
+  VALOF
+    a := 1
+    RESULT a
 :
 
 INT FUNCTION pwm8.compare.lookup (VAL INT pin)
-  SKIP
+  INT a:
+  VALOF
+    a := 1
+    RESULT a
 :
 
 INT FUNCTION pwm16.compare.lookup (VAL INT pin)
-  SKIP
+  INT a:
+  VALOF
+    a := 1
+    RESULT a
 :
 
 INT FUNCTION pwm16.ICRn.lookup (VAL INT pin)
-  SKIP
+  INT a:
+  VALOF
+    a := 1
+    RESULT a
 : 
 
 #ENDIF
