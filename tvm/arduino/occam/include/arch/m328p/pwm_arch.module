@@ -6,7 +6,7 @@
 #DEFINE PWM_ARCH.MODULE
 
 INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
-  INT TCCRnA, TCCRnB, OCRnx:
+  INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx:
   VALOF
     CASE pin
       5, 6
