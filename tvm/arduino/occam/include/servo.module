@@ -1,0 +1,26 @@
+--** Servo wrapper functions. Probably should be moved to a better location.
+-- @module servo
+
+#IF NOT (DEFINED (SERVO.MODULE))
+#DEFINE SERVO.MODULE
+
+
+-- Kay. So this is so far from parallel safe. That should maybe change?
+-- It also locks users into 180 values of percision, and doesn't perform
+--  any bounds checking.
+-- Not even sure if it works...
+PROC servo.start (VAL INT pin, VAL INT32 servo.pulse, servo.min, servo.max, CHAN INT32 deg?)
+  INT32 incriment IS ((max - min) / 180):
+  INT32 new.deg
+  SEQ
+    --Still gonna leave it to the user to call digital.mode (pin, OUTPUT)
+    pwm16.setup (pin, 8)
+    pwm16.set.top (pin, servo.pulse)
+    pwm16.set.compare (pin, servo.min)
+    WHILE TRUE
+      SEQ
+        new.deg ? deg
+        pwm16.set.compare (pin, new.deg * 180)
+:
+
+#ENDIF
