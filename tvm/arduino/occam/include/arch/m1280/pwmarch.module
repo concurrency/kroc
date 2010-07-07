@@ -2,8 +2,8 @@
 -- @module pwm_arch
 
 
-#IF NOT (DEFINED (PWM_ARCH.MODULE))
-#DEFINE PWM_ARCH.MODULE
+#IF NOT (DEFINED (PWMARCH.MODULE))
+#DEFINE PWMARCH.MODULE
 
 --This is a stub. It will change soon.
 
