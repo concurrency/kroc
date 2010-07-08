@@ -1,13 +1,10 @@
---** Procs for fiddling with digital pin things
---FIXME: Rewrite that.
+--** Procs for low-level digital manipulation of pins on the ATmega.
+--   PROCs in this module take registers for direction (DDRn), pin (PINn)
+--   and port (PORTn) to manipulate digital pins on the ATmega.
 -- @module digital
 
-#IF NOT (DEFINED (DIGITAL.MODULE))
-#DEFINE DIGITAL.MODULE
-
--- In this module, we use "pin" to denote an actual AVR pin.
--- We will provide digital.write at a higher level to 
--- denote a board's pins (which are mapped to the AVR's pins.)
+#IF NOT (DEFINED (REGISTER.MODULE))
+#DEFINE REGISTER.MODULE
 
 --{{{  PROC pin.write
 --* Sets the state of a pin to either HIGH or LOW.
@@ -22,16 +19,28 @@ INLINE PROC pin.write (VAL INT r.port, bit, state)
 --}}}
 
 
+--{{{ PROC pin.read
+--* Reads the state of a PIN register. Either HIGH or LOW.
+-- @param r.pin A pin register (PINA, PINB)
+-- @param bit The bit in the port
+-- @param state The state of the bit (HIGH or LOW)
 INLINE PROC pin.read (VAL INT r.pin, bit, RESULT INT state)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   state := (INT ((ports[r.pin] /\ (BV (bit))) >> bit))
 :
+--}}}
 
+--{{{ PROC pin.mode
+--* Sets the direction of the pin (INPUT or OUTPUT)
+-- @param r.ddr The data direction register (DDRA, etc.)
+-- @param bit The bit in the register
+-- @param mode Either INPUT or OUTPUT
 INLINE PROC pin.mode (VAL INT r.ddr, bit, mode)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   ports[r.ddr] := (ports[r.ddr] /\ (~BV (bit))) \/ ((BYTE mode) << bit)
 :
+--}}}
 
 #ENDIF

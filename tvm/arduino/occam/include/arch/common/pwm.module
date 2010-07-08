@@ -1,11 +1,17 @@
---** Pulse width modulation for the ATmega328
+--** Common routines for configuring PWM on the ATmega family of processors.
 -- @module pwm
 
 #IF NOT (DEFINED (PWM.MODULE))
 #DEFINE PWM.MODULE
 
+-- FIXME MCJ
+-- I would love to come up with a better naming convention
+-- for the arch-specific part...
 #INCLUDE "pwmarch.module"
 
+-- FIXME MCJ
+-- "breg" sounds like "BREG" in the VM source.
+-- The PROC can probably be named better.
 INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -19,6 +25,11 @@ INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
     ports[reg] := (BYTE (val /\ #FF))
 :
 
+-- WARNING: The PWM pin must be set to output using a call like
+--   digital.mode (pin, OUTPUT)
+-- before it can be set up successfully as a PWM output.
+-- This should not be an issue if using the higher-level wrapper of 
+-- the PWM PROCs in this module.
 PROC pwm8.setup (VAL INT pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -26,10 +37,6 @@ PROC pwm8.setup (VAL INT pin, prescale)
   INITIAL INT TCCRnB.bits IS pwm8.TCCRnB.helper (prescale):
 
   SEQ
-    --digital.mode (pin, OUTPUT)
-    -- This is simplest to call from a level up, honestly, let the user do it.
-    --  To automate it here would involve reinventing the logic of digital.mode
-    --  for every possible PWM pin, which, on the Mega, would be a royal pain.
     -- FIXME 20100706 MCJ
     -- This is dangerous. The lookup returns an INT for the bitfield, but
     -- it should probably be a BYTE. We're downcasting here, and if something goes
@@ -39,6 +46,11 @@ PROC pwm8.setup (VAL INT pin, prescale)
     ports[OCRnx]  := 0
 :
 
+-- WARNING: The PWM pin must be set to output using a call like
+--   digital.mode (pin, OUTPUT)
+-- before it can be set up successfully as a PWM output.
+-- This should not be an issue if using the higher-level wrapper of 
+-- the PWM PROCs in this module.
 PROC pwm16.setup (VAL INT pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -46,7 +58,6 @@ PROC pwm16.setup (VAL INT pin, prescale)
   INITIAL INT TCCRnB.bits IS pwm16.TCCRnB.helper (prescale):
 
   SEQ
-    --digital.mode (pin, OUTPUT)
     ports[TCCRnA] := ports[TCCRnA] \/ (BYTE TCCRnA.bits)
     ports[TCCRnB] := ports[TCCRnB] \/ (BYTE TCCRnB.bits)
     ports[OCRnx]  := 0

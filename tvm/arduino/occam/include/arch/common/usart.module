@@ -4,6 +4,7 @@
 #IF NOT (DEFINED (USART.MODULE))
 #DEFINE USART.MODULE
 
+--{{{ PROC serial.setup
 --* Initialise iterrupt-driven serial IO
 --
 -- @param port Serial port (0, 1, 2, or 3)
@@ -16,12 +17,14 @@ PROC serial.setup (VAL INT port, VAL INT32 baud)
   SEQ
     ports[UBRRH[port]] := factor.bytes[1]
     ports[UBRRL[port]] := factor.bytes[0]
-
+    -- WARNING: Should we replace this, then? Is one "more correct" than the other?
+    -- (3 << UCSZN0[port]) is the same as (UCSZN0[port] \/ UCSZN1[port])
     ports[UCSRC[port]] := 3 << UCSZN0[port]
-        --This is the same as := UCSZN0[port] \/ UCSZN1[port]
     ports[UCSRB[port]] := BV (TXEN[port]) \/ BV (RXEN[port])
 :
+--}}}
 
+--{{{ PROC serial.write.byte
 --* Write a byte to the serial port (interrupt-driven)
 --
 -- @param VAL INT Serial port (0, 1, 2, or 3)
@@ -44,7 +47,9 @@ PROC serial.write.byte (VAL INT port, VAL BYTE b)
         SKIP
     ports[UDR[port]] := b
 :
+--}}}
 
+--{{{ PROC serial.read.byte
 --* Read a byte from the serial port (interrupt-driven)
 --
 -- @param VAL INT Serial port (0, 1, 2, or 3)
@@ -67,7 +72,9 @@ PROC serial.read.byte (VAL INT port, RESULT BYTE b)
         SKIP
     b := ports[UDR[port]]
 :
+--}}}
 
+--{{{ PROC serial.setup.blocking
 --* Initialise the serial port (blocking).
 --
 -- @param port Serial port (0, 1, 2, or 3)
@@ -80,11 +87,14 @@ PROC serial.setup.blocking (VAL INT port, VAL INT32 baud)
   SEQ
     ports[UBRRH[port]] := factor.bytes[1]
     ports[UBRRL[port]] := factor.bytes[0]
-
+    -- WARNING: Should we replace this, then? Is one "more correct" than the other?
+    -- (3 << UCSZN0[port]) is the same as (UCSZN0[port] \/ UCSZN1[port])
     ports[UCSRC[port]] := 3 << UCSZ00
     ports[UCSRB[port]] := BV (TXEN[port])
 :
+--}}}
 
+--{{{ PROC serial.write.byte.blocking
 --* Write a byte to the serial port (blocking).
 --
 -- @param VAL INT Serial port (0, 1, 2, or 3)
@@ -97,5 +107,6 @@ PROC serial.write.byte.blocking (VAL INT port, VAL BYTE b)
       SKIP
     ports[UDR[port]] := b
 :
+--}}}
 
 #ENDIF
