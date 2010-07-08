@@ -53,7 +53,7 @@ INT, INT, INT, BYTE FUNCTION pwm8.lookup (VAL INT pin)
                   OCRnx := OCR2B
         ELSE
           die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
-    RESULT TCCRnA, TCCRnB, INT TCCRnA.bits, OCRnx
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits
 :
 
 -- Should TCCRnA.bits be a BYTE?
@@ -75,7 +75,7 @@ INT, INT, INT, BYTE FUNCTION pwm16.lookup (VAL INT pin)
             OCRnx := OCR1B
         ELSE
           die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
-    RESULT TCCRnA, TCCRnB, INT TCCRnA.bits, OCRnx
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits
 :
 
 -- Should this be "BYTE"?
@@ -96,7 +96,7 @@ BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
           bits := #05 -- := BV (CSn2) \/ BV (CSn0)
         ELSE
           die ("Invalid clock prescale value")
-    RESULT INT bits
+    RESULT bits
 :
 
 -- SHould this be a BYTE return?
@@ -116,7 +116,7 @@ BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
         bits := BV (WGM13) \/ #05 -- := BV (CSn2) \/ BV (CSn0)
       ELSE
         die ("Invalid clock prescale value")
-    RESULT INT bits
+    RESULT bits
 :
 
 INT FUNCTION pwm8.compare.lookup (VAL INT pin)
