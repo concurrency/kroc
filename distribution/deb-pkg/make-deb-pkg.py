@@ -230,7 +230,7 @@ def subst_and_copy(file, source_dir, dest_dir):
 				# After replacements, write the line
 				output.write(line)
 
-def copy_config(path=SOURCE_CONF()):
+def copy_config(path=SVN):
 	with pushd():
 		cd(SOURCE_CONF())
 		for filename in os.listdir(SOURCE_CONF(path)):
