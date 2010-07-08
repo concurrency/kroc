@@ -7,8 +7,7 @@
 -- FIXME MCJ
 -- I would love to come up with a better naming convention
 -- for the arch-specific part...
--- #INCLUDE "pwmarch.module" 
-#INCLUDE "pwmmap.module" -- in platform
+#INCLUDE "pwmarch.module" 
 
 -- FIXME MCJ
 -- "breg" sounds like "BREG" in the VM source.
@@ -34,14 +33,12 @@ INLINE PROC set16 (VAL INT reg, VAL INT16 val)
 PROC pwm8.setup (VAL INT pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT TCCRnA, TCCRnB, OCRnx, BYTE TCCRnA.bit IS pwm8.lookup (pin):
-  INITIAL BYTE TCCRnB.bits IS pwm8.TCCRnB.helper (prescale):
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits, TCCRnB.bits:
 
   SEQ
-    -- FIXME 20100706 MCJ
-    -- This is dangerous. The lookup returns an INT for the bitfield, but
-    -- it should probably be a BYTE. We're downcasting here, and if something goes
-    -- wrong, then we have an overflow...
+    TCCRnA, TCCRnB, OCRnx, TCCRnA.bits := pwm8.lookup (pin)
+    TCCRnB.bits := pwm8.TCCRnB.helper (prescale)
     ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
     ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
@@ -55,10 +52,12 @@ PROC pwm8.setup (VAL INT pin, prescale)
 PROC pwm16.setup (VAL INT pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT TCCRnA, TCCRnB, OCRnx, BYTE TCCRnA.bits IS pwm16.lookup (pin):
-  INITIAL BYTE TCCRnB.bits IS pwm16.TCCRnB.helper (prescale):
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits, TCCRnB.bits:
 
   SEQ
+    TCCRnA, TCCRnB, OCRnx, TCCRnA.bits := pwm16.lookup (pin)
+    TCCRnB.bits := pwm16.TCCRnB.helper (prescale)
     ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
     ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
@@ -77,11 +76,11 @@ PROC pwm16.set.compare (VAL INT pin, VAL INT16 level)
   INITIAL INT OCRnx IS pwm16.compare.lookup (pin):
   -- Not sure if this is the way to do it...
   -- Not sure if I'm a fan of relying on the highs being one up from the lows..
-  set16breg (OCRnx, level)
+  set16 (OCRnx, level)
 :
 
 PROC pwm16.set.top (VAL INT pin, VAL INT16 top)
-  INITIAL INT ICRn IS pwm16.IRCn.lookup (pin):
+  INITIAL INT ICRn IS pwm16.ICRn.lookup (pin):
   set16 (ICRn, top)
 :
 

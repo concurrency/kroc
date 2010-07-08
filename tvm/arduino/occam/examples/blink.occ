@@ -1,36 +1,28 @@
-#INCLUDE "wiring.module"
-
-PROC flash.pin (VAL INT pin, on, off)
-  SEQ
-    pinMode (pin, OUTPUT)
-    WHILE TRUE
-      SEQ
-        digitalWrite (pin, HIGH)
-        delay (on)
-        digitalWrite (pin, LOW)
-        delay (off)
-:
+#INCLUDE "plumbing.module"
 
 PROC main ()
-  INITIAL INT val IS 0:
+  INITIAL BYTE val IS 0:
   INITIAL BOOL up IS TRUE:
   SEQ
-    pin.mode (9, OUTPUT)
-    pwm8.setup (8, 64)
-    WHILE TRUE
-      pwm8.set.compare (8, val)
-      IF
-        up = TRUE
+    digital.mode (9, OUTPUT)
+    pwm8.setup (9, 64)
+    PAR
+      heartbeat ()
+      WHILE TRUE
+        SEQ
+          pwm8.set.compare (9, val)
           IF
-            val <> 255
-              val := val + 5
+            up = TRUE
+              IF
+                val <> 255
+                  val := val + 5
+                TRUE
+                  up := FALSE
             TRUE
-              up := FALSE
-        TRUE
-          IF
-            val <> 0
-              val := val - 5
-            TRUE
-              up := TRUE
-      delay (200)
+              IF
+                val <> 0
+                  val := val - 5
+                TRUE
+                  up := TRUE
+          delay (50)
 :

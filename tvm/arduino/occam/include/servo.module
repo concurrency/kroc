@@ -9,23 +9,24 @@ PROTOCOL SERVO
     max ; INT
     min ; INT
     div ; INT
-    pos ; INT
-    refresh ; INT32
+    pos ; INT16
+    refresh ; INT16
     start
     stop
 :
 
 PROC servo (VAL INT pin, CHAN SERVO s?)
-  PROC set.increment ()
-    increment := (max - min) / div
-  :
   INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
   INITIAL INT max IS 2300:
   INITIAL INT min IS 700:
   INITIAL INT div IS 180:
-  INITIAL INT pos IS (max - min) / 2:
-  INITIAL INT32 refresh IS 20000:
+  INITIAL INT16 pos IS (INT16 (max - min)) / 2:
+  INITIAL INT16 refresh IS 20000:
   INITIAL INT increment IS (max - min) / div:
+  PROC set.increment ()
+    increment := (max - min) / div
+  :
+
   WHILE TRUE
     s ? CASE
       max ; max
@@ -34,9 +35,9 @@ PROC servo (VAL INT pin, CHAN SERVO s?)
         SKIP
       div ; div
         set.increment()
-      pos ; _pos
+      pos ; pos
         SEQ
-          pos := (_pos * increment) + min
+          pos := (pos * increment) + min
           IF
             RUNNING
               pwm16.set.compare (pin, pos)
