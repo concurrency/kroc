@@ -9,8 +9,9 @@ PROTOCOL SERVO
     max ; INT
     min ; INT
     div ; INT
-    pos ; INT16
-    refresh ; INT16
+    pos ; INT
+    usec ; INT
+    refresh ; INT
     start
     stop
 :
@@ -20,29 +21,45 @@ PROC servo (VAL INT pin, CHAN SERVO s?)
   INITIAL INT max IS 2300:
   INITIAL INT min IS 700:
   INITIAL INT div IS 180:
-  INITIAL INT16 pos IS (INT16 (max - min)) / 2:
-  INITIAL INT16 refresh IS 20000:
+  INITIAL INT pos IS 90:
   INITIAL INT increment IS (max - min) / div:
-  PROC set.increment ()
+  INITIAL INT usec IS (pos * increment) + min:
+  INITIAL INT refresh IS 20000:
+  INLINE PROC set.increment ()
     increment := (max - min) / div
+  :
+  INLINE PROC set.usec ()
+    usec := (pos * increment) + min
   :
 
   WHILE TRUE
     s ? CASE
       max ; max
-        SKIP
+        SEQ
+          set.increment ()
+          set.usec ()
       min ; min
-        SKIP
+        SEQ
+          set.increment ()
+          set.usec()
       div ; div
         set.increment()
       pos ; pos
         SEQ
-          pos := (pos * increment) + min
+          set.usec ()
           IF
             RUNNING
-              pwm16.set.compare (pin, pos)
+              pwm16.set.compare (pin, usec)
             TRUE
               SKIP
+      usec ; usec
+        SEQ
+          pos := usec
+          IF
+            RUNNING
+              pwm16.set.compare (pin, usec)
+            TRUE
+              SKIP 
       refresh ; refresh
         SKIP
       start

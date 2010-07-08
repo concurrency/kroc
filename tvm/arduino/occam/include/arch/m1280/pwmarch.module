@@ -101,28 +101,30 @@ INT, INT, INT, BYTE FUNCTION pwm8.lookup (VAL INT board.pin)
           SEQ
             TCCRnA := TCCR5A
             TCCRnB := TCCR5B
-            TCCRnA.bits := (BV (WGM50) \/ BV (COM5B1))
-            OCRnx := OCR5B
-
-  RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits
+            TCCRnA.bits := (BV (WGM50) \/ BV (COM5C1))
+            OCRnx := OCR5C
+        ELSE
+          die ("The ArduinoMega does not support PWM on that pin.")
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits
 :
 
 INT, INT, INT, BYTE FUNCTION pwm16.lookup (VAL INT pin)
-  INT a, b, c, d:
+  INT a, b, c:
+  BYTE d:
   VALOF
     a, b, c, d := 1, 2, 3, 4
     RESULT a, b, c, d
 :
 
 BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
-  INT a:
+  BYTE a:
   VALOF
     a := 1
     RESULT a
 :
 
 BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
-  INT a:
+  BYTE a:
   VALOF
     a := 1
     RESULT a
