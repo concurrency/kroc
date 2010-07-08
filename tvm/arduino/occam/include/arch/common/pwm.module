@@ -12,7 +12,7 @@
 -- FIXME MCJ
 -- "breg" sounds like "BREG" in the VM source.
 -- The PROC can probably be named better.
-INLINE PROC set16 (VAL INT reg, VAL INT16 val)
+INLINE PROC set16 (VAL INT reg, VAL INT val)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
@@ -70,7 +70,7 @@ PROC pwm8.set.compare (VAL INT pin, VAL BYTE level)
   ports[OCRnx] := level
 :
 
-PROC pwm16.set.compare (VAL INT pin, VAL INT16 level)
+PROC pwm16.set.compare (VAL INT pin, VAL INT level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   INITIAL INT OCRnx IS pwm16.compare.lookup (pin):
@@ -79,7 +79,7 @@ PROC pwm16.set.compare (VAL INT pin, VAL INT16 level)
   set16 (OCRnx, level)
 :
 
-PROC pwm16.set.top (VAL INT pin, VAL INT16 top)
+PROC pwm16.set.top (VAL INT pin, VAL INT top)
   INITIAL INT ICRn IS pwm16.ICRn.lookup (pin):
   set16 (ICRn, top)
 :

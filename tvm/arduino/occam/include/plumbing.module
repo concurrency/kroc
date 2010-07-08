@@ -324,6 +324,17 @@ PROC serial.write (CHAN BYTE in?)
       serial.write.byte (0, b)
 :
 
+--{{{  PROC serialWriteString
+--* Write a string to the serial port.
+--
+-- @param port Serial port to write to.
+-- @param string Bytes to write.
+PROC serial.write.string (VAL []BYTE string)
+  SEQ i = 0 FOR SIZE string
+    serial.write.byte (0, string[i])
+:
+--}}}
+
 PROC serial.read (CHAN BYTE out!)
   WHILE TRUE
     BYTE b:

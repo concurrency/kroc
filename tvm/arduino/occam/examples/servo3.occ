@@ -1,0 +1,91 @@
+#INCLUDE "plumbing.module"
+
+PROC serial.write (VAL BYTE char)
+  serial.write.byte (0, char)
+:
+
+PROC serial.write.string (VAL []BYTE string)
+  SEQ i = 0 FOR SIZE string
+    serial.write.byte (0, string[i])
+:
+
+PROC serial.write.int (VAL INT n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serial.write.byte (0, digits[(n >> (i * 4)) /\ #F])
+:
+
+#INCLUDE "servo.module"
+
+PROC main ()
+  CHAN SERVO s:
+  SEQ
+    --serial.setup (0, 57600)
+    digital.mode (9, OUTPUT)
+    PAR
+      heartbeat ()
+      servo (9, s?)
+      SEQ
+        s ! min ; 650
+        s ! max ; 2350
+        s ! div ; 4
+        s ! pos ; 0
+        s ! start
+        delay (2000)
+        WHILE TRUE
+          SEQ
+            SEQ i = 0 FOR 4
+              SEQ
+                s ! pos ; i
+                delay (1000)
+            SEQ i = 4 FOR 4 STEP -1
+              SEQ
+                s ! pos ; i
+                delay (1000)
+:
+
+#IF FALSE
+        WHILE TRUE
+          SEQ
+            s ! pos ; n.pos
+            IF
+              up = TRUE
+                IF
+                  n.pos <> 180
+                    n.pos := n.pos + 1 
+                  TRUE
+                    up := FALSE
+              TRUE
+                IF
+                  n.pos <> 0
+                    n.pos := n.pos - 1
+                  TRUE
+                    up := TRUE
+            serial.write.string ("Set servo to ")
+            serial.write.int (n.pos)
+            serial.write ('*n')
+            delay (25)
+
+        SEQ i = 800 FOR 15 STEP -50
+          SEQ
+            s ! pos ; i
+            serial.write.string ("Set servo to ")
+            serial.write.int (i)
+            serial.write ('*n')
+            delay (500)
+        SEQ i = 50 FOR 4 STEP -10
+          SEQ
+            s ! pos ; i
+            serial.write.string ("Set servo to ")
+            serial.write.int (i)
+            serial.write ('*n')
+            delay (500)
+        SEQ i = 10 FOR 10 STEP -1
+          SEQ
+            s ! pos ; i
+            serial.write.string ("Set servo to ")
+            serial.write.int (i)
+            serial.write ('*n')
+            delay (500)
+        s ! pos ; 200
+#ENDIF
