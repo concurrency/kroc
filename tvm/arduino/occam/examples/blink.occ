@@ -12,7 +12,25 @@ PROC flash.pin (VAL INT pin, on, off)
 :
 
 PROC main ()
-  -- Configures all digital and analog pins as output
-  PAR i = 2 FOR 17
-    flash.pin (i, i * 100, i * 230)
+  INITIAL INT val IS 0:
+  INITIAL BOOL up IS TRUE:
+  SEQ
+    pin.mode (9, OUTPUT)
+    pwm8.setup (8, 64)
+    WHILE TRUE
+      pwm8.set.compare (8, val)
+      IF
+        up = TRUE
+          IF
+            val <> 255
+              val := val + 5
+            TRUE
+              up := FALSE
+        TRUE
+          IF
+            val <> 0
+              val := val - 5
+            TRUE
+              up := TRUE
+      delay (200)
 :

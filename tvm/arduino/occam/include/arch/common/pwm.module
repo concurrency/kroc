@@ -7,12 +7,13 @@
 -- FIXME MCJ
 -- I would love to come up with a better naming convention
 -- for the arch-specific part...
-#INCLUDE "pwmarch.module"
+-- #INCLUDE "pwmarch.module" 
+#INCLUDE "pwmmap.module" -- in platform
 
 -- FIXME MCJ
 -- "breg" sounds like "BREG" in the VM source.
 -- The PROC can probably be named better.
-INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
+INLINE PROC set16 (VAL INT reg, VAL INT16 val)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
@@ -22,7 +23,7 @@ INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
     -- OCR1AL + 1 = OCR1AH
     -- According to the datasheet, we have to write the high byte first.
     ports[reg+1] := (BYTE (val >> 8)) 
-    ports[reg] := (BYTE (val /\ #FF))
+    ports[reg] := (BYTE (val BITAND #FF))
 :
 
 -- WARNING: The PWM pin must be set to output using a call like
@@ -33,16 +34,16 @@ INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
 PROC pwm8.setup (VAL INT pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx IS pwm8.lookup (pin):
-  INITIAL INT TCCRnB.bits IS pwm8.TCCRnB.helper (prescale):
+  INITIAL INT TCCRnA, TCCRnB, OCRnx, BYTE TCCRnA.bit IS pwm8.lookup (pin):
+  INITIAL BYTE TCCRnB.bits IS pwm8.TCCRnB.helper (prescale):
 
   SEQ
     -- FIXME 20100706 MCJ
     -- This is dangerous. The lookup returns an INT for the bitfield, but
     -- it should probably be a BYTE. We're downcasting here, and if something goes
     -- wrong, then we have an overflow...
-    ports[TCCRnA] := ports[TCCRnA] \/ (BYTE TCCRnA.bits)
-    ports[TCCRnB] := ports[TCCRnB] \/ (BYTE TCCRnB.bits)
+    ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
+    ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
 :
 
@@ -54,12 +55,12 @@ PROC pwm8.setup (VAL INT pin, prescale)
 PROC pwm16.setup (VAL INT pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT TCCRnA, TCCRnB, TCCRnA.bits, OCRnx IS pwm16.lookup (pin):
-  INITIAL INT TCCRnB.bits IS pwm16.TCCRnB.helper (prescale):
+  INITIAL INT TCCRnA, TCCRnB, OCRnx, BYTE TCCRnA.bits IS pwm16.lookup (pin):
+  INITIAL BYTE TCCRnB.bits IS pwm16.TCCRnB.helper (prescale):
 
   SEQ
-    ports[TCCRnA] := ports[TCCRnA] \/ (BYTE TCCRnA.bits)
-    ports[TCCRnB] := ports[TCCRnB] \/ (BYTE TCCRnB.bits)
+    ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
+    ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
 :
 
@@ -79,14 +80,10 @@ PROC pwm16.set.compare (VAL INT pin, VAL INT16 level)
   set16breg (OCRnx, level)
 :
 
-#IF FALSE
--- FIXME 20100706 MCJ
--- This is broken, but Drew wrote it, so he knows how to fix it.
 PROC pwm16.set.top (VAL INT pin, VAL INT16 top)
-  INITIAL INT ICRn IS pwm16.top.lookup (pin):
-  set16breg (ICRn, top)
+  INITIAL INT ICRn IS pwm16.IRCn.lookup (pin):
+  set16 (ICRn, top)
 :
-#ENDIF
 
 
 

@@ -6,7 +6,7 @@
 #DEFINE PWMARCH.MODULE
 
 -- Should TCCRnA.bits be a BYTE?
-INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
+INT, INT, INT, BYTE FUNCTION pwm8.lookup (VAL INT pin)
   INT TCCRnA, TCCRnB, OCRnx:
   BYTE TCCRnA.bits:
   VALOF
@@ -57,7 +57,7 @@ INT, INT, INT, INT FUNCTION pwm8.lookup (VAL INT pin)
 :
 
 -- Should TCCRnA.bits be a BYTE?
-INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
+INT, INT, INT, BYTE FUNCTION pwm16.lookup (VAL INT pin)
   INT TCCRnA, TCCRnB, OCRnx:
   BYTE TCCRnA.bits:
   VALOF
@@ -79,7 +79,7 @@ INT, INT, INT, INT FUNCTION pwm16.lookup (VAL INT pin)
 :
 
 -- Should this be "BYTE"?
-INT FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
+BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
   BYTE bits:
   VALOF
     SEQ
@@ -100,7 +100,7 @@ INT FUNCTION pwm8.TCCRnB.helper (VAL INT prescale)
 :
 
 -- SHould this be a BYTE return?
-INT FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
+BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale)
   BYTE bits:
   VALOF
     CASE prescale
