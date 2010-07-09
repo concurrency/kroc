@@ -1,0 +1,48 @@
+--** occam header for Arduino Duemilanove specific pin mappings.
+-- @module boardmap
+#IF NOT (DEFINED (BOARDMAP.MODULE))
+#DEFINE BOARDMAP.MODULE
+
+#INCLUDE "constants.module"
+#INCLUDE "base.module"
+
+
+VAL INT A0 IS 23:
+VAL INT A1 IS 24:
+VAL INT A2 IS 25:
+VAL INT A3 IS 26:
+VAL INT A4 IS 27:
+VAL INT A5 IS 28:
+
+VAL INT RX0 IS 2;
+VAL INT TX0 IS 3:
+
+VAL INT LED.PIN IS 19:
+
+VAL []INT MAP IS [2,  3,  4,  5,  6,  11, 12, 13,
+                  14, 15, 16, 17, 18, 19,
+                  23, 24, 25, 26, 27, 28]:
+
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+
+
+--Board to Architecture layout w/ register names.
+--
+--
+--B.pin A.pin   *REG    B.pin A.pin *REG
+--0       2     PD0     --8       14    PB0
+--1       3     PD1     --9       15    PB1
+--2       4     PD2     --10      16    PB2
+--3       5     PD3     --11      17    PB3
+--4       6     PD4     --12      18    PB4
+--5       11    PD5     --13      19    PB5
+--6       12    PD6     --AREF
+--7       13    PD7     --GND
+--
+--a0(14)  23    PC0
+--a1(15)  24    PC1
+--a2(16)  25    PC2
+--a3(17)  26    PC3
+--a4(18)  27    PC4
+--a5(19)  28    PC5
+#ENDIF
