@@ -1,0 +1,136 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "maths.module"
+#INCLUDE "printreal32.occ"
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+PROC print.32 (VAL REAL32 v)
+  [16] BYTE barr:
+  INT total:
+  SEQ
+    total := 16
+    real32toa (v, barr, total)
+    SEQ i = 0 FOR total
+      serialWrite ([barr[i]])
+:
+PROC neg.safe.print(VAL REAL32 v)
+  REAL32 tmp:
+  SEQ
+    IF
+      v < 0.0
+        SEQ
+          tmp := (-1.0) * v
+          serialWrite("-")
+          print.32 (v)
+      TRUE
+        print.32 (v)
+:
+PROC calculator (CHAN REAL32 input.z?, input.y?, input.x?)
+  REAL32 val.z, val.y, val.x, sum, pitch,roll,angle,test:
+  INT32 value.pitch, value.roll:
+  WHILE TRUE
+    SEQ
+      input.z ? val.z
+      input.x ? val.x
+      input.y ? val.y
+      
+      val.x := val.x - 512.0
+      val.x := (val.x/512.0)
+      
+      --pitch := (ATAN2 ((val.x - 512.0), ((val.z) - 768.0)))
+      pitch := (ACOS (val.x) * (180.0/3.14159)) 
+      --roll := (ATAN2 ((val.y - 512.0), ((val.z) - 768.0)))
+      --value.pitch := INT32 ROUND pitch
+      --value.roll := INT32 ROUND roll
+      
+      
+      serialWrite ("Pitch: ")
+      --serialWriteDecInt (INT value.pitch)
+      --print.32 (pitch)
+      neg.safe.print(pitch)
+      serialWrite ("       ")
+      serialWrite ("Roll: ")
+      --print.32 (roll)
+      neg.safe.print(roll)
+      --serialWriteDecInt (INT value.roll)
+      serialWrite ("*n")
+:
+
+PROC magic (CHAN INT adc.input?, CHAN REAL32 out!)
+  INT value:
+  REAL32 val32:
+  
+  
+  WHILE TRUE
+    SEQ
+      adc.input ? value
+      --serialWrite("before round")
+      val32 := REAL32 ROUND value
+      --val32 := (val32/1023.0) * 3.3
+      --serialWrite("after round")
+      out ! val32
+      
+      
+:
+    
+PROC show (CHAN INT output?)
+  INT val:
+  
+  WHILE TRUE
+    SEQ
+      output ? val
+      
+      serialWriteDecInt(val)
+      serialWrite("*n")
+    
+:
+PROC pinger(CHAN SIGNAL ping!)
+  WHILE TRUE
+    SEQ
+      ping ! SIGNAL
+      delay(150)
+:
+
+PROC main ()
+  CHAN INT output.z,output.y, output.x:
+  CHAN SIGNAL ping.x, ping.y, ping.z:
+  CHAN REAL32 output.z.32, output.y.32, output.x.32:
+  PAR
+    pinger(ping.x!)
+    pinger(ping.y!)
+    pinger(ping.z!)
+    adc(3,ping.z?,output.z!)
+    adc(4,ping.y?,output.y!)
+    adc(5,ping.x?,output.x!)
+    magic(output.z?,output.z.32!)
+    magic(output.y?, output.y.32!)
+    magic(output.x?,output.x.32!)
+    calculator(output.z.32?, output.y.32?, output.x.32?)
+    --show(output.y?)
+
+:

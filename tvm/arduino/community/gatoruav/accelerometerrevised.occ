@@ -1,0 +1,116 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "maths.module"
+#INCLUDE "printreal32.occ"
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+PROC print.32 (VAL REAL32 v)
+  [16] BYTE barr:
+  INT total:
+  SEQ
+    total := 16
+    real32toa (v, barr, total)
+    SEQ i = 0 FOR total
+      serialWrite ([barr[i]])
+:
+PROC neg.safe.print(VAL REAL32 v)
+  REAL32 tmp:
+  SEQ
+    IF
+      v < 0.0
+        SEQ
+          tmp := v * (-1.0)
+          serialWrite("-")
+          print.32(tmp)
+      TRUE
+        print.32(v)
+:
+
+--VAL INT MAX.Y IS 610:
+--VAL INT MIN.Y IS 390:
+
+PROC conv (CHAN INT in?, out!, VAL INT max, min)
+  WHILE TRUE
+    INT reading, result:
+    REAL32 map:
+    SEQ
+      in ? reading
+      REAL32 num, denom:
+      SEQ
+        --Gives initial range of 2
+        num    := REAL32 ROUND ((reading - min) * 2)
+        denom  := REAL32 ROUND (max - min) 
+        -- Accelerometer value (normalized to zero) divided by the total range of values (~200) 
+        --1 is subtracted from the result of the division to bring the value between -1 and 1
+        map    := (num / denom) - 1.0
+        map    := ACOS(map)
+        --Conversion from radians to degrees and shifting the range to read 'zero' at zero
+        map    := (map * (180.0/3.14159)) - 86.0 
+        result := INT ROUND (map)
+        
+      out ! result
+:
+  
+PROC request (CHAN SIGNAL ping!)
+  WHILE TRUE
+    SEQ
+      ping ! SIGNAL
+:
+PROC show (CHAN INT input.x, input.y)
+  INT x, y:
+  WHILE TRUE
+    SEQ
+      input.x ? x
+      input.y ? y
+      
+      --serialWrite ("Pitch: ")
+      --serialWriteDecInt (x)
+      --serialWrite ("       ")
+      
+      serialWrite ("Roll: ")
+      serialWriteDecInt (y)
+      serialWrite ("*n")
+:
+  
+PROC main ()
+  CHAN INT adc.val.x, adc.val.y:
+  CHAN INT output.x, output.y:
+  CHAN SIGNAL ping.x, ping.y:
+  
+  PAR
+    adc(5, ping.x?, adc.val.x!)
+    request(ping.x!)
+    conv (adc.val.x?, output.x!,768, 412)
+    
+    adc(3, ping.y?, adc.val.y!)
+    request(ping.y!)
+    conv (adc.val.y?, output.y!, 608, 390)
+
+    show (output.x?, output.y?)
+:
+

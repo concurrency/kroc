@@ -1,0 +1,103 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "maths.module"
+#INCLUDE "printreal32.occ"
+
+PROC print.32 (VAL REAL32 v)
+  [16] BYTE barr:
+  INT total:
+  SEQ
+    total := 16
+    real32toa (v, barr, total)
+    SEQ i = 0 FOR total
+      serialWrite ([barr[i]])
+:
+PROC neg.safe.print(VAL REAL32 v)
+  REAL32 tmp:
+  SEQ
+    IF
+      v < 0.0
+        SEQ
+          tmp := v * (- 1.0)
+          serialWrite("-")
+          print.32(tmp)
+      TRUE
+        print.32(v)
+:
+PROC adc.acc.conv (CHAN INT input?, CHAN REAL32 output!, VAL REAL32 zero.voltage)
+  INT val:
+  REAL32 force, val.32:
+  WHILE TRUE
+    SEQ 
+      input ? val
+      val.32 := REAL32 ROUND val
+      force := ((((val.32*3.3)/1023.0)-zero.voltage)/0.3)
+      output ! force
+:
+PROC r.calc (CHAN REAL32 facc.x?, facc.y?, facc.z?, AxR!, AyR!, AzR!, r.x!, r.y!, r.z!)
+  REAL32 x, y, z:
+  REAL32 x.out, y.out, z.out:
+  WHILE TRUE
+    SEQ 
+      x.out := SQRT (((x * x) + (y * y)) + (z * z))
+      y.out := SQRT (((x * x) + (y * y)) + (z * z))
+      z.out := SQRT (((x * x) + (y * y)) + (z * z))
+      
+      r.x ! x.out
+      r.y ! y.out
+      r.z ! z.out
+    
+:
+PROC angle.calc (CHAN REAL32 A.R?, r?, angle!)
+  REAL32 accel.val, r.val, angle.out:
+  WHILE TRUE
+    SEQ
+      angle.out := ACOS(accel.val/r.val)
+      angle ! angle.out
+:
+PROC print.angle (CHAN REAL32 x?, y?, z?)
+  REAL32 x.val, y.val, z.val:
+  WHILE TRUE
+    SEQ
+      x ? x.val
+      y ? y.val
+      z ? z.val
+    
+      neg.safe.print (x.val)
+      serialWrite ("           ")
+      neg.safe.print (y.val)
+      serialWrite ("           ")
+      neg.safe.print (z.val)
+:
+
+VAL INT x IS 0:
+VAL INT y IS 1:
+VAL INT z IS 2:
+
+PROC main ()
+  [3]CHAN INT adc.acc:
+  [3]CHAN REAL32 facc, A, r, angle:
+  [3]CHAN SIGNAL s:
+  
+  PAR
+    PAR
+      tick (0,s[x]!)
+      tick (0,s[y]!)
+      tick (0,s[z]!)
+      adc (2, s[x]?, adc.acc[x]!)
+      adc (4, s[y]?, adc.acc[y]!)
+      adc (6, s[z]?, adc.acc[z]!)
+    PAR
+      adc.acc.conv(adc.acc[x]?, facc[x]!, 2.42)
+      adc.acc.conv(adc.acc[y]?, facc[y]!, 2.33)
+      adc.acc.conv(adc.acc[z]?, facc[z]!, 1.89)
+      r.calc(facc[x]?, facc[y]?, facc[z]?, A[x]!, A[y]!, A[z]!, r[x]!, r[y]!, r[z]!)
+    
+    PAR
+      angle.calc(A[x]?, r[x]?, angle[x]!)
+      angle.calc(A[y]?, r[y]?, angle[y]!)
+      angle.calc(A[z]?, r[z]?, angle[z]!)
+    PAR
+      print.angle(angle[x]?, angle[y]?, angle[z]?)
+    
+    
+:
