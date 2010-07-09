@@ -1,0 +1,7 @@
+#INCLUDE "plumbing.module"
+
+PROC blinkie ()
+  PAR
+    heartbeat ()
+    blink ( 9, 500)
+:
