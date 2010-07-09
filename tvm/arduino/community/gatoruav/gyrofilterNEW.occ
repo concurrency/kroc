@@ -127,7 +127,6 @@ PROC main()
     axis.x := 'x'
     axis.y := 'y'
     axis.z := 'z'
-    delay (5000)
     PAR
       PAR
         --gryo 0 "x"
