@@ -1,0 +1,77 @@
+#IF NOT (DEFINED (CHIPMAP.MODULE))
+#DEFINE CHIPMAP.MODULE
+
+-- From Atmel document 8271S
+
+-- PIN     REG     PIN    REG
+--   1     PC6      15    PB1
+--   2     PD0      16    PB2
+--   3     PD1      17    PB3
+--   4     PD2      18    PB4
+--   5     PD3      19    PB5
+--   6     PD4      20    AVcc
+--   7     Vcc      21    AREF
+--   8     GND      22    GND
+--   9     PB6      23    PC0
+--  10     PB7      24    PC1
+--  11     PD5      25    PC2
+--  12     PD6      26    PC3
+--  13     PD7      27    PC4
+--  14     PB0      28    PC5
+
+VAL INT XXXX  IS -1:
+VAL INT XXXXX IS XXXX:
+
+--------- DDR.MAP --------------------------------------------
+--                       0                                   7
+VAL []INT DDR.MAP IS [DDRC, DDRD, DDRD, DDRD, DDRD, DDRD, XXXX,
+--                       8                                  14
+                      XXXX, DDRB, DDRD, DDRD, DDRD, DDRD, DDRB,
+--                      15                                  21
+                      DDRB, DDRB, DDRB, DDRB, DDRB, XXXX, XXXX,
+--                      22                                  27
+                      XXXX, DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
+
+--------- PORT.MAP ---------------------------------------------------
+--                     0                                         7
+VAL []INT PORT.MAP IS [PORTC, PORTD, PORTD, PORTD, PORTD, PORTD, XXXXX,
+--                         8                                        14
+                       XXXXX, PORTB, PORTD, PORTD, PORTD, PORTD, PORTB,
+--                        15                                        21
+                       PORTB, PORTB, PORTB, PORTB, PORTB, XXXXX, XXXXX,
+--                        22                                        27
+                       XXXXX, PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
+
+--------- PIN.MAP ---------------------------------------------------
+--                       0                                    7
+VAL []INT PIN.MAP IS [PINC, PIND, PIND, PIND, PIND, PIND, XXXX,
+--                       8                                  14
+                      XXXX, PINB, PIND, PIND, PIND, PIND, PINB,
+--                      15                                  21
+                      PINB, PINB, PINB, PINB, PINB, XXXX, XXXX,
+--                      22                                  27
+                      XXXX, PINC, PINC, PINC, PINC, PINC, PINC]:
+
+--------- BIT.MAP ---------------------------------------------------
+--                     0                       7
+VAL []INT BIT.MAP IS [ 6,  0,  1,  2,  3,  4, -1,
+--                     8,                     14
+                      -1,  6,  7,  5,  6,  7,  0,
+--                    15                      21
+                       1,  2,  3,  4,  5, -1, -1,
+--                    22                      28
+                      -1,  0,  1,  2,  3,  4,  5]: 
+
+-- AVR pins are numbered starting from 1... so, we need to subtract 1 to index into the arrays.
+INT, INT, INT, INT FUNCTION chip.to.gpio (VAL INT avr.pin) 
+  INT ddr, port, pin, bit:
+  VALOF
+    SEQ
+      ddr  := DDR.MAP[avr.pin - 1]
+      port := PORT.MAP[avr.pin - 1]
+      pin  := PIN.MAP[avr.pin - 1]
+      bit  := BIT.MAP[avr.pin - 1]
+    RESULT ddr, port, pin, bit
+:
+
+#ENDIF
