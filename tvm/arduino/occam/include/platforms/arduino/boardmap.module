@@ -6,24 +6,24 @@
 #INCLUDE "constants.module"
 #INCLUDE "base.module"
 
+-- These index into the MAP array.
+VAL INT A0 IS 14:
+VAL INT A1 IS 15:
+VAL INT A2 IS 16:
+VAL INT A3 IS 17:
+VAL INT A4 IS 18:
+VAL INT A5 IS 19:
 
-VAL INT A0 IS 23:
-VAL INT A1 IS 24:
-VAL INT A2 IS 25:
-VAL INT A3 IS 26:
-VAL INT A4 IS 27:
-VAL INT A5 IS 28:
-
-VAL INT RX0 IS 2;
+VAL INT RX0 IS 2:
 VAL INT TX0 IS 3:
 
-VAL INT LED.PIN IS 19:
+VAL INT LED.PIN IS 13:
 
-VAL []INT MAP IS [2,  3,  4,  5,  6,  11, 12, 13,
-                  14, 15, 16, 17, 18, 19,
-                  23, 24, 25, 26, 27, 28]:
+VAL []BYTE MAP IS [2,  3,  4,  5,  6,  11, 12, 13,
+                   14, 15, 16, 17, 18, 19,
+                   23, 24, 25, 26, 27, 28]:
 
-INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS (INT MAP[board.pin]):
 
 
 --Board to Architecture layout w/ register names.
