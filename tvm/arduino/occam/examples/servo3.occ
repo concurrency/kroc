@@ -17,10 +17,41 @@ PROC serial.write.int (VAL INT n)
 
 #INCLUDE "servo.module"
 
+PROC sawtooth (VAL INT max, CHAN INT ch!)
+  WHILE TRUE
+    SEQ
+      SEQ i = 0 FOR max
+        SEQ
+          tock ? SIGNAL
+          ch ! i
+      SEQ i = max FOR max STEP -1
+        SEQ
+          tock ? SIGNAL
+          ch ! i
+:
+
+PROC tick (VAL INT msec, CHAN SIGNAL t!)
+  WHILE TRUE
+    SEQ
+      delay(msec)
+      t ! SIGNAL
+:
+
+PROC all.procs ()
+  CHAN SERVO s:
+  CHAN SIGNAL t:
+  SEQ
+    digital.mode (9, OUTPUT)
+    PAR
+      heartbeat ()
+      servo (9, s?)
+      tick(1000, t!)
+      sawtooth(t?, s!)
+:
+
 PROC main ()
   CHAN SERVO s:
   SEQ
-    --serial.setup (0, 57600)
     digital.mode (9, OUTPUT)
     PAR
       heartbeat ()
