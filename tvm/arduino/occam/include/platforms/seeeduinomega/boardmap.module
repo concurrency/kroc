@@ -1,0 +1,151 @@
+--** occam header for Seeeduino Mega specific pin mappings.
+-- @module boardmap
+#IF NOT (DEFINED (BOARDMAP.MODULE))
+#DEFINE BOARDMAP.MODULE
+
+#INCLUDE "constants.module"
+#INCLUDE "base.module"
+
+
+VAL INT LED.PIN IS -1:
+
+VAL INT PE2 IS 54:
+VAL INT PE6 IS 55:
+VAL INT PE7 IS 56:
+VAL INT PG3 IS 57:
+VAL INT PD4 IS 58:
+VAL INT PD6 IS 59:
+VAL INT PD5 IS 60:
+VAL INT PD4 IS 61:
+
+VAL INT PJ7 IS 62:
+VAL INT PJ6 IS 63:
+VAL INT PJ5 IS 64:
+VAL INT PJ4 IS 65:
+VAL INT PJ3 IS 66:
+VAL INT PJ2 IS 67:
+VAL INT PH7 IS 68:
+VAL INT PH2 IS 69:
+
+VAL INT A0  IS 70:
+VAL INT A1  IS 71:
+VAL INT A2  IS 72:
+VAL INT A3  IS 73:
+VAL INT A4  IS 74:
+VAL INT A5  IS 75:
+VAL INT A6  IS 76:
+VAL INT A7  IS 77:
+VAL INT A8  IS 78:
+VAL INT A9  IS 79:
+VAL INT A10 IS 80:
+VAL INT A11 IS 81:
+VAL INT A12 IS 82:
+VAL INT A13 IS 83:
+VAL INT A14 IS 84:
+VAL INT A15 IS 85:
+
+VAL INT RX0 IS 0:
+VAL INT TX0 IS 1:
+VAL INT RX1 IS 19:
+VAL INT TX1 IS 18:
+VAL INT RX2 IS 17:
+VAL INT TX2 IS 16:
+VAL INT RX3 IS 15:
+VAL INT TX3 IS 14:
+VAL INT SDA IS 20:
+VAL INT SCL IS 21:
+
+VAL INT MISO IS 50:
+VAL INT MOSI IS 51:
+VAL INT SCK  IS 52:
+VAL INT SS   IS 53:
+
+
+VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
+                  17, 16, 23, 24, 25, 26,
+                  64, 63, 13, 12, 46, 45, 44, 43,
+                  78, 77, 76, 75, 74, 73, 72, 71,
+                  60, 59, 58, 57, 56, 55, 54, 53,
+                  50, 70, 52, 51, 42, 41, 40, 39,
+                  38, 37, 36, 35, 22, 21, 20, 19,
+                   4,  8,  9, 28, 29, 49, 48, 47,
+                  79, 69, 68, 67, 66, 65, 27, 14,
+                  97, 96, 95, 94, 93, 92, 91, 90,
+                  89, 88, 87, 86, 85, 84, 83, 82]:
+
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+
+--Board to Architecture layout w/ register names.
+--
+--B.pin   A.pin *REG  --B.pin A.pin *REG
+-- 0(RX0) 02    PE0   -- 8      17    PH5
+-- 1(TX0) 03    PE1   -- 9      18    PH6 
+-- 2      06    PE4   --10      23    PB4
+-- 3      07    PE5   --11      24    PB5
+-- 4      01    PG5   --12      25    PB6
+-- 5      05    PE3   --13      26    PB7
+-- 6      15    PH3   --AREF
+-- 7      16    PH4   --GND
+--
+--14(TX3) 64    PJ1   --22      78    PA0
+--15(RX3) 63    PJ0   --23      77    PA1
+--16(TX2) 13    PH1   --24      76    PA2
+--17(RX2) 12    PH0   --25      75    PA3
+--18(TX1) 46    PD3   --26      74    PA4
+--19(RX1) 45    PD2   --27      73    PA5
+--20(SDA) 44    PD1   --28      72    PA6
+--21(SCL) 43    PD0   --29      71    PA7
+--
+--30      60    PC7   --38      50    PD7
+--31      59    PC6   --39      70    PG2
+--32      58    PC5   --40      52    PG1
+--33      57    PC4   --41      51    PG0
+--34      56    PC3   --42      42    PL7
+--35      55    PC2   --43      41    PL6
+--36      54    PC1   --44      40    PL5
+--37      53    PC0   --45      39    PL4
+--
+--46      38    PL3
+--47      37    PL2
+--48      36    PL1
+--49      35    PL0
+--50(MISO)22    PB3
+--51(MOSI)21    PB2
+--52(SCK) 20    PB1
+--53(SS)  19    PB0
+--
+--54(PE2) 4     PE2   --62(PJ7) 79    PJ7
+--55(PE6) 8     PE6   --63(PJ6) 69    PJ6
+--56(PE7) 9     PE7   --64(PJ5) 68    PJ5
+--57(PG3) 28    PG3   --65(PJ4) 67    PJ4
+--58(PG4) 29    PG4   --66(PJ3) 66    PJ3
+--59(PD6) 49    PD6   --67(PJ2) 65    PJ2
+--60(PD5) 48    PD5   --68(PH7) 27    PH7
+--61(PD4) 47    PD4   --69(PH2) 14    PH2
+--
+--70(A0)  97    PF7   --78(A8)  89    PK7
+--71(A1)  96    PF6   --79(A9)  88    PK6
+--72(A2)  95    PF5   --80(A10) 87    PK5
+--73(A3)  94    PF4   --81(A11) 86    PK4
+--74(A4)  93    PF3   --82(A12) 85    PK3
+--75(A5)  92    PF2   --83(A13) 84    PK2
+--76(A6)  91    PF1   --84(A14) 83    PK1
+--77(A7)  90    PF0   --85(A15) 82    PK0
+--
+--UNUSED M1280 PINS
+--10  VCC
+--11  GND
+--30  VCC
+--31  RESET
+--32  GND
+--33  XTAL2
+--34  XTAL1
+--61  VCC
+--62  GND
+--80  VCC
+--81  GND
+--98  AREF
+--99  GND
+--100 AVC
+
+#ENDIF

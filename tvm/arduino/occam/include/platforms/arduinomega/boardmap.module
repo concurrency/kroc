@@ -1,0 +1,106 @@
+--** occam header for Arduino Mega specific pin mappings.
+-- @module boardmap
+#IF NOT (DEFINED (BOARDMAP.MODULE))
+#DEFINE BOARDMAP.MODULE
+
+#INCLUDE "constants.module"
+#INCLUDE "base.module"
+
+
+VAL INT LED.PIN IS -1:
+
+VAL INT A0  IS 54:
+VAL INT A1  IS 55:
+VAL INT A2  IS 56:
+VAL INT A3  IS 57:
+VAL INT A4  IS 58:
+VAL INT A5  IS 59:
+VAL INT A6  IS 60:
+VAL INT A7  IS 61:
+VAL INT A8  IS 62:
+VAL INT A9  IS 63:
+VAL INT A10 IS 64:
+VAL INT A11 IS 65:
+VAL INT A12 IS 66:
+VAL INT A13 IS 67:
+VAL INT A14 IS 68:
+VAL INT A15 IS 69:
+
+VAL INT RX0 IS 0:
+VAL INT TX0 IS 1:
+VAL INT RX1 IS 19:
+VAL INT TX1 IS 18:
+VAL INT RX2 IS 17:
+VAL INT TX2 IS 16:
+VAL INT RX3 IS 15:
+VAL INT TX3 IS 14:
+VAL INT SDA IS 20:
+VAL INT SCL IS 21:
+
+VAL INT MISO IS 50:
+VAL INT MOSI IS 51:
+VAL INT SCK  IS 52:
+VAL INT SS   IS 53:
+
+
+VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
+                  17, 18, 23, 24, 25, 26,
+                  64, 63, 13, 12, 46, 45, 44, 43,
+                  78, 77, 76, 75, 74, 73, 72, 71,
+                  60, 59, 58, 57, 56, 55, 54, 53,
+                  50, 70, 52, 51, 42, 41, 40, 39,
+                  38, 37, 36, 35, 22, 21, 20, 19,
+                  97, 96, 95, 94, 93, 92, 91, 90,
+                  89, 88, 87, 86, 85, 84, 83, 82]:
+
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+
+--Board to Architecture layout w/ register names.
+--
+--B.pin   A.pin *REG  --B.pin A.pin *REG
+-- 0(RX0) 02    PE0   -- 8      17    PH5
+-- 1(TX0) 03    PE1   -- 9      18    PH6 
+-- 2      06    PE4   --10      23    PB4
+-- 3      07    PE5   --11      24    PB5
+-- 4      01    PG5   --12      25    PB6
+-- 5      05    PE3   --13      26    PB7
+-- 6      15    PH3   --AREF
+-- 7      16    PH4   --GND
+--
+--14(TX3) 64    PJ1   --22      78    PA0
+--15(RX3) 63    PJ0   --23      77    PA1
+--16(TX2) 13    PH1   --24      76    PA2
+--17(RX2) 12    PH0   --25      75    PA3
+--18(TX1) 46    PD3   --26      74    PA4
+--19(RX1) 45    PD2   --27      73    PA5
+--20(SDA) 44    PD1   --28      72    PA6
+--21(SCL) 43    PD0   --29      71    PA7
+--
+--30      60    PC7   --38      50    PD7
+--31      59    PC6   --39      70    PG2
+--32      58    PC5   --40      52    PG1
+--33      57    PC4   --41      51    PG0
+--34      56    PC3   --42      42    PL7
+--35      55    PC2   --43      41    PL6
+--36      54    PC1   --44      40    PL5
+--37      53    PC0   --45      39    PL4
+--
+--46      38    PL3   --54(A0)  97    PF7
+--47      37    PL2   --55(A1)  96    PF6
+--48      36    PL1   --56(A2)  95    PF5
+--49      35    PL0   --57(A3)  94    PF4
+--50(MISO)22    PB3   --58(A4)  93    PF3
+--51(MOSI)21    PB2   --59(A5)  92    PF2
+--52(SCK) 20    PB1   --60(A6)  91    PF1
+--53(SS)  19    PB0   --61(A7)  90    PF0
+--
+--62(A8)  89    PK7
+--63(A9)  88    PK6
+--64(A10) 87    PK5
+--65(A11) 86    PK4
+--66(A12) 85    PK3
+--67(A13) 84    PK2
+--68(A14) 83    PK1
+--69(A15) 82    PK0
+
+#ENDIF
