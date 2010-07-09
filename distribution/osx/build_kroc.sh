@@ -1,5 +1,5 @@
 PKG_CONFIG=pkg-config-0.23
-SDL=SDL-1.2.13
+SDL=SDL-1.2.14
 PLAYER=player-2.1.2
 STAGE=stage-2.1.1
 # Arduino package could perhaps be replaced with a avr-gcc package?
