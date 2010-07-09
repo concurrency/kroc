@@ -7,6 +7,8 @@
 -- base, constants, and FFI must come first
 #INCLUDE "base.module"
 #INCLUDE "constants.module"
+-- Maps pin numbers 1 - 28 to registers
+#INCLUDE "chipmap.module"
 #INCLUDE "ffi.module"
 -- These modules depend on base, constants, and FFI
 #INCLUDE "digital.module"

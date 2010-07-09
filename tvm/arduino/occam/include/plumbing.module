@@ -12,7 +12,7 @@
 #DEFINE PLUMBING.MODULE
 
 #INCLUDE "avr.module"
-#INCLUDE "pinmapping.module"
+#INCLUDE "boardmap.module"
 #INCLUDE "printing.module"
 
 DATA TYPE LEVEL IS INT:
@@ -30,28 +30,32 @@ VAL INT OUTPUT IS #1:
 --}}}
 
 --{{{  PROC digital.write
-PROC digital.write (VAL INT pin, state)
+PROC digital.write (VAL INT board.pin, state)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
   INT r.ddr, r.port, r.pin, bit:
   SEQ
-    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    -- Need to do ... chip.to.gpio...
+    r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
     pin.write(r.port, bit, state)
 :
 --}}}
 
 --{{{  PROC digital.read
-PROC digital.read (VAL INT pin, RESULT INT state)
+PROC digital.read (VAL INT board.pin, RESULT INT state)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
   INT r.ddr, r.port, r.pin, bit:
   SEQ
-    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
     pin.read(r.pin, bit, state)
 :
 --}}}
 
 --{{{  PROC digital.mode
-PROC digital.mode (VAL INT pin, mode)
+PROC digital.mode (VAL INT board.pin, mode)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
   INT r.ddr, r.port, r.pin, bit:
   SEQ
-    r.ddr, r.port, r.pin, bit := pin.location (pin)
+    r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
     pin.mode(r.ddr, bit, mode)
 :
 --}}}
@@ -64,14 +68,14 @@ PROC digital.mode (VAL INT pin, mode)
 --
 -- @param pin The Arduino pin number
 -- @param in Pin levels (LOW or HIGH)
-PROC digital.output (VAL INT pin, CHAN LEVEL in?)
+PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
   LEVEL v:
   SEQ
     in ? v
-    digital.mode (pin, OUTPUT)
+    digital.mode (board.pin, OUTPUT)
     WHILE TRUE
       SEQ
-        digital.write (pin, INT v)
+        digital.write (board.pin, INT v)
         in ? v
 :
 
@@ -297,20 +301,19 @@ PROC clamp (VAL INT low, high, CHAN INT in?, out!)
 -- For the given pin, will do an analog read of that pin
 -- and emit the value upon request. Currently not parallel safe.
 --
--- @param pin The Arduino pin number
+-- @param pin The Arduino pin number (A0 - A5)
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
-PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
+PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
   INT v:
   SEQ
     WHILE TRUE
       SEQ
         req ? SIGNAL
-        adc.vcc (pin, v)
+        adc.vcc (board.pin, v)
         val ! v
 :
 
-#IF FALSE
 -- FIXME 20100706 MCJ
 -- I think the USART.MODULE now has a lot of this functionality.
 -- I'm commenting this out until I double-check and bring in 
@@ -406,7 +409,6 @@ PROC serial.tx.int32 (VAL INT port, VAL INT32 n)
     serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
 :
 --}}}
-#ENDIF
 
 #IF FALSE
 -- FIXME 20100706 MCJ
