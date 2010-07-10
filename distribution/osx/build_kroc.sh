@@ -4,7 +4,7 @@ PLAYER=player-2.1.2
 STAGE=stage-2.1.1
 # Arduino package could perhaps be replaced with a avr-gcc package?
 # FIXME: 0017 is out, perhaps upgrade
-LIBUSB=libusb-1.0.8
+LIBUSB=libusb-0.1.12
 ARDUINO=arduino-0016
 AVRDUDE=avrdude-5.10
 
@@ -88,9 +88,9 @@ if ! [ -d $BUILD/$LIBUSB ] ; then
   mkdir -p build
   cd build
   curl -L -O \
-    http://prdownloads.sourceforge.net/libusb/$LIBUSB.tar.bz2 \
+    http://prdownloads.sourceforge.net/libusb/$LIBUSB.tar.gz \
     || exit 1
-  tar -xvjf $LIBUSB.tar.bz2
+  tar -xvzf $LIBUSB.tar.gz
   cd $LIBUSB
   ./configure --prefix=$INSTALL
   make
