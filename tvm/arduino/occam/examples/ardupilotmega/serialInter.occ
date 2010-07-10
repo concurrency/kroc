@@ -8,10 +8,10 @@ PROC main ()
   VAL []BYTE digits IS "0123456789abcdef":
 
   PAR
-    serial.intr.setup (57600)
+    serial.setup (0, 57600)
     tick (100, ping!)
-    adc (5, ping?, val!)
-    serial.intr.tx (b?)
+    adc (0, ping?, val!)
+    serial.write (b?)
     WHILE TRUE
       SEQ
         val ? tmp

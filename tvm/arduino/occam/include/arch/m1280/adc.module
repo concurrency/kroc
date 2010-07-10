@@ -6,6 +6,7 @@
 
 PROC adc.base (VAL INT pin, VAL BOOL USE.VCC, RESULT INT v)
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   INT16 result:
   SEQ
     -- Enable ADC; enable interrupt; clock prescale 128
