@@ -55,33 +55,40 @@ YMDHMS = now.strftime("%Y%m%d%H%M%S")
 PACKAGE_NAME = "concurrency"
 
 # Root for temporary build process.
-TEMP = "/tmp"
-PACKAGE_BUILD = "%s/%s" % (TEMP, PACKAGE_NAME)
+TEMP_PATH = [ "/tmp" ]
+def TEMP():
+		return TEMP_PATH[0]
+
+def PACKAGE_BUILD():
+		return "%s/%s" % (TEMP(), PACKAGE_NAME)
 
 # Location for checkout of fresh codebase
-SVN  = "%s/dpkg-%s" % (TEMP, YMD)
+def SVN():
+		return "%s/deb-pkg-src" % (TEMP())
+
 # Location for the obj-avr build
-OBJ  = "%s/obj" % (SVN)
+def OBJ():
+		return "%s/obj" % (SVN())
 
 # For use when referencing into the source tree
 # Functions, because I want to be able to change the 
 # root path for the SVN tree.
-def SOURCE_ARDUINO(url=SVN):
+def SOURCE_ARDUINO(url=SVN()):
 	return "%s/%s" % (url, "/tvm/arduino")
 
-def SOURCE_CONF(url=SVN):
+def SOURCE_CONF(url=SVN()):
 	return "%s/%s" % (url, "/tvm/arduino/occam/share/conf")
 
-def SOURCE_SCRIPTS(url=SVN):
+def SOURCE_SCRIPTS(url=SVN()):
 	return "%s/%s" % (url, "/tvm/arduino/scripts")
 
-def SOURCE_FIRMWARE(url=SVN):
+def SOURCE_FIRMWARE(url=SVN()):
 	return "%s/%s" % (url, "/tvm/arduino")
 
-def SOURCE_LIB(url=SVN):
+def SOURCE_LIB(url=SVN()):
 	return "%s/%s" % (url, "/tvm/arduino/occam/include")
 
-def SOURCE_DEBIAN(url=SVN):
+def SOURCE_DEBIAN(url=SVN()):
 	return "%s/%s" % (url, "/distribution/deb-pkg/DEBIAN.in")
 
 # Desired filesystem path for installation
@@ -92,14 +99,14 @@ FINAL    = "/%s" % (INSTPATH)
 # Destdir installation paths
 # All copy/install actions in the script should
 # target these paths.
-DEST          = "%s/%s" % (TEMP, PACKAGE_NAME)
+DEST          = "%s/%s" % (TEMP(), PACKAGE_NAME)
 DEST_ROOT     = "%s/%s" % (DEST, INSTPATH)
 DEST_BIN      = "%s/%s" % (DEST_ROOT, "bin")
 DEST_SHARE    = "%s/%s" % (DEST_ROOT, "share")
 DEST_FIRMWARE = "%s/%s" % (DEST_SHARE, "firmwares")
 DEST_CONF     = "%s/%s" % (DEST_SHARE, "conf")
 DEST_LIB      = "%s/%s" % (DEST_ROOT, "lib")
-DEST_DEBIAN   = "%s/%s" % (PACKAGE_BUILD, "DEBIAN")
+DEST_DEBIAN   = "%s/%s" % (PACKAGE_BUILD(), "DEBIAN")
 
 DESTINATIONS  = [DEST_ROOT, DEST_BIN, DEST_SHARE,
 								 DEST_FIRMWARE, DEST_CONF, DEST_LIB, DEST_DEBIAN]
@@ -166,23 +173,23 @@ def mkdir(dir):
 # MEAT AND POTATOES
 
 def checkout(url):
-	remove_and_create_dir(SVN)
+	remove_and_create_dir(SVN())
 	print "In %s" % os.getcwd()
-	cmd(build_command(["svn", "co", url, SVN]))
+	cmd(build_command(["svn", "co", url, SVN()]))
 
 def autoreconf():
 	with pushd():
-		cd(SVN)
+		cd(SVN())
 		cmd("autoreconf -vfi")
 
 def configure():
 	# Make the object directory
 	with pushd():
-		cd(SVN)
-		mkdir(OBJ)
+		cd(SVN())
+		mkdir(OBJ())
 	# Do the configure from within it.
 	with pushd():
-		cd(OBJ)
+		cd(OBJ())
 		cmd(build_command(["../configure", concat(["--prefix=", FINAL]), 
 				"--with-toolchain=tvm", "--target=avr",
 				"--with-wrapper=arduino"]))
@@ -190,7 +197,7 @@ def configure():
 def build():
 	# 'make' in the object directory
 	with pushd():
-		cd(OBJ)
+		cd(OBJ())
 		cmd("make")
 		cmd(build_command(["make", concat(["DESTDIR=", DEST]), "install"]))
 	# Run the build script in the wrapper.
@@ -230,7 +237,7 @@ def subst_and_copy(file, source_dir, dest_dir):
 				# After replacements, write the line
 				output.write(line)
 
-def copy_config(path=SVN):
+def copy_config(path=SVN()):
 	with pushd():
 		cd(SOURCE_CONF())
 		for filename in os.listdir(SOURCE_CONF(path)):
@@ -246,7 +253,7 @@ def deployment_version():
 def chmod(mode, path, file):
 	cmd(build_command(["chmod", mode, "%s/%s" % (path, file)]))
 
-def copy(url=SVN):
+def copy(url=SVN()):
 	# Copy scripts directory to destination
 	copy_dir(SOURCE_SCRIPTS(url), DEST_BIN)
 
@@ -286,18 +293,22 @@ def deb():
 	chmod("755", DEST_DEBIAN, "postinst")
 
 	with pushd():
-		cd(TEMP)
+		cd(TEMP())
 		print "PACKAGING %s" % PACKAGE_NAME
 		cmd(build_command(["dpkg", "--build", PACKAGE_NAME, "./"]))
 
 # This needs to run `sudo' 
 def rpm():
 	with pushd():
-		cd(TEMP)
+		cd(TEMP())
 		print "Converting to RPM"
 		cmd(build_command(["alien", "--scripts", "-r", 
 											 "%s_%s_i386.deb" % (PACKAGE_NAME, YMD)]))
 
+def with_temp_dir(path):
+		print "SETTING TEMP PATH"
+		TEMP_PATH[0] = path
+		print "SET TO %s" % TEMP()
 
 def all(url):
 	checkout(url)
@@ -343,10 +354,10 @@ OPTIONS = [
 		deb],
 	["all", "store", "ALL_SVN_URL", "Do everything up to this point.",
 		all],
-	["refresh-libs", "store", "LIB_PATH", "Re-run copy-config, copy, deb, and rpm.",
-		refresh_libs],
-	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).",
-		rpm]
+	["refresh-libs", "store", "LIB_PATH", "Re-run copy-config, copy, deb, and rpm.", refresh_libs],
+	["with-temp-dir", "store", "TEMP_DIR", "Set the temp build directory.",
+		with_temp_dir],
+	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).", rpm]
 	] 
 	
 parser = OptionParser()
@@ -371,15 +382,18 @@ def call_handler(str):
 			# Invoke the last element of the list
 			OPT[len(OPT) - 1]()
 
+for key, val in props(options).iteritems():
+	if (key == "LIB_PATH") and (val != None):
+		print "PATH IS %s" % options.LIB_PATH
+		refresh_libs(options.LIB_PATH)
+	if (key == "TEMP_DIR") and (val != None):
+		with_temp_dir(options.TEMP_DIR)
 
 for key, val in props(options).iteritems():
 	if (key == "CHECKOUT_SVN_URL") and (val != None):
 		checkout(options.CHECKOUT_SVN_URL)
 	if (key == "ALL_SVN_URL") and (val != None):
 		all(options.ALL_SVN_URL)
-	if (key == "LIB_PATH") and (val != None):
-		print "PATH IS %s" % options.LIB_PATH
-		refresh_libs(options.LIB_PATH)
 	elif val:
 		print "*** RUNNING [ %s ] ***" % key
 		call_handler(re.sub("_", "-", key))
