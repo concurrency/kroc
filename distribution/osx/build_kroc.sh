@@ -5,6 +5,7 @@ STAGE=stage-2.1.1
 # Arduino package could perhaps be replaced with a avr-gcc package?
 # FIXME: 0017 is out, perhaps upgrade
 ARDUINO=arduino-0016
+AVRDUDE=avrdude-5.10
 
 #FIXME: Possibly do SDL_sound
 #http://icculus.org/SDL_sound/
@@ -82,6 +83,18 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
   cd $ARDUINO
 fi
 
+if ! [ -d $BUILD/$AVRDUDE ] ; then
+  mkdir -p build
+  cd build
+  curl -O \
+  http://download.savannah.gnu.org/releases-noredirect/avrdude/$AVRDUDE.tar.gz \
+    || exit 1
+  unzip $AVRDUDE.tar.gz
+  cd $AVRDUDE
+  ./configure --prefix=$INSTALL
+  make
+  make install
+fi
 
 cd $BUILD
 cd ../../../
