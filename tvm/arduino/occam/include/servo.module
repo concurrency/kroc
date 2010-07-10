@@ -17,7 +17,7 @@ PROTOCOL SERVO
 :
 
 PROC servo (VAL INT board.pin, CHAN SERVO s?)
-  INITIAL INT avr.pin IS board.to.chip (board.pin)
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
   INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
   INITIAL INT max IS 2300:
   INITIAL INT min IS 700:
