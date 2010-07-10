@@ -19,38 +19,39 @@
 --  13     PD7      27    PC4
 --  14     PB0      28    PC5
 
-VAL INT XXXX  IS -1:
-VAL INT XXXXX IS XXXX:
+VAL INT DDRX  IS -1:
+VAL INT PORTX IS -1:
+VAL INT PINX  IS -1:
 
 --------- DDR.MAP --------------------------------------------
 --                       0                                   7
-VAL []INT DDR.MAP IS [DDRC, DDRD, DDRD, DDRD, DDRD, DDRD, XXXX,
+VAL []INT DDR.MAP IS [DDRC, DDRD, DDRD, DDRD, DDRD, DDRD, DDRX,
 --                       8                                  14
-                      XXXX, DDRB, DDRD, DDRD, DDRD, DDRD, DDRB,
+                      DDRX, DDRB, DDRD, DDRD, DDRD, DDRD, DDRB,
 --                      15                                  21
-                      DDRB, DDRB, DDRB, DDRB, DDRB, XXXX, XXXX,
+                      DDRB, DDRB, DDRB, DDRB, DDRB, DDRX, DDRX,
 --                      22                                  27
-                      XXXX, DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
+                      DDRX, DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
 
 --------- PORT.MAP ---------------------------------------------------
 --                     0                                         7
-VAL []INT PORT.MAP IS [PORTC, PORTD, PORTD, PORTD, PORTD, PORTD, XXXXX,
+VAL []INT PORT.MAP IS [PORTC, PORTD, PORTD, PORTD, PORTD, PORTD, PORTX,
 --                         8                                        14
-                       XXXXX, PORTB, PORTD, PORTD, PORTD, PORTD, PORTB,
+                       PORTX, PORTB, PORTD, PORTD, PORTD, PORTD, PORTB,
 --                        15                                        21
-                       PORTB, PORTB, PORTB, PORTB, PORTB, XXXXX, XXXXX,
+                       PORTB, PORTB, PORTB, PORTB, PORTB, PORTX, PORTX,
 --                        22                                        27
-                       XXXXX, PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
+                       PORTX, PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
 
 --------- PIN.MAP ---------------------------------------------------
 --                       0                                    7
-VAL []INT PIN.MAP IS [PINC, PIND, PIND, PIND, PIND, PIND, XXXX,
+VAL []INT PIN.MAP IS [PINC, PIND, PIND, PIND, PIND, PIND, PINX,
 --                       8                                  14
-                      XXXX, PINB, PIND, PIND, PIND, PIND, PINB,
+                      PINX, PINB, PIND, PIND, PIND, PIND, PINB,
 --                      15                                  21
-                      PINB, PINB, PINB, PINB, PINB, XXXX, XXXX,
+                      PINB, PINB, PINB, PINB, PINB, PINX, PINX,
 --                      22                                  27
-                      XXXX, PINC, PINC, PINC, PINC, PINC, PINC]:
+                      PINX, PINC, PINC, PINC, PINC, PINC, PINC]:
 
 --------- BIT.MAP ---------------------------------------------------
 --                     0                       7
