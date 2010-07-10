@@ -5,7 +5,7 @@
  
  <MODE NAME="occam"		FILE="occam.xml"
 -				FILE_NAME_GLOB="*.icc" />
-+				FILE_NAME_GLOB="*.{icc,occ}" />
++				FILE_NAME_GLOB="*.{icc,occ,module}" />
  
  <MODE NAME="omnimark"		FILE="omnimark.xml"
  				FILE_NAME_GLOB="*.x{om,in}" />
