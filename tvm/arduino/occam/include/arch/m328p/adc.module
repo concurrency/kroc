@@ -11,6 +11,7 @@ VAL INT AVR.A0 IS 23:
 
 PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
   PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
   INT16 result:
   -- AVR pins for Analog start at pin 23.
   INITIAL INT pin IS avr.pin - AVR.A0:

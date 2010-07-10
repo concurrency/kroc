@@ -9,24 +9,13 @@ PROC serial.write.int (VAL INT n)
 PROC main ()
   INITIAL BYTE val IS 0:
   INITIAL BOOL up IS TRUE:
-  VAL []BYTE digits IS "0123456789abcdef":
+  CHAN BYTE val.friend:
   SEQ
-    serial.setup (0, 57600)
-    digital.mode (9, OUTPUT)
-    digital.mode (16, OUTPUT)
-    pwm8.setup (9, 64)
     PAR
       heartbeat ()
-      blink (16, 500)
-      SEQ i = 0 FOR 5
-        SEQ j = 0 FOR 9 
-          SEQ
-            serial.write.byte (0, digits[(i >> (0 * 4)) /\ #F])
-            serial.write.byte (0, digits[(j >> (0 * 4)) /\ #F])
-            serial.write.byte (0, '*n')
+      pwm8 (6, val.friend?)
       WHILE TRUE
         SEQ
-          pwm8.set.compare (9, val)
           IF
             up = TRUE
               IF
@@ -41,4 +30,5 @@ PROC main ()
                 TRUE
                   up := TRUE
           delay (50)
+          val.friend ! val
 :

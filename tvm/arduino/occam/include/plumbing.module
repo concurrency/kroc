@@ -283,30 +283,6 @@ PROC heartbeat ()
       die("This board does not have an LED pin. Sorry.")
 :
 
---* Limits the range of values in a stream.
--- Takes a low and high limit, and any integers read in that
--- are below the 'low' value are clamped to low, and likewise
--- with the 'high' value. 
---
--- @param low The lower limit for valid numbers.
--- @param high The upper limit for valid numbers.
--- @param in The input stream of INTs.
--- @param out The output stream of INTs.
-PROC clamp (VAL INT low, high, CHAN INT in?, out!)
-  INT v:
-  WHILE TRUE
-    SEQ
-      in ? v
-      IF
-        v < low
-          v := low
-        v > high
-          v := high
-        TRUE
-          SKIP
-      out ! v
-:
-
 --* Read an analog value.
 -- For the given pin, will do an analog read of that pin
 -- and emit the value upon request. Currently not parallel safe.
@@ -316,11 +292,12 @@ PROC clamp (VAL INT low, high, CHAN INT in?, out!)
 -- @param val The current analog reading, 0 - 1023
 PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
   INT v:
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
   SEQ
     WHILE TRUE
       SEQ
         req ? SIGNAL
-        adc.vcc (board.pin, v)
+        adc.vcc (avr.pin, v)
         val ! v
 :
 
@@ -420,10 +397,34 @@ PROC serial.tx.int32 (VAL INT port, VAL INT32 n)
 :
 --}}}
 
-#IF FALSE
+#IF TRUE 
 -- FIXME 20100706 MCJ
 -- These are PROCs that now need to be rewritten or removed. They no 
 -- longer work/fit within the lower-level framework we've built on top of plumbing.
+
+--* Limits the range of values in a stream.
+-- Takes a low and high limit, and any integers read in that
+-- are below the 'low' value are clamped to low, and likewise
+-- with the 'high' value. 
+--
+-- @param low The lower limit for valid numbers.
+-- @param high The upper limit for valid numbers.
+-- @param in The input stream of INTs.
+-- @param out The output stream of INTs.
+PROC clamp (VAL BYTE low, high, CHAN BYTE in?, out!)
+  BYTE v:
+  WHILE TRUE
+    SEQ
+      in ? v
+      IF
+        v < low
+          v := low
+        v > high
+          v := high
+        TRUE
+          SKIP
+      out ! v
+:
 
 --* Writes an analog value to a pin.
 -- For a given (analog) pin, sets the level to a value between
@@ -432,17 +433,19 @@ PROC serial.tx.int32 (VAL INT port, VAL INT32 n)
 --
 -- @param pin The Arduino pin number
 -- @param level The input level.
-PROC pwm (VAL INT pin, CHAN INT level?)
-  INITIAL INT lvl IS 0:
+PROC pwm8 (VAL INT pin, CHAN BYTE level?)
+  INITIAL BYTE lvl IS 0:
+  INITIAL INT avr.pin IS board.to.chip (pin):
   SEQ
-    beginAnalog (pin)
-    CHAN INT clamped:
+    digital.mode (pin, OUTPUT)
+    pwm8.setup (avr.pin, 64)
+    CHAN BYTE clamped:
     PAR
       clamp (0, 255, level?, clamped!)
       WHILE TRUE
         SEQ
           clamped ? lvl
-          analogWrite (pin, (BYTE lvl))
+          pwm8.set.compare (avr.pin, lvl)
 :
 #ENDIF
 

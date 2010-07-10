@@ -5,13 +5,13 @@
 #IF NOT (DEFINED (PWMARCH.MODULE))
 #DEFINE PWMARCH.MODULE
 
-INT, INT, INT, BYTE, BYTE FUNCTION pwm8.lookup (VAL INT pin)
+INT, INT, INT, BYTE, BYTE FUNCTION pwm8.lookup (VAL INT avr.pin)
   INT TCCRnA, TCCRnB, OCRnx:
   BYTE TCCRnA.bits, TCCRnB.bits:
   VALOF
     SEQ
       TCCRnB.bits := 0
-      CASE pin
+      CASE avr.pin
         5
           SEQ
             TCCRnA := TCCR2A
@@ -53,7 +53,7 @@ INT, INT, INT, BYTE, BYTE FUNCTION pwm8.lookup (VAL INT pin)
     RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits
 :
 
-INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT pin)
+INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
   INT TCCRnA, TCCRnB, OCRnx:
   BYTE TCCRnA.bits, TCCRnB.bits:
   VALOF
@@ -61,7 +61,7 @@ INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT pin)
       TCCRnA := TCCR1A
       TCCRnB := TCCR1B
       TCCRnB.bits := BV (WGM13)
-      CASE pin
+      CASE avr.pin
         15
           SEQ
             TCCRnA.bits := (BV (COM1A1))
@@ -75,7 +75,7 @@ INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT pin)
     RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits
 :
 
-BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
+BYTE FUNCTION pwm8.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
   BYTE bits:
   VALOF
     SEQ
@@ -95,7 +95,7 @@ BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
     RESULT bits
 :
 
-BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
+BYTE FUNCTION pwm16.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
   BYTE bits:
   VALOF
     CASE prescale
@@ -114,10 +114,10 @@ BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
     RESULT bits
 :
 
-INT FUNCTION pwm8.compare.lookup (VAL INT pin)
+INT FUNCTION pwm8.compare.lookup (VAL INT avr.pin)
   INT OCRnx:
   VALOF
-    CASE pin
+    CASE avr.pin
       5
         OCRnx := OCR2B
       11
@@ -135,10 +135,10 @@ INT FUNCTION pwm8.compare.lookup (VAL INT pin)
     RESULT OCRnx
 :
 
-INT FUNCTION pwm16.compare.lookup (VAL INT pin)
+INT FUNCTION pwm16.compare.lookup (VAL INT avr.pin)
   INT OCRnx:
   VALOF
-    CASE pin
+    CASE avr.pin
       15
         OCRnx := OCR1A
       16
@@ -148,10 +148,10 @@ INT FUNCTION pwm16.compare.lookup (VAL INT pin)
     RESULT OCRnx
 :
 
-INT FUNCTION pwm16.ICRn.lookup (VAL INT pin)
+INT FUNCTION pwm16.ICRn.lookup (VAL INT avr.pin)
   INT ICRn:
   VALOF
-    CASE pin
+    CASE avr.pin
       15, 16
         ICRn := ICR1
       ELSE

@@ -30,15 +30,15 @@ INLINE PROC set16 (VAL INT reg, VAL INT val)
 -- before it can be set up successfully as a PWM output.
 -- This should not be an issue if using the higher-level wrapper of 
 -- the PWM PROCs in this module.
-PROC pwm8.setup (VAL INT pin, prescale)
+PROC pwm8.setup (VAL INT avr.pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   INT TCCRnA, TCCRnB, OCRnx:
   BYTE TCCRnA.bits, TCCRnB.bits:
 
   SEQ
-    TCCRnA, TCCRnB, OCRnx, TCCRnA.bits := pwm8.lookup (pin)
-    TCCRnB.bits := pwm8.TCCRnB.helper (prescale)
+    TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits := pwm8.lookup (avr.pin)
+    TCCRnB.bits := pwm8.TCCRnB.helper (TCCRnB.bits, prescale)
     ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
     ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
@@ -49,38 +49,38 @@ PROC pwm8.setup (VAL INT pin, prescale)
 -- before it can be set up successfully as a PWM output.
 -- This should not be an issue if using the higher-level wrapper of 
 -- the PWM PROCs in this module.
-PROC pwm16.setup (VAL INT pin, prescale)
+PROC pwm16.setup (VAL INT avr.pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   INT TCCRnA, TCCRnB, OCRnx:
   BYTE TCCRnA.bits, TCCRnB.bits:
 
   SEQ
-    TCCRnA, TCCRnB, OCRnx, TCCRnA.bits := pwm16.lookup (pin)
-    TCCRnB.bits := pwm16.TCCRnB.helper (prescale)
+    TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits := pwm16.lookup (avr.pin)
+    TCCRnB.bits := pwm16.TCCRnB.helper (TCCRnB.bits, prescale)
     ports[TCCRnA] := ports[TCCRnA] \/ TCCRnA.bits
     ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
 :
 
-PROC pwm8.set.compare (VAL INT pin, VAL BYTE level)
+PROC pwm8.set.compare (VAL INT avr.pin, VAL BYTE level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT OCRnx IS pwm8.compare.lookup (pin):
+  INITIAL INT OCRnx IS pwm8.compare.lookup (avr.pin):
   ports[OCRnx] := level
 :
 
-PROC pwm16.set.compare (VAL INT pin, VAL INT level)
+PROC pwm16.set.compare (VAL INT avr.pin, VAL INT level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT OCRnx IS pwm16.compare.lookup (pin):
+  INITIAL INT OCRnx IS pwm16.compare.lookup (avr.pin):
   -- Not sure if this is the way to do it...
   -- Not sure if I'm a fan of relying on the highs being one up from the lows..
   set16 (OCRnx, level)
 :
 
-PROC pwm16.set.top (VAL INT pin, VAL INT top)
-  INITIAL INT ICRn IS pwm16.ICRn.lookup (pin):
+PROC pwm16.set.top (VAL INT avr.pin, VAL INT top)
+  INITIAL INT ICRn IS pwm16.ICRn.lookup (avr.pin):
   set16 (ICRn, top)
 :
 

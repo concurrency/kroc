@@ -16,7 +16,8 @@ PROTOCOL SERVO
     stop
 :
 
-PROC servo (VAL INT pin, CHAN SERVO s?)
+PROC servo (VAL INT board.pin, CHAN SERVO s?)
+  INITIAL INT avr.pin IS board.to.chip (board.pin)
   INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
   INITIAL INT max IS 2300:
   INITIAL INT min IS 700:
@@ -49,7 +50,7 @@ PROC servo (VAL INT pin, CHAN SERVO s?)
           set.usec ()
           IF
             RUNNING
-              pwm16.set.compare (pin, usec)
+              pwm16.set.compare (avr.pin, usec)
             TRUE
               SKIP
       usec ; usec
@@ -57,7 +58,7 @@ PROC servo (VAL INT pin, CHAN SERVO s?)
           pos := usec
           IF
             RUNNING
-              pwm16.set.compare (pin, usec)
+              pwm16.set.compare (avr.pin, usec)
             TRUE
               SKIP 
       refresh ; refresh
@@ -65,9 +66,9 @@ PROC servo (VAL INT pin, CHAN SERVO s?)
       start
         SEQ
           RUNNING := TRUE
-          pwm16.setup (pin, 8)
-          pwm16.set.top (pin, refresh)
-          pwm16.set.compare (pin, pos)
+          pwm16.setup (avr.pin, 8)
+          pwm16.set.top (avr.pin, refresh)
+          pwm16.set.compare (avr.pin, pos)
       stop
         SKIP
 :

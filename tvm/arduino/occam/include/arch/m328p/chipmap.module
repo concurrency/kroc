@@ -34,7 +34,7 @@ VAL []INT DDR.MAP IS [DDRC, DDRD, DDRD, DDRD, DDRD, DDRD, DDRX,
                       DDRX, DDRC, DDRC, DDRC, DDRC, DDRC, DDRC]:
 
 --------- PORT.MAP ---------------------------------------------------
---                     0                                         7
+--                         0                                         7
 VAL []INT PORT.MAP IS [PORTC, PORTD, PORTD, PORTD, PORTD, PORTD, PORTX,
 --                         8                                        14
                        PORTX, PORTB, PORTD, PORTD, PORTD, PORTD, PORTB,
@@ -44,7 +44,7 @@ VAL []INT PORT.MAP IS [PORTC, PORTD, PORTD, PORTD, PORTD, PORTD, PORTX,
                        PORTX, PORTC, PORTC, PORTC, PORTC, PORTC, PORTC]:
 
 --------- PIN.MAP ---------------------------------------------------
---                       0                                    7
+--                       0                                   7
 VAL []INT PIN.MAP IS [PINC, PIND, PIND, PIND, PIND, PIND, PINX,
 --                       8                                  14
                       PINX, PINB, PIND, PIND, PIND, PIND, PINB,
@@ -63,7 +63,8 @@ VAL []INT BIT.MAP IS [ 6,  0,  1,  2,  3,  4, -1,
 --                    22                      28
                       -1,  0,  1,  2,  3,  4,  5]: 
 
--- AVR pins are numbered starting from 1... so, we need to subtract 1 to index into the arrays.
+-- AVR pins are numbered starting from 1...
+-- We need to subtract 1 to index into the arrays.
 INT, INT, INT, INT FUNCTION chip.to.gpio (VAL INT avr.pin) 
   INT ddr, port, pin, bit:
   VALOF
