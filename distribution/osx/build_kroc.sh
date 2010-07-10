@@ -89,7 +89,7 @@ if ! [ -d $BUILD/$AVRDUDE ] ; then
   curl -O \
   http://download.savannah.gnu.org/releases-noredirect/avrdude/$AVRDUDE.tar.gz \
     || exit 1
-  unzip $AVRDUDE.tar.gz
+  tar -xvzf $AVRDUDE.tar.gz
   cd $AVRDUDE
   ./configure --prefix=$INSTALL
   make
