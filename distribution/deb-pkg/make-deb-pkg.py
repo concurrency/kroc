@@ -99,17 +99,25 @@ FINAL    = "/%s" % (INSTPATH)
 # Destdir installation paths
 # All copy/install actions in the script should
 # target these paths.
-DEST          = "%s/%s" % (TEMP(), PACKAGE_NAME)
-DEST_ROOT     = "%s/%s" % (DEST, INSTPATH)
-DEST_BIN      = "%s/%s" % (DEST_ROOT, "bin")
-DEST_SHARE    = "%s/%s" % (DEST_ROOT, "share")
-DEST_FIRMWARE = "%s/%s" % (DEST_SHARE, "firmwares")
-DEST_CONF     = "%s/%s" % (DEST_SHARE, "conf")
-DEST_LIB      = "%s/%s" % (DEST_ROOT, "lib")
-DEST_DEBIAN   = "%s/%s" % (PACKAGE_BUILD(), "DEBIAN")
+def DEST():
+	return "%s/%s" % (TEMP(), PACKAGE_NAME)
+def DEST_ROOT():
+	return "%s/%s" % (DEST(), INSTPATH)
+def DEST_BIN():
+	return "%s/%s" % (DEST_ROOT(), "bin")
+def DEST_SHARE():
+	return "%s/%s" % (DEST_ROOT(), "share")
+def DEST_FIRMWARE():
+	return "%s/%s" % (DEST_SHARE(), "firmwares")
+def DEST_CONF():
+	return "%s/%s" % (DEST_SHARE(), "conf")
+def DEST_LIB():
+	return "%s/%s" % (DEST_ROOT(), "lib")
+def DEST_DEBIAN():
+	return "%s/%s" % (PACKAGE_BUILD(), "DEBIAN")
 
-DESTINATIONS  = [DEST_ROOT, DEST_BIN, DEST_SHARE,
-								 DEST_FIRMWARE, DEST_CONF, DEST_LIB, DEST_DEBIAN]
+#DESTINATIONS  = [DEST_ROOT, DEST_BIN, DEST_SHARE,
+#								 DEST_FIRMWARE, DEST_CONF, DEST_LIB, DEST_DEBIAN]
 
 
 # UTILITY FUNCTIONS 
@@ -199,7 +207,7 @@ def build():
 	with pushd():
 		cd(OBJ())
 		cmd("make")
-		cmd(build_command(["make", concat(["DESTDIR=", DEST]), "install"]))
+		cmd(build_command(["make", concat(["DESTDIR=", DEST()]), "install"]))
 	# Run the build script in the wrapper.
 	# This generates virtual machines for multipl
 	# targets (m328, m1280, 3.3V and 5V (8MHz and 16MHz, respectively))
@@ -237,16 +245,19 @@ def subst_and_copy(file, source_dir, dest_dir):
 				# After replacements, write the line
 				output.write(line)
 
-def copy_config(path=SVN()):
+def copy_config(path=None):
+	if path == None:
+		path = SVN()
+
 	with pushd():
-		cd(SOURCE_CONF())
+		cd(SOURCE_CONF(path))
 		for filename in os.listdir(SOURCE_CONF(path)):
 			if re.search(".*conf.in$", filename):
-				subst_and_copy(filename, SOURCE_CONF(path), DEST_CONF)
+				subst_and_copy(filename, SOURCE_CONF(path), DEST_CONF())
 
 def deployment_version():
 	with pushd():
-		with open("%s/deployment.version" % DEST_CONF, 'w') as dv:
+		with open("%s/deployment.version" % DEST_CONF(), 'w') as dv:
 			dv.write(YMDHMS)
 			dv.close()
 
@@ -255,42 +266,42 @@ def chmod(mode, path, file):
 
 def copy(url=SVN()):
 	# Copy scripts directory to destination
-	copy_dir(SOURCE_SCRIPTS(url), DEST_BIN)
+	copy_dir(SOURCE_SCRIPTS(url), DEST_BIN())
 
-	subst_and_copy("plumb.in", SOURCE_SCRIPTS(url), DEST_BIN)
-	chmod("755", DEST_BIN, "plumb")
+	subst_and_copy("plumb.in", SOURCE_SCRIPTS(url), DEST_BIN())
+	chmod("755", DEST_BIN(), "plumb")
 
-	copy_files(".*.hex", SOURCE_FIRMWARE(), DEST_FIRMWARE)
+	copy_files(".*.hex", SOURCE_FIRMWARE(url), DEST_FIRMWARE())
 	
-	copy_files("avrdude.conf", SOURCE_ARDUINO(), DEST_CONF)
+	copy_files("avrdude.conf", SOURCE_ARDUINO(url), DEST_CONF())
 	
-	copy_dir(SOURCE_LIB(url), DEST_LIB)	
+	copy_dir(SOURCE_LIB(url), DEST_LIB())	
 
-def deb():
-	remove_and_create_dir(DEST_DEBIAN)
-
-	for filename in os.listdir(SOURCE_DEBIAN()):
+def deb(url=SVN()):
+	remove_and_create_dir(DEST_DEBIAN())
+	
+	for filename in os.listdir(SOURCE_DEBIAN(url)):
 		if not re.search("in$", filename):
-			copy_files(filename, SOURCE_DEBIAN(), DEST_DEBIAN)
-			chmod("755", DEST_DEBIAN, filename)
+			copy_files(filename, SOURCE_DEBIAN(url), DEST_DEBIAN())
+			chmod("755", DEST_DEBIAN(), filename)
 	
-	copy_files("preinst", SOURCE_DEBIAN(), DEST_DEBIAN)
-	chmod("755", DEST_DEBIAN, "preinst")
+	copy_files("preinst", SOURCE_DEBIAN(url), DEST_DEBIAN())
+	chmod("755", DEST_DEBIAN(), "preinst")
 
-	copy_files("postrm", SOURCE_DEBIAN(), DEST_DEBIAN)
-	chmod("755", DEST_DEBIAN, "postrm")
+	copy_files("postrm", SOURCE_DEBIAN(url), DEST_DEBIAN())
+	chmod("755", DEST_DEBIAN(), "postrm")
 
-	copy_files("preinst", SOURCE_DEBIAN(), DEST_DEBIAN)
-	chmod("755", DEST_DEBIAN, "preinst")
+	copy_files("preinst", SOURCE_DEBIAN(url), DEST_DEBIAN())
+	chmod("755", DEST_DEBIAN(), "preinst")
 
-	copy_files("prerm", SOURCE_DEBIAN(), DEST_DEBIAN)
-	chmod("755", DEST_DEBIAN, "prerm")
+	copy_files("prerm", SOURCE_DEBIAN(url), DEST_DEBIAN())
+	chmod("755", DEST_DEBIAN(), "prerm")
 
-	subst_and_copy("control.in", SOURCE_DEBIAN(), DEST_DEBIAN)
-	chmod("755", DEST_DEBIAN, "control")
+	subst_and_copy("control.in", SOURCE_DEBIAN(url), DEST_DEBIAN())
+	chmod("755", DEST_DEBIAN(), "control")
 
-	subst_and_copy("postinst.in", SOURCE_DEBIAN(), DEST_DEBIAN)
-	chmod("755", DEST_DEBIAN, "postinst")
+	subst_and_copy("postinst.in", SOURCE_DEBIAN(url), DEST_DEBIAN())
+	chmod("755", DEST_DEBIAN(), "postinst")
 
 	with pushd():
 		cd(TEMP())
@@ -326,7 +337,7 @@ def refresh_libs(path):
 	copy_config(path)
 	deployment_version()
 	copy(path)
-	deb()
+	deb(path)
 
 #############################################
 # COMMAND LINE PARSING
