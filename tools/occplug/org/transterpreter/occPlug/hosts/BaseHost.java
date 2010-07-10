@@ -41,7 +41,7 @@ public class BaseHost {
 	{
 		String os = System.getProperty("os.name");
 		
-		if(os.equals("OS X"))
+		if(os.equals("OS X") || os.equals("Mac OS X"))
 		{
 			return new OSX();
 		}
