@@ -265,6 +265,16 @@ PROC blink (VAL INT pin, delay.time)
 --* A parallel health monitor.
 -- Blinks the LED.PIN  every 500 ms.
 --FIXME: If there is no LED.PIN, I'd like to see a board-specific die(..)
+-- 20100710 MCJ
+-- Further, death looks like this:
+-- Final machine state:
+-- file=plumbing.module line=273
+-- wptr=0326 (rel=004a)  iptr=d56b (rel=0537)  eflags=0001 sflags=0000
+-- areg=d580 breg=0004 creg=0004  oreg=0000
+-- 8000 8000 0000 d582 8000 8000 8000 wptr>d580 0320 0004 002b d58b 0002 0000 
+-- 64 9c 1f f3 b3 22 f0 22 4b d3 21 f0 iptr>22 f0 60 bd 22 23 f7 d2 42 d1 21 42 
+--
+-- We may want to improve that... perhaps by using die() in some way. 
 PROC heartbeat ()
   IF
     LED.PIN > 0
