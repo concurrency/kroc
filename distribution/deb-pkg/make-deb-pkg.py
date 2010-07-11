@@ -84,7 +84,7 @@ def remove_dir(dir):
 	cmd(build_command(["rm" "-rf", dir]))
 
 def copy_dir(src, dst):
-	print "COPYING [%s] TO [%s]" % (src, dst)
+	print "DIRECTORY COPY [%s] TO [%s]" % (src, dst)
 	cmd(build_command(["rsync", "-vaz", 
 										 "--exclude=*svn*",
 										 "--exclude=.svn",
@@ -244,6 +244,12 @@ def rpm():
 def with_temp_dir(path):
 		config.rebase('TEMP', path)
 
+def with_lib_path(path):
+	config.rebase('LIB_PATH', path)
+	print "CFG: %s" % config.get('LIB_PATH')
+	print "CFG: %s" % config.get('SOURCE_LIB')
+		
+
 def all(url):
 	checkout(url)
 	autoreconf()
@@ -256,8 +262,7 @@ def all(url):
 	copy()
 	deb()
 
-def refresh_libs(path):
-	config.rebase('LIB_PATH', path)
+def refresh_libs():
 	copy_config()
 	deployment_version()
 	copy()
@@ -289,7 +294,8 @@ OPTIONS = [
 		deb],
 	["all", "store", "ALL_SVN_URL", "Do everything up to this point.",
 		all],
-	["refresh-libs", "store", "LIB_PATH", "Re-run copy-config, copy, deb, and rpm.", refresh_libs],
+	["with-lib-path", "store", "LIB_PATH", "Set new lib path.", with_lib_path],
+	["refresh-libs", "store_true", "Re-run copy-config, copy, deb, and rpm.", refresh_libs],
 	["with-temp-dir", "store", "TEMP_DIR", "Set the temp build directory.",
 		with_temp_dir],
 	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).", rpm]
@@ -316,10 +322,10 @@ def call_handler(str, arg):
 		if str == OPT[2]:
 			print "CALLING [ %s ] " % OPT[2]
 			OPT[len(OPT) - 1](arg)
-		if str.lower() == OPT[0]:
+		if re.sub("_", "-", str.lower()) == OPT[0]:
 			OPT[len(OPT) - 1]()
 
-FIRST = ["TEMP_DIR"]
+FIRST = ["TEMP_DIR", "LIB_PATH"]
 
 for key, val in props(options).iteritems():
 	if key in FIRST:
