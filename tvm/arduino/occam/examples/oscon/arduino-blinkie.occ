@@ -2,6 +2,6 @@
 
 PROC blinkie ()
   PAR
-    heartbeat ()
-    blink ( 9, 500)
+    -- heartbeat ()
+    blink (35, 500)
 :

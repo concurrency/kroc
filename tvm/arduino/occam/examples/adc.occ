@@ -8,11 +8,10 @@ PROC main ()
 
   SEQ
     serial.setup (0, 57600)
-    serial.write.string ("Serial is go.")
     delay (1000)
     PAR
       tick (500, s!)
-      adc (4, s?, v!)
+      adc (A4, s?, v!)
       serial.tx.int (0, v?)
 :
 

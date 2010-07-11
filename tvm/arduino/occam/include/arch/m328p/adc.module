@@ -16,8 +16,6 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
   -- AVR pins for Analog start at pin 23.
   INITIAL INT a.pin IS avr.pin - AVR.A0:
   SEQ
-    serial.write.byte (0, (BYTE a.pin))
-    serial.write.byte (0, '*n')
     -- Enable ADC; enable interrupt; clock prescale 128
     -- The '7' is == ADPS2 \/ ADPS1 \/ ADPS0 which sest the prescale to 128
     ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ 7
