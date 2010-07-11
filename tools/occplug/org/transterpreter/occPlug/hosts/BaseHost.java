@@ -45,7 +45,7 @@ public class BaseHost {
 		{
 			return new OSX();
 		}
-		else if(os.equals("Windows"))
+		else if(os.startsWith("Windows"))
 		{
 			return new Windows();
 		}
