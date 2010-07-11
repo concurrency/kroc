@@ -14,21 +14,23 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
   #PRAGMA DEFINED ports
   INT16 result:
   -- AVR pins for Analog start at pin 23.
-  INITIAL INT pin IS avr.pin - AVR.A0:
+  INITIAL INT a.pin IS avr.pin - AVR.A0:
   SEQ
+    serial.write.byte (0, (BYTE a.pin))
+    serial.write.byte (0, '*n')
     -- Enable ADC; enable interrupt; clock prescale 128
     -- The '7' is == ADPS2 \/ ADPS1 \/ ADPS0 which sest the prescale to 128
     ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ 7
     -- Disable digital inputs on the ADC pin.
-    ports[DIDR0] := ports[DIDR0] \/ BV (pin)
+    ports[DIDR0] := ports[DIDR0] \/ BV (a.pin)
 
     -- Select the channel
     -- If we are using Vcc as our reference, set bit REFS0.
     IF
       USE.VCC
-        ports[ADMUX] := BV (REFS0) \/ (BYTE pin)
+        ports[ADMUX] := BV (REFS0) \/ (BYTE a.pin)
       TRUE
-        ports[ADMUX] := (BYTE pin)
+        ports[ADMUX] := (BYTE a.pin)
 
     -- Start conversion
     ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
