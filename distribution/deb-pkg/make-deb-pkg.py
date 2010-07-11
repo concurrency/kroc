@@ -106,6 +106,7 @@ def mkdir(dir):
 # MEAT AND POTATOES
 
 def checkout(url):
+	config.refresh()
 	remove_and_create_dir(config.get('SVN'))
 	print "In %s" % os.getcwd()
 	cmd(build_command(["svn", "co", url, config.get('SVN')]))
@@ -123,7 +124,7 @@ def configure():
 	# Do the configure from within it.
 	with pushd():
 		cd(config.get('OBJ'))
-		cmd(build_command(["../configure", concat(["--prefix=", FINAL]), 
+		cmd(build_command(["../configure", concat(["--prefix=", config.get('FINAL')]), 
 				"--with-toolchain=tvm", "--target=avr",
 				"--with-wrapper=arduino"]))
 
@@ -146,8 +147,9 @@ def install():
 		cmd(build_command(["make", "install", concat(["DESTDIR=", config.get('FINAL')])]))
 
 def make_destdirs():
+	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_LIB', 'DEST_DEBIAN'] 
 	for d in DESTINATIONS:
-		mkdir(d)
+		mkdir(config.get(d))
 
 def subst_and_copy(file, source_dir, dest_dir):
 	with open("%s/%s" % (source_dir, file), 'r') as input:
@@ -233,7 +235,7 @@ def deb():
 # This needs to run `sudo' 
 def rpm():
 	with pushd():
-		cd(TEMP())
+		cd(config.get('TEMP'))
 		print "Converting to RPM"
 		cmd(build_command(["alien", "--scripts", "-r", 
 											 "%s_%s_i386.deb" % (config.get('PACKAGE_NAME'), 
@@ -309,14 +311,23 @@ def ignored(str):
 	return re.match("CHECKOUT", str) 
 
 def call_handler(str, arg):
+	print "GOT %s %s" % (str, arg)
 	for OPT in OPTIONS:
 		if str == OPT[2]:
 			print "CALLING [ %s ] " % OPT[2]
-			# Invoke the last element of the list
 			OPT[len(OPT) - 1](arg)
+		if str.lower() == OPT[0]:
+			OPT[len(OPT) - 1]()
+
+FIRST = ["TEMP_DIR"]
+
+for key, val in props(options).iteritems():
+	if key in FIRST:
+		call_handler(re.sub("-", "_", key), val)
 
 #for key, val in props(options).iteritems():
 for key, val in props(options).iteritems():
-	if val != None:
-		call_handler(re.sub("-", "_", key), val)
+	if key not in FIRST:
+		if (val != None):
+			call_handler(re.sub("-", "_", key), val)
 
