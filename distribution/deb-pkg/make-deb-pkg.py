@@ -8,6 +8,8 @@ import time
 import os
 import re
 
+import config
+
 # USAGE
 # You can find out what parameters are avaialble by invoking this 
 # script with:
@@ -42,83 +44,6 @@ import re
 # 
 # 20100706 MCJ: Running on my Ubuntu 9.10 VM on my 2.4GHz Mac, this
 #               takes around 18 minutes to complete, start to finish.
-
-
-# CONFIGURATION 
-
-# Current date (YYYYMMDD)
-now = datetime.datetime.now()
-YMD = now.strftime("%Y%m%d")
-YMDHMS = now.strftime("%Y%m%d%H%M%S")
-
-# Package name
-PACKAGE_NAME = "concurrency"
-
-# Root for temporary build process.
-TEMP_PATH = [ "/tmp" ]
-def TEMP():
-		return TEMP_PATH[0]
-
-def PACKAGE_BUILD():
-		return "%s/%s" % (TEMP(), PACKAGE_NAME)
-
-# Location for checkout of fresh codebase
-def SVN():
-		return "%s/deb-pkg-src" % (TEMP())
-
-# Location for the obj-avr build
-def OBJ():
-		return "%s/obj" % (SVN())
-
-# For use when referencing into the source tree
-# Functions, because I want to be able to change the 
-# root path for the SVN tree.
-def SOURCE_ARDUINO(url=SVN()):
-	return "%s/%s" % (url, "/tvm/arduino")
-
-def SOURCE_CONF(url=SVN()):
-	return "%s/%s" % (url, "/tvm/arduino/occam/share/conf")
-
-def SOURCE_SCRIPTS(url=SVN()):
-	return "%s/%s" % (url, "/tvm/arduino/scripts")
-
-def SOURCE_FIRMWARE(url=SVN()):
-	return "%s/%s" % (url, "/tvm/arduino")
-
-def SOURCE_LIB(url=SVN()):
-	return "%s/%s" % (url, "/tvm/arduino/occam/include")
-
-def SOURCE_DEBIAN(url=SVN()):
-	return "%s/%s" % (url, "/distribution/deb-pkg/DEBIAN.in")
-
-# Desired filesystem path for installation
-INSTPATH = "opt/occam/arduino"
-# Final installation path
-FINAL    = "/%s" % (INSTPATH)
-
-# Destdir installation paths
-# All copy/install actions in the script should
-# target these paths.
-def DEST():
-	return "%s/%s" % (TEMP(), PACKAGE_NAME)
-def DEST_ROOT():
-	return "%s/%s" % (DEST(), INSTPATH)
-def DEST_BIN():
-	return "%s/%s" % (DEST_ROOT(), "bin")
-def DEST_SHARE():
-	return "%s/%s" % (DEST_ROOT(), "share")
-def DEST_FIRMWARE():
-	return "%s/%s" % (DEST_SHARE(), "firmwares")
-def DEST_CONF():
-	return "%s/%s" % (DEST_SHARE(), "conf")
-def DEST_LIB():
-	return "%s/%s" % (DEST_ROOT(), "lib")
-def DEST_DEBIAN():
-	return "%s/%s" % (PACKAGE_BUILD(), "DEBIAN")
-
-#DESTINATIONS  = [DEST_ROOT, DEST_BIN, DEST_SHARE,
-#								 DEST_FIRMWARE, DEST_CONF, DEST_LIB, DEST_DEBIAN]
-
 
 # UTILITY FUNCTIONS 
 def concat(ls):
@@ -181,23 +106,23 @@ def mkdir(dir):
 # MEAT AND POTATOES
 
 def checkout(url):
-	remove_and_create_dir(SVN())
+	remove_and_create_dir(config.get('SVN'))
 	print "In %s" % os.getcwd()
-	cmd(build_command(["svn", "co", url, SVN()]))
+	cmd(build_command(["svn", "co", url, config.get('SVN')]))
 
 def autoreconf():
 	with pushd():
-		cd(SVN())
+		cd(config.get('SVN'))
 		cmd("autoreconf -vfi")
 
 def configure():
 	# Make the object directory
 	with pushd():
-		cd(SVN())
-		mkdir(OBJ())
+		cd(config.get('SVN'))
+		mkdir(config.get('OBJ'))
 	# Do the configure from within it.
 	with pushd():
-		cd(OBJ())
+		cd(config.get('OBJ'))
 		cmd(build_command(["../configure", concat(["--prefix=", FINAL]), 
 				"--with-toolchain=tvm", "--target=avr",
 				"--with-wrapper=arduino"]))
@@ -205,20 +130,20 @@ def configure():
 def build():
 	# 'make' in the object directory
 	with pushd():
-		cd(OBJ())
+		cd(config.get('OBJ'))
 		cmd("make")
-		cmd(build_command(["make", concat(["DESTDIR=", DEST()]), "install"]))
+		cmd(build_command(["make", concat(["DESTDIR=", config.get('DEST')]), "install"]))
 	# Run the build script in the wrapper.
 	# This generates virtual machines for multipl
 	# targets (m328, m1280, 3.3V and 5V (8MHz and 16MHz, respectively))
 	with pushd():
-		cd(concat([SVN, "/tvm/arduino"]))
+		cd(concat([config.get('SVN'), "/tvm/arduino"]))
 		cmd("./build.sh")
 
 def install():
 	with pushd():
 		cmd("make")
-		cmd(build_command(["make", "install", concat(["DESTDIR=", FINAL])]))
+		cmd(build_command(["make", "install", concat(["DESTDIR=", config.get('FINAL')])]))
 
 def make_destdirs():
 	for d in DESTINATIONS:
@@ -232,81 +157,78 @@ def subst_and_copy(file, source_dir, dest_dir):
 		with open("%s/%s" % (dest_dir, dest_file), 'w') as output:
 			for line in input:
 				if re.search("@FINAL@", line):
-					line = re.sub("@FINAL@", FINAL, line)
+					line = re.sub("@FINAL@", config.get('FINAL'), line)
 				elif re.search("@PLATFORM@", line):
 					line = re.sub("@PLATFORM@", re.search("(.*?)\.(.*)", file).group(1), line)
 				elif re.search("@TVM_INST_ROOT@", line):
-					line = re.sub("@TVM_INST_ROOT@", FINAL, line)
+					line = re.sub("@TVM_INST_ROOT@", config.get('FINAL'), line)
 				elif re.search("@PACKAGEVERSION@", line):
-					line = re.sub("@PACKAGEVERSION@", YMD, line)
+					line = re.sub("@PACKAGEVERSION@", config.get('YMD'), line)
 				elif re.search("@DSTBIN@", line):
-					line = re.sub("@DSTBIN@", FINAL, line)
+					line = re.sub("@DSTBIN@", config.get('FINAL'), line)
 
 				# After replacements, write the line
 				output.write(line)
 
-def copy_config(path=None):
-	if path == None:
-		path = SVN()
-
+def copy_config():
 	with pushd():
-		cd(SOURCE_CONF(path))
-		for filename in os.listdir(SOURCE_CONF(path)):
+		cd(config.get('SOURCE_CONF'))
+		for filename in os.listdir(config.get('SOURCE_CONF')):
 			if re.search(".*conf.in$", filename):
-				subst_and_copy(filename, SOURCE_CONF(path), DEST_CONF())
+				subst_and_copy(filename, config.get('SOURCE_CONF'), config.get('DEST_CONF'))
 
 def deployment_version():
 	with pushd():
-		with open("%s/deployment.version" % DEST_CONF(), 'w') as dv:
-			dv.write(YMDHMS)
+		with open("%s/deployment.version" % config.get('DEST_CONF'), 'w') as dv:
+			dv.write(config.get('YMDHMS'))
 			dv.close()
 
 def chmod(mode, path, file):
 	cmd(build_command(["chmod", mode, "%s/%s" % (path, file)]))
 
-def copy(url=SVN()):
+def copy():
 	# Copy scripts directory to destination
-	copy_dir(SOURCE_SCRIPTS(url), DEST_BIN())
+	copy_dir(config.get('SOURCE_SCRIPTS'), config.get('DEST_BIN'))
 
-	subst_and_copy("plumb.in", SOURCE_SCRIPTS(url), DEST_BIN())
-	chmod("755", DEST_BIN(), "plumb")
+	subst_and_copy("plumb.in", config.get('SOURCE_SCRIPTS'), config.get('DEST_BIN'))
+	chmod("755", config.get('DEST_BIN'), "plumb")
 
-	copy_files(".*.hex", SOURCE_FIRMWARE(url), DEST_FIRMWARE())
+	copy_files(".*.hex", config.get('SOURCE_FIRMWARE'), config.get('DEST_FIRMWARE'))
 	
-	copy_files("avrdude.conf", SOURCE_ARDUINO(url), DEST_CONF())
+	copy_files("avrdude.conf", config.get('SOURCE_ARDUINO'), config.get('DEST_CONF'))
 	
-	copy_dir(SOURCE_LIB(url), DEST_LIB())	
+	copy_dir(config.get('SOURCE_LIB'), config.get('DEST_LIB'))	
 
-def deb(url=SVN()):
-	remove_and_create_dir(DEST_DEBIAN())
+def deb():
+	remove_and_create_dir(config.get('DEST_DEBIAN'))
 	
-	for filename in os.listdir(SOURCE_DEBIAN(url)):
+	for filename in os.listdir(config.get('SOURCE_DEBIAN')):
 		if not re.search("in$", filename):
-			copy_files(filename, SOURCE_DEBIAN(url), DEST_DEBIAN())
-			chmod("755", DEST_DEBIAN(), filename)
+			copy_files(filename, config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+			chmod("755", config.get('DEST_DEBIAN'), filename)
 	
-	copy_files("preinst", SOURCE_DEBIAN(url), DEST_DEBIAN())
-	chmod("755", DEST_DEBIAN(), "preinst")
+	copy_files("preinst", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "preinst")
 
-	copy_files("postrm", SOURCE_DEBIAN(url), DEST_DEBIAN())
-	chmod("755", DEST_DEBIAN(), "postrm")
+	copy_files("postrm", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "postrm")
 
-	copy_files("preinst", SOURCE_DEBIAN(url), DEST_DEBIAN())
-	chmod("755", DEST_DEBIAN(), "preinst")
+	copy_files("preinst", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "preinst")
 
-	copy_files("prerm", SOURCE_DEBIAN(url), DEST_DEBIAN())
-	chmod("755", DEST_DEBIAN(), "prerm")
+	copy_files("prerm", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "prerm")
 
-	subst_and_copy("control.in", SOURCE_DEBIAN(url), DEST_DEBIAN())
-	chmod("755", DEST_DEBIAN(), "control")
+	subst_and_copy("control.in", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "control")
 
-	subst_and_copy("postinst.in", SOURCE_DEBIAN(url), DEST_DEBIAN())
-	chmod("755", DEST_DEBIAN(), "postinst")
+	subst_and_copy("postinst.in", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "postinst")
 
 	with pushd():
-		cd(TEMP())
-		print "PACKAGING %s" % PACKAGE_NAME
-		cmd(build_command(["dpkg", "--build", PACKAGE_NAME, "./"]))
+		cd(config.get('TEMP'))
+		print "PACKAGING %s" % config.get('PACKAGE_NAME')
+		cmd(build_command(["dpkg", "--build", config.get('PACKAGE_NAME'), "./"]))
 
 # This needs to run `sudo' 
 def rpm():
@@ -314,12 +236,11 @@ def rpm():
 		cd(TEMP())
 		print "Converting to RPM"
 		cmd(build_command(["alien", "--scripts", "-r", 
-											 "%s_%s_i386.deb" % (PACKAGE_NAME, YMD)]))
+											 "%s_%s_i386.deb" % (config.get('PACKAGE_NAME'), 
+											 config.get('YMD'))]))
 
 def with_temp_dir(path):
-		print "SETTING TEMP PATH"
-		TEMP_PATH[0] = path
-		print "SET TO %s" % TEMP()
+		config.rebase('TEMP', path)
 
 def all(url):
 	checkout(url)
@@ -334,10 +255,11 @@ def all(url):
 	deb()
 
 def refresh_libs(path):
-	copy_config(path)
+	config.rebase('LIB_PATH', path)
+	copy_config()
 	deployment_version()
-	copy(path)
-	deb(path)
+	copy()
+	deb()
 
 #############################################
 # COMMAND LINE PARSING
@@ -386,26 +308,15 @@ for OPT in OPTIONS:
 def ignored(str):
 	return re.match("CHECKOUT", str) 
 
-def call_handler(str):
-	tag = str.lower()
+def call_handler(str, arg):
 	for OPT in OPTIONS:
-		if tag == OPT[0]:
+		if str == OPT[2]:
+			print "CALLING [ %s ] " % OPT[2]
 			# Invoke the last element of the list
-			OPT[len(OPT) - 1]()
+			OPT[len(OPT) - 1](arg)
 
+#for key, val in props(options).iteritems():
 for key, val in props(options).iteritems():
-	if (key == "LIB_PATH") and (val != None):
-		print "PATH IS %s" % options.LIB_PATH
-		refresh_libs(options.LIB_PATH)
-	if (key == "TEMP_DIR") and (val != None):
-		with_temp_dir(options.TEMP_DIR)
-
-for key, val in props(options).iteritems():
-	if (key == "CHECKOUT_SVN_URL") and (val != None):
-		checkout(options.CHECKOUT_SVN_URL)
-	if (key == "ALL_SVN_URL") and (val != None):
-		all(options.ALL_SVN_URL)
-	elif val:
-		print "*** RUNNING [ %s ] ***" % key
-		call_handler(re.sub("_", "-", key))
+	if val != None:
+		call_handler(re.sub("-", "_", key), val)
 
