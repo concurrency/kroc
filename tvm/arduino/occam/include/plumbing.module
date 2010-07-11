@@ -350,6 +350,23 @@ PROC serial.rx (VAL INT port, CHAN BYTE out!)
       out ! b
 :
 
+--{{{  PROC serial.rx.int
+--* Write an [@code INT] to the serial port in hex.
+--
+-- @param port The serial port to write to.
+-- @param n The integer to write.
+PROC serial.tx.int (VAL INT port, CHAN INT n?)
+  VAL []BYTE digits IS "0123456789abcdef":
+  INT num:
+  WHILE TRUE
+    SEQ
+      n ? num
+      SEQ i = 3 FOR 4 STEP -1
+        serial.write.byte (port, digits[(num >> (i * 4)) /\ #F])
+      serial.write.byte (port, '*n')
+:
+--}}}
+
 --FIXME: The int/int32 helper methods don't use any chanels or signals. Methinks this should change.
 --{{{  PROC serial.write.int
 --* Write an [@code INT] to the serial port in hex.
@@ -373,17 +390,6 @@ PROC serial.write.int32 (VAL INT32 n)
 :
 --}}}
 
---{{{  PROC serial.rx.int
---* Write an [@code INT] to the serial port in hex.
---
--- @param port The serial port to write to.
--- @param n The integer to write.
-PROC serial.tx.int (VAL INT port, VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (port, digits[(n >> (i * 4)) /\ #F])
-:
---}}}
 
 --{{{  PROC serial.tx.int32
 --* Write an [@code INT32] to the serial port in hex.
