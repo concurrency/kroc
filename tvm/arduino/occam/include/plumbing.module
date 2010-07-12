@@ -392,16 +392,9 @@ PROC heartbeat ()
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
 PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
-  INT v, avr.pin, tmp:
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  INT v:
   SEQ
-    -- If someone uses the constants 0 - 5, correct them.
-    -- Really, they should use A0 - A5 instead.
-    IF 
-      board.pin < 6
-        tmp := board.pin + A0
-      TRUE
-        tmp := board.pin
-    avr.pin := board.to.chip (tmp)
     WHILE TRUE
       SEQ
         req ? SIGNAL
