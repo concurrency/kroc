@@ -4,34 +4,43 @@
 #IF NOT (DEFINED (ADC.MODULE))
 #DEFINE ADC.MODULE
 
-PROC adc.base (VAL INT pin, VAL BOOL USE.VCC, RESULT INT v)
+-- The AVR analog pins start at (AVR) pin 82 (A15) and move to 97 (A0).
+-- This value is used for calculating analog channel choice in adc.module
+VAL INT AVR.A0 IS 97:
+
+PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   INT16 result:
+  -- AVR pins for Analog start at pin 97 and move down.
+  INITIAL INT a.pin IS (avr.pin - AVR.A0) * (-1):
   SEQ
     -- Enable ADC; enable interrupt; clock prescale 128
     -- The '7' is == ADPS2 \/ ADPS1 \/ ADPS0 which sest the prescale to 128
     ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ 7
     -- Disable digital inputs on the ADC pin.
     IF
-      pin < 8
-        ports[DIDR0] := ports[DIDR0] \/ BV (pin)
+      a.pin < 8
+        ports[DIDR0] := ports[DIDR0] \/ BV (a.pin)
       TRUE
-        ports[DIDR2] := ports[DIDR2] \/ BV (pin -8)
+        ports[DIDR2] := ports[DIDR2] \/ BV (a.pin -8)
 
     -- Select the channel
     IF
-      pin < 8
-        ports[ADMUX] := (BYTE pin)
+      a.pin < 8
+        ports[ADMUX] := (BYTE a.pin)
       TRUE
         SEQ
-          ports[ADMUX] := (BYTE (pin - 8))
+          ports[ADMUX] := (BYTE (a.pin - 8))
           ports[ADCSRB] := BV (MUX5)
     -- If we are using Vcc as out reference, set bit REFS0
     IF
       USE.VCC
         ports[ADMUX] := ports[ADMUX] \/ BV (REFS0)
       TRUE
+        --FIXME: Should this be a skip? It's not symetircal with the 328,
+        -- and having never tested the aref pins on either the Doomduino nor
+        -- any in the mega line, I've no idea if this is right...
         SKIP
 
     -- Start conversion

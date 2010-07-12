@@ -7,9 +7,9 @@
 
 --This is a stub. It will change soon.
 
-INT, INT, INT, BYTE FUNCTION pwm8.lookup (VAL INT avr.pin)
+INT, INT, INT, BYTE, BYTE FUNCTION pwm8.lookup (VAL INT avr.pin)
   INT TCCRnA, TCCRnB, OCRnx:
-  BYTE TCCRnA.bits:
+  BYTE TCCRnA.bits, TCCRnB.bits:
   VALOF
     SEQ
       CASE avr.pin
@@ -106,12 +106,12 @@ INT, INT, INT, BYTE FUNCTION pwm8.lookup (VAL INT avr.pin)
             OCRnx := OCR5C
         ELSE
           die ("The ArduinoMega does not support PWM on that pin.")
-    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits
 :
 
-INT, INT, INT, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
+INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
   INT TCCRnA, TCCRnB, OCRnx:
-  BYTE TCCRnA.bits:
+  BYTE TCCRnA.bits, TCCRnB.bits:
   VALOF
     SEQ
       CASE avr.pin
@@ -120,48 +120,56 @@ INT, INT, INT, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
             TCCRnA := TCCR3A
             TCCRnB := TCCR3B
             TCCRnA.bits := BV (COM3A1)
+            TCCRnB.bits := BV (WGM33)
             OCRnx := OCR3A
         6
           SEQ
             TCCRnA := TCCR3A
             TCCRnB := TCCR3B
             TCCRnA.bits := BV (COM3B1)
+            TCCRnB.bits := BV (WGM33)
             OCRnx := OCR3B
         7
           SEQ
             TCCRnA := TCCR3A
             TCCRnB := TCCR3B
             TCCRnA.bits := BV (COM3C1)
+            TCCRnB.bits := BV (WGM33)
             OCRnx := OCR3C
         15
           SEQ
             TCCRnA := TCCR4A
             TCCRnB := TCCR4B
             TCCRnA.bits := BV (COM4A1)
+            TCCRnB.bits := BV (WGM43)
             OCRnx := OCR4A
         16
           SEQ
             TCCRnA := TCCR4A
             TCCRnB := TCCR4B
             TCCRnA.bits := BV (COM4B1)
+            TCCRnB.bits := BV (WGM43)
             OCRnx := OCR4B
         17
           SEQ
             TCCRnA := TCCR4A
             TCCRnB := TCCR4B
             TCCRnA.bits := BV (COM4C1)
+            TCCRnB.bits := BV (WGM43)
             OCRnx := OCR4C
         24
           SEQ
             TCCRnA := TCCR1A
             TCCRnB := TCCR1B
             TCCRnA.bits := BV (COM1A1)
+            TCCRnB.bits := BV (WGM13)
             OCRnx := OCR1A
         25
           SEQ
             TCCRnA := TCCR1A
             TCCRnB := TCCR1B
             TCCRnA.bits := BV (COM1B1)
+            TCCRnB.bits := BV (WGM13)
             OCRnx := OCR1B
         26 -- Weird thing about the 13th pin.
            --  It's the out for both OCR0A and OCR1C.
@@ -169,31 +177,35 @@ INT, INT, INT, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
             TCCRnA := TCCR1A
             TCCRnB := TCCR1B
             TCCRnA.bits := BV (COM1C1)
+            TCCRnB.bits := BV (WGM13)
             OCRnx := OCR1C
         40
           SEQ
             TCCRnA := TCCR5A
             TCCRnB := TCCR5B
             TCCRnA.bits := BV (COM5C1)
+            TCCRnB.bits := BV (WGM53)
             OCRnx := OCR5C
         39
           SEQ
             TCCRnA := TCCR5A
             TCCRnB := TCCR5B
             TCCRnA.bits := BV (COM5B1)
+            TCCRnB.bits := BV (WGM53)
             OCRnx := OCR5B
         38
           SEQ
             TCCRnA := TCCR5A
             TCCRnB := TCCR5B
             TCCRnA.bits := BV (COM5A1)
+            TCCRnB.bits := BV (WGM53)
             OCRnx := OCR5A
         ELSE
           die ("The ArduinoMega does not support 16bit PWM on that pin.")
-    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits
 :
 
-BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
+BYTE FUNCTION pwm8.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
   BYTE bits:
   VALOF
     SEQ
@@ -213,7 +225,7 @@ BYTE FUNCTION pwm8.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
     RESULT bits
 :
 
-BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
+BYTE FUNCTION pwm16.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
   BYTE bits:
   VALOF
     SEQ
@@ -236,40 +248,39 @@ BYTE FUNCTION pwm16.TCCRnB.helper (VAL INT prescale, VAL BYTE TCCRnB.bits)
 INT FUNCTION pwm8.compare.lookup (VAL INT avr.pin)
   INT OCRnx:
   VALOF
-    SEQ
-      CASE avr.pin
-        1
-          OCRnx := OCR0B
-        5
-          OCRnx := OCR3A
-        6
-          OCRnx := OCR3B
-        7
-          OCRnx := OCR3C
-        15
-          OCRnx := OCR4A
-        16
-          OCRnx := OCR4B
-        17
-          OCRnx := OCR4C
-        18
-          OCRnx := OCR2B
-        23
-          OCRnx := OCR2A
-        24
-          OCRnx := OCR1A
-        25
-          OCRnx := OCR1B
-        26 -- Also OCR0A...
-          OCRnx := OCR1C
-        40
-          OCRnx := OCR5C
-        39
-          OCRnx := OCR5B
-        38
-          OCRnx := OCR5A
-        ELSE
-          die ("The ArduinoMega does not support PWM on that pin.")
+    IF
+      avr.pin = 1
+        OCRnx := OCR0B
+      avr.pin = 5
+        OCRnx := OCR3A
+      avr.pin = 6
+        OCRnx := OCR3B
+      avr.pin = 7
+        OCRnx := OCR3C
+      avr.pin = 15
+        OCRnx := OCR4A
+      avr.pin = 16
+        OCRnx := OCR4B
+      avr.pin = 17
+        OCRnx := OCR4C
+      avr.pin = 18
+        OCRnx := OCR2B
+      avr.pin = 23
+        OCRnx := OCR2A
+      avr.pin = 24
+        OCRnx := OCR1A
+      avr.pin = 25
+        OCRnx := OCR1B
+      avr.pin = 26 -- Also OCR0A...
+        OCRnx := OCR1C
+      avr.pin = 40
+        OCRnx := OCR5C
+      avr.pin = 39
+        OCRnx := OCR5B
+      avr.pin = 38
+        OCRnx := OCR5A
+      TRUE
+        die ("The ArduinoMega does not support PWM on that pin.")
     RESULT OCRnx
 :
 
@@ -277,32 +288,32 @@ INT FUNCTION pwm16.compare.lookup (VAL INT avr.pin)
   INT OCRnx:
   VALOF
     SEQ
-      CASE avr.pin
-        5
+      IF
+        avr.pin = 5
           OCRnx := OCR3A
-        6
+        avr.pin = 6
           OCRnx := OCR3B
-        7
+        avr.pin = 7
           OCRnx := OCR3C
-        15
+        avr.pin = 15
           OCRnx := OCR4A
-        16
+        avr.pin = 16
           OCRnx := OCR4B
-        17
+        avr.pin = 17
           OCRnx := OCR4C
-        24
+        avr.pin = 24
           OCRnx := OCR1A
-        25
+        avr.pin = 25
           OCRnx := OCR1B
-        26
+        avr.pin = 26
           OCRnx := OCR1C
-        40
+        avr.pin = 40
           OCRnx := OCR5C
-        39
+        avr.pin = 39
           OCRnx := OCR5B
-        48
+        avr.pin = 48
           OCRnx := OCR5A
-        ELSE
+        TRUE
           die ("The ArduinoMega does not support PWM on that pin.")
     RESULT OCRnx
 :
@@ -310,17 +321,26 @@ INT FUNCTION pwm16.compare.lookup (VAL INT avr.pin)
 INT FUNCTION pwm16.ICRn.lookup (VAL INT avr.pin)
   INT ICRn:
   VALOF
+    -- WARNING 20100712 MCJ
+    -- Looks like a compiler bug. Without the SEQ, this CASE
+    -- statement crashes. With the SEQs, it runs. Both are valid
+    -- processes, so it isn't clear why one would crash and the 
+    -- other wouldn't...
     CASE avr.pin
-      24, 25, 267
-        ICRn := ICR1
+      24, 25, 26
+        SEQ
+          ICRn := ICR1
       5, 6, 7
-        ICRn := ICR3
+        SEQ
+          ICRn := ICR3
       15, 16, 17
-        ICRn := ICR4
+        SEQ
+          ICRn := ICR4
       38, 39, 40
-        ICRn := ICR5
+        SEQ
+          ICRn := ICR5
       ELSE
-        die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
+        die ("Not an Arduino Mega PWM pin.")
     RESULT ICRn
 : 
 
