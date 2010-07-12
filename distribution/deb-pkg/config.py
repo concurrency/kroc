@@ -10,8 +10,9 @@ import re
 now    = datetime.datetime.now()
 BASE = {'YMD'            : now.strftime("%Y%m%d"),
 				'YMDHMS'         : now.strftime("%Y%m%d%H%M%S"),
-				'TEMP'           : '/tmp',
-				'PACKAGE_NAME'   : 'concurrency-@TARGET@-@WRAPPER@',
+				'TEMP_ROOT'      : '/tmp',
+				'TEMP'           : '@TEMP_ROOT@/@TARGET@/@WRAPPER@',
+				'PACKAGE_NAME'   : 'concurrency-@WRAPPER@',
 				'PACKAGE_BUILD'  : '@TEMP@/@PACKAGE_NAME@',
 				'SVN'            : '@TEMP@/src',
 				'OBJ'            : '@SVN@/obj',

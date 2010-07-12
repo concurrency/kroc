@@ -305,7 +305,7 @@ def rpm():
 
 def with_temp_dir(path):
 		header('SETTING TEMP DIR TO %s' % path)
-		config.rebase('TEMP', path)
+		config.rebase('TEMP_ROOT', path)
 
 def with_lib_path(path):
 	header('SETTING LIB PATH TO %s' % path)
