@@ -5,6 +5,6 @@ echo "************************************************************"
 echo "Please source our setup script."
 echo "Do this by adding the following to your .bashrc:"
 echo
-echo "  source @DSTBIN@/@KROC-SETUP@"
+echo "  source @FINAL@/bin/@KROC-SETUP@"
 echo ""
 echo "************************************************************"

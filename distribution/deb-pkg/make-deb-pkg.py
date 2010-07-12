@@ -194,23 +194,22 @@ def make_destdirs():
 def subst_and_copy(file, source_dir, dest_dir):
 	with open("%s/%s" % (source_dir, file), 'r') as input:
 		dest_file = re.search("(.*).in", file).group(1)
-		print "WRITING CONFIG FILE: %s/%s" % (dest_dir, dest_file)
-
+		# print "WRITING CONFIG FILE: %s/%s" % (dest_dir, dest_file)
+	
 		with open("%s/%s" % (dest_dir, dest_file), 'w') as output:
 			for line in input:
-				if re.search("@FINAL@", line):
-					line = re.sub("@FINAL@", config.get('FINAL'), line)
-				elif re.search("@PLATFORM@", line):
+				for key, val in config.CFG.iteritems():
+					# print "LOOKING FOR '@%s@' in %s" % (key, line)
+					if re.search(re.compile('@%s@' % key), line):
+						# print "FOUND %s in %s" % (key, line)
+						line = re.sub(re.compile('@%s@' % key), val, line)
+
+				if re.search("@PLATFORM@", line):
 					line = re.sub("@PLATFORM@", re.search("(.*?)\.(.*)", file).group(1), line)
-				elif re.search("@TVM_INST_ROOT@", line):
-					line = re.sub("@TVM_INST_ROOT@", config.get('FINAL'), line)
-				elif re.search("@PACKAGEVERSION@", line):
-					line = re.sub("@PACKAGEVERSION@", config.get('YMD'), line)
-				elif re.search("@DSTBIN@", line):
-					line = re.sub("@DSTBIN@", config.get('FINAL'), line)
-				elif re.search("@KROC-SETUP@", line):
+				
+				if re.search("@KROC-SETUP@", line):
 					if config.get('TARGET') == 'native':
-						line = line
+						line = re.sub("@KROC-SETUP@", "kroc-setup.sh", line)
 					else:
 						line = re.sub("@KROC-SETUP@", 
 													"%s-kroc-setup.sh" % config.get('TARGET'),
@@ -278,6 +277,7 @@ def deb():
 	copy_files("prerm", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
 	chmod("755", config.get('DEST_DEBIAN'), "prerm")
 
+	print "SOURCE: %s" % config.get('SOURCE_DEBIAN')
 	subst_and_copy("control.in", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
 	chmod("755", config.get('DEST_DEBIAN'), "control")
 
@@ -301,9 +301,11 @@ def rpm():
 											 config.get('YMD'))]))
 
 def with_temp_dir(path):
+		header('SETTING TEMP DIR TO %s' % path)
 		config.rebase('TEMP', path)
 
 def with_lib_path(path):
+	header('SETTING LIB PATH TO %s' % path)
 	config.rebase('LIB_PATH', path)
 
 def build_avr():
