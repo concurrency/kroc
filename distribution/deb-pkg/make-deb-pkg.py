@@ -67,13 +67,14 @@ def pushd():
     finally: cd(curdir)
 
 def cd(dir):
+	print "CD [ %s ]" % dir
 	os.chdir(dir)
 
 def build_command(ls):
 	return ' '.join(ls)
 
 def cmd(str):
-	# print "COMMAND [ %s ]" % str
+	print "COMMAND [ %s ]" % str
 	result = commands.getstatusoutput(str)
 
 def remove_and_create_dir(dir):
@@ -192,6 +193,8 @@ def make_destdirs():
 		mkdir(config.get(d))
 
 def subst_and_copy(file, source_dir, dest_dir):
+	print "DOING SUBST ON [ %s/%s ]" % (source_dir, file)
+
 	with open("%s/%s" % (source_dir, file), 'r') as input:
 		dest_file = re.search("(.*).in", file).group(1)
 		# print "WRITING CONFIG FILE: %s/%s" % (dest_dir, dest_file)
@@ -201,7 +204,7 @@ def subst_and_copy(file, source_dir, dest_dir):
 				for key, val in config.CFG.iteritems():
 					# print "LOOKING FOR '@%s@' in %s" % (key, line)
 					if re.search(re.compile('@%s@' % key), line):
-						# print "FOUND %s in %s" % (key, line)
+						print "FOUND %s in %s" % (key, line)
 						line = re.sub(re.compile('@%s@' % key), val, line)
 
 				if re.search("@PLATFORM@", line):
