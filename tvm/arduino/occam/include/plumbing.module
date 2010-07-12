@@ -438,11 +438,22 @@ PROC clamp (VAL BYTE low, high, CHAN BYTE in?, out!)
 --
 -- @param pin The Arduino pin number
 -- @param level The input level.
-PROC pwm8 (VAL INT pin, CHAN BYTE level?)
+PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
-  INITIAL INT avr.pin IS board.to.chip (pin):
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
   SEQ
-    digital.mode (pin, OUTPUT)
+    -- WARNING 20100712
+    -- Debugging the odd compiler/CASE problem in pwmarch.module.
+    -- Left the debug for now in case we find more problems.
+    --serial.write.string("Setting digital mode*n")
+    --serial.write.string("Board: ")
+    --serial.write.int(board.pin)
+    --serial.write.string("*n")
+    --serial.write.string("AVR: ")
+    --serial.write.int(avr.pin)
+    --serial.write.string("*n")
+    digital.mode (board.pin, OUTPUT)
+    --serial.write.string("pwm8.setup*n")
     pwm8.setup (avr.pin, 64)
     CHAN BYTE clamped:
     PAR
@@ -450,7 +461,9 @@ PROC pwm8 (VAL INT pin, CHAN BYTE level?)
       WHILE TRUE
         SEQ
           clamped ? lvl
-          pwm8.set.compare (avr.pin, lvl)
+          --serial.write.string("set.compare*n")
+          pwm8.set.compare (avr.pin, (INT lvl))
+          --serial.write.string("after compare*n")
 :
 #ENDIF
 
