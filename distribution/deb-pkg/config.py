@@ -23,7 +23,7 @@ BASE = {'YMD'            : now.strftime("%Y%m%d"),
 				'SOURCE_FIRMWARE': '@SVN@/tvm/arduino',
 				'LIB_PATH'       : '@SVN@',
 				'SOURCE_LIB'     : '@LIB_PATH@/tvm/arduino/occam/include',
-				'SOURCE_DEBIAN'  : '@SVN@/distribution/deb-pkg/DEBIAN.in',
+				'SOURCE_DEBIAN'  : '@LIB_PATH@/distribution/deb-pkg/DEBIAN.in',
 				# Desired filesystem path for installation
 				'INSTPATH'       : 'opt/occam/@TARGET@/@WRAPPER@',
 				'FINAL'          : '/@INSTPATH@',
