@@ -31,6 +31,7 @@ PROC ping (CHAN SIGNAL s!)
   WHILE TRUE
     SEQ
       s ! SIGNAL
+      delay (100)
 :
 PROC display (CHAN INT input?)
   INT val:
@@ -84,6 +85,7 @@ PROC conv (CHAN INT in?, out!)
       out ! result
 :
 
+
 PROC main()
   CHAN SIGNAL s:
   CHAN INT val, average, converted:
@@ -91,8 +93,8 @@ PROC main()
   PAR
     ping (s!)
     adc (2, s?, val!)
-    av (val?, average!)
-    conv (average?, converted!)
-    --display (average?)
+    --av (val?, average!)
+    --conv (average?, converted!)
+    display (val?)
 
 :
