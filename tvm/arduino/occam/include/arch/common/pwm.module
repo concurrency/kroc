@@ -66,8 +66,15 @@ PROC pwm16.setup (VAL INT avr.pin, prescale)
 PROC pwm8.set.compare (VAL INT avr.pin, VAL BYTE level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-  INITIAL INT OCRnx IS pwm8.compare.lookup (avr.pin):
-  ports[OCRnx] := level
+  -- INITIAL INT OCRnx IS pwm8.compare.lookup (avr.pin):
+  INT OCRnx:
+  SEQ
+    -- serial.write.byte(0, BYTE (65 + avr.pin))
+    -- serial.write.byte(0, '*n')
+    OCRnx := pwm8.compare.lookup (avr.pin)
+    -- serial.write.byte(0, 'X')
+    -- serial.write.byte(0, '*n')
+    ports[OCRnx] := level
 :
 
 PROC pwm16.set.compare (VAL INT avr.pin, VAL INT level)

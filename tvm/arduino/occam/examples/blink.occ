@@ -1,19 +1,12 @@
 #INCLUDE "plumbing.module"
 
-PROC serial.write.int (VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (0, digits[(n >> (i * 4)) /\ #F])
-:
-
 PROC main ()
   INITIAL BYTE val IS 0:
   INITIAL BOOL up IS TRUE:
   CHAN BYTE val.friend:
   SEQ
     PAR
-      heartbeat ()
-      pwm8 (6, val.friend?)
+      pwm8 (13, val.friend?)
       WHILE TRUE
         SEQ
           IF
