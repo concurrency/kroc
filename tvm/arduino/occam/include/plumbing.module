@@ -402,10 +402,29 @@ PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
         val ! v
 :
 
-#IF TRUE 
--- FIXME 20100706 MCJ
--- These are PROCs that now need to be rewritten or removed. They no 
--- longer work/fit within the lower-level framework we've built on top of plumbing.
+--* Limits the range of values in a stream.
+-- Takes a low and high limit, and any integers read in that
+-- are below the 'low' value are clamped to low, and likewise
+-- with the 'high' value. 
+--
+-- @param low The lower limit for valid numbers.
+-- @param high The upper limit for valid numbers.
+-- @param in The input stream of BYTEs.
+-- @param out The output stream of BYTEs.
+PROC clamp (VAL BYTE low, high, CHAN BYTE in?, out!)
+  BYTE v:
+  WHILE TRUE
+    SEQ
+      in ? v
+      IF
+        v < low
+          v := low
+        v > high
+          v := high
+        TRUE
+          SKIP
+      out ! v
+:
 
 --* Limits the range of values in a stream.
 -- Takes a low and high limit, and any integers read in that
@@ -416,8 +435,8 @@ PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
 -- @param high The upper limit for valid numbers.
 -- @param in The input stream of INTs.
 -- @param out The output stream of INTs.
-PROC clamp (VAL BYTE low, high, CHAN BYTE in?, out!)
-  BYTE v:
+PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
+  INT v:
   WHILE TRUE
     SEQ
       in ? v
@@ -441,6 +460,7 @@ PROC clamp (VAL BYTE low, high, CHAN BYTE in?, out!)
 PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
   INITIAL INT avr.pin IS board.to.chip (board.pin):
+  CHAN BYTE clamped:
   SEQ
     -- WARNING 20100712
     -- Debugging the odd compiler/CASE problem in pwmarch.module.
@@ -455,17 +475,51 @@ PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
     digital.mode (board.pin, OUTPUT)
     --serial.write.string("pwm8.setup*n")
     pwm8.setup (avr.pin, 64)
-    CHAN BYTE clamped:
     PAR
       clamp (0, 255, level?, clamped!)
       WHILE TRUE
         SEQ
           clamped ? lvl
           --serial.write.string("set.compare*n")
-          pwm8.set.compare (avr.pin, (INT lvl))
+          pwm8.set.compare (avr.pin, lvl)
           --serial.write.string("after compare*n")
 :
-#ENDIF
+
+--* Writes an analog value to a pin.
+-- For a given (analog) pin, sets the level to a value between
+-- 0 and TOP. Negative values are treated as 0, and values greater
+-- than TOP are treated as TOP.
+--
+-- @param pin The Arduino pin number
+-- @param level The input level.
+PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
+  INITIAL INT lvl IS 0:
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  CHAN INT clamped:
+  SEQ
+    -- WARNING 20100712
+    -- Debugging the odd compiler/CASE problem in pwmarch.module.
+    -- Left the debug for now in case we find more problems.
+    --serial.write.string("Setting digital mode*n")
+    --serial.write.string("Board: ")
+    --serial.write.int(board.pin)
+    --serial.write.string("*n")
+    --serial.write.string("AVR: ")
+    --serial.write.int(avr.pin)
+    --serial.write.string("*n")
+    digital.mode (board.pin, OUTPUT)
+    --serial.write.string("pwm8.setup*n")
+    pwm16.setup (avr.pin, 64)
+    pwm16.set.top (avr.pin, top)
+    PAR
+      clamp.int (0, top, level?, clamped!)
+      WHILE TRUE
+        SEQ
+          clamped ? lvl
+          --serial.write.string("set.compare*n")
+          pwm16.set.compare (avr.pin, lvl)
+          --serial.write.string("after compare*n")
+:
 
 #IF FALSE
 -- While this is a nice interrupt-driven approach to ADC,
