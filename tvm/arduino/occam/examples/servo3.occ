@@ -1,20 +1,4 @@
 #INCLUDE "plumbing.module"
-
-PROC serial.write (VAL BYTE char)
-  serial.write.byte (0, char)
-:
-
-PROC serial.write.string (VAL []BYTE string)
-  SEQ i = 0 FOR SIZE string
-    serial.write.byte (0, string[i])
-:
-
-PROC serial.write.int (VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (0, digits[(n >> (i * 4)) /\ #F])
-:
-
 #INCLUDE "servo.module"
 
 --PROC sawtooth (VAL INT max, CHAN INT ch!)
@@ -52,10 +36,9 @@ PROC serial.write.int (VAL INT n)
 PROC main ()
   CHAN SERVO s:
   SEQ
-    digital.mode (9, OUTPUT)
+    digital.mode (12, OUTPUT)
     PAR
-      heartbeat ()
-      servo (9, s?)
+      servo (12, s?)
       SEQ
         s ! min ; 650
         s ! max ; 2350

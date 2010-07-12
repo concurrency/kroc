@@ -1,18 +1,19 @@
 #INCLUDE "plumbing.module"
 
 PROC main ()
-  INITIAL BYTE val IS 0:
+  INITIAL INT val IS 0:
+  VAL INT TOP IS 2000:
   INITIAL BOOL up IS TRUE:
   CHAN INT val.friend:
   SEQ
     PAR
-      pwm8 (9, val.friend?)
+      pwm16 (12, TOP, val.friend?)
       WHILE TRUE
         SEQ
           IF
             up = TRUE
               IF
-                val <> top
+                val <> TOP
                   val := val + 50
                 TRUE
                   up := FALSE

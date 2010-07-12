@@ -11,7 +11,7 @@ PROC main ()
     delay (1000)
     PAR
       tick (500, s!)
-      adc (A4, s?, v!)
+      adc (A9, s?, v!)
       serial.tx.int (0, v?)
 :
 

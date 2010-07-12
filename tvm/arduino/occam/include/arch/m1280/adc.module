@@ -57,11 +57,11 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
 :
 
 INLINE PROC adc.aref (VAL INT pin, RESULT INT v)
-  adc.base (pin, TRUE, v)
+  adc.base (pin, FALSE, v)
 :
 
 INLINE PROC adc.vcc (VAL INT pin, RESULT INT v)
-  adc.base (pin, FALSE, v)
+  adc.base (pin, TRUE, v)
 :
 
 #ENDIF
