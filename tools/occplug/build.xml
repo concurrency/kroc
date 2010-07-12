@@ -55,10 +55,11 @@
       includeJavaRuntime="yes"
 			debug="yes"
 			debuglevel="lines,vars,source"
-			source="1.4"
-			target="1.4"
+			source="1.5"
+			target="1.5"
     >
-      <classpath refid="project.class.path"/>
+    <classpath refid="project.class.path"/>
+    <!--<compilerarg value="-Xlint"/>-->
     </javac>
   </target>
 
