@@ -1,4 +1,4 @@
-Package: concurrency
+Package: concurrency-@TARGET@-@WRAPPER@
 Version: @PACKAGEVERSION@
 Section: base
 Priority: optional

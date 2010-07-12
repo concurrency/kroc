@@ -11,11 +11,12 @@ now    = datetime.datetime.now()
 BASE = {'YMD'            : now.strftime("%Y%m%d"),
 				'YMDHMS'         : now.strftime("%Y%m%d%H%M%S"),
 				'TEMP'           : '/tmp',
-				'PACKAGE_NAME'   : 'concurrency',
+				'PACKAGE_NAME'   : 'concurrency-@TARGET@-@WRAPPER@',
 				'PACKAGE_BUILD'  : '@TEMP@/@PACKAGE_NAME@',
-				'SVN'            : '@TEMP@/deb-pkg-src',
+				'SVN'            : '@TEMP@/src',
 				'OBJ'            : '@SVN@/obj',
 				# Where we pull things from
+				# These are all used by the Arduino build...
 				'SOURCE_ARDUINO' : '@SVN@/tvm/arduino',
 				'SOURCE_CONF'    : '@SVN@/tvm/arduino/occam/share/conf',
 				'SOURCE_SCRIPTS' : '@SVN@/tvm/arduino/scripts',
@@ -24,7 +25,7 @@ BASE = {'YMD'            : now.strftime("%Y%m%d"),
 				'SOURCE_LIB'     : '@LIB_PATH@/tvm/arduino/occam/include',
 				'SOURCE_DEBIAN'  : '@SVN@/distribution/deb-pkg/DEBIAN.in',
 				# Desired filesystem path for installation
-				'INSTPATH'       : 'opt/occam/arduino',
+				'INSTPATH'       : 'opt/occam/@TARGET@/@WRAPPER@',
 				'FINAL'          : '/@INSTPATH@',
 				# Dstdir installation paths
 				'DEST'           : '@TEMP@/@PACKAGE_NAME@',
@@ -34,7 +35,13 @@ BASE = {'YMD'            : now.strftime("%Y%m%d"),
 				'DEST_FIRMWARE'  : '@DEST_SHARE@/firmwares',
 				'DEST_CONF'      : '@DEST_SHARE@/conf',
 				'DEST_LIB'       : '@DEST_ROOT@/lib',
-				'DEST_DEBIAN'    : '@PACKAGE_BUILD@/DEBIAN'
+				'DEST_DEBIAN'    : '@PACKAGE_BUILD@/DEBIAN',
+				# For building different targets
+				# Changing these default values requires you to
+				# edit them in the packaging script, too
+				'TOOLCHAIN'      : 'native',
+				'TARGET'         : 'native',
+				'WRAPPER'        : 'native',
 			}
 
 CFG = { }
@@ -75,6 +82,7 @@ def dosubst(str):
 		return str
 
 def refresh ():
+	# print "REFRESHING CONFIGURATION"
 	tmp = copy(BASE)
 	# Go through each key
 	for key, value in BASE.iteritems():
@@ -84,6 +92,7 @@ def refresh ():
 		CFG[k] = v
 
 def rebase (key, value):
+	# print "REBASING CONFIGURATION AROUND '%s'" % key
 	BASE[key] = value
 	refresh ()
 
