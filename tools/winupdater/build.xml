@@ -1,9 +1,9 @@
-<project name="JEditSparklePlugin" default="dist" basedir=".">
+<project name="JEditWinSparklePlugin" default="dist" basedir=".">
 
   <property file="build.properties"/>
 
   <property name="build.dir" location="build/"/>
-  <property name="jar.name"  value="JEditSparklePlugin.jar"/>
+  <property name="jar.name"  value="JEditWinSparklePlugin.jar"/>
   <property name="jedit.user.install.dir" location="install"/>
   <property name="install.dir"  location="${jedit.user.install.dir}"/>
 
