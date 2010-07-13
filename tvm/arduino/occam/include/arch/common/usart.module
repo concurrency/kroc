@@ -6,9 +6,8 @@
 
 --{{{ PROC serial.setup
 --* Initialise iterrupt-driven serial IO
---
--- @param port Serial port (0, 1, 2, or 3)
--- @param baud Baud rate
+-- @param port Serial port (eg: 0, 1, 2, or 3).
+-- @param baud Baud rate. Typically 57600.
 PROC serial.setup (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
@@ -26,9 +25,8 @@ PROC serial.setup (VAL INT port, VAL INT32 baud)
 
 --{{{ PROC serial.write.byte
 --* Write a byte to the serial port (interrupt-driven)
---
--- @param VAL INT Serial port (0, 1, 2, or 3)
--- @param VAL BYTE Byte to write
+-- @param VAL INT Serial port (eg: 0, 1, 2, or 3).
+-- @param VAL BYTE Byte to write.
 PROC serial.write.byte (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -51,9 +49,8 @@ PROC serial.write.byte (VAL INT port, VAL BYTE b)
 
 --{{{ PROC serial.read.byte
 --* Read a byte from the serial port (interrupt-driven)
---
--- @param VAL INT Serial port (0, 1, 2, or 3)
--- @param VAL BYTE Byte to be read
+-- @param VAL INT Serial port (eg: 0, 1, 2, or 3).
+-- @param VAL BYTE Byte to be read.
 PROC serial.read.byte (VAL INT port, RESULT BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -63,7 +60,6 @@ PROC serial.read.byte (VAL INT port, RESULT BYTE b)
         --{{{  receive buffer empty; wait for something to come in
         SEQ
           -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
-          -- interrupt handler. (FIXME: This was RXCIE1... for port zero? Was that wrong?)
           ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (RXCIE[port])
           INT dummy:
           wait.for.interrupt (VINTR.RX[port], dummy)
@@ -76,9 +72,8 @@ PROC serial.read.byte (VAL INT port, RESULT BYTE b)
 
 --{{{ PROC serial.setup.blocking
 --* Initialise the serial port (blocking).
---
--- @param port Serial port (0, 1, 2, or 3)
--- @param baud Baud rate
+-- @param port Serial port (eg: 0, 1, 2, or 3).
+-- @param baud Baud rate. Typically 57600.
 PROC serial.setup.blocking (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
@@ -96,9 +91,8 @@ PROC serial.setup.blocking (VAL INT port, VAL INT32 baud)
 
 --{{{ PROC serial.write.byte.blocking
 --* Write a byte to the serial port (blocking).
---
--- @param VAL INT Serial port (0, 1, 2, or 3)
--- @param VAL BYTE Byte to write
+-- @param VAL INT Serial port (eg: 0, 1, 2, or 3)
+-- @param VAL BYTE Byte to write.
 PROC serial.write.byte.blocking (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
