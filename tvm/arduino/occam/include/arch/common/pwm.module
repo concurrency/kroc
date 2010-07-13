@@ -1,35 +1,55 @@
 --** Common routines for configuring PWM on the ATmega family of processors.
+--
+-- The operation of PWMs should be improved and made to be significantly more
+-- modular and robust by turning it into a PROTOCOL based process.
+-- This can be done Later.
 -- @module pwm
 
 #IF NOT (DEFINED (PWM.MODULE))
 #DEFINE PWM.MODULE
 
--- FIXME MCJ
+--FIXME: MCJ
 -- I would love to come up with a better naming convention
 -- for the arch-specific part...
 #INCLUDE "pwmarch.module" 
 
--- FIXME MCJ
--- "breg" sounds like "BREG" in the VM source.
--- The PROC can probably be named better.
+--{{{ PROC set16 
+--* Converst the incoming INT val to a pair of BYTEs that are then written
+-- into a pair of adjacent register that then act as a single 17bit number.
+--
+-- We're operating under the assumption that the high byte is always one 
+-- greater than the low byte.
+-- Honestly not that trilled about it, but it seems to work.
+--
+-- An example:
+-- OCR1A = OCR1AL
+-- OCR1AL + 1 = OCR1AH
+-- According to the datasheet, we always have to write the high byte first.
+-- @param reg The [@em low] register to be written to -- The high register
+--   (to which the higher-half of the INT gets written to) will be found
+--   automagically.
+-- @param val The value to be written into the register pair.
 INLINE PROC set16 (VAL INT reg, VAL INT val)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    -- It looks like the high byte is always one greater than the low byte.
-    -- This should be double-checked, but as an example:
-    -- OCR1A = OCR1AL
-    -- OCR1AL + 1 = OCR1AH
-    -- According to the datasheet, we have to write the high byte first.
     ports[reg+1] := (BYTE (val >> 8)) 
     ports[reg] := (BYTE (val BITAND #FF))
 :
+--}}}
 
--- WARNING: The PWM pin must be set to output using a call like
---   digital.mode (pin, OUTPUT)
--- before it can be set up successfully as a PWM output.
--- This should not be an issue if using the higher-level wrapper of 
--- the PWM PROCs in this module.
+--{{{ PROC pwm8.setup
+--* Sets up the given pin to opperate with phase-correct Pulse Width
+-- Modulation on an 8 bit timer.
+-- Be aware that not every pin on any given board or architecture
+-- can be operated as a PWM Pin. Consult your board for information on which
+-- pins can produce PWM.
+-- 
+-- We make a number of assumptions in this method. I'd very much liek to
+-- rewrite this into a PROTOCOL so we don't need to make assumptions about
+-- the PWM mode, compare up- vs. down-counting, etc.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param prescale The prescaler value to set with PWM.
 PROC pwm8.setup (VAL INT avr.pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -43,12 +63,20 @@ PROC pwm8.setup (VAL INT avr.pin, prescale)
     ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
 :
+--}]}
 
--- WARNING: The PWM pin must be set to output using a call like
---   digital.mode (pin, OUTPUT)
--- before it can be set up successfully as a PWM output.
--- This should not be an issue if using the higher-level wrapper of 
--- the PWM PROCs in this module.
+--{{{ PROC pwm16.setup
+--* Sets up the given pin to opperate with phase-correct Pulse Width
+-- Modulation on a 16 bit timer.
+-- Be aware that not every pin on any given board or architecture
+-- can be operated as a PWM Pin. Consult your board for information on which
+-- pins can produce PWM.
+-- 
+-- We make a number of assumptions in this method. I'd very much liek to
+-- rewrite this into a PROTOCOL so we don't need to make assumptions about
+-- the PWM mode, compare up- vs. down-counting, etc.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param prescale The prescaler value to set with PWM.
 PROC pwm16.setup (VAL INT avr.pin, prescale)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -62,7 +90,12 @@ PROC pwm16.setup (VAL INT avr.pin, prescale)
     ports[TCCRnB] := ports[TCCRnB] \/ TCCRnB.bits
     ports[OCRnx]  := 0
 :
+--}}}
 
+--{{{ PROC pwm8.set.compare
+--* Sets the compare register on the given PWM pin.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param level The new level to set the compare register to.
 PROC pwm8.set.compare (VAL INT avr.pin, VAL BYTE level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -76,7 +109,12 @@ PROC pwm8.set.compare (VAL INT avr.pin, VAL BYTE level)
     -- serial.write.byte(0, '*n')
     ports[OCRnx] := level
 :
+--}}}
 
+--{{{ PROC pwm16.set.compare
+--* Sets the compare register on the given PWM pin.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param level The new level to set the compare register to.
 PROC pwm16.set.compare (VAL INT avr.pin, VAL INT level)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -85,133 +123,16 @@ PROC pwm16.set.compare (VAL INT avr.pin, VAL INT level)
   -- Not sure if I'm a fan of relying on the highs being one up from the lows..
   set16 (OCRnx, level)
 :
+--}}
 
+--{{{ PROC pwm16.set.top
+--* Sets the 'top' register on the given PWM pin, effecting the highest
+-- number the timer will count to before beging its down-count.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param top The new top to set the 'top' register.
 PROC pwm16.set.top (VAL INT avr.pin, VAL INT top)
   INITIAL INT ICRn IS pwm16.ICRn.lookup (avr.pin):
   set16 (ICRn, top)
 :
-
-
-
-#IF FALSE
---These are (probably) deprecated methods. I'm leaving them so I have them for
--- reference when I find out how not-deprecated they are.
-
-
---{{{  PROC beginAnalog
---* Initialize analog input.
--- Only works on PWM pins. 
--- @param pin The Arduino pin number.
-PROC beginAnalog (VAL INT pin)
-  --Begins PWM for an 8 bit timer.
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-
-  INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
-  -- Double-lookup tables are a gross way of doing this..
-  -- I'm not 100% on how it should be done, but if we just look up the constants
-  --  depending on a case w/ and element per PWM pin, we can easily add
-  --  saftey-checking when we get around to it... Maybe...
-
---Signalize that TCNT1 has reached
-  --I think this sowed up randomly in a crash... Not gonna kill it yet though..
-  SEQ
-    -- FIXME: So, we need to set this to OUTPUT, but pinMode is part of wiring.
-    --  Honstely not sure how to rectify this...
-    --pinMode (pin, OUTPUT)
-
-    -- Here WGM sets the mode to PWM, phase correct, TOP=0xFF (perhaps
-    --  should change to TOP=OCRAn?) (pg. 109,137,161)
-    -- COM sets the behavior of OCxn (the output pin connected to the given
-    --  timer, OCRxn compare and ICRn TOP (if applicable))
-    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] \/ (BV (COM[index]) \/ BV (WGM[index]))
-
-
-    -- Set prescale to 64... don't change that. The VM is using that
-    --  for TCCR2, and we'll (for the moment) use the same everywhere.
-    --  It should be noted that for some timers, CS1[index] and CS0[index]
-    --  are the same bit...
-    ports[TCR.PRESCALE[index]] := BV(CS1[index]) \/ BV(CS0[index])
-
-    -- This justs sets the compare number to 0. It's really just a saftey thing.
-    ports[OCR[index]] := 0
-:
 --}}}
-
---{{{  PROC analogWrite
---* Write an analog value to a pin.
--- @param pin The Arduino pin number.
--- @param level A [@code BYTE] representing the analog level (0 -> 255)
-PROC analogWrite (VAL INT pin, VAL BYTE level)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
-  SEQ
-    ports[OCR[index]] := level
-:
---}}}
-
---{{{  PROC endAnalog
---* Disable analog output on Arduino.
--- Only works on PWM pins.
--- @param pin The Arduino pin number.
-PROC endAnalog (VAL INT pin)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  INITIAL INT index IS ARDUINO.PIN.MAP[pin]:
-  SEQ
-    ports[TCR.MODE[index]] := ports[TCR.MODE[index]] /\ (~ BV(COM[index]))
-:
---}}}
-
--- FIXME: I'm thinking the only pins that can queue into the 16 bit
---  timer are 9 and 10... Can they run simultaniously? Yes. Yes they can.
-
-INLINE PROC set16breg (VAL INT reg, VAL INT16 val)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    -- It looks like the high byte is always one greater
-    -- than the low byte. For example:
-    -- OCR1A = OCR1AL
-    -- OCR1AL + 1 = OCR1AH
-    -- According to the datasheet, we have to write the high byte first.
-    ports[reg+1] := (BYTE (val >> 8)) 
-    ports[reg] := (BYTE (val BITAND #FF))
-:
-
--- Pin can only be 9 or 10
-PROC beginAnalog16 (VAL INT pin)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  SEQ
-    --pinMode (pin, OUTPUT)
-    --CS10 sets the prescale to 8.
-    ports[TCCR1B] := BV (WGM13) \/ BV (CS10)
-    IF
-      pin = 9
-        SEQ
-          ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1A1)
-          ports[OCR1A] := 0
-      pin = 10
-        SEQ
-          ports[TCCR1A] := ports[TCCR1A] \/ BV (COM1B1)
-          ports[OCR1B] := 0
-      TRUE
-        SKIP
-:
-
-PROC analogWrite16 (VAL INT pin, VAL INT16 level)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  IF
-    pin = 9
-      set16breg (OCR1A, level)
-    pin = 10
-      set16breg (OCR1B, level)
-    TRUE
-      SKIP
-:
-#ENDIF
-
 #ENDIF
