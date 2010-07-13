@@ -1,4 +1,4 @@
---** occam header for Seeeduino Mega specific pin mappings.
+--** occam header for ArduPilotMega specific pin mappings.
 -- @module boardmap
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
@@ -6,61 +6,8 @@
 #INCLUDE "constants.module"
 #INCLUDE "base.module"
 
-
-VAL INT LED.PIN IS -1:
-
-VAL INT A0  IS 57:
-VAL INT A1  IS 58:
-VAL INT A2  IS 59:
-VAL INT A3  IS 60:
-VAL INT A4  IS 61:
-VAL INT A5  IS 62:
-VAL INT A6  IS 63:
-VAL INT A7  IS 64:
-VAL INT A8  IS 65:
-VAL INT A9  IS 66:
-VAL INT A10 IS 67:
-VAL INT A11 IS 68:
-VAL INT A12 IS 69:
-VAL INT A13 IS 70:
-VAL INT A14 IS 71:
-VAL INT A15 IS 72:
-
-VAL INT RX0 IS 0:
-VAL INT TX0 IS 1:
-VAL INT RX1 IS 19:
-VAL INT TX1 IS 18:
-VAL INT RX2 IS 17:
-VAL INT TX2 IS 16:
-VAL INT RX3 IS 15:
-VAL INT TX3 IS 14:
-
-VAL INT SDA  IS 20:
-VAL INT SCL  IS 21:
-VAL INT MISO IS 50:
-VAL INT MOSI IS 51:
-VAL INT SCK  IS 52:
-VAL INT SS   IS 53:
-
-VAL INT PD4  IS 54
-VAL INT PE6  IS 55
-VAL INT PH2  IS 56
-
-
-VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
-                  17, 16, 23, 24, 25, 26,
-                  64, 63, 13, 12, 46, 45, 44, 43,
-                  78, 77, 76, 75, 74, 73, 72, 71,
-                  60, 59, 58, 57, 56, 55, 54, 53,
-                  50, 70, 52, 51, 42, 41, 40, 39,
-                  38, 37, 36, 35, 22, 21, 20, 19,
-                  47,  8, 14,
-                  97, 96, 95, 94, 93, 92, 91, 90,
-                  89, 88, 87, 86, 85, 84, 83, 82]:
-
-INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
-
---Board to Architecture layout w/ register names.
+--{{{ Board to Architecture Layout
+--* Board to Architecture layout w/ register names.
 --
 --B.pin   A.pin *REG  --B.pin A.pin *REG
 -- 0(RX0) 02    PE0   -- 8      17    PH5
@@ -110,3 +57,71 @@ INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
 --
 --DTR = RESET
 --CTS = FTDI
+--}}}
+
+--{{{ Symbolic Constants
+--* Symbolic constants to simplify mapping Analog-Digital Converstion and
+-- Serial Communication pins -- as well as ArduPilotMega specific,
+-- un-numbered pins -- to the ATmega1280.
+VAL INT A0  IS 57:
+VAL INT A1  IS 58:
+VAL INT A2  IS 59:
+VAL INT A3  IS 60:
+VAL INT A4  IS 61:
+VAL INT A5  IS 62:
+VAL INT A6  IS 63:
+VAL INT A7  IS 64:
+VAL INT A8  IS 65:
+VAL INT A9  IS 66:
+VAL INT A10 IS 67:
+VAL INT A11 IS 68:
+VAL INT A12 IS 69:
+VAL INT A13 IS 70:
+VAL INT A14 IS 71:
+VAL INT A15 IS 72:
+
+VAL INT RX0 IS 0:
+VAL INT TX0 IS 1:
+VAL INT RX1 IS 19:
+VAL INT TX1 IS 18:
+VAL INT RX2 IS 17:
+VAL INT TX2 IS 16:
+VAL INT RX3 IS 15:
+VAL INT TX3 IS 14:
+
+VAL INT SDA  IS 20:
+VAL INT SCL  IS 21:
+VAL INT MISO IS 50:
+VAL INT MOSI IS 51:
+VAL INT SCK  IS 52:
+VAL INT SS   IS 53:
+
+VAL INT PD4  IS 54
+VAL INT PE6  IS 55
+VAL INT PH2  IS 56
+
+--* Symbolic constant to signify a lack of on-board LED pin.
+VAL INT LED.PIN IS -1:
+--}}}
+
+--{{{ Board to Architecture array map
+--* Array (hand written) to convert ArduPilotMega pins to ATmega1280 Pins.
+VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
+                  17, 16, 23, 24, 25, 26,
+                  64, 63, 13, 12, 46, 45, 44, 43,
+                  78, 77, 76, 75, 74, 73, 72, 71,
+                  60, 59, 58, 57, 56, 55, 54, 53,
+                  50, 70, 52, 51, 42, 41, 40, 39,
+                  38, 37, 36, 35, 22, 21, 20, 19,
+                  47,  8, 14,
+                  97, 96, 95, 94, 93, 92, 91, 90,
+                  89, 88, 87, 86, 85, 84, 83, 82]:
+--}}}
+
+--* ArudPilotMega specific board.to.chip converstion function for finding
+-- chip-specific pins from board-specific pins.
+-- @param board.pin The Board Pin to be mapped to an AVR Pin.
+-- @return The AVR Pin connected to the given Board Pin.
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+
+#ENDIF
