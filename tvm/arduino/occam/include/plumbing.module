@@ -450,6 +450,66 @@ PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
       out ! v
 :
 
+--* Crawls a BYTE from [low] to [high] and back down (and back up, etc.)
+-- by [step]. Does not cap pos at low or high, it simply checks for
+-- <= or >=.
+--
+-- @param low The lower limit at which the pos begins moving upward.
+-- @param high The upper limit at which the pos begins moving downward.
+-- @param step the step pos moves for every send.
+-- @param out The output stream of BYTEs.
+PROC crawl.byte (VAL BYTE low, high, step, VAL INT wait, CHAN BYTE out!)
+  INITIAL BYTE pos IS 0:
+  INITIAL BOOL up IS TRUE:
+  WHILE TRUE
+    SEQ
+      IF
+        up = TRUE
+          IF
+            pos < high
+              pos := pos + step
+            TRUE
+              up := FALSE
+        TRUE
+          IF
+            pos > low
+              pos := pos - step
+            TRUE
+              up := TRUE
+      out ! pos
+      delay (wait)
+:
+
+--* Crawls a INT from [low] to [high] and back down (and back up, etc.)
+-- by [step]. Does not cap pos at low or high, it simply checks for
+-- <= or >=.
+--
+-- @param low The lower limit at which the pos begins moving upward.
+-- @param high The upper limit at which the pos begins moving downward.
+-- @param step the step pos moves for every send.
+-- @param out The output stream of INTs.
+PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
+  INITIAL INT pos IS 0:
+  INITIAL BOOL up IS TRUE:
+  WHILE TRUE
+    SEQ
+      IF
+        up = TRUE
+          IF
+            pos < high
+              pos := pos + step
+            TRUE
+              up := FALSE
+        TRUE
+          IF
+            pos > low
+              pos := pos - step
+            TRUE
+              up := TRUE
+      out ! pos
+      delay (wait)
+:
+
 --* Writes an analog value to a pin.
 -- For a given (analog) pin, sets the level to a value between
 -- 0 and 255. Negative values are treated as 0, and values greater

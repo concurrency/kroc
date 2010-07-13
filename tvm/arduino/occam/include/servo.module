@@ -19,13 +19,13 @@ PROTOCOL SERVO
 PROC servo (VAL INT board.pin, CHAN SERVO s?)
   INITIAL INT avr.pin IS board.to.chip (board.pin):
   INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
-  INITIAL INT max IS 2300:
-  INITIAL INT min IS 700:
-  INITIAL INT div IS 180:
-  INITIAL INT pos IS 90:
+  INITIAL INT max IS 2200: --In muSeconds
+  INITIAL INT min IS 800:  --In muSeconds
+  INITIAL INT div IS 180:  --Unitless
+  INITIAL INT pos IS 90:   --Must be between 0:div
   INITIAL INT increment IS (max - min) / div:
   INITIAL INT usec IS (pos * increment) + min:
-  INITIAL INT refresh IS 20000:
+  INITIAL INT refresh IS 20000: --In muSeconds
   INLINE PROC set.increment ()
     increment := (max - min) / div
   :
@@ -43,7 +43,7 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
         SEQ
           set.increment ()
           set.usec()
-      div ; div
+      div ; div -- we should totally clamp this...
         set.increment()
       pos ; pos
         SEQ

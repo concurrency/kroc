@@ -36,9 +36,9 @@
 PROC main ()
   CHAN SERVO s:
   SEQ
-    digital.mode (12, OUTPUT)
+    digital.mode (2, OUTPUT)
     PAR
-      servo (12, s?)
+      servo (2, s?)
       SEQ
         s ! min ; 650
         s ! max ; 2350
