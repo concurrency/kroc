@@ -3,7 +3,7 @@ package org.transterpreter.occPlug.process;
 /*
  * ExecWorker.java
  * part of the occPlug plugin for the jEdit text editor
- * Copyright (C) 2004-2007 Christian L. Jacobsen
+ * Copyright (C) 2004-2010 Christian L. Jacobsen
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,7 +23,9 @@ package org.transterpreter.occPlug.process;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.ProcessBuilder;
 //}}}
+import java.util.Map;
 
 /**
  * A class defining a worker which will run an external process. It will take
@@ -36,7 +38,7 @@ import java.io.OutputStream;
 // {{{ class ExecWorker
 public class ExecWorker extends Thread implements Killable {
 	private Process					p;
-	private final Runtime			r		= java.lang.Runtime.getRuntime();
+	private ProcessBuilder			pb;
 	private boolean					killed	= false;
 
 	private final ExecWorkerHelper	helper;
@@ -55,15 +57,22 @@ public class ExecWorker extends Thread implements Killable {
 		this.envp = envp;
 		this.dir = dir;
 
-		this.helper = helper;
+		this.helper = helper;	
+		pb = new ProcessBuilder(cmd);
+		Map<String, String> env = pb.environment();
+		for(int i = 0; i < envp.length; ++i)
+		{
+			String[] bits = envp[i].split("=");
+			env.put(bits[0], bits[1]);
+		}
+		pb.directory(dir);
 	}
 
 	public void run() {
-
-
+		
 		/* Execute the command */
 		try {
-			p = r.exec(cmd, envp, dir);
+			p = pb.start();
 		} catch (Exception e) {
 			helper.cannotExec(e);
 			helper.finalizer();
