@@ -284,7 +284,7 @@ PROC heartbeat ()
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
 PROC adc (VAL INT board.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
-  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  INITIAL INT avr.pin IS board.analog.to.chip(board.pin):
   INT v:
   SEQ
     WHILE TRUE
