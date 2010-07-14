@@ -16,11 +16,19 @@ VAL []INT dec.powers IS [10000, 1000, 100, 10, 1]:
 VAL INT32 scaling.INT32 IS 10000:
 VAL REAL32 scaling.REAL32 IS 10000.0:
 
+--{{{ REAL32 Helper Functions (useful functions are below)
+--* Fills the passed array with the [@em character] '0'.
+-- @param arr The array to be filled with 0s.
 PROC printing.zeroArray([]BYTE arr)
   SEQ i = 0 FOR (SIZE arr)
     arr[i] := '0'
 :
 
+--* Trims the trailing 0s from an array of BYTEs by decrementing the `total`
+-- value by one for every consecutive '0' at the end of the BYTE array.
+-- @param arr The array of BYTEs to be printed
+-- @param total On completion of the PROC, this will be the number of
+--   elements of arr useful to printing.
 PROC printing.trimTrailing0s (VAL []BYTE arr, INT total)
   SEQ
     total := (SIZE arr)
@@ -34,6 +42,8 @@ PROC printing.trimTrailing0s (VAL []BYTE arr, INT total)
             REMOVING := FALSE
 :
 
+--* Real 32 to array helper function.
+-- Honestly, this is magic to me. You probably don't need to invoke this.
 PROC printing.real32toa.helper (VAL INT lhs, []BYTE arr, INT length)
   [(SIZE dec.powers)]BYTE dest:
   INITIAL INT number IS lhs:
@@ -62,6 +72,13 @@ PROC printing.real32toa.helper (VAL INT lhs, []BYTE arr, INT length)
               length := length + 1
 :
 
+--* Converts the given REAL32 number into a printable array of character,
+-- and the `total` number of elements of said array useful for printing.
+-- @param n The REAL32 to be printed.
+-- @param arr The [@em initially empty] array to be used for storing BYTEs
+--   for future printing.
+-- @param total The [@em initially zero] INT that store the total number of
+--   elements of arr useful for printing.
 PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
   INITIAL REAL32 scaled IS n * scaling.REAL32:
   INT32 lhs32:
@@ -69,7 +86,7 @@ PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
   INITIAL INT length IS 0:
   SEQ
     printing.zeroArray(arr)
-    scaled := n * scaling.REAL32
+    scaled := n * scaling.REAL32 -- We scale twice? Not worried about overflow then?
     lhs32 := INT32 TRUNC scaled
     lhs := INT (lhs32 / scaling.INT32)
     printing.real32toa.helper(lhs, arr, length)
@@ -80,5 +97,56 @@ PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
       printing.real32toa.helper((INT lhs32), arr, start)
       printing.trimTrailing0s(arr, total)
 :
+--}}}
+
+--{{{  PROC serial.write.int
+--* Write an [@code INT] to the serial port in hex.
+--
+-- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param n The integer to write.
+PROC serial.write.int (VAL INT port, VAL INT n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serial.write.byte (0, digits[(n >> (i * 4)) /\ #F])
+:
+--}}}
+
+--{{{  PROC serial.write.int32
+--* Write an [@code INT32] to the serial port in hex.
+--
+-- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param n The long integer ([@code INT32]) to write.
+PROC serial.write.int32 (VAL INT port, VAL INT32 n)
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 7 FOR 8 STEP -1
+    serial.write.byte (0, digits[INT ((n >> (i * 4)) /\ #F)])
+:
+--}}}
+
+--{{{ PROC serial.write.real32
+--* Write an [@REAL32] to the serial port in decimal form.
+--
+-- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param n The ([@code REAL32]) to write.
+-- @param precision The maximum length of the printed number
+PROC serial.write.real32 (VAL port, VAL REAL32 n, VAL INT precision)
+  [precision]BYTE arr:
+  INT total:
+  real32to1 (n, arr, total)
+  SEQ i = 0 FOR total
+    serial.write (port, arr[i])
+:
+--}}}
+
+--{{{  PROC serialWriteString
+--* Write a string to the serial port.
+--
+-- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param string Bytes to write.
+PROC serial.write.string (VAL INT port, VAL []BYTE string)
+  SEQ i = 0 FOR SIZE string
+    serial.write.byte (0, string[i])
+:
+--}}}
 
 #ENDIF
