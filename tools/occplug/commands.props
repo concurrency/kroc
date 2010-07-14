@@ -1,0 +1,21 @@
+#
+# Default
+#
+plugin.OccPlugPlugin.command.default.occplug=occplug
+plugin.OccPlugPlugin.command.default.occ21=occ21
+plugin.OccPlugPlugin.command.default.plinker=plinker.pl
+plugin.OccPlugPlugin.command.default.tce-dump=tce-dump.pl
+plugin.OccPlugPlugin.command.default.kroc=kroc
+plugin.OccPlugPlugin.command.default.tranx86=tranx86
+
+
+
+#
+# Windows
+#
+plugin.OccPlugPlugin.command.windows.occplug=occplug.exe
+plugin.OccPlugPlugin.command.windows.occ21=occ21.exe
+plugin.OccPlugPlugin.command.windows.plinker=plinker.exe
+plugin.OccPlugPlugin.command.windows.tce-dump=tce-dump.exe
+plugin.OccPlugPlugin.command.windows.kroc=kroc
+plugin.OccPlugPlugin.command.windows.tranx86=tranx86.exe

@@ -23,4 +23,8 @@ package org.transterpreter.occPlug.hosts;
 
 public class Windows extends BaseHost {
 
+	public Windows()
+	{
+		super("windows");
+	}
 }
