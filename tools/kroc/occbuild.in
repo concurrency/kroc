@@ -56,6 +56,9 @@ def die(*s):
 	warn(*s)
 	sys.exit(1)
 
+def running_windows():
+	return platform.system() == "Windows"
+
 def find_file(name, path, ext=''):
 	"""Given a pathsep-delimited path string, find name,.
 	Returns path to name, if found, otherwise None.
@@ -79,7 +82,7 @@ def find_file(name, path, ext=''):
 
 
 def adjust_for_windows(cmd):
-	if platform.system() != "Windows":
+	if running_windows():
 		return cmd
 	command = cmd[0]
 	cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
@@ -112,7 +115,7 @@ def tidy_spaces(string):
 def split_options(opts):
 	"""Split an argument we've been given into a list of arguments to pass
 	to another program."""
-	return shlex.split(opts)
+	return shlex.split(opts, posix=not running_windows())
 
 def split_ext(file):
 	"""Given a filename, return its basename and extension."""
@@ -253,7 +256,7 @@ def build_default_search_path(tc_search_path):
 
 def set_isearch():
 	"""Set ISEARCH using search path.  This is for the benefit of occ21."""
-	if platform.system() == "Windows":
+	if running_windows():
 		sep = ";"
 	else:
 		sep = ":"
