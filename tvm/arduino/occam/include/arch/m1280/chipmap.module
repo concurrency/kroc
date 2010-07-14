@@ -18,7 +18,16 @@ VAL []INT PIN.MAP IS [PING, PINE, PINE, PINE, PINE, PINE, PINE, PINE, PINE, PINX
 --------- BIT.MAP ---------------------------------------------------
 VAL []INT BIT.MAP IS [5, 0, 1, 2, 3, 4, 5, 6, 7, -1, -1, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6, 7, 7, 3, 4, -1, -1, -1, -1, -1, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 0, 1, 2, 3, 4, 5, 6, 7, -1, -1, 0, 1, 2, 3, 4, 5, 6, 2, 7, 6, 5, 4, 3, 2, 1, 0, 7, -1, -1, 7, 6, 5, 4, 3, 2, 1, 0, 7, 6, 5, 4, 3, 2, 1, 0, -1, -1, -1]:
 
--- It would be nice if this wasn't duplicated in each architecture.
+--FIXME: mjadud It would be nice if this wasn't duplicated in each architecture
+--* Looks up the various General Purpose I/O registers connected to the given
+-- [@em AVR] pin.
+-- AVR pins are numbered starting from 1...
+-- We need to subtract 1 to index into the arrays.
+-- @param avr.pin The AVR pin controlled by the given returns.
+-- @returns ddr, port, pin The various control registers that control the
+--   given pin.
+-- @return bit The specific bit of the control registers that alters the
+--   behavior of the given AVR pin.
 INT, INT, INT, INT FUNCTION chip.to.gpio (VAL INT avr.pin) 
   INT ddr, port, pin, bit:
   VALOF

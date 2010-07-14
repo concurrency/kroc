@@ -4,11 +4,16 @@
 #IF NOT (DEFINED (ADC.MODULE))
 #DEFINE ADC.MODULE
 
--- The AVR analog pins start at (AVR) pin 23.
--- This is used for calculating analog channel choice
--- in adc.module
+--* This value is used for calculating analog channel choice in adc.module
+-- The AVR analog pins start at (AVR) pin 23 and -- easily enough -- count up.
 VAL INT AVR.A0 IS 23:
 
+--* Perform an Analog-to-Digital Conversino on the given AVR pin, and write
+-- out the result.
+-- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
+-- @param USE.VCC Set by the helper functions (probably). Whether or not to
+--   use the internal voltage reference, or the aref pin as a reference.
+-- @param v The INT that will be used to store the analog read.
 PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -43,10 +48,16 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
     v := (INT result)
 :
 
+--* Helper function for performing an ADC using the AREF.
+-- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
+-- @param v The INT that will be used to store the analog read.
 INLINE PROC adc.aref (VAL INT avr.pin, RESULT INT v)
   adc.base (avr.pin, FALSE, v)
 :
 
+--* Helper function for performing an ADC using the VCC.
+-- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
+-- @param v The INT that will be used to store the analog read.
 INLINE PROC adc.vcc (VAL INT avr.pin, RESULT INT v)
   adc.base (avr.pin, TRUE, v)
 :
