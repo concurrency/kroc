@@ -1,5 +1,8 @@
 package org.transterpreter.occPlug.hosts;
 
+import org.gjt.sp.jedit.jEdit;
+import org.transterpreter.occPlug.OccPlugPlugin;
+
 /*
  * BaseHost.java
  * part of the occPlug plugin for the jEdit text editor
@@ -20,8 +23,20 @@ package org.transterpreter.occPlug.hosts;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-public class BaseHost {
+public abstract class BaseHost {
 
+	protected String[] commandBase;
+	
+	protected BaseHost()
+	{
+		commandBase = new String[] {"default"};
+	}
+	
+	protected BaseHost(String base)
+	{
+		commandBase = new String[] {base, "default"};
+	}
+	
 	/**
 	 * Provide a list of suggestions for available serial ports. 
 	 * This is just a list of suggestions and the user will be able to
@@ -35,6 +50,21 @@ public class BaseHost {
 	public String[] getSerialPorts()
 	{
 		return null;
+	}
+	
+	public String getCommandName(String command)
+	{
+		String prop = "";
+		
+		for(final String base : commandBase)
+		{
+			prop = OccPlugPlugin.PROPERTY_PREFIX + "command." + base + "." + command;
+			String cmd = jEdit.getProperty(prop);
+			if(cmd != null)
+				return cmd;
+		}
+		
+		throw new RuntimeException("Invalid command: " + command + "(" + prop + ")");		
 	}
 	
 	public static BaseHost getHostObject()

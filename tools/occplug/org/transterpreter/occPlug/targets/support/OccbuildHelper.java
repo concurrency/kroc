@@ -27,6 +27,7 @@ import java.util.Hashtable;
 
 import org.gjt.sp.jedit.MiscUtilities;
 import org.transterpreter.occPlug.OccPlugUtil;
+import org.transterpreter.occPlug.hosts.BaseHost;
 
 public class OccbuildHelper {
 	public static String[] makeOccbuildEnvironment()
@@ -48,12 +49,14 @@ public class OccbuildHelper {
 	
 	public static String[] makeOccbuildEnvironment(final Hashtable additional)
 	{
+		BaseHost host = BaseHost.getHostObject();
+		
 		final Hashtable occbuildEnv = new Hashtable();
-		occbuildEnv.put("OCC21", MiscUtilities.constructPath(getBinPath(), "occ21"));
-		occbuildEnv.put("TCE-DUMP.PL", MiscUtilities.constructPath(getBinPath(), "tce-dump.pl"));
-		occbuildEnv.put("PLINKER.PL", MiscUtilities.constructPath(getBinPath(), "plinker.pl"));
-		occbuildEnv.put("KROC", MiscUtilities.constructPath(getBinPath(), "kroc"));
-		occbuildEnv.put("OCTRAN", MiscUtilities.constructPath(getBinPath(), "tranx86"));
+		occbuildEnv.put("OCC21", MiscUtilities.constructPath(getBinPath(), host.getCommandName("occ21")));
+		occbuildEnv.put("TCE-DUMP.PL", MiscUtilities.constructPath(getBinPath(), host.getCommandName("tce-dump")));
+		occbuildEnv.put("PLINKER.PL", MiscUtilities.constructPath(getBinPath(), host.getCommandName("plinker")));
+		occbuildEnv.put("KROC", MiscUtilities.constructPath(getBinPath(), host.getCommandName("kroc")));
+		occbuildEnv.put("OCTRAN", MiscUtilities.constructPath(getBinPath(), host.getCommandName("tranx86")));
 		
 		if(additional != null)
 		{
@@ -108,7 +111,9 @@ public class OccbuildHelper {
 	
 	public static String getOccbuildPath()
 	{
-		return MiscUtilities.constructPath(getBinPath(), "occbuild");
+		BaseHost host = BaseHost.getHostObject();
+		
+		return MiscUtilities.constructPath(getBinPath(), host.getCommandName("occbuild"));
 	}
 	
 	public static String getOccbuildPath(final OccbuildOptions options)
