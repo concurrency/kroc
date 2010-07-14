@@ -162,4 +162,23 @@ VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
 -- @return The AVR Pin connected to the given Board Pin.
 INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
 
+--* Duemilanove specific board.analog.to.chip conversion function for finding
+-- chip-specific pins -- specifically for the analog pins.
+-- If the user inputs 0-15, 70 will be added (so that the apropriate analog AVR
+-- pin is returned by the call to board.to.chip) to board.analog.pin, otherwise
+-- board.to.chip is called normally.
+-- @param board.analog.pin The Barod Pin to be mapped to an AVR Pin.
+-- @return The AVR Pin connected to the given Board Pin.
+INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
+  INT avr.pin:
+  VALOF
+    SEQ
+      IF 
+        board.analog.pin < 16
+          avr.pin := board.to.chip (board.analog.pin + 70)
+        TRUE
+          avr.pin := board.to.chip (board.analog.pin)
+    RESULT avr.pin
+: 
+
 #ENDIF
