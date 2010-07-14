@@ -14,154 +14,70 @@
 #INCLUDE "avr.module"
 #INCLUDE "boardmap.module"
 #INCLUDE "printing.module"
+#INCLUDE "servo.module"
 
+--{{{ Constants
 DATA TYPE LEVEL IS INT:
 VAL LEVEL LOW IS #0:
 VAL LEVEL HIGH IS #1:
 
---{{{  constants
---* Symbolic constant for digital LOW on an Arduino pin.
--- VAL INT LOW IS #0:
---* Symbolic constant for digital HIGH on an Arduino pin.
--- VAL INT HIGH IS #1:
-
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
---}}}
 
--- FIXME 20100706 MCJ
--- I think the USART.MODULE now has a lot of this functionality.
--- I'm commenting this out until I double-check and bring in 
--- the appropriate high-level interface.
+VAL BOOL VCC IS TRUE:
+VAL BOOL AREF IS FALSE:
 
-PROC serial.write (CHAN BYTE in?)
-  WHILE TRUE
-    BYTE b:
-    SEQ
-      in ? b
-      serial.write.byte (0, b)
-:
-
---{{{  PROC serialWriteString
---* Write a string to the serial port.
---
--- @param port Serial port to write to.
--- @param string Bytes to write.
-PROC serial.write.string (VAL []BYTE string)
-  SEQ i = 0 FOR SIZE string
-    serial.write.byte (0, string[i])
-:
---}}}
-
-PROC serial.read (CHAN BYTE out!)
-  WHILE TRUE
-    BYTE b:
-    SEQ
-      serial.read.byte (0, b)
-      out ! b
-:
-
-
-PROC serial.tx (VAL INT port, CHAN BYTE in?)
-  WHILE TRUE
-    BYTE b:
-    SEQ
-      in ? b
-      serial.write.byte (port, b)
-:
-
-PROC serial.rx (VAL INT port, CHAN BYTE out!)
-  WHILE TRUE
-    BYTE b:
-    SEQ
-      serial.read.byte (port, b)
-      out ! b
-:
-
---{{{  PROC serial.rx.int
---* Write an [@code INT] to the serial port in hex.
---
--- @param port The serial port to write to.
--- @param n The integer to write.
-PROC serial.tx.int (VAL INT port, CHAN INT n?)
-  VAL []BYTE digits IS "0123456789abcdef":
-  INT num:
-  WHILE TRUE
-    SEQ
-      n ? num
-      SEQ i = 3 FOR 4 STEP -1
-        serial.write.byte (port, digits[(num >> (i * 4)) /\ #F])
-      serial.write.byte (port, '*n')
-:
---}}}
-
---FIXME: The int/int32 helper methods don't use any chanels or signals. Methinks this should change.
---{{{  PROC serial.write.int
---* Write an [@code INT] to the serial port in hex.
---
--- @param n The integer to write.
-PROC serial.write.int (VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (0, digits[(n >> (i * 4)) /\ #F])
-:
---}}}
-
---{{{  PROC serial.write.int32
---* Write an [@code INT32] to the serial port in hex.
---
--- @param n The long integer ([@code INT32]) to write.
-PROC serial.write.int32 (VAL INT32 n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (0, digits[INT ((n >> (i * 4)) /\ #F)])
-:
+VAL INT DEBOUNCE.TIME IS 50:
 --}}}
 
 
---{{{  PROC serial.tx.int32
---* Write an [@code INT32] to the serial port in hex.
---
--- @oaram port The serial port to write to.
--- @param n The long integer ([@code INT32]) to write.
-PROC serial.tx.int32 (VAL INT port, VAL INT32 n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
-:
---}}}
---{{{  PROC digital.write
+--{{{ PROC digital.write
+--* Sets the digitial state of a pin to either HIGH or LOW.
+-- @param board.pin The board pin to be set.
+-- @param state The state to set -- Either HIGH or LOW.
 PROC digital.write (VAL INT board.pin, state)
   INITIAL INT avr.pin IS board.to.chip(board.pin):
-  INT r.ddr, r.port, r.pin, bit:
+  --INT r.ddr, r.port, r.pin, bit:
+  INT dummy1, r.port, dummy2, bit
   SEQ
-    -- Need to do ... chip.to.gpio...
-    r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    dummy1, r.port, dummy2, bit := chip.to.gpio (avr.pin)
     pin.write(r.port, bit, state)
 :
 --}}}
 
---{{{  PROC digital.read
+--{{{ PROC digital.read
+--* Reads the digitial state of a pin. Either HIGH or LOW.
+-- @param board.pin The board pin to be read.
+-- @param state The pin's current state -- Either HIGH or LOW.
 PROC digital.read (VAL INT board.pin, RESULT INT state)
   INITIAL INT avr.pin IS board.to.chip(board.pin):
-  INT r.ddr, r.port, r.pin, bit:
+  --INT r.ddr, r.port, r.pin, bit:
+  INT dummy1, dummy2, r.pin, bit:
   SEQ
-    r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
     pin.read(r.pin, bit, state)
 :
 --}}}
 
---{{{  PROC digital.mode
+--{{{ PROC digital.mode
+--* Sets the Data Direction Register of the given pin (sets the flow of data)
+-- to either INPUT or OUTPUT.
+-- @param board.pin The board pin to set the direction of.
+-- @param mode The mode to be set. Either INPUT or OUTPUT.
 PROC digital.mode (VAL INT board.pin, mode)
   INITIAL INT avr.pin IS board.to.chip(board.pin):
-  INT r.ddr, r.port, r.pin, bit:
+  --INT r.ddr, r.port, r.pin, bit:
+  INT r.ddr, dummy1, dummy2, bit:
   SEQ
-    r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    r.ddr, dumm1, dummy2, bit := chip.to.gpio (avr.pin)
     pin.mode(r.ddr, bit, mode)
 :
 --}}}
 
-
+--{{{ PROC digital.output
 --* Set digital levels on a pin.
 -- Reads LEVEL values (LOW or HIGH) on the input 
 -- channel, and sets the value of the specified pin 
@@ -179,57 +95,9 @@ PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
         digital.write (board.pin, INT v)
         in ? v
 :
+--}}}
 
---FIXME: digital.input is so much specific to the arduino, which needs to change.
---* Read digital levels on pin 2 or 3.
--- For only pin 2 or pin 3 on the Arduino, this procedure
--- will output a LEVEL (either LOW or HIGH) whenever the
--- pin changes value.
---
--- @param pin The Arduino pin number (2 or 3 only)
--- @param out The LEVEL, output when the pin changes level.
-PROC digital.input (VAL INT pin, CHAN LEVEL out!)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  INT wl:
-  INITIAL INT vintr IS (-1):
-  LEVEL level, last.level:
-  PROC read ()
-    SEQ
-      digital.read (pin, wl)
-      level := LEVEL wl
-  :
-  SEQ
-    CASE pin
-      2
-        SEQ
-          vintr := VINTR.INT0
-          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC00))) \/ (1 << ISC00)
-          ports[EIMSK] := ports[EIMSK] \/ (BV (INT0))
-      3
-        SEQ
-          vintr := VINTR.INT1
-          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC10))) \/ (1 << ISC10)
-          ports[EIMSK] := ports[EIMSK] \/ (BV (INT1))
-      ELSE
-        die ("pin does not support interrupts")
-    read ()
-    last.level := level
-    WHILE TRUE
-      SEQ
-        IF
-          level <> last.level
-            out ! level
-          TRUE
-            SKIP
-        INT any:
-        wait.for.interrupt (vintr, any)
-        read ()
-:
-
-
-VAL INT DEBOUNCE.TIME IS 50:
-
+--{{{ PROC debounce
 --* Debounce a channel.
 -- Debounces a channel of LEVELs. Specifically, if 
 -- multiple values come in within the DEBOUNCE.TIME 
@@ -256,7 +124,9 @@ PROC debounce (CHAN LEVEL in?, out!)
             ignoring := FALSE
       out ! v
 :
+--}}}
 
+--{{{ PROC level.to.signal
 --* Convert a LEVEL to a SIGNAL.
 -- Consumes a stream of LEVEL values, and emits a SIGNAL
 -- for each LEVEL received, regardless of whether it is
@@ -271,7 +141,9 @@ PROC level.to.signal (CHAN LEVEL in?, CHAN SIGNAL out!)
       in ? any
       out ! SIGNAL
 :
+--}}}
 
+--{{{ PROC invert.level
 --* Invert LEVELs.
 -- Reads in LEVEL values, and outputs the opposite.
 -- Upon receiving a LOW, sends a HIGH, and visa versa.
@@ -289,22 +161,9 @@ PROC invert.level (CHAN LEVEL in?, out!)
         TRUE -- If v = LOW
           out ! HIGH
 :
+--}}}
 
---* Watches for button presses on pin 2 or 3.
--- When a button is pressed (must be attached to pin 2 or 3)
--- a SIGNAL is generated. Uses digital.input, debounce, and 
--- level.to.signal.
---
--- @param pin The pin the button is connected to (must be 2 or 3)
--- @param out SIGNALs generated when the button is pressed.
-PROC button.press (VAL INT pin, CHAN SIGNAL out!)
-  CHAN LEVEL a, b:
-  PAR
-    digital.input (pin, a!)
-    debounce (a?, b!)
-    level.to.signal (b?, out!)
-:
-
+--{{{ PROC tick
 --* Generates a consistent stream of SIGNALs.
 -- Every [@code period] milliseconds, a SIGNAL is generated.
 --
@@ -316,7 +175,9 @@ PROC tick (VAL INT period, CHAN SIGNAL out!)
       delay (period)
       out ! SIGNAL
 :
+--}}}
 
+--{{{ PROC toggle
 --* Outputs an alternating stream of LEVEL values.
 -- Starting with an initial level (either LOW or HIGH), this 
 -- process outputs a stream of alternating LEVEL values upon 
@@ -337,7 +198,9 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
         TRUE -- If level = LOW
           level := HIGH
 :
+--}}}
 
+--{{{ PROC pin.toggle
 --* Drives a pin alternately LOW and HIGH.
 -- Upon request, alternates the level of a pin from LOW to HIGH.
 -- 
@@ -350,7 +213,9 @@ PROC pin.toggle (VAL INT pin, VAL LEVEL initial.level, CHAN SIGNAL in?)
     toggle (initial.level, in?, v!)
     digital.output (pin, v?)
 :
+--}}}
 
+--{{{ PROC blink
 --* Drives a pin alternately LOW and HIGH on a fixed cycle.
 -- Every [@code delay.time] milliseconds, toggles a pin.
 -- 
@@ -362,8 +227,12 @@ PROC blink (VAL INT pin, delay.time)
     tick (delay.time, s!)
     pin.toggle (pin, LOW, s?)
 :
+--}}}
 
+--{{{ PROC heartbeat
 --* A parallel health monitor.
+--FIXME: 20100714 drew
+--  There are more boards w/o board LEDs... Do we even want this PROC?
 -- Blinks the LED.PIN  every 500 ms.
 --FIXME: If there is no LED.PIN, I'd like to see a board-specific die(..)
 -- 20100710 MCJ
@@ -383,15 +252,18 @@ PROC heartbeat ()
     TRUE
       die("This board does not have an LED pin. Sorry.")
 :
+--}}}
 
---* Read an analog value.
--- For the given pin, will do an analog read of that pin
--- and emit the value upon request. Currently not parallel safe.
+--{{{ PROC ADC
+--* Reads the analog value of a given pin on a signal request.
+-- Currently not parallel safe.
 --
 -- @param pin The Arduino pin number (A0 - A5)
+-- @param ref The source of the reference voltage. Either VCC (internal) or
+--   AREF (external).
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
-PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
+PROC adc (VAL INT board.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
   INITIAL INT avr.pin IS board.to.chip(board.pin):
   INT v:
   SEQ
@@ -401,9 +273,11 @@ PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
         adc.vcc (avr.pin, v)
         val ! v
 :
+--}}}
 
+--{{{ PROC clamp.[byte/int]
 --* Limits the range of values in a stream.
--- Takes a low and high limit, and any integers read in that
+-- Takes a low and high limit, and any bytes read in that
 -- are below the 'low' value are clamped to low, and likewise
 -- with the 'high' value. 
 --
@@ -411,7 +285,7 @@ PROC adc (VAL INT board.pin, CHAN SIGNAL req?, CHAN INT val!)
 -- @param high The upper limit for valid numbers.
 -- @param in The input stream of BYTEs.
 -- @param out The output stream of BYTEs.
-PROC clamp (VAL BYTE low, high, CHAN BYTE in?, out!)
+PROC clamp.byte (VAL BYTE low, high, CHAN BYTE in?, out!)
   BYTE v:
   WHILE TRUE
     SEQ
@@ -449,6 +323,10 @@ PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
           SKIP
       out ! v
 :
+--}}}
+
+--{{{ PROC crawl.[byte/int]
+--FIXME: 20100714 drew These PROCs are just shoddy. Re-write them.
 
 --* Crawls a BYTE from [low] to [high] and back down (and back up, etc.)
 -- by [step]. Does not cap pos at low or high, it simply checks for
@@ -509,20 +387,25 @@ PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
       out ! pos
       delay (wait)
 :
+--}}}
+
+--{{{ PROC pwm[8/16]
+--FIXME: 20100714 drew These PROC are also crufty.
+-- The while PWM architecture should be re-written as a PROTOCOL.
 
 --* Writes an analog value to a pin.
--- For a given (analog) pin, sets the level to a value between
+-- For a given (PWM) pin, sets the observed analog level to a value between
 -- 0 and 255. Negative values are treated as 0, and values greater
 -- than 255 are treated as 255.
 --
--- @param pin The Arduino pin number
--- @param level The input level.
+-- @param pin The Arduino pin number.
+-- @param level The input level channel.
 PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
   INITIAL INT avr.pin IS board.to.chip (board.pin):
   CHAN BYTE clamped:
   SEQ
-    -- WARNING 20100712
+    -- WARNING: 20100712
     -- Debugging the odd compiler/CASE problem in pwmarch.module.
     -- Left the debug for now in case we find more problems.
     --serial.write.string("Setting digital mode*n")
@@ -551,7 +434,8 @@ PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
 -- than TOP are treated as TOP.
 --
 -- @param pin The Arduino pin number
--- @param level The input level.
+-- @param top The highest level top can be set to.
+-- @param level The input level channel.
 PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
   INITIAL INT lvl IS 0:
   INITIAL INT avr.pin IS board.to.chip (board.pin):
@@ -569,7 +453,7 @@ PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
     --serial.write.string("*n")
     digital.mode (board.pin, OUTPUT)
     --serial.write.string("pwm8.setup*n")
-    pwm16.setup (avr.pin, 64)
+    pwm16.setup (avr.pin, 8)
     pwm16.set.top (avr.pin, top)
     PAR
       clamp.int (0, top, level?, clamped!)
@@ -580,7 +464,10 @@ PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
           pwm16.set.compare (avr.pin, lvl)
           --serial.write.string("after compare*n")
 :
+--}}}
 
+
+--{{{ DEPRECATED CRAP
 #IF FALSE
 -- While this is a nice interrupt-driven approach to ADC,
 -- it is not parallel-safe. Because we deschedule when doing a reading,
@@ -617,7 +504,73 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
 
         val ! (INT result)
 :
+
+
+-- This version of digital.input is so much specific to the arduino.
+-- I think the version above is better, but it mgiht not be tested yet..
+--* Read digital levels on pin 2 or 3.
+-- For only pin 2 or pin 3 on the Arduino, this procedure
+-- will output a LEVEL (either LOW or HIGH) whenever the
+-- pin changes value.
+--
+-- @param pin The Arduino pin number (2 or 3 only)
+-- @param out The LEVEL, output when the pin changes level.
+PROC digital.input (VAL INT pin, CHAN LEVEL out!)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INT wl:
+  INITIAL INT vintr IS (-1):
+  LEVEL level, last.level:
+  PROC read ()
+    SEQ
+      digital.read (pin, wl)
+      level := LEVEL wl
+  :
+  SEQ
+    CASE pin
+      2
+        SEQ
+          vintr := VINTR.INT0
+          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC00))) \/ (1 << ISC00)
+          ports[EIMSK] := ports[EIMSK] \/ (BV (INT0))
+      3
+        SEQ
+          vintr := VINTR.INT1
+          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC10))) \/ (1 << ISC10)
+          ports[EIMSK] := ports[EIMSK] \/ (BV (INT1))
+      ELSE
+        die ("pin does not support interrupts")
+    read ()
+    last.level := level
+    WHILE TRUE
+      SEQ
+        IF
+          level <> last.level
+            out ! level
+          TRUE
+            SKIP
+        INT any:
+        wait.for.interrupt (vintr, any)
+        read ()
+:
+
+--* Watches for button presses on pin 2 or 3.
+-- When a button is pressed (must be attached to pin 2 or 3)
+-- a SIGNAL is generated. Uses digital.input, debounce, and 
+-- level.to.signal.
+--
+-- @param pin The pin the button is connected to (must be 2 or 3)
+-- @param out SIGNALs generated when the button is pressed.
+PROC button.press (VAL INT pin, CHAN SIGNAL out!)
+  CHAN LEVEL a, b:
+  PAR
+    digital.input (pin, a!)
+    debounce (a?, b!)
+    level.to.signal (b?, out!)
+:
+
 #ENDIF
+--}}}
 
 
 #ENDIF
