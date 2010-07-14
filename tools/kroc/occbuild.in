@@ -81,10 +81,12 @@ def find_file(name, path, ext=''):
 def adjust_for_windows(cmd):
         if platform.system() != "Windows":
                 return cmd
+        command = cmd[0]
         cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
         if not cmd[0]:
-                die('Could not find command: %s', cmd[0])
-        cmd.insert(0, 'env')
+                die('Could not find command: ', command)
+        if not cmd[0].endswith('.exe'):
+                cmd.insert(0, 'env')
         return cmd
 
 def run_command(cmd):
