@@ -57,37 +57,37 @@ def die(*s):
 	sys.exit(1)
 
 def find_file(name, path, ext=''):
-        """Given a pathsep-delimited path string, find name,.
-        Returns path to name, if found, otherwise None.
-        Also allows for files with implicit extensions (eg, .exe), but
-        always returning name, as was provided.
-        >>> find_file('ls', '/usr/bin:/bin', ext='.exe')
-        '/bin/ls'
-        """
-        if os.path.isfile(name):
-                return name
-        if      ext and os.path.isfile(name + ext):
-                # Already absolute path.
-                return name + ext
-        for p in path.split(os.pathsep):
-                candidate = os.path.join(p, name)
-                if (os.path.isfile(candidate)):
-                        return candidate
-                if ext and os.path.isfile(candidate + ext):
-                        return candidate + ext
-        return None
+	"""Given a pathsep-delimited path string, find name,.
+	Returns path to name, if found, otherwise None.
+	Also allows for files with implicit extensions (eg, .exe), but
+	always returning name, as was provided.
+	>>> find_file('ls', '/usr/bin:/bin', ext='.exe')
+	'/bin/ls'
+	"""
+	if os.path.isfile(name):
+		return name
+	if	ext and os.path.isfile(name + ext):
+		# Already absolute path.
+		return name + ext
+	for p in path.split(os.pathsep):
+		candidate = os.path.join(p, name)
+		if (os.path.isfile(candidate)):
+			return candidate
+		if ext and os.path.isfile(candidate + ext):
+			return candidate + ext
+	return None
 
 
 def adjust_for_windows(cmd):
-        if platform.system() != "Windows":
-                return cmd
-        command = cmd[0]
-        cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
-        if not cmd[0]:
-                die('Could not find command: ', command)
-        if not cmd[0].endswith('.exe'):
-                cmd.insert(0, 'env')
-        return cmd
+	if platform.system() != "Windows":
+		return cmd
+	command = cmd[0]
+	cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
+	if not cmd[0]:
+		die('Could not find command: ', command)
+	if not cmd[0].endswith('.exe'):
+		cmd.insert(0, 'env')
+	return cmd
 
 def run_command(cmd):
 	"""Run a program with arguments and return the exit code."""
