@@ -172,7 +172,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		final String[] firmdlCommand = { 
 				OccPlugUtil.pathifyXXX("bin/avrdude"),
 				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
-				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex"),
+				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex") + ":i",
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
 				// FIXME: Need a sensible way of setting these
