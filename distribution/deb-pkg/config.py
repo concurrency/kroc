@@ -42,8 +42,8 @@ BASE = {'YMD'            : now.strftime("%Y%m%d"),
 				'FINAL_DEST_ROOT'      : '@FINAL@',
 				'FINAL_DEST_BIN'       : '@FINAL@/bin',
 				'FINAL_DEST_SHARE'     : '@FINAL@/share',
-				'FINAL_DEST_FIRMWARE'  : '@DEST_SHARE@/firmwares',
-				'FINAL_DEST_CONF'      : '@DEST_SHARE@/conf',
+				'FINAL_DEST_FIRMWARE'  : '@FINAL_DEST_SHARE@/firmwares',
+				'FINAL_DEST_CONF'      : '@FINAL_DEST_SHARE@/conf',
 				'FINAL_DEST_LIB'       : '@FINAL@/lib',
 				# For building different targets
 				# Changing these default values requires you to
