@@ -38,7 +38,7 @@ VAL INT DEBOUNCE.TIME IS 50:
 PROC digital.write (VAL INT board.pin, state)
   INITIAL INT avr.pin IS board.to.chip(board.pin):
   --INT r.ddr, r.port, r.pin, bit:
-  INT dummy1, r.port, dummy2, bit
+  INT dummy1, r.port, dummy2, bit:
   SEQ
     --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
     dummy1, r.port, dummy2, bit := chip.to.gpio (avr.pin)
@@ -72,7 +72,7 @@ PROC digital.mode (VAL INT board.pin, mode)
   INT r.ddr, dummy1, dummy2, bit:
   SEQ
     --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
-    r.ddr, dumm1, dummy2, bit := chip.to.gpio (avr.pin)
+    r.ddr, dummy1, dummy2, bit := chip.to.gpio (avr.pin)
     pin.mode(r.ddr, bit, mode)
 :
 --}}}
@@ -270,7 +270,7 @@ PROC adc (VAL INT board.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
     WHILE TRUE
       SEQ
         req ? SIGNAL
-        adc.vcc (avr.pin, v)
+        adc.base (avr.pin, ref, v)
         val ! v
 :
 --}}}
@@ -419,7 +419,7 @@ PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
     --serial.write.string("pwm8.setup*n")
     pwm8.setup (avr.pin, 64)
     PAR
-      clamp (0, 255, level?, clamped!)
+      clamp.byte (0, 255, level?, clamped!)
       WHILE TRUE
         SEQ
           clamped ? lvl
