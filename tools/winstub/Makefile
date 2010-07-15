@@ -1,5 +1,7 @@
 srcdir := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
+CPPFLAGS=-Wall -Os
+
 VPATH=$(srcdir)
 
 Transterpreter.exe: winstub.o resource.o
@@ -11,4 +13,4 @@ resource.o: resource.rc
 	windres $< -O coff -o $@
 
 clean:
-	rm Transterpreter.exe *.o
+	rm -rf Transterpreter.exe *.o
