@@ -56,8 +56,8 @@ BASE = {'VERSION'              : '100',
 				'FINAL_DEST_CONF'      : '@FINAL_DEST_SHARE@/conf',
 				# OCCPLUG
 				'SOURCE_OCCPLUG'       : '@SVN@/tools/occplug',
-				'TEMP_OCCPLUG'         : '@TEMP@/occplug',
-				'DEST_OCCPLUG'         : '@DEST_ROOT@/share/jedit/jars',
+				'DEST_OCCPLUG_ROOT'    : '@TEMP@/occPlug',
+				'DEST_OCCPLUG'         : '@DEST_OCCPLUG_ROOT@/share/jedit/jars',
 				'ERRORLIST_URL'        : 'http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.5-bin.zip',
 				
 			}

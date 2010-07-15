@@ -405,8 +405,11 @@ def build_occplug():
 		cmd(build_command(['ant', 
 											'-Djedit.install.dir=/usr/share/jedit', 
 											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
-											concat(['-Dbuild.dir=', config.get('TEMP_OCCPLUG')]),
+											concat(['-Dbuild.dir=', config.get('TEMP')]),
 											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
+	with pushd():
+		cd(config.get('DEST_OCCPLUG_ROOT'))
+		cmd(build_command(["dpkg", "--build", config.get('PACKAGE_NAME'), "./"]))
 
 # Builds multiple packages for all architectures
 
