@@ -136,24 +136,24 @@ PROC accel.conv (CHAN INT in?, out!, VAL INT max, min)
       in ? reading
       IF
         reading > 504
-          SEQ i = 0 FOR (SIZE ADC.GREATER)
+          SEQ i = 0 FOR (SIZE ADC.GREATER) STEP 1
             WHILE looking
               IF
                 reading >= ADC.GREATER[i]
                   SEQ
-                    out ! ANGLES[i]
                     looking := FALSE
+                    out ! ANGLES[i]
                 TRUE
                   SKIP 
 
         reading < 504
-          SEQ i = 0 FOR (SIZE ADC.LESS)
+          SEQ i = 0 FOR (SIZE ADC.LESS) STEP 1
             WHILE looking
               IF
                 reading <= ADC.LESS[i]
                   SEQ
-                    out ! ANGLES[i]
                     looking := FALSE
+                    out ! ANGLES[i]
                 TRUE
                   SKIP
         TRUE
@@ -181,20 +181,20 @@ PROC main()
 
   PAR
     --gyro 1 "y"
-    tick(100,signal.gyro!)
+    --tick(100,signal.gyro!)
     tick(100,signal.accel!)
     
-    adc(A1,signal.gyro?, input.gyro!)
+    --adc(A1,signal.gyro?, input.gyro!)
     adc(A2,signal.accel?, input.accel!)
     
     accel.conv(input.accel?, output.accel!, 608, 390)
     
-    to.degrees(input.gyro?, degree.gyro!)
-    gyro.drift(drift.gyro!)
-    filter(degree.gyro?, rate.gyro!, drift.gyro?)
+    --to.degrees(input.gyro?, degree.gyro!)
+    --gyro.drift(drift.gyro!)
+    --filter(degree.gyro?, rate.gyro!, drift.gyro?)
     
-    comp.filter (rate.gyro?, output.accel?, theta!, 80, 7)
+    --comp.filter (rate.gyro?, output.accel?, theta!, 80, 7)
     
-    time.int(theta?)
-    --show (theta?)
+    --time.int(theta?)
+    show (output.accel?)
 :
