@@ -8,49 +8,58 @@ import re
 #   (use for changing things like TEMP)
 
 now    = datetime.datetime.now()
-BASE = {'YMD'            : now.strftime("%Y%m%d"),
-				'YMDHMS'         : now.strftime("%Y%m%d%H%M%S"),
-				'TEMP_ROOT'      : '/tmp',
-				'TEMP'           : '@TEMP_ROOT@/@TARGET@/@WRAPPER@',
-				'PACKAGE_NAME'   : 'concurrency-@WRAPPER@',
-				'PACKAGE_BUILD'  : '@TEMP@/@PACKAGE_NAME@',
-				'SVN'            : '@TEMP@/src',
-				'OBJ'            : '@SVN@/obj',
+BASE = {'VERSION'              : '100',
+				'BUILD_ARCHITECTURE'   : 'i386',
+				'TOOLCHAIN'            : 'kroc',
+				'TARGET'               : 'posix',
+				'WRAPPER'              : 'posix',
+				'PACKAGE_DESCRIPTION'  : 'Native occam-pi for the desktop.',
+				# # # #
+				'YMD'                  : now.strftime("%Y%m%d"),
+				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
+				'TEMP_ROOT'            : '/tmp/@BUILD_ARCHITECTURE@',
+				'TEMP'                 : '@TEMP_ROOT@/@TOOLCHAIN@-@TARGET@-@WRAPPER@',
+				'PACKAGE_NAME'         : 'concurrency-@TOOLCHAIN@-@WRAPPER@',
+				'PACKAGE_BUILD'        : '@TEMP@/@PACKAGE_NAME@',
+				'SVN'                  : '@TEMP@/src',
+				'OBJ'                  : '@SVN@/obj',
 				# Where we pull things from
 				# These are all used by the Arduino build...
-				'SOURCE_ARDUINO' : '@SVN@/tvm/arduino',
-				'SOURCE_CONF'    : '@LIB_PATH@/tvm/arduino/occam/share/conf',
-				'SOURCE_SCRIPTS' : '@LIB_PATH@/tvm/arduino/scripts',
-				'SOURCE_FIRMWARE': '@SVN@/tvm/arduino',
-				'LIB_PATH'       : '@SVN@',
-				'SOURCE_LIB'     : '@LIB_PATH@/tvm/arduino/occam/include',
-				'SOURCE_DEBIAN'  : '@LIB_PATH@/distribution/deb-pkg/DEBIAN.in',
+				'SOURCE_ARDUINO'       : '@SVN@/tvm/arduino',
+				'SOURCE_CONF'          : '@LIB_PATH@/tvm/arduino/occam/share/conf',
+				'SOURCE_SCRIPTS'       : '@LIB_PATH@/tvm/arduino/scripts',
+				'SOURCE_FIRMWARE'      : '@SVN@/tvm/arduino',
+				'LIB_PATH'             : '@SVN@',
+				'SOURCE_LIB'           : '@LIB_PATH@/tvm/arduino/occam/include',
+				'SOURCE_DEBIAN'        : '@LIB_PATH@/distribution/deb-pkg/DEBIAN.in',
 				# Desired filesystem path for installation
-				'INSTPATH'       : 'opt/occam/@TARGET@/@WRAPPER@',
-				'FINAL'          : '/@INSTPATH@',
+				'INSTPATH'             : '',
+				'FINAL'                : '/@INSTPATH@',
 				# Dstdir installation paths
-				'DEST'           : '@TEMP@/@PACKAGE_NAME@',
-				'DEST_ROOT'      : '@DEST@/@INSTPATH@',
-				'DEST_BIN'       : '@DEST_ROOT@/bin',
-				'DEST_SHARE'     : '@DEST_ROOT@/share',
-				'DEST_FIRMWARE'  : '@DEST_SHARE@/firmwares',
-				'DEST_CONF'      : '@DEST_SHARE@/conf',
-				'DEST_LIB'       : '@DEST_ROOT@/lib',
-				'DEST_DEBIAN'    : '@PACKAGE_BUILD@/DEBIAN',
+				'SHARE'                : 'share/@TOOLCHAIN@-@TARGET@',
+				'BIN'                  : 'bin',
+				'DEST'                 : '@TEMP@/@PACKAGE_NAME@',
+				'DEST_ROOT'            : '@DEST@/@INSTPATH@',
+				'DEST_BIN'             : '@DEST_ROOT@/@BIN@',
+				'DEST_SHARE'           : '@DEST_ROOT@/@SHARE@',
+				'DEST_FIRMWARE'        : '@DEST_SHARE@/firmwares',
+				'DEST_CONF'            : '@DEST_SHARE@/conf',
+				'DEST_DEBIAN'          : '@PACKAGE_BUILD@/DEBIAN',
 				# FINAL DESTINATIONS
 				# Use these for substitution within scripts.
 				'FINAL_DEST_ROOT'      : '@FINAL@',
-				'FINAL_DEST_BIN'       : '@FINAL@/bin',
-				'FINAL_DEST_SHARE'     : '@FINAL@/share',
+				'FINAL_DEST_BIN'       : '@FINAL@/@BIN@',
+				# This really only comes into play for the AVR, as KRoC and the 	
+				# TVM put things in sensible places through the destdir mechanism.
+				'FINAL_DEST_SHARE'     : '@FINAL@/@SHARE@',
 				'FINAL_DEST_FIRMWARE'  : '@FINAL_DEST_SHARE@/firmwares',
 				'FINAL_DEST_CONF'      : '@FINAL_DEST_SHARE@/conf',
-				'FINAL_DEST_LIB'       : '@FINAL@/lib',
-				# For building different targets
-				# Changing these default values requires you to
-				# edit them in the packaging script, too
-				'TOOLCHAIN'      : 'native',
-				'TARGET'         : 'native',
-				'WRAPPER'        : 'native',
+				# OCCPLUG
+				'SOURCE_OCCPLUG'       : '@SVN@/tools/occplug',
+				'TEMP_OCCPLUG'         : '@TEMP@/occplug',
+				'DEST_OCCPLUG'         : '@DEST_ROOT@/share/java',
+				'ERRORLIST_URL'        : 'http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.5-bin.zip',
+				
 			}
 
 CFG = { }
