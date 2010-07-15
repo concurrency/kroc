@@ -322,7 +322,7 @@ def with_temp_dir(path):
 
 def with_lib_path(path):
 	header('SETTING LIB PATH TO %s' % path)
-	config.rebase('LIB_PATH', path)
+	config.rebase('SVN', path)
 
 def echo_config():
 	for key, val in config.CFG.iteritems():

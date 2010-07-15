@@ -53,6 +53,7 @@ BASE = {'VERSION'              : '100',
 				# This really only comes into play for the AVR, as KRoC and the 	
 				# TVM put things in sensible places through the destdir mechanism.
 				'FINAL_DEST_SHARE'     : '@FINAL@/@SHARE@',
+				'FINAL_DEST_INCLUDE'   : '@FINAL@/@SHARE@/include',
 				'FINAL_DEST_FIRMWARE'  : '@FINAL_DEST_SHARE@/firmwares',
 				'FINAL_DEST_CONF'      : '@FINAL_DEST_SHARE@/conf',
 				# OCCPLUG
