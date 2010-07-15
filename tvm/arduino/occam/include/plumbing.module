@@ -103,7 +103,7 @@ PROC digital.mode (VAL INT board.pin, mode)
 -- channel, and sets the value of the specified pin 
 -- accordingly.
 --
--- @param pin The Arduino pin number
+-- @param board.pin The Arduino pin number
 -- @param in Pin levels (LOW or HIGH)
 PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
   LEVEL v:
@@ -278,7 +278,7 @@ PROC heartbeat ()
 --* Reads the analog value of a given pin on a signal request.
 -- Currently not parallel safe.
 --
--- @param pin The Arduino pin number (A0 - A5)
+-- @param board.pin The Arduino pin number (A0 - A5)
 -- @param ref The source of the reference voltage. Either VCC (internal) or
 --   AREF (external).
 -- @param req The request line.
@@ -354,7 +354,9 @@ PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
 --
 -- @param low The lower limit at which the pos begins moving upward.
 -- @param high The upper limit at which the pos begins moving downward.
--- @param step the step pos moves for every send.
+-- @param step The step pos moves for every send.
+-- @param wait The time -- in miliseconds -- to wait after a successful send
+--   before attempting another.
 -- @param out The output stream of BYTEs.
 PROC crawl.byte (VAL BYTE low, high, step, VAL INT wait, CHAN BYTE out!)
   INITIAL BYTE pos IS 0:
@@ -385,6 +387,8 @@ PROC crawl.byte (VAL BYTE low, high, step, VAL INT wait, CHAN BYTE out!)
 -- @param low The lower limit at which the pos begins moving upward.
 -- @param high The upper limit at which the pos begins moving downward.
 -- @param step the step pos moves for every send.
+-- @param wait The time -- in miliseconds -- to wait after a successful send
+--   before attempting another.
 -- @param out The output stream of INTs.
 PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
   INITIAL INT pos IS 0:
@@ -418,7 +422,7 @@ PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
 -- 0 and 255. Negative values are treated as 0, and values greater
 -- than 255 are treated as 255.
 --
--- @param pin The Arduino pin number.
+-- @param board.pin The Arduino pin number.
 -- @param level The input level channel.
 PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
@@ -453,7 +457,7 @@ PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
 -- 0 and TOP. Negative values are treated as 0, and values greater
 -- than TOP are treated as TOP.
 --
--- @param pin The Arduino pin number
+-- @param board.pin The Arduino pin number
 -- @param top The highest level top can be set to.
 -- @param level The input level channel.
 PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
@@ -485,112 +489,5 @@ PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
           --serial.write.string("after compare*n")
 :
 --}}}
-
-
---{{{ DEPRECATED CRAP
-#IF FALSE
--- While this is a nice interrupt-driven approach to ADC,
--- it is not parallel-safe. Because we deschedule when doing a reading,
--- someone else can come in and start another. I have replaced this 
--- with a busywait version until I can come up with a better solution.
---
--- The busywait obviously blocks our runtime until a reading finishes.
--- However, it eliminates the critical section.
-PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
-  PLACED [MAX.PORT]BYTE ports 0:
-  INT16 result:   
-  SEQ
-    -- Reference voltage is Vcc; select channel
-    ports[ADMUX] := (1 << REFS0) \/ (BYTE pin)
-    -- Enable ADC; enable interrupt; clock prescale 128
-    ports[ADCSRA] := (BV (ADEN) \/ BV (ADIE)) \/ (7 << ADPS0)
-    -- Disable digital inputs on all six ADC pins
-    ports[DIDR0] := #3F
-    WHILE TRUE
-      SEQ
-        req ? SIGNAL
-        -- Start conversion
-        ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
-
-        -- serialWrite("Waiting for conversion...")
-        -- Wait for conversion to complete
-        INT t:
-        wait.for.interrupt (VINTR.ADC, t)
-
-        -- Read value
-        -- (We can't do this by retyping ports, since that does a 16-bit read)
-        [2]BYTE bytes RETYPES result:
-        bytes[0], bytes[1] := ports[ADCL], ports[ADCH]
-
-        val ! (INT result)
-:
-
-
--- This version of digital.input is so much specific to the arduino.
--- I think the version above is better, but it mgiht not be tested yet..
---* Read digital levels on pin 2 or 3.
--- For only pin 2 or pin 3 on the Arduino, this procedure
--- will output a LEVEL (either LOW or HIGH) whenever the
--- pin changes value.
---
--- @param pin The Arduino pin number (2 or 3 only)
--- @param out The LEVEL, output when the pin changes level.
-PROC digital.input (VAL INT pin, CHAN LEVEL out!)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  INT wl:
-  INITIAL INT vintr IS (-1):
-  LEVEL level, last.level:
-  PROC read ()
-    SEQ
-      digital.read (pin, wl)
-      level := LEVEL wl
-  :
-  SEQ
-    CASE pin
-      2
-        SEQ
-          vintr := VINTR.INT0
-          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC00))) \/ (1 << ISC00)
-          ports[EIMSK] := ports[EIMSK] \/ (BV (INT0))
-      3
-        SEQ
-          vintr := VINTR.INT1
-          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC10))) \/ (1 << ISC10)
-          ports[EIMSK] := ports[EIMSK] \/ (BV (INT1))
-      ELSE
-        die ("pin does not support interrupts")
-    read ()
-    last.level := level
-    WHILE TRUE
-      SEQ
-        IF
-          level <> last.level
-            out ! level
-          TRUE
-            SKIP
-        INT any:
-        wait.for.interrupt (vintr, any)
-        read ()
-:
-
---* Watches for button presses on pin 2 or 3.
--- When a button is pressed (must be attached to pin 2 or 3)
--- a SIGNAL is generated. Uses digital.input, debounce, and 
--- level.to.signal.
---
--- @param pin The pin the button is connected to (must be 2 or 3)
--- @param out SIGNALs generated when the button is pressed.
-PROC button.press (VAL INT pin, CHAN SIGNAL out!)
-  CHAN LEVEL a, b:
-  PAR
-    digital.input (pin, a!)
-    debounce (a?, b!)
-    level.to.signal (b?, out!)
-:
-
-#ENDIF
---}}}
-
 
 #ENDIF

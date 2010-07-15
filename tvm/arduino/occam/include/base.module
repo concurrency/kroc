@@ -17,7 +17,7 @@ INLINE PROC die (VAL []BYTE error)
 --* Convert a bit number to a bit value.
 -- This is just [@code 1 << bit], like [@text _BV] in the C headers.
 -- @param bit How far to shift 1 left.
--- @retuns - 1 shifted [@code bit] to the left
+-- @returns - 1 shifted [@code bit] to the left
 BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
 
 --{{{  PROC delay
