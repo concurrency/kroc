@@ -33,7 +33,7 @@ BASE = {'VERSION'              : '100',
 				'SOURCE_LIB'           : '@LIB_PATH@/tvm/arduino/occam/include',
 				'SOURCE_DEBIAN'        : '@LIB_PATH@/distribution/deb-pkg/DEBIAN.in',
 				# Desired filesystem path for installation
-				'INSTPATH'             : '',
+				'INSTPATH'             : 'usr',
 				'FINAL'                : '/@INSTPATH@',
 				# Dstdir installation paths
 				'SHARE'                : 'share/@TOOLCHAIN@-@TARGET@',
@@ -57,7 +57,7 @@ BASE = {'VERSION'              : '100',
 				# OCCPLUG
 				'SOURCE_OCCPLUG'       : '@SVN@/tools/occplug',
 				'TEMP_OCCPLUG'         : '@TEMP@/occplug',
-				'DEST_OCCPLUG'         : '@DEST_ROOT@/share/java',
+				'DEST_OCCPLUG'         : '@DEST_ROOT@/share/jedit/jars',
 				'ERRORLIST_URL'        : 'http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.5-bin.zip',
 				
 			}

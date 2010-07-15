@@ -8,6 +8,7 @@ import urllib
 import time
 import os
 import re
+import zipfile
 
 import config
 
@@ -190,7 +191,7 @@ def install():
 
 def make_destdirs():
 	header("MAKING DESTINATION DIRECTORIES")
-	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_DEBIAN'] 
+	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_DEBIAN', 'DEST_OCCPLUG'] 
 	for d in DESTINATIONS:
 		mkdir(config.get(d))
 
@@ -372,30 +373,40 @@ def refresh_libs():
 		copy_arduino_build()
 	deb()
 
+def unzip_file_into_dir(file, dir):
+    zfobj = zipfile.ZipFile(file)
+    for name in zfobj.namelist():
+        if name.endswith('/'):
+            os.mkdir(os.path.join(dir, name))
+        else:
+            outfile = open(os.path.join(dir, name), 'wb')
+            outfile.write(zfobj.read(name))
+            outfile.close()
 
 def build_occplug():
-	config.refresh() 
+	header("BUILDING OCCPLUG")
 
-	base    = 'ErrorList'
-	zipfile = '%s.zip' % base
-	jarfile = '%s.jar' % base 
+	config.refresh() 
+	remove_and_create_dir(config.get('DEST_OCCPLUG'))	
+
+	zipfile = 'ErrorList-1.5-bin.zip'
+	jarfile = 'ErrorList.jar'
 
 	with pushd():
 		cd(config.get('SOURCE_OCCPLUG'))
-		urllib.urlretrieve (config.get('ERRORLIST_URL'), zipfile)
+		cmd(build_command(['wget', config.get('ERRORLIST_URL')]))
 
-		cmd(build_command(['unzip', zipfile]))
-		cmd(build_command(['mv', jarfile, config.get('SOURCE_OCCPLUG')]))
+		# cmd(build_command(['unzip', zipfile]))
+		unzip_file_into_dir(zipfile, config.get('DEST_OCCPLUG'))
 	
+		# Move the ErrorList straight to the destination; we can build against it there.
+		#cmd(build_command(['mv', jarfile, config.get('DEST_OCCPLUG')]))
+
 		cmd(build_command(['ant', 
 											'-Djedit.install.dir=/usr/share/jedit', 
-											'-Dinstall.dir=%s' % config.get('@DEST_OCCPLUG@'),
-											'-Dbuild.dir=%s' % config.get('@OCCPLUG_TEMP@'),
-											'-lib .']))	
-
-		cmd(build_command(['mv', jarfile, config.get('@DEST_OCCPLUG@')]))
-		
-
+											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
+											concat(['-Dbuild.dir=', config.get('TEMP_OCCPLUG')]),
+											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
 
 # Builds multiple packages for all architectures
 
@@ -491,11 +502,21 @@ def call_handler(str, arg):
 		elif (tag == re.sub("_", "+", OPT[0].lower())):
 			OPT[len(OPT) - 1]()
 
-PLAT       = ["BUILD-TVM", "BUILD-AVR"]
+PLAT       = ["BUILD-TVM", "BUILD-AVR", "BUILD-KROC"]
 DIR_PARAMS = ["TEMP_DIR", "LIB_PATH"]
 FIRST      = DIR_PARAMS
 
+def check_for_build_target():
+	found = False
+	for key, val in props(options).iteritems():
+		if (key in PLAT) and (val != None):
+			found = True
+	if not found:
+		print "You need to include a build target (eg. --build-tvm)."
+		sys.exit()
+
 def driver():
+	check_for_build_target()
 	for key, val in props(options).iteritems():
 		if (key in PLAT) and (val != None):
 			call_handler(key, val)
