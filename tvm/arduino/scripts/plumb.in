@@ -93,12 +93,11 @@ echo "Compiling..."
 # I think ISEARCH, being set in the .conf, should do
 # the work of finding the platform-specific libraries...
 avr-occbuild \
-  --search $TVM_INST_ROOT/share/tvm/avr-vtinclude \
-  --search $TVM_INST_ROOT/share/tvm/avr-vtlib \
-  --search $TVM_INST_ROOT/lib \
-  --search $TVM_INST_ROOT/lib/arch/common \
-  --search $TVM_INST_ROOT/lib/arch/$TVM_MCU \
-  --search $TVM_INST_ROOT/lib/platforms/$PLATFORM \
+  --search @DEST_SHARE@/tvm/avr-vtinclude \
+  --search @DEST_SHARE@/tvm/avr-vtlib \
+  --search @DEST_SHARE@/@TOOLCHAIN@-@TARGET@ \
+  --search @DEST_SHARE@/arch/$TVM_MCU \
+					--search @DEST_SHARE@/platforms/$PLATFORM \
   -DF.CPU=$TVM_F_CPU --program $FILENAME
 
 if [ $? -eq 0 ]; then
