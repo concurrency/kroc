@@ -26,6 +26,7 @@ PROC serial.setup (VAL INT board.pin, VAL INT32 baud)
   VAL INT port IS board.to.serial.port (board.pin):
   serial.start (port, baud)
 :
+--}}}
 
 --{{{ REAL32 Helper Functions (useful functions are below)
 --* Fills the passed array with the [@em character] '0'.
@@ -160,7 +161,7 @@ PROC serial.write.int32 (VAL INT board.pin, VAL INT32 n)
 #IF FALSE
 -- So this puppy is broken. Not sure why.
 --{{{ PROC serial.write.real32
---* Write an [@REAL32] to the serial port in decimal form.
+--* Write an [@code REAL32] to the serial port in decimal form.
 --
 -- @param board.pin The board pin to be printed to.
 -- @param n The ([@code REAL32]) to write.
