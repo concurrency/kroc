@@ -30,6 +30,9 @@ import org.gjt.sp.jedit.MiscUtilities;
 import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
+import org.transterpreter.occPlug.hosts.BaseHost;
+import org.transterpreter.occPlug.hosts.OSX;
+import org.transterpreter.occPlug.hosts.Windows;
 import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.process.helpers.TerminalExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
@@ -51,8 +54,11 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		super();
 	
 		boolean include_kroc = true;
-		if(System.getProperty("os.name").equals("Mac OS X") && 
-				System.getProperty("os.arch").equals("ppc")) include_kroc = false;
+		BaseHost host = BaseHost.getHostObject();
+		
+		if(host instanceof OSX && System.getProperty("os.arch").equals("ppc")) include_kroc = false;
+		if(host instanceof Windows) include_kroc = false;
+
 		
 		if(include_kroc)
 		{
@@ -117,6 +123,8 @@ public class Desktop extends BaseTarget implements CompileAbility {
 
 	public void runProgram(CompileTarget theTarget, Runnable finished) {
 		
+		BaseHost host = BaseHost.getHostObject();
+
 		targetSupport.setVisibleDisplayArea("terminal");
 		vt320 terminal = targetSupport.getTerminal();
 		
@@ -131,20 +139,16 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		{
 			filename = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName()) + ".tbc";
 			
-			final String fw_p;
-			if(System.getProperty("os.arch").equals("ppc"))
-			{		
-				fw_p = OccPlugUtil.pathifyXXX("share/tvm-ppc/firmware/tvm-posix.tbc");
-			}
-			else
-			{
-				fw_p = OccPlugUtil.pathifyXXX("share/tvm/firmware/tvm-posix.tbc");
-			}
+			String fw_p;
+			fw_p = host.getPath("tvm", "firmware");
+			fw_p = OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(fw_p, "tvm-posix.tbc"));
+			
 			runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
 			String lib_p = OccPlugUtil.pathifyXXX("lib");
 			runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
 	
-			runCommand.add(OccPlugUtil.pathifyXXX("bin/tvm"));
+			String tvm = host.getCommandName("tvm");
+			runCommand.add(OccPlugUtil.pathifyXXX(MiscUtilities.constructPath("bin", tvm)));
 		}
 		else if(theTarget == target_kroc)
 		{

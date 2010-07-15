@@ -23,4 +23,12 @@ package org.transterpreter.occPlug.hosts;
 
 public class OSX extends Unix {
 
+	public OSX()
+	{
+		super("osx");
+		if(System.getProperty("os.arch").equals("ppc"))
+		{
+			base = "osx-ppc";
+		}
+	}
 }
