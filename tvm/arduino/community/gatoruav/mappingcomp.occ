@@ -56,7 +56,7 @@ PROC show (CHAN INT theta?)
   WHILE TRUE
     SEQ
       theta ? pos
-      pos := pos
+      --pos := pos
       serialWriteDecInt (pos)
       serial.write.string("*n")
 
@@ -64,15 +64,16 @@ PROC show (CHAN INT theta?)
 PROC to.degrees (CHAN INT input?, CHAN INT output!)
 
   INITIAL INT counter, shift, n IS 0, 0, 0:
-  INITIAL REAL32 n.32 IS 0.0:
-  INITIAL INT32 n.int32 IS 0:
+  --INITIAL REAL32 n.32 IS 0.0:
+  --INITIAL INT32 n.int32 IS 0:
   WHILE TRUE
     SEQ
       input ? n
-      n.32 := REAL32 ROUND n
-      n.32 := ((((n.32-3.3)/1023.0)-1.26)/3.0) * 100.0
-      n.int32 := INT32 ROUND n.32
-      n := (INT(n.int32))
+      --n.32 := REAL32 ROUND n
+      --                was -1.26
+      n := (((((n-33)/10230)-13)/30) * 1000)/10
+      --n.int32 := INT32 ROUND n.32
+      --n := (INT(n.int32))
        
       IF  
         counter < 11
@@ -125,18 +126,26 @@ PROC gyro.drift (CHAN INT drift!)
     SEQ
       drift ! 0
 :
-VAL [18]INT ADC.GREATER IS [511,520,528,537,545,553,560,567,573,578,584,588,592,595,598,601,602,603]: 
-VAL [18]INT ADC.LESS IS [495,486,477,469,461,453,445,438,431,426,420,416,411,407,404,401,399,398]:
-VAL [18]INT ANGLES IS [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90]:
-PROC accel.conv (CHAN INT in?, out!)
+-- 511 520 528 removed to increse sensitivity on -20 to 20 range
+VAL [15]INT Y.ADC.GREATER IS [537,545,553,560,567,573,578,584,588,592,595,598,601,602,603]:
+-- 495 486 477 removed to increse sensitivity of -20 to 20 range 
+VAL [15]INT Y.ADC.LESS IS [469,461,453,445,438,431,426,420,416,411,407,404,401,399,398]:
+VAL [15]INT X.ADC.GREATER IS [478,470,463,455,448,442,436,431,427,423,419,416,413,411,410]:
+VAL [15]INT X.ADC.LESS IS [542,551,558,566,573,581,587,593,598,603,607,610,613,615,616]:
+VAL [15]INT ANGLES IS [20,25,30,35,40,45,50,55,60,65,70,75,80,85,90]:
+PROC accel.conv (CHAN INT in?, out!, VAL []INT ADC.GREATER, ADC.LESS)
   WHILE TRUE
     INITIAL BOOL looking IS TRUE:
     INITIAL INT i IS 0:
-    INT reading:
+    INT reading, theta:
     SEQ
       in ? reading
       i := 0
       IF
+        (reading <= 528) AND (reading >= 477)
+          SEQ
+            theta := (((reading * 10) - 5030) / 17) / 10
+            out ! theta
         reading > 504
           SEQ
             WHILE i < (SIZE ADC.GREATER)
@@ -198,7 +207,7 @@ PROC main()
     adc(A2,signal.accel?, input.accel!)
     
     --numspit(input.accel!)
-    --accel.conv(input.accel?, output.accel!)
+    accel.conv(input.accel?, output.accel!, X.ADC.GREATER, X.ADC.LESS)
     
     --to.degrees(input.gyro?, degree.gyro!)
     --gyro.drift(drift.gyro!)
@@ -207,5 +216,5 @@ PROC main()
     --comp.filter (rate.gyro?, output.accel?, theta!, 80, 7)
     
     --time.int(theta?)
-    show (input.accel?)
+    show (output.accel?)
 :
