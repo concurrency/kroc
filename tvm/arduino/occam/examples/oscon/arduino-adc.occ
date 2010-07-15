@@ -1,0 +1,17 @@
+#INCLUDE "plumbing.module"
+  
+VAL []INT ADC IS [A0, A1, A2, A3, A4, A5]:
+PROC test ()
+  [(SIZE ADC)]CHAN SIGNAL s:
+  [(SIZE ADC)]CHAN INT v:
+  [(SIZE ADC)]INT readings:
+  PAR
+    PAR i = 0 FOR 5
+      PAR
+        adc (ADC[i], s[i]?, v[i]!)
+        tick(500, s[i]!)
+        WHILE TRUE
+          SEQ
+            v[i] ? readings[i]
+            serial.write.int(readings[i]) 
+:

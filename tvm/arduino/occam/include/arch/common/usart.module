@@ -1,0 +1,106 @@
+--** USART/serial reoutines for the ATmega1280
+-- @module usart
+
+#IF NOT (DEFINED (USART.MODULE))
+#DEFINE USART.MODULE
+
+--{{{ PROC serial.start
+--* Initialise iterrupt-driven serial IO
+-- @param port Serial port (eg: 0, 1, 2, or 3).
+-- @param baud Baud rate. Typically 57600.
+PROC serial.start (VAL INT port, VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[UBRRH[port]] := factor.bytes[1]
+    ports[UBRRL[port]] := factor.bytes[0]
+    -- WARNING: Should we replace this, then? Is one "more correct" than the other?
+    -- (3 << UCSZN0[port]) is the same as (UCSZN0[port] \/ UCSZN1[port])
+    ports[UCSRC[port]] := 3 << UCSZN0[port]
+    ports[UCSRB[port]] := BV (TXEN[port]) \/ BV (RXEN[port])
+:
+--}}}
+
+--{{{ PROC serial.byte.out
+--* Write a byte to the serial port (interrupt-driven)
+-- @param VAL INT Serial port (eg: 0, 1, 2, or 3).
+-- @param VAL BYTE Byte to write.
+PROC serial.byte.out (VAL INT port, VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSRA[port]] /\ BV (UDRE[port])) = 0
+        --{{{  transmit buffer full; wait for it to empty
+        SEQ
+          -- Enable the interrupt; UDRIE0 will be cleared by the (C-side)
+          -- interrupt handler.
+          ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (UDRIE[port])
+          INT dummy:
+          wait.for.interrupt (VINTR.UDRE[port], dummy)
+        --}}}
+      TRUE
+        SKIP
+    ports[UDR[port]] := b
+:
+--}}}
+
+--{{{ PROC serial.byte.in
+--* Read a byte from the serial port (interrupt-driven)
+-- @param VAL INT Serial port (eg: 0, 1, 2, or 3).
+-- @param VAL BYTE Byte to be read.
+PROC serial.byte.in (VAL INT port, RESULT BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSRA[port]] /\ BV (RXC[port])) = 0
+        --{{{  receive buffer empty; wait for something to come in
+        SEQ
+          -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
+          ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (RXCIE[port])
+          INT dummy:
+          wait.for.interrupt (VINTR.RX[port], dummy)
+        --}}}
+      TRUE
+        SKIP
+    b := ports[UDR[port]]
+:
+--}}}
+
+--{{{ PROC serial.start.blocking
+--* Initialise the serial port (blocking).
+-- @param port Serial port (eg: 0, 1, 2, or 3).
+-- @param baud Baud rate. Typically 57600.
+PROC serial.start.blocking (VAL INT port, VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[UBRRH[port]] := factor.bytes[1]
+    ports[UBRRL[port]] := factor.bytes[0]
+    -- WARNING: Should we replace this, then? Is one "more correct" than the other?
+    -- (3 << UCSZN0[port]) is the same as (UCSZN0[port] \/ UCSZN1[port])
+    ports[UCSRC[port]] := 3 << UCSZ00
+    ports[UCSRB[port]] := BV (TXEN[port])
+:
+--}}}
+
+--{{{ PROC serial.byte.out.blocking
+--* Write a byte to the serial port (blocking).
+-- @param VAL INT Serial port (eg: 0, 1, 2, or 3)
+-- @param VAL BYTE Byte to write.
+PROC serial.byte.out.blocking (VAL INT port, VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    WHILE (ports[UCSRA[port]] /\ BV (UDRE[port])) = 0
+      SKIP
+    ports[UDR[port]] := b
+:
+--}}}
+
+#ENDIF

@@ -1,0 +1,108 @@
+--** occam header for Arduino Duemilanove specific pin mappings.
+-- @module boardmap
+#IF NOT (DEFINED (BOARDMAP.MODULE))
+#DEFINE BOARDMAP.MODULE
+
+#INCLUDE "constants.module"
+#INCLUDE "base.module"
+
+--{{{ Board to Architecure Layout
+--* Board to Architecture layout w/ register names.
+--
+--B.pin   A.pin REG
+--0(RX0)  2     PD0
+--1(TX0)  3     PD1
+--2       4     PD2
+--3       5     PD3
+--4       6     PD4
+--5       11    PD5
+--6       12    PD6
+--7       13    PD7
+--
+--8       14    PB0
+--9       15    PB1
+--10      16    PB2
+--11      17    PB3
+--12      18    PB4
+--13      19    PB5
+--AREF
+--GND
+--
+--a0(14)  23    PC0
+--a1(15)  24    PC1
+--a2(16)  25    PC2
+--a3(17)  26    PC3
+--a4(18)  27    PC4
+--a5(19)  28    PC5
+--}}}
+
+--{{{ Symbolic Constants
+--* Symbolic constants to simplify mapping Analog-Digital Converstion and
+-- Serial Communication pins to the ATmega328p.
+VAL INT A0 IS 14:
+VAL INT A1 IS 15:
+VAL INT A2 IS 16:
+VAL INT A3 IS 17:
+VAL INT A4 IS 18:
+VAL INT A5 IS 19:
+
+VAL INT RX0 IS 0:
+VAL INT TX0 IS 1:
+
+--* Synbolic constant for on-board LED pin.
+VAL INT LED.PIN IS 13:
+--}}}
+
+--{{{ Board to Architecture array map
+--* Array (hand written) to convert Duemilanovel pins to ATmega328p Pins.
+VAL []BYTE MAP IS [2,  3,  4,  5,  6,  11, 12, 13,
+                   14, 15, 16, 17, 18, 19,
+                   23, 24, 25, 26, 27, 28]:
+--}}}
+
+--* Duemilanove specific board.to.chip converstion function for finding
+-- chip-specific pins from board-specific pin.
+-- @param board.pin The Board Pin to be mapped to an AVR Pin.
+-- @return The AVR Pin connected to the given Board Pin.
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS (INT MAP[board.pin]):
+
+--* Duemilanove specific board.analog.to.chip conversion function for finding
+-- chip-specific pins -- specifically for the analog pins.
+-- If the user inputs 0-5, 14 will be added (so that the apropriate analog AVR
+-- pin is returned by the call to board.to.chip) to board.analog.pin, otherwise
+-- board.to.chip is called normally.
+-- @param board.analog.pin The Barod Pin to be mapped to an AVR Pin.
+-- @return The AVR Pin connected to the given Board Pin.
+INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
+  INT avr.pin:
+  VALOF
+    SEQ
+      IF 
+        board.analog.pin < 6
+          avr.pin := board.to.chip (board.analog.pin + 14)
+        TRUE
+          avr.pin := board.to.chip (board.analog.pin)
+    RESULT avr.pin
+: 
+
+--* Arduino specific board.to.serial.port conversion function for finding
+-- chip-specific pins -- specifically for serial operations.
+-- There's really only one serial port on the Arduino, so this is a silly
+-- FUNCTION that's really just here to make sure nothing breaks in the
+-- broader scheme of things.
+-- @param board.serial.pin The Board Pin to be mapped to a Serial Port.
+-- @return The Serial Port corrisponding to the given Board Pin.
+BYTE INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+  INT serial.port:
+  VALOF
+    SEQ
+      IF
+        (board.pin =  0) OR (board.pin = 1)
+          serial.port := 0
+        TRUE
+          die ("The given Board Pin is not connected to any Serial Ports.")
+    serial.write.byte (RX0, (BYTE serial.port))
+  RESULT serial.port
+:
+
+#ENDIF

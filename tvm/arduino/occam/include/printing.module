@@ -1,0 +1,203 @@
+--** Printing support for Plumbing
+--
+-- [@code PROC]s in this module generally have arguments in this order:
+--
+-- [@item] non-channels;
+-- [@item] input channels;
+-- [@item] output channels.
+--
+-- @module printing
+
+#IF NOT (DEFINED (printing.MODULE))
+#DEFINE PRINTING.MODULE
+
+VAL []INT dec.powers IS [10000, 1000, 100, 10, 1]:
+
+VAL INT32 scaling.INT32 IS 10000:
+VAL REAL32 scaling.REAL32 IS 10000.0:
+
+
+--{{{ PROC serial.setup
+--* begins serial operation on the given board pin.
+--
+-- @param board.pin Board Pin to being serial operations on.
+-- @param baud Baud rate at which to transmit serial data, typically 57600.
+PROC serial.setup (VAL INT board.pin, VAL INT baud)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.start (port, baud)
+:
+
+--{{{ REAL32 Helper Functions (useful functions are below)
+--* Fills the passed array with the [@em character] '0'.
+-- @param arr The array to be filled with 0s.
+PROC printing.zeroArray([]BYTE arr)
+  SEQ i = 0 FOR (SIZE arr)
+    arr[i] := '0'
+:
+
+--* Trims the trailing 0s from an array of BYTEs by decrementing the `total`
+-- value by one for every consecutive '0' at the end of the BYTE array.
+-- @param arr The array of BYTEs to be printed
+-- @param total On completion of the PROC, this will be the number of
+--   elements of arr useful to printing.
+PROC printing.trimTrailing0s (VAL []BYTE arr, INT total)
+  SEQ
+    total := (SIZE arr)
+    INITIAL BOOL REMOVING IS TRUE:
+    SEQ i = ((SIZE arr) - 1) FOR (SIZE arr) STEP (- 1)
+      SEQ
+        IF
+          REMOVING AND (arr[i] = '0')
+            total := total - 1
+          TRUE
+            REMOVING := FALSE
+:
+
+--* Real 32 to array helper function.
+-- Honestly, this is magic to me. You probably don't need to invoke this.
+PROC printing.real32toa.helper (VAL INT lhs, []BYTE arr, INT length)
+  [(SIZE dec.powers)]BYTE dest:
+  INITIAL INT number IS lhs:
+  SEQ
+    SEQ i = 0 FOR (SIZE dec.powers)
+      INT digit:
+      SEQ
+        digit := number / dec.powers[i]
+        number := number REM dec.powers[i]
+        dest[i] := (BYTE digit) + (BYTE '0')
+
+    INITIAL BOOL LEADING IS TRUE:
+    SEQ index = 0 FOR (SIZE dest)
+      SEQ
+        IF 
+          LEADING AND (dest[index] = '0')
+            SKIP
+          LEADING AND (dest[index] <> '0')
+            SEQ
+              arr[length] := dest[index]
+              length := length + 1
+              LEADING := FALSE
+          TRUE
+            SEQ
+              arr[length] := dest[index]
+              length := length + 1
+:
+
+--* Converts the given REAL32 number into a printable array of character,
+-- and the `total` number of elements of said array useful for printing.
+-- @param n The REAL32 to be printed.
+-- @param arr The [@em initially empty] array to be used for storing BYTEs
+--   for future printing.
+-- @param total The [@em initially zero] INT that store the total number of
+--   elements of arr useful for printing.
+PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
+  INITIAL REAL32 scaled IS n * scaling.REAL32:
+  INT32 lhs32:
+  INT lhs:
+  INITIAL INT length IS 0:
+  SEQ
+    printing.zeroArray(arr)
+    scaled := n * scaling.REAL32 -- We scale twice? Not worried about overflow then?
+    lhs32 := INT32 TRUNC scaled
+    lhs := INT (lhs32 / scaling.INT32)
+    printing.real32toa.helper(lhs, arr, length)
+    arr[length] := '.'
+    lhs32 := lhs32 - ((INT32 lhs) * scaling.INT32)
+    INITIAL INT start IS (length + 1):
+    SEQ
+      printing.real32toa.helper((INT lhs32), arr, start)
+      printing.trimTrailing0s(arr, total)
+:
+--}}}
+
+
+--{{{ PROC serial.read.byte
+--* Reads a [@code BYTE] fom the given pin.
+--
+-- @param board.pin The pin from which to read.
+-- @param b The resulting byte from the read.
+PROC serial.read.byte (VAL INT board.pin, RESULT BYTE b)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.in (port, b)
+:
+
+--{{{ PROC serial.write.byte
+--* Write a [@code BYTE] to the given pin.
+--
+-- @param board.pin The board pin to be printed to.
+-- @param b The BYTE to be written.
+PROC serial.write.byte (VAL INT board.pin, VAL BYTE b)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.out (port, b)
+:
+
+--{{{ PROC serial.write.int
+--* Write an [@code INT] to the serial port in hex.
+--
+-- @param board.pin The board pin to be printed to.
+-- @param n The integer to write.
+PROC serial.write.int (VAL INT board.pin, VAL INT n)
+  VAL INT port IS board.to.serial.port (board.pin):
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serial.byte.out (port, digits[(n >> (i * 4)) /\ #F])
+:
+--}}}
+
+--{{{ PROC serial.write.int32
+--* Write an [@code INT32] to the serial port in hex.
+--
+-- @param board.pin The board pin to be printed to.
+-- @param n The long integer ([@code INT32]) to write.
+PROC serial.write.int32 (VAL INT board.pin, VAL INT32 n)
+  VAL INT port IS board.to.serial.port (board.pin):
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 7 FOR 8 STEP -1
+    serial.byte.out (port, digits[INT ((n >> (i * 4)) /\ #F)])
+:
+--}}}
+
+#IF FALSE
+-- So this puppy is broken. Not sure why.
+--{{{ PROC serial.write.real32
+--* Write an [@REAL32] to the serial port in decimal form.
+--
+-- @param board.pin The board pin to be printed to.
+-- @param n The ([@code REAL32]) to write.
+-- @param precision The maximum length of the printed number
+PROC serial.write.real32 (VAL INT board.pin, VAL REAL32 n, VAL INT precision)
+  VAL INT port IS board.to.serial.port (board.pin):
+  [precision]BYTE arr:
+  INT total:
+  SEQ
+    printing.zeroArray(arr)
+    real32toa (n, arr, total)
+    SEQ i = 0 FOR total
+      serial.byte.out (port, arr[i])
+:
+--}}}
+#ENDIF
+
+--{{{ PROC serial.write.string
+--* Write a string to the serial port.
+--
+-- @param board.pin The board pin to be printed to.
+-- @param string Bytes to write.
+PROC serial.write.string (VAL INT board.pin, VAL []BYTE string)
+  VAL INT port IS board.to.serial.port (board.pin):
+  SEQ i = 0 FOR SIZE string
+    serial.byte.out (port, string[i])
+:
+--}}}
+
+--{{{ PROC serial.write.newline
+--* Write a newline.
+--
+-- @param board.pin The board pin to be printed to.
+PROC serial.write.newline (VAL INT board.pin)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.out (port, '*n')
+:
+--}}}
+
+#ENDIF
