@@ -22,6 +22,7 @@ do
 			--with-fcpu=$fcpu \
 			"$@"
 		make
+		make firmware.hex
 	done
 done
 
