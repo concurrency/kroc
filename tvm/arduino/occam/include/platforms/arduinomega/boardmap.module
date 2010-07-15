@@ -76,6 +76,8 @@ VAL INT A13 IS 67:
 VAL INT A14 IS 68:
 VAL INT A15 IS 69:
 
+VAL INT RX  IS 0:
+VAL INT TX  IS 1:
 VAL INT RX0 IS 0:
 VAL INT TX0 IS 1:
 VAL INT RX1 IS 19:
@@ -124,7 +126,7 @@ VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
 -- @return The AVR Pin connected to the given Board Pin.
 INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
 
---* Duemilanove specific board.analog.to.chip conversion function for finding
+--* Arduino Mega specific board.analog.to.chip conversion function for finding
 -- chip-specific pins -- specifically for the analog pins.
 -- If the user inputs 0-15, 54 will be added (so that the apropriate analog AVR
 -- pin is returned by the call to board.to.chip) to board.analog.pin, otherwise
@@ -141,6 +143,32 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
         TRUE
           avr.pin := board.to.chip (board.analog.pin)
     RESULT avr.pin
-: 
+:
+
+--* Arduino Mega specific board.to.serial.port conversion function for finding
+-- chip-specific pins -- specifically for serial operations.
+-- Each serial read/transmit pair is organized into a single 'port' for use
+-- with /arch/common/usart.moduel. RX2 and TX2 are pins 17 and 16, but they --
+-- both being part of the same port -- are both mapped to '2'.
+-- @param board.serial.pin The Board Pin to be mapped to a Serial Port.
+-- @return The Serial Port corrisponding to the given Board Pin.
+BYTE INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+  INT serial.port:
+  VALOF
+    SEQ
+      IF
+        (board.pin =  0) OR (board.pin = 1)
+          serial.port := 0
+        (board.pin = 18) OR (board.pin = 19)
+          serial.port := 1
+        (board.pin = 16) OR (board.pin = 17)
+          serial.port := 2
+        (board.pin = 14) OR (board.pin = 15)
+          serial.port := 3
+        TRUE
+          die ("The given Board Pin is not connected to any Serial Ports.")
+    serial.write.byte (RX0, (BYTE serial.port))
+  RESULT serial.port
+:
 
 #ENDIF

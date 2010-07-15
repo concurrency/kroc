@@ -16,6 +16,17 @@ VAL []INT dec.powers IS [10000, 1000, 100, 10, 1]:
 VAL INT32 scaling.INT32 IS 10000:
 VAL REAL32 scaling.REAL32 IS 10000.0:
 
+
+--{{{ PROC serial.setup
+--* begins serial operation on the given board pin.
+--
+-- @param board.pin Board Pin to being serial operations on.
+-- @param baud Baud rate at which to transmit serial data, typically 57600.
+PROC serial.setup (VAL INT board.pin, VAL INT baud)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.start (port, baud)
+:
+
 --{{{ REAL32 Helper Functions (useful functions are below)
 --* Fills the passed array with the [@em character] '0'.
 -- @param arr The array to be filled with 0s.
@@ -99,27 +110,50 @@ PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
 :
 --}}}
 
---{{{  PROC serial.write.int
+
+--{{{ PROC serial.read.byte
+--* Reads a [@code BYTE] fom the given pin.
+--
+-- @param board.pin The pin from which to read.
+-- @param b The resulting byte from the read.
+PROC serial.read.byte (VAL INT board.pin, RESULT BYTE b)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.in (port, b)
+:
+
+--{{{ PROC serial.write.byte
+--* Write a [@code BYTE] to the given pin.
+--
+-- @param board.pin The board pin to be printed to.
+-- @param b The BYTE to be written.
+PROC serial.write.byte (VAL INT board.pin, VAL BYTE b)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.out (port, b)
+:
+
+--{{{ PROC serial.write.int
 --* Write an [@code INT] to the serial port in hex.
 --
--- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param board.pin The board pin to be printed to.
 -- @param n The integer to write.
-PROC serial.write.int (VAL INT port, VAL INT n)
+PROC serial.write.int (VAL INT board.pin, VAL INT n)
+  VAL INT port IS board.to.serial.port (board.pin):
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (port, digits[(n >> (i * 4)) /\ #F])
+    serial.byte.out (port, digits[(n >> (i * 4)) /\ #F])
 :
 --}}}
 
---{{{  PROC serial.write.int32
+--{{{ PROC serial.write.int32
 --* Write an [@code INT32] to the serial port in hex.
 --
--- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param board.pin The board pin to be printed to.
 -- @param n The long integer ([@code INT32]) to write.
-PROC serial.write.int32 (VAL INT port, VAL INT32 n)
+PROC serial.write.int32 (VAL INT board.pin, VAL INT32 n)
+  VAL INT port IS board.to.serial.port (board.pin):
   VAL []BYTE digits IS "0123456789abcdef":
   SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
+    serial.byte.out (port, digits[INT ((n >> (i * 4)) /\ #F)])
 :
 --}}}
 
@@ -128,38 +162,41 @@ PROC serial.write.int32 (VAL INT port, VAL INT32 n)
 --{{{ PROC serial.write.real32
 --* Write an [@REAL32] to the serial port in decimal form.
 --
--- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param board.pin The board pin to be printed to.
 -- @param n The ([@code REAL32]) to write.
 -- @param precision The maximum length of the printed number
-PROC serial.write.real32 (VAL INT port, VAL REAL32 n, VAL INT precision)
+PROC serial.write.real32 (VAL INT board.pin, VAL REAL32 n, VAL INT precision)
+  VAL INT port IS board.to.serial.port (board.pin):
   [precision]BYTE arr:
   INT total:
   SEQ
     printing.zeroArray(arr)
     real32toa (n, arr, total)
     SEQ i = 0 FOR total
-      serial.write.byte (port, arr[i])
+      serial.byte.out (port, arr[i])
 :
 --}}}
 #ENDIF
 
---{{{  PROC serial.write.string
+--{{{ PROC serial.write.string
 --* Write a string to the serial port.
 --
--- @param port Serial port to write to (eg: 0, 1, 2, 3).
+-- @param board.pin The board pin to be printed to.
 -- @param string Bytes to write.
-PROC serial.write.string (VAL INT port, VAL []BYTE string)
+PROC serial.write.string (VAL INT board.pin, VAL []BYTE string)
+  VAL INT port IS board.to.serial.port (board.pin):
   SEQ i = 0 FOR SIZE string
-    serial.write.byte (port, string[i])
+    serial.byte.out (port, string[i])
 :
 --}}}
 
 --{{{ PROC serial.write.newline
 --* Write a newline.
 --
--- @param port Serial port to write to (eg: 0, 1, 2, 3).
-PROC serial.write.newline (VAL INT port)
-  serial.write.byte (port, '*n')
+-- @param board.pin The board pin to be printed to.
+PROC serial.write.newline (VAL INT board.pin)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.out (port, '*n')
 :
 --}}}
 
