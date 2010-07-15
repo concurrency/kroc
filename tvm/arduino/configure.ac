@@ -76,7 +76,7 @@ AC_SUBST(UPLOAD_RATE)
 
 CFLAGS="-g -Wall -Os -mmcu=$MCU"
 
-AVRDUDE_FLAGS='-V -F -p $(DUDEMCU) -P $(UPLOAD_PORT) -b $(UPLOAD_RATE) -c stk500v1'
+AVRDUDE_FLAGS='-V -F -p $(MCU) -P $(UPLOAD_PORT) -b $(UPLOAD_RATE) -c arduino'
 AC_SUBST(AVRDUDE_FLAGS)
 
 AC_OUTPUT([Makefile config.mk])

@@ -112,17 +112,14 @@ if [ "$1" = "copy" ]; then
   
   pushd $ARDUINOWRAPPER
     cp binary-to-ihex $DSTBIN
-    cp reset-arduino $DSTBIN 
     cp arduinocc $DSTBIN
     cp io-header-to-occam $DSTBIN
-    cp reset-arduino $DSTBIN
     cp read-arduino $DSTBIN
     #cp arduino-upload $DSTBIN
     #cp arduino-firmware-upload $DSTBIN
   
     mkdir -p $DSTARDUINO
     cp tvm-arduino.hex $DSTARDUINO
-    cp avrdude.conf $DSTARDUINO
   
     cp occam/avr.module $DSTLIB
     cp occam/font8x8.inc $DSTLIB
@@ -154,8 +151,7 @@ if [ "$1" = "writeconfig" ]; then
     config $CONFIG ""  
     config $CONFIG "# avrdude"
     config $CONFIG "TVM_AVRDUDE_FIRMWARE_FLAGS=\"-V -F -p \$TVM_MCU\""
-    config $CONFIG "TVM_AVRDUDE_CODE_FLAGS=\"-V -F -p \$TVM_MCU -b \$TVM_UPLOAD_RATE -c stk500v1\""
-    config $CONFIG "TVM_AVRDUDE_CONF=$FINALARDUINO/avrdude.conf"
+    config $CONFIG "TVM_AVRDUDE_CODE_FLAGS=\"-V -F -p \$TVM_MCU -b \$TVM_UPLOAD_RATE -c arduino\""
     config $CONFIG ""
     config $CONFIG "TVM_ARDUINO_FIRMWARE=$FINALARDUINO/tvm-arduino.hex"
   

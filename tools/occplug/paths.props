@@ -1,0 +1,21 @@
+#
+# OS X
+#
+plugin.OccPlugPlugin.path.kroc.osx.include=share/kroc/vtinclude
+plugin.OccPlugPlugin.path.kroc.osx.lib=share/kroc/vtlib
+
+plugin.OccPlugPlugin.path.tvm.osx.include=share/tvm/vtinclude
+plugin.OccPlugPlugin.path.tvm.osx.lib=share/tvm/vtlib
+plugin.OccPlugPlugin.path.tvm.osx.firmware=share/tvm/firmware
+plugin.OccPlugPlugin.path.tvm.osx-ppc.include=share/tvm-ppc/vtinclude
+plugin.OccPlugPlugin.path.tvm.osx-ppc.lib=share/tvm-ppc/vtlib
+plugin.OccPlugPlugin.path.tvm.osx-ppc.firmware=share/tvm-ppc/firmware
+
+#
+# Windows
+#
+plugin.OccPlugPlugin.path.tvm.windows.include=posix/tvm/include
+plugin.OccPlugPlugin.path.tvm.windows.lib=posix/tvm/lib
+plugin.OccPlugPlugin.path.tvm.windows.firmware=posix/tvm/firmware
+
+

@@ -69,7 +69,6 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
   cd $ARDUINO
 fi
 
-
 cd $BUILD
 cd ../../../
 

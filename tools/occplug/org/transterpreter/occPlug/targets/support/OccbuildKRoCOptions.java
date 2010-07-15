@@ -21,15 +21,21 @@ package org.transterpreter.occPlug.targets.support;
  */
 
 import org.transterpreter.occPlug.OccPlugUtil;
+import org.transterpreter.occPlug.hosts.BaseHost;
 
 public class OccbuildKRoCOptions extends OccbuildOptions
 {
 	public OccbuildKRoCOptions()
 	{
+		BaseHost host = BaseHost.getHostObject();
+
 		toolchain = "kroc";
+		
 		systemSearch = new String[] {
-				OccPlugUtil.pathifyXXX("share/kroc/vtinclude"),
-				OccPlugUtil.pathifyXXX("share/kroc/vtlib"),
-				OccPlugUtil.pathifyXXX("lib")};
+				OccPlugUtil.pathifyXXX(host.getPath("kroc", "include")),
+				OccPlugUtil.pathifyXXX(host.getPath("kroc", "lib")),
+				// FIXME: What is this?
+				//OccPlugUtil.pathifyXXX("lib")
+				};
 	}
 }

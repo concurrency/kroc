@@ -1,0 +1,100 @@
+#INCLUDE "plumbing.module"
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serial.write.string("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serial.write.string([BYTE digit])
+        index := index + 1
+    
+:
+PROC ping (CHAN SIGNAL s!)
+  WHILE TRUE
+    SEQ
+      s ! SIGNAL
+      delay (100)
+:
+PROC display (CHAN INT input?)
+  INT val:
+  WHILE TRUE
+    SEQ 
+      input ? val
+      serialWriteDecInt (val)
+      serial.write.string ("*n")
+:
+
+VAL INT NUM.READINGS.TO.AVERAGE IS 40:
+PROC av (CHAN INT input?, output!)
+  [NUM.READINGS.TO.AVERAGE]INT readings:
+  INT val, average, sum:
+  INITIAL INT ndx IS 0:
+  SEQ
+    -- Preload array
+    SEQ i = 0 FOR (SIZE readings)
+      input ? readings[i]      
+    WHILE TRUE
+      SEQ
+        -- Read in a new value
+        input ? readings[ndx]
+        -- Sum up the current array of readings
+        sum := 0
+        SEQ i = 0 FOR (SIZE readings)
+          sum := sum + readings[i]
+        output ! (sum / (SIZE readings))
+        ndx := (ndx + 1) REM (SIZE readings)
+:
+
+VAL INT MAX.Y IS 610:
+VAL INT MIN.Y IS 390:
+
+#INCLUDE "maths.module"
+PROC conv (CHAN INT in?, out!)
+  WHILE TRUE
+    INT reading, result:
+    REAL32 map:
+    SEQ
+      in ? reading
+      REAL32 num, denom:
+      SEQ
+        num    := REAL32 ROUND ((reading - MIN.Y) * 2)
+        denom  := REAL32 ROUND (MAX.Y - MIN.Y) 
+        map    := (num / denom) - 1.0
+        map    := ACOS(map)
+        map    := (map * (180.0/3.14159)) - 90.0
+        result := INT ROUND (map * 100.0)
+        
+      out ! result
+:
+
+
+PROC main()
+  CHAN SIGNAL s:
+  CHAN INT val, average, converted:
+  
+  PAR
+    ping (s!)
+    adc (2, s?, val!)
+    av (val?, average!)
+    --conv (average?, converted!)
+    display (average?)
+
+:

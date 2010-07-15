@@ -24,7 +24,9 @@ firmware_SOURCES = \
 noinst_PROGRAMS = firmware
 CLEANFILES = firmware.hex
 
-all: firmware.hex
+upload: tvm-arduino.hex
+	$(AVRDUDE) $(AVRDUDE_FLAGS) -U flash:w:tvm-arduino.hex
+	./read-arduino $(UPLOAD_PORT)
 
 install: all
 	cp $(FIRMWARE).hex $(prefix)/share/
