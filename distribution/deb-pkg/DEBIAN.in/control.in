@@ -1,8 +1,8 @@
-Package: concurrency-@WRAPPER@
-Version: 100
+Package: concurrency-@TOOLCHAIN@-@TARGET@-@WRAPPER@
+Version: @VERSION@
 Section: base
 Priority: optional
-Architecture: i386
+Architecture: @BUILD_ARCHITECTURE@
 Depends: bash, avrdude (<< 5.10-3), jedit (<< 4.3.2)
 Maintainer: matt@concurrency.cc
-Description: occam-pi for the AVR/Arduino
+Description: @PACKAGE_DESCRIPTION@

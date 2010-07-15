@@ -4,6 +4,7 @@ import contextlib
 import datetime
 import commands
 import inspect
+import urllib
 import time
 import os
 import re
@@ -152,11 +153,11 @@ def configure():
 		TARGET    = config.get('TARGET')
 		WRAPPER   = config.get('WRAPPER')
 		PARAMS    = ''
-		if TOOLCHAIN != 'native':
+		if TOOLCHAIN != 'kroc':
 			PARAMS += "--with-toolchain=%s " % config.get('TOOLCHAIN')
-		if TARGET != 'native':
+		if TARGET != 'posix':
 			PARAMS += "--target=%s " % config.get('TARGET')
-		if WRAPPER != 'native':
+		if WRAPPER != 'posix':
 				PARAMS += "--with-wrapper=%s" % config.get('WRAPPER')
 
 		cmd(build_command(["../configure", concat(["--prefix=", config.get('FINAL')]), 
@@ -183,12 +184,13 @@ def build():
 def install():
 	header("DOING MAKE INSTALL")
 	with pushd():
+		cd(config.get('OBJ'))
 		cmd("make")
-		cmd(build_command(["make", "install", concat(["DESTDIR=", config.get('FINAL')])]))
+		cmd(build_command(["make", "install", concat(["DESTDIR=", config.get('DEST')])]))
 
 def make_destdirs():
 	header("MAKING DESTINATION DIRECTORIES")
-	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_LIB', 'DEST_DEBIAN'] 
+	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_DEBIAN'] 
 	for d in DESTINATIONS:
 		mkdir(config.get(d))
 
@@ -211,11 +213,12 @@ def subst_and_copy(file, source_dir, dest_dir):
 					line = re.sub("@PLATFORM@", re.search("(.*?)\.(.*)", file).group(1), line)
 				
 				if re.search("@KROC-SETUP@", line):
-					if config.get('TARGET') == 'native':
-						line = re.sub("@KROC-SETUP@", "kroc-setup.sh", line)
-					else:
+					#if config.get('TOOLCHAIN') in ['kroc', 'tvm']:
+					#	line = re.sub("@KROC-SETUP@", "kroc-setup.sh", line)
+					#else:
+					# Actually... can we change the name of this file?
 						line = re.sub("@KROC-SETUP@", 
-													"%s-kroc-setup.sh" % config.get('TARGET'),
+													"%s-occam-setup.sh" % config.get('TARGET'),
 													line)
 
 				# After replacements, write the line
@@ -251,12 +254,16 @@ def copy_arduino_build():
 	copy_files(".*.hex", config.get('SOURCE_FIRMWARE'), config.get('DEST_FIRMWARE'))
 	
 	copy_files("avrdude.conf", config.get('SOURCE_ARDUINO'), config.get('DEST_CONF'))
-	
-	copy_dir(config.get('SOURCE_LIB'), config.get('DEST_LIB'))	
+
+	# What was going into LIB should actually go into SHARE. 	
+	copy_dir(config.get('SOURCE_LIB'), config.get('DEST_SHARE'))	
 
 def copy_native_build():
 	header("COPYING NATIVE BUILD PRODUCTS TO PACKAGE")
 	# No-op for native? "make install" does everything...
+
+def copy_native_tvm_build():
+	header("COPYING NATIVE TVM BUILD PRODUCTS TO PACKAGE")
 
 def deb():
 	header("BUILDING DEBIAN PACKAGE")
@@ -311,19 +318,37 @@ def with_lib_path(path):
 	header('SETTING LIB PATH TO %s' % path)
 	config.rebase('LIB_PATH', path)
 
+def echo_config():
+	for key, val in config.CFG.iteritems():
+		print "%s\t\t%s" % (key, val)
+
+
 def build_avr():
 	header("SETTING AVR BUILD OPTIONS")
-	config.rebase('WRAPPER', 'arduino')
 	config.rebase('TOOLCHAIN', 'tvm')
 	config.rebase('TARGET', 'avr')
+	config.rebase('WRAPPER', 'arduino')
+	config.set('PACKAGE_DESCRIPTION', 'occam for the AVR/Arduino.')
+	#echo_config()
 
-def build_native():
+def build_native_kroc():
 	header("SETTING NATIVE BUILD OPTIONS")
-	config.rebase('WRAPPER', 'native')
-	config.rebase('TOOLCHAIN', 'native')
-	config.rebase('TARGET', 'native')
+	config.rebase('TOOLCHAIN', 'kroc')
+	config.rebase('TARGET', 'posix')
+	config.rebase('WRAPPER', 'posix')
+	config.set('PACKAGE_DESCRIPTION', 'A native occam-pi for POSIX platforms.')
+	#echo_config()
 		
+def build_native_tvm():
+	header("SETTING NATIVE TVM BUILD OPTIONS")
+	config.rebase('TOOLCHAIN', 'tvm')
+	config.rebase('TARGET', 'posix')
+	config.rebase('WRAPPER', 'posix')
+	config.set('PACKAGE_DESCRIPTION', 'occam-pi on the Transterpreter for POSIX platforms.')
+	#echo_config()
 
+def ttw():
+	return [config.get('TOOLCHAIN'), config.get('TARGET'), config.get('WRAPPER')]
 
 def all(url):
 	checkout(url)
@@ -331,23 +356,70 @@ def all(url):
 	configure()
 	build()
 	install()
-	make_destdirs()
-
-	if config.get('WRAPPER') == 'arduino':
+	if ['tvm', 'avr', 'arduino'] == ttw():
+		make_destdirs()
 		copy_arduino_config()
 		copy_arduino_build()
-
-	if config.get('WRAPPER') == 'native':
+	if ['kroc', 'posix', 'posix'] == ttw():
 		copy_native_build()
-
+	if ['tvm', 'posix', 'posix'] == ttw():
+		copy_native_tvm_build()
 	deb()
 
 def refresh_libs():
 	if config.get('WRAPPER') == 'arduino':
 		copy_arduino_config()
 		copy_arduino_build()
-
 	deb()
+
+
+def build_occplug():
+	config.refresh() 
+
+	base    = 'ErrorList'
+	zipfile = '%s.zip' % base
+	jarfile = '%s.jar' % base 
+
+	with pushd():
+		cd(config.get('SOURCE_OCCPLUG'))
+		urllib.urlretrieve (config.get('ERRORLIST_URL'), zipfile)
+
+		cmd(build_command(['unzip', zipfile]))
+		cmd(build_command(['mv', jarfile, config.get('SOURCE_OCCPLUG')]))
+	
+		cmd(build_command(['ant', 
+											'-Djedit.install.dir=/usr/share/jedit', 
+											'-Dinstall.dir=%s' % config.get('@DEST_OCCPLUG@'),
+											'-Dbuild.dir=%s' % config.get('@OCCPLUG_TEMP@'),
+											'-lib .']))	
+
+		cmd(build_command(['mv', jarfile, config.get('@DEST_OCCPLUG@')]))
+		
+
+
+# Builds multiple packages for all architectures
+
+def all_arch(url):
+	config.refresh()
+
+	# TOOLCHAINS    = ['avr', 'kroc', 'tvm']
+	TOOLCHAINS    = ['kroc', 'tvm']
+	# ARCHITECTURES = ['i386', 'i686']
+	arch = 'i386'
+	for tool in TOOLCHAINS:
+		# I think we need 386 and 686 packages to make
+		# life easier for end-users.
+		#with_temp_dir("%s/%s" % (arch, config.get('TEMP_ROOT') ))
+
+		# Set the config for the platform.
+		if tool == 'avr':
+			build_avr()
+		elif tool == 'tvm':
+			build_native_tvm()
+		elif tool == 'kroc':
+			build_native_kroc()
+		
+		all(url)
 
 #############################################
 # COMMAND LINE PARSING
@@ -377,12 +449,15 @@ OPTIONS = [
 		deb],
 	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).", rpm],
 	["all", "store", "ALL_SVN_URL", "Do everything up to this point.", all],
-	["refresh-libs", "store_true", "Re-run copy-config, copy, deb, and rpm.", refresh_libs],
-	["with-lib-path", "store", "LIB_PATH", "Set new lib path.", with_lib_path],
+	["refresh-avr-libs", "store_true", "Re-run copy-config, copy, deb, and rpm.", refresh_libs],
+	["with-avr-svn-path", "store", "LIB_PATH", "Set path for where we will refresh from.", with_lib_path],
 	["with-temp-dir", "store", "TEMP_DIR", "Set the temp build directory.",
 		with_temp_dir],
-	["build-avr", "store_true", "BUILD_AVR", "Set build vars for AVR.", build_avr],
-	["build-native", "store_true", "BUILD_NATIVE", "Set build vars for NATIVE.", build_native]
+	["build-avr", "store_true", "Set build vars for AVR.", build_avr],
+	["build-kroc", "store_true","Set build vars for a native KRoC build.", build_native_kroc],
+	["build-tvm", "store_true", "Set build vars for a native TVM build.", build_native_tvm],
+	["build-occplug", "store_true", "Build the occPlug.", build_occplug],
+	["uber", "store", "SVN_URL", "Build all toolchains and architectures.", all_arch]
 	] 
 	
 parser = OptionParser()
@@ -416,23 +491,22 @@ def call_handler(str, arg):
 		elif (tag == re.sub("_", "+", OPT[0].lower())):
 			OPT[len(OPT) - 1]()
 
-BUILD_TYPE = [ "BUILD_AVR", "BUILD_NATIVE"]
+PLAT       = ["BUILD-TVM", "BUILD-AVR"]
 DIR_PARAMS = ["TEMP_DIR", "LIB_PATH"]
-FIRST      = BUILD_TYPE + DIR_PARAMS
+FIRST      = DIR_PARAMS
 
-for key, val in props(options).iteritems():
-	if (key in BUILD_TYPE) and (val != None):
-		# print "HANDLING BUILD TYPE"
-		call_handler(re.sub("-", "_", key), None)
-	elif (key in DIR_PARAMS) and (val != None):
-		# print "HANDLING DIR PARAMS"
-		call_handler(re.sub("-", "_", key), val)
-
-# print "---- MOVING ON SWIFTLY ----"
-
-#for key, val in props(options).iteritems():
-for key, val in props(options).iteritems():
-	if (key not in FIRST):
-		if (val != None):
+def driver():
+	for key, val in props(options).iteritems():
+		if (key in PLAT) and (val != None):
+			call_handler(key, val)
+		if (key in DIR_PARAMS) and (val != None):
+			# print "HANDLING DIR PARAMS"
 			call_handler(re.sub("-", "_", key), val)
+	#for key, val in props(options).iteritems():
+	for key, val in props(options).iteritems():
+		if (key not in FIRST):
+			if (val != None):
+				call_handler(re.sub("-", "_", key), val)
 
+	
+driver()
