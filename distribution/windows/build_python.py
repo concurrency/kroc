@@ -29,7 +29,7 @@ msvc90crt_manifest = '''
 </assembly>
 '''
 f = open('build/Microsoft.VC90.CRT.manifest', 'w')
-f.write('msvc90crt_manifest')
+f.write(msvc90crt_manifest)
 f.close()
 
 data_files = [
