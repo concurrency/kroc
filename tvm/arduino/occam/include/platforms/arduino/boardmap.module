@@ -10,8 +10,8 @@
 --* Board to Architecture layout w/ register names.
 --
 --B.pin   A.pin REG
---0       2     PD0
---1       3     PD1
+--0(RX0)  2     PD0
+--1(TX0)  3     PD1
 --2       4     PD2
 --3       5     PD3
 --4       6     PD4
@@ -46,8 +46,8 @@ VAL INT A3 IS 17:
 VAL INT A4 IS 18:
 VAL INT A5 IS 19:
 
-VAL INT RX0 IS 2:
-VAL INT TX0 IS 3:
+VAL INT RX0 IS 0:
+VAL INT TX0 IS 1:
 
 --* Synbolic constant for on-board LED pin.
 VAL INT LED.PIN IS 13:
@@ -84,5 +84,25 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
           avr.pin := board.to.chip (board.analog.pin)
     RESULT avr.pin
 : 
+
+--* Arduino specific board.to.serial.port conversion function for finding
+-- chip-specific pins -- specifically for serial operations.
+-- There's really only one serial port on the Arduino, so this is a silly
+-- FUNCTION that's really just here to make sure nothing breaks in the
+-- broader scheme of things.
+-- @param board.serial.pin The Board Pin to be mapped to a Serial Port.
+-- @return The Serial Port corrisponding to the given Board Pin.
+BYTE INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+  INT serial.port:
+  VALOF
+    SEQ
+      IF
+        (board.pin =  0) OR (board.pin = 1)
+          serial.port := 0
+        TRUE
+          die ("The given Board Pin is not connected to any Serial Ports.")
+    serial.write.byte (RX0, (BYTE serial.port))
+  RESULT serial.port
+:
 
 #ENDIF
