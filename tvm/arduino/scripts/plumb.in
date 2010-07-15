@@ -95,7 +95,7 @@ echo "Compiling..."
 avr-occbuild \
   --search @DEST_SHARE@/tvm/avr-vtinclude \
   --search @DEST_SHARE@/tvm/avr-vtlib \
-  --search @DEST_SHARE@/@TOOLCHAIN@-@TARGET@ \
+  --search @DEST_SHARE@ \
   --search @DEST_SHARE@/arch/$TVM_MCU \
 					--search @DEST_SHARE@/platforms/$PLATFORM \
   -DF.CPU=$TVM_F_CPU --program $FILENAME
