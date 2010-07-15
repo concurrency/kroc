@@ -191,8 +191,8 @@ def install():
 
 def make_destdirs():
 	header("MAKING DESTINATION DIRECTORIES")
-	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_DEBIAN', 
-				'DEST_OCCPLUG', 'DEST_OCCPLUG_DEBIAN'] 
+	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_CONF', 'DEST_DEBIAN', 
+				'DEST_OCCPLUG', 'DEST_OCCPLUG_DEBIAN', 'DEST_INCLUDE'] 
 	for d in DESTINATIONS:
 		mkdir(config.get(d))
 
@@ -253,12 +253,12 @@ def copy_arduino_build():
 	subst_and_copy("plumb.in", config.get('SOURCE_SCRIPTS'), config.get('DEST_BIN'))
 	chmod("755", config.get('DEST_BIN'), "plumb")
 
-	copy_files(".*.hex", config.get('SOURCE_FIRMWARE'), config.get('DEST_FIRMWARE'))
+	copy_files(".*.hex", config.get('SOURCE_ARDUINO'), config.get('DEST_FIRMWARE'))
 	
 	copy_files("avrdude.conf", config.get('SOURCE_ARDUINO'), config.get('DEST_CONF'))
 
 	# What was going into LIB should actually go into SHARE. 	
-	copy_dir(config.get('SOURCE_LIB'), config.get('DEST_SHARE'))	
+	copy_dir(config.get('SOURCE_INCLUDE'), config.get('DEST_INCLUDE'))	
 
 def copy_native_build():
 	header("COPYING NATIVE BUILD PRODUCTS TO PACKAGE")
@@ -373,6 +373,7 @@ def all(url):
 
 def refresh_libs():
 	if config.get('WRAPPER') == 'arduino':
+		make_destdirs()
 		copy_arduino_config()
 		copy_arduino_build()
 	deb()
