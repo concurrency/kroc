@@ -29,6 +29,7 @@ PROTOCOL SERVO
     --* Refresh rate of the servo pulse. [@em Do not change this casually.]
     -- Most servos require a refreshed puslse once every 20 miliseconds,
     -- which is what refresh defaults to.
+    -- @item refresh Initially 20000. Measured in microseconds.
     refresh ; INT
     --* Starts servo operations. We recomened setting div and pos before
     -- sending the start command, and not changing div after.
