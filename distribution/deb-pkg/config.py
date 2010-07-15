@@ -14,6 +14,7 @@ BASE = {'VERSION'              : '100',
 				'TARGET'               : 'posix',
 				'WRAPPER'              : 'posix',
 				'PACKAGE_DESCRIPTION'  : 'Native occam-pi for the desktop.',
+				'SVN_TRUNK'            : 'http://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk',
 				# # # #
 				'YMD'                  : now.strftime("%Y%m%d"),
 				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
