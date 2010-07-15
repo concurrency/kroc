@@ -353,6 +353,9 @@ def ttw():
 	return [config.get('TOOLCHAIN'), config.get('TARGET'), config.get('WRAPPER')]
 
 def all(url):
+	if url == 'trunk':
+		url = config.get('SVN_TRUNK')
+
 	checkout(url)
 	autoreconf()
 	configure()
