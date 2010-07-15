@@ -25,8 +25,8 @@ PROC serial.start (VAL INT port, VAL INT32 baud)
 
 --{{{ PROC serial.byte.out
 --* Write a byte to the serial port (interrupt-driven)
--- @param VAL INT Serial port (eg: 0, 1, 2, or 3).
--- @param VAL BYTE Byte to write.
+-- @param port Serial port (eg: 0, 1, 2, or 3).
+-- @param b Byte to write.
 PROC serial.byte.out (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -49,8 +49,8 @@ PROC serial.byte.out (VAL INT port, VAL BYTE b)
 
 --{{{ PROC serial.byte.in
 --* Read a byte from the serial port (interrupt-driven)
--- @param VAL INT Serial port (eg: 0, 1, 2, or 3).
--- @param VAL BYTE Byte to be read.
+-- @param port Serial port (eg: 0, 1, 2, or 3).
+-- @param b Byte to be read.
 PROC serial.byte.in (VAL INT port, RESULT BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -91,8 +91,8 @@ PROC serial.start.blocking (VAL INT port, VAL INT32 baud)
 
 --{{{ PROC serial.byte.out.blocking
 --* Write a byte to the serial port (blocking).
--- @param VAL INT Serial port (eg: 0, 1, 2, or 3)
--- @param VAL BYTE Byte to write.
+-- @param port Serial port (eg: 0, 1, 2, or 3)
+-- @param b BYTE Byte to write.
 PROC serial.byte.out.blocking (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports

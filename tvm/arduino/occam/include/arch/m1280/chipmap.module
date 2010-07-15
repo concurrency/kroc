@@ -1,6 +1,9 @@
+--** Symbolic arrays and FUNCTON(s) for mapping into General Purpose I/O
+-- functionality on ATmega1280 based boards.
+-- @module 1280.chipmap
+
 #IF NOT (DEFINED (CHIPMAP.MODULE))
 #DEFINE CHIPMAP.MODULE
-
 
 VAL INT DDRX  IS -1:
 VAL INT PORTX IS -1:

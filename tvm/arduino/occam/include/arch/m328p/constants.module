@@ -1,5 +1,5 @@
---** Constants for the 328
--- @module constants
+--** Constants for the ATmwga328.
+-- @module 328.constants
 
 #IF NOT (DEFINED (CONSTANTS.MODULE))
 #DEFINE CONSTANTS.MODULE

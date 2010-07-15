@@ -1,5 +1,5 @@
---** Pulse Width Modulation board-specific helper functions for the ATmega328
--- @module pwm_arch
+--** Pulse Width Modulation board-specific helper functions for the ATmega328.
+-- @module 328.pwmarch
 
 
 #IF NOT (DEFINED (PWMARCH.MODULE))

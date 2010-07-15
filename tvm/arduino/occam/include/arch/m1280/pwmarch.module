@@ -1,5 +1,5 @@
 --** Pulse Width Modulation board-specific helper functions for the ATmega1280
--- @module pwm_arch
+-- @module 1280.pwmarch
 
 
 #IF NOT (DEFINED (PWMARCH.MODULE))

@@ -1,5 +1,5 @@
 --** occam header for ArduPilotMega specific pin mappings.
--- @module boardmap
+-- @module ardupilotmega.boardmap
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
 

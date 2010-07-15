@@ -1,5 +1,5 @@
 --** occam header for Seeeduino Mega specific pin mappings.
--- @module boardmap
+-- @module seeeduinomega.boardmap
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
 

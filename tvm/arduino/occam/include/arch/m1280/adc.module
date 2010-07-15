@@ -1,5 +1,5 @@
---** ACD routines for the 1280
--- @module adc
+--** ACD routines for the ATmega1280.
+-- @module 1280.adc
 
 #IF NOT (DEFINED (ADC.MODULE))
 #DEFINE ADC.MODULE
@@ -66,15 +66,15 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
 --* Helper function for performing an ADC using the AREF.
 -- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
 -- @param v The INT that will be used to store the analog read.
-INLINE PROC adc.aref (VAL INT pin, RESULT INT v)
-  adc.base (pin, FALSE, v)
+INLINE PROC adc.aref (VAL INT avr.pin, RESULT INT v)
+  adc.base (avr.pin, FALSE, v)
 :
 
 --* Helper function for performing an ADC using the VCC.
 -- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
 -- @param v The INT that will be used to store the analog read.
-INLINE PROC adc.vcc (VAL INT pin, RESULT INT v)
-  adc.base (pin, TRUE, v)
+INLINE PROC adc.vcc (VAL INT avr.pin, RESULT INT v)
+  adc.base (avr.pin, TRUE, v)
 :
 
 #ENDIF

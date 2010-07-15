@@ -1,5 +1,5 @@
 --** occam header for Arduino Duemilanove specific pin mappings.
--- @module boardmap
+-- @module arduino.boardmap
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
 
@@ -90,7 +90,7 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
 -- There's really only one serial port on the Arduino, so this is a silly
 -- FUNCTION that's really just here to make sure nothing breaks in the
 -- broader scheme of things.
--- @param board.serial.pin The Board Pin to be mapped to a Serial Port.
+-- @param board.pin The Board Pin to be mapped to a Serial Port.
 -- @return The Serial Port corrisponding to the given Board Pin.
 INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   INT serial.port:

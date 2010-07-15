@@ -1,5 +1,5 @@
 --** occam header for Arduino Mega specific pin mappings.
--- @module boardmap
+-- @module arduinomega.boardmap
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
 
@@ -150,7 +150,7 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
 -- Each serial read/transmit pair is organized into a single 'port' for use
 -- with /arch/common/usart.moduel. RX2 and TX2 are pins 17 and 16, but they --
 -- both being part of the same port -- are both mapped to '2'.
--- @param board.serial.pin The Board Pin to be mapped to a Serial Port.
+-- @param board.pin The Board Pin to be mapped to a Serial Port.
 -- @return The Serial Port corrisponding to the given Board Pin.
 INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   INT serial.port:
