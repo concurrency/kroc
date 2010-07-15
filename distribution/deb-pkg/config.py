@@ -26,12 +26,12 @@ BASE = {'VERSION'              : '100',
 				# Where we pull things from
 				# These are all used by the Arduino build...
 				'SOURCE_ARDUINO'       : '@SVN@/tvm/arduino',
-				'SOURCE_CONF'          : '@LIB_PATH@/tvm/arduino/occam/share/conf',
-				'SOURCE_SCRIPTS'       : '@LIB_PATH@/tvm/arduino/scripts',
-				'SOURCE_FIRMWARE'      : '@SVN@/tvm/arduino',
-				'LIB_PATH'             : '@SVN@',
-				'SOURCE_LIB'           : '@LIB_PATH@/tvm/arduino/occam/include',
-				'SOURCE_DEBIAN'        : '@LIB_PATH@/distribution/deb-pkg/DEBIAN.in',
+				'SOURCE_SHARE'         : '@SOURCE_ARDUINO@/occam/share',
+				'SOURCE_CONF'          : '@SOURCE_SHARE@/conf',
+				'SOURCE_SCRIPTS'       : '@SOURCE_ARDUINO@/scripts',
+				'SOURCE_FIRMWARE'      : '@SOURCE_ARDUINO@',
+				'SOURCE_LIB'           : '@SOURCE_SHARE@',
+				'SOURCE_DEBIAN'        : '@SVN@/distribution/deb-pkg/DEBIAN.in',
 				# Desired filesystem path for installation
 				'INSTPATH'             : 'usr',
 				'FINAL'                : '/@INSTPATH@',
