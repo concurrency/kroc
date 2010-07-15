@@ -42,10 +42,10 @@ UPLOAD_PORT=$2
 
 if [ "$3" == "firmware" ]; then
   echo "Uploading firmware version [$TVM_ARDUINO_FIRMWARE]."
-  reset-arduino $UPLOAD_PORT
-  avrdude -C $TVM_AVRDUDE_CONF \
+  #avrdude -C $TVM_AVRDUDE_CONF \
+  avrdude \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
-    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c stk500v1 \
+    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c arduino \
     -U flash:w:$SHARE/firmwares/$TVM_ARDUINO_FIRMWARE
   exit
 fi
@@ -97,6 +97,7 @@ avr-occbuild \
   --search @FINAL_DEST_SHARE@/tvm/avr-vtinclude \
   --search @FINAL_DEST_SHARE@/tvm/avr-vtlib \
   --search @FINAL_DEST_INCLUDE@ \
+  --search @FINAL_DEST_INCLUDE@/arch/common \
   --search @FINAL_DEST_INCLUDE@/arch/$TVM_MCU \
 	--search @FINAL_DEST_INCLUDE@/platforms/$PLATFORM \
   -DF.CPU=$TVM_F_CPU --program $FILENAME
@@ -122,8 +123,9 @@ if [ $? -eq 0 ]; then
   if [ $? -eq 0 ]; then
     if [ -f $HEX ]; then
       echo "Uploading..."
-      reset-arduino $UPLOAD_PORT
-      avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+      #avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+      echo "avrdude $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM"
+      avrdude $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
     else
       echo ".hex file not generated or not found."
       exit
