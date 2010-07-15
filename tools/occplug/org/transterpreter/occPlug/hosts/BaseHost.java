@@ -26,6 +26,7 @@ import org.transterpreter.occPlug.OccPlugPlugin;
 public abstract class BaseHost {
 
 	protected String[] commandBase;
+	protected String base;
 	
 	protected BaseHost()
 	{
@@ -34,6 +35,7 @@ public abstract class BaseHost {
 	
 	protected BaseHost(String base)
 	{
+		this.base = base;
 		commandBase = new String[] {base, "default"};
 	}
 	
@@ -67,6 +69,16 @@ public abstract class BaseHost {
 		throw new RuntimeException("Invalid command: " + command + "(" + prop + ")");		
 	}
 	
+	public String getPath(String tool, String path)
+	{
+		String prop = OccPlugPlugin.PROPERTY_PREFIX + "path." + tool + "." + base + "." + path;
+		String cmd = jEdit.getProperty(prop);
+		if(cmd != null)
+			return cmd;
+		
+		throw new RuntimeException("Invalid getPath: (" + prop + ")");		
+	}
+	
 	public static BaseHost getHostObject()
 	{
 		String os = System.getProperty("os.name");
@@ -81,7 +93,8 @@ public abstract class BaseHost {
 		}
 		else if(os.equals("Linux"))
 		{
-			return new Unix();
+			//return new Unix();
+			throw new RuntimeException("Linux not supported.");
 		}
 		
 		throw new RuntimeException("Unknown operating system");

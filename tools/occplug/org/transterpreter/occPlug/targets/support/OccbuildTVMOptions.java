@@ -1,4 +1,4 @@
-package org.transterpreter.occPlug.targets.support;
+package org.transterpreter.occPlug.targets.support; 
 
 /*
  * OccbuildTVMOptions.java
@@ -21,19 +21,19 @@ package org.transterpreter.occPlug.targets.support;
  */
 
 import org.transterpreter.occPlug.OccPlugUtil;
+import org.transterpreter.occPlug.hosts.BaseHost;
 
 public class OccbuildTVMOptions extends OccbuildOptions
 {
 	public OccbuildTVMOptions()
 	{
+		BaseHost host = BaseHost.getHostObject();
+
 		toolchain = "tvm";
-		if(System.getProperty("os.arch").equals("ppc"))
-		{
-			systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/tvm-ppc/vtinclude"), OccPlugUtil.pathifyXXX("share/tvm-ppc/vtlib")};
-		}
-		else
-		{
-			systemSearch = new String[] {OccPlugUtil.pathifyXXX("share/tvm/vtinclude"), OccPlugUtil.pathifyXXX("share/tvm/vtlib")};
-		}
+
+		systemSearch = new String[] {
+				OccPlugUtil.pathifyXXX(host.getPath("tvm", "include")), 
+				OccPlugUtil.pathifyXXX(host.getPath("tvm", "lib"))};
+
 	}
 }

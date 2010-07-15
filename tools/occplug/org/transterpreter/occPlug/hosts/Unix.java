@@ -25,6 +25,11 @@ import java.io.FilenameFilter;
 
 public class Unix extends BaseHost {
 	
+	protected Unix(String base)
+	{
+		super(base);
+	}
+	
 	public String[] getSerialPorts()
 	{
 		FilenameFilter filter = new FilenameFilter() {
