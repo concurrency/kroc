@@ -6,6 +6,7 @@ import errno
 import shutil
 import datetime
 import glob
+import subprocess
 
 BUILD               = 'build'
 OUTPUT              = 'output'
@@ -24,8 +25,11 @@ BINARIES = "occ21.exe ilibr.exe mkoccdeps.exe tvm.exe".split()
 
 build_date  = datetime.datetime.utcnow()
 version     = build_date.strftime('%Y%m%d.%H%M')
-shortversion= 'Development version: %s %s' % (version, 'svnversionTODO')
-#(`svnversion -nc ../../`)"
+svnversion  = subprocess.Popen(['svnversion', 
+                                '-nc', 
+                                '../../'], 
+                               stdout=subprocess.PIPE).communicate()[0]
+shortversion= 'Development version: %s %s' % (version, svnversion)
 
 
 # from: 
@@ -148,6 +152,16 @@ mkdirs(JEDIT_DIR)
 copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar'])
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('../common/jEdit/occam.xml', os.path.join(JEDIT_DIR, 'modes'))
-#patch "$jedit_dir/modes/catalog" < "../common/jEdit/catalog.patch"
+
+# Copy custom properties
+copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))
+
+# Patch jEdit catalog
+retcode = subprocess.call(["patch", 
+           os.path.join(JEDIT_DIR, 'modes/catalog'), 
+           '../common/jEdit/catalog.patch'], shell=True)
+if retcode != 0:
+   print 'Patch of jEdit catalog failed, aborting'
+   sys.exit(1)
 
 print 'Built app version: %s (%s)' % (version, shortversion,)
