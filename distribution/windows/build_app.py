@@ -77,11 +77,11 @@ copy_tree('py2exe-dist', BIN_DIR)
 import urllib2
 mkdirs('perlfiles')
 if not os.path.exists('perlfiles/plinker.exe'):
-    f = open('perlfiles/plinker.exe', 'w')
+    f = open('perlfiles/plinker.exe', 'wb')
     f.write(urllib2.urlopen('http://lyderjacobsen.org/misc/plinker.exe').read())
     f.close()
 if not os.path.exists('perlfiles/tce-dump.exe'):
-    f = open('perlfiles/tce-dump.exe', 'w')
+    f = open('perlfiles/tce-dump.exe', 'wb')
     f.write(urllib2.urlopen('http://lyderjacobsen.org/misc/tce-dump.exe').read())
     f.close()
 copy_files('perlfiles/*', BIN_DIR)
