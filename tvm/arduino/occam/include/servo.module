@@ -1,0 +1,106 @@
+--** Servo wrapper functions.
+-- @module servo
+
+#IF NOT (DEFINED (SERVO.MODULE))
+#DEFINE SERVO.MODULE
+
+--FIXME: There are no sanity checks around here... maybe a problem?
+--{{{ PROTOCOL SERVO
+--* Servo control protocol.
+PROTOCOL SERVO
+  CASE
+    --* Maximum time active; in microseconds.
+    -- @item max Initially 2300. must be less than 20000.
+    max ; INT
+    --* Minimum time active; in microseconds.
+    -- @item min Initially 700. must be more than 0.
+    min ; INT
+    --* Number of divisions in the span between max - min.
+    -- @item div Initially 180. Must be <= max - min.
+    div ; INT
+    --* Positition of the servo. [@em This is what you'll be using the most].
+    -- @item pos Initially 90. Must be between 0:pos.
+    pos ; INT
+    --* Number of microseonds (greater than min) the pulse to the servo will
+    -- last. [@em We strongly recomend using div and pos to effect the
+    -- position of the servo].
+    -- @item usec Automatically calculated when pos is reset.
+    usec ; INT
+    --* Refresh rate of the servo pulse. [@em Do not change this casually.]
+    -- Most servos require a refreshed puslse once every 20 miliseconds,
+    -- which is what refresh defaults to.
+    refresh ; INT
+    --* Starts servo operations. We recomened setting div and pos before
+    -- sending the start command, and not changing div after.
+    start
+    --* Supposed to stop servo operations. But we've not added that
+    -- functionality yet.
+    stop
+:
+--}}}
+
+--{{{ PROC servo
+--* Listens for and acts on all tagged signals sent to a servo channel.
+-- @param board.pin The board pin to be used for servo operations. For the
+--   time being, only PWM pins connected to a 16 bit timer can be used to
+--   operate servos.
+-- @param s The servo channel used for controlling servo operations.
+PROC servo (VAL INT board.pin, CHAN SERVO s?)
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
+  INITIAL INT max IS 2200: --In muSeconds
+  INITIAL INT min IS 800:  --In muSeconds
+  INITIAL INT div IS 180:  --Unitless
+  INITIAL INT pos IS 90:   --Must be between 0:div
+  INITIAL INT increment IS (max - min) / div:
+  INITIAL INT usec IS (pos * increment) + min:
+  INITIAL INT refresh IS 20000: --In muSeconds
+  INLINE PROC set.increment ()
+    increment := (max - min) / div
+  :
+  INLINE PROC set.usec ()
+    usec := (pos * increment) + min
+  :
+
+  WHILE TRUE
+    s ? CASE
+      max ; max
+        SEQ
+          set.increment ()
+          set.usec ()
+      min ; min
+        SEQ
+          set.increment ()
+          set.usec()
+      div ; div -- we should totally clamp this...
+        set.increment()
+      pos ; pos
+        SEQ
+          set.usec ()
+          IF
+            RUNNING
+              pwm16.set.compare (avr.pin, usec)
+            TRUE
+              SKIP
+      usec ; usec
+        SEQ
+          pos := usec
+          IF
+            RUNNING
+              pwm16.set.compare (avr.pin, usec)
+            TRUE
+              SKIP 
+      refresh ; refresh
+        SKIP
+      start
+        SEQ
+          RUNNING := TRUE
+          pwm16.setup (avr.pin, 8)
+          pwm16.set.top (avr.pin, refresh)
+          pwm16.set.compare (avr.pin, pos)
+      stop
+        SKIP
+:
+--}}}
+
+#ENDIF

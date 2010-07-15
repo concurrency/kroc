@@ -1,0 +1,18 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  --INT16 val:
+  --CHAN SIGNAL ping:
+  SEQ
+    beginAnalog16 (3)
+    beginAnalog (10)
+    PAR
+      analogWrite16 (3, 19531)
+      analogWrite (10, 254)
+      heartbeat ()
+    --pwm (6, val?)
+    --tick (100, ping!)
+    --adc (5, ping?, val!)
+    --val ! 254
+    --heartbeat ()
+:

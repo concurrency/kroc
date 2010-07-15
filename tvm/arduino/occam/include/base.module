@@ -1,0 +1,35 @@
+#IF NOT (DEFINED (BASE.MODULE))
+#DEFINE BASE.MODULE
+
+--{{{ PROC die
+--* Kills everything and reports an error back to the user.
+-- @param error A string containing the error message.
+INLINE PROC die (VAL []BYTE error)
+  SEQ
+    --{{{  force error to be used
+    INT n:
+    n := SIZE error
+    --}}}
+    CAUSEERROR ()
+:
+--}}}
+
+--* Convert a bit number to a bit value.
+-- This is just [@code 1 << bit], like [@text _BV] in the C headers.
+-- @param bit How far to shift 1 left.
+-- @retuns - 1 shifted [@code bit] to the left
+BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
+
+--{{{  PROC delay
+--* Wait for a period of time.
+-- @param millis Time in wait, in milliseconds
+PROC delay (VAL INT millis)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS millis
+:
+--}}}
+
+#ENDIF

@@ -1,0 +1,19 @@
+--** A wrapper for platform-specific code on the 328
+-- @module avr
+
+#IF NOT (DEFINED (AVR.MODULE))
+#DEFINE AVR.MODULE
+
+-- base, constants, and FFI must come first
+#INCLUDE "base.module"
+#INCLUDE "constants.module"
+-- Maps pin numbers 1 - 28 to registers
+#INCLUDE "chipmap.module"
+#INCLUDE "ffi.module"
+-- These modules depend on base, constants, and FFI
+#INCLUDE "digital.module"
+#INCLUDE "usart.module"
+#INCLUDE "adc.module"
+#INCLUDE "pwm.module"
+
+#ENDIF

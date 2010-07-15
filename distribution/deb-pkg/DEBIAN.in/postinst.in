@@ -2,9 +2,9 @@
 
 echo ""
 echo "************************************************************"
-echo "Please add @DSTBIN@ to your path."
-echo "For example, add the following to your .bashrc:"
+echo "Please source our setup script."
+echo "Do this by adding the following to your .bashrc:"
 echo
-echo "  export PATH=@DSTBIN@:\$PATH"
+echo "  source @FINAL@/bin/@KROC-SETUP@"
 echo ""
 echo "************************************************************"

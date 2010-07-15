@@ -1,0 +1,47 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "servo.module"
+
+PROC main()
+  CHAN BYTE led8, led10, led12:
+  CHAN INT A4chan, A1chan:
+  CHAN SIGNAL A4tick, A1tick:
+  CHAN SERVO pin2, pin5:
+  INT A4toS2, A1toS5:
+  PAR
+    blink (53, 500)
+    blink (45, 333)
+    blink (33, 750)
+    pwm8 (12, led12?)
+    crawl.byte (0, 255, 5, 20, led12!)
+    pwm8 (10, led10?)
+    crawl.byte (0, 255, 5, 30, led10!)
+    pwm8 (8, led8?)
+    crawl.byte (0, 255, 5, 70, led8!)
+
+    adc (A4, A4tick?, A4chan!)
+    tick (100, A4tick!)
+    adc (A1, A1tick?, A1chan!)
+    tick (100, A1tick!)
+
+    servo (2, pin2?)
+    servo (5, pin5?)
+    SEQ -- Setup and control Servo pin2
+      digital.mode (2, OUTPUT)
+      pin2 ! div ; 1030
+      pin2 ! start
+      WHILE TRUE
+        SEQ
+          A4chan ? A4toS2
+          pin2 ! pos ; A4toS2
+    SEQ -- Setup and control Servo pin5
+      serial.setup (0, 57600)
+      digital.mode (5, OUTPUT)
+      pin5 ! div ; 1030
+      pin5 ! start
+      WHILE TRUE
+        SEQ
+          A1chan ? A1toS5
+          serial.write.int (A1toS5)
+          serial.write.byte (0, '*n')
+          pin5 ! pos ; A1toS5
+:

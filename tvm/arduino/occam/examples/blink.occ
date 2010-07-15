@@ -1,0 +1,27 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  INITIAL BYTE val IS 0:
+  INITIAL BOOL up IS TRUE:
+  CHAN INT val.friend:
+  SEQ
+    PAR
+      pwm8 (9, val.friend?)
+      WHILE TRUE
+        SEQ
+          IF
+            up = TRUE
+              IF
+                val <> top
+                  val := val + 50
+                TRUE
+                  up := FALSE
+            TRUE
+              IF
+                val <> 0
+                  val := val - 50
+                TRUE
+                  up := TRUE
+          delay (10)
+          val.friend ! val
+:

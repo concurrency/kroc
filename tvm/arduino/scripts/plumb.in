@@ -1,43 +1,71 @@
 #!/bin/bash 
+# An auto-version tag here would be good.
+
+# App name
+PLUMB="plumb"
+TVM_INST_ROOT=@FINAL@
+
+usage()
+{
+	echo
+	echo "Usage: $PLUMB <platform> <port> <file>"
+	echo
+}
 
 # Source in everything we need--both the KRoC env and 
-# variables for Arduino compilation and upload.
-
 source avr-kroc-setup.sh
-source arduinocc-environment.sh
+
+if [ "$1" == "" ]; then
+	usage
+	echo "Choose a platform:"
+	for P in $PLATFORMS
+	do
+		echo "  " $P
+	done
+	exit
+fi	
+
+PLATFORM=$1
+source $TVM_INST_ROOT/share/conf/$PLATFORM.conf
 
 # Sanity check
-if [ "$1" == "" ]; then
+if [ "$2" == "" ]; then
   # Print reasonable documentation for the students
-  echo
+  usage
   echo "No port provided. On Ubuntu Linux, this is probably '/dev/ttyUSB0'."
   echo
   exit
 fi
 
-if [ "$2" == "firmware" ]; then
-  echo "Uploading Transterpreter Virtual Machine"
-  avrdude $TVM_AVRDUDE_FIRMWARE_FLAGS \
-    -P $1 -b $TVM_UPLOAD_RATE -c arduino \
-    -U flash:w:$TVM_ARDUINO_FIRMWARE
+UPLOAD_PORT=$2
+
+if [ "$3" == "firmware" ]; then
+  echo "Uploading firmware version [$TVM_ARDUINO_FIRMWARE]."
+  reset-arduino $UPLOAD_PORT
+  avrdude -C $TVM_AVRDUDE_CONF \
+     $TVM_AVRDUDE_FIRMWARE_FLAGS \
+    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c stk500v1 \
+    -U flash:w:$TVM_INST_ROOT/share/firmwares/$TVM_ARDUINO_FIRMWARE
   exit
 fi
 
-if [ "$2" == "" ]; then
+if [ "$3" == "" ]; then
   # Print that they need the filename
-  echo
+  usage
   echo "You need to provide an occam program after the port."
   echo "For example:"
   echo
-  echo "  arduinocc /dev/ttyUSB0 blink.occ"
+  echo "  $PLUMB arduino /dev/ttyUSB0 blink.occ"
   echo
   echo "occam programs always end with a .occ extension."
   echo
   exit
 fi
 
-PROGBASE=`basename $2 .occ`
-PROGDIR=`dirname $2`
+FILENAME=$3
+
+PROGBASE=`basename $FILENAME .occ`
+PROGDIR=`dirname $FILENAME`
 OCC="$PROGDIR/$PROGBASE.occ"
 TBC="$PROGBASE.tbc"
 HEX="$PROGBASE.hex"
@@ -49,7 +77,6 @@ if [ ! -f $OCC ]; then
   exit
 fi
 
-UPLOAD_PORT=$1
 AVRDUDE_FLAGS="$TVM_AVRDUDE_CODE_FLAGS -P $UPLOAD_PORT"
 AVRDUDE_WRITE_OCCAM="-D -U flash:w:$HEX"
 
@@ -60,13 +87,19 @@ fi
 
 
 echo "Compiling..."
+#echo "Compiling for $PLATFORM with a $TVM_MCU"
 
 # These values come in from arduiniocc-enironment.sh
+# I think ISEARCH, being set in the .conf, should do
+# the work of finding the platform-specific libraries...
 avr-occbuild \
   --search $TVM_INST_ROOT/share/tvm/avr-vtinclude \
   --search $TVM_INST_ROOT/share/tvm/avr-vtlib \
   --search $TVM_INST_ROOT/lib \
-  -DF.CPU=$TVM_F_CPU --program $2
+  --search $TVM_INST_ROOT/lib/arch/common \
+  --search $TVM_INST_ROOT/lib/arch/$TVM_MCU \
+  --search $TVM_INST_ROOT/lib/platforms/$PLATFORM \
+  -DF.CPU=$TVM_F_CPU --program $FILENAME
 
 if [ $? -eq 0 ]; then
 
@@ -89,7 +122,8 @@ if [ $? -eq 0 ]; then
   if [ $? -eq 0 ]; then
     if [ -f $HEX ]; then
       echo "Uploading..."
-      avrdude $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+      reset-arduino $UPLOAD_PORT
+      avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
     else
       echo ".hex file not generated or not found."
       exit
