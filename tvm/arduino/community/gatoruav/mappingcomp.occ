@@ -128,34 +128,38 @@ PROC gyro.drift (CHAN INT drift!)
 VAL [18]INT ADC.GREATER IS [511,520,528,537,545,553,560,567,573,578,584,588,592,595,598,601,602,603]: 
 VAL [18]INT ADC.LESS IS [495,486,477,469,461,453,445,438,431,426,420,416,411,407,404,401,399,398]:
 VAL [18]INT ANGLES IS [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90]:
-PROC accel.conv (CHAN INT in?, out!, VAL INT max, min)
+PROC accel.conv (CHAN INT in?, out!)
   WHILE TRUE
     INITIAL BOOL looking IS TRUE:
+    INITIAL INT i IS 0:
     INT reading:
     SEQ
       in ? reading
+      i := 0
       IF
         reading > 504
-          SEQ i = 0 FOR (SIZE ADC.GREATER) STEP 1
-            WHILE looking
+          SEQ
+            WHILE i < (SIZE ADC.GREATER)
               IF
-                reading >= ADC.GREATER[i]
+                reading <= ADC.GREATER[i]
                   SEQ
-                    looking := FALSE
+                    serialWriteDecInt(i)
                     out ! ANGLES[i]
+                    i := (SIZE ADC.GREATER)
                 TRUE
-                  SKIP 
+                  i := i + 1 
 
         reading < 504
-          SEQ i = 0 FOR (SIZE ADC.LESS) STEP 1
-            WHILE looking
+          SEQ
+            WHILE i < (SIZE ADC.LESS)
               IF
-                reading <= ADC.LESS[i]
+                reading >= ADC.LESS[i]
                   SEQ
-                    looking := FALSE
+                    serialWriteDecInt(i)
                     out ! ANGLES[i]
+                    i := (SIZE ADC.LESS)
                 TRUE
-                  SKIP
+                  i := i + 1
         TRUE
           out ! 0   
 
@@ -174,6 +178,12 @@ PROC time.int (CHAN INT v?)
       serial.write.string("*n")
 :
 
+PROC numspit(CHAN INT out!)
+  WHILE TRUE
+    SEQ
+      INITIAL INT num IS 504:
+      out ! num
+:
 PROC main()
   CHAN INT rate.gyro, input.gyro, drift.gyro, degree.gyro, input.accel, output.accel, theta:
   CHAN SIGNAL signal.gyro, signal.accel:
@@ -182,12 +192,13 @@ PROC main()
   PAR
     --gyro 1 "y"
     --tick(100,signal.gyro!)
-    tick(100,signal.accel!)
+    tick(1,signal.accel!)
     
     --adc(A1,signal.gyro?, input.gyro!)
     adc(A2,signal.accel?, input.accel!)
     
-    accel.conv(input.accel?, output.accel!, 608, 390)
+    --numspit(input.accel!)
+    --accel.conv(input.accel?, output.accel!)
     
     --to.degrees(input.gyro?, degree.gyro!)
     --gyro.drift(drift.gyro!)
@@ -196,5 +207,5 @@ PROC main()
     --comp.filter (rate.gyro?, output.accel?, theta!, 80, 7)
     
     --time.int(theta?)
-    show (output.accel?)
+    show (input.accel?)
 :
