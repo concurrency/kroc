@@ -72,6 +72,20 @@ for binary in BINARIES:
 # py2exe generated files
 copy_tree('py2exe-dist', BIN_DIR)
 
+# perl files 
+# FIXME: This will need to be generated natively at some point
+import urllib2
+mkdirs('perlfiles')
+if not os.path.exists('perlfiles/plinker.exe'):
+    f = open('perlfiles/plinker.exe', 'w')
+    f.write(urllib2.urlopen('http://lyderjacobsen.org/misc/plinker.exe').read())
+    f.close()
+if not os.path.exists('perlfiles/tce-dump.exe'):
+    f = open('perlfiles/tce-dump.exe', 'w')
+    f.write(urllib2.urlopen('http://lyderjacobsen.org/misc/tce-dump.exe').read())
+    f.close()
+copy_files('perlfiles/*', BIN_DIR)
+
 # tvm native libraries
 # FIXME: These should go elsewhere
 copy_files('install/lib/tvm/*.dll', BIN_DIR)
