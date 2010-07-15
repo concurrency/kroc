@@ -18,7 +18,7 @@ POSIX_TVM_FW_DIR    = os.path.join(APP_DIR, 'posix', 'tvm', 'firmware')
 ARDUINO_TVM_INC_DIR = os.path.join(APP_DIR, 'arduino', 'tvm', 'include')
 ARDUINO_TVM_LIB_DIR = os.path.join(APP_DIR, 'arduino', 'tvm', 'lib')
 ARDUINO_TVM_FW_DIR  = os.path.join(APP_DIR, 'arduino', 'tvm', 'firmware')
-ARDUINO_PLUMBING_DIR= os.path.join(APP_DIR, 'arduino', 'plumbing')
+ARDUINO_PLUMBING_DIR= os.path.join(APP_DIR, 'arduino', 'plumbing-book')
 JEDIT_DIR           = os.path.join(APP_DIR, 'jEdit')
 
 BINARIES = "occ21.exe ilibr.exe mkoccdeps.exe tvm.exe".split()
@@ -119,24 +119,21 @@ mkdirs(ARDUINO_TVM_LIB_DIR)
 mkdirs(ARDUINO_TVM_FW_DIR)
 
 # Arduino firmware
+# FIXME: Need to build all firmwares and include
 copy_file('build/kroc-tvm-avr-wrapper/tvm-arduino.hex', ARDUINO_TVM_FW_DIR)
 
 # Arduino tools
 # FIXME: These will have to be py2exed I think...
-copy_file('../../tvm/arduino/binary-to-ihex', BIN_DIR)
-copy_file('../../tvm/arduino/read-arduino', BIN_DIR)
+copy_file('../../tvm/arduino/scripts/binary-to-ihex', BIN_DIR)
+copy_file('../../tvm/arduino/scripts/read-arduino', BIN_DIR)
 
 # Arduino includes
-# FIXME: This will change after the merge...
-copy_file('../../tvm/arduino/occam/plumbing.module', ARDUINO_TVM_INC_DIR)
-copy_file('../../tvm/arduino/occam/wiring.module', ARDUINO_TVM_INC_DIR)
-copy_file('../../tvm/arduino/occam/avr.module', ARDUINO_TVM_INC_DIR)
-copy_file('../../tvm/arduino/occam/iom328p.inc', ARDUINO_TVM_INC_DIR)
+copy_tree('../../tvm/arduino/occam/include', ARDUINO_TVM_INC_DIR, excludes='.ss')
 
 # Plumbing examples
 # FIXME: Should this live in the root for better visibility???
 mkdirs(ARDUINO_PLUMBING_DIR)
-copy_files('../../tvm/arduino/occam/ch*.occ', ARDUINO_PLUMBING_DIR)
+copy_files('../../tvm/arduino/occam/book/ch*.occ', ARDUINO_PLUMBING_DIR)
 
 # arduino module includes
 copy_tree('install-avr/share/tvm/avr-vtinclude', ARDUINO_TVM_LIB_DIR)
