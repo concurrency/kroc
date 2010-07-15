@@ -22,7 +22,7 @@ VAL REAL32 scaling.REAL32 IS 10000.0:
 --
 -- @param board.pin Board Pin to being serial operations on.
 -- @param baud Baud rate at which to transmit serial data, typically 57600.
-PROC serial.setup (VAL INT board.pin, VAL INT baud)
+PROC serial.setup (VAL INT board.pin, VAL INT32 baud)
   VAL INT port IS board.to.serial.port (board.pin):
   serial.start (port, baud)
 :
