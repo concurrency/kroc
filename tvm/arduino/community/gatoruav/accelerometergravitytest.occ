@@ -14,7 +14,7 @@ PROC serialWriteDecInt (VAL INT n)
         SKIP
     IF 
       neg 
-        serialWrite("-")
+        serial.write.string("-")
       TRUE 
         SKIP
     WHILE (index < 5)
@@ -23,7 +23,7 @@ PROC serialWriteDecInt (VAL INT n)
         digit := number / powers[index]
         number := number REM powers[index]
         digit := digit + (INT '0')
-        serialWrite([BYTE digit])
+        serial.write.string([BYTE digit])
         index := index + 1
     
 :
@@ -39,7 +39,7 @@ PROC display (CHAN INT input?)
     SEQ 
       input ? val
       serialWriteDecInt (val)
-      serialWrite ("*n")
+      serial.write.string ("*n")
 :
 
 VAL INT NUM.READINGS.TO.AVERAGE IS 40:
@@ -93,8 +93,8 @@ PROC main()
   PAR
     ping (s!)
     adc (2, s?, val!)
-    --av (val?, average!)
+    av (val?, average!)
     --conv (average?, converted!)
-    display (val?)
+    display (average?)
 
 :
