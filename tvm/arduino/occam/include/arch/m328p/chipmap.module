@@ -1,3 +1,7 @@
+--** Symbolic arrays and FUNCTON(s) for mapping into General Purpose I/O
+-- functionality on ATmega328 based boards.
+-- @module 328.chipmap
+
 #IF NOT (DEFINED (CHIPMAP.MODULE))
 #DEFINE CHIPMAP.MODULE
 
@@ -64,6 +68,7 @@ VAL []INT BIT.MAP IS [ 6,  0,  1,  2,  3,  4, -1,
                       -1,  0,  1,  2,  3,  4,  5]: 
 
 --FIXME: mjadud It would be nice if this wasn't duplicated in each architecture
+
 --* Looks up the various General Purpose I/O registers connected to the given
 -- [@em AVR] pin.
 -- AVR pins are numbered starting from 1...

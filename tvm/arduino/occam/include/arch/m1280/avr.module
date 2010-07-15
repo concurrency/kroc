@@ -1,5 +1,5 @@
---** A weapper for platform-specific code on the ATmega1280
--- @module avr
+--** A weapper for platform-specific code on the ATmega1280.
+-- @module 1280.avr
 
 #IF NOT (DEFINED (AVR.MODULE))
 #DEFINE AVR.MODULE

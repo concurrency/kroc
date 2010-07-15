@@ -1,5 +1,5 @@
---** Foreign functions for the 328 wrapper
--- @module ffi
+--** Foreign functions for the ATmega328 wrapper.
+-- @module 328.ffi
 
 #IF NOT (DEFINED (FFI.MODULE))
 #DEFINE FFI.MODULE

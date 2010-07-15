@@ -1,5 +1,5 @@
---** ADC routines for the 328
--- @module adc
+--** ADC routines for the ATmega328.
+-- @module 328.adc
 
 #IF NOT (DEFINED (ADC.MODULE))
 #DEFINE ADC.MODULE

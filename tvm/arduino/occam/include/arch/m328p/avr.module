@@ -1,5 +1,5 @@
---** A wrapper for platform-specific code on the 328
--- @module avr
+--** A wrapper for platform-specific code on the ATmega328.
+-- @module 328.avr
 
 #IF NOT (DEFINED (AVR.MODULE))
 #DEFINE AVR.MODULE

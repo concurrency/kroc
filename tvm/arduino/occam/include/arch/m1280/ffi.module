@@ -1,5 +1,5 @@
 --** Foreign functions ofr hte 1280 wrapper
--- @module ffi
+-- @module 1280.ffi
 
 #IF NOT (DEFINED (FFI.MODULE))
 #DEFINE FFI.MODULE

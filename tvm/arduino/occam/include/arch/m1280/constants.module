@@ -1,5 +1,5 @@
 --** occam definitions for AVR processors.
--- @module avr
+-- @module 1280.constants
 
 #IF NOT (DEFINED (CONSTANTS.MODULE))
 #DEFINE CONSTANTS.MODULE
