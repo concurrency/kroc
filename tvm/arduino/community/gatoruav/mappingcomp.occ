@@ -15,7 +15,7 @@ PROC serialWriteDecInt (VAL INT n)
         SKIP
     IF 
       neg 
-        serialWrite("-")
+        serial.write.string("-")
       TRUE 
         SKIP
     WHILE (index < 5)
@@ -24,7 +24,7 @@ PROC serialWriteDecInt (VAL INT n)
         digit := number / powers[index]
         number := number REM powers[index]
         digit := digit + (INT '0')
-        serialWrite([BYTE digit])
+        serial.write.string([BYTE digit])
         index := index + 1
     
 :
@@ -45,9 +45,9 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
       gyr := gyr 
       
       --serialWriteDecInt (gyr)
-      --serialWrite ("     ")
+      --serial.write.string ("     ")
       --serialWriteDecInt (accel)
-      --serialWrite ("*n")
+      --serial.write.string ("*n")
       angle := (((tau * (angle + (gyr * dt))) + (( 100 - tau) * accel))/100)
       theta ! angle
 :
@@ -58,7 +58,7 @@ PROC show (CHAN INT theta?)
       theta ? pos
       pos := pos
       serialWriteDecInt (pos)
-      serialWrite("*n")
+      serial.write.string("*n")
 
 :
 PROC to.degrees (CHAN INT input?, CHAN INT output!)
@@ -73,7 +73,7 @@ PROC to.degrees (CHAN INT input?, CHAN INT output!)
       n.32 := ((((n.32-3.3)/1023.0)-1.26)/3.0) * 100.0
       n.int32 := INT32 ROUND n.32
       n := (INT(n.int32))
-      
+       
       IF  
         counter < 11
           SEQ
@@ -125,21 +125,37 @@ PROC gyro.drift (CHAN INT drift!)
     SEQ
       drift ! 0
 :
-VAL [18]INT ADC.GREATER IS [511,520,528,537,545,553,560,567,573,578,584,588,592,595,598,601,602,603] 
+VAL [18]INT ADC.GREATER IS [511,520,528,537,545,553,560,567,573,578,584,588,592,595,598,601,602,603]: 
+VAL [18]INT ADC.LESS IS [495,486,477,469,461,453,445,438,431,426,420,416,411,407,404,401,399,398]:
+VAL [18]INT ANGLES IS [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90]:
 PROC accel.conv (CHAN INT in?, out!, VAL INT max, min)
   WHILE TRUE
-    INT reading, result:
+    INITIAL BOOL looking IS TRUE:
+    INT reading:
     SEQ
-    in ? reading
-    
+      in ? reading
       IF
         reading > 504
-          SEQ i = 0 FOR 18
-            IF reading < ADC.GREATER
-              out ! 
-        
+          SEQ i = 0 FOR (SIZE ADC.GREATER)
+            WHILE looking
+              IF
+                reading >= ADC.GREATER[i]
+                  SEQ
+                    out ! ANGLES[i]
+                    looking := FALSE
+                TRUE
+                  SKIP 
+
         reading < 504
-      
+          SEQ i = 0 FOR (SIZE ADC.LESS)
+            WHILE looking
+              IF
+                reading <= ADC.LESS[i]
+                  SEQ
+                    out ! ANGLES[i]
+                    looking := FALSE
+                TRUE
+                  SKIP
         TRUE
           out ! 0   
 
@@ -155,7 +171,7 @@ PROC time.int (CHAN INT v?)
         v ? hole
       tim ? end
       serialWriteDecInt(end MINUS start)
-      serialWrite("*n")
+      serial.write.string("*n")
 :
 
 PROC main()
@@ -168,8 +184,8 @@ PROC main()
     tick(100,signal.gyro!)
     tick(100,signal.accel!)
     
-    adc(1,signal.gyro?, input.gyro!)
-    adc(2,signal.accel?, input.accel!)
+    adc(A1,signal.gyro?, input.gyro!)
+    adc(A2,signal.accel?, input.accel!)
     
     accel.conv(input.accel?, output.accel!, 608, 390)
     
@@ -177,8 +193,8 @@ PROC main()
     gyro.drift(drift.gyro!)
     filter(degree.gyro?, rate.gyro!, drift.gyro?)
     
-    comp.filter (rate.gyro?, output.accel?, theta!, 80, 10)
+    comp.filter (rate.gyro?, output.accel?, theta!, 80, 7)
     
-    --time.int(theta?)
-    show (theta?)
+    time.int(theta?)
+    --show (theta?)
 :
