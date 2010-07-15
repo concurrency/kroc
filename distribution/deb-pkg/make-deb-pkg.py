@@ -84,7 +84,8 @@ def remove_and_create_dir(dir):
 	cmd(build_command(["mkdir", dir]))
 
 def remove_dir(dir):
-	cmd(build_command(["rm" "-rf", dir]))
+	print " -- REMOVING -- %s" % dir
+	cmd(build_command(["rm", "-rf", dir]))
 
 def copy_dir(src, dst):
 	# print "DIRECTORY COPY [%s] TO [%s]" % (src, dst)
@@ -96,6 +97,7 @@ def copy_dir(src, dst):
 										 "%s/" % dst]))
 
 def copy_files(pat, src_dir, dest_dir):
+	print "COPYING FILES FROM %s" % src_dir
 	for filename in os.listdir(src_dir):
 		if re.search(pat, filename):
 			# print "COPYING FILE [%s] TO [%s]" % (filename, dest_dir)
@@ -179,6 +181,7 @@ def build():
 		# This generates virtual machines for multipl
 		# targets (m328, m1280, 3.3V and 5V (8MHz and 16MHz, respectively))
 		with pushd():
+			header("BUILDING  FIRMWARES")
 			cd(concat([config.get('SVN'), "/tvm/arduino"]))
 			cmd("./build.sh")
 
@@ -191,7 +194,7 @@ def install():
 
 def make_destdirs():
 	header("MAKING DESTINATION DIRECTORIES")
-	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_CONF', 'DEST_DEBIAN', 
+	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_CONF', 'DEST_DEBIAN', 'DEST_FIRMWARE',
 				'DEST_OCCPLUG', 'DEST_OCCPLUG_DEBIAN', 'DEST_INCLUDE'] 
 	for d in DESTINATIONS:
 		mkdir(config.get(d))
@@ -253,9 +256,10 @@ def copy_arduino_build():
 	subst_and_copy("plumb.in", config.get('SOURCE_SCRIPTS'), config.get('DEST_BIN'))
 	chmod("755", config.get('DEST_BIN'), "plumb")
 
+	header("COPYING FIRMWARE FILES")
 	copy_files(".*.hex", config.get('SOURCE_ARDUINO'), config.get('DEST_FIRMWARE'))
 	
-	copy_files("avrdude.conf", config.get('SOURCE_ARDUINO'), config.get('DEST_CONF'))
+	#copy_files("avrdude.conf", config.get('SOURCE_ARDUINO'), config.get('DEST_CONF'))
 
 	# What was going into LIB should actually go into SHARE. 	
 	copy_dir(config.get('SOURCE_INCLUDE'), config.get('DEST_INCLUDE'))	
@@ -371,9 +375,15 @@ def all(url):
 		copy_native_tvm_build()
 	deb()
 
+def delete_usr_share_kroc():
+	header("DETE USR/SHARE/KROC")
+	remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
+	remove_dir(concat([config.get('DEST'), '/usr/share/aclocal']))
+
 def refresh_libs():
 	if config.get('WRAPPER') == 'arduino':
 		make_destdirs()
+		delete_usr_share_kroc()
 		copy_arduino_config()
 		copy_arduino_build()
 	deb()
