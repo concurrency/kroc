@@ -503,7 +503,7 @@ OPTIONS = [
 	["build-kroc", "store_true","Set build vars for a native KRoC build.", build_native_kroc],
 	["build-tvm", "store_true", "Set build vars for a native TVM build.", build_native_tvm],
 	["build-occplug", "store_true", "Build the occPlug.", build_occplug],
-	["uber", "store", "SVN_URL", "Build all toolchains and architectures.", all_arch]
+	["uber", "store", "UBER_URL", "Build all toolchains and architectures.", all_arch]
 	] 
 	
 parser = OptionParser()
@@ -544,7 +544,7 @@ FIRST      = DIR_PARAMS
 def check_for_build_target():
 	found = False
 	for key, val in props(options).iteritems():
-		if (key in PLAT) and (val != None):
+		if (key in PLAT) and (val != None) or (key == 'UBER_URL'):
 			found = True
 	if not found:
 		print "You need to include a build target (eg. --build-tvm)."
