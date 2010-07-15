@@ -56,8 +56,11 @@ BASE = {'VERSION'              : '100',
 				'FINAL_DEST_CONF'      : '@FINAL_DEST_SHARE@/conf',
 				# OCCPLUG
 				'SOURCE_OCCPLUG'       : '@SVN@/tools/occplug',
-				'DEST_OCCPLUG_ROOT'    : '@TEMP@/occPlug',
-				'DEST_OCCPLUG'         : '@DEST_OCCPLUG_ROOT@/share/jedit/jars',
+				'DEST_OCCPLUG_ROOT'    : '@TEMP@/@OCCPLUG_PACKAGE_NAME@',
+				'DEST_OCCPLUG'         : '@DEST_OCCPLUG_ROOT@/usr/share/jedit/jars',
+				'DEST_OCCPLUG_DEBIAN'  : '@DEST_OCCPLUG_ROOT@/DEBIAN',
+				'SOURCE_OCCPLUG_DEBIAN': '@SVN@/distribution/deb-pkg/DEBIAN.occPlug',
+				'OCCPLUG_PACKAGE_NAME' : 'occPlug',
 				'ERRORLIST_URL'        : 'http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.5-bin.zip',
 				
 			}

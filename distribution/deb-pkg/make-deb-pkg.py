@@ -191,7 +191,8 @@ def install():
 
 def make_destdirs():
 	header("MAKING DESTINATION DIRECTORIES")
-	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_DEBIAN', 'DEST_OCCPLUG'] 
+	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_FIRMWARE', 'DEST_CONF', 'DEST_DEBIAN', 
+				'DEST_OCCPLUG', 'DEST_OCCPLUG_DEBIAN'] 
 	for d in DESTINATIONS:
 		mkdir(config.get(d))
 
@@ -374,19 +375,52 @@ def refresh_libs():
 	deb()
 
 def unzip_file_into_dir(file, dir):
-    zfobj = zipfile.ZipFile(file)
-    for name in zfobj.namelist():
-        if name.endswith('/'):
-            os.mkdir(os.path.join(dir, name))
-        else:
-            outfile = open(os.path.join(dir, name), 'wb')
-            outfile.write(zfobj.read(name))
-            outfile.close()
+	print "[unzip %s -> %s" % (file, dir)
+	zfobj = zipfile.ZipFile(file)
+	for name in zfobj.namelist():
+		if name.endswith('/'):
+			os.mkdir(os.path.join(dir, name))
+		else:
+			outfile = open(os.path.join(dir, name), 'wb')
+			outfile.write(zfobj.read(name))
+			outfile.close()
+
+def occplug_deb():
+	header("BUILDING occPlug DEBIAN PACKAGE")
+
+	remove_and_create_dir(config.get('DEST_OCCPLUG_DEBIAN'))
+	
+	for filename in os.listdir(config.get('SOURCE_OCCPLUG_DEBIAN')):
+		if not re.search("in$", filename):
+			copy_files(filename, config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
+			chmod("755", config.get('DEST_OCCPLUG_DEBIAN'), filename)
+	
+	copy_files("preinst", config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
+	chmod("755", config.get('DEST_DEBIAN'), "preinst")
+
+	copy_files("postrm", config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
+	chmod("755", config.get('DEST_OCCPLUG_DEBIAN'), "postrm")
+
+	copy_files("preinst", config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
+	chmod("755", config.get('DEST_OCCPLUG_DEBIAN'), "preinst")
+
+	copy_files("prerm", config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
+	chmod("755", config.get('DEST_OCCPLUG_DEBIAN'), "prerm")
+
+	print "SOURCE: %s" % config.get('SOURCE_OCCPLUG_DEBIAN')
+	subst_and_copy("control.in", config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
+	chmod("755", config.get('DEST_OCCPLUG_DEBIAN'), "control")
+
+	with pushd():
+		cd(config.get('TEMP'))
+		print "PACKAGING %s" % config.get('OCCPLUG_PACKAGE_NAME')
+		cmd(build_command(["dpkg", "--build", config.get('OCCPLUG_PACKAGE_NAME'), "./"]))
 
 def build_occplug():
 	header("BUILDING OCCPLUG")
 
 	config.refresh() 
+	make_destdirs()
 	remove_and_create_dir(config.get('DEST_OCCPLUG'))	
 
 	zipfile = 'ErrorList-1.5-bin.zip'
@@ -395,8 +429,6 @@ def build_occplug():
 	with pushd():
 		cd(config.get('SOURCE_OCCPLUG'))
 		cmd(build_command(['wget', config.get('ERRORLIST_URL')]))
-
-		# cmd(build_command(['unzip', zipfile]))
 		unzip_file_into_dir(zipfile, config.get('DEST_OCCPLUG'))
 	
 		# Move the ErrorList straight to the destination; we can build against it there.
@@ -407,9 +439,7 @@ def build_occplug():
 											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
 											concat(['-Dbuild.dir=', config.get('TEMP')]),
 											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
-	with pushd():
-		cd(config.get('DEST_OCCPLUG_ROOT'))
-		cmd(build_command(["dpkg", "--build", config.get('PACKAGE_NAME'), "./"]))
+	occplug_deb()
 
 # Builds multiple packages for all architectures
 
