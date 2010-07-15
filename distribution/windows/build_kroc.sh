@@ -2,8 +2,7 @@
 SDL=SDL-1.2.14
 PLAYER=player-2.1.2
 STAGE=stage-2.1.1
-# Arduino package could perhaps be replaced with a avr-gcc package?
-# FIXME: 0017 is out, perhaps upgrade
+# FIXME: Arduino package could perhaps be replaced with a avr-gcc package?
 ARDUINO=arduino-0018
 
 #FIXME: Possibly do SDL_sound
@@ -124,9 +123,18 @@ cd ../../../tvm/arduino
 unset ACLOCAL
 autoreconf -v -f -i
 cd $BUILD
-mkdir -p kroc-tvm-avr-wrapper
-cd kroc-tvm-avr-wrapper
-../../../../tvm/arduino/configure --host=avr --with-toolchain=tvm --prefix=$INSTALL --libdir=${INSTALL}/lib/avr
-make
-make tvm-arduino.hex
+# This is a lot like what arduino/build.sh does except we do it outside
+# the tree here.
+MCUS="atmega328p atmega1280"
+FCPUS="16000000 8000000"
+for mcu in $MCUS; do
+  for fcpu in $FCPUS; do
+    mkdir -p kroc-tvm-avr-$mcu-$fcpu-wrapper
+    cd kroc-tvm-avr-$mcu-$fcpu-wrapper
+    ../../../../tvm/arduino/configure --host=avr --prefix=$INSTALL --libdir=${INSTALL}/lib/avr --with-mcu=$mcu --with-fcpu=$fcpu
+    make
+    make firmware.hex
+    cd ..
+  done
+done
 PATH=$OLD_PATH
