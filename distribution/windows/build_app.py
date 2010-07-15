@@ -119,8 +119,7 @@ mkdirs(ARDUINO_TVM_LIB_DIR)
 mkdirs(ARDUINO_TVM_FW_DIR)
 
 # Arduino firmware
-# FIXME: Need to build all firmwares and include
-copy_file('build/kroc-tvm-avr-wrapper/tvm-arduino.hex', ARDUINO_TVM_FW_DIR)
+copy_files('build/kroc-tvm-avr-*-*-wrapper/tvm-avr-*-*.hex', ARDUINO_TVM_FW_DIR)
 
 # Arduino tools
 # FIXME: These will have to be py2exed I think...
