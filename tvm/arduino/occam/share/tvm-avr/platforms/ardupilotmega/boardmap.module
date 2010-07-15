@@ -143,4 +143,22 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
     RESULT avr.pin
 : 
 
+INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+  INT serial.port:
+  VALOF
+    SEQ
+      IF
+        (board.pin =  0) OR (board.pin = 1)
+          serial.port := 0
+        (board.pin = 18) OR (board.pin = 19)
+          serial.port := 1
+        (board.pin = 16) OR (board.pin = 17)
+          serial.port := 2
+        (board.pin = 14) OR (board.pin = 15)
+          serial.port := 3
+        TRUE
+          die ("The given Board Pin is not connected to any Serial Ports.")
+    RESULT serial.port
+:
+
 #ENDIF

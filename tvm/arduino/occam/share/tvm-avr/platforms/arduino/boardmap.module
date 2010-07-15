@@ -92,7 +92,7 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
 -- broader scheme of things.
 -- @param board.serial.pin The Board Pin to be mapped to a Serial Port.
 -- @return The Serial Port corrisponding to the given Board Pin.
-BYTE INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   INT serial.port:
   VALOF
     SEQ
@@ -101,8 +101,7 @@ BYTE INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
           serial.port := 0
         TRUE
           die ("The given Board Pin is not connected to any Serial Ports.")
-    serial.write.byte (RX0, (BYTE serial.port))
-  RESULT serial.port
+    RESULT serial.port
 :
 
 #ENDIF
