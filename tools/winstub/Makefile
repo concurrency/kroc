@@ -10,7 +10,7 @@ Transterpreter.exe: winstub.o resource.o
 resource.o: resource.rc
 
 %.o:%.rc
-	windres $< -O coff -o $@
+	windres -I$(srcdir) $< -O coff -o $@
 
 clean:
 	rm -rf Transterpreter.exe *.o
