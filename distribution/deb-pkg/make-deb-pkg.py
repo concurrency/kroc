@@ -447,7 +447,7 @@ def all_arch(url):
 	config.refresh()
 
 	# TOOLCHAINS    = ['avr', 'kroc', 'tvm']
-	TOOLCHAINS    = ['kroc', 'tvm']
+	TOOLCHAINS    = ['kroc', 'tvm', 'avr']
 	# ARCHITECTURES = ['i386', 'i686']
 	arch = 'i386'
 	for tool in TOOLCHAINS:
@@ -464,6 +464,8 @@ def all_arch(url):
 			build_native_kroc()
 		
 		all(url)
+
+	build_occplug()
 
 #############################################
 # COMMAND LINE PARSING
