@@ -46,6 +46,7 @@ import org.gjt.sp.jedit.jEdit;
 import org.transterpreter.occPlug.OccPlugPlugin;
 import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
+import org.transterpreter.occPlug.hosts.BaseHost;
 import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
@@ -119,20 +120,13 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			}
 
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-				FilenameFilter filter = new FilenameFilter() {
-					public boolean accept(File dir, String name) {
-						return (name.startsWith("tty.usbserial-")
-								|| name.equals("ttys0") || name.equals("ttys1")
-								|| name.equals("ttys2") || name.equals("ttys3"));
-					}
-				};
-				File dir = new File("/dev");
-				String[] devices = dir.list(filter);
+				String[] devices = BaseHost.getHostObject().getSerialPorts();
+
 				if (devices == null) return;
 
 				for (int i = 0; i < devices.length; i++) {
-					if (arduinoPortItems.add("/dev/" + devices[i])) {
-						arduinoPort.addElement("/dev/" + devices[i]);
+					if (arduinoPortItems.add(devices[i])) {
+						arduinoPort.addElement(devices[i]);
 					}
 				}
 			}
@@ -178,7 +172,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		final String[] firmdlCommand = { 
 				OccPlugUtil.pathifyXXX("bin/avrdude"),
 				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
-				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex"),
+				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex") + ":i",
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
 				// FIXME: Need a sensible way of setting these

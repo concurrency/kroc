@@ -1,0 +1,24 @@
+#INCLUDE "plumbing.module"
+
+PROC gps.com ()
+  [32]BYTE query:
+  WHILE TRUE
+    SEQ
+      serial.setup (1, 14400)
+      SEQ i = 0 FOR 32
+        SEQ
+          
+          serial.read.byte (1, query [i])
+      SEQ i =0 FOR 32
+        SEQ
+          serialWrite ([query [i]])
+:
+
+
+PROC main ()
+  SEQ
+    gps.com()
+
+    
+    
+:

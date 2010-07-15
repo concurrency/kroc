@@ -1,10 +1,12 @@
 PKG_CONFIG=pkg-config-0.23
-SDL=SDL-1.2.13
+SDL=SDL-1.2.14
 PLAYER=player-2.1.2
 STAGE=stage-2.1.1
 # Arduino package could perhaps be replaced with a avr-gcc package?
 # FIXME: 0017 is out, perhaps upgrade
+LIBUSB=libusb-0.1.12
 ARDUINO=arduino-0016
+AVRDUDE=avrdude-5.10
 
 #FIXME: Possibly do SDL_sound
 #http://icculus.org/SDL_sound/
@@ -82,6 +84,32 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
   cd $ARDUINO
 fi
 
+if ! [ -d $BUILD/$LIBUSB ] ; then
+  mkdir -p build
+  cd build
+  curl -L -O \
+    http://prdownloads.sourceforge.net/libusb/$LIBUSB.tar.gz \
+    || exit 1
+  tar -xvzf $LIBUSB.tar.gz
+  cd $LIBUSB
+  ./configure --prefix=$INSTALL
+  make
+  make install
+fi
+
+
+if ! [ -d $BUILD/$AVRDUDE ] ; then
+  mkdir -p build
+  cd build
+  curl -O \
+  http://download.savannah.gnu.org/releases-noredirect/avrdude/$AVRDUDE.tar.gz \
+    || exit 1
+  tar -xvzf $AVRDUDE.tar.gz
+  cd $AVRDUDE
+  ./configure --prefix=$INSTALL CFLAGS=-I$INSTALL/include LDFLAGS=-L$INSTALL/lib
+  make
+  make install
+fi
 
 cd $BUILD
 cd ../../../

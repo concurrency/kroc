@@ -1,0 +1,118 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "maths.module"
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+PROC calculator (CHAN REAL32 input.z?, input.y?, input.x?)
+  REAL32 val.z, val.y, val.x, sum, pitch,roll:
+  REAL32 angle:
+  INT32 value.pitch, value.roll:
+  REAL32 test:
+  WHILE TRUE
+    SEQ
+      input.z ? val.z
+      input.x ? val.x
+      input.y ? val.y
+      sum := (val.z * val.z)
+      sum := sum + (val.x * val.x)
+      sum := sum + (val.y * val.y)
+      pitch :=((100.0) * ATAN2 ((val.x/352.0), (val.z/415.0)))
+
+      roll := ((100.0) * ATAN2 ((val.y/335.0), (val.z/415.0)))
+      
+      value.pitch := INT32 ROUND pitch
+      
+      value.roll := INT32 ROUND roll
+      serialWrite ("Pitch: ")
+      serialWriteDecInt (INT value.pitch)
+      serialWrite ("       ")
+      serialWrite ("Roll: ")
+      serialWriteDecInt (INT value.roll)
+      serialWrite ("*n")
+:
+
+PROC magic (CHAN INT adc.input?, CHAN REAL32 out!, VAL BYTE axis)
+  INT value:
+  REAL32 val32:
+  
+  
+  WHILE TRUE
+    SEQ
+      adc.input ? value
+      --IF 
+        --axis = 'x'
+          --value := value - 352
+        --axis = 'y'
+          --value := value - 335
+        --axis = 'z'
+          --value := value - 415
+        --TRUE
+          --SKIP
+          
+      val32 := REAL32 ROUND value
+
+      out ! val32
+      
+      
+:
+    
+PROC show (CHAN INT output?)
+  INT val:
+  
+  WHILE TRUE
+    SEQ
+      output ? val
+      
+      serialWriteDecInt(val)
+      serialWrite("*n")
+    
+:
+PROC pinger(CHAN SIGNAL ping!)
+  WHILE TRUE
+    SEQ
+      ping ! SIGNAL
+      delay(150)
+:
+
+PROC main ()
+  CHAN INT output.z,output.y, output.x:
+  CHAN SIGNAL ping.x, ping.y, ping.z:
+  CHAN REAL32 output.z.32, output.y.32, output.x.32:
+  PAR
+    pinger(ping.x!)
+    pinger(ping.y!)
+    pinger(ping.z!)
+    adc(5,ping.z?,output.z!)
+    adc(3,ping.y?,output.y!)
+    adc(0,ping.x?,output.x!)
+    magic(output.z?,output.z.32!, 'z')
+    magic(output.y?, output.y.32!, 'y')
+    magic(output.x?,output.x.32!, 'x')
+    calculator(output.z.32?, output.y.32?, output.x.32?)
+    --show(output.x?)
+:

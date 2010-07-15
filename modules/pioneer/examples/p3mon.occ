@@ -4,6 +4,9 @@
 #INCLUDE "pioneer.module"
 
 
+-- FIXME: this needs rewriting to work with the pioneer module (CGR 20100625)
+
+
 VAL INT SECONDS IS 1000000:
 VAL INT MILLIS IS 1000:
 

@@ -4,10 +4,10 @@ if ! [ -d build/jedit ] ; then
   mkdir -p build/jedit
   cd build
   curl -L -O \
-    http://prdownloads.sourceforge.net/jedit/jedit42install.jar \
+    http://prdownloads.sourceforge.net/jedit/jedit4.3.2install.jar \
     || exit 1
   cd jedit
-  jar -xvf ../jedit42install.jar
+  jar -xvf ../jedit4.3.2install.jar
   mkdir -p jedit-program
   cd jedit-program
   tar -xvjf ../installer/jedit-program.tar.bz2
