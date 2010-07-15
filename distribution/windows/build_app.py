@@ -73,6 +73,9 @@ for binary in BINARIES:
     src = os.path.join('install/bin/', binary)
     copy_file(src, BIN_DIR)
 
+# The stub
+copy_file('build/stub/Transterpreter.exe', APP_DIR)
+
 # py2exe generated files
 copy_tree('py2exe-dist', BIN_DIR)
 
