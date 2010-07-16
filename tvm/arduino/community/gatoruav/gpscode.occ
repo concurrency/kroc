@@ -1,24 +1,29 @@
 #INCLUDE "plumbing.module"
-
-PROC gps.com ()
-  [32]BYTE query:
+#IF FALSE
+PROC serial.rx (VAL INT pin, CHAN BYTE received!)
+  BYTE ch:
   WHILE TRUE
     SEQ
-      serial.setup (1, 14400)
-      SEQ i = 0 FOR 32
-        SEQ
-          
-          serial.read.byte (1, query [i])
-      SEQ i =0 FOR 32
-        SEQ
-          serialWrite ([query [i]])
+      serial.read.byte(pin, ch)
+      received ! ch
 :
 
-
+PROC serial.tx (VAL INT pin, CHAN BYTE received?)
+  BYTE ch:
+  WHILE TRUE
+    SEQ
+      received ? ch
+      serial.write.byte(pin, ch)
+:
+#ENDIF
 PROC main ()
+  CHAN BYTE b:
   SEQ
-    gps.com()
-
-    
-    
+    serial.setup(0, 57600)
+    serial.setup(2, 9600) -- or whatever...
+    PAR
+      serial.tx(TX0, b?) -- looks a lot like rx, but opposite...
+      serial.rx(RX2, b!)
 :
+    
+  
