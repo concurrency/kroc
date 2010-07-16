@@ -79,13 +79,13 @@ def cmd(str):
 	print "COMMAND [ %s ]" % str
 	result = commands.getstatusoutput(str)
 
-def remove_and_create_dir(dir):
-	cmd(build_command(["rm", "-rf", dir]))
-	cmd(build_command(["mkdir", dir]))
-
 def remove_dir(dir):
 	print " -- REMOVING -- %s" % dir
 	cmd(build_command(["rm", "-rf", dir]))
+
+def remove_and_create_dir(dir):
+	remove_dir(dir)
+	mkdir(dir)
 
 def copy_dir(src, dst):
 	# print "DIRECTORY COPY [%s] TO [%s]" % (src, dst)
@@ -130,9 +130,12 @@ def header(str):
 
 def checkout(url):
 	header("RUNNING CHECKOUT")
-
 	config.refresh()
+	if url == 'trunk':
+		url = config.get('SVN_TRUNK')
+
 	remove_and_create_dir(config.get('SVN'))
+
 	# print "In %s" % os.getcwd()
 	cmd(build_command(["svn", "co", url, config.get('SVN')]))
 
@@ -363,14 +366,15 @@ def ttw():
 	return [config.get('TOOLCHAIN'), config.get('TARGET'), config.get('WRAPPER')]
 
 def all(url):
-	if url == 'trunk':
-		url = config.get('SVN_TRUNK')
 
-	checkout(url)
+	if (url != 'LOCAL'):
+		checkout(url)
+
 	autoreconf()
 	configure()
 	build()
 	install()
+
 	if ['tvm', 'avr', 'arduino'] == ttw():
 		make_destdirs()
 		copy_arduino_config()
@@ -449,14 +453,15 @@ def build_occplug():
 	src_ext = '/tools/occplug' 
 	dist_ext = '/distribution/deb-pkg'
 
-	srcpath = concat([config.get('TEMP'), '/src', src_ext])
-	mkdir(srcpath)
+	#srcpath = concat([config.get('TEMP'), '/src', src_ext])
+	#mkdir(srcpath)
 	
-	distpath = concat([config.get('TEMP'), '/src', dist_ext])
-	mkdir(distpath)
-	config.set('OCCPLUG_DISTRIBUTION', distpath)
+	#distpath = concat([config.get('TEMP'), '/src', dist_ext])
+	#mkdir(distpath)
+	config.set('OCCPLUG_DISTRIBUTION', 
+						concat([config.get('SVN'), dist_ext]))
 
-	config.rebase('SOURCE_OCCPLUG', srcpath)
+	#config.rebase('SOURCE_OCCPLUG', srcpath)
 
 	make_destdirs()
 	remove_dir(concat([config.get('TEMP'), '/', config.get('PACKAGE_NAME')]))
@@ -466,8 +471,8 @@ def build_occplug():
 
 	print 'SOURCE OCCPLUG: %s' % config.get('SOURCE_OCCPLUG')
 
-	checkout_to(concat([config.get('SVN_TRUNK'), src_ext]), config.get('SOURCE_OCCPLUG'))
-	checkout_to(concat([config.get('SVN_TRUNK'), dist_ext]), distpath)
+	#checkout_to(concat([config.get('SVN_TRUNK'), src_ext]), config.get('SOURCE_OCCPLUG'))
+	#checkout_to(concat([config.get('SVN_TRUNK'), dist_ext]), distpath)
 
 	zipfile = 'ErrorList-1.5-bin.zip'
 	jarfile = 'ErrorList.jar'
@@ -553,6 +558,8 @@ OPTIONS = [
 		deb],
 	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).", rpm],
 	["all", "store", "ALL_SVN_URL", "Do everything up to this point.", all],
+	["local-all", "store_true", "Do everything in a currently checked-out tree.", 
+		(lambda : all('LOCAL'))],
 	["refresh-avr-libs", "store_true", "Re-run copy-config, copy, deb, and rpm.", refresh_libs],
 	["with-avr-svn-path", "store", "LIB_PATH", "Set path for where we will refresh from.", with_lib_path],
 	["with-temp-dir", "store", "TEMP_DIR", "Set the temp build directory.",
