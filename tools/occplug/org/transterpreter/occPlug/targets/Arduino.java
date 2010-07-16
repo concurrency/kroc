@@ -377,7 +377,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		output.writeRegular("Compiling: " + occFile + "\n");
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(occbuildCommand) + "\n", output);
 
-		final String[] env = OccbuildHelper.makeOccbuildEnvironment();
+		final String[] env = OccbuildHelper.makeOccbuildEnvironment("tvm-arduino");
 		OccPlugUtil.writeVerbose("Environment: " + Arrays.asList(env) + "\n", output);
 		
 		final Runnable[] finalisers = { finished };

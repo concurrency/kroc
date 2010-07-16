@@ -1,7 +1,7 @@
 #
 # Default
 #
-plugin.OccPlugPlugin.command.default.occplug=occplug
+plugin.OccPlugPlugin.command.default.occbuild=occbuild
 plugin.OccPlugPlugin.command.default.occ21=occ21
 plugin.OccPlugPlugin.command.default.plinker=plinker.pl
 plugin.OccPlugPlugin.command.default.tce-dump=tce-dump.pl
@@ -15,7 +15,7 @@ plugin.OccPlugPlugin.command.default.binary-to-ihex=binary-to-ihex
 #
 # Windows
 #
-plugin.OccPlugPlugin.command.windows.occplug=occplug.exe
+plugin.OccPlugPlugin.command.windows.occbuild=occbuild.exe
 plugin.OccPlugPlugin.command.windows.occ21=occ21.exe
 plugin.OccPlugPlugin.command.windows.plinker=plinker.exe
 plugin.OccPlugPlugin.command.windows.tce-dump=tce-dump.exe

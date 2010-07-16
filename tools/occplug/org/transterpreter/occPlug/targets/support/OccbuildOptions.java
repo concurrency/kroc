@@ -26,10 +26,13 @@ import java.util.Hashtable;
 import java.util.Iterator;
 
 import org.transterpreter.occPlug.OccPlugUtil;
+import org.transterpreter.occPlug.hosts.BaseHost;
 
 public abstract class OccbuildOptions
 {
-	public String occbuildName           = "occbuild";
+	private final BaseHost host = BaseHost.getHostObject();
+	
+	public String occbuildName           = host.getCommandName("occbuild");
 	public boolean long_error_messages   = false;
 	//public String target_cpu             = null;
 	public boolean verbose               = OccPlugUtil.getVerbose();
