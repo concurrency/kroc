@@ -1,9 +1,9 @@
 package org.transterpreter.occPlug.hosts;
 
 /*
- * Unix.java
+ * Ubuntu.java
  * part of the occPlug plugin for the jEdit text editor
- * Copyright (C) 2010 Christian L. Jacobsen
+ * Copyright (C) 2010 Christian L. Jacobsen, Matthew C. Jadud
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,40 +20,11 @@ package org.transterpreter.occPlug.hosts;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-import java.io.File;
-import java.io.FilenameFilter;
 
-public class Unix extends BaseHost {
-	
-	protected Unix(String base)
+public class Ubuntu extends BaseHost {
+
+	public Ubuntu()
 	{
-		super(base);
-	}
-	
-	public String[] getSerialPorts()
-	{
-		FilenameFilter filter = new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return (
-						/* Ubuntu 8, 9, 10 */
-						name.startsWith("ttyUSB") 
-						/* Mac OSX */
-						|| name.startsWith("tty.usbserial-")
-						/* *NIX */
-						|| name.equals("ttys0") 
-						|| name.equals("ttys1")
-						|| name.equals("ttys2") 
-						|| name.equals("ttys3")
-						);
-			}
-		};
-		
-		File dir = new File("/dev");
-		String[] devices = dir.list(filter);
-		
-		for(int i = 0; i < devices.length; i++)
-			devices[i] = "/dev/" + devices[i];
-		
-		return devices;
+		super("ubuntu");
 	}
 }
