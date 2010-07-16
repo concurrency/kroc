@@ -10,6 +10,7 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
   
   [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree:
   [2]CHAN SIGNAL sig.gyro, sig.accel:
+  
   PAR
 
     ping(sig.gyro[X]!)
@@ -17,11 +18,11 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
     ping(sig.accel[X]!)
     ping(sig.accel[Y]!)
     -- Gyro adcs
-    adc(GYRO.X, sig.gyro[X]?, gyro.out[X]!)
-    adc(GYRO.Y, sig.gyro[Y]?, gyro.out[Y]!)
+    adc(GYRO.X, AREF, sig.gyro[X]?, gyro.out[X]!)
+    adc(GYRO.Y, AREF, sig.gyro[Y]?, gyro.out[Y]!)
     -- Accel adcs
-    adc(ACCEL.X, sig.accel[X]?, accel.out[X]!)
-    adc(ACCEL.Y, sig.accel[Y]?, accel.out[Y]!)
+    adc(ACCEL.X,AREF, sig.accel[X]?, accel.out[X]!)
+    adc(ACCEL.Y,AREF, sig.accel[Y]?, accel.out[Y]!)
   
     accel.conv.y(accel.out[Y]?, accel.conv[Y]!)
     accel.conv.x(accel.out[X]?, accel.conv[X]!)
@@ -32,8 +33,8 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
     gyro.to.degrees(gyro.smooth[Y]?, gyro.degree[Y]!)
     gyro.to.degrees(gyro.smooth[X]?, gyro.degree[X]!)
 
-    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, 95, 1)
-    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 95, 1)
+    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, 80, 1)
+    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 80, 1)
     
 :
 

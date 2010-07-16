@@ -1,12 +1,75 @@
-#INCLUDE "uav.module"
-
-
+#INCLUDE "uavsensors.module"
+#INCLUDE "servo.module"
+PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
+  INT pitch, roll, servo.pos.pitch, servo.pos.roll:
+  SEQ
+    s ! pos ; 90
+    WHILE TRUE
+      SEQ
+        theta.x ? pitch
+        theta.y ? roll
+        
+        servo.pos.pitch := (pitch * (-1)) + 90
+        s ! pos ; servo.pos.pitch
+        
+        servo.pos.roll := (roll * (-1)) + 90
+        s2 ! pos ; servo.pos.roll
+        
+      
+:    
 PROC display(CHAN INT theta?)
   INT angle:
   WHILE TRUE
     SEQ
       theta ? angle
       serialWriteDecInt(angle)
-      serial.write.string("*n")
+      serial.write.string(TX0, "*n")
 :
+VAL INT NUM.READINGS.TO.AVERAGE IS 10:
+PROC av (CHAN INT input?, output!)
+  [NUM.READINGS.TO.AVERAGE]INT readings:
+  INT val, average, sum:
+  INITIAL INT ndx IS 0:
+  SEQ
+    -- Preload array
+    SEQ i = 0 FOR (SIZE readings)
+      input ? readings[i]      
+    WHILE TRUE
+      SEQ
+        -- Read in a new value
+        input ? readings[ndx]
+        -- Sum up the current array of readings
+        sum := 0
+        SEQ i = 0 FOR (SIZE readings)
+          sum := sum + readings[i]
+        output ! (sum / (SIZE readings))
+        ndx := (ndx + 1) REM (SIZE readings)
+:
+PROC main ()
+  CHAN SERVO s, s2:
+  CHAN INT roll, pitch, filtered.x, filtered.y:
+  SEQ
+    digital.mode (9, OUTPUT)
+    digital.mode (10, OUTPUT)
+    PAR
+      servo (9, s?)
+      servo (10, s2?)
+      SEQ
+        s ! min ; 650
+        s ! max ; 2350
+        s ! div ; 180
+        s ! pos ; 0
+        s ! start        
+        s2 ! min ; 650
+        s2 ! max ; 2350
+        s2 ! div ; 180
+        s2 ! pos ; 0
+        s2 ! start
+        delay (2000)
+        level.flight (filtered.x?, filtered.y?, s, s2)
+      angles(A0, A1, A2, A3, pitch!, roll!)
+      av(pitch?, filtered.x!)
+      av(roll?, filtered.y!)
+      --display(roll?)
 
+:
