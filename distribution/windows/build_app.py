@@ -19,6 +19,7 @@ ARDUINO_TVM_INC_DIR = os.path.join(APP_DIR, 'arduino', 'tvm', 'include')
 ARDUINO_TVM_LIB_DIR = os.path.join(APP_DIR, 'arduino', 'tvm', 'lib')
 ARDUINO_TVM_FW_DIR  = os.path.join(APP_DIR, 'arduino', 'tvm', 'firmware')
 ARDUINO_PLUMBING_DIR= os.path.join(APP_DIR, 'arduino', 'plumbing-book')
+ARDUINO_TVM_CONF_DIR= os.path.join(APP_DIR, 'arduino', 'tvm', 'conf')
 JEDIT_DIR           = os.path.join(APP_DIR, 'jEdit')
 
 BINARIES = "occ21.exe ilibr.exe mkoccdeps.exe tvm.exe".split()
@@ -117,9 +118,15 @@ copy_file('install/bin/SDL.dll', BIN_DIR)
 mkdirs(ARDUINO_TVM_INC_DIR)
 mkdirs(ARDUINO_TVM_LIB_DIR)
 mkdirs(ARDUINO_TVM_FW_DIR)
+mkdirs(ARDUINO_TVM_CONF_DIR)
 
 # Arduino firmware
 copy_files('build/kroc-tvm-avr-*-*-wrapper/tvm-avr-*-*.hex', ARDUINO_TVM_FW_DIR)
+
+# Arduino config files
+for conf in glob.iglob('../../tvm/arduino/occam/conf/*.conf.in'):
+    copy_file(conf, 
+              os.path.join(ARDUINO_TVM_CONF_DIR, os.path.basename(conf)[:-2]))
 
 # Arduino tools
 # FIXME: These will have to be py2exed I think...
