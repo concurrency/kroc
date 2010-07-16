@@ -220,7 +220,7 @@ PROC heartbeat ()
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
 PROC adc (VAL INT analog.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
-  INITIAL INT avr.pin IS board.analog.to.chip(board.pin):
+  INITIAL INT avr.pin IS board.analog.to.chip(analog.pin):
   INT v:
   SEQ
     WHILE TRUE
@@ -239,8 +239,8 @@ PROC adc (VAL INT analog.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
 -- @oaram ping In signal that activated a new reading and mapping.
 -- @param out The output chanel mapped values are sent out on.
 PROC potentiometer (VAL INT analog.pin, min, max, CHAN SIGNAL ping?, CHAN INT out!)
-  INITIAL INT avr.pin IS board.to.chip (board.pin):
-  INITIAL INT range = max - min:
+  INITIAL INT avr.pin IS board.analog.to.chip (analog.pin):
+  INITIAL INT range IS max - min:
   INT v:
 
   WHILE TRUE
@@ -309,7 +309,6 @@ PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
 -- by [step]. Does not cap pos at low or high, it simply checks for
 -- <= or >=.
 --
--- @param low The lower limit at which the pos begins moving upward.
 -- @param high The upper limit at which the pos begins moving downward.
 -- @param step The step pos moves for every send.
 -- @param wait The time -- in miliseconds -- to wait after a successful send
@@ -354,13 +353,12 @@ PROC crawl.byte (VAL BYTE high, step, VAL INT wait, CHAN BYTE out!)
 -- by [step]. Does not cap pos at low or high, it simply checks for
 -- <= or >=.
 --
--- @param low The lower limit at which the pos begins moving upward.
 -- @param high The upper limit at which the pos begins moving downward.
 -- @param step the step pos moves for every send.
 -- @param wait The time -- in miliseconds -- to wait after a successful send
 --   before attempting another.
 -- @param out The output stream of INTs.
-PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
+PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
   INITIAL INT pos IS 0:
   INITIAL BOOL up IS TRUE:
   
