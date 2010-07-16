@@ -17,7 +17,7 @@ PROC serialWriteDecInt (VAL INT n)
         SKIP
     IF 
       neg 
-        serial.write.string("-")
+        serial.write.string(TX0, "-")
       TRUE 
         SKIP
     WHILE (index < 5)
@@ -26,7 +26,7 @@ PROC serialWriteDecInt (VAL INT n)
         digit := number / powers[index]
         number := number REM powers[index]
         digit := digit + (INT '0')
-        serial.write.string([BYTE digit])
+        serial.write.string(TX0,[BYTE digit])
         index := index + 1
     
 :
@@ -201,9 +201,9 @@ PROC time.int (CHAN INT v?, VAL BYTE axis)
       SEQ i = 0 FOR 100
         v ? hole
       tim ? end
-      serial.write.string([axis])
+      serial.write.string(TX0, [axis])
       serialWriteDecInt(end MINUS start)
-      serial.write.string("*n")
+      serial.write.string(TX0, "*n")
 :
 
 #ENDIF
