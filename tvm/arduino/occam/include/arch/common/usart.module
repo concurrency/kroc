@@ -16,8 +16,8 @@ PROC serial.start (VAL INT port, VAL INT32 baud)
   SEQ
     ports[UBRRH[port]] := factor.bytes[1]
     ports[UBRRL[port]] := factor.bytes[0]
-    -- WARNING: Should we replace this, then? Is one "more correct" than the other?
-    -- (3 << UCSZN0[port]) is the same as (UCSZN0[port] \/ UCSZN1[port])
+    -- I'm really not sure what this does, actually...
+    -- I was wrong at first. I'm pretty sure this is == to UPMn0
     ports[UCSRC[port]] := 3 << UCSZN0[port]
     ports[UCSRB[port]] := BV (TXEN[port]) \/ BV (RXEN[port])
 :

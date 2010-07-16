@@ -214,12 +214,12 @@ PROC heartbeat ()
 --* Reads the analog value of a given pin on a signal request.
 -- Currently not parallel safe.
 --
--- @param board.pin The Arduino pin number (A0 - A5)
+-- @param analog.pin The Arduino pin number (A0 - A5)
 -- @param ref The source of the reference voltage. Either VCC (internal) or
 --   AREF (external).
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
-PROC adc (VAL INT board.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
+PROC adc (VAL INT analog.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
   INITIAL INT avr.pin IS board.analog.to.chip(board.pin):
   INT v:
   SEQ
@@ -231,6 +231,27 @@ PROC adc (VAL INT board.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
 :
 --}}}
 
+--{{{ PROC mapped.adc
+--* Maps the incoming values from a potentiometer (knob, slider, etc.)
+-- connected to analog.pin to apropriate values between min and max.
+-- @param analog.pin The analog pin the potentiometer is connected to.
+-- @param min, max The minimum and maximum values that will be output.
+-- @oaram ping In signal that activated a new reading and mapping.
+-- @param out The output chanel mapped values are sent out on.
+PROC potentiometer (VAL INT analog.pin, min, max, CHAN SIGNAL ping?, CHAN INT out!)
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  INITIAL INT range = max - min:
+  INT v:
+
+  WHILE TRUE
+    SEQ
+      ping ? SIGNAL
+      adc.base (avr.pin, VCC, v)
+      v := ((v  / 1023) * range) + min
+      out ! v
+:
+--}}}
+ 
 --{{{ PROC clamp.[byte/int]
 --* Limits the range of values in a stream.
 -- Takes a low and high limit, and any bytes read in that
