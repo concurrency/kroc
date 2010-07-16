@@ -18,4 +18,11 @@ plugin.OccPlugPlugin.path.tvm.windows.include=posix/tvm/include
 plugin.OccPlugPlugin.path.tvm.windows.lib=posix/tvm/lib
 plugin.OccPlugPlugin.path.tvm.windows.firmware=posix/tvm/firmware
 
-
+#
+# Ubuntu
+# 
+plugin.OccPlugPlugin.path.kroc.ubuntu.include=/usr/share/kroc
+plugin.OccPlugPlugin.path.kroc.ubuntu.lib=/usr/share/kroc/lib
+plugin.OccPlugPlugin.path.tvm.ubuntu.include=/usr/share/tvm/include
+plugin.OccPlugPlugin.path.tvm.ubuntu.lib=/usr/share/tvm/lib
+plugin.OccPlugPlugin.path.tvm.ubuntu.firmware=/usr/share/tvm/firmware
