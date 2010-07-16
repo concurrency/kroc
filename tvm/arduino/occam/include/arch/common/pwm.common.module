@@ -3,10 +3,10 @@
 -- The operation of PWMs should be improved and made to be significantly more
 -- modular and robust by turning it into a PROTOCOL based process.
 -- This can be done Later.
--- @module pwm
+-- @module pwm.common
 
-#IF NOT (DEFINED (PWM.MODULE))
-#DEFINE PWM.MODULE
+#IF NOT (DEFINED (PWMCOMMON.MODULE))`
+#DEFINE PWMCOMMON.MODULE
 
 --FIXME: MCJ
 -- I would love to come up with a better naming convention
@@ -14,8 +14,8 @@
 #INCLUDE "pwmarch.module" 
 
 --{{{ PROC set16 
---* Converst the incoming INT val to a pair of BYTEs that are then written
--- into a pair of adjacent register that then act as a single 17bit number.
+--* Converts the incoming INT val to a pair of BYTEs that are then written
+-- into a pair of adjacent registers that then act as a single 16bit number.
 --
 -- We're operating under the assumption that the high byte is always one 
 -- greater than the low byte.
@@ -37,6 +37,45 @@ INLINE PROC set16 (VAL INT reg, VAL INT val)
     ports[reg] := (BYTE (val BITAND #FF))
 :
 --}}}
+
+--{{{ PROC pwm8.set.compare
+--* Sets the compare register on the given PWM pin.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param level The new level to set the compare register to.
+PROC pwm8.set.compare (VAL INT avr.pin, VAL BYTE level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  -- INITIAL INT OCRnx IS pwm8.compare.lookup (avr.pin):
+  INT OCRnx:
+  SEQ
+    OCRnx := pwm8.compare.lookup (avr.pin)
+    ports[OCRnx] := level
+:
+--}}}
+
+--{{{ PROC pwm16.set.compare
+--* Sets the compare register on the given PWM pin.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param level The new level to set the compare register to.
+PROC pwm16.set.compare (VAL INT avr.pin, VAL INT level)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  INITIAL INT OCRnx IS pwm16.compare.lookup (avr.pin):
+  set16 (OCRnx, level)
+:
+--}}
+
+--{{{ PROC pwm16.set.top
+--* Sets the 'top' register on the given PWM pin, effecting the highest
+-- number the timer will count to before beging its down-count.
+-- @param avr.pin The [@em Architecture] pin to activate PWM on.
+-- @param top The new top to set the 'top' register.
+PROC pwm16.set.top (VAL INT avr.pin, VAL INT top)
+  INITIAL INT ICRn IS pwm16.ICRn.lookup (avr.pin):
+  set16 (ICRn, top)
+:
+--}}}
+
 
 --{{{ PROC pwm8.setup
 --* Sets up the given pin to opperate with phase-correct Pulse Width
@@ -72,7 +111,7 @@ PROC pwm8.setup (VAL INT avr.pin, prescale)
 -- can be operated as a PWM Pin. Consult your board for information on which
 -- pins can produce PWM.
 -- 
--- We make a number of assumptions in this method. I'd very much liek to
+-- We make a number of assumptions in this method. I'd very much like to
 -- rewrite this into a PROTOCOL so we don't need to make assumptions about
 -- the PWM mode, compare up- vs. down-counting, etc.
 -- @param avr.pin The [@em Architecture] pin to activate PWM on.
@@ -92,47 +131,4 @@ PROC pwm16.setup (VAL INT avr.pin, prescale)
 :
 --}}}
 
---{{{ PROC pwm8.set.compare
---* Sets the compare register on the given PWM pin.
--- @param avr.pin The [@em Architecture] pin to activate PWM on.
--- @param level The new level to set the compare register to.
-PROC pwm8.set.compare (VAL INT avr.pin, VAL BYTE level)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  -- INITIAL INT OCRnx IS pwm8.compare.lookup (avr.pin):
-  INT OCRnx:
-  SEQ
-    -- serial.write.byte(0, BYTE (65 + avr.pin))
-    -- serial.write.byte(0, '*n')
-    OCRnx := pwm8.compare.lookup (avr.pin)
-    -- serial.write.byte(0, 'X')
-    -- serial.write.byte(0, '*n')
-    ports[OCRnx] := level
-:
---}}}
-
---{{{ PROC pwm16.set.compare
---* Sets the compare register on the given PWM pin.
--- @param avr.pin The [@em Architecture] pin to activate PWM on.
--- @param level The new level to set the compare register to.
-PROC pwm16.set.compare (VAL INT avr.pin, VAL INT level)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  INITIAL INT OCRnx IS pwm16.compare.lookup (avr.pin):
-  -- Not sure if this is the way to do it...
-  -- Not sure if I'm a fan of relying on the highs being one up from the lows..
-  set16 (OCRnx, level)
-:
---}}
-
---{{{ PROC pwm16.set.top
---* Sets the 'top' register on the given PWM pin, effecting the highest
--- number the timer will count to before beging its down-count.
--- @param avr.pin The [@em Architecture] pin to activate PWM on.
--- @param top The new top to set the 'top' register.
-PROC pwm16.set.top (VAL INT avr.pin, VAL INT top)
-  INITIAL INT ICRn IS pwm16.ICRn.lookup (avr.pin):
-  set16 (ICRn, top)
-:
---}}}
 #ENDIF

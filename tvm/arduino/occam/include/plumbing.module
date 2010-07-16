@@ -33,13 +33,15 @@
 
 #INCLUDE "avr.module"
 #INCLUDE "boardmap.module"
+#INCLUDE "digital.module"
 #INCLUDE "printing.module"
 #INCLUDE "servo.module"
 
 --{{{ Constants
-DATA TYPE LEVEL IS INT:
-VAL LEVEL LOW IS #0:
-VAL LEVEL HIGH IS #1:
+-- LEVEL is now defined in digital.module
+-- DATA TYPE LEVEL IS INT:
+-- VAL LEVEL LOW IS #0:
+-- VAL LEVEL HIGH IS #1:
 
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
@@ -50,72 +52,6 @@ VAL BOOL AREF IS FALSE:
 VAL INT DEBOUNCE.TIME IS 50:
 --}}}
 
-
---{{{ PROC digital.write
---* Sets the digitial state of a pin to either HIGH or LOW.
--- @param board.pin The board pin to be set.
--- @param state The state to set -- Either HIGH or LOW.
-PROC digital.write (VAL INT board.pin, state)
-  INITIAL INT avr.pin IS board.to.chip(board.pin):
-  --INT r.ddr, r.port, r.pin, bit:
-  INT dummy1, r.port, dummy2, bit:
-  SEQ
-    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
-    dummy1, r.port, dummy2, bit := chip.to.gpio (avr.pin)
-    pin.write(r.port, bit, state)
-:
---}}}
-
---{{{ PROC digital.read
---* Reads the digitial state of a pin. Either HIGH or LOW.
--- @param board.pin The board pin to be read.
--- @param state The pin's current state -- Either HIGH or LOW.
-PROC digital.read (VAL INT board.pin, RESULT INT state)
-  INITIAL INT avr.pin IS board.to.chip(board.pin):
-  --INT r.ddr, r.port, r.pin, bit:
-  INT dummy1, dummy2, r.pin, bit:
-  SEQ
-    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
-    dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
-    pin.read(r.pin, bit, state)
-:
---}}}
-
---{{{ PROC digital.mode
---* Sets the Data Direction Register of the given pin (sets the flow of data)
--- to either INPUT or OUTPUT.
--- @param board.pin The board pin to set the direction of.
--- @param mode The mode to be set. Either INPUT or OUTPUT.
-PROC digital.mode (VAL INT board.pin, mode)
-  INITIAL INT avr.pin IS board.to.chip(board.pin):
-  --INT r.ddr, r.port, r.pin, bit:
-  INT r.ddr, dummy1, dummy2, bit:
-  SEQ
-    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
-    r.ddr, dummy1, dummy2, bit := chip.to.gpio (avr.pin)
-    pin.mode(r.ddr, bit, mode)
-:
---}}}
-
---{{{ PROC digital.output
---* Set digital levels on a pin.
--- Reads LEVEL values (LOW or HIGH) on the input 
--- channel, and sets the value of the specified pin 
--- accordingly.
---
--- @param board.pin The Arduino pin number
--- @param in Pin levels (LOW or HIGH)
-PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
-  LEVEL v:
-  SEQ
-    in ? v
-    digital.mode (board.pin, OUTPUT)
-    WHILE TRUE
-      SEQ
-        digital.write (board.pin, INT v)
-        in ? v
-:
---}}}
 
 --{{{ PROC debounce
 --* Debounce a channel.
@@ -415,7 +351,7 @@ PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
 
 --{{{ PROC pwm[8/16]
 --FIXME: 20100714 drew These PROC are also crufty.
--- The while PWM architecture should be re-written as a PROTOCOL.
+-- The whole PWM architecture should be re-written as a PROTOCOL.
 
 --* Writes an analog value to a pin.
 -- For a given (PWM) pin, sets the observed analog level to a value between

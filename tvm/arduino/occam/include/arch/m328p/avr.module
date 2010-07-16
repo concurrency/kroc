@@ -11,9 +11,9 @@
 #INCLUDE "chipmap.module"
 #INCLUDE "ffi.module"
 -- These modules depend on base, constants, and FFI
-#INCLUDE "digital.module"
+#INCLUDE "pin.module"
 #INCLUDE "usart.module"
 #INCLUDE "adc.module"
-#INCLUDE "pwm.module"
+#INCLUDE "pwmcommon.module"
 
 #ENDIF

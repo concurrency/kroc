@@ -1,7 +1,7 @@
 --** Procs for low-level digital manipulation of pins on any ATmega.
 -- PROCs in this module take registers for direction (DDRn), pin (PINn)
 -- and port (PORTn) to manipulate digital pins on the ATmega.
--- @module digital
+-- @module pin
 
 #IF NOT (DEFINED (REGISTER.MODULE))
 #DEFINE REGISTER.MODULE
