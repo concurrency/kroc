@@ -38,13 +38,13 @@
 #INCLUDE "servo.module"
 
 --{{{ Constants
--- LEVEL is now defined in digital.module
+-- LEVEL, INPUT and OUTPUT are now defined in digital.module
 -- DATA TYPE LEVEL IS INT:
 -- VAL LEVEL LOW IS #0:
 -- VAL LEVEL HIGH IS #1:
 
-VAL INT INPUT IS #0:
-VAL INT OUTPUT IS #1:
+--VAL INT INPUT IS #0:
+--VAL INT OUTPUT IS #1:
 
 VAL BOOL VCC IS TRUE:
 VAL BOOL AREF IS FALSE:
@@ -294,24 +294,37 @@ PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
 -- @param wait The time -- in miliseconds -- to wait after a successful send
 --   before attempting another.
 -- @param out The output stream of BYTEs.
-PROC crawl.byte (VAL BYTE low, high, step, VAL INT wait, CHAN BYTE out!)
+PROC crawl.byte (VAL BYTE high, step, VAL INT wait, CHAN BYTE out!)
   INITIAL BYTE pos IS 0:
   INITIAL BOOL up IS TRUE:
+
   WHILE TRUE
     SEQ
       IF
         up = TRUE
-          IF
-            pos < high
-              pos := pos + step
-            TRUE
-              up := FALSE
+          SEQ
+            pos := pos + step
+            IF
+              pos < high
+                SKIP
+              pos > high
+                SEQ
+                  pos := high
+                  up := FALSE
+              TRUE
+                up := FALSE
         TRUE
-          IF
-            pos > low
-              pos := pos - step
-            TRUE
-              up := TRUE
+          SEQ
+            pos := pos - step
+            IF
+              pos > 0
+                SKIP
+              pos < 0
+                SEQ
+                  pos := 0
+                  up := TRUE
+              TRUE
+                up := TRUE
       out ! pos
       delay (wait)
 :
@@ -329,21 +342,34 @@ PROC crawl.byte (VAL BYTE low, high, step, VAL INT wait, CHAN BYTE out!)
 PROC crawl.int (VAL INT low, high, step, VAL INT wait,  CHAN INT out!)
   INITIAL INT pos IS 0:
   INITIAL BOOL up IS TRUE:
+  
   WHILE TRUE
     SEQ
       IF
         up = TRUE
-          IF
-            pos < high
-              pos := pos + step
-            TRUE
-              up := FALSE
+          SEQ
+            pos := pos + step
+            IF
+              pos < high
+                SKIP
+              pos > high
+                SEQ
+                  pos := high
+                  up := FALSE
+              TRUE
+                up := FALSE
         TRUE
-          IF
-            pos > low
-              pos := pos - step
-            TRUE
-              up := TRUE
+          SEQ
+            pos := pos - step
+            IF
+              pos > 0
+                SKIP
+              pos < 0
+                SEQ
+                  pos := 0
+                  up := TRUE
+              TRUE
+                up := TRUE
       out ! pos
       delay (wait)
 :
