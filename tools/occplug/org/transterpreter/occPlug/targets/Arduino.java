@@ -165,7 +165,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 
 		public String getPlatform() {
-			return device.getID();
+			return getProp("PLATFORM");
 		}		
 	}
 	
@@ -365,7 +365,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "include")),
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "arch", props.getMCU())),
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "arch", "common")),
-				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), props.getPlatform()))};
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "platforms", props.getPlatform()))};
 		options.defines.put("F.CPU", props.getFCPU()); 
 		// FIXME: occbuild for avr builds should always set -TLE? otherwise builds fail on BE machines
 		options.extra_options.add(new String[] { "--occ21-opts", "-tle"});
