@@ -278,7 +278,8 @@ def copy_native_tvm_build():
 
 def deb():
 	header("BUILDING DEBIAN PACKAGE")
-
+	
+	remove_unwanted_build_products()
 	remove_and_create_dir(config.get('DEST_DEBIAN'))
 	
 	for filename in os.listdir(config.get('SOURCE_DEBIAN')):
@@ -380,15 +381,19 @@ def all(url):
 		copy_native_tvm_build()
 	deb()
 
-def delete_usr_share_kroc():
-	header("DETE USR/SHARE/KROC")
-	remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
-	remove_dir(concat([config.get('DEST'), '/usr/share/aclocal']))
+def remove_unwanted_build_products():
+	header("DELETE UNWANTED BUILD PRODUCTS")
+	if config.get('WRAPPER') == 'arduino':
+		remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
+		remove_dir(concat([config.get('DEST'), '/usr/share/aclocal']))
+	if config.get('TARGET') == 'tvm':
+		remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
+	
+
 
 def refresh_libs():
 	if config.get('WRAPPER') == 'arduino':
 		make_destdirs()
-		delete_usr_share_kroc()
 		copy_arduino_config()
 		copy_arduino_build()
 	deb()
@@ -449,7 +454,8 @@ def build_occplug():
 	
 	distpath = concat([config.get('TEMP'), '/src', dist_ext])
 	mkdir(distpath)
-	
+	config.set('OCCPLUG_DISTRIBUTION', distpath)
+
 	config.rebase('SOURCE_OCCPLUG', srcpath)
 
 	make_destdirs()
@@ -479,6 +485,13 @@ def build_occplug():
 											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
 											concat(['-Dbuild.dir=', config.get('TEMP')]),
 											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
+
+	# Insert the ubuntu.props file into the .jar
+	cmd(build_command([
+			'jar -uf', 
+			concat([config.get('DEST_OCCPLUG'), '/', 'OccPlug.jar']),
+			concat([config.get('OCCPLUG_DISTRIBUTION'), '/', 'ubuntu.props'])
+			]))
 	
 	config.set('BUILD_ARCHITECTURE', 'all')
 
