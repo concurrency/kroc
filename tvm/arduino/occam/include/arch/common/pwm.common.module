@@ -5,13 +5,13 @@
 -- This can be done Later.
 -- @module pwm.common
 
-#IF NOT (DEFINED (PWMCOMMON.MODULE))`
+#IF NOT (DEFINED (PWMCOMMON.MODULE))
 #DEFINE PWMCOMMON.MODULE
 
 --FIXME: MCJ
 -- I would love to come up with a better naming convention
 -- for the arch-specific part...
-#INCLUDE "pwmarch.module" 
+#INCLUDE "pwm.arch.module" 
 
 --{{{ PROC set16 
 --* Converts the incoming INT val to a pair of BYTEs that are then written

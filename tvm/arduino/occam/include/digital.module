@@ -11,6 +11,9 @@ DATA TYPE LEVEL IS INT:
 VAL LEVEL LOW IS #0:
 VAL LEVEL HIGH IS #1:
 
+VAL INT INPUT IS #0:
+VAL INT OUTPUT IS #1:
+
 --{{{ PROC digital.write
 --* Sets the digitial state of a pin to either HIGH or LOW.
 -- @param board.pin The board pin to be set.

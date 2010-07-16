@@ -12,7 +12,7 @@
 -- These modules depend on base, constants, and FFI
 #INCLUDE "pin.module"
 #INCLUDE "usart.module"
-#INCLUDE "pwmcommon.module"
+#INCLUDE "pwm.common.module"
 #INCLUDE "adc.module"
 
 #ENDIF

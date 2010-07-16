@@ -1,0 +1,54 @@
+VAL INT PHASE.CORRECT IS #2:
+
+VAL INT BYTE.MAX IS #1:
+VAL INT OUT.COMPARE IS #2:
+
+PROTOCOL PWM8
+  CASE
+    mode ; BYTE
+    prescale ; INT
+    inverted ; BOOL
+    top ; BYTE
+    compare ; BYTE
+:
+
+PROC pwm8 (VAL INT board.pin, CHAN PWM8 p?)
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  INITIAL INT mode IS PHASE.CORRECT:
+  INITIAL INT prescale IS 64:
+  INITIAL INT top IS BYTE.MAX:
+  INITIAL BOOL inverted IS FALSE:
+  INITIAL INT compare IS 9:
+  INITIAL BOOL running IS FALSE:
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits, TCCRnB.bits:
+
+  SEQ
+    
+  WHILE TRUE
+    s ? CASE
+      mode ; .mode
+        IF
+          .mode = FAST
+            --One Thing.
+          .mode = PHASE.CORRECT
+            --One Other Thing.
+          .mode = CLEAR.TIMER.COMPARE
+            --One Last Thing
+      prescale ; .prescale
+        --Does a thing.
+      top ; .top
+        IF
+          .top = BYTE.MAX
+            --A Thing
+          .top = OUT.COMPARE
+        --Do I even want this here?
+      inverted ; inverted
+        SKIP
+      compare ; .compare
+        --This will change all the time.
+      start
+        --Twiddles bits.
+      stop
+        --Is some filler.
+:

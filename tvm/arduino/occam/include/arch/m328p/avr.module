@@ -14,6 +14,6 @@
 #INCLUDE "pin.module"
 #INCLUDE "usart.module"
 #INCLUDE "adc.module"
-#INCLUDE "pwmcommon.module"
+#INCLUDE "pwm.common.module"
 
 #ENDIF
