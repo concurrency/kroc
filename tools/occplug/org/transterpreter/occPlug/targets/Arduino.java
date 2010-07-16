@@ -290,7 +290,9 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 
 		String bin = host.getPath("tvm-arduino", "bin");
-		DeviceProperties props = new DeviceProperties((ArduinoDevice) device.getSelectedItem());
+		ArduinoDevice selectedDevice = (ArduinoDevice) device.getSelectedItem();
+		DeviceProperties props = new DeviceProperties(selectedDevice);
+		
 		
 		final String[] firmdlCommand = { 
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("avrdude"))),
@@ -303,6 +305,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-b", props.getUploadRate() };
 
 		output.writeRegular("Uploading Plumbing firmware\n");
+		OccPlugUtil.writeVerbose("Device id: " + selectedDevice.getID() + "\n", output);
 		OccPlugUtil.writeVerbose("Using config: " + props.getConfigFileName() + " \n", output);
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
 
