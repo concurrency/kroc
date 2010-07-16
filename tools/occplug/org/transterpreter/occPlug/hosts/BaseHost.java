@@ -93,7 +93,10 @@ public abstract class BaseHost {
 		}
 		else if(os.equals("Linux"))
 		{
-			//return new Unix();
+			if (jEdit.getProperty("plugin.OccPlugPlugin.linux.flavor").equals("ubuntu"))
+			{
+				return new Unix();
+			}
 			throw new RuntimeException("Linux not supported.");
 		}
 		
