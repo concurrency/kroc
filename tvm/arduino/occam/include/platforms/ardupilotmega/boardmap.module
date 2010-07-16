@@ -100,6 +100,11 @@ VAL INT PD4  IS 54
 VAL INT PE6  IS 55
 VAL INT PH2  IS 56
 
+VAL INT OUT0 IS 45:
+VAL INT OUT1 IS 44:
+VAL INT OUT2 IS 12:
+VAL INT OUT3 IS 13:
+
 --* Symbolic constant to signify a lack of on-board LED pin.
 VAL INT LED.PIN IS -1:
 --}}}
