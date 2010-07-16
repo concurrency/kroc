@@ -111,6 +111,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 	{
 		private final ArduinoDevice device;
 		private final Properties props = new Properties();
+		private final String configFile;
 		
 		public DeviceProperties(ArduinoDevice device)
 		{
@@ -118,7 +119,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			
 			BaseHost host = BaseHost.getHostObject();
 			
-			String configFile = OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "conf"), device.getConfig())); 
+			configFile = OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "conf"), device.getConfig())); 
 			try {
 				FileInputStream in = new FileInputStream(configFile);
 				props.load(in);
@@ -147,6 +148,10 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		public String getFirmware()
 		{
 			return getProp("TVM_ARDUINO_FIRMWARE");
+		}
+
+		public String getConfigFileName() {
+			return configFile;
 		}		
 	}
 	
@@ -298,6 +303,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-b", props.getUploadRate() };
 
 		output.writeRegular("Uploading Plumbing firmware\n");
+		OccPlugUtil.writeVerbose("Using config: " + props.getConfigFileName(), output);
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
 
 		final Runnable[] finalisers = { finished };
