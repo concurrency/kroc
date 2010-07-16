@@ -358,9 +358,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
 		DeviceProperties props = new DeviceProperties(selectedDevice);
 		
-		OccbuildOptions options = new OccbuildTVMOptions();
-		//options.target_cpu = "avr";
-		//options.occbuildName = "avr-occbuild";
+		OccbuildOptions options = new OccbuildTVMOptions("tvm-arduino");
 		options.systemSearch = new String[] {
 				//OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
 				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "lib")),

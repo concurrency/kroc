@@ -27,13 +27,19 @@ public class OccbuildTVMOptions extends OccbuildOptions
 {
 	public OccbuildTVMOptions()
 	{
+		this("tvm");
+	}
+	
+	public OccbuildTVMOptions(String tool)
+	{
 		BaseHost host = BaseHost.getHostObject();
 
 		toolchain = "tvm";
-
+		tool = tool;
+		
 		systemSearch = new String[] {
-				OccPlugUtil.pathifyXXX(host.getPath("tvm", "include")), 
-				OccPlugUtil.pathifyXXX(host.getPath("tvm", "lib"))};
+				OccPlugUtil.pathifyXXX(host.getPath(tool, "include")), 
+				OccPlugUtil.pathifyXXX(host.getPath(tool, "lib"))};
 
 	}
 }
