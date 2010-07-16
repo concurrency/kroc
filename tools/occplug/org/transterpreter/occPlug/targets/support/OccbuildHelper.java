@@ -3,7 +3,7 @@ package org.transterpreter.occPlug.targets.support;
 /*
  * OccbuildHelper.java
  * part of the occPlug plugin for the jEdit text editor
- * Copyright (C) 2009 Christian L. Jacobsen
+ * Copyright (C) 2009-2010 Christian L. Jacobsen
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,12 +30,14 @@ import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.hosts.BaseHost;
 
 public class OccbuildHelper {
-	public static String[] makeOccbuildEnvironment()
+	private final static BaseHost host = BaseHost.getHostObject();
+
+	public static String[] makeOccbuildEnvironment(String toolchain)
 	{
-		return makeOccbuildEnvironment((Hashtable) null);
+		return makeOccbuildEnvironment(toolchain, (Hashtable) null);
 	}
 
-	public static String[] makeOccbuildEnvironment(String[] additional)
+	public static String[] makeOccbuildEnvironment(String toolchain, String[] additional)
 	{
 		Hashtable h = new Hashtable();
 		for(int i = 0; i < additional.length; i++)
@@ -44,19 +46,19 @@ public class OccbuildHelper {
 			int j = s.indexOf('=');
 			h.put(s.substring(0, j), s.substring(j + 1));	
 		}
-		return makeOccbuildEnvironment(h);
+		return makeOccbuildEnvironment(toolchain, h);
 	}
 	
-	public static String[] makeOccbuildEnvironment(final Hashtable additional)
-	{
-		BaseHost host = BaseHost.getHostObject();
-		
+	public static String[] makeOccbuildEnvironment(String toolchain, final Hashtable additional)
+	{		
 		final Hashtable occbuildEnv = new Hashtable();
-		occbuildEnv.put("OCC21", MiscUtilities.constructPath(getBinPath(), host.getCommandName("occ21")));
-		occbuildEnv.put("TCE-DUMP.PL", MiscUtilities.constructPath(getBinPath(), host.getCommandName("tce-dump")));
-		occbuildEnv.put("PLINKER.PL", MiscUtilities.constructPath(getBinPath(), host.getCommandName("plinker")));
-		occbuildEnv.put("KROC", MiscUtilities.constructPath(getBinPath(), host.getCommandName("kroc")));
-		occbuildEnv.put("OCTRAN", MiscUtilities.constructPath(getBinPath(), host.getCommandName("tranx86")));
+		final String bin = getBinPath(toolchain);
+		
+		occbuildEnv.put("OCC21", MiscUtilities.constructPath(bin, host.getCommandName("occ21")));
+		occbuildEnv.put("TCE-DUMP.PL", MiscUtilities.constructPath(bin, host.getCommandName("tce-dump")));
+		occbuildEnv.put("PLINKER.PL", MiscUtilities.constructPath(bin, host.getCommandName("plinker")));
+		occbuildEnv.put("KROC", MiscUtilities.constructPath(bin, host.getCommandName("kroc")));
+		occbuildEnv.put("OCTRAN", MiscUtilities.constructPath(bin, host.getCommandName("tranx86")));
 		
 		if(additional != null)
 		{
@@ -109,21 +111,13 @@ public class OccbuildHelper {
 		return (String[]) occbuildCommand.toArray(new String[0]);
 	}
 	
-	public static String getOccbuildPath()
-	{
-		BaseHost host = BaseHost.getHostObject();
-		
-		return MiscUtilities.constructPath(getBinPath(), host.getCommandName("occbuild"));
-	}
-	
 	public static String getOccbuildPath(final OccbuildOptions options)
-	{
-		return MiscUtilities.constructPath(getBinPath(), options.occbuildName);
+	{		
+		return OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath(options.toolchain, "bin"), options.occbuildName));
 	}
 	
-	public static String getBinPath()
+	public static String getBinPath(final String toolchain)
 	{
-		return OccPlugUtil.pathifyXXX("bin");
+		return OccPlugUtil.pathifyXXX(host.getPath(toolchain, "bin"));
 	}
-
 }

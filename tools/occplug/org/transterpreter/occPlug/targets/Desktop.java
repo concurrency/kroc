@@ -96,12 +96,19 @@ public class Desktop extends BaseTarget implements CompileAbility {
 			return;
 		}
 	
-
+		// Set up the command and environment
 		String[] occbuildCommand;
+		String[] env; 
 		if(target == target_tvm)
+		{
 			occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand("tvm", occFile);
+			env = OccbuildHelper.makeOccbuildEnvironment("tvm");
+		}
 		else if(target == target_kroc)
+		{
 			occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand("kroc", occFile);
+			env = OccbuildHelper.makeOccbuildEnvironment("kroc");
+		}
 		else
 			throw new RuntimeException("Invalid target passed to compileProgram");
 		
@@ -109,8 +116,6 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		output.writeRegular("Compiling: " + occFile + "\n");
 		OccPlugUtil.writeVerbose(Arrays.asList(occbuildCommand) + "\n", output);
 
-		// Set up the environment
-		String[] env = OccbuildHelper.makeOccbuildEnvironment();
 		OccPlugUtil.writeVerbose(Arrays.asList(env) + "\n", output);
 
 		final Runnable[] finalisers = { finished };
@@ -148,7 +153,7 @@ public class Desktop extends BaseTarget implements CompileAbility {
 			runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
 	
 			String tvm = host.getCommandName("tvm");
-			runCommand.add(OccPlugUtil.pathifyXXX(MiscUtilities.constructPath("bin", tvm)));
+			runCommand.add(OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm", "bin"), tvm)));
 		}
 		else if(theTarget == target_kroc)
 		{
