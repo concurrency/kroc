@@ -291,7 +291,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 
 		String bin = host.getPath("tvm-arduino", "bin");
-		ArduinoDevice selectedDevice = (ArduinoDevice) device.getSelectedItem();
+		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
 		DeviceProperties props = new DeviceProperties(selectedDevice);
 		
 		
