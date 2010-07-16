@@ -113,7 +113,7 @@ public class OccbuildHelper {
 	
 	public static String getOccbuildPath(final OccbuildOptions options)
 	{		
-		return OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath(options.toolchain, "bin"), options.occbuildName));
+		return OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath(options.tool, "bin"), options.occbuildName));
 	}
 	
 	public static String getBinPath(final String toolchain)

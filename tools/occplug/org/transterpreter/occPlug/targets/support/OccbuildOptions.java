@@ -37,6 +37,7 @@ public abstract class OccbuildOptions
 	//public String target_cpu             = null;
 	public boolean verbose               = OccPlugUtil.getVerbose();
 	public String toolchain;
+	public String tool;
 	public String[] search               = null;
 	public String[] systemSearch;
 	public final Hashtable defines       = new Hashtable();

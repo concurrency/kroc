@@ -27,13 +27,18 @@ public class OccbuildKRoCOptions extends OccbuildOptions
 {
 	public OccbuildKRoCOptions()
 	{
+		this("kroc");
+	}
+	public OccbuildKRoCOptions(String tool)
+	{
 		BaseHost host = BaseHost.getHostObject();
 
 		toolchain = "kroc";
+		this.tool = "kroc";
 		
 		systemSearch = new String[] {
-				OccPlugUtil.pathifyXXX(host.getPath("kroc", "include")),
-				OccPlugUtil.pathifyXXX(host.getPath("kroc", "lib")),
+				OccPlugUtil.pathifyXXX(host.getPath(tool, "include")),
+				OccPlugUtil.pathifyXXX(host.getPath(tool, "lib")),
 				// FIXME: What is this?
 				//OccPlugUtil.pathifyXXX("lib")
 				};
