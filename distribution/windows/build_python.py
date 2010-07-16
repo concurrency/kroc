@@ -79,8 +79,22 @@ RT_MANIFEST = 24
 occbuild = Target(
   description='occbuild',
   script='install/bin/occbuild',
-  other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='occplug'))],
+  other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='occbuild'))],
 )
+
+avr_occbuild = Target(
+  description='avr-occbuild',
+  script='install-avr/bin/avr-occbuild',
+  other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='avr-occbuild'))],
+)
+
+
+binary_to_ihex = Target(
+  description='binary-to-ihex',
+  script='../../tvm/arduino/scripts/binary-to-ihex',
+  other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='binary-to-ihex'))],
+)
+
 
 # Make it appear like we wrote py2exe on the commandline
 sys.argv.append('py2exe')
@@ -94,7 +108,7 @@ opts = {
 setup(
 	options=opts,
 	console=[
-		occbuild
+		occbuild, avr_occbuild, binary_to_ihex
 ],
 data_files=data_files
 )
