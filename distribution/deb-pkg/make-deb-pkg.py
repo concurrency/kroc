@@ -136,6 +136,11 @@ def checkout(url):
 	# print "In %s" % os.getcwd()
 	cmd(build_command(["svn", "co", url, config.get('SVN')]))
 
+def checkout_to(url, path):
+	header("RUNNING CHECKOUT TO...")
+	config.refresh()
+	cmd(build_command(["svn", "co", url, path]))
+
 def autoreconf():
 	header("RUNNING AUTORECONF")
 	with pushd():
@@ -317,8 +322,8 @@ def rpm():
 											 config.get('YMD'))]))
 
 def with_temp_dir(path):
-		header('SETTING TEMP DIR TO %s' % path)
-		config.rebase('TEMP_ROOT', path)
+		header('SETTING TEMP DIR TO %s/%s' % (path, config.get('BUILD_ARCHITECTURE')))
+		config.rebase('TEMP_ROOT', '%s/%s' % (path, config.get('BUILD_ARCHITECTURE')))
 
 def with_lib_path(path):
 	header('SETTING LIB PATH TO %s' % path)
@@ -432,10 +437,31 @@ def occplug_deb():
 
 def build_occplug():
 	header("BUILDING OCCPLUG")
-
 	config.refresh() 
+	config.rebase('TEMP', '@TEMP_ROOT@/occPlug')
+	remove_dir(config.get('TEMP'))
+
+	src_ext = '/tools/occplug' 
+	dist_ext = '/distribution/deb-pkg'
+
+	srcpath = concat([config.get('TEMP'), '/src', src_ext])
+	mkdir(srcpath)
+	
+	distpath = concat([config.get('TEMP'), '/src', dist_ext])
+	mkdir(distpath)
+	
+	config.rebase('SOURCE_OCCPLUG', srcpath)
+
 	make_destdirs()
-	remove_and_create_dir(config.get('DEST_OCCPLUG'))	
+	remove_dir(concat([config.get('TEMP'), '/', config.get('PACKAGE_NAME')]))
+
+	# remove_and_create_dir(config.get('TEMP'))
+	# remove_and_create_dir(config.get('DEST_OCCPLUG'))	
+
+	print 'SOURCE OCCPLUG: %s' % config.get('SOURCE_OCCPLUG')
+
+	checkout_to(concat([config.get('SVN_TRUNK'), src_ext]), config.get('SOURCE_OCCPLUG'))
+	checkout_to(concat([config.get('SVN_TRUNK'), dist_ext]), distpath)
 
 	zipfile = 'ErrorList-1.5-bin.zip'
 	jarfile = 'ErrorList.jar'
@@ -453,17 +479,22 @@ def build_occplug():
 											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
 											concat(['-Dbuild.dir=', config.get('TEMP')]),
 											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
+	
+	config.set('BUILD_ARCHITECTURE', 'all')
+
 	occplug_deb()
 
 # Builds multiple packages for all architectures
 
 def all_arch(url):
 	config.refresh()
+	
+	if url == 'trunk':
+		url = config.get('SVN_TRUNK')
 
-	# TOOLCHAINS    = ['avr', 'kroc', 'tvm']
 	TOOLCHAINS    = ['kroc', 'tvm', 'avr']
-	# ARCHITECTURES = ['i386', 'i686']
-	arch = 'i386'
+	arch = config.get('BUILD_ARCHITECTURE')
+
 	for tool in TOOLCHAINS:
 		# I think we need 386 and 686 packages to make
 		# life easier for end-users.
@@ -566,6 +597,8 @@ def check_for_build_target():
 
 def driver():
 	check_for_build_target()
+	config.rebase('BUILD_ARCHITECTURE', 'i686')
+
 	for key, val in props(options).iteritems():
 		if (key in PLAT) and (val != None):
 			call_handler(key, val)
