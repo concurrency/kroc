@@ -360,12 +360,13 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		
 		OccbuildOptions options = new OccbuildTVMOptions();
 		//options.target_cpu = "avr";
-		options.occbuildName = "avr-occbuild";
+		//options.occbuildName = "avr-occbuild";
 		options.systemSearch = new String[] {
 				//OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
 				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "lib")),
 				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "include")),
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "arch", props.getMCU())),
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "arch", "common")),
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), props.getPlatform()))};
 		options.defines.put("F.CPU", props.getFCPU()); 
 		// FIXME: occbuild for avr builds should always set -TLE? otherwise builds fail on BE machines
