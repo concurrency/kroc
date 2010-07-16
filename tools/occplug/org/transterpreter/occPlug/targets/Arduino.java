@@ -165,7 +165,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 	private final JPanel				arduinoCompileOptions;
 	private final ArrayList				disableOnDownload		= new ArrayList();
 	private final ArduinoDevice[]		arduinoDevices;
-	private JComboBox					device;
+	private final DefaultComboBoxModel	arduinoDevicesModel;
 	
 	public Arduino()
 	{
@@ -178,6 +178,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 			arduinoDevices[i] = new ArduinoDevice(deviceIDs[i]);
 		}
+		arduinoDevicesModel = new DefaultComboBoxModel(arduinoDevices);
 		
 		arduinoFirmwareOptions = makeOptionsPanel();
 		arduinoCompileOptions = makeOptionsPanel();
@@ -208,7 +209,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		/* Arduino options */
 		JPanel options = new JPanel();
 		options.add(new JLabel("Device: "));
-		device = new JComboBox(arduinoDevices);
+		JComboBox device = new JComboBox(arduinoDevicesModel);
 		disableOnDownload.add(device);
 		device.addFocusListener(saveFirmwareOptionsFocusListener);
 		options.add(device);
@@ -274,7 +275,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				+ "targets.arduino.port", (String) arduinoPort
 				.getSelectedItem());
 		jEdit.setProperty(OccPlugPlugin.OPTION_PREFIX
-				+ "targets.arduino.device", ((ArduinoDevice) device.getSelectedItem()).getID());
+				+ "targets.arduino.device", ((ArduinoDevice) arduinoDevicesModel.getSelectedItem()).getID());
 	}
 
 	public void uploadFirmware(FirmwareTarget target, Runnable finished) {
