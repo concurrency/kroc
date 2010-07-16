@@ -422,7 +422,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 
 		final String[] runCommand = { 
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("avrdude"))),
-				"-C",OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, "avrdude.conf")),
+				"-C",OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "etc"), "avrdude.conf")),
 				"-V", 
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
