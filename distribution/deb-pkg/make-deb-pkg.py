@@ -85,7 +85,10 @@ def remove_dir(dir):
 
 def remove_files(filespec):
 	print " -- REMOVING FILES -- "
-	cmd(build-command(['rm', filespec]))
+	if not os.path.exists(filespec):
+		print "FILE DOES NOT EXIST: %s" % filespec
+	else:
+		cmd(build_command(['rm', filespec]))
 
 def remove_and_create_dir(dir):
 	remove_dir(dir)
@@ -407,18 +410,20 @@ def remove_unwanted_build_products():
 		remove_files(concat([config.get('DEST'), '/usr/bin/arduino-upload']))
 
 	if config.get('TOOLCHAIN') == 'tvm':
-		MAN1 = ['occamdoc.1', 'mkoccdeps.1', 'occ21.1']
-		MAN3 = ['libhostio-inmos.3', 'libcourse-cycles.3', 'libfile.3', 'libcourse-nets.3', 'libstring-inmos.3', 'libcourse-utils.3', 'libproc.3', 'libsock.3', 'libstreamio-inmos.3', 'libconvert-inmos.3', 'libmath-inmos.3']
-		for M1 in MAN1:
-			remove_files(concat([config.get('DEST'), '/usr/share/man/man1/%s'	% M1]))
-		for M3 in MAN3:
-			remove_files(concat([config.get('DEST'), '/usr/share/man/man1/%s'	% M3]))
+		#MAN1 = ['occamdoc.1', 'mkoccdeps.1', 'occ21.1']
+		#MAN3 = ['libhostio-inmos.3', 'libcourse-cycles.3', 'libfile.3', 'libcourse-nets.3', 'libstring-inmos.3', 'libcourse-utils.3', 'libproc.3', 'libsock.3', 'libstreamio-inmos.3', 'libconvert-inmos.3', 'libmath-inmos.3']
+		#for M1 in MAN1:
+		#	remove_files(concat([config.get('DEST'), '/usr/share/man/man1/%s'	% M1]))
+		#for M3 in MAN3:
+		#	remove_files(concat([config.get('DEST'), '/usr/share/man/man1/%s'	% M3]))
+	
+		# How about... no man files in the Transterpreter.
+		remove_dir(concat([config.get('DEST'), '/usr/share/man']))
 		remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
 		remove_files(concat([config.get('DEST'), '/usr/bin/cdxview']))
 		remove_files(concat([config.get('DEST'), '/usr/bin/netbard']))
 		
-		DUPBIN = ['kroc-setup.sh', 'tce-dump.pl', 'plinker.pl', 'ilibr', 'occamdon', 'occbuild',
-							'kroc-setup.csh']
+		DUPBIN = ['kroc-setup.sh', 'ilibr', 'occamdoc', 'occbuild', 'kroc-setup.csh', 'occ21', 'mkoccdeps']
 		for DUP in DUPBIN:
 			remove_files(concat([config.get('DEST'), '/usr/bin/%s'	% DUP]))
 
