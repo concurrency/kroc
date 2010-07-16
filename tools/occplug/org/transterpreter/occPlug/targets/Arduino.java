@@ -363,7 +363,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		options.occbuildName = "avr-occbuild";
 		options.systemSearch = new String[] {
 				//OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
-				OccPlugUtil.pathifyXXX( host.getPath("tvm-arduino", "lib")),
+				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "lib")),
 				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "include")),
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "arch", props.getMCU())),
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), props.getPlatform()))};
@@ -414,25 +414,23 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		final String ihexFile = fileBase + ".ihex";
 		final File curDir = new File(targetSupport.getActiveDirectory());
 		final String [] ihexCommand = {
-				OccPlugUtil.pathifyXXX("bin/binary-to-ihex"),
-				// FIXME: This needs to come from elsewhere
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("binary-to-ihex"))),
 				props.getBytecodeAddr(),
 				tbcFile,
 				ihexFile
 		};
 
 		final String[] runCommand = { 
-				OccPlugUtil.pathifyXXX("bin/avrdude"),
-				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("avrdude"))),
+				"-C",OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, "avrdude.conf")),
 				"-V", 
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
 				"-D",
-				// FIXME: Need a sensible way of setting these
-				("-c"), "stk500v1", 
-				"-p", "atmega328p", 
-				"-b", "57600", 
-				"-U", "flash:w:" + ihexFile};
+				"-c", "arduino", 
+				"-p", props.getMCU(), 
+				"-b", props.getUploadRate(), 
+				"-U", "flash:w:" + ihexFile + ":i"};
 		final Runnable[] finalisers = { finished };
 		
 		final Runnable[] intermediaryFinalisers =
