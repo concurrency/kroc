@@ -41,3 +41,13 @@ plugin.OccPlugPlugin.path.tvm.ubuntu.include=/usr/share/tvm/include
 plugin.OccPlugPlugin.path.tvm.ubuntu.lib=/usr/share/tvm/lib
 plugin.OccPlugPlugin.path.tvm.ubuntu.firmware=/usr/share/tvm/firmware
 plugin.OccPlugPlugin.path.tvm.ubuntu.bin=/usr/bin
+plugin.OccPlugPlugin.path.kroc.ubuntu.bin=/usr/bin
+
+plugin.OccPlugPlugin.path.tvm-arduino.ubuntu.conf=/usr/share/tvm-avr/conf
+plugin.OccPlugPlugin.path.tvm-arduino.ubuntu.firmware=/usr/share/tvm-avr/firmware
+plugin.OccPlugPlugin.path.tvm-arduino.ubuntu.include=/usr/share/tvm-avr/include
+# There is no libdir for AVR on Ubuntu at this time.
+plugin.OccPlugPlugin.path.tvm-arduino.ubuntu.lib=/usr/lib
+plugin.OccPlugPlugin.path.tvm-arduino.ubuntu.bin=/usr/bin
+# Use the conf from the avrdude package. The .conf lives in etc.
+plugin.OccPlugPlugin.path.tvm-arduino.ubuntu.etc=/etc
