@@ -97,7 +97,7 @@ public abstract class BaseHost {
 			/* On Linux, this property file does not auto-load.
 			 * I'm forcing the issue by asking jEdit to get the resource.
 			 */ 
-			jEdit.getResource("ubuntu.props");
+			jEdit.class.getResource("ubuntu.props");
 
 			if (jEdit.getProperty(prop).equals("ubuntu"))
 			{
