@@ -406,7 +406,7 @@ def remove_unwanted_build_products():
 		remove_files(concat([config.get('DEST'), '/usr/bin/arduino-firmware-upload']))
 		remove_files(concat([config.get('DEST'), '/usr/bin/arduino-upload']))
 
-	if config.get('TARGET') == 'tvm':
+	if config.get('TOOLCHAIN') == 'tvm':
 		MAN1 = ['occamdoc.1', 'mkoccdeps.1', 'occ21.1']
 		MAN3 = ['libhostio-inmos.3', 'libcourse-cycles.3', 'libfile.3', 'libcourse-nets.3', 'libstring-inmos.3', 'libcourse-utils.3', 'libproc.3', 'libsock.3', 'libstreamio-inmos.3', 'libconvert-inmos.3', 'libmath-inmos.3']
 		for M1 in MAN1:
