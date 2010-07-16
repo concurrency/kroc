@@ -15,6 +15,7 @@ plugin.OccPlugPlugin.path.tvm-arduino.osx.conf=
 plugin.OccPlugPlugin.path.tvm-arduino.osx.firmware=
 plugin.OccPlugPlugin.path.tvm-arduino.osx.include=
 plugin.OccPlugPlugin.path.tvm-arduino.osx.lib=
+plugin.OccPlugPlugin.path.tvm-arduino.osx.bin=bin
 
 #
 # Windows
