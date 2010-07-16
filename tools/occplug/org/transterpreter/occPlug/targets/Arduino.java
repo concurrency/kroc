@@ -149,9 +149,23 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 			return getProp("TVM_ARDUINO_FIRMWARE");
 		}
+		
+		public String getFCPU()
+		{
+			return getProp("TVM_F_CPU");
+		}
 
+		public String getBytecodeAddr()
+		{
+			return getProp("TVM_BYTECODE_ADDR");
+		}
+		
 		public String getConfigFileName() {
 			return configFile;
+		}
+
+		public String getPlatform() {
+			return device.getID();
 		}		
 	}
 	
@@ -339,15 +353,21 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			return;
 		}
 	
+		BaseHost host = BaseHost.getHostObject();
+		String bin = host.getPath("tvm-arduino", "bin");
+		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
+		DeviceProperties props = new DeviceProperties(selectedDevice);
+		
 		OccbuildOptions options = new OccbuildTVMOptions();
 		//options.target_cpu = "avr";
 		options.occbuildName = "avr-occbuild";
 		options.systemSearch = new String[] {
-				OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
-				OccPlugUtil.pathifyXXX("share/tvm-arduino/avr-vtlib"),
-				OccPlugUtil.pathifyXXX("share/tvm-arduino/avr-vtinclude")};
-		// FIXME: Needs to be settable somewhere
-		options.defines.put("F.CPU", "16000000"); 
+				//OccPlugUtil.pathifyXXX("share/tvm-arduino/plumbing-include"),
+				OccPlugUtil.pathifyXXX( host.getPath("tvm-arduino", "lib")),
+				OccPlugUtil.pathifyXXX(host.getPath("tvm-arduino", "include")),
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), "arch", props.getMCU())),
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "include"), props.getPlatform()))};
+		options.defines.put("F.CPU", props.getFCPU()); 
 		// FIXME: occbuild for avr builds should always set -TLE? otherwise builds fail on BE machines
 		options.extra_options.add(new String[] { "--occ21-opts", "-tle"});
 		String[] occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand(options, occFile);
@@ -383,6 +403,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			finished.run();
 			return;
 		}
+
+		BaseHost host = BaseHost.getHostObject();
+		String bin = host.getPath("tvm-arduino", "bin");
+		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
+		DeviceProperties props = new DeviceProperties(selectedDevice);
 		
 		final String fileBase = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName());
 		final String tbcFile = fileBase + ".tbc";
@@ -391,7 +416,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		final String [] ihexCommand = {
 				OccPlugUtil.pathifyXXX("bin/binary-to-ihex"),
 				// FIXME: This needs to come from elsewhere
-				"0x5000",
+				props.getBytecodeAddr(),
 				tbcFile,
 				ihexFile
 		};
