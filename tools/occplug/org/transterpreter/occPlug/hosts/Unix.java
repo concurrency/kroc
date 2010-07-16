@@ -34,9 +34,16 @@ public class Unix extends BaseHost {
 	{
 		FilenameFilter filter = new FilenameFilter() {
 			public boolean accept(File dir, String name) {
-				return (name.startsWith("tty.usbserial-")
-						|| name.equals("ttys0") || name.equals("ttys1")
-						|| name.equals("ttys2") || name.equals("ttys3"));
+				return (
+						/* Ubuntu 8, 9, 10 */
+						name.startsWith("ttyUSB") 
+						/* Mac OSX */
+						|| name.startsWith("tty.usbserial-")
+						/* *NIX */
+						|| name.equals("ttys0") 
+						|| name.equals("ttys1")
+						|| name.equals("ttys2") 
+						|| name.equals("ttys3"));
 			}
 		};
 		
