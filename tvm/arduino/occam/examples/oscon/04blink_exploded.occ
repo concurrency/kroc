@@ -1,0 +1,9 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+
+  PAR
+    tick (delay.time, s!)
+    pin.toggle (pin, LOW, s?)
+:
