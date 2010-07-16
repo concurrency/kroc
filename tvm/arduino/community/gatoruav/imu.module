@@ -1,4 +1,7 @@
+#IF NOT (DEFINED (IMU.MODULE))
+#DEFINE IMU.MODULE
 #INCLUDE "plumbing.module"
+
 VAL []INT powers IS [10000, 1000, 100, 10, 1]:
 PROC serialWriteDecInt (VAL INT n)
   INITIAL INT index IS 0:
@@ -203,3 +206,4 @@ PROC time.int (CHAN INT v?, VAL BYTE axis)
       serial.write.string("*n")
 :
 
+#ENDIF
