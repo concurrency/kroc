@@ -60,10 +60,13 @@ public class ExecWorker extends Thread implements Killable {
 		this.helper = helper;	
 		pb = new ProcessBuilder(cmd);
 		Map<String, String> env = pb.environment();
-		for(int i = 0; i < envp.length; ++i)
+		if(envp != null)
 		{
-			String[] bits = envp[i].split("=");
-			env.put(bits[0], bits[1]);
+			for(int i = 0; i < envp.length; ++i)
+			{
+				String[] bits = envp[i].split("=");
+				env.put(bits[0], bits[1]);
+			}
 		}
 		pb.directory(dir);
 	}
