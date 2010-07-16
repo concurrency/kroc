@@ -326,6 +326,7 @@ def rpm():
 											 config.get('YMD'))]))
 
 def with_temp_dir(path):
+		config.refresh()
 		header('SETTING TEMP DIR TO %s/%s' % (path, config.get('BUILD_ARCHITECTURE')))
 		config.rebase('TEMP_ROOT', '%s/%s' % (path, config.get('BUILD_ARCHITECTURE')))
 
@@ -484,7 +485,6 @@ def build_occplug():
 	
 		# Move the ErrorList straight to the destination; we can build against it there.
 		#cmd(build_command(['mv', jarfile, config.get('DEST_OCCPLUG')]))
-
 		cmd(build_command(['ant', 
 											'-Djedit.install.dir=/usr/share/jedit', 
 											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
@@ -492,11 +492,14 @@ def build_occplug():
 											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
 
 	# Insert the ubuntu.props file into the .jar
-	cmd(build_command([
-			'jar -uf', 
-			concat([config.get('DEST_OCCPLUG'), '/', 'OccPlug.jar']),
-			concat([config.get('OCCPLUG_DISTRIBUTION'), '/', 'ubuntu.props'])
-			]))
+	with pushd():
+		cd(config.get('OCCPLUG_DISTRIBUTION'))
+
+		cmd(build_command([
+				'jar -uf', 
+				concat([config.get('DEST_OCCPLUG'), '/', 'OccPlug.jar']),
+				'ubuntu.props'
+				]))
 	
 	config.set('BUILD_ARCHITECTURE', 'all')
 
@@ -617,7 +620,8 @@ def check_for_build_target():
 
 def driver():
 	check_for_build_target()
-	config.rebase('BUILD_ARCHITECTURE', 'i686')
+	# Need to do a better job with architecture... perhaps a flag.
+	# config.rebase('BUILD_ARCHITECTURE', 'i686')
 
 	for key, val in props(options).iteritems():
 		if (key in PLAT) and (val != None):
