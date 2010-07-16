@@ -35,7 +35,7 @@ public class OccbuildTVMOptions extends OccbuildOptions
 		BaseHost host = BaseHost.getHostObject();
 
 		toolchain = "tvm";
-		tool = tool;
+		this.tool = tool;
 		
 		systemSearch = new String[] {
 				OccPlugUtil.pathifyXXX(host.getPath(tool, "include")), 
