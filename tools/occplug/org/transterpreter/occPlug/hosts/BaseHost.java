@@ -94,6 +94,10 @@ public abstract class BaseHost {
 		else if(os.equals("Linux"))
 		{
 			String prop = OccPlugPlugin.PROPERTY_PREFIX + "linux.flavor";
+			/* On Linux, this property file does not auto-load.
+			 * I'm forcing the issue by asking jEdit to get the resource.
+			 */ 
+			jEdit.getResource("ubuntu.props");
 
 			if (jEdit.getProperty(prop).equals("ubuntu"))
 			{
