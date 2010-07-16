@@ -27,12 +27,15 @@ import java.awt.Component;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Properties;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -95,13 +98,56 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		
 		public String getConfig()
 		{
-			return getProperty("config", true);
+			return getProperty("conf", true);
 		}
 		
 		public String toString()
 		{
 			return getName();
 		}
+	}
+	
+	private class DeviceProperties
+	{
+		private final ArduinoDevice device;
+		private final Properties props = new Properties();
+		
+		public DeviceProperties(ArduinoDevice device)
+		{
+			this.device = device;
+			
+			BaseHost host = BaseHost.getHostObject();
+			
+			String configFile = OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "conf"), device.getConfig())); 
+			try {
+				FileInputStream in = new FileInputStream(configFile);
+				props.load(in);
+			} catch (FileNotFoundException e) {
+				throw new RuntimeException(e);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		protected String getProp(String name)
+		{
+			return props.getProperty(name);
+		}
+		
+		public String getMCU()
+		{
+			return getProp("TVM_MCU");
+		}
+		
+		public String getUploadRate()
+		{
+			return getProp("TVM_UPLOAD_RATE");
+		}
+		
+		public String getFirmware()
+		{
+			return getProp("TVM_ARDUINO_FIRMWARE");
+		}		
 	}
 	
 	private final FirmwareTarget[]		firmwareTargets			= { 
@@ -238,24 +284,26 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			return;
 		}
 
+		String bin = host.getPath("tvm-arduino", "bin");
+		DeviceProperties props = new DeviceProperties((ArduinoDevice) device.getSelectedItem());
+		
 		final String[] firmdlCommand = { 
-				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath("bin", host.getCommandName("avrdude"))),
-				"-C", OccPlugUtil.pathifyXXX("bin/avrdude.conf"), 
-				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex") + ":i",
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("avrdude"))),
+				"-C", OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, "avrdude.conf")), 
+				"-U", "flash:w:" + OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "firmware"), props.getFirmware())) + ":i",
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
-				// FIXME: Need a sensible way of setting these
-				("-c"), "stk500v1", 
-				"-p", "atmega328p", 
-				"-b", "57600", };
+				"-c", "arduino", 
+				"-p", props.getMCU(), 
+				"-b", props.getUploadRate() };
 
-		output.writeRegular("Downloading Plumbing firmware\n");
+		output.writeRegular("Uploading Plumbing firmware\n");
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
 
 		final Runnable[] finalisers = { finished };
 		ExecWorker worker = new ExecWorker(firmdlCommand, null, null, // new
 																			// File(workingDir),
-				new TargetExecWorkerHelper("firmware download", output,
+				new TargetExecWorkerHelper("firmware upload", output,
 						finalisers));
 		targetSupport.startWorker(worker);
 	}

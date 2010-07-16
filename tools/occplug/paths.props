@@ -11,12 +11,23 @@ plugin.OccPlugPlugin.path.tvm.osx-ppc.include=share/tvm-ppc/vtinclude
 plugin.OccPlugPlugin.path.tvm.osx-ppc.lib=share/tvm-ppc/vtlib
 plugin.OccPlugPlugin.path.tvm.osx-ppc.firmware=share/tvm-ppc/firmware
 
+plugin.OccPlugPlugin.path.tvm-arduino.osx.config=
+plugin.OccPlugPlugin.path.tvm-arduino.osx.firmware=
+plugin.OccPlugPlugin.path.tvm-arduino.osx.include=
+plugin.OccPlugPlugin.path.tvm-arduino.osx.lib=
+
 #
 # Windows
 #
 plugin.OccPlugPlugin.path.tvm.windows.include=posix/tvm/include
 plugin.OccPlugPlugin.path.tvm.windows.lib=posix/tvm/lib
 plugin.OccPlugPlugin.path.tvm.windows.firmware=posix/tvm/firmware
+
+plugin.OccPlugPlugin.path.tvm-arduino.windows.config=arduino/tvm/conf
+plugin.OccPlugPlugin.path.tvm-arduino.windows.firmware=arduino/tvm/firmware
+plugin.OccPlugPlugin.path.tvm-arduino.windows.include=arduino/tvm/include
+plugin.OccPlugPlugin.path.tvm-arduino.windows.lib=arduino/tvm/lib
+plugin.OccPlugPlugin.path.tvm-arduino.windows.bin=bin
 
 #
 # Ubuntu
