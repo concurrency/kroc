@@ -2,7 +2,7 @@
 VAL INT X IS 0:
 VAL INT Y IS 1:
 
-PROC display([]CHAN INT theta)
+PROC display([]CHAN INT theta?)
   [2]INT thetas:
   WHILE TRUE
     SEQ
@@ -15,6 +15,7 @@ PROC display([]CHAN INT theta)
       serial.write.string("*n")
 :
 
+-- This runs at around 143 reading per second
 PROC main()
   
   [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree, theta:
@@ -44,5 +45,9 @@ PROC main()
     comp.filter(gyro.degree[Y]?, accel.conv[Y]?, theta[Y]!, 95, 1)
     comp.filter(gyro.degree[X]?, accel.conv[X]?, theta[X]!, 95, 1)
 
-    display(theta!)
+    -- Comment/Uncomment to show/not show timing info
+    --time.int(theta[X]?, 'X')
+    --time.int(theta[Y]?, 'Y')
+    -- Comment/Uncomment to show/not show angles
+    display(theta?)
 :

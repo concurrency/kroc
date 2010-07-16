@@ -46,15 +46,6 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
 
       theta ! angle
 :
-PROC show (CHAN INT value?)
-  INITIAL INT val IS 0:
-  WHILE TRUE
-    SEQ
-      value ? val
-      serialWriteDecInt (val)
-      serial.write.string("*n")
-
-:
 PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
 
   INITIAL INT counter, shift, n IS 0, 0, 0:
@@ -81,7 +72,7 @@ PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
 PROC gyro.filter (CHAN INT input?, rate!)
   [4]INT filter.arr:
   INT filtered:
-  INITIAL INT current.rate, current.pos, past.pos IS 0, 0, 0:
+  INITIAL INT current.rate IS 0:
   
   -- Following SEQs are for initialization
   SEQ
@@ -115,7 +106,6 @@ PROC gyro.drift (CHAN INT drift!)
 
 PROC accel.conv.y (CHAN INT in?, out!)
   WHILE TRUE
-    INITIAL BOOL looking IS TRUE:
     INITIAL INT i IS 0:
     INT reading, theta:
     SEQ
@@ -156,7 +146,6 @@ PROC accel.conv.y (CHAN INT in?, out!)
 :
 PROC accel.conv.x (CHAN INT in?, out!)
   WHILE TRUE
-    INITIAL BOOL looking IS TRUE:
     INITIAL INT i IS 0:
     INT reading, theta:
     SEQ
@@ -200,7 +189,7 @@ PROC ping (CHAN SIGNAL s!)
     SEQ
       s ! SIGNAL
 :
-PROC time.int (CHAN INT v?)
+PROC time.int (CHAN INT v?, VAL BYTE axis)
   TIMER tim:
   INT start, end, hole:
   WHILE TRUE
@@ -209,6 +198,7 @@ PROC time.int (CHAN INT v?)
       SEQ i = 0 FOR 100
         v ? hole
       tim ? end
+      serial.write.string([axis])
       serialWriteDecInt(end MINUS start)
       serial.write.string("*n")
 :
