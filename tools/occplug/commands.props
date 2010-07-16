@@ -8,6 +8,7 @@ plugin.OccPlugPlugin.command.default.tce-dump=tce-dump.pl
 plugin.OccPlugPlugin.command.default.kroc=kroc
 plugin.OccPlugPlugin.command.default.tranx86=tranx86
 plugin.OccPlugPlugin.command.default.tvm=tvm
+plugin.OccPlugPlugin.command.default.avrdude=avrdude
 
 
 
@@ -21,3 +22,5 @@ plugin.OccPlugPlugin.command.windows.tce-dump=tce-dump.exe
 plugin.OccPlugPlugin.command.windows.kroc=kroc
 plugin.OccPlugPlugin.command.windows.tranx86=tranx86.exe
 plugin.OccPlugPlugin.command.windows.tvm=tvm.exe
+plugin.OccPlugPlugin.command.windows.avrdude=avrdude.exe
+

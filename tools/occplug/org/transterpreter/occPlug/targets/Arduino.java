@@ -65,19 +65,62 @@ import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
 public class Arduino extends BaseTarget implements FirmwareAbility,
 		CompileAbility {
 
+	private class ArduinoDevice
+	{
+		private String id;
+		private static final String PREFIX = OccPlugPlugin.PROPERTY_PREFIX + "arduino.device.";
+		
+		public ArduinoDevice(String id)
+		{
+			this.id = id;
+		}
+		
+		public String getProperty(String propertyName, boolean required)
+		{
+			String name = jEdit.getProperty(PREFIX + id + "." + propertyName);
+			if(name == null && required)
+				throw new RuntimeException("Arduino device " + id + " has no property: " + propertyName);
+			return name;			
+		}
+		
+		public String getName()
+		{
+			return getProperty("name", true);
+		}
+		
+		public String getConfig()
+		{
+			return getProperty("config", true);
+		}
+		
+		public String toString()
+		{
+			return getName();
+		}
+	}
+	
 	private final FirmwareTarget[]		firmwareTargets			= { 
-			new FirmwareTarget("Arduino (and compatible)", this) };
+			new FirmwareTarget("Arduino", this) };
 	private final CompileTarget[]		compileTargets			= { 
-			new CompileTarget("Arduino (and compatible)", this) };
+			new CompileTarget("Arduino", this) };
 	private final DefaultComboBoxModel	arduinoPort				= new DefaultComboBoxModel();
 	private final SortedSet				arduinoPortItems		= new TreeSet();
 	private final JPanel				arduinoFirmwareOptions;
 	private final JPanel				arduinoCompileOptions;
 	private final ArrayList				disableOnDownload		= new ArrayList();
-
+	private final ArduinoDevice[]		arduinoDevices;
+	
 	public Arduino()
 	{
 		super();
+		
+		String devicesString = jEdit.getProperty(OccPlugPlugin.PROPERTY_PREFIX + "arduino.devices");
+		String[] devices = devicesString.split(",");
+		arduinoDevices = new ArduinoDevice[devices.length];
+		for(int i = 0; i < devices.length; i++)
+		{
+			arduinoDevices[i] = new ArduinoDevice(devices[i]);
+		}
 		
 		arduinoFirmwareOptions = makeOptionsPanel();
 		arduinoCompileOptions = makeOptionsPanel();
@@ -107,6 +150,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 
 		/* Arduino options */
 		JPanel options = new JPanel();
+		options.add(new JLabel("Device: "));
+		JComboBox device = new JComboBox(arduinoDevices);
+		disableOnDownload.add(device);
+		options.add(device);
+		
 		options.add(new JLabel("Port: "));
 		JComboBox port = new JComboBox(arduinoPort);
 		port.setEditable(true);
@@ -162,6 +210,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 	public void uploadFirmware(FirmwareTarget target, Runnable finished) {
 		final DocumentWriter output = targetSupport.getDefaultOutput();
 		
+		BaseHost host = BaseHost.getHostObject();
+
 		String port = (String) arduinoPort.getSelectedItem();
 		if (port == null || port.trim().equals("")) {
 			output.writeError("Please specify a port");
@@ -170,8 +220,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 
 		final String[] firmdlCommand = { 
-				OccPlugUtil.pathifyXXX("bin/avrdude"),
-				"-C", OccPlugUtil.pathifyXXX("lib/avrdude.conf"), 
+				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath("bin", host.getCommandName("avrdude"))),
+				"-C", OccPlugUtil.pathifyXXX("bin/avrdude.conf"), 
 				"-U", "flash:w:" + OccPlugUtil.pathifyXXX("share/tvm-arduino/firmware/tvm-arduino.hex") + ":i",
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
