@@ -1,0 +1,14 @@
+plugin.OccPlugPlugin.arduino.devices=arduino,arduinomega,arduinopro,seedmega
+
+
+plugin.OccPlugPlugin.arduino.device.arduino.name=Arduino
+plugin.OccPlugPlugin.arduino.device.arduino.conf=arduino.conf
+
+plugin.OccPlugPlugin.arduino.device.arduinomega.name=Arduino Mega
+plugin.OccPlugPlugin.arduino.device.arduinomega.conf=arduinomega.conf
+
+plugin.OccPlugPlugin.arduino.device.arduinopro.name=Arduino Pro
+plugin.OccPlugPlugin.arduino.device.arduinopro.conf=arduinopro.conf
+
+plugin.OccPlugPlugin.arduino.device.seedmega.name=Seeduino Mega
+plugin.OccPlugPlugin.arduino.device.seedmega.conf=seedmega.conf
