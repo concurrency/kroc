@@ -303,7 +303,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-b", props.getUploadRate() };
 
 		output.writeRegular("Uploading Plumbing firmware\n");
-		OccPlugUtil.writeVerbose("Using config: " + props.getConfigFileName(), output);
+		OccPlugUtil.writeVerbose("Using config: " + props.getConfigFileName() + " \n", output);
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(firmdlCommand) + " \n", output);
 
 		final Runnable[] finalisers = { finished };
