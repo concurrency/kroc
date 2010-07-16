@@ -1,0 +1,12 @@
+#INCLUDE "uav.module"
+
+
+PROC display(CHAN INT theta?)
+  INT angle:
+  WHILE TRUE
+    SEQ
+      theta ? angle
+      serialWriteDecInt(angle)
+      serial.write.string("*n")
+:
+
