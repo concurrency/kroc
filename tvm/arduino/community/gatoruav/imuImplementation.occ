@@ -27,7 +27,7 @@ PROC main()
     ping(sig.accel[X]!)
     ping(sig.accel[Y]!)
     -- Gyro adcs
-    adc(A1, sig.gyro[X]?, gyro.out[X]!)
+    adc(1, sig.gyro[X]?, gyro.out[X]!)
     adc(A2, sig.gyro[Y]?, gyro.out[Y]!)
     -- Accel adcs
     adc(A3, sig.accel[X]?, accel.out[X]!)
