@@ -83,6 +83,10 @@ def remove_dir(dir):
 	print " -- REMOVING -- %s" % dir
 	cmd(build_command(["rm", "-rf", dir]))
 
+def remove_files(filespec):
+	print " -- REMOVING FILES -- "
+	cmd(build-command(['rm', filespec]))
+
 def remove_and_create_dir(dir):
 	remove_dir(dir)
 	mkdir(dir)
@@ -388,12 +392,35 @@ def all(url):
 
 def remove_unwanted_build_products():
 	header("DELETE UNWANTED BUILD PRODUCTS")
+
+	# These are not dev packages; I'll pull this out of all of them.
+	# (There are more things I could remove, but... this is a start.
+	# That, and they conflict with each-other.)
+	remove_dir(concat([config.get('DEST'), '/usr/share/aclocal']))
+
 	if config.get('WRAPPER') == 'arduino':
 		remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
-		remove_dir(concat([config.get('DEST'), '/usr/share/aclocal']))
+		remove_dir(concat([config.get('DEST'), '/usr/include/tvm']))
+		remove_files(concat([config.get('DEST'), '/usr/lib/libtvm.a']))
+		remove_files(concat([config.get('DEST'), '/usr/bin/reset-arduino']))
+		remove_files(concat([config.get('DEST'), '/usr/bin/arduino-firmware-upload']))
+		remove_files(concat([config.get('DEST'), '/usr/bin/arduino-upload']))
+
 	if config.get('TARGET') == 'tvm':
+		MAN1 = ['occamdoc.1', 'mkoccdeps.1', 'occ21.1']
+		MAN3 = ['libhostio-inmos.3', 'libcourse-cycles.3', 'libfile.3', 'libcourse-nets.3', 'libstring-inmos.3', 'libcourse-utils.3', 'libproc.3', 'libsock.3', 'libstreamio-inmos.3', 'libconvert-inmos.3', 'libmath-inmos.3']
+		for M1 in MAN1:
+			remove_files(concat([config.get('DEST'), '/usr/share/man/man1/%s'	% M1]))
+		for M3 in MAN3:
+			remove_files(concat([config.get('DEST'), '/usr/share/man/man1/%s'	% M3]))
 		remove_dir(concat([config.get('DEST'), '/usr/share/kroc']))
-	
+		remove_files(concat([config.get('DEST'), '/usr/bin/cdxview']))
+		remove_files(concat([config.get('DEST'), '/usr/bin/netbard']))
+		
+		DUPBIN = ['kroc-setup.sh', 'tce-dump.pl', 'plinker.pl', 'ilibr', 'occamdon', 'occbuild',
+							'kroc-setup.csh']
+		for DUP in DUPBIN:
+			remove_files(concat([config.get('DEST'), '/usr/bin/%s'	% DUP]))
 
 
 def refresh_libs():
