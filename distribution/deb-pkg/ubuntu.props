@@ -1,4 +1,4 @@
 # 
 # Ubuntu properties
 #
-plugin.OccPlugPlugin.flavor.linux=ubuntu
+plugin.OccPlugPlugin.linux.flavor=ubuntu
