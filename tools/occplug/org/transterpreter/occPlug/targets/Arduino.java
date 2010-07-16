@@ -172,11 +172,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		super();
 		
 		String devicesString = jEdit.getProperty(OccPlugPlugin.PROPERTY_PREFIX + "arduino.devices");
-		String[] devices = devicesString.split(",");
-		arduinoDevices = new ArduinoDevice[devices.length];
-		for(int i = 0; i < devices.length; i++)
+		String[] deviceIDs = devicesString.split(",");
+		arduinoDevices = new ArduinoDevice[deviceIDs.length];
+		for(int i = 0; i < deviceIDs.length; i++)
 		{
-			arduinoDevices[i] = new ArduinoDevice(devices[i]);
+			arduinoDevices[i] = new ArduinoDevice(deviceIDs[i]);
 		}
 		
 		arduinoFirmwareOptions = makeOptionsPanel();
