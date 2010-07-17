@@ -15,8 +15,9 @@ AVRDUDE=avrdude-5.10
 INSTALL=$PWD/install
 BUILD=$PWD/build
 
-PATH=$PATH:$PWD/install/bin
-export PATH
+#PATH=$PATH:$PWD/install/bin
+PATH=/bin:/usr/bin:/usr/X11/bin:$PWD/install/bin
+#export PATH
 
 
 which -s pkg-config
@@ -40,7 +41,7 @@ if [ "$?" == "1" ] ; then
   cd $SDL
   # Compiling with newer xquartz (xquartz.macosforge.org)
   # does not work w/o this patch
-  patch -p0 < ../../patch-SDL_x11gl_c.h.diff
+  #patch -p0 < ../../patch-SDL_x11gl_c.h.diff
   ./configure --prefix=$INSTALL
   make install
   cd ../..
