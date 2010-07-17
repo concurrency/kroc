@@ -11,7 +11,6 @@
 
   <path id="project.class.path">
     <pathelement location="."/>
-    <pathelement location="/Applications/My Apps/jEdit 4.2/jedit.jar"/>
     <pathelement location="${jedit.install.dir}/jedit.jar"/>
   </path>
 
@@ -46,11 +45,11 @@
       <arg value="-static"/>
       <arg value="-shared"/>
       <arg value="-Wl,--kill-at"/>
-      <arg value="-IC:\Program Files\Java\jdk1.6.0_18\include"/>
-      <arg value="-IC:\Program Files\Java\jdk1.6.0_18\include\win32"/>
-      <arg value="-IC:\Documents and Settings\Asdf\My Documents\Downloads\vslavik-winsparkle-941987c\include"/>
+      <arg value="-I${env.JAVA_HOME}\include"/>
+      <arg value="-I${env.JAVA_HOME}\include\win32"/>
+      <arg value="-I${winsparkle.dir}\include"/>
       <arg value="native/JEditWinSparkleNativeBridge.cpp"/>
-      <arg value="C:\Documents and Settings\Asdf\My Documents\Downloads\vslavik-winsparkle-941987c\Debug\WinSparkle.lib"/>
+      <arg value="${winsparkle.dir}\Debug\WinSparkle.lib"/>
       <arg value="-o"/>
       <arg value="${build.dir}/JEditWinSparkleNativeBridge.dll"/>
     </exec>
