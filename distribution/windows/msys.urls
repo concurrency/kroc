@@ -26,9 +26,10 @@ http://prdownloads.sourceforge.net/mingw/libopenssl-0.9.8k-1-msys-1.0.11-dll-098
 http://prdownloads.sourceforge.net/mingw/libopenssl-0.9.8k-1-msys-1.0.11-dev.tar.lzma
 ### openssh ###
 http://prdownloads.sourceforge.net/mingw/openssh-4.7p1-2-msys-1.0.11-bin.tar.lzma
-
-
-
+http://prdownloads.sourceforge.net/mingw/minires-1.02_1-1-msys-1.0.11-bin.tar.lzma
+http://prdownloads.sourceforge.net/mingw/libminires-1.02_1-1-msys-1.0.11-dll.tar.lzma
+http://prdownloads.sourceforge.net/mingw/zlib-1.2.3-1-msys-1.0.11-dev.tar.gz
+http://prdownloads.sourceforge.net/mingw/zlib-1.2.3-1-msys-1.0.11-dll.tar.gz
 
 # WARNING: Do not use msys autotools or libtool. They are not meant
 # for compiling standalone Windows binaries, but for compiling msys itself
