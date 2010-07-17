@@ -20,7 +20,6 @@
 
 #include "org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin.h"
 #include "winsparkle.h"
-#include <wchar.h>
 
 
 JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_init
@@ -29,4 +28,11 @@ JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSpa
 	win_sparkle_set_app_details(L"A company", L"An app", L"1.1");
 	win_sparkle_set_appcast_url("http://winsparkle.org/example/appcast.xml");
 	win_sparkle_init();
+}
+
+
+JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_unload
+  (JNIEnv *, jobject)
+{
+  win_sparkle_cleanup();
 }

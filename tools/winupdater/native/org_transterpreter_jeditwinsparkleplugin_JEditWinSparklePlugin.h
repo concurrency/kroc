@@ -15,6 +15,14 @@ extern "C" {
 JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_init
   (JNIEnv *, jobject);
 
+/*
+ * Class:     org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin
+ * Method:    unload
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_unload
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

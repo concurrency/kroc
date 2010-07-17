@@ -17,9 +17,9 @@ import java.util.zip.ZipFile;
 	public static final String Name = "JEditWinSparklePlugin";
 	
 	private static final String dllName = "WinSparkle";
-	private static final String url = "http://127.0.0.1/Concurrency.cc/appcast.xml";
 	
 	private native void init();
+	private native void unload();
 	
 	private final String jarLibNames[] = {
 		"WinSparkle.dll",
@@ -82,6 +82,11 @@ import java.util.zip.ZipFile;
 		//win_sparkle_set_appcast_url(url);
 		//Initate Winsparkle
 		init();
+	}
+
+	public void stop()
+	{
+		unload();
 	}
  }
  
