@@ -104,7 +104,7 @@ def copy_dir(src, dst):
 										 "%s/" % dst]))
 
 def copy_files(pat, src_dir, dest_dir):
-	print "COPYING FILES FROM %s" % src_dir
+	print "COPYING %s FROM %s" % (pat, src_dir)
 	for filename in os.listdir(src_dir):
 		if re.search(pat, filename):
 			# print "COPYING FILE [%s] TO [%s]" % (filename, dest_dir)
@@ -328,6 +328,7 @@ def deb():
 		cd(config.get('TEMP'))
 		print "PACKAGING %s" % config.get('PACKAGE_NAME')
 		cmd(build_command(["dpkg", "--build", config.get('PACKAGE_NAME'), "./"]))
+
 
 def meta_deb():
 	header("BUILDING META PACKAGE")
@@ -602,6 +603,74 @@ def all_arch(url):
 		all(url)
 
 	build_occplug()
+	meta_deb()
+
+def upload():
+	header("UPLOADING FILES")
+	with pushd():
+		root = config.get('TEMP_ROOT')
+		cd(root)
+		mkdir('PACKAGES/binary')
+
+		META = concat(['concurrency-occam-pi', '_', 
+											 config.get('VERSION'), '_', 
+											 config.get('BUILD_ARCHITECTURE'), '.deb'])
+		
+		KROC = concat(['concurrency-kroc-posix-posix', '_', 
+											 config.get('VERSION'), '_', 
+											 config.get('BUILD_ARCHITECTURE'), '.deb'])
+
+		TVM = concat(['concurrency-tvm-posix-posix', '_', 
+											 config.get('VERSION'), '_', 
+											 config.get('BUILD_ARCHITECTURE'), '.deb'])
+
+		AVR = concat(['concurrency-tvm-avr-arduino', '_', 
+											 config.get('VERSION'), '_', 
+											 config.get('BUILD_ARCHITECTURE'), '.deb'])
+
+		PLUG = concat(['concurrency-occplug', '_', 
+											 config.get('VERSION'), '_', 
+											 'all', '.deb'])
+
+		build_avr()
+		deb()			
+		build_native_kroc()
+		deb()
+		build_native_tvm()
+		deb()
+
+		meta_deb()
+		occplug_deb()
+
+		with pushd():
+			cd(root)
+			copy_files(META, '.', 'PACKAGES/binary')
+
+		with pushd():
+			cd(root + '/kroc-posix-posix')
+			copy_files(KROC, '.', '../PACKAGES/binary')
+	
+		with pushd():
+			cd(root + '/tvm-posix-posix')
+			copy_files(TVM, '.', '../PACKAGES/binary')
+
+		with pushd():
+			cd(root + '/tvm-avr-arduino')
+			copy_files(AVR, '.', '../PACKAGES/binary')
+
+		with pushd():
+			cd(root + '/occPlug')
+			copy_files(PLUG, '.', '../PACKAGES/binary')
+
+		with pushd():
+			cd(root + '/PACKAGES')
+			cmd(build_command(['dpkg-scanpackages', 'binary', '/dev/null', '|', 'gzip', '-9c', '>', 'binary/Packages.gz']))
+		
+		with pushd():
+			cd(root + '/PACKAGES/binary')
+			cmd(config.get('SSH_CMD'))
+
+
 
 #############################################
 # COMMAND LINE PARSING
@@ -641,7 +710,8 @@ OPTIONS = [
 	["build-kroc", "store_true","Set build vars for a native KRoC build.", build_native_kroc],
 	["build-tvm", "store_true", "Set build vars for a native TVM build.", build_native_tvm],
 	["build-occplug", "store_true", "Build the occPlug.", build_occplug],
-	["uber", "store", "UBER_URL", "Build all toolchains and architectures.", all_arch]
+	["uber", "store", "UBER_URL", "Build all toolchains and architectures.", all_arch],
+	["upload", "store_true", "Upload everything to the server.", upload]
 	] 
 	
 parser = OptionParser()
