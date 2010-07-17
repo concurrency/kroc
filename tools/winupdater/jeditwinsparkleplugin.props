@@ -16,3 +16,10 @@ plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.docs=index
 
 # we only have one dependency, jEdit 4.2final, since we use the new plugin API
 plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinWinSparklePlugin.depend.0=jedit 04.02.99.00
+
+# action labels
+jeditwinsparkleplugin.label=Update
+jeditwinsparkleplugin.checkupdate.label=Check for updates...
+
+
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.menu-item=jeditwinsparkleplugin.checkupdate
