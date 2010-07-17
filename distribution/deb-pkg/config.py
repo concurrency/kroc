@@ -8,13 +8,14 @@ import re
 #   (use for changing things like TEMP)
 
 now    = datetime.datetime.now()
-BASE = {'VERSION'              : '100',
+BASE = {'VERSION'              : '102',
 				'BUILD_ARCHITECTURE'   : 'i386',
 				'TOOLCHAIN'            : 'kroc',
 				'TARGET'               : 'posix',
 				'WRAPPER'              : 'posix',
 				'PACKAGE_DESCRIPTION'  : 'Native occam-pi for the desktop.',
 				'SVN_TRUNK'            : 'https://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk',
+				'SSH_CMD'              : 'scp * jadudm@unhosting.org:/data/www/com/jadud/www/deb/binary',
 				# # # #
 				'YMD'                  : now.strftime("%Y%m%d"),
 				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
