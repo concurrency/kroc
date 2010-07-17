@@ -3,9 +3,8 @@
 PROC main ()
   CHAN SIGNAL s:
   CHAN BYTE b:
-
   PAR
     tick (200, s!)
     potentiometer.byte (2, s?, b!)
-    pwm8(11, b?) 
+    pwm8(10, b?) 
 :

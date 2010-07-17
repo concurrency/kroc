@@ -636,23 +636,23 @@ def upload():
 		meta_deb()
 		occplug_deb()
 
-		META = concat(['concurrency-occam-pi', '_', 
+		META = concat(['occam-pi', '_', 
 											 config.get('VERSION'), '_', 
 											 config.get('BUILD_ARCHITECTURE'), '.deb'])
 		
-		KROC = concat(['concurrency-kroc-posix-posix', '_', 
+		KROC = concat([config.get('STEM'), '-kroc-posix-posix', '_', 
 											 config.get('VERSION'), '_', 
 											 config.get('BUILD_ARCHITECTURE'), '.deb'])
 
-		TVM = concat(['concurrency-tvm-posix-posix', '_', 
+		TVM = concat([config.get('STEM'), '-tvm-posix-posix', '_', 
 											 config.get('VERSION'), '_', 
 											 config.get('BUILD_ARCHITECTURE'), '.deb'])
 
-		AVR = concat(['concurrency-tvm-avr-arduino', '_', 
+		AVR = concat([config.get('STEM'), '-tvm-avr-arduino', '_', 
 											 config.get('VERSION'), '_', 
 											 config.get('BUILD_ARCHITECTURE'), '.deb'])
 
-		PLUG = concat(['concurrency-occplug', '_', 
+		PLUG = concat([config.get('STEM'), '-occplug', '_', 
 											 config.get('VERSION'), '_', 
 											 'all', '.deb'])
 		
