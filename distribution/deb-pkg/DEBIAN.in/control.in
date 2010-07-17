@@ -1,6 +1,6 @@
 Package: concurrency-@TOOLCHAIN@-@TARGET@-@WRAPPER@
 Version: @VERSION@
-Section: base
+Section: main
 Priority: optional
 Architecture: @BUILD_ARCHITECTURE@
 Depends: bash, avrdude (<< 5.10-3), jedit (<< 4.3.2)

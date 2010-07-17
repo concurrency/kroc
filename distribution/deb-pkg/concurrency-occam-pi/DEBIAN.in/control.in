@@ -1,0 +1,9 @@
+Package: concurrency-occam-pi
+Version: @VERSION@
+Section: main
+Priority: optional
+Architecture: @BUILD_ARCHITECTURE@
+Depends: concurrency-tvm-avr-arduino, concurrency-tvm-posix-posix, concurrency-kroc-posix-posix, concurrency-occplug
+Installed-Size:
+Maintainer: matt@concurrency.cc
+Description: occam-pi for the desktop and the Arduino.

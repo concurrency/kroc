@@ -22,6 +22,8 @@ BASE = {'VERSION'              : '100',
 				'TEMP'                 : '@TEMP_ROOT@/@TOOLCHAIN@-@TARGET@-@WRAPPER@',
 				'PACKAGE_NAME'         : 'concurrency-@TOOLCHAIN@-@WRAPPER@',
 				'PACKAGE_BUILD'        : '@TEMP@/@PACKAGE_NAME@',
+				'META_NAME'            : 'concurrency-occam-pi',
+				'META_BUILD'           : '@TEMP_ROOT@/@META_NAME@',
 				'SVN'                  : '@TEMP_ROOT@/src',
 				'OBJ'                  : '@SVN@/obj-@TOOLCHAIN@-@TARGET@-@WRAPPER@',
 				# Where we pull things from
@@ -31,7 +33,9 @@ BASE = {'VERSION'              : '100',
 				'SOURCE_CONF'          : '@SOURCE_OCCAM@/conf',
 				'SOURCE_SCRIPTS'       : '@SOURCE_ARDUINO@/scripts',
 				'SOURCE_INCLUDE'       : '@SOURCE_OCCAM@/include',
+				'SOURCE_DEBPKG'        : '@SVN@/distribution/deb-pkg',
 				'SOURCE_DEBIAN'        : '@SVN@/distribution/deb-pkg/DEBIAN.in',
+				'SOURCE_META_DEBIAN'   : '@SVN@/distribution/deb-pkg/@META_NAME@/DEBIAN.in',
 				# Desired filesystem path for installation
 				'INSTPATH'             : 'usr',
 				'FINAL'                : '/@INSTPATH@',
@@ -46,6 +50,8 @@ BASE = {'VERSION'              : '100',
 				'DEST_FIRMWARE'        : '@DEST_SHARE@/firmware',
 				'DEST_CONF'            : '@DEST_SHARE@/conf',
 				'DEST_DEBIAN'          : '@PACKAGE_BUILD@/DEBIAN',
+				'DEST_META_DEBIAN'     : '@META_BUILD@/DEBIAN',
+				
 				# FINAL DESTINATIONS
 				# Use these for substitution within scripts.
 				'FINAL_DEST_ROOT'      : '@FINAL@',
