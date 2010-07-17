@@ -29,7 +29,7 @@ JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSpa
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_performUpdateCheckWithUI
-  (JNIEnv *, jobject);
+  (JNIEnv *, jclass);
 
 #ifdef __cplusplus
 }
