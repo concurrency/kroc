@@ -101,4 +101,9 @@ public class Surveyor extends BaseTarget implements CompileAbility {
 		// TODO Auto-generated method stub
 		
 	}
+
+	public void setEnabledForCompileOptions(boolean b) {
+		// TODO Auto-generated method stub
+		
+	}
 }

@@ -27,4 +27,5 @@ public interface CompileAbility {
 	public JPanel getCompileOptions(final CompileTarget target);
 	public void compileProgram(final CompileTarget target, final Runnable finished);
 	public void runProgram(final CompileTarget theTarget, final Runnable finished);
+	public void setEnabledForCompileOptions(boolean b);
 }

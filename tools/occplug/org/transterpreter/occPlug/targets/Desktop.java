@@ -211,4 +211,8 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		execWorker.start();
 		*/
 	}
+
+	public void setEnabledForCompileOptions(boolean b) {
+		// Empty, nothing to disable
+	}
 }
