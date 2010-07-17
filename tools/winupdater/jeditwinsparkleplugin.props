@@ -1,0 +1,18 @@
+# jEdit only needs to load the plugin the first time the user accesses it
+# the presence of this property also tells jEdit the plugin is using the new API
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.activate=startup
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.usePluginHome=true
+
+# These two properties are required for all plugins
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.name=jEdit WinSparkle Plugin
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.author=Christian L. Jacobsen
+
+# version number == jEdit version number
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.version=0.1
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.files=JEditWinSparkleNativeBridge.dll WinSparkle.dll
+
+# online help
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.docs=index.html
+
+# we only have one dependency, jEdit 4.2final, since we use the new plugin API
+plugin.org.transterpreter.jeditwinsparkleplugin.JEditWinWinSparklePlugin.depend.0=jedit 04.02.99.00

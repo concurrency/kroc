@@ -1,4 +1,4 @@
-<project name="JEditWinSparklePlugin" default="dist" basedir=".">
+<project name="JEditSparklePlugin" default="dist" basedir=".">
 
   <property file="build.properties"/>
 
@@ -11,7 +11,7 @@
 
   <path id="project.class.path">
     <pathelement location="."/>
-    <pathelement location="/Program Files (x86)/jEdit 4.3.2/jedit.jar"/>
+    <pathelement location="/Applications/My Apps/jEdit 4.2/jedit.jar"/>
     <pathelement location="${jedit.install.dir}/jedit.jar"/>
   </path>
 
@@ -33,14 +33,30 @@
       includeJavaRuntime="yes"
       debug="yes"
       debuglevel="lines,vars,source"
-      source="1.4"
-      target="1.4"
+      source="1.5"
+      target="1.5"
     >
       <classpath refid="project.class.path"/>
     </javac>
   </target>
 
-  <target name="dist" depends="compile">
+  <target name="native-compile" depends="init">
+    <echo message="Compiling native code"/>
+    <exec executable="g++">
+      <arg value="-static"/>
+      <arg value="-shared"/>
+      <arg value="-Wl,--kill-at"/>
+      <arg value="-IC:\Program Files\Java\jdk1.6.0_18\include"/>
+      <arg value="-IC:\Program Files\Java\jdk1.6.0_18\include\win32"/>
+      <arg value="-IC:\Documents and Settings\Asdf\My Documents\Downloads\vslavik-winsparkle-941987c\include"/>
+      <arg value="native/JEditWinSparkleNativeBridge.cpp"/>
+      <arg value="C:\Documents and Settings\Asdf\My Documents\Downloads\vslavik-winsparkle-941987c\Debug\WinSparkle.lib"/>
+      <arg value="-o"/>
+      <arg value="${build.dir}/JEditWinSparkleNativeBridge.dll"/>
+    </exec>
+  </target>
+
+  <target name="dist" depends="compile, native-compile">
     <mkdir dir="${install.dir}"/>
     <jar jarfile="${install.dir}/${jar.name}">
       <fileset dir=".">
@@ -52,6 +68,7 @@
       </fileset>
       <fileset dir="${build.dir}">
          <include name="**/*.class"/>
+         <include name="*.dll"/>
       </fileset>
     </jar>
     <antcall target="reload"/>

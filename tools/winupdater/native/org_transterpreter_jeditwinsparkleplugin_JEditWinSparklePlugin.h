@@ -9,10 +9,10 @@ extern "C" {
 #endif
 /*
  * Class:     org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin
- * Method:    win_sparkle_init
+ * Method:    init
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_win_1sparkle_1init
+JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_init
   (JNIEnv *, jobject);
 
 #ifdef __cplusplus
