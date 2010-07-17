@@ -1,0 +1,27 @@
+--** ATmega328p specific interrupt code.
+-- @module 328.external.interrups.module
+
+#IF NOT (DEFINED (EXTERNAL.INTERRUPTS.MODULE))
+#DEFINE EXTERNAL.INTERRUPTS.MODULE
+
+--* Sets up the interrupt registers for the ATmega328.
+-- [@code vintr] gets set in this process.
+-- @param avr.pin The AVR pin being setup for interrupts.
+-- @param vintr The interrupt vector associated with the given AVR pin.
+PROC set.interrups (VAL INT avr.pin, INT vintr)
+  CASE
+      4
+        SEQ
+          vintr := VINTR.INT0
+          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC00))) \/ (1 << ISC00)
+          ports[EIMSK] := ports[EIMSK] \/ (BV (INT0))
+      5
+        SEQ
+          vintr := VINTR.INT1
+          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC10))) \/ (1 << ISC10)
+          ports[EIMSK] := ports[EIMSK] \/ (BV (INT1))
+      ELSE
+        die ("pin does not support interrupts")
+:
+
+#ENDIF

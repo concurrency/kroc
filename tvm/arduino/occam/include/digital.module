@@ -80,4 +80,40 @@ PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
 :
 --}}}
 
+--{{{ PROC digital.input
+--* Read digital levels on pin 2 or 3.
+-- For only pin 2 or pin 3 on the Arduino, this procedure
+-- will output a LEVEL (either LOW or HIGH) whenever the
+-- pin changes value.
+--
+-- @param board.pin The Arduino pin number (2 or 3 only)
+-- @param out The LEVEL, output when the pin changes level.
+PROC digital.input (VAL INT board.pin, CHAN LEVEL out!)
+  INT wl:
+  INT vintr:
+  LEVEL level, last.level:
+
+  PROC read ()
+    SEQ
+      digital.read (pin, wl)
+      level := LEVEL wl
+  :
+
+  SEQ
+   set.interrups (VAL INT avr.pin, INT vintr)
+    read () --FIXME:Why is this its own process?
+    last.level := level
+    WHILE TRUE
+      SEQ
+        IF
+          level <> last.level
+            out ! level
+          TRUE
+            SKIP
+        INT any:
+        wait.for.interrupt (vintr, any)
+        read ()
+:
+--}}}
+
 #ENDIF

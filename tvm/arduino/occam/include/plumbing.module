@@ -471,4 +471,21 @@ PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
 :
 --}}}
 
+--{{{ PROC button.press
+--* Watches for button presses on pin 2 or 3.
+-- When a button is pressed (must be attached to pin 2 or 3)
+-- a SIGNAL is generated. Uses digital.input, debounce, and 
+-- level.to.signal.
+--
+-- @param pin The pin the button is connected to (must be 2 or 3)
+-- @param out SIGNALs generated when the button is pressed.
+PROC button.press (VAL INT pin, CHAN SIGNAL out!)
+  CHAN LEVEL a, b:
+  PAR
+    digital.input (pin, a!)
+    debounce (a?, b!)
+    level.to.signal (b?, out!)
+:
+--}}}
+
 #ENDIF
