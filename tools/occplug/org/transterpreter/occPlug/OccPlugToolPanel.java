@@ -21,10 +21,12 @@ package org.transterpreter.occPlug;
  */
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Iterator;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -168,9 +170,11 @@ public class OccPlugToolPanel extends JPanel {
 //				.getConsoleDoc());
 //		output.clear();
 		
+		setState(RUNNING);
 		theTarget.handler.runProgram(theTarget, new Runnable() {
 			public void run() {
-				// FIXME: Reenable buttons and stuff
+				theTarget.handler.setEnabledForCompileOptions(true);
+				setState(NORMAL);
 			}
 		});
 	}
@@ -215,11 +219,12 @@ public class OccPlugToolPanel extends JPanel {
 			}
 		}
 		
+
+		setState(ALLOFF);
 		theTarget.handler.compileProgram(theTarget, new Runnable() {
 			public void run() {
-				// FIXME:
-				//setToolBarEnabled(true);
-				//theTarget.handler.setEnabledForFirmwareOptions(true);
+				theTarget.handler.setEnabledForCompileOptions(true);
+				setState(NORMAL);
 			}
 		});
 		
@@ -257,34 +262,27 @@ public class OccPlugToolPanel extends JPanel {
 		Runnable doWorkRunnable = new Runnable() {
 			public void run() {
 				switch (state) {
-					case NORMAL:
-						compileBtn.setEnabled(true);
-						runBtn.setEnabled(true);
-						//stopBtn.setEnabled(false);
-						stopBtn.setEnabled(true);
-						clearBtn.setEnabled(true);
-//						host.setEnabled(true);
-//						port.setEnabled(true);
-						break;
 					case RUNNING:
 						compileBtn.setEnabled(false);
 						runBtn.setEnabled(false);
 						stopBtn.setEnabled(true);
 						clearBtn.setEnabled(true);
-//						host.setEnabled(false);
-//						port.setEnabled(false);
+						target.setEnabled(false);
 						break;
+					case NORMAL:
 					case ALLON:
 						compileBtn.setEnabled(true);
 						runBtn.setEnabled(true);
 						stopBtn.setEnabled(true);
 						clearBtn.setEnabled(true);
+						target.setEnabled(true);
 						break;
 					case ALLOFF:
 						compileBtn.setEnabled(false);
 						runBtn.setEnabled(false);
 						stopBtn.setEnabled(false);
 						clearBtn.setEnabled(false);
+						target.setEnabled(false);
 						break;
 					default:
 						throw new RuntimeException("Bad state in setState");

@@ -340,6 +340,11 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		}
 	}
 
+	public void setEnabledForCompileOptions(boolean enabled)
+	{
+		setEnabledForFirmwareOptions(enabled);
+	}
+	
 	public void compileProgram(CompileTarget target, Runnable finished) {
 		
 		final DocumentWriter output = targetSupport.getDefaultOutput();
