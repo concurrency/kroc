@@ -55,10 +55,13 @@ def copy_tree(src_dir, dest_dir, excludes=[]):
         dest_path = os.path.join(dest_dir, path)
         mkdirs(dest_path)
         for f in files:
+            skip = False
             src_file = os.path.join(root, f)
             for f in excludes:
-                if src_file.endswith(f): continue
-            copy_file(src_file, dest_path)
+                if src_file.endswith(f): 
+                    skip = True
+            if not skip:
+                copy_file(src_file, dest_path)
         if '.svn' in dirs:
             dirs.remove('.svn')  # don't visit .svn directories 
 
@@ -157,7 +160,6 @@ copy_file('install-avrdude/etc/avrdude.conf', BIN_DIR)
 
 # jEdit
 mkdirs(JEDIT_DIR)
-#copydir_addexcludes "build/jedit/jedit-program/" "$jedit_dir" "LatestVersion.jar"
 copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar'])
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('../common/jEdit/occam.xml', os.path.join(JEDIT_DIR, 'modes'))
