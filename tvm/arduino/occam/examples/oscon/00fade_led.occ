@@ -1,0 +1,9 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN BYTE s:
+
+  PAR
+    crawl.byte (255, 5, 10, s!)
+    pwm8 (11, s?)
+:
