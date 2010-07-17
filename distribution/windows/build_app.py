@@ -184,6 +184,17 @@ f = open(os.path.join(OUTPUT, 'VERSION'), 'w')
 f.write(version)
 f.close()
 
+update_props = """\
+options.jeditwinsparkleplugin.company=Concurrency.cc
+options.jeditwinsparkleplugin.app=The Transterpreter
+options.jeditwinsparkleplugin.version=%(version)s
+options.jeditwinsparkleplugin.appcast='http://download.transterpreter.org/appcast/win-dev-zip.xml'
+""" % dict(version=version)
+
+f = open(os.path.join(os.path.join(JEDIT_DIR, 'properties', 'update.props')), 'w')
+f.write(update_props)
+f.close()
+
 if create_zip:
     zip_name = 'Transterpreter-win-dev-%s.zip' % version
     print 'Crating zip file: %s' % zip_name
