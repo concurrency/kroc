@@ -3,7 +3,7 @@
 PROC main ()
   PAR
     blink (13, 500)
-    blink (12, 750)
-    blink (11, 660)
-    blink (10, 300)
+    blink (12, 400)
+    blink (11, 300)
+    blink (10, 200)
 :
