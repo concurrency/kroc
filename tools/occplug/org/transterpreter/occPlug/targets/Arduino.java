@@ -46,11 +46,14 @@ import javax.swing.event.PopupMenuListener;
 
 import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.jEdit;
+import org.gjt.sp.util.Log;
 import org.transterpreter.occPlug.OccPlugPlugin;
 import org.transterpreter.occPlug.OccPlugUtil;
+import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.hosts.BaseHost;
 import org.transterpreter.occPlug.process.ExecWorker;
+import org.transterpreter.occPlug.process.helpers.TerminalExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
 import org.transterpreter.occPlug.targets.support.CompileTarget;
@@ -60,6 +63,8 @@ import org.transterpreter.occPlug.targets.support.OccbuildHelper;
 import org.transterpreter.occPlug.targets.support.OccbuildOptions;
 import org.transterpreter.occPlug.targets.support.OccbuildTVMOptions;
 import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
+
+import de.mud.terminal.vt320;
 
 /**
  * @author clj
@@ -438,6 +443,42 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-U", "flash:w:" + ihexFile + ":i"};
 		final Runnable[] finalisers = { finished };
 		
+
+		Log.log(Log.MESSAGE, this, "read-arduino: " + 
+		OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("read-arduino"))));
+
+		final String[] readArduinoCommand = {
+			OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("read-arduino"))),
+			(String) arduinoPort.getSelectedItem()};
+			/* (String)props.getUploadRate()}; */
+	
+		
+		for (String s : readArduinoCommand) {
+			Log.log(Log.MESSAGE, this, "CMD: " + s);
+		}
+
+		final Runnable[] readFinalisers =
+		{
+				new Runnable() {
+					public void run() {
+						/* Clear the terminal */
+						output.clear();
+						ExecWorker execWorker = new ExecWorker(readArduinoCommand,
+								null, 
+								curDir,
+								new TargetExecWorkerHelper("read-arduino", output,
+									finalisers));
+
+						OccPlug.getOccPlugInstance().setExecWorker(execWorker);
+
+						execWorker.start();
+		 				// targetSupport.startWorker(execWorker);
+						
+					}
+				}
+		};
+		
+
 		final Runnable[] intermediaryFinalisers =
 		{
 				new Runnable() {
@@ -446,16 +487,30 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 								null, 
 								curDir,
 								new TargetExecWorkerHelper("run", output,
-										finalisers));
+										readFinalisers));
 						execWorker.start();
 					}
 				}
 		};
+
 		ExecWorker worker = new ExecWorker(ihexCommand, 
-				null, 
-				curDir,
-				new TargetExecWorkerHelper("run", output,
-						intermediaryFinalisers));
-		targetSupport.startWorker(worker);
+			null, 
+			curDir,
+			new TargetExecWorkerHelper("run", output,
+				intermediaryFinalisers));
+		 targetSupport.startWorker(worker);
+
+		/* Show the VT terminal. */
+		/*
+		targetSupport.setVisibleDisplayArea("terminal");
+		final vt320 terminal = targetSupport.getTerminal();
+		
+		terminal.reset();
+		targetSupport.focusTerminal();
+			
+		Log.log(Log.MESSAGE, this, "Showing terminal.");
+		*/
+
+		
 	}
 }

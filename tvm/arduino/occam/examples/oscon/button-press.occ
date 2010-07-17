@@ -1,9 +1,26 @@
 #INCLUDE "plumbing.module"
 
+PROC delta.signal (CHAN SIGNAL s?, s1!, s2!)
+  WHILE TRUE
+    SEQ
+      s ? SIGNAL
+      PAR
+        s1 ! SIGNAL
+        s2 ! SIGNAL
+:
+
 PROC main ()
-  CHAN SIGNAL s:
+  CHAN SIGNAL s, s1, s2:
   PAR
     blink(12, 100)
     button.press(2, s!)
-    pin.toggle(11, LOW, s?)
+    pin.toggle(11, LOW, s1?)
+    delta.signal(s?, s1!, s2!)
+    
+    INITIAL INT ch IS 0:
+    WHILE TRUE
+      SEQ
+        s2 ? SIGNAL
+        ch := ((ch + 1) REM 26)
+        serial.write.byte(TX0, BYTE (ch + 65))
 :

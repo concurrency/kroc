@@ -9,6 +9,7 @@ plugin.OccPlugPlugin.command.default.kroc=kroc
 plugin.OccPlugPlugin.command.default.tranx86=tranx86
 plugin.OccPlugPlugin.command.default.tvm=tvm
 plugin.OccPlugPlugin.command.default.avrdude=avrdude
+plugin.OccPlugPlugin.command.default.read-arduino=read-arduino
 plugin.OccPlugPlugin.command.default.avr-occbuild=avr-occbuild
 plugin.OccPlugPlugin.command.default.binary-to-ihex=binary-to-ihex
 
