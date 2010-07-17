@@ -159,6 +159,9 @@ copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar']
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('../common/jEdit/occam.xml', os.path.join(JEDIT_DIR, 'modes'))
 
+# Updater
+copy_file('build/winupdater/JEditWinSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
+
 # Copy custom properties
 copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))
 
