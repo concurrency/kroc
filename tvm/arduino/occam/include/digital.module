@@ -89,18 +89,19 @@ PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
 -- @param board.pin The Arduino pin number (2 or 3 only)
 -- @param out The LEVEL, output when the pin changes level.
 PROC digital.input (VAL INT board.pin, CHAN LEVEL out!)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
   INT wl:
   INT vintr:
   LEVEL level, last.level:
 
   PROC read ()
     SEQ
-      digital.read (pin, wl)
+      digital.read (board.pin, wl)
       level := LEVEL wl
   :
 
   SEQ
-   set.interrups (VAL INT avr.pin, INT vintr)
+    set.interrups (avr.pin, vintr)
     read () --FIXME:Why is this its own process?
     last.level := level
     WHILE TRUE

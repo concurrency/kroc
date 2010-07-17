@@ -1,7 +1,3 @@
---I'm not sure I like having the whole conversion bit in here.
--- Let me know if you'd rather have a potenetiometer.byte PROC... Or something.
-
-
 #INCLUDE "plumbing.module"
 
 PROC main ()
