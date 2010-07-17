@@ -1,27 +1,9 @@
 #INCLUDE "plumbing.module"
 
 PROC main ()
-  INITIAL BYTE val IS 0:
-  INITIAL BOOL up IS TRUE:
-  CHAN BYTE val.friend:
-  SEQ
-    PAR
-      pwm8 (11, val.friend?)
-      WHILE TRUE
-        SEQ
-          IF
-            up = TRUE
-              IF
-                val <> 255 
-                  val := val + 5
-                TRUE
-                  up := FALSE
-            TRUE
-              IF
-                val <> 0
-                  val := val - 5
-                TRUE
-                  up := TRUE
-          delay (10)
-          val.friend ! val
+  CHAN BYTE i:
+
+  PAR
+    crawl.byte (255, 5, 10, i!)
+    pwm8 (11, i?)
 :
