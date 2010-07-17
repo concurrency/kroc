@@ -171,6 +171,7 @@ public class OccPlugToolPanel extends JPanel {
 //		output.clear();
 		
 		setState(RUNNING);
+		theTarget.handler.setEnabledForCompileOptions(false);
 		theTarget.handler.runProgram(theTarget, new Runnable() {
 			public void run() {
 				theTarget.handler.setEnabledForCompileOptions(true);
@@ -221,6 +222,7 @@ public class OccPlugToolPanel extends JPanel {
 		
 
 		setState(ALLOFF);
+		theTarget.handler.setEnabledForCompileOptions(false);
 		theTarget.handler.compileProgram(theTarget, new Runnable() {
 			public void run() {
 				theTarget.handler.setEnabledForCompileOptions(true);
