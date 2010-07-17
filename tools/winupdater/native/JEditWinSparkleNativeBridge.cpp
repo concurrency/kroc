@@ -21,12 +21,35 @@
 #include "org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin.h"
 #include "winsparkle.h"
 
+#include <windows.h>
+
+#define WIDE_LEN 1000
 
 JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_init
-  (JNIEnv *, jobject)
+  (JNIEnv *env, jobject obj, jstring company, jstring app, jstring version, jstring url)
 {
-	win_sparkle_set_app_details(L"A company", L"An app", L"1.1");
-	win_sparkle_set_appcast_url("http://winsparkle.org/example/appcast.xml");
+	char c[1000], a[1000], v[1000], u[4000];
+	wchar_t wc[WIDE_LEN], wa[WIDE_LEN], wv[WIDE_LEN];
+	int len;
+
+        len = env->GetStringLength(company);
+        env->GetStringUTFRegion(company, 0, len, c);
+	MultiByteToWideChar(CP_UTF8, 0, c, len, wc, WIDE_LEN);
+
+        len = env->GetStringLength(app);
+        env->GetStringUTFRegion(app, 0, len, a);
+	MultiByteToWideChar(CP_UTF8, 0, a, len, wa, WIDE_LEN);
+
+        len = env->GetStringLength(version);
+        env->GetStringUTFRegion(version, 0, len, v);
+	MultiByteToWideChar(CP_UTF8, 0, v, len, wv, WIDE_LEN);
+
+        len = env->GetStringLength(url);
+        env->GetStringUTFRegion(url, 0, len, u);
+
+	win_sparkle_set_app_details(wc, wa, wv);
+	win_sparkle_set_appcast_url(u);
+
 	win_sparkle_init();
 }
 

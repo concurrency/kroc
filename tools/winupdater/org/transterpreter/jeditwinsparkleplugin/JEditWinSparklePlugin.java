@@ -4,6 +4,7 @@ import org.gjt.sp.jedit.EditPlugin;
 import org.gjt.sp.util.Log;
 import org.gjt.sp.jedit.MiscUtilities;
 import org.gjt.sp.jedit.PluginJAR;
+import org.gjt.sp.jedit.jEdit;
 
 import java.io.OutputStream;
 import java.io.FileOutputStream;
@@ -18,7 +19,10 @@ import java.util.zip.ZipFile;
 	
 	private static final String dllName = "WinSparkle";
 	
-	private native void init();
+	private native void init(String company, 
+				 String app, 
+				 String version, 
+				 String appCastURL);
 	private native void unload();
 	
 	private final String jarLibNames[] = {
@@ -78,10 +82,18 @@ import java.util.zip.ZipFile;
                         Log.log(Log.ERROR, this, ex);
                 }
 
-		//Set the appcast url - http://127.0.0.1/Concurrency.cc/appcast.xml
-		//win_sparkle_set_appcast_url(url);
+		String company = jEdit.getProperty("options.jeditwinsparkleplugin.company");
+		if(company == null) throw new RuntimeException("please set options.jeditwinsparkleplugin.company");
+		String app = jEdit.getProperty("options.jeditwinsparkleplugin.app");
+		if(app == null) throw new RuntimeException("please set options.jeditwinsparkleplugin.app");
+		String version = jEdit.getProperty("options.jeditwinsparkleplugin.version");
+		if(version == null) throw new RuntimeException("please set options.jeditwinsparkleplugin.version");
+		String url = jEdit.getProperty("options.jeditwinsparkleplugin.appcast");
+		if(url == null) throw new RuntimeException("please set options.jeditwinsparkleplugin.appcast");
+	
+
 		//Initate Winsparkle
-		init();
+		init(company, app, version, url);
 	}
 
 	public void stop()
