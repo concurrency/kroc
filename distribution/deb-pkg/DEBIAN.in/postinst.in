@@ -2,9 +2,5 @@
 
 echo ""
 echo "************************************************************"
-echo "Please source our setup script."
-echo "Do this by adding the following to your .bashrc:"
-echo
-echo "  source @FINAL@/bin/@KROC-SETUP@"
-echo ""
+echo "Installed the @TOOLCHAIN@ version of occam-pi."
 echo "************************************************************"
