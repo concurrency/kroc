@@ -237,7 +237,7 @@ def subst_and_copy(file, source_dir, dest_dir):
 				for key, val in config.CFG.iteritems():
 					# print "LOOKING FOR '@%s@' in %s" % (key, line)
 					if re.search(re.compile('@%s@' % key), line):
-						print "FOUND %s in %s" % (key, line)
+						print "FOUND %s, NOW %s " % (key, val)
 						line = re.sub(re.compile('@%s@' % key), val, line)
 
 				if re.search("@PLATFORM@", line):
@@ -605,12 +605,36 @@ def all_arch(url):
 	build_occplug()
 	meta_deb()
 
+def getUTC():
+	dto = datetime.datetime.utcnow()
+	return dto.strftime('%Y%m%d.%H%M')
+
 def upload():
 	header("UPLOADING FILES")
 	with pushd():
 		root = config.get('TEMP_ROOT')
+
+		# Remove old packages
+		with pushd():
+			cd(root)
+			remove_dir('PACKAGES')
+
 		cd(root)
 		mkdir('PACKAGES/binary')
+
+		config.rebase('VERSION', getUTC())
+		config.refresh()
+		header("SHIPPING VERSION: %s" % config.get('VERSION'))
+		
+		build_avr()
+		deb()			
+		build_native_kroc()
+		deb()
+		build_native_tvm()
+		deb()
+
+		meta_deb()
+		occplug_deb()
 
 		META = concat(['concurrency-occam-pi', '_', 
 											 config.get('VERSION'), '_', 
@@ -631,17 +655,8 @@ def upload():
 		PLUG = concat(['concurrency-occplug', '_', 
 											 config.get('VERSION'), '_', 
 											 'all', '.deb'])
-
-		build_avr()
-		deb()			
-		build_native_kroc()
-		deb()
-		build_native_tvm()
-		deb()
-
-		meta_deb()
-		occplug_deb()
-
+		
+	
 		with pushd():
 			cd(root)
 			copy_files(META, '.', 'PACKAGES/binary')
