@@ -14,5 +14,6 @@
 #INCLUDE "usart.module"
 #INCLUDE "pwm.common.module"
 #INCLUDE "adc.module"
+#INCLUDE "external.interrupts.module"
 
 #ENDIF
