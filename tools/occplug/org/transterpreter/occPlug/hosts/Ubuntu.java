@@ -57,8 +57,40 @@ public class Ubuntu extends Unix {
       // It returns true if File or directory exists
 			Log.log(Log.MESSAGE, this, "CATALOG DOES NOT EXISTS");
     }
+
+		copyOccamPiXML();
 		
 	}
+
+	public static void copyOccamPiXML () {
+		String sourceDir  = "/usr/share/jedit/modes";
+		File   sourceFile = new File(sourceDir + "/occam-pi.xml"); 
+		String destDir    = jEdit.getSettingsDirectory() + "/modes";
+		File   destFile   = new File(destDir + "/occam-pi.xml");
+
+		if ( ! destFile.exists() ) {	
+			try {	
+				FileReader fr = new FileReader(sourceFile);
+				BufferedReader br = new BufferedReader(fr);
+			
+				FileOutputStream out = new FileOutputStream(destFile);
+				PrintStream p = new PrintStream(out);
+			
+				while (br.ready()) {
+					p.println(br.readLine());
+				}
+				br.close();
+				p.close();			
+
+				Log.log(Log.MESSAGE, Ubuntu.class, "Done copying occam-pi.xml");
+
+			} catch (Exception e) {
+				Log.log(Log.MESSAGE, Ubuntu.class, "Error copying occam-pi.xml: " + e);
+			}
+		}
+	}
+
+
 
 	private void addOccamPiToCatalog(File cat) {
 		try {

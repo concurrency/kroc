@@ -216,7 +216,8 @@ def make_destdirs():
 		'DEST_CONF', 
 		'DEST_DEBIAN', 
 		'DEST_FIRMWARE',
-		'DEST_OCCPLUG', 
+		'DEST_OCCPLUG_JARS', 
+		'DEST_OCCPLUG_MODES',
 		'DEST_OCCPLUG_DEBIAN', 
 		'DEST_INCLUDE',
 		'DEST_META_DEBIAN'
@@ -506,6 +507,9 @@ def occplug_deb():
 	subst_and_copy("control.in", config.get('SOURCE_OCCPLUG_DEBIAN'), config.get('DEST_OCCPLUG_DEBIAN'))
 	chmod("755", config.get('DEST_OCCPLUG_DEBIAN'), "control")
 
+	# Copy in the highlighting file.
+	copy_files('occam-pi.xml', concat([config.get('SOURCE_COMMON'), '/jEdit']), config.get('DEST_OCCPLUG_MODES'))
+
 	with pushd():
 		cd(config.get('TEMP'))
 		print "PACKAGING %s" % config.get('OCCPLUG_PACKAGE_NAME')
@@ -547,15 +551,15 @@ def build_occplug():
 	with pushd():
 		cd(config.get('SOURCE_OCCPLUG'))
 		cmd(build_command(['wget', config.get('ERRORLIST_URL')]))
-		unzip_file_into_dir(zipfile, config.get('DEST_OCCPLUG'))
+		unzip_file_into_dir(zipfile, config.get('DEST_OCCPLUG_JARS'))
 	
 		# Move the ErrorList straight to the destination; we can build against it there.
 		#cmd(build_command(['mv', jarfile, config.get('DEST_OCCPLUG')]))
 		cmd(build_command(['ant', 
 											'-Djedit.install.dir=/usr/share/jedit', 
-											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG')]),
+											concat(['-Dinstall.dir=', config.get('DEST_OCCPLUG_JARS')]),
 											concat(['-Dbuild.dir=', config.get('TEMP')]),
-											concat(['-lib ', config.get('DEST_OCCPLUG')])  ]))	
+											concat(['-lib ', config.get('DEST_OCCPLUG_JARS')])  ]))	
 
 	# Insert the ubuntu.props file into the .jar
 	with pushd():
@@ -563,7 +567,7 @@ def build_occplug():
 
 		cmd(build_command([
 				'jar -uf', 
-				concat([config.get('DEST_OCCPLUG'), '/', 'OccPlug.jar']),
+				concat([config.get('DEST_OCCPLUG_JARS'), '/', 'OccPlug.jar']),
 				'ubuntu.props'
 				]))
 	
