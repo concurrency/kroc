@@ -21,6 +21,7 @@ package org.transterpreter.occPlug;
  */
 
 import org.gjt.sp.jedit.EditPlugin;
+import org.transterpreter.occPlug.hosts.BaseHost;
 
 /**
  * The occam Plugin
@@ -33,11 +34,14 @@ public class OccPlugPlugin extends EditPlugin {
 	public static final String	PROPERTY_PREFIX	= "plugin.OccPlugPlugin.";
 	public static final String	OPTION_PREFIX	= "options.occPlug.";
 
+	/* Call host-specific startup. Nothing happens
+	 * if it isn't implemented for a particular host. */
 	public void start() {
-		// Not used
+		BaseHost bh = BaseHost.getHostObject();
+		bh.hostStartup();
 	}
 
 	public void stop() {
 		// Not used
 	}
-}
+ }
