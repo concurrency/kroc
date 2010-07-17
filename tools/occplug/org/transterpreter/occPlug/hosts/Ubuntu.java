@@ -25,6 +25,7 @@ import org.gjt.sp.util.Log;
 import java.io.*;
 import org.gjt.sp.jedit.jEdit;
 import java.util.regex.*;
+import java.util.*;
 
 public class Ubuntu extends Unix {
 
@@ -45,9 +46,10 @@ public class Ubuntu extends Unix {
 		{
       // It returns false if File or directory does not exist
 			Log.log(Log.MESSAGE, this, "CATALOG EXISTS");
-			if ( ! isOccampiInCatalog(catalog) ) 
+			if ( ! isOccamPiInCatalog(catalog) ) 
 			{
 				Log.log(Log.MESSAGE, this, "OCCAM-PI NOT IN CATALOG.");
+				addOccamPiToCatalog(catalog);
 			} else {
 				Log.log(Log.MESSAGE, this, "OCCAM-PI IS IN CATALOG.");
 			}
@@ -58,20 +60,57 @@ public class Ubuntu extends Unix {
 		
 	}
 
-	private boolean isOccampiInCatalog(File cat) 
+	private void addOccamPiToCatalog(File cat) {
+		try {
+			FileReader fr = new FileReader(cat);
+			BufferedReader br = new BufferedReader(fr);
+			Pattern pat = Pattern.compile("</MODES>");
+			ArrayList<String> file = new ArrayList<String>();
+
+			while (br.ready()) {
+				String line = br.readLine();
+				Matcher m = pat.matcher(line);
+			
+				/* If we hit the closing tag, insert the new catalog entry first. */
+				if ( m.find() ) {
+					String insert = jEdit.getProperty("plugin.OccPlugPlugin.linux.occampi.catalog");
+					file.add(insert);
+				}
+
+				/* But always add what we find along the way...*/
+				file.add(line);
+			} 
+
+     	br.close();
+			fr.close();
+			
+			/* Now, write the file back out */
+			FileOutputStream out = new FileOutputStream(cat.toString());
+			PrintStream p = new PrintStream(out);
+	
+			for (String s : file) {
+				p.println(s);
+			}
+			p.close();
+				
+		} catch (Exception e) {
+			Log.log(Log.MESSAGE, this, "ERROR INSERTING MODE IN CATALOG: " + e);
+		}
+}
+			
+			
+
+	private boolean isOccamPiInCatalog(File cat) 
 	{
 		boolean result = false;
 
 		try {
-    	FileInputStream fis = new FileInputStream(cat);
-      BufferedInputStream bis = new BufferedInputStream(fis);
-      DataInputStream dis = new DataInputStream(bis);
-      
+			FileReader fr = new FileReader(cat);
+			BufferedReader br = new BufferedReader(fr);
 			Pattern pat = Pattern.compile("occam-pi");
 
-			while (dis.available() != 0) {		
-				String line = dis.readLine();
-        Log.log(Log.MESSAGE, this, "CAT LINE: " + line);
+			while (br.ready()) {		
+				String line = br.readLine();
 				Matcher m = pat.matcher(line);
 			
 				if ( m.find() ) {
@@ -80,10 +119,8 @@ public class Ubuntu extends Unix {
 				}
 				
       }
-
-      fis.close();
-      bis.close();
-      dis.close();
+			br.close();
+			fr.close();
 		} catch (Exception e) {
 			Log.log(Log.MESSAGE, this, "Error checking for occam-pi in catalog: " + e);
 		}
