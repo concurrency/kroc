@@ -1,0 +1,24 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SERVO srv:
+  CHAN SIGNAL ping:
+  CHAN INT adc.in:
+  INT convert:
+
+  PAR
+    heartbeat ()
+    tick (100, ping!)
+    adc (A2, VCC, ping?, adc.in!)
+    servo(9, srv?)
+
+    SEQ
+      serial.setup (TX0, 57600)
+      srv ! div ; 1023
+      srv ! start
+      WHILE TRUE
+        SEQ
+          adc.in ? convert
+          serial.write.int (TX0, convert)
+          srv ! pos ; convert
+:

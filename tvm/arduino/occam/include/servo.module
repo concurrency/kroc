@@ -96,6 +96,7 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
       start
         SEQ
           RUNNING := TRUE
+          digital.mode(board.pin, OUTPUT)
           pwm16.setup (avr.pin, 8)
           pwm16.set.top (avr.pin, refresh)
           pwm16.set.compare (avr.pin, pos)
