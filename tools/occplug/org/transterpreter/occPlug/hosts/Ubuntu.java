@@ -21,7 +21,7 @@ package org.transterpreter.occPlug.hosts;
  */
 
 
-public class Ubuntu extends BaseHost {
+public class Ubuntu extends Unix {
 
 	public Ubuntu()
 	{

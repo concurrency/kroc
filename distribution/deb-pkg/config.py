@@ -43,7 +43,7 @@ BASE = {'VERSION'              : '100',
 				'DEST_BIN'             : '@DEST_ROOT@/@BIN@',
 				'DEST_SHARE'           : '@DEST_ROOT@/@SHARE@',
 				'DEST_INCLUDE'         : '@DEST_SHARE@/include',
-				'DEST_FIRMWARE'        : '@DEST_SHARE@/firmwares',
+				'DEST_FIRMWARE'        : '@DEST_SHARE@/firmware',
 				'DEST_CONF'            : '@DEST_SHARE@/conf',
 				'DEST_DEBIAN'          : '@PACKAGE_BUILD@/DEBIAN',
 				# FINAL DESTINATIONS
