@@ -7,6 +7,7 @@ import shutil
 import datetime
 import glob
 import subprocess
+import zipfile
 
 BUILD               = 'build'
 OUTPUT              = 'output'
@@ -65,6 +66,8 @@ def copy_files(src, dest_path):
     files = glob.iglob(src)
     for f in files:
         copy_file(f, dest_path)
+
+create_zip = not os.path.exists(APP_DIR)
 
 mkdirs(APP_DIR)
 mkdirs(BIN_DIR)
@@ -180,5 +183,23 @@ f.close()
 f = open(os.path.join(OUTPUT, 'VERSION'), 'w')
 f.write(version)
 f.close()
+
+if create_zip:
+    zip_name = 'Transterpreter-win-dev-%s.zip' % version
+    print 'Crating zip file: %s' % zip_name
+    # Create a zip file
+    zip = zipfile.ZipFile(os.path.join(OUTPUT, zip_name), 'w')
+    for root, dirs, files in os.walk(APP_DIR):
+        for f in files:
+            src_file = os.path.join(root, f)
+            dst_file = os.path.join(*src_file.split('\\')[1:])
+            method = zipfile.ZIP_DEFLATED
+            zip.write(src_file, dst_file, method)
+            
+    zip.close()
+else:
+  print 'WARNING: Not creating potentially dirty zipfile'
+  print '         Transterpreter dir already existed in output directory'
+  print '         Delete and rerun if zip is required.'
 
 print 'Built app version: %s (%s)' % (version, shortversion,)
