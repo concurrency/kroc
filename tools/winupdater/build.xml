@@ -24,6 +24,16 @@
     </condition>
   </target>
 
+  <target name="jni">
+    <javah
+      destdir="native"
+      classpath="${build.dir}"
+    >
+      <class name="org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin"/>
+      <classpath refid="project.class.path"/>
+    </javah>
+  </target>
+
   <target name="compile" depends="init">
     <javac
       srcdir="."
