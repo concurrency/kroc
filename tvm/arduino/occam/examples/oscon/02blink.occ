@@ -1,5 +1,5 @@
 #INCLUDE "plumbing.module"
 
 PROC main ()
-  blink (13, 500)
+  blink (11, 500)
 :

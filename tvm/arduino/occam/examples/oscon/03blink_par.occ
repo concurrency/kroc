@@ -5,4 +5,5 @@ PROC main ()
     blink (13, 500)
     blink (12, 750)
     blink (11, 660)
+    blink (10, 300)
 :

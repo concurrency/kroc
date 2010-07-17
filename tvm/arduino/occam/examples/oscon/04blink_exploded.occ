@@ -4,6 +4,6 @@ PROC main ()
   CHAN SIGNAL s:
 
   PAR
-    tick (delay.time, s!)
-    pin.toggle (pin, LOW, s?)
+    tick (500, s!)
+    pin.toggle (11, LOW, s?)
 :

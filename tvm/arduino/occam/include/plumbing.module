@@ -240,13 +240,14 @@ PROC adc (VAL INT analog.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
 -- @param out The output chanel mapped values are sent out on.
 PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL ping?, CHAN BYTE out!)
   INITIAL INT avr.pin IS board.analog.to.chip (analog.pin):
+  INT  v:
   BYTE x:
 
   WHILE TRUE
     SEQ
       ping ? SIGNAL
       adc.base (avr.pin, VCC, v)
-      x := (BYTE (v * 25) / 102) --v == in, x == out. (v / 1023) = (x / 255)
+      x := (BYTE ((v * 25) / 102)) --v == in, x == out. (v / 1023) = (x / 255)
       out ! x
 :
 --}}}
