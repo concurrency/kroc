@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin
  * Method:    init
- * Signature: ()V
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_init
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jstring, jstring, jstring, jstring);
 
 /*
  * Class:     org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin
