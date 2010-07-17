@@ -231,24 +231,23 @@ PROC adc (VAL INT analog.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
 :
 --}}}
 
---{{{ PROC mapped.adc
+--{{{ PROC potentiometer.byte
 --* Maps the incoming values from a potentiometer (knob, slider, etc.)
 -- connected to analog.pin to apropriate values between min and max.
 -- @param analog.pin The analog pin the potentiometer is connected to.
 -- @param min, max The minimum and maximum values that will be output.
 -- @oaram ping In signal that activated a new reading and mapping.
 -- @param out The output chanel mapped values are sent out on.
-PROC potentiometer (VAL INT analog.pin, min, max, CHAN SIGNAL ping?, CHAN INT out!)
+PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL ping?, CHAN BYTE out!)
   INITIAL INT avr.pin IS board.analog.to.chip (analog.pin):
-  INITIAL INT range IS max - min:
-  INT v:
+  BYTE x:
 
   WHILE TRUE
     SEQ
       ping ? SIGNAL
       adc.base (avr.pin, VCC, v)
-      v := ((v  / 1023) * range) + min
-      out ! v
+      x := (BYTE (v * 25) / 102) --v == in, x == out. (v / 1023) = (x / 255)
+      out ! x
 :
 --}}}
  

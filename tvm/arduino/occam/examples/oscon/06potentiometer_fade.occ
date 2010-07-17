@@ -1,0 +1,15 @@
+--I'm not sure I like having the whole conversion bit in here.
+-- Let me know if you'd rather have a potenetiometer.byte PROC... Or something.
+
+
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+  CHAN BYTE b:
+
+  PAR
+    tick (200, s!)
+    potentiometer.byte (2, s?, b!)
+    pwm8(11, b?) 
+:
