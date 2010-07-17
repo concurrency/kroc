@@ -23,6 +23,6 @@ cd $ROOT
 cd ../../tools/winupdater
 
 ant -Djedit.install.dir=$ROOT/build/jedit/jedit-program/ \
-    -Dinstall.dir=$ROOT/build/macupdater \
+    -Dinstall.dir=$ROOT/build/winupdater \
     -Dwinsparkle.dir=$ROOT/build/winsparkle/vslavik-winsparkle-941987c/
 
