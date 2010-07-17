@@ -24,6 +24,7 @@ import java.util.zip.ZipFile;
 				 String version, 
 				 String appCastURL);
 	private native void unload();
+	public static native void performUpdateCheckWithUI();
 	
 	private final String jarLibNames[] = {
 		"WinSparkle.dll",

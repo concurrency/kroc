@@ -59,3 +59,9 @@ JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSpa
 {
   win_sparkle_cleanup();
 }
+
+JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_performUpdateCheckWithUI
+  (JNIEnv *, jobject)
+{
+	win_sparkle_check_update_with_ui();
+}
