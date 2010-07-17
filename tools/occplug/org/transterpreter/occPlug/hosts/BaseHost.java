@@ -38,6 +38,10 @@ public abstract class BaseHost {
 		this.base = base;
 		commandBase = new String[] {base, "default"};
 	}
+
+	public void hostStartup() {
+		/* Do nothing here... just override. */
+	}
 	
 	/**
 	 * Provide a list of suggestions for available serial ports. 
