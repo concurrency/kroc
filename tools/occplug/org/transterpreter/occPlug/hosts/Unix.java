@@ -22,6 +22,7 @@ package org.transterpreter.occPlug.hosts;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import org.gjt.sp.util.Log;
 
 public class Unix extends BaseHost {
 	
@@ -49,11 +50,16 @@ public class Unix extends BaseHost {
 		};
 		
 		File dir = new File("/dev");
+		String[] all     = dir.list();
 		String[] devices = dir.list(filter);
 		
-		for(int i = 0; i < devices.length; i++)
-			devices[i] = "/dev/" + devices[i];
+		Log.log(Log.MESSAGE, this, "Populating USB devices.");
 		
+		for(int i = 0; i < devices.length; i++)
+		{
+			devices[i] = "/dev/" + devices[i];
+		}
+
 		return devices;
 	}
 }
