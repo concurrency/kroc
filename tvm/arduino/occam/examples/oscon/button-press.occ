@@ -1,0 +1,9 @@
+#INCLUDE "plumbing.module"
+
+PROC main ()
+  CHAN SIGNAL s:
+  PAR
+    blink(12, 100)
+    button.press(2, s!)
+    pin.toggle(11, LOW, s?)
+:

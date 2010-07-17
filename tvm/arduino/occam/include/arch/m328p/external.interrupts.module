@@ -8,7 +8,7 @@
 -- [@code vintr] gets set in this process.
 -- @param avr.pin The AVR pin being setup for interrupts.
 -- @param vintr The interrupt vector associated with the given AVR pin.
-PROC set.interrups (VAL INT avr.pin, INT vintr)
+PROC set.interrups (VAL INT avr.pin, RESULT INT vintr)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   CASE avr.pin
