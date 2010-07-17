@@ -90,8 +90,8 @@ PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
 -- @param out The LEVEL, output when the pin changes level.
 PROC digital.input (VAL INT board.pin, CHAN LEVEL out!)
   INITIAL INT avr.pin IS board.to.chip(board.pin):
+  INITIAL INT vintr IS (- 1):
   INT wl:
-  INT vintr IS (- 1):
   LEVEL level, last.level:
 
   PROC read ()
