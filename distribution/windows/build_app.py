@@ -190,7 +190,7 @@ update_props = """\
 options.jeditwinsparkleplugin.company=Concurrency.cc
 options.jeditwinsparkleplugin.app=The Transterpreter
 options.jeditwinsparkleplugin.version=%(version)s
-options.jeditwinsparkleplugin.appcast='http://download.transterpreter.org/appcast/win-dev-zip.xml'
+options.jeditwinsparkleplugin.appcast=http://download.transterpreter.org/appcast/win-dev-zip.xml
 """ % dict(version=version)
 
 f = open(os.path.join(os.path.join(JEDIT_DIR, 'properties', 'update.props')), 'w')
