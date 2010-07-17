@@ -209,8 +209,18 @@ def install():
 
 def make_destdirs():
 	header("MAKING DESTINATION DIRECTORIES")
-	DESTINATIONS = ['DEST_ROOT', 'DEST_BIN', 'DEST_SHARE',                                                  'DEST_CONF', 'DEST_DEBIAN', 'DEST_FIRMWARE',
-				'DEST_OCCPLUG', 'DEST_OCCPLUG_DEBIAN', 'DEST_INCLUDE'] 
+	DESTINATIONS = [
+		'DEST_ROOT', 
+		'DEST_BIN', 
+		'DEST_SHARE',
+		'DEST_CONF', 
+		'DEST_DEBIAN', 
+		'DEST_FIRMWARE',
+		'DEST_OCCPLUG', 
+		'DEST_OCCPLUG_DEBIAN', 
+		'DEST_INCLUDE',
+		'DEST_META_DEBIAN'
+		] 
 	for d in DESTINATIONS:
 		mkdir(config.get(d))
 
@@ -303,9 +313,6 @@ def deb():
 	copy_files("postrm", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
 	chmod("755", config.get('DEST_DEBIAN'), "postrm")
 
-	copy_files("preinst", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
-	chmod("755", config.get('DEST_DEBIAN'), "preinst")
-
 	copy_files("prerm", config.get('SOURCE_DEBIAN'), config.get('DEST_DEBIAN'))
 	chmod("755", config.get('DEST_DEBIAN'), "prerm")
 
@@ -320,6 +327,33 @@ def deb():
 		cd(config.get('TEMP'))
 		print "PACKAGING %s" % config.get('PACKAGE_NAME')
 		cmd(build_command(["dpkg", "--build", config.get('PACKAGE_NAME'), "./"]))
+
+def meta_deb():
+	header("BUILDING META PACKAGE")
+
+	for filename in os.listdir(config.get('SOURCE_META_DEBIAN')):
+		if not re.search("in$", filename):
+			copy_files(filename, config.get('SOURCE_META_DEBIAN'), config.get('DEST_META_DEBIAN'))
+			chmod("755", config.get('DEST_META_DEBIAN'), filename)
+	
+	copy_files("preinst", config.get('SOURCE_META_DEBIAN'), config.get('DEST_META_DEBIAN'))
+	chmod("755", config.get('DEST_META_DEBIAN'), "preinst")
+
+	copy_files("postrm", config.get('SOURCE_META_DEBIAN'), config.get('DEST_META_DEBIAN'))
+	chmod("755", config.get('DEST_META_DEBIAN'), "postrm")
+
+	copy_files("prerm", config.get('SOURCE_META_DEBIAN'), config.get('DEST_META_DEBIAN'))
+	chmod("755", config.get('DEST_META_DEBIAN'), "prerm")
+
+	print "SOURCE: %s" % config.get('SOURCE_META_DEBIAN')
+	subst_and_copy("control.in", config.get('SOURCE_META_DEBIAN'), config.get('DEST_META_DEBIAN'))
+	chmod("755", config.get('DEST_META_DEBIAN'), "control")
+
+	with pushd():
+		cd(concat([config.get('TEMP_ROOT')]))
+		print "PACKAGING %s" % config.get('META_NAME')
+		cmd(build_command(["dpkg", "--build", config.get('META_NAME'), "./"]))
+		
 
 
 # This needs to run `sudo' 
@@ -589,8 +623,8 @@ OPTIONS = [
 		copy_arduino_build],
 	["copy-native-build", "store_true", "Copy libraries and compiled files into place.",
 		copy_native_build],
-	["deb", "store_true", "Build the Debian package (.deb).",
-		deb],
+	["deb", "store_true", "Build the Debian package (.deb).", deb],
+	["meta-deb", "store_true", "Build the meta package (.deb).", meta_deb],
 	["rpm", "store_true", "Convert the Debian package to a Fedora package (.rpm).", rpm],
 	["all", "store", "ALL_SVN_URL", "Do everything up to this point.", all],
 	["local-all", "store_true", "Do everything in a currently checked-out tree.", 
