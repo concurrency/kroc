@@ -30,7 +30,7 @@ svnversion  = subprocess.Popen(['svnversion',
                                 '-nc', 
                                 '../../'], 
                                stdout=subprocess.PIPE).communicate()[0]
-shortversion= 'Development version: %s %s' % (version, svnversion)
+shortversion= 'Development version: %s (%s)' % (version, svnversion)
 
 
 # from: 
@@ -172,5 +172,13 @@ retcode = subprocess.call(["patch",
 if retcode != 0:
    print 'Patch of jEdit catalog failed, aborting'
    sys.exit(1)
+
+f = open(os.path.join(APP_DIR, 'VERSION.txt'), 'w')
+f.write(shortversion)
+f.close()
+
+f = open(os.path.join(OUTPUT, 'VERSION'), 'w')
+f.write(version)
+f.close()
 
 print 'Built app version: %s (%s)' % (version, shortversion,)
