@@ -192,6 +192,10 @@ public class OccPlug extends JPanel implements EBComponent {
 		}
 	}
 
+	public void setExecWorker(ExecWorker ew) {
+		execWorker = ew;
+	}
+
 	//
 	// Constructors
 	//
