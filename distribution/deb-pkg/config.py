@@ -22,7 +22,7 @@ BASE = {'VERSION'              : '102',
 				# # # #
 				'kroc-posix-posix-deps': 'bash',
 				'tvm-posix-posix-deps' : 'bash',
-				'tvm-avr-arduino-deps' : 'bash, jedit, avrdude, python-serial',     
+				'tvm-avr-arduino-deps' : 'bash, avrdude, python-serial',     
 				# # # #
 				'YMD'                  : now.strftime("%Y%m%d"),
 				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
