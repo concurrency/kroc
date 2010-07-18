@@ -636,6 +636,13 @@ def upload():
 		header("SHIPPING VERSION: %s" % config.get('VERSION'))
 		
 		header("PACKAGING AVR")
+		config.rebase('DEPENDS',
+									config.get(concat([config.get('TOOLCHAIN'), 
+															'-',
+															config.get('TARGET'),
+															'-',
+															config.get('WRAPPER'),
+															'-deps'])))
 		build_avr()
 		deb()			
 		header("PACKAGING NATIVE KROC")

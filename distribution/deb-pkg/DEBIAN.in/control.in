@@ -3,6 +3,6 @@ Version: @VERSION@
 Section: main
 Priority: optional
 Architecture: @BUILD_ARCHITECTURE@
-Depends: bash, avrdude (<< 5.10-3), jedit (<< 4.3.2), python-serial
+Depends: @DEPENDS@
 Maintainer: matt@concurrency.cc
 Description: @PACKAGE_DESCRIPTION@
