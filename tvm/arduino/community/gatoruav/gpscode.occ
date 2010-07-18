@@ -1,5 +1,5 @@
 #INCLUDE "plumbing.module"
-#IF FALSE
+
 PROC serial.rx (VAL INT pin, CHAN BYTE received!)
   BYTE ch:
   WHILE TRUE
@@ -15,7 +15,7 @@ PROC serial.tx (VAL INT pin, CHAN BYTE received?)
       received ? ch
       serial.write.byte(pin, ch)
 :
-#ENDIF
+
 PROC main ()
   CHAN BYTE b:
   SEQ
