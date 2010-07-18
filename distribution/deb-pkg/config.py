@@ -18,7 +18,7 @@ BASE = {'VERSION'              : '102',
 				'WRAPPER'              : 'posix',
 				'PACKAGE_DESCRIPTION'  : 'Native occam-pi for the desktop.',
 				'SVN_TRUNK'            : 'https://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk',
-				'SCP_CMD'              : 'scp * jadudm@ATSIGN@unhosting.org:/data/www/org/transterpreter-download/files/dev/ubuntu/@UVN@/binary',
+				'SCP_CMD'              : 'scp * jadudm@ATSIGN@unhosting.org:/data/www/org/transterpreter-download/files/dev/ubuntu/@UVN@/@BUILD_ARCHITECTURE@/binary',
 				# # # #
 				'YMD'                  : now.strftime("%Y%m%d"),
 				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
