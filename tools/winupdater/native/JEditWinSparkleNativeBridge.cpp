@@ -32,6 +32,14 @@ JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSpa
 	wchar_t wc[WIDE_LEN], wa[WIDE_LEN], wv[WIDE_LEN];
 	int len;
 
+	memset(c, 0, 1000);
+	memset(a, 0, 1000);
+	memset(v, 0, 1000);
+	memset(u, 0, 4000);
+	memset(wc, 0, sizeof(wchar_t) * WIDE_LEN);
+	memset(wa, 0, sizeof(wchar_t) * WIDE_LEN);
+	memset(wv, 0, sizeof(wchar_t) * WIDE_LEN);
+
         len = env->GetStringLength(company);
         env->GetStringUTFRegion(company, 0, len, c);
 	MultiByteToWideChar(CP_UTF8, 0, c, len, wc, WIDE_LEN);
@@ -61,7 +69,7 @@ JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSpa
 }
 
 JNIEXPORT void JNICALL Java_org_transterpreter_jeditwinsparkleplugin_JEditWinSparklePlugin_performUpdateCheckWithUI
-  (JNIEnv *, jobject)
+  (JNIEnv *, jclass)
 {
 	win_sparkle_check_update_with_ui();
 }
