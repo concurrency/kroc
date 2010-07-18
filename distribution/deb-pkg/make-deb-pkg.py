@@ -7,6 +7,7 @@ import inspect
 import urllib
 import time
 import os
+import sys
 import re
 import zipfile
 
@@ -607,8 +608,18 @@ def getUTC():
 	dto = datetime.datetime.utcnow()
 	return dto.strftime('%Y%m%d.%H%M')
 
+def ubuntu_version(name):
+	header("UPLOADING UBUNTU VERSION: %s" % name)
+	config.rebase('UVN', name)
+
 def upload():
 	header("UPLOADING FILES")
+	print("VERSION: %s" % config.get('UVN'))
+
+	if config.get('UVN') == 'NO_NAME':
+		header("SET UBUNTU VERSION WITH --ubuntu-version")
+		sys.exit()
+
 	with pushd():
 		root = config.get('TEMP_ROOT')
 
@@ -687,7 +698,7 @@ def upload():
 		with pushd():
 			cd(root + '/PACKAGES')
 			cmd(build_command(['dpkg-scanpackages', 'binary', '/dev/null', '|', 'gzip', '-9c', '>', 'binary/Packages.gz']))
-		
+			
 		with pushd():
 			cd(root + '/PACKAGES/binary')
 			cmd(config.get('SCP_CMD'))
@@ -733,6 +744,7 @@ OPTIONS = [
 	["build-tvm", "store_true", "Set build vars for a native TVM build.", build_native_tvm],
 	["build-occplug", "store_true", "Build the occPlug.", build_occplug],
 	["uber", "store", "UBER_URL", "Build all toolchains and architectures.", all_arch],
+	["ubuntu-version", "store", 'UBUNTU_VERSION', "Set the Ubuntu version name.", ubuntu_version],
 	["upload", "store_true", "Upload everything to the server.", upload]
 	] 
 	
@@ -769,7 +781,8 @@ def call_handler(str, arg):
 
 PLAT       = ["BUILD-TVM", "BUILD-AVR", "BUILD-KROC"]
 DIR_PARAMS = ["TEMP_DIR", "LIB_PATH"]
-FIRST      = DIR_PARAMS
+NAMING     = ["UBUNTU_VERSION"]
+FIRST      = NAMING + DIR_PARAMS
 
 def check_for_build_target():
 	found = False
@@ -787,10 +800,13 @@ def driver():
 
 	for key, val in props(options).iteritems():
 		if (key in PLAT) and (val != None):
+			# print "PLAT: %s, %s" % (key, val)
 			call_handler(key, val)
-		if (key in DIR_PARAMS) and (val != None):
+		if (key in FIRST) and (val != None):
+			# print "FIRST: %s, %s" % (key, val)
 			# print "HANDLING DIR PARAMS"
 			call_handler(re.sub("-", "_", key), val)
+
 	#for key, val in props(options).iteritems():
 	for key, val in props(options).iteritems():
 		if (key not in FIRST):

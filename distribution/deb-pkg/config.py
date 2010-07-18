@@ -10,13 +10,15 @@ import re
 now    = datetime.datetime.now()
 BASE = {'VERSION'              : '102',
 				'BUILD_ARCHITECTURE'   : 'i386',
+				'UVN'                  : 'NO_NAME',
+				'ATSIGN'               : '@',
 				'STEM'                 : 'occam-pi',
 				'TOOLCHAIN'            : 'kroc',
 				'TARGET'               : 'posix',
 				'WRAPPER'              : 'posix',
 				'PACKAGE_DESCRIPTION'  : 'Native occam-pi for the desktop.',
 				'SVN_TRUNK'            : 'https://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk',
-				'SCP_CMD'              : 'scp * jadudm@unhosting.org:/data/www/org/transterpreter-download/files/dev/ubuntu/binary',
+				'SCP_CMD'              : 'scp * jadudm@ATSIGN@unhosting.org:/data/www/org/transterpreter-download/files/dev/ubuntu/@UVN@/binary',
 				# # # #
 				'YMD'                  : now.strftime("%Y%m%d"),
 				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
@@ -92,7 +94,7 @@ def no_subst_left(hash):
 	result = True
 
 	for key, value in hash.iteritems():
-		print "CHECKING %s, %s" % (key, value)
+		#print "CHECKING %s, %s" % (key, value)
 
 		if re.search('@.*?@', value):
 			result = False
@@ -108,24 +110,27 @@ def hassubst(str):
 def dosubst(str):
 	if hassubst(str):
 		repls = re.findall('@(.*?)@', str)
+		#print "REPLS: %s" % repls
 		for pat in repls:
+			#print("[pat %s], [str %s]" % (pat, str))
 			str = re.sub(re.compile('@%s@' % pat), BASE[pat], str)
 		return dosubst(str)
 	else:
 		return str
 
 def refresh ():
-	# print "REFRESHING CONFIGURATION"
+	#print "REFRESHING CONFIGURATION"
 	tmp = copy(BASE)
 	# Go through each key
 	for key, value in BASE.iteritems():
+		#print "[key %s], [value %s]" % (key, value)
 		value = dosubst(value)
 		tmp[key] = value
 	for k, v in tmp.iteritems():
 		CFG[k] = v
 
 def rebase (key, value):
-	# print "REBASING CONFIGURATION AROUND '%s'" % key
+	#print "REBASING CONFIGURATION AROUND '%s'" % key
 	BASE[key] = value
 	refresh ()
 
