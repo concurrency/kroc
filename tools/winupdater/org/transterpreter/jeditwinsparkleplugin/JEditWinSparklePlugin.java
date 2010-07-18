@@ -65,7 +65,6 @@ import java.util.zip.ZipFile;
                         }
                         o.close();
 
-                        System.load(libraryPath);
                     }
                 }
                 catch(IOException ex)
@@ -75,7 +74,17 @@ import java.util.zip.ZipFile;
                           jar); // + " to " + libraryPath);
                         Log.log(Log.ERROR, this, ex);
                 }
-                catch(java.lang.UnsatisfiedLinkError ex)
+                
+
+		try
+		{
+			for(String lib: jarLibNames)
+			{
+				String libraryPath = MiscUtilities.constructPath(libraryDir, lib);
+				System.load(libraryPath);
+			}
+		}
+		catch(java.lang.UnsatisfiedLinkError ex)
                 {
                         Log.log(Log.ERROR, this,
                           "Could not load native library from:" +
