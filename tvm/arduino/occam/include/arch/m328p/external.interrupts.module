@@ -11,7 +11,7 @@
 PROC set.interrups (VAL INT avr.pin, RESULT INT vintr)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
-	#PRAGMA DEFINED vintr
+  #PRAGMA DEFINED vintr
   CASE avr.pin
     4
       SEQ
