@@ -683,7 +683,7 @@ def upload():
 		
 		with pushd():
 			cd(root + '/PACKAGES/binary')
-			cmd(config.get('SSH_CMD'))
+			cmd(config.get('SCP_CMD'))
 
 
 
