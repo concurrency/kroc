@@ -107,10 +107,13 @@ def copy_files(pat, src_dir, dest_dir):
 	print "COPYING %s FROM %s" % (pat, src_dir)
 	for filename in os.listdir(src_dir):
 		if re.search(pat, filename):
-			# print "COPYING FILE [%s] TO [%s]" % (filename, dest_dir)
-			cmd(build_command(["cp", 
-												 "%s/%s" % (src_dir, filename),
-												 "%s/%s" % (dest_dir, filename)]))
+			print "COPYING FILE [%s] TO [%s]" % (filename, dest_dir)
+			if (re.search("\.svn", filename)):
+				header("WILL NOT COPY A SVN FILE: %s" % filename)
+			else:
+				cmd(build_command(["cp", 
+													 "%s/%s" % (src_dir, filename),
+													 "%s/%s" % (dest_dir, filename)]))
 
 def mkdir(dir):
 	cmd(build_command(["mkdir -p", dir]))
@@ -621,16 +624,25 @@ def upload():
 		config.refresh()
 		header("SHIPPING VERSION: %s" % config.get('VERSION'))
 		
+		header("PACKAGING AVR")
 		build_avr()
 		deb()			
+		header("PACKAGING NATIVE KROC")
 		build_native_kroc()
 		deb()
+		header("PACKAGING NATIVE TVM")
 		build_native_tvm()
 		deb()
-
+		header("PACKAGING META")
 		meta_deb()
-		occplug_deb()
+	
+		arch = config.get('BUILD_ARCHITECTURE')
 
+		header("PACKAGING OCCPLUG")
+		build_occplug()
+		occplug_deb()
+		
+		config.rebase('BUILD_ARCHITECTURE', arch)
 		META = concat(['occam-pi', '_', 
 											 config.get('VERSION'), '_', 
 											 config.get('BUILD_ARCHITECTURE'), '.deb'])
@@ -646,7 +658,7 @@ def upload():
 		AVR = concat([config.get('STEM'), '-tvm-avr-arduino', '_', 
 											 config.get('VERSION'), '_', 
 											 config.get('BUILD_ARCHITECTURE'), '.deb'])
-
+		
 		PLUG = concat([config.get('STEM'), '-occplug', '_', 
 											 config.get('VERSION'), '_', 
 											 'all', '.deb'])
