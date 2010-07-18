@@ -612,6 +612,20 @@ def ubuntu_version(name):
 	header("UPLOADING UBUNTU VERSION: %s" % name)
 	config.rebase('UVN', name)
 
+def build_arch(arch):
+	header("SETTING BUILD ARCH TO %s" % arch)
+	config.rebase('BUILD_ARCHITECTURE', arch)
+
+def dependencies():
+	config.rebase('DEPENDS',
+									config.get(concat([config.get('TOOLCHAIN'), 
+															'-',
+															config.get('TARGET'),
+															'-',
+															config.get('WRAPPER'),
+															'-deps'])))
+	header("DEPS NOW: %s" % config.get('DEPENDS'))
+
 def upload():
 	header("UPLOADING FILES")
 	print("VERSION: %s" % config.get('UVN'))
@@ -636,20 +650,16 @@ def upload():
 		header("SHIPPING VERSION: %s" % config.get('VERSION'))
 		
 		header("PACKAGING AVR")
-		config.rebase('DEPENDS',
-									config.get(concat([config.get('TOOLCHAIN'), 
-															'-',
-															config.get('TARGET'),
-															'-',
-															config.get('WRAPPER'),
-															'-deps'])))
 		build_avr()
+		dependencies()
 		deb()			
 		header("PACKAGING NATIVE KROC")
 		build_native_kroc()
+		dependencies()
 		deb()
 		header("PACKAGING NATIVE TVM")
 		build_native_tvm()
+		dependencies()
 		deb()
 		header("PACKAGING META")
 		meta_deb()
@@ -752,6 +762,7 @@ OPTIONS = [
 	["build-occplug", "store_true", "Build the occPlug.", build_occplug],
 	["uber", "store", "UBER_URL", "Build all toolchains and architectures.", all_arch],
 	["ubuntu-version", "store", 'UBUNTU_VERSION', "Set the Ubuntu version name.", ubuntu_version],
+	["build_arch", "store", 'ARCH', "Set the build architecture.", build_arch],
 	["upload", "store_true", "Upload everything to the server.", upload]
 	] 
 	
@@ -788,7 +799,7 @@ def call_handler(str, arg):
 
 PLAT       = ["BUILD-TVM", "BUILD-AVR", "BUILD-KROC"]
 DIR_PARAMS = ["TEMP_DIR", "LIB_PATH"]
-NAMING     = ["UBUNTU_VERSION"]
+NAMING     = ["UBUNTU_VERSION", "ARCH"]
 FIRST      = NAMING + DIR_PARAMS
 
 def check_for_build_target():
