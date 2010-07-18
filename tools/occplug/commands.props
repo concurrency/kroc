@@ -25,6 +25,7 @@ plugin.OccPlugPlugin.command.windows.kroc=kroc
 plugin.OccPlugPlugin.command.windows.tranx86=tranx86.exe
 plugin.OccPlugPlugin.command.windows.tvm=tvm.exe
 plugin.OccPlugPlugin.command.windows.avrdude=avrdude.exe
+plugin.OccPlugPlugin.command.windows.read-arduino=read-arduino.exe
 plugin.OccPlugPlugin.command.windows.avr-occbuild=avr-occbuild.exe
 plugin.OccPlugPlugin.command.windows.binary-to-ihex=binary-to-ihex.exe
 
