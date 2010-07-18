@@ -24,7 +24,7 @@ def extract(archive, dest='', force=False):
                     os.path.splitext(os.path.basename(archive))[0])
             exists = os.path.exists(dest)
         if not exists:
-            print 'extracting %s to ' % (archive, dest)
+            print 'extracting %s to %s' % (archive, dest)
             a.extractall(dest)
         else:
             print 'extracting %s (already extracted)' % (archive, )
