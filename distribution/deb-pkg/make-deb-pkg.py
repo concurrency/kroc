@@ -427,7 +427,6 @@ def all(url):
 		copy_native_build()
 	if ['tvm', 'posix', 'posix'] == ttw():
 		copy_native_tvm_build()
-	deb()
 
 def remove_unwanted_build_products():
 	header("DELETE UNWANTED BUILD PRODUCTS")
@@ -469,7 +468,6 @@ def refresh_libs():
 		make_destdirs()
 		copy_arduino_config()
 		copy_arduino_build()
-	deb()
 
 def unzip_file_into_dir(file, dir):
 	print "[unzip %s -> %s" % (file, dir)
@@ -574,8 +572,6 @@ def build_occplug():
 	
 	config.set('BUILD_ARCHITECTURE', 'all')
 
-	occplug_deb()
-
 # Builds multiple packages for all architectures
 
 def all_arch(url):
@@ -603,7 +599,6 @@ def all_arch(url):
 		all(url)
 
 	build_occplug()
-	meta_deb()
 
 def getUTC():
 	dto = datetime.datetime.utcnow()
