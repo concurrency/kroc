@@ -1,4 +1,4 @@
-Package: concurrency-occam-pi
+Package: @STEM@ 
 Version: @VERSION@
 Section: main
 Priority: optional
