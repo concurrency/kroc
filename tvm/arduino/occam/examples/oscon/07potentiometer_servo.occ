@@ -9,19 +9,15 @@ PROC main ()
       CHAN SIGNAL ping:
       CHAN INT reading:
       PAR
-        heartbeat ()
         tick (100, ping!)
         adc (ADC[i], VCC, ping?, reading!)
         servo(PIN[i], srv?)
         SEQ
-          serial.setup (TX0, 57600)
           srv ! div ; 1023
           srv ! start
           INT value:
           WHILE TRUE
             SEQ
               reading ? value
-              serial.write.int (TX0, value)
-              serial.write.byte(TX0, '*n')
               srv ! pos ; value
 :
