@@ -1,22 +1,22 @@
 #
 # OS X
 #
-plugin.OccPlugPlugin.path.kroc.osx.include=share/kroc/vtinclude
-plugin.OccPlugPlugin.path.kroc.osx.lib=share/kroc/vtlib
+plugin.OccPlugPlugin.path.kroc.osx.include=posix/kroc/include
+plugin.OccPlugPlugin.path.kroc.osx.lib=posix/kroc/lib
 plugin.OccPlugPlugin.path.kroc.osx.bin=bin
 
-plugin.OccPlugPlugin.path.tvm.osx.include=share/tvm/vtinclude
-plugin.OccPlugPlugin.path.tvm.osx.lib=share/tvm/vtlib
-plugin.OccPlugPlugin.path.tvm.osx.firmware=share/tvm/firmware
+plugin.OccPlugPlugin.path.tvm.osx.include=posix/tvm/include
+plugin.OccPlugPlugin.path.tvm.osx.lib=posix/tvm/lib
+plugin.OccPlugPlugin.path.tvm.osx.firmware=posix/tvm/firmware
 plugin.OccPlugPlugin.path.tvm.osx.bin=bin
-plugin.OccPlugPlugin.path.tvm.osx-ppc.include=share/tvm-ppc/vtinclude
-plugin.OccPlugPlugin.path.tvm.osx-ppc.lib=share/tvm-ppc/vtlib
-plugin.OccPlugPlugin.path.tvm.osx-ppc.firmware=share/tvm-ppc/firmware
+plugin.OccPlugPlugin.path.tvm.osx-ppc.include=posix/tvm-ppc/include
+plugin.OccPlugPlugin.path.tvm.osx-ppc.lib=posix/tvm-ppc/lib
+plugin.OccPlugPlugin.path.tvm.osx-ppc.firmware=posix/tvm-ppc/firmware
 
-plugin.OccPlugPlugin.path.tvm-arduino.osx.conf=
-plugin.OccPlugPlugin.path.tvm-arduino.osx.firmware=
-plugin.OccPlugPlugin.path.tvm-arduino.osx.include=
-plugin.OccPlugPlugin.path.tvm-arduino.osx.lib=
+plugin.OccPlugPlugin.path.tvm-arduino.osx.conf=arduino/tvm/conf
+plugin.OccPlugPlugin.path.tvm-arduino.osx.firmware=arduino/tvm/firmware
+plugin.OccPlugPlugin.path.tvm-arduino.osx.include=arduino/tvm/include
+plugin.OccPlugPlugin.path.tvm-arduino.osx.lib=arduino/tvm/lib
 plugin.OccPlugPlugin.path.tvm-arduino.osx.bin=bin
 plugin.OccPlugPlugin.path.tvm-arduino.osx.etc=bin
 

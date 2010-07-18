@@ -40,12 +40,12 @@
   <dict>
     <!--
     <key>WorkingDirectory</key>
-    <string>\$APP_PACKAGE/Contents/Resources/</string>
+    <string>$APP_PACKAGE/Contents/Resources/</string>
     -->
     <key>Arguments</key>
 		<string>-background -settings=~/.transterpreter/jEdit</string>
     <key>ClassPath</key>
-    <string>\$APP_PACKAGE/Contents/Resources/jEdit/jedit.jar</string>
+    <string>$APP_PACKAGE/Contents/Resources/jEdit/jedit.jar</string>
     <key>JVMVersion</key>
     <string>1.4+</string>
     <key>MainClass</key>
