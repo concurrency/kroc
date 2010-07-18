@@ -95,6 +95,13 @@ binary_to_ihex = Target(
   other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='binary-to-ihex'))],
 )
 
+read_arduino = Target(
+  description='read-arduino',
+  script='../../tvm/arduino/scripts/read-arduino',
+  other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='read-arduino'))],
+)
+
+
 
 # Make it appear like we wrote py2exe on the commandline
 sys.argv.append('py2exe')
@@ -108,7 +115,7 @@ opts = {
 setup(
 	options=opts,
 	console=[
-		occbuild, avr_occbuild, binary_to_ihex
+		occbuild, avr_occbuild, binary_to_ihex, read_arduino
 ],
 data_files=data_files
 )
