@@ -26,6 +26,7 @@ plugin.OccPlugPlugin.path.tvm-arduino.osx.etc=bin
 plugin.OccPlugPlugin.path.tvm.windows.include=posix/tvm/include
 plugin.OccPlugPlugin.path.tvm.windows.lib=posix/tvm/lib
 plugin.OccPlugPlugin.path.tvm.windows.firmware=posix/tvm/firmware
+plugin.OccPlugPlugin.path.tvm.windows.bin=bin
 
 plugin.OccPlugPlugin.path.tvm-arduino.windows.conf=arduino/tvm/conf
 plugin.OccPlugPlugin.path.tvm-arduino.windows.firmware=arduino/tvm/firmware
