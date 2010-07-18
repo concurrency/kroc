@@ -20,6 +20,10 @@ BASE = {'VERSION'              : '102',
 				'SVN_TRUNK'            : 'https://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk',
 				'SCP_CMD'              : 'scp * jadudm@ATSIGN@unhosting.org:/data/www/org/transterpreter-download/files/dev/ubuntu/@UVN@/@BUILD_ARCHITECTURE@/binary',
 				# # # #
+				'kroc-posix-posix-deps': 'bash',
+				'tvm-posix-posix-deps' : 'bash',
+				'tvm-avr-arduino-deps' : 'bash, jedit, avrdude, python-serial',     
+				# # # #
 				'YMD'                  : now.strftime("%Y%m%d"),
 				'YMDHMS'               : now.strftime("%Y%m%d%H%M%S"),
 				'TEMP_ROOT'            : '/tmp/@BUILD_ARCHITECTURE@',
