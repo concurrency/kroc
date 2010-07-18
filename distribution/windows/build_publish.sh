@@ -26,7 +26,7 @@ cat >build/feed.xml <<EOF
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namepsaces/sparkle">
   <channel>
     <title>Transterpreter Downloads (Win; Zip; Development branch)</title>
-    <link>http://download.transterpreter.org/appcast/mac-dev.xml</link>
+    <link>http://download.transterpreter.org/appcast/win-dev-zip.xml</link>
     <description>Transterpreter Appcast</description>
     <language>en-uk</language>
     <pubDate>$PUBDATE</pubDate>
@@ -56,6 +56,43 @@ cat >build/feed.xml <<EOF
                                 length="$SIZE"
                         />
                 </item>
+  </channel>
+</rss>
+EOF
+
+# FIXME: There is something wrong with the above XML fragment which does not
+# seem to parse with WinSparkle... works fine in Sparkle for the Mac.
+# Therefore we use the XML from the WinSparkle example, which seems to work
+
+
+cat >build/feed.xml <<EOF
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+<channel>
+    <title>Transterpreter Downloads (Win; Zip; Development branch)</title>
+    <link>http://download.transterpreter.org/appcast/win-dev-zip.xml</link>
+    <description>Transterpreter Appcast</description>
+    <language>en-uk</language>
+    <item>
+      <title>Transterpreter - Development Version $VERSION</title>
+      <description><![CDATA[
+          <h2>Development version</h2>
+          <p>Please note that you are using a development version of the
+          Transterpreter, which may break, blow up,
+          dissintigrate, or otherwise harm itself at any
+          point. <!--If you meant to run something less prone to
+          breakage, please go to
+          <a href="http://www.transterpreter.org/">http://www.transterpreter.org/</a>
+          and download one of
+          the official releases.--></p>
+          ]]>
+      </description>
+      <pubDate>$PUBDATE</pubDate>
+      <enclosure url="$DOWNLOAD_URL"
+                 sparkle:version="$VERSION"
+                 type="application/octet-stream"
+                 length="$SIZE"/>
+    </item>
   </channel>
 </rss>
 EOF
