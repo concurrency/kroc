@@ -101,7 +101,7 @@ PROC digital.input (VAL INT board.pin, CHAN LEVEL out!)
   :
 
   SEQ
-		#PRAGMA DEFINED vintr
+    #PRAGMA DEFINED vintr
     set.interrups (avr.pin, vintr)
     read () --FIXME:Why is this its own process?
     last.level := level
