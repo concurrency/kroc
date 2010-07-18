@@ -162,7 +162,7 @@ copy_file('install-avrdude/etc/avrdude.conf', BIN_DIR)
 mkdirs(JEDIT_DIR)
 copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar'])
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
-copy_file('../common/jEdit/occam.xml', os.path.join(JEDIT_DIR, 'modes'))
+copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
 
 # Updater
 copy_file('build/winupdater/JEditWinSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
@@ -170,13 +170,16 @@ copy_file('build/winupdater/JEditWinSparklePlugin.jar', os.path.join(JEDIT_DIR, 
 # Copy custom properties
 copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))
 
-# Patch jEdit catalog
-retcode = subprocess.call(["patch", 
-           os.path.join(JEDIT_DIR, 'modes/catalog'), 
-           '../common/jEdit/catalog.patch'], shell=True)
-if retcode != 0:
-   print 'Patch of jEdit catalog failed, aborting'
-   sys.exit(1)
+# Add the occam-pi modeline
+s = open('build/jedit/jedit-program/modes/catalog', 'r')
+d = open(os.path.join(JEDIT_DIR, 'modes/catalog'), 'w')
+for l in s:
+    if l.startswith('</MODES>'):
+      d.write('<MODE NAME="occam-pi" FILE="occam-pi.xml" FILE_NAME_GLOB="*.{occ,module}" />\n')
+    d.write(l)
+s.close()
+d.close()
+
 
 f = open(os.path.join(APP_DIR, 'VERSION.txt'), 'w')
 f.write(shortversion)
