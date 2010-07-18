@@ -4,6 +4,7 @@ import os
 import datetime
 import subprocess
 import glob
+import urllib
 
 # Pick the remaining packages from the common directory
 sys.path.append('../common/python-lib')
@@ -61,7 +62,7 @@ mkdirs(ARDUINO_TVM_CONF_DIR)
 
 # Download and extract sparkle
 download(os.path.join(BUILD, SPARKLE_ZIP),
-        'http://sparkle.andymatuschak.org/files/%s' % (SPARKLE_ZIP, ))
+        'http://sparkle.andymatuschak.org/files/%s' % (urllib.quote(SPARKLE_ZIP) ))
 extract(os.path.join(BUILD, SPARKLE_ZIP), BUILD)
 
 # FIXME: Perhaps we should include this in the repos as it is more obscure than
