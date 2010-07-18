@@ -1,4 +1,4 @@
-Package: concurrency-@TOOLCHAIN@-@TARGET@-@WRAPPER@
+Package: @STEM@-@TOOLCHAIN@-@TARGET@-@WRAPPER@
 Version: @VERSION@
 Section: main
 Priority: optional
