@@ -1,0 +1,83 @@
+--
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+--WARNING: 20100718 drew This is very much uncompleted code. It's
+--  implimentation is going to throw a few sizeable holes in the conde that's
+--  already working elsewhere, which has made me think twice about converting
+--  PWM operations to a PROTOCOL-based structure. If usecase that would make
+--  this kind of more-complicated, more-robust structure useful, I would
+--  definitely push forward with this interface.
+
+#IF NOT (DEFINED (PWM.MODULE))
+#DEFINE PWM.MODULE
+
+VAL INT PHASE.CORRECT IS #2:
+
+VAL INT BYTE.MAX IS #1:
+VAL INT OUT.COMPARE IS #2:
+
+PROTOCOL PWM8
+  CASE
+    mode ; BYTE
+    prescale ; INT
+    inverted ; BOOL
+    top ; BYTE
+    compare ; BYTE
+:
+
+PROC pwm8 (VAL INT board.pin, CHAN PWM8 p?)
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  INITIAL INT mode IS PHASE.CORRECT:
+  INITIAL INT prescale IS 64:
+  INITIAL INT top IS BYTE.MAX:
+  INITIAL BOOL inverted IS FALSE:
+  INITIAL INT compare IS 9:
+  INITIAL BOOL running IS FALSE:
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits, TCCRnB.bits:
+
+  SEQ
+    
+  WHILE TRUE
+    s ? CASE
+      mode ; .mode
+        IF
+          .mode = FAST
+            --One Thing.
+          .mode = PHASE.CORRECT
+            --One Other Thing.
+          .mode = CLEAR.TIMER.COMPARE
+            --One Last Thing
+      prescale ; .prescale
+        --Does a thing.
+      top ; .top
+        IF
+          .top = BYTE.MAX
+            --A Thing
+          .top = OUT.COMPARE
+        --Do I even want this here?
+      inverted ; inverted
+        SKIP
+      compare ; .compare
+        --This will change all the time.
+      start
+        --Twiddles bits.
+      stop
+        --Is some filler.
+:
+
+#ENDIF
