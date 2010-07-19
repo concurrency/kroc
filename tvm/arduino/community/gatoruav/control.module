@@ -1,0 +1,79 @@
+#IF NOT (DEFINED (CONTROL.MODULE))
+#DEFINE CONTROL.MODULE
+#IF FALSE
+PROC turn (VAL INT pitch, roll, bank.angle)
+  SEQ
+    IF 
+      servo.pos.roll <> roll + 90 + bank.angle
+        SEQ
+          SEQ i = 0 for bank.angle    --This slowly initiates servo movement to the specified angle to initiate a roll condition
+            servo.pos.pitch := (pitch) + 100
+            s ! pos ; servo.pos.pitch
+            
+            servo.pos.roll := roll + 90 + i
+            s ! pos ; servo.pos.roll
+        
+      TRUE
+        SEQ
+          servo.pos.pitch := (pitch * (-1)) + 90 + bank.angle -- This stabilizes the airplane at the specified bank angle
+          s ! pos ; servo.pos.pitch
+        
+          servo.pos.roll := (roll * (-1)) + 90 + bank.angle
+          s2 ! pos ; servo.pos.roll
+    
+:    
+    
+VAL BOOL LEFT, RIGHT IS TRUE, FALSE: 
+PROC turn.to.heading (CHAN INT theta.x?, theta.y?, heading?, CHAN SIGNAL sig, CHAN SERVO s, s2, VAL BOOL direction, VAL INT new.heading)
+  INT pitch, roll, curr.dir:
+  
+  SEQ
+    
+    theta.x ? pitch
+    theta.y ? roll
+    heading ? curr.dir
+    
+    
+    IF 
+      curr.dirr = new.heading  -- If we are flying at the same heading as the new heading we want, then just keep flying
+        SKIP
+      turn.dir = LEFT
+        WHILE (curr.dirr > (5 + new.heading)) AND (curr.dirr < (5 + new.heading))  -- If we want to specify a left turn, then we will turn to the left until we are within 5 degrees of our intended new heading.
+          SEQ
+            turn (pitch, roll, s, s2 35)
+      turn.dir = RIGHT
+        WHILE (curr.dirr > (5 + new.heading)) AND (curr.dirr < (5 + new.heading)) -- If we want to specify a right turn, then we will turn to the right until we are within 5 degrees of our intended new heading.
+          SEQ
+            turn (pitch, roll, s, s2, -35)
+      TRUE
+        SKIP
+:
+#ENDIF
+PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
+  INT pitch, roll, servo.pos.pitch, servo.pos.roll:
+  SEQ
+    s ! pos ; 90
+    WHILE TRUE
+      SEQ
+        theta.x ? pitch
+        theta.y ? roll
+        
+        servo.pos.pitch := (pitch * (-1)) + 90
+        s ! pos ; servo.pos.pitch
+        
+        servo.pos.roll := (roll * (-1)) + 90
+        s2 ! pos ; servo.pos.roll
+        
+      
+:  
+PROC servo.setup(CHAN SERVO s, VAL INT start.pos)
+
+  SEQ
+    s ! min ; 650
+    s ! max ; 2350
+    s ! div ; 180
+    s ! pos ; 0
+    s ! start
+    s ! pos ; start.pos
+:  
+#ENDIF
