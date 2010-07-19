@@ -62,6 +62,7 @@ mkdirs(OUTPUT)
 mkdirs(BUILD)
 mkdirs(BIN_DIR)
 mkdirs(ARDUINO_TVM_CONF_DIR)
+mkdirs(ARDUINO_TVM_FW_DIR)
 
 # Download and extract sparkle
 download(os.path.join(BUILD, SPARKLE_ZIP),
