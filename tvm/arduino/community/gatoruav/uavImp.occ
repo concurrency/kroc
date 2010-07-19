@@ -102,11 +102,7 @@ PROC main ()
       servo (9, s?)
       servo (10, s2?)
       SEQ
-        s ! min ; 650
-        s ! max ; 2350
-        s ! div ; 180
-        s ! pos ; 0
-        s ! start        
+        servo.setup(s, 90)       
         s2 ! min ; 650
         s2 ! max ; 2350
         s2 ! div ; 180
