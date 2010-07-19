@@ -120,9 +120,11 @@ INT FUNCTION analogRead (VAL INT analog.pin)
 :
 
 PROC analogWrite (VAL INT board.pin, VAL BYTE value) -- This is PWM, fyi
+  SKIP
 :
 
 PROC Serial.begin (VAL INT speed)
+  SKIP
 :
 
 PROC Serial.end ()
@@ -135,8 +137,7 @@ INT FUNCTION Serial.available () IS 0:
   --Another stub function that we've yet to impliment in plumbing.
   -- Might be worth looking into though? ::shrugs::
 
-BYTE FUNCTION Serial.read ()
-:
+BYTE FUNCTION Serial.read () IS 0:
 
 PROC Serial.flush ()
   --More stubs that seem like they might be useful. I'm pretty sure Plumbing
@@ -149,14 +150,17 @@ PROC Serial.flush ()
 --  support BYTE, HEX and... Almost Dec/0/2/4/ect. This reminds me I need to
 --  figure out print.real32.
 PROC Serial.print (VAL INT val, VAL []BYTE format)
+  SKIP
 :
 
 PROC Serial.println (VAL INT val, VAL []BYTE format)
+  SKIP
 :
 
 -- Because Method Overloading isn't a thing in Occam, I've decided this is
 --  going to be exclusivly strings.
 PROC Serial.write ()
+  SKIP
 :
 
 
@@ -165,7 +169,8 @@ PROC Serial.write ()
 
 
 
-
+#IF FALSE
+--Old code. Gonna get gone pretty soon.
 
 --{{{  PROC beginSerial
 --* Initialize serial port.
@@ -231,5 +236,7 @@ PROC serialReadByte (VAL INT port, RESULT BYTE b)
   serial.read.byte(port, b)
 :
 --}}}
+
+#ENDIF
 
 #ENDIF
