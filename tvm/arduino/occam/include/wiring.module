@@ -32,7 +32,6 @@
 #INCLUDE "boardmap.module"
 #INCLUDE "digital.module"
 #INCLUDE "printing.module"
-#INCLUDE "servo.module"
 
 --{{{  constants
 VAL INT LOW IS #0:
@@ -41,8 +40,8 @@ VAL INT HIGH IS #1:
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
 
---This is acting as a global variable. Does that even work in Occam?
-INITIAL INT ADC.REF IS #0:
+--I'm trying to make this work as a global variable. Not so much...
+VAL INT ADC.REF IS #0:
 
 VAL INT DEFAULT IS #0:
 VAL INT INTERNAL IS #1:
@@ -83,11 +82,11 @@ PROC digitalWrite (VAL INT board.pin, level)
   SEQ
     --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
     dummy1, r.port, dummy2, bit := chip.to.gpio (avr.pin)
-    pin.write(r.port, bit, state)
+    pin.write(r.port, bit, level)
 :
 
 INT FUNCTION digitalRead (VAL INT board.pin)
-  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  VAL INT avr.pin IS board.to.chip(board.pin):
   --INT r.ddr, r.port, r.pin, bit:
   INT dummy1, dummy2, r.pin, bit, level:
   VALOF
@@ -112,19 +111,22 @@ PROC analogReference (VAL INT type)
 
 INT FUNCTION analogRead (VAL INT analog.pin)
   VAL INT avr.pin IS board.analog.to.chip(analog.pin):
-  INITIAL INT val IS (-1):
+  INT val:
   VALOF
     SEQ
       adc.base (avr.pin, ADC.REF, val)
-  RESULT val
+    RESULT val
 :
 
 PROC analogWrite (VAL INT board.pin, VAL BYTE value) -- This is PWM, fyi
-  SKIP
+  INITIAL INT avr.pin IS board.analog.to.chip(board.pin):
+  SEQ
+    pwm8.setup (avr.pin, 64)
+    pwm8.set.compare (avr.pin, value)
 :
 
-PROC Serial.begin (VAL INT speed)
-  SKIP
+PROC Serial.begin (VAL INT32 speed)
+  serial.start (TX0, speed)
 :
 
 PROC Serial.end ()
@@ -133,11 +135,16 @@ PROC Serial.end ()
   SKIP
 :
 
-INT FUNCTION Serial.available () IS 0:
+INT FUNCTION Serial.available () IS (-1):
   --Another stub function that we've yet to impliment in plumbing.
   -- Might be worth looking into though? ::shrugs::
 
-BYTE FUNCTION Serial.read () IS 0:
+BYTE FUNCTION Serial.read ()
+  BYTE b:
+  VALOF
+    serial.byte.in (RX0, b)
+    RESULT b
+:
 
 PROC Serial.flush ()
   --More stubs that seem like they might be useful. I'm pretty sure Plumbing
@@ -145,98 +152,98 @@ PROC Serial.flush ()
   SKIP
 :
 
--- Well now... this is some seriously more complicated useability than we've
---  put in plumbing... I think I like the syntax though, and we'll be able to
---  support BYTE, HEX and... Almost Dec/0/2/4/ect. This reminds me I need to
---  figure out print.real32.
-PROC Serial.print (VAL INT val, VAL []BYTE format)
-  SKIP
+----So, this is my attempt to get what the arduino.cc crew does for their
+---- serial.print (val, format), but I'm not sure it's possible in occam.
+--PROC Serial.print (VAL INT val, VAL []BYTE format)
+--  IF
+--    format = ([]BYTE "BYTE")
+--      serial.write.byte (TX0, (BYTE val))
+--    format = ([]BYTE "BIN")
+--      --We don't have support for printing binary strings atm
+--      SKIP
+--    format = ([]BYTE "OCT")
+--      --Why would you even want this?
+--      SKIP
+--    format = ([]BYTE "DEC")
+--      --Not sure if we can do this yet... I guess it would be real32s...
+--      SKIP
+--    format = ([]BYTE "HEX")
+--      serial.write.int (TX0, val)
+--    format = ([]BYTE "0"))
+--      --Same as DEC.
+--      SKIP
+--    format = ([]BYTE "1")
+--      --1 level of precision.
+--      SKIP
+--    format = ([]BYTE "2")
+--      --2 levels of precision.
+--      SKIP
+--    format = ([]BYTE "3")
+--      --I think you get the idea.
+--      SKIP
+--    format = ([]BYTE "4")
+--      SKIP
+--    format = ([]BYTE "5")
+--      SKIP
+--    format = ([]BYTE "6")
+--      SKIP
+--:
+--
+--PROC Serial.println (VAL INT val, VAL []BYTE format)
+--  SEQ
+--    Serial.print (val, format) --Note that this is the method above...
+--    serial.write.newline (TX0) -- Whereas this is a printing.module PROC.
+--:
+
+PROC Serial.printByte (VAL BYTE val)
+  serial.write.byte (TX0, val)
 :
 
-PROC Serial.println (VAL INT val, VAL []BYTE format)
-  SKIP
+PROC Serial.printHex (VAL INT val)
+  serial.write.int (TX0, val)
 :
 
 -- Because Method Overloading isn't a thing in Occam, I've decided this is
 --  going to be exclusivly strings.
-PROC Serial.write ()
-  SKIP
+PROC Serial.write (VAL []BYTE string)
+  serial.write.string (TX0, string)
 :
 
-
-
-
-
-
-
-#IF FALSE
---Old code. Gonna get gone pretty soon.
-
---{{{  PROC beginSerial
---* Initialize serial port.
 --
--- @para, port Serial port to initialize.
--- @param baud Baud rate.
-PROC serialSetup (VAL INT port, VAL INT32 baud)
-  serial.setup.blocking (port, baud)
-:
---}}}
-
---{{{ PROC serialWriteByte
---* Write a byte to the serial port.
+----And we can't include Serial1:3 equivalents because R/TX1:3 are only
+---- defined for the ATmega1280
 --
--- @param port Serial port to write to.
--- @param b Byte to write.
-PROC serialWriteByte (VAL INT port, VAL BYTE b)
-  serial.write.byte (port, b)
-:
---}}}
-
---{{{  PROC serialWriteString
---* Write a string to the serial port.
+--PROC Serial1.begin (VAL INT speed)
+--  serial.start (TX1, speed)
+--:
 --
--- @param port Serial port to write to.
--- @param string Bytes to write.
-PROC serialWriteString (VAL INT port, VAL []BYTE string)
-  SEQ i = 0 FOR SIZE string
-    serial.write.byte (port, string[i])
-:
---}}}
-
---{{{  PROC serialWriteInt
---* Write an [@code INT] to the serial port in hex.
+--PROC Serial1.end ()
 --
--- @param port Serial port to write to.
--- @param n The integer to write.
-PROC serialWriteInt (VAL INT port, VAL INT n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.write.byte (port, digits[(n >> (i * 4)) /\ #F])
-:
---}}}
-
---{{{  PROC serialWriteInt32
---* Write an [@code INT32] to the serial port in hex.
+--  SKIP
+--:
 --
--- @param port Serial port to write to.
--- @param n The long integer ([@code INT32]) to write.
-PROC serialWriteInt32 (VAL INT port, VAL INT32 n)
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 7 FOR 8 STEP -1
-    serial.write.byte (port, digits[INT ((n >> (i * 4)) /\ #F)])
-:
---}}}
-
---{{{ PROC serialReadByte
---* Read a byte from the serial port.
+--INT FUNCTION Serial1.available () IS (-1):
 --
--- @param port Serial port to read from.
--- @param b Byte to be read.
-PROC serialReadByte (VAL INT port, RESULT BYTE b)
-  serial.read.byte(port, b)
-:
---}}}
-
-#ENDIF
-
+--BYTE FUNCTION Serial1.read ()
+--  BYTE b:
+--  VALOF
+--    serial.byte.in (RX1, b)
+--    RESULT b
+--:
+--
+--PROC Serial1.flush ()
+--  SKIP
+--:
+--PROC Serial1.printByte (VAL BYTE val)
+--  serial.write.byte (TX1, val)
+--:
+--
+--PROC Serial1.printHex (VAL BYTE val)
+--  serial.write.int (TX1, val)
+--:
+--
+--PROC Serial1.write (VAL []BYTE string)
+--  serial.write.string (TX1, string)
+--:
+--
 #ENDIF
