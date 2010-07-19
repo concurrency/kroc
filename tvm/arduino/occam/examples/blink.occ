@@ -4,6 +4,7 @@ PROC main ()
   CHAN BYTE i:
 
   PAR
+    heartbeat()
     crawl.byte (255, 5, 10, i!)
     pwm8 (11, i?)
 :
