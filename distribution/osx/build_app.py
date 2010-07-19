@@ -43,7 +43,7 @@ JEDIT_OSX_PLUGIN    = 'MacOSX.jar'
 
 SPARKLE             = 'Sparkle 1.5b6'
 SPARKLE_ZIP         = SPARKLE + '.zip'
-SPARKLE_FEED        = '=http://download.transterpreter.org/appcast/mac-dev.xml'
+SPARKLE_FEED        = 'http://download.transterpreter.org/appcast/mac-dev.xml'
 
 LIPO_BINARIES       = ['occ21', 'tvm', 'ilibr', 'mkoccdeps'] 
 # FIXME: tranx86 did not seem to get built?
@@ -73,8 +73,7 @@ extract(os.path.join(BUILD, SPARKLE_ZIP), BUILD)
 # the other things we depend on and therefore more likely to go away
 # from: http://www.seph.dk/uncategorized/new-mac-os-x-plugin-for-jedit/
 # FIXME: Is this even required with the new version of jedit?
-download(os.path.join(BUILD, JEDIT_OSX_PLUGIN),
-        'http://www.seph.dk/download/$JEDIT_OSX_PLUGIN')
+download(os.path.join(BUILD, JEDIT_OSX_PLUGIN), 'http://www.seph.dk/download/%s' % (JEDIT_OSX_PLUGIN, ))
 
 # Copy the .app skeleton
 # FIXME: There are some .in files in here that need transforming!!!
