@@ -23,6 +23,11 @@
 #IF NOT (DEFINED (ADC.MODULE))
 #DEFINE ADC.MODULE
 
+-- These are duplicated in plumbing. I'm not sure where they should be defined
+VAL INT VCC IS #0:
+VAL INT INTERNAL IS #1:
+VAL INT AREF IS #2:
+
 --* This value is used for calculating analog channel choice in adc.module
 -- The AVR analog pins start at (AVR) pin 23 and -- easily enough -- count up.
 VAL INT AVR.A0 IS 23:
@@ -30,10 +35,10 @@ VAL INT AVR.A0 IS 23:
 --* Perform an Analog-to-Digital Conversino on the given AVR pin, and write
 -- out the result.
 -- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
--- @param USE.VCC Set by the helper functions (probably). Whether or not to
+-- @param ref Set by the helper functions. Whether or not to
 --   use the internal voltage reference, or the aref pin as a reference.
 -- @param v The INT that will be used to store the analog read.
-PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
+PROC adc.base (VAL INT avr.pin, VAL INT ref, RESULT INT v)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   INT16 result:
@@ -49,10 +54,12 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
     -- Select the channel
     -- If we are using Vcc as our reference, set bit REFS0.
     IF
-      USE.VCC
-        ports[ADMUX] := BV (REFS0) \/ (BYTE a.pin)
-      TRUE
-        ports[ADMUX] := (BYTE a.pin)
+      ref = VCC
+        ports[ADMUX] = BV (REFS0) \/ (BYTE a.pin)
+      ref = AREF
+        ports[ADMUX] = (BYTE a.pin)
+      TRUE -- ref = INTERNAL
+        ports[ADMUX] = (BV (REFS0) \/ BV (REFS1)) \/ (BYTE a.pin)
 
     -- Start conversion
     ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)
@@ -71,14 +78,14 @@ PROC adc.base (VAL INT avr.pin, VAL BOOL USE.VCC, RESULT INT v)
 -- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
 -- @param v The INT that will be used to store the analog read.
 INLINE PROC adc.aref (VAL INT avr.pin, RESULT INT v)
-  adc.base (avr.pin, FALSE, v)
+  adc.base (avr.pin, AREF, v)
 :
 
 --* Helper function for performing an ADC using the VCC.
 -- @param avr.pin The [@em AVR pin] on which to perfom the ADC.
 -- @param v The INT that will be used to store the analog read.
 INLINE PROC adc.vcc (VAL INT avr.pin, RESULT INT v)
-  adc.base (avr.pin, TRUE, v)
+  adc.base (avr.pin, VCC, v)
 :
 
 #ENDIF

@@ -29,16 +29,25 @@
 #DEFINE WIRING.MODULE
 
 #INCLUDE "avr.module"
-#INCLUDE "pinmapping.module"
+#INCLUDE "boardmap.module"
+#INCLUDE "digital.module"
+#INCLUDE "printing.module"
+#INCLUDE "servo.module"
 
 --{{{  constants
---* Symbolic constant for digital LOW on an Arduino pin.
 VAL INT LOW IS #0:
---* Symbolic constant for digital HIGH on an Arduino pin.
 VAL INT HIGH IS #1:
 
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
+
+--This is acting as a global variable. Does that even work in Occam?
+INITIAL ADC.REF IS #0:
+
+VAL INT DEFAULT IS #0:
+VAL INT INTERNAL IS #1:
+VAL INT EXTERNAL IS #2:
+
 
 VAL INT SERIAL  IS #0:
 VAL INT DISPLAY IS #1:
@@ -55,6 +64,108 @@ VAL INT DEFAULT IS 1:
 VAL INT EXTERNAL IS 0:
 
 --}}}
+
+
+PROC pinMode (VAL INT board.pin, mode)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  --INT r.ddr, r.port, r.pin, bit:
+  INT r.ddr, dummy1, dummy2, bit:
+  SEQ
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    r.ddr, dummy1, dummy2, bit := chip.to.gpio (avr.pin)
+    pin.mode(r.ddr, bit, mode)
+:
+
+PROC digitalWrite (VAL INT board.pin, level)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  --INT r.ddr, r.port, r.pin, bit:
+  INT dummy1, r.port, dummy2, bit:
+  SEQ
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    dummy1, r.port, dummy2, bit := chip.to.gpio (avr.pin)
+    pin.write(r.port, bit, state)
+:
+
+INT FUNCTION digitalRead (VAL INT board.pin)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  --INT r.ddr, r.port, r.pin, bit:
+  INT dummy1, dummy2, r.pin, bit, level:
+  VALOF
+    SEQ
+      --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+      dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
+      pin.read(r.pin, bit, level)
+  RESULT level
+:
+
+PROC analogReference (VAL INT type)
+  IF
+    type = DEFAULT
+      ADC.REF := DEFAULT
+    type = INTERNAL
+      ADC.REF := INTERNAL
+    type = EXTERNAL
+      ADC.REF := EXTERNAL
+    TRUE
+      die ("Analog processes do not support this type.")
+:
+
+INT FUNCTION analogRead (VAL INT analog.pin)
+  INITIAL INT avr.pin IS board.analog.to.chip(analog.pin):
+  INITIAL INT val IS (-1):
+  VALOF
+    SEQ
+      adc.base (avr.pin, ADC.REF, val)
+  RESULT val
+:
+
+PROC analogWrite (VAL INT board.pin, VAL BYTE value) -- This is PWM, fyi
+:
+
+PROC Serial.begin (VAL INT speed)
+:
+
+PROC Serial.end ()
+  --Stub function. We've never wanted to turn off serial, so this can get
+  -- expanded when we figure out if we'll ever want to do it though plumbing.
+  SKIP
+:
+
+INT FUNCTION Serial.available () IS 0:
+  --Another stub function that we've yet to impliment in plumbing.
+  -- Might be worth looking into though? ::shrugs::
+
+BYTE FUNCTION Serial.read ()
+:
+
+PROC Serial.flush ()
+  --More stubs that seem like they might be useful. I'm pretty sure Plumbing
+  -- takes care of this for us though...
+  SKIP
+:
+
+-- Well now... this is some seriously more complicated useability than we've
+--  put in plumbing... I think I like the syntax though, and we'll be able to
+--  support BYTE, HEX and... Almost Dec/0/2/4/ect. This reminds me I need to
+--  figure out print.real32.
+PROC Serial.print (VAL INT val, VAL []BYTE format)
+:
+
+PROC Serial.println (VAL INT val, VAL []BYTE format)
+:
+
+-- Because Method Overloading isn't a thing in Occam, I've decided this is
+--  going to be exclusivly strings.
+PROC Serial.write ()
+:
+
+
+
+
+
+
+
+
 
 --{{{  PROC beginSerial
 --* Initialize serial port.

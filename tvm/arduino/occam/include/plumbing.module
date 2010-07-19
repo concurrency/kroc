@@ -45,8 +45,10 @@
 --VAL INT INPUT IS #0:
 --VAL INT OUTPUT IS #1:
 
-VAL BOOL VCC IS TRUE:
-VAL BOOL AREF IS FALSE:
+-- VCC, INTERNAL, and AREF are actually defined in adc.module. Here for ref.
+--VAL INT VCC IS #0:
+--VAL INT INTERNAL IS #1:
+--VAL INT AREF IS #2:
 
 VAL INT DEBOUNCE.TIME IS 50:
 --}}}
@@ -218,7 +220,7 @@ PROC heartbeat ()
 --   AREF (external).
 -- @param req The request line.
 -- @param val The current analog reading, 0 - 1023
-PROC adc (VAL INT analog.pin, VAL BOOL ref, CHAN SIGNAL req?, CHAN INT val!)
+PROC adc (VAL INT analog.pin, VAL INT ref, CHAN SIGNAL req?, CHAN INT val!)
   INITIAL INT avr.pin IS board.analog.to.chip(analog.pin):
   INT v:
   SEQ
