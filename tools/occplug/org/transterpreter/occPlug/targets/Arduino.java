@@ -414,7 +414,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			return;
 		}
 
-		BaseHost host = BaseHost.getHostObject();
+		final BaseHost host = BaseHost.getHostObject();
 		String bin = host.getPath("tvm-arduino", "bin");
 		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
 		DeviceProperties props = new DeviceProperties(selectedDevice);
@@ -462,9 +462,14 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				new Runnable() {
 					public void run() {
 						final ArrayList<String> runEnv = new ArrayList<String>();
-						// FIXME: use  host.getPath("...", "python");
-						runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX("python"));
+
+						String pythonPath = host.getPath("all", "python");
+						if(pythonPath != null)
+						{
+							runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX(pythonPath));
+						}
 						OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
+						
 						/* Clear the terminal */
 						output.clear();
 						ExecWorker execWorker = new ExecWorker(readArduinoCommand,
