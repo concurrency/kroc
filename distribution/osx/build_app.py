@@ -23,6 +23,7 @@ RESOURCE_DIR        = os.path.join(CONTENTS_DIR, 'Resources')
 BIN_DIR             = os.path.join(RESOURCE_DIR, 'bin')
 FRAMEWORK_DIR       = os.path.join(CONTENTS_DIR, 'Frameworks')
 JEDIT_DIR           = os.path.join(RESOURCE_DIR, 'jEdit')
+PYTHON_DIR          = os.path.join(RESOURCE_DIR, 'python')
 SYSTEM_FRAMEWORK_DIR= '/System/Library/Frameworks'
 
 POSIX_TVM_INC_DIR   = os.path.join(RESOURCE_DIR, 'posix', 'tvm', 'include')
@@ -88,6 +89,11 @@ for bin in LIPO_BINARIES:
             ['lipo', '-create', os.path.join('install/bin', bin) , 
                 os.path.join('install-tvm-ppc/bin/', bin), '-output', 
                 os.path.join(BIN_DIR, bin)])
+
+# Python files
+copy_tree('build/python/lib/python%d.%d/site-packages/serial/' %
+        (sys.version_info[0], sys.version_info[1]),
+        os.path.join(PYTHON_DIR, 'serial'))
 
 # Sparkle
 copy_tree(
