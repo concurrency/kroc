@@ -55,11 +55,11 @@ PROC adc.base (VAL INT avr.pin, VAL INT ref, RESULT INT v)
     -- If we are using Vcc as our reference, set bit REFS0.
     IF
       ref = VCC
-        ports[ADMUX] = BV (REFS0) \/ (BYTE a.pin)
+        ports[ADMUX] := BV (REFS0) \/ (BYTE a.pin)
       ref = AREF
-        ports[ADMUX] = (BYTE a.pin)
+        ports[ADMUX] := (BYTE a.pin)
       TRUE -- ref = INTERNAL
-        ports[ADMUX] = (BV (REFS0) \/ BV (REFS1)) \/ (BYTE a.pin)
+        ports[ADMUX] := (BV (REFS0) \/ BV (REFS1)) \/ (BYTE a.pin)
 
     -- Start conversion
     ports[ADCSRA] := ports[ADCSRA] \/ BV (ADSC)

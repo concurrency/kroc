@@ -42,7 +42,7 @@ VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
 
 --This is acting as a global variable. Does that even work in Occam?
-INITIAL ADC.REF IS #0:
+INITIAL INT ADC.REF IS #0:
 
 VAL INT DEFAULT IS #0:
 VAL INT INTERNAL IS #1:
@@ -95,7 +95,7 @@ INT FUNCTION digitalRead (VAL INT board.pin)
       --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
       dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
       pin.read(r.pin, bit, level)
-  RESULT level
+    RESULT level
 :
 
 PROC analogReference (VAL INT type)
@@ -111,7 +111,7 @@ PROC analogReference (VAL INT type)
 :
 
 INT FUNCTION analogRead (VAL INT analog.pin)
-  INITIAL INT avr.pin IS board.analog.to.chip(analog.pin):
+  VAL INT avr.pin IS board.analog.to.chip(analog.pin):
   INITIAL INT val IS (-1):
   VALOF
     SEQ
