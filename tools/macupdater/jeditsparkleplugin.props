@@ -5,7 +5,7 @@ plugin.org.transterpreter.jeditsparkleplugin.JEditSparklePlugin.usePluginHome=tr
 
 # These two properties are required for all plugins
 plugin.org.transterpreter.jeditsparkleplugin.JEditSparklePlugin.name=jEdit Sparkle Plugin
-plugin.org.transterpreter.JEditSparklePlugin.author=John Gellene
+plugin.org.transterpreter.JEditSparklePlugin.author=Christian L. Jacobsen
 
 # version number == jEdit version number
 plugin.org.transterpreter.jeditsparkleplugin.JEditSparklePlugin.version=0.1
