@@ -31,15 +31,15 @@ def copy_file(src, dst, substitute=None):
         shutil.copy2(src, dst)
 
 def copy_tree(src_dir, dest_dir, excludes=[], substitute=None):
+    mkdirs(dest_dir)
     for root, dirs, files in os.walk(src_dir):
         path = root[len(src_dir) + 1:]
         dest_path = os.path.join(dest_dir, path)
-        mkdirs(dest_path)
         for f in files:
             skip = False
             src_file = os.path.join(root, f)
-            for f in excludes:
-                if src_file.endswith(f): 
+            for ex_file in excludes:
+                if src_file.endswith(ex_file): 
                     skip = True
             if not skip:
                 if os.path.islink(src_file):
@@ -52,7 +52,21 @@ def copy_tree(src_dir, dest_dir, excludes=[], substitute=None):
                 else:
                     copy_file(src_file, dest_path, substitute)
         if '.svn' in dirs:
-            dirs.remove('.svn')  # don't visit .svn directories 
+            dirs.remove('.svn')  # don't visit .svn directories
+        for dir in dirs:
+            s_dir = os.path.join(root, dir)
+            if os.path.islink(s_dir):
+                link_dest = os.readlink(s_dir)
+                dest = os.path.join(dest_path, os.path.basename(s_dir))
+                if os.path.lexists(dest):
+                    os.unlink(dest)
+                print 'symlink: %s pointing to  %s' % (dest, link_dest)
+                os.symlink(link_dest, dest)
+            else:
+                d = os.path.join(dest_path, dir)
+                print 'making directory %s' % (d, )
+                if not os.path.exists(d):
+                    os.makedirs(d)
 
 def copy_files(src, dest_path, substitute=None):
     files = glob.iglob(src)
