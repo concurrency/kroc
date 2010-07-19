@@ -31,7 +31,6 @@ def copy_file(src, dst, substitute=None):
         shutil.copy2(src, dst)
 
 def copy_tree(src_dir, dest_dir, excludes=[], substitute=None):
-    print src_dir, dest_dir
     for root, dirs, files in os.walk(src_dir):
         path = root[len(src_dir) + 1:]
         dest_path = os.path.join(dest_dir, path)

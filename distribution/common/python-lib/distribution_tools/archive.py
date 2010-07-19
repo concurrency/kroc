@@ -1,5 +1,6 @@
 import zipfile
 import os
+import command
 
 def check_sanity(namelist):
     names = [name.split('/')[0] for name in namelist]
@@ -24,8 +25,9 @@ def extract(archive, dest='', force=False):
                     os.path.splitext(os.path.basename(archive))[0])
             exists = os.path.exists(dest)
         if not exists:
+            os.makedirs(dest)
             print 'extracting %s to %s' % (archive, dest)
-            a.extractall(dest)
+            command.execute(['unzip', '-q', archive, '-d', dest])
         else:
             print 'extracting %s (already extracted)' % (archive, )
     else:
