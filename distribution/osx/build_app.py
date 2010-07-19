@@ -39,8 +39,6 @@ ARDUINO_TVM_FW_DIR  = os.path.join(RESOURCE_DIR, 'arduino', 'tvm', 'firmware')
 ARDUINO_PLUMBING_DIR= os.path.join(ROOT_DIR, 'plumbing-book')
 ARDUINO_TVM_CONF_DIR= os.path.join(RESOURCE_DIR, 'arduino', 'tvm', 'conf')
 
-JEDIT_OSX_PLUGIN    = 'MacOSX.jar'
-
 SPARKLE             = 'Sparkle 1.5b6'
 SPARKLE_ZIP         = SPARKLE + '.zip'
 SPARKLE_FEED        = 'http://download.transterpreter.org/appcast/mac-dev.xml'
