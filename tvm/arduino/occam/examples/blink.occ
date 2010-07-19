@@ -1,4 +1,5 @@
 #INCLUDE "plumbing.module"
+#INCLUDE "wiring.module"
 
 PROC main ()
   CHAN BYTE i:
