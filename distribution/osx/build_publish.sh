@@ -1,23 +1,24 @@
 #!/bin/bash
 set -o errexit
 
-VERSION=`defaults read $PWD/output/Transterpreter.app/Contents/Info CFBundleVersion`
-DOWNLOAD_BASE_URL="http://download.transterpreter.org/files/mac-dev"
+VERSION=`defaults read $PWD/output/Transterpreter/Transterpreter.app/Contents/Info CFBundleVersion`
+DOWNLOAD_BASE_URL="http://download.transterpreter.org/files/dev/mac"
 #RELEASENOTES_URL="http://www.absolutepanic.org/pgX/release-notes.html#version-$VERSION"
-FILES_PATH=/data/www/org/transterpreter-download/files/mac-dev
+FILES_PATH=/data/www/org/transterpreter-download/files/dev/mac
 FEED_PATH=/data/www/org/transterpreter-download/feeds/mac-dev.xml
 HOST=unhosting.org
 
-ARCHIVE_FILENAME="Transterpreter-dev-$VERSION.zip"
+ARCHIVE_FILENAME="Transterpreter-mac-dev-$VERSION.zip"
+ARCHIVE_PATH="output/$ARCHIVE_FILENAME"
 DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$ARCHIVE_FILENAME"
 KEYCHAIN_PRIVKEY_NAME="Transterpreter.app Sparkle Private Key"
 
 WD=$PWD
 
-SIZE=$(stat -f %z "$ARCHIVE_FILENAME")
+SIZE=$(stat -f %z "$ARCHIVE_PATH")
 PUBDATE=$(date +"%a, %d %b %G %T %z")
 SIGNATURE=$(
-	openssl dgst -sha1 -binary < "$ARCHIVE_FILENAME" \
+	openssl dgst -sha1 -binary < "$ARCHIVE_PATH" \
 	| openssl dgst -dss1 -sign <(security find-generic-password -g -s "$KEYCHAIN_PRIVKEY_NAME" 2>&1 1>/dev/null | perl -pe '($_) = /"(.+)"/; s/\\012/\n/g') \
 	| openssl enc -base64
 )
@@ -64,7 +65,7 @@ cat >build/feed.xml <<EOF
 </rss>
 EOF
 
-scp "$ARCHIVE_FILENAME" $HOST:$FILES_PATH
+scp "$ARCHIVE_PATH" $HOST:$FILES_PATH
 scp "build/feed.xml" $HOST:$FEED_PATH
 #echo scp "'$SOURCE_ROOT/release-notes/release-notes.html'" unhosting.org:/data/www/org/absolutepanic/www/pgX/
 #echo scp "'$WD/appcast.xml'" www.example.com:web/software/my-cool-app/appcast.xml
