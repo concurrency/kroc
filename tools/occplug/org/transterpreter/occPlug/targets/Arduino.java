@@ -179,10 +179,10 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 	private final CompileTarget[]		compileTargets			= { 
 			new CompileTarget("Arduino", this) };
 	private final DefaultComboBoxModel	arduinoPort				= new DefaultComboBoxModel();
-	private final SortedSet				arduinoPortItems		= new TreeSet();
+	private final SortedSet<String>				arduinoPortItems		= new TreeSet<String>();
 	private final JPanel				arduinoFirmwareOptions;
 	private final JPanel				arduinoCompileOptions;
-	private final ArrayList				disableOnDownload		= new ArrayList();
+	private final ArrayList<JComboBox>				disableOnDownload		= new ArrayList<JComboBox>();
 	private final ArduinoDevice[]		arduinoDevices;
 	private final DefaultComboBoxModel	arduinoDevicesModel;
 	
@@ -338,9 +338,9 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 	}
 
 	public void setEnabledForFirmwareOptions(boolean enabled) {
-		Iterator i = disableOnDownload.iterator();
+		Iterator<JComboBox> i = disableOnDownload.iterator();
 		while (i.hasNext()) {
-			Component item = (Component) i.next();
+			Component item = i.next();
 			item.setEnabled(enabled);
 		}
 	}
@@ -461,10 +461,14 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 				new Runnable() {
 					public void run() {
+						final ArrayList<String> runEnv = new ArrayList<String>();
+						// FIXME: use  host.getPath("...", "python");
+						runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX("python"));
+						OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
 						/* Clear the terminal */
 						output.clear();
 						ExecWorker execWorker = new ExecWorker(readArduinoCommand,
-								null, 
+								(String[]) runEnv.toArray(new String[0]), 
 								curDir,
 								new TargetExecWorkerHelper("read-arduino", output,
 									finalisers));
