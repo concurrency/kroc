@@ -69,12 +69,6 @@ download(os.path.join(BUILD, SPARKLE_ZIP),
         'http://sparkle.andymatuschak.org/files/%s' % (urllib.quote(SPARKLE_ZIP) ))
 extract(os.path.join(BUILD, SPARKLE_ZIP), BUILD)
 
-# FIXME: Perhaps we should include this in the repos as it is more obscure than
-# the other things we depend on and therefore more likely to go away
-# from: http://www.seph.dk/uncategorized/new-mac-os-x-plugin-for-jedit/
-# FIXME: Is this even required with the new version of jedit?
-download(os.path.join(BUILD, JEDIT_OSX_PLUGIN), 'http://www.seph.dk/download/%s' % (JEDIT_OSX_PLUGIN, ))
-
 # Copy the .app skeleton
 # FIXME: There are some .in files in here that need transforming!!!
 copy_tree('skel/Transterpreter.app', 
@@ -161,10 +155,6 @@ mkdirs(JEDIT_DIR)
 copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar'])
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
-
-# OS X Plugin
-# FIXME: Still required with jEdit 4.3.2????
-copy_file(os.path.join(BUILD, JEDIT_OSX_PLUGIN), os.path.join(JEDIT_DIR, 'modes'))
 
 # Updater
 copy_file('build/macupdater/JEditSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
