@@ -5,6 +5,7 @@ import datetime
 import subprocess
 import glob
 import urllib
+import zipfile
 
 # Pick the remaining packages from the common directory
 sys.path.append('../common/python-lib')
@@ -15,7 +16,8 @@ from distribution_tools import command
 
 BUILD               = 'build'
 OUTPUT              = 'output'
-APP_DIR             = os.path.join(OUTPUT, 'Transterpreter.app')
+ROOT_DIR            = os.path.join(OUTPUT, 'Transterpreter')
+APP_DIR             = os.path.join(ROOT_DIR, 'Transterpreter.app')
 CONTENTS_DIR        = os.path.join(APP_DIR, 'Contents')
 RESOURCE_DIR        = os.path.join(CONTENTS_DIR, 'Resources')
 BIN_DIR             = os.path.join(RESOURCE_DIR, 'bin')
@@ -34,7 +36,7 @@ POSIX_TVMPPC_FW_DIR = os.path.join(RESOURCE_DIR, 'posix', 'tvm-ppc', 'firmware')
 ARDUINO_TVM_INC_DIR = os.path.join(RESOURCE_DIR, 'arduino', 'tvm', 'include')
 ARDUINO_TVM_LIB_DIR = os.path.join(RESOURCE_DIR, 'arduino', 'tvm', 'lib')
 ARDUINO_TVM_FW_DIR  = os.path.join(RESOURCE_DIR, 'arduino', 'tvm', 'firmware')
-ARDUINO_PLUMBING_DIR= os.path.join(OUTPUT, 'arduino', 'plumbing-book')
+ARDUINO_PLUMBING_DIR= os.path.join(ROOT_DIR, 'plumbing-book')
 ARDUINO_TVM_CONF_DIR= os.path.join(RESOURCE_DIR, 'arduino', 'tvm', 'conf')
 
 JEDIT_OSX_PLUGIN    = 'MacOSX.jar'
@@ -53,6 +55,8 @@ build_date  = datetime.datetime.utcnow()
 version     = build_date.strftime('%Y%m%d.%H%M')
 svnversion  = command.capture(['svnversion', '-nc', '../../'])
 shortversion= 'Development version: %s (%s)' % (version, svnversion)
+
+create_zip = not os.path.exists(APP_DIR)
 
 # Make the top level directories, in case they don't exist
 mkdirs(OUTPUT)
@@ -179,7 +183,17 @@ for l in s:
 s.close()
 d.close()
 
-copy_file('skel/README.rtf', OUTPUT)
+#copy_file('skel/README.rtf', OUTPUT)
+
+if create_zip:
+    zip_name = 'Transterpreter-mac-dev-%s.zip' % version
+    print 'Crating zip file: %s' % zip_name
+    # Create a zip file
+    command.execute(['zip', '-q', '-9', '-r', zip_name, 'Transterpreter'], cwd=OUTPUT)
+else:
+  print 'WARNING: Not creating potentially dirty zipfile'
+  print '         Transterpreter dir already existed in output directory'
+  print '         Delete and rerun if zip is required.'
 
 
 print 'Built app version: %s (%s)' % (version, shortversion,)
