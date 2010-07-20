@@ -1,11 +1,12 @@
 #INCLUDE "plumbing.module"
-#INCLUDE "wiring.module"
 
 PROC main ()
-  CHAN BYTE i:
+  CHAN BYTE i, j:
 
   PAR
     heartbeat()
     crawl.byte (255, 5, 10, i!)
-    pwm8 (11, i?)
+    pwm8 (9, i?)
+    crawl.byte (255, 5, 10, j!)
+    pwm8 (10, j?)
 :
