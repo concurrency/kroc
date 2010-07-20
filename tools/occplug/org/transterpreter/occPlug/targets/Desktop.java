@@ -37,6 +37,7 @@ import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.process.helpers.TerminalExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
 import org.transterpreter.occPlug.targets.support.CompileAbility;
+import org.transterpreter.occPlug.targets.support.CompileExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.CompileTarget;
 import org.transterpreter.occPlug.targets.support.OccbuildHelper;
 import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
@@ -121,7 +122,7 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		final Runnable[] finalisers = { finished };
 		ExecWorker worker = new ExecWorker(occbuildCommand, env, 
 				new File(targetSupport.getActiveDirectory()),
-				new TargetExecWorkerHelper("compile", output,
+				new CompileExecWorkerHelper("compile", output,
 						finalisers));
 		targetSupport.startWorker(worker);	
 	}

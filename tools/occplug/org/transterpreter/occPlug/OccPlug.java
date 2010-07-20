@@ -133,7 +133,7 @@ public class OccPlug extends JPanel implements EBComponent {
 	
 	private static OccPlug              theOccPlug              = null;
 
-	private class ErrorSet {
+	public class ErrorSet {
 		public ErrorKey	key;
 		public Error	error;
 	}
@@ -161,7 +161,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		}
 	}
 
-	private class Error {
+	public class Error {
 		public int			type;
 		// public String msg;
 		public ArrayList	msgs	= new ArrayList(2);
@@ -485,7 +485,7 @@ public class OccPlug extends JPanel implements EBComponent {
 		}
 	}
 
-	public synchronized ErrorSet checkForErrors(String str, String path) {
+	public synchronized ErrorSet checkForErrors(String str) {
 		Matcher m;
 
 		m = errorPattern.matcher(str);
