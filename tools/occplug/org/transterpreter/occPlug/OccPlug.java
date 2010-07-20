@@ -114,7 +114,7 @@ public class OccPlug extends JPanel implements EBComponent {
 	private JPanel						displayPanel;
 
 	private boolean						errorSourceRegistered	= false;
-	private DefaultErrorSource			errorSource;
+	public DefaultErrorSource			errorSource;
 
 	private Pattern						errorPattern;
 	private Pattern						warningPattern;
@@ -122,7 +122,7 @@ public class OccPlug extends JPanel implements EBComponent {
 
 	private Pattern						libaryPathPattern;
 
-	private HashMap						provisionalErrorList	= new HashMap();
+	public HashMap						provisionalErrorList	= new HashMap();
 
 	private ExecWorker					execWorker				= null;
 

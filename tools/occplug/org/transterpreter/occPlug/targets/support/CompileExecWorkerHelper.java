@@ -47,6 +47,8 @@ public class CompileExecWorkerHelper extends ExecWorkerHelper {
 		this.cmdName = cmdName;
 		this.finalisers = finalisers;
 		this.output = output;
+		OccPlug.getOccPlugInstance().provisionalErrorList.clear();
+		OccPlug.getOccPlugInstance().errorSource.clear();
 	}
 
 	public Thread stdoutHandlerSetup(InputStream stdout) {
@@ -109,5 +111,8 @@ public class CompileExecWorkerHelper extends ExecWorkerHelper {
 		} else {
 			output.writeOK(cmdName + " completed sucessfully\n");
 		}
+		OccPlug.getOccPlugInstance().updateErrorSource("");
+		if (OccPlug.getOccPlugInstance().errorSource.getErrorCount() != 0) 
+			OccPlug.getOccPlugInstance().registerErrorSource();
 	}
 }
