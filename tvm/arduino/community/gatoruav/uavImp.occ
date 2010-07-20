@@ -36,16 +36,28 @@ PROC main ()
     digital.mode (9, OUTPUT)
     digital.mode (10, OUTPUT)
     PAR
-      servo (9, s?)
-      servo (10, s2?)
+      servo (45, s)
+      servo (44, s2)
       SEQ
-        servo.setup(s, 90)       
-        servo.setup(s2, 90)
+        
+        s2 ! min ; 650
+        s2 ! max ; 2350
+        s2 ! div ; 180
+        s2 ! pos ; 0
+        s2 ! start
+        s ! min ; 650
+        s ! max ; 2350
+        s ! div ; 180
+        s ! pos ; 0
+        s ! start
+        --servo.setup(s)       
+        --servo.setup(s2)
         delay (2000)
         level.flight (filtered.x?, filtered.y?, s, s2)
-      angles(A0, A1, A2, A3, pitch!, roll!)
+      angles(A4, A5, A0, A1, pitch!, roll!)
       av(pitch?, filtered.x!)
       av(roll?, filtered.y!)
-      --display(roll?)
+      --navlights(40, 41, 31, 33, 30, 32)
+       --display(roll?)
 
 :

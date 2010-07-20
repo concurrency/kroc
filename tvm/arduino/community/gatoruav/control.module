@@ -66,7 +66,7 @@ PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
         
       
 :  
-PROC servo.setup(CHAN SERVO s, VAL INT start.pos)
+PROC servo.setup(CHAN SERVO s)
 
   SEQ
     s ! min ; 650
@@ -74,6 +74,26 @@ PROC servo.setup(CHAN SERVO s, VAL INT start.pos)
     s ! div ; 180
     s ! pos ; 0
     s ! start
-    s ! pos ; start.pos
-:  
+: 
+PROC navlights(VAL INT tail.left, tail.right, wingstrobe.left, wingstrobe.right, wingnav.left, wingnav.right)
+  SEQ
+    digital.mode(wingnav.left, OUTPUT)
+    digital.write(wingnav.left, 1)
+    digital.mode(wingnav.right, OUTPUT)
+    digital.write(wingnav.right, 1)
+    PAR
+      SEQ
+        blink(wingstrobe.left, 1000)
+      SEQ
+        delay(1000)
+        blink(wingstrobe.right, 1000)
+      SEQ
+        delay(1000)
+        blink(tail.left, 800)
+      SEQ
+        delay(1000)
+        blink(tail.right, 800)
+:
+
+ 
 #ENDIF
