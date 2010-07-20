@@ -452,7 +452,7 @@ static int control_msg (brick_t *brick, int req_type, int req, int value, int in
 	if ((ret = usb_control_msg (intf->dev_h, req_type, req, value, index, (char *) data, len, timeout)) >= 0) {
 		return ret;
 	} else {
-		fprintf (stderr, "control error = %d (%s)\n", errno, strerrno (errno));
+		fprintf (stderr, "control error = %d (%s)\n", errno, strerror (errno));
 		return -1;
 	}
 }
