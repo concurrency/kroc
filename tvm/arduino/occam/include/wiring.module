@@ -97,16 +97,18 @@ INT FUNCTION digitalRead (VAL INT board.pin)
     RESULT level
 :
 
-PROC analogReference (VAL INT type)
-  IF
-    type = DEFAULT
-      ADC.REF := DEFAULT
-    type = INTERNAL
-      ADC.REF := INTERNAL
-    type = EXTERNAL
-      ADC.REF := EXTERNAL
-    TRUE
-      die ("Analog processes do not support this type.")
+INT FUNCTION analogReference (VAL INT type)
+  VALOF
+    IF
+      type = DEFAULT
+        ADC.REF := DEFAULT
+      type = INTERNAL
+        ADC.REF := INTERNAL
+      type = EXTERNAL
+        ADC.REF := EXTERNAL
+      TRUE
+        die ("Analog processes do not support this type.")
+    RESULT type
 :
 
 INT FUNCTION analogRead (VAL INT analog.pin)

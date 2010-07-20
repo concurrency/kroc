@@ -395,10 +395,7 @@ PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
 :
 --}}}
 
---{{{ PROC pwm[8/16]
---FIXME: 20100714 drew These PROC are also crufty.
--- The whole PWM architecture should be re-written as a PROTOCOL.
-
+--{{{ PROC pwm[16]
 --* Writes an analog value to a pin.
 -- For a given (PWM) pin, sets the observed analog level to a value between
 -- 0 and 255. Negative values are treated as 0, and values greater
@@ -406,7 +403,7 @@ PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
 --
 -- @param board.pin The Arduino pin number.
 -- @param level The input level channel.
-PROC pwm8 (VAL INT board.pin, CHAN BYTE level?)
+PROC pwm (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
   INITIAL INT avr.pin IS board.to.chip (board.pin):
   CHAN BYTE clamped:
