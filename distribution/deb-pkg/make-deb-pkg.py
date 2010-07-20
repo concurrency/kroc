@@ -548,7 +548,7 @@ def build_occplug():
 	#checkout_to(concat([config.get('SVN_TRUNK'), src_ext]), config.get('SOURCE_OCCPLUG'))
 	#checkout_to(concat([config.get('SVN_TRUNK'), dist_ext]), distpath)
 
-	zipfile = 'ErrorList-1.5-bin.zip'
+	zipfile = 'ErrorList-1.9-bin.zip'
 	jarfile = 'ErrorList.jar'
 
 	with pushd():
