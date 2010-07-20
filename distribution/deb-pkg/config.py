@@ -79,7 +79,7 @@ BASE = {'VERSION'              : '102',
 				'DEST_OCCPLUG_DEBIAN'  : '@DEST_OCCPLUG_ROOT@/DEBIAN',
 				'SOURCE_OCCPLUG_DEBIAN': '@SVN@/distribution/deb-pkg/DEBIAN.occPlug',
 				'OCCPLUG_PACKAGE_NAME' : 'occPlug',
-				'ERRORLIST_URL'        : 'http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.5-bin.zip',
+				'ERRORLIST_URL'        : 'http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.9-bin.zip',
 				
 			}
 
