@@ -37,13 +37,18 @@
         <!-- VALUE="\s*(((if|while)\s*\(|else\s*|else\s+if\s*\(|for\s*\(.*\))[^{;]*)" /> -->
 	</PROPS>
 
-	<RULES IGNORE_CASE="FALSE" HIGHLIGHT_DIGITS="TRUE">
+	<RULES 
+		IGNORE_CASE="FALSE" 
+		HIGHLIGHT_DIGITS="TRUE"
+		DIGIT_RE="(#[\p{XDigit}]?)"
+		>
 
 		<!-- Normal comments. -->
 		<EOL_SPAN TYPE="COMMENT1">--</EOL_SPAN>
 
 		<!-- Compiler directives. -->
-		<EOL_SPAN TYPE="COMMENT2">#</EOL_SPAN>
+    <!-- FIXME: Conflicts with hex constants -->
+		<!-- <EOL_SPAN TYPE="COMMENT2">#</EOL_SPAN> -->
 
 		<SPAN TYPE="LITERAL1" NO_LINE_BREAK="TRUE">
 			<BEGIN>'</BEGIN>

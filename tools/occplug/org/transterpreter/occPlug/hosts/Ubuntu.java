@@ -68,7 +68,6 @@ public class Ubuntu extends Unix {
 		String destDir    = jEdit.getSettingsDirectory() + "/modes";
 		File   destFile   = new File(destDir + "/occam-pi.xml");
 
-		if ( ! destFile.exists() ) {	
 			try {	
 				FileReader fr = new FileReader(sourceFile);
 				BufferedReader br = new BufferedReader(fr);
@@ -87,7 +86,6 @@ public class Ubuntu extends Unix {
 			} catch (Exception e) {
 				Log.log(Log.MESSAGE, Ubuntu.class, "Error copying occam-pi.xml: " + e);
 			}
-		}
 	}
 
 
