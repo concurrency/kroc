@@ -94,6 +94,34 @@ PROC navlights(VAL INT tail.left, tail.right, wingstrobe.left, wingstrobe.right,
         delay(1000)
         blink(tail.right, 800)
 :
-
- 
+PROC lights(VAL INT pin1, pin2, pin3, pin4, CHAN INT bogo)
+  INITIAL INT c, b IS 0, 0:
+  WHILE TRUE
+    SEQ
+      c := c + 1
+      IF
+        c = 30
+          SEQ
+            digital.mode(pin1, OUTPUT)
+            digital.write(pin1, 1)
+            digital.mode(pin2, OUTPUT)
+            digital.write(pin2, 1)
+            digital.mode(pin3, OUTPUT)
+            digital.mode(pin4, OUTPUT)
+            digital.write(pin3, 0)
+            digital.write(pin4, 1)
+        c = 60
+          SEQ
+            digital.mode(pin1, OUTPUT)
+            digital.write(pin1, 0)
+            digital.mode(pin2, OUTPUT)
+            digital.write(pin2, 0)
+            digital.mode(pin3, OUTPUT)
+            digital.mode(pin4, OUTPUT)
+            digital.write(pin3, 1)
+            digital.write(pin4, 0)
+            c := 0
+        TRUE
+          bogo ! 0
+:
 #ENDIF
