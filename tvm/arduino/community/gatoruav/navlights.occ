@@ -2,6 +2,15 @@
 
 PROC main ()
   PAR
-    blink (22, 700)
-    blink (26, 700)
+    SEQ
+      blink (22, 800)
+    SEQ
+      delay (500)
+      blink (24, 800)
+    SEQ
+      delay (1000)
+      blink (26, 800)
+    SEQ
+      delay (1000)
+      blink (28, 800)
 :

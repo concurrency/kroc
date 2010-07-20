@@ -1,6 +1,6 @@
 #INCLUDE "uavsensors.module"
 #INCLUDE "servo.module"
-#INCLUDE "control.module"
+--#INCLUDE "control.module"
 PROC display(CHAN INT theta?)
   INT angle:
   WHILE TRUE
@@ -29,6 +29,23 @@ PROC av (CHAN INT input?, output!)
         output ! (sum / (SIZE readings))
         ndx := (ndx + 1) REM (SIZE readings)
 :
+PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
+  INT pitch, roll, servo.pos.pitch, servo.pos.roll:
+  SEQ
+    s ! pos ; 90
+    WHILE TRUE
+      SEQ
+        theta.x ? pitch
+        theta.y ? roll
+        
+        servo.pos.pitch := (pitch * (-1)) + 90
+        s ! pos ; servo.pos.pitch
+        
+        servo.pos.roll := (roll * (-1)) + 90
+        s2 ! pos ; servo.pos.roll
+        
+      
+:  
 PROC main ()
   CHAN SERVO s, s2:
   CHAN INT roll, pitch, filtered.x, filtered.y:
