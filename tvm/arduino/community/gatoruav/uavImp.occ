@@ -1,5 +1,6 @@
 #INCLUDE "uavsensors.module"
 #INCLUDE "servo.module"
+#INCLUDE "control.module"
 --#INCLUDE "control.module"
 PROC display(CHAN INT theta?)
   INT angle:
@@ -29,26 +30,9 @@ PROC av (CHAN INT input?, output!)
         output ! (sum / (SIZE readings))
         ndx := (ndx + 1) REM (SIZE readings)
 :
-PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
-  INT pitch, roll, servo.pos.pitch, servo.pos.roll:
-  SEQ
-    s ! pos ; 90
-    WHILE TRUE
-      SEQ
-        theta.x ? pitch
-        theta.y ? roll
-        
-        servo.pos.pitch := (pitch * (-1)) + 90
-        s ! pos ; servo.pos.pitch
-        
-        servo.pos.roll := (roll * (-1)) + 90
-        s2 ! pos ; servo.pos.roll
-        
-      
-:  
 PROC main ()
   CHAN SERVO s, s2:
-  CHAN INT roll, pitch, filtered.x, filtered.y:
+  CHAN INT roll, pitch, filtered.x, filtered.y, bogo:
   SEQ
     digital.mode (9, OUTPUT)
     digital.mode (10, OUTPUT)
@@ -56,7 +40,16 @@ PROC main ()
       servo (45, s)
       servo (44, s2)
       SEQ
+         
+        digital.mode(32, OUTPUT)
+        digital.write(32, 1)
+        digital.mode(30, OUTPUT)
+        digital.write(30, 1)
         
+        digital.mode(40, OUTPUT)
+        digital.write(40, 1)
+        digital.mode(41, OUTPUT)
+        digital.write(41, 1)
         s2 ! min ; 650
         s2 ! max ; 2350
         s2 ! div ; 180
@@ -74,6 +67,7 @@ PROC main ()
       angles(A4, A5, A0, A1, pitch!, roll!)
       av(pitch?, filtered.x!)
       av(roll?, filtered.y!)
+      --lights(40,41,31,33,bogo!)
       --navlights(40, 41, 31, 33, 30, 32)
        --display(roll?)
 
