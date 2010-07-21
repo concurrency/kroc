@@ -73,6 +73,16 @@ public abstract class BaseHost {
 		throw new RuntimeException("Invalid command: " + command + "(" + prop + ")");		
 	}
 	
+	public String getPath(String tool, String path, String defaultValue)
+	{
+		String prop = OccPlugPlugin.PROPERTY_PREFIX + "path." + tool + "." + base + "." + path;
+		String cmd = jEdit.getProperty(prop);
+		if(cmd != null)
+			return cmd;
+		
+		return defaultValue;
+	}
+	
 	public String getPath(String tool, String path)
 	{
 		String prop = OccPlugPlugin.PROPERTY_PREFIX + "path." + tool + "." + base + "." + path;
