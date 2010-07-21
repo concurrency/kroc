@@ -37,101 +37,134 @@ import java.util.Map;
  */
 // {{{ class ExecWorker
 public class ExecWorker extends Thread implements Killable {
-	private Process					p;
-	private ProcessBuilder			pb;
 	private boolean					killed	= false;
-
-	private final ExecWorkerHelper	helper;
-
-	private final String[]			cmd;
-	private final String[]			envp;
-	private final File				dir;
+	private Process					currentProcess = null;
+	
+	private final					Command[] commands;
 	
 	private OutputStream 			stdin	= null;
 	private Thread 					stdout	= null;
 	private Thread 					stderr	= null;
+	
+	private final Runnable[]			finalisers;
 
 	public ExecWorker(String[] cmd, String[] envp, File dir,
 			ExecWorkerHelper helper) {
-		this.cmd = cmd;
-		this.envp = envp;
-		this.dir = dir;
-
-		this.helper = helper;	
-		pb = new ProcessBuilder(cmd);
-		Map<String, String> env = pb.environment();
-		if(envp != null)
-		{
-			for(int i = 0; i < envp.length; ++i)
-			{
-				String[] bits = envp[i].split("=");
-				env.put(bits[0], bits[1]);
-			}
-		}
-		pb.directory(dir);
+		this(new Command(cmd, envp, dir, helper));
 	}
-
+	
+	public ExecWorker(Command command) {
+		this(new Command[] {command});
+	}
+	
+	public ExecWorker(Command[] commands) {
+		this(commands, (Runnable[]) null);
+	}
+	
+	public ExecWorker(Command[] commands, Runnable finaliser) {
+		this(commands, new Runnable[] { finaliser });
+	}
+	
+	public ExecWorker(Command[] commands, Runnable[] finaliser) {
+		this.commands = commands;
+		this.finalisers = finaliser;
+	}
+	
 	public void run() {
-		
-		/* Execute the command */
-		try {
-			p = pb.start();
-		} catch (Exception e) {
-			helper.cannotExec(e);
-			helper.finalizer();
-		}
-
-		/* Set up all the helpers for dealing with IO */
-		try {
-			// STDIN
-			if (helper.stdinUsed()) {
-				stdin = helper.stdinHandlerSetup(p.getOutputStream());
-			} else {
-				p.getOutputStream().close();
+		for (Command command : commands) {
+			ProcessBuilder pb = new ProcessBuilder(command.cmd);
+			Map<String, String> env = pb.environment();
+			if (command.envp != null) {
+				for (int i = 0; i < command.envp.length; ++i) {
+					String[] bits = command.envp[i].split("=");
+					env.put(bits[0], bits[1]);
+				}
 			}
-			// STDOUT
-			if (helper.stdoutUsed()) {
-				stdout = helper.stdoutHandlerSetup(p.getInputStream());
+			pb.directory(command.dir);
+
+			/* Execute the command */
+			try {
+				synchronized(this) {
+					if(!killed)
+					{
+						currentProcess = pb.start();
+					}
+					else
+					{
+						runFinaliser();
+						return;					
+					}
+				}
+			} catch (IOException e) {
+				command.helper.cannotExec(e);
+				command.helper.finalizer();
+				runFinaliser();
+				return;
+			}
+
+			/* Set up all the helpers for dealing with IO */
+			try {
+				// STDIN
+				if (command.helper.stdinUsed()) {
+					stdin = command.helper.stdinHandlerSetup(currentProcess.getOutputStream());
+				} else {
+					currentProcess.getOutputStream().close();
+				}
+				// STDOUT
+				if (command.helper.stdoutUsed()) {
+					stdout = command.helper.stdoutHandlerSetup(currentProcess.getInputStream());
+					if (stdout != null) {
+						stdout.start();
+					}
+				} else {
+					currentProcess.getInputStream().close();
+				}
+				// STDERR
+				if (command.helper.stderrUsed()) {
+					stderr = command.helper.stderrHandlerSetup(currentProcess.getErrorStream());
+					if (stderr != null) {
+						stderr.start();
+					}
+				} else {
+					currentProcess.getErrorStream().close();
+				}
+			} catch (IOException e) {
+				command.helper.ioHandlerExceptionHandler(e);
+				runFinaliser();
+				return;				
+			}
+
+			/* Wait for the execution of the external command to finish */
+			try {
+				currentProcess.waitFor();
 				if (stdout != null) {
-					stdout.start();
+					stdout.join();
 				}
-			} else {
-				p.getInputStream().close();
-			}
-			// STDERR
-			if (helper.stderrUsed()) {
-				stderr = helper.stderrHandlerSetup(p.getErrorStream());
 				if (stderr != null) {
-					stderr.start();
+					stderr.join();
 				}
-			} else {
-				p.getErrorStream().close();
+			} catch (InterruptedException e) {
+				command.helper.interruptedExceptionHandler(e);
+				runFinaliser();
+				return;
 			}
-		} catch (IOException e) {
-			helper.ioHandlerExceptionHandler(e);
-		}
 
-		/* Wait for the execution of the external command to finish */
-		try {
-			p.waitFor();
-			if (stdout != null) {
-				stdout.join();
+			/* We're done */
+			command.helper.cmdExited(currentProcess.exitValue());
+			command.helper.finalizer();
+			if(currentProcess.exitValue() != 0)
+			{
+				runFinaliser();
+				return;
 			}
-			if (stderr != null) {
-				stderr.join();
-			}
-		} catch (InterruptedException e) {
-			helper.interruptedExceptionHandler(e);
 		}
-
-		/* We're done */
-		helper.cmdExited(p.exitValue());
-		helper.finalizer();
+		runFinaliser();
+		return;
 	}
 
 	public synchronized void kill() {
 		if (!killed) {
-			p.destroy();
+			currentProcess.destroy();
 			killed = true;
 		}
 	}
@@ -145,6 +178,17 @@ public class ExecWorker extends Thread implements Killable {
 			return stdin;
 		} else {
 			return null;
+		}
+	}
+	
+	private void runFinaliser()
+	{
+		if(finalisers != null)
+		{
+			for(Runnable finaliser: finalisers)
+			{
+				finaliser.run();
+			}
 		}
 	}
 }
