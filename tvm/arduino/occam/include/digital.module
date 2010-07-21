@@ -17,24 +17,26 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** Processes for manipulating the funtionality of digital pins.
+--** Processes for manipulating digital pins.
 --
--- Some functionality of digital in has be set up; still very incomplete.
--- @module plumbing
+-- @module digital
 
 #IF NOT (DEFINED (DIGITAL.MODULE))
 #DEFINE DIGITAL.MODULE
 
-
+--* Symbolic constant for setting the level of a digital pin.
 DATA TYPE LEVEL IS INT:
 VAL LEVEL LOW IS #0:
 VAL LEVEL HIGH IS #1:
 
+--* Symbolic constant for setting data direction registers to input.
 VAL INT INPUT IS #0:
+--* Symbolic constant for setting data direction registers to output.
 VAL INT OUTPUT IS #1:
 
 --{{{ PROC digital.write
---* Sets the digitial state of a pin to either HIGH or LOW.
+--* Sets the digital state of a pin to either HIGH or LOW.
+--
 -- @param board.pin The board pin to be set.
 -- @param state The state to set -- Either HIGH or LOW.
 PROC digital.write (VAL INT board.pin, state)
@@ -49,7 +51,8 @@ PROC digital.write (VAL INT board.pin, state)
 --}}}
 
 --{{{ PROC digital.read
---* Reads the digitial state of a pin. Either HIGH or LOW.
+--* Reads the digital state of a pin. Either HIGH or LOW.
+--
 -- @param board.pin The board pin to be read.
 -- @param state The pin's current state -- Either HIGH or LOW.
 PROC digital.read (VAL INT board.pin, RESULT INT state)
@@ -66,6 +69,7 @@ PROC digital.read (VAL INT board.pin, RESULT INT state)
 --{{{ PROC digital.mode
 --* Sets the Data Direction Register of the given pin (sets the flow of data)
 -- to either INPUT or OUTPUT.
+--
 -- @param board.pin The board pin to set the direction of.
 -- @param mode The mode to be set. Either INPUT or OUTPUT.
 PROC digital.mode (VAL INT board.pin, mode)
@@ -81,9 +85,8 @@ PROC digital.mode (VAL INT board.pin, mode)
 
 --{{{ PROC digital.output
 --* Set digital levels on a pin.
--- Reads LEVEL values (LOW or HIGH) on the input 
--- channel, and sets the value of the specified pin 
--- accordingly.
+-- Reads LEVEL values (LOW or HIGH) on the input channel, and sets the
+-- value of the specified pin accordingly.
 --
 -- @param board.pin The Arduino pin number
 -- @param in Pin levels (LOW or HIGH)
@@ -100,12 +103,11 @@ PROC digital.output (VAL INT board.pin, CHAN LEVEL in?)
 --}}}
 
 --{{{ PROC digital.input
---* Read digital levels on pin 2 or 3.
--- For only pin 2 or pin 3 on the Arduino, this procedure
--- will output a LEVEL (either LOW or HIGH) whenever the
+--* Read digital levels on external level interrupt pins.
+-- This procedure will output a LEVEL (either LOW or HIGH) whenever the
 -- pin changes value.
 --
--- @param board.pin The Arduino pin number (2 or 3 only)
+-- @param board.pin The pin number (pins 2 and 3 are safe choices).
 -- @param out The LEVEL, output when the pin changes level.
 PROC digital.input (VAL INT board.pin, CHAN LEVEL out!)
   INITIAL INT avr.pin IS board.to.chip(board.pin):

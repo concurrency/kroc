@@ -1,5 +1,5 @@
 --
---	Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Christian Jacobsen
 --      Copyright (C) 2009-2010   Matt Jadud
 --      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
 --      Copyright (C) 2009-2010   Adam Sampson
@@ -26,6 +26,7 @@
 
 --{{{ PROC die
 --* Kills everything and reports an error back to the user.
+--
 -- @param error A string containing the error message.
 INLINE PROC die (VAL []BYTE error)
   SEQ
@@ -37,15 +38,19 @@ INLINE PROC die (VAL []BYTE error)
 :
 --}}}
 
+--{{{ FUNCTION BV
 --* Convert a bit number to a bit value.
 -- This is just [@code 1 << bit], like [@text _BV] in the C headers.
+--
 -- @param bit How far to shift 1 left.
 -- @returns - 1 shifted [@code bit] to the left
 BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
+--}}}
 
 --{{{  PROC delay
 --* Wait for a period of time.
--- @param millis Time in wait, in milliseconds
+--
+-- @param millis Time to wait, in milliseconds
 PROC delay (VAL INT millis)
   TIMER tim:
   INT t:

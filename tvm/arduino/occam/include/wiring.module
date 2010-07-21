@@ -18,8 +18,12 @@
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
---WARNGING: 20100718 drew None of this code works. It is all so much broken.
---  I think I'm going to go through in the coming week and make it less all bad
+--WARNGING: 20100721 drew Most of this code is the most broken. I've been
+-- trying to balance getting these processes and functions to look and act
+-- as much like arduino.cc's version of wiring as I can, while still writing
+-- all of this in Occam, but that's mostly ending in this entire module
+-- not compiling.
+-- Work is ongoing.
 
 --** occam bindings for the Wiring API.
 --
@@ -39,9 +43,6 @@ VAL INT HIGH IS #1:
 
 VAL INT INPUT IS #0:
 VAL INT OUTPUT IS #1:
-
---I'm trying to make this work as a global variable. Not so much...
-VAL INT ADC.REF IS #0:
 
 VAL INT DEFAULT IS #0:
 VAL INT INTERNAL IS #1:

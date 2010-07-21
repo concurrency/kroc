@@ -14,9 +14,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** The Plumbing library.
---
 --** Servo wrapper functions.
+--
 -- @module servo
 
 #IF NOT (DEFINED (SERVO.MODULE))
@@ -28,52 +27,56 @@
 PROTOCOL SERVO
   CASE
     --* Maximum time active; in microseconds.
-    -- @item max Initially 2300. must be less than 20000.
+    -- @item max Initially 2300. must be less than [@code frequency].
     max ; INT
     --* Minimum time active; in microseconds.
     -- @item min Initially 700. must be more than 0.
     min ; INT
-    --* Number of divisions in the span between max - min.
-    -- @item div Initially 180. Must be <= max - min.
+    --* Number of divisions in the span between [@code max] - [@code min.]
+    -- @item div Initially 180. Must be <= [@code max] - [@code min].
     div ; INT
     --* Positition of the servo. [@em This is what you'll be using the most].
-    -- @item pos Initially 90. Must be between 0:pos.
+    -- @item pos Initially 90. Must be between 0:[@code pos].
     pos ; INT
-    --* Number of microseonds (greater than min) the pulse to the servo will
-    -- last. [@em We strongly recomend using div and pos to effect the
-    -- position of the servo].
-    -- @item usec Automatically calculated when pos is reset.
+    --* Number of microseconds (greater than [@code min]) the pulse to the
+    -- servo will last. [@em We strongly recommend using [@code div] and
+    -- [@code pos] to effect the position of the servo].
+    -- @item usec Automatically calculated when [@code pos] is reset.
     usec ; INT
-    --* Refresh rate of the servo pulse. [@em Do not change this casually.]
-    -- Most servos require a refreshed puslse once every 20 miliseconds,
-    -- which is what refresh defaults to.
-    -- @item refresh Initially 20000. Measured in microseconds.
-    refresh ; INT
-    --* Starts servo operations. We recomened setting div and pos before
-    -- sending the start command, and not changing div after.
+    --* Frequency of the servo pulse. [@em Do not change this casually.]
+    -- Most servos require a pulse once every 20 milliseconds,
+    -- which is what [@code frequency] defaults to.
+    -- @item frequency Initially 20000. Measured in microseconds.
+    frequency ; INT
+    --* Starts servo operations. We recommened setting [@code div] and
+    -- [@code pos] before sending the [@code start] signal, and not
+    -- changing [@code div] after.
     start
-    --* Supposed to stop servo operations. But we've not added that
+    --* Supposed to stop servo operations. We've not added that
     -- functionality yet.
     stop
 :
 --}}}
 
 --{{{ PROC servo
---* Listens for and acts on all tagged signals sent to a servo channel.
+--* General servo control.
+-- Pass a PWM pin and SERVO channel into this process, and all signals sent
+-- over the channel will be acted upon properly.
+--
 -- @param board.pin The board pin to be used for servo operations. For the
 --   time being, only PWM pins connected to a 16 bit timer can be used to
 --   operate servos.
 -- @param s The servo channel used for controlling servo operations.
 PROC servo (VAL INT board.pin, CHAN SERVO s?)
   INITIAL INT avr.pin IS board.to.chip (board.pin):
-  INITIAL BOOL RUNNING IS FALSE: -- Perhaps change this to a register check?
+  INITIAL BOOL RUNNING IS FALSE: -- Perhaps this should be a register check?
   INITIAL INT max IS 2200: --In muSeconds
   INITIAL INT min IS 800:  --In muSeconds
   INITIAL INT div IS 180:  --Unitless
   INITIAL INT pos IS 90:   --Must be between 0:div
   INITIAL INT increment IS (max - min) / div:
   INITIAL INT usec IS (pos * increment) + min:
-  INITIAL INT refresh IS 20000: --In muSeconds
+  INITIAL INT frequency IS 20000: --In muSeconds
   INLINE PROC set.increment ()
     increment := (max - min) / div
   :
@@ -109,14 +112,14 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
               pwm16.set.compare (avr.pin, usec)
             TRUE
               SKIP 
-      refresh ; refresh
+      frequency ; refresh
         SKIP
       start
         SEQ
           RUNNING := TRUE
           digital.mode(board.pin, OUTPUT)
           pwm16.setup (avr.pin, 8)
-          pwm16.set.top (avr.pin, refresh)
+          pwm16.set.top (avr.pin, frequency)
           pwm16.set.compare (avr.pin, pos)
       stop
         SKIP

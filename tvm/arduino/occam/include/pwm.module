@@ -16,10 +16,10 @@
 --
 
 --WARNING: 20100718 drew This is very much uncompleted code. It's
---  implimentation is going to throw a few sizeable holes in the conde that's
+--  implimentation is going to throw a few sizeable holes in code that's
 --  already working elsewhere, which has made me think twice about converting
---  PWM operations to a PROTOCOL-based structure. If usecase that would make
---  this kind of more-complicated, more-robust structure useful, I would
+--  PWM operations to a PROTOCOL-based structure. If usecases that would make
+--  this kind of more-complicated, more-robust structure useful arrise, I will
 --  definitely push forward with this interface.
 
 #IF NOT (DEFINED (PWM.MODULE))
