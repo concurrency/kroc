@@ -17,7 +17,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** Constants for the ATmwga328.
+--** Occam definitions for the ATmega328.
+--
 -- @module 328.constants
 
 #IF NOT (DEFINED (CONSTANTS.MODULE))
@@ -41,7 +42,7 @@ VAL INT32 F.CPU IS ##F.CPU:
 --
 -- [@code
 -- PLACED [MAX.PORT]BYTE ports 0:
--- ports[PORTB] := 42
+--ports[PORTB] := 42
 -- ]
 VAL INT MAX.PORT IS #200:
 
@@ -99,9 +100,6 @@ VAL []INT UCSZN1 IS [UCSZ01]:
 VAL []INT RXC IS [RXC0]:
 VAL []INT RXCIE IS [RXCIE0]:
 VAL []INT VINTR.RX IS [VINTR.USART.RX0]:
-
-VAL INT TX0 IS 0:
-VAL INT RX0 IS 0:
 --}}}
 
 #ENDIF

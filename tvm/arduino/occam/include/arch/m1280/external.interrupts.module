@@ -17,17 +17,21 @@
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 --** ATmega1280 specific interrupt code.
--- @module 328.external.interrups.module
+--
+-- @module 1280.external.interrups.module
 
 #IF NOT (DEFINED (EXTERNAL.INTERRUPTS.MODULE))
 #DEFINE EXTERNAL.INTERRUPTS.MODULE
 
+--{{{ PROC set.interrups
 --* Sets up the interrupt registers for the ATmega328.
+--
 -- [@code vintr] gets set in this process.
--- @param avr.pin The AVR pin being setup for interrupts.
+-- @param avr.pin The [@em AVR] pin being setup for interrupts.
 -- @param vintr The interrupt vector associated with the given AVR pin.
 PROC set.interrups (VAL INT avr.pin, INT vintr)
   SKIP
 :
+--}}}
 
 #ENDIF

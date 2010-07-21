@@ -16,7 +16,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** Foreign functions ofr hte 1280 wrapper
+--** Foreign functions for the ATmega1280 wrapper
+--
 -- @module 1280.ffi
 
 #IF NOT (DEFINED (FFI.MODULE))

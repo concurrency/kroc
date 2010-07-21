@@ -19,6 +19,7 @@
 --
 --** Symbolic arrays and FUNCTON(s) for mapping into General Purpose I/O
 -- functionality on ATmega328 based boards.
+--
 -- @module 328.chipmap
 
 #IF NOT (DEFINED (CHIPMAP.MODULE))
@@ -90,17 +91,18 @@ VAL []INT BIT.MAP IS [ 6,  0,  1,  2,  3,  4, -1,
 
 --* Looks up the various General Purpose I/O registers connected to the given
 -- [@em AVR] pin.
--- AVR pins are numbered starting from 1...
--- We need to subtract 1 to index into the arrays.
--- @param avr.pin The AVR pin controlled by the given returns.
--- @returns ddr, port, pin The various control registers that control the
---   given pin.
+--
+-- @param avr.pin The [@em AVR] pin controlled by the given returns.
+-- @returns ddr, port, pin The various control registers that effects the
+--   behavior of the given pin.
 -- @return bit The specific bit of the control registers that alters the
 --   behavior of the given AVR pin.
 INT, INT, INT, INT FUNCTION chip.to.gpio (VAL INT avr.pin) 
   INT ddr, port, pin, bit:
   VALOF
     SEQ
+      -- AVR pins are numbered starting from 1...
+      -- We need to subtract 1 to index into the arrays.
       ddr  := DDR.MAP[avr.pin - 1]
       port := PORT.MAP[avr.pin - 1]
       pin  := PIN.MAP[avr.pin - 1]

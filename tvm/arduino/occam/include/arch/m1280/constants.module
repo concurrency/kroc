@@ -17,7 +17,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** occam definitions for AVR processors.
+--** Occam definitions for the ATmega1280.
+--
 -- @module 1280.constants
 
 #IF NOT (DEFINED (CONSTANTS.MODULE))
@@ -41,9 +42,8 @@ VAL INT32 F.CPU IS ##F.CPU:
 --
 -- [@code
 -- PLACED [MAX.PORT]BYTE ports 0:
--- ports[PORTB] := 42
+--ports[PORTB] := 42
 -- ]
--- FIXME: This has not yet been checked against the 1280.
 VAL INT MAX.PORT IS #200:
 
 --{{{  interrupt numbers
@@ -106,15 +106,6 @@ VAL []INT UCSZN1 IS [UCSZ01, UCSZ11, UCSZ21, UCSZ31]:
 VAL []INT RXC IS [RXC0, RXC1, RXC2, RXC3]:
 VAL []INT RXCIE IS [RXCIE0, RXCIE1, RXCIE2, RXCIE3]:
 VAL []INT VINTR.RX IS [VINTR.USART.RX0, VINTR.USART.RX1, VINTR.USART.RX2, VINTR.USART.RX3]:
-
---VAL INT TX0 IS 0:
---VAL INT RX0 IS 0:
---VAL INT TX1 IS 1:
---VAL INT RX1 IS 1:
---VAL INT TX2 IS 2:
---VAL INT RX2 IS 2:
---VAL INT TX3 IS 3:
---VAL INT RX3 IS 3:
 --}}}
 
 #ENDIF
