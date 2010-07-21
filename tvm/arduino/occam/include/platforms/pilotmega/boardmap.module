@@ -14,8 +14,9 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** occam header for ArduPilotMega specific pin mappings.
--- @module ardupilotmega.boardmap
+--** Occam header for ArduPilotMega specific pin mappings.
+--
+-- @module boardmap.pilotmega
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
 
@@ -23,7 +24,7 @@
 #INCLUDE "base.module"
 
 --{{{ Board to Architecture Layout
---* Board to Architecture layout w/ register names.
+-- Board to Architecture layout w/ register names.
 --
 --B.pin   A.pin *REG  --B.pin A.pin *REG
 -- 0(RX0) 02    PE0   -- 8      17    PH5
@@ -76,9 +77,23 @@
 --}}}
 
 --{{{ Symbolic Constants
---* Symbolic constants to simplify mapping Analog-Digital Converstion and
--- Serial Communication pins -- as well as ArduPilotMega specific,
--- un-numbered pins -- to the ATmega1280.
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT PD4  IS 54:
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT PE6  IS 55:
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT PH2  IS 56:
+
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT OUT0 IS 45:
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT OUT1 IS 44:
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT OUT2 IS 12:
+--* Symbolic constant for accessing ArduPilotMega specific, un-numbered pin.
+VAL INT OUT3 IS 13:
+
+--* Symbolic constant for accessing the first analog pin.
 VAL INT A0  IS 57:
 VAL INT A1  IS 58:
 VAL INT A2  IS 59:
@@ -94,39 +109,55 @@ VAL INT A11 IS 68:
 VAL INT A12 IS 69:
 VAL INT A13 IS 70:
 VAL INT A14 IS 71:
+--* Symbolic constant for accessing the last analog pin.
+--
+-- Constants A1:14 do exist, they are simply not documented here for the
+-- sake of saving space.
 VAL INT A15 IS 72:
 
+--* Symbolic constant for accessing the fisrt read port.
 VAL INT RX0 IS 0:
+--* Symbolic constant for accessing the fisrt transmit port.
 VAL INT TX0 IS 1:
 VAL INT RX1 IS 19:
 VAL INT TX1 IS 18:
 VAL INT RX2 IS 17:
 VAL INT TX2 IS 16:
+--* Symbolic constant for accessing the last read port.
+--
+-- Constatns RX1:2 do exist, they are simply not documented here for the
+-- sake of saving space.
 VAL INT RX3 IS 15:
+--* Symbolic constant for accessing the last transmit port.
+--
+-- Constatns TX1:2 do exist, they are simply not documented here for the
+-- sake of saving space.
 VAL INT TX3 IS 14:
 
+--* Symbolic constant for accessing the Serial DAta register.
 VAL INT SDA  IS 20:
+--* Symbolic constant for accessing the Serial CLock register.
 VAL INT SCL  IS 21:
+
+--* Symbolic constant for accessing the Master data Input, Slave Output
+-- register (for use with SPI communication).
 VAL INT MISO IS 50:
+--* Symbolic constant for accessing the Master data Output, Slave Input
+-- register (for use with SPI communication).
 VAL INT MOSI IS 51:
+--* Symbolic constant for accessing the bus Serial ClocK
+-- register (for use with SPI communication).
 VAL INT SCK  IS 52:
+--* Symbolic constant for accessing the Slave Select input
+-- register (for use with SPI communication).
 VAL INT SS   IS 53:
-
-VAL INT PD4  IS 54
-VAL INT PE6  IS 55
-VAL INT PH2  IS 56
-
-VAL INT OUT0 IS 45:
-VAL INT OUT1 IS 44:
-VAL INT OUT2 IS 12:
-VAL INT OUT3 IS 13:
 
 --* Symbolic constant to signify a lack of on-board LED pin.
 VAL INT LED.PIN IS -1:
 --}}}
 
 --{{{ Board to Architecture array map
---* Array (hand written) to convert ArduPilotMega pins to ATmega1280 Pins.
+-- Array (hand written) to convert ArduPilotMega pins to ATmega1280 Pins.
 VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
                   17, 16, 23, 24, 25, 26,
                   64, 63, 13, 12, 46, 45, 44, 43,
@@ -139,19 +170,25 @@ VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
                   89, 88, 87, 86, 85, 84, 83, 82]:
 --}}}
 
---* ArudPilotMega specific board.to.chip converstion function for finding
--- chip-specific pins from board-specific pins.
--- @param board.pin The Board Pin to be mapped to an AVR Pin.
--- @return The AVR Pin connected to the given Board Pin.
+--{{{ FUNCTION board.to.chip
+--* ArduPilotMega specific conversion function for finding
+-- chip-specific pins from board-specific pin.
+--
+-- @param board.pin The board pin to be mapped to an AVR pin.
+-- @return The AVR pin connected to the given board pin.
 INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+--}}}
 
---* Duemilanove specific board.analog.to.chip conversion function for finding
--- chip-specific pins -- specifically for the analog pins.
--- If the user inputs 0-15, 57 will be added (so that the apropriate analog AVR
--- pin is returned by the call to board.to.chip) to board.analog.pin, otherwise
--- board.to.chip is called normally.
--- @param board.analog.pin The Barod Pin to be mapped to an AVR Pin.
--- @return The AVR Pin connected to the given Board Pin.
+--{{{ FUNCTION board.analog.to.chip
+--* ArduPilotMega specific conversion function for finding
+-- chip-specific pins [@em specifically for analog pins].
+--
+-- If the user inputs 0-15, the appropriate analog pin number is substituted.
+-- For example, if '11' is passed in as [@code board.analog.pin], A11 is
+-- is substituted in before the lookup call. 
+--
+-- @param board.analog.pin The board pin to be mapped to an AVR pin.
+-- @return The AVR pin connected to the given board pin.
 INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
   INT avr.pin:
   VALOF
@@ -163,7 +200,18 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
           avr.pin := board.to.chip (board.analog.pin)
     RESULT avr.pin
 : 
+--}}}
 
+--{{{ FUNCTION board.to.serial.port
+--* ArduPiloMega specific conversion function for finding
+-- chip-specific pins [@em specifically for serial operations].
+--
+-- Each serial read/transmit pair is organized into a single 'port' for use
+-- with /arch/common/usart.moduel. RX2 and TX2 are pins 17 and 16, but they --
+-- being part of the same port -- are both mapped to '2'.
+--
+-- @param board.pin The board pin to be mapped to a serial port.
+-- @return The serial port corrisponding to the given board pin.
 INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   INT serial.port:
   VALOF
@@ -181,5 +229,6 @@ INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
           die ("The given Board Pin is not connected to any Serial Ports.")
     RESULT serial.port
 :
+--}}}
 
 #ENDIF
