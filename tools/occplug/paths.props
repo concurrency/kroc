@@ -1,7 +1,8 @@
 #
 # OS X
 #
-#plugin.OccPlugPlugin.path.all.osx.python=python
+
+plugin.OccPlugPlugin.path.all.osx.python=python
 
 plugin.OccPlugPlugin.path.kroc.osx.include=posix/kroc/include
 plugin.OccPlugPlugin.path.kroc.osx.lib=posix/kroc/lib

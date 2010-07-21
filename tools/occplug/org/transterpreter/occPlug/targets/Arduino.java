@@ -52,6 +52,7 @@ import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.hosts.BaseHost;
+import org.transterpreter.occPlug.process.Command;
 import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.process.helpers.TerminalExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
@@ -408,6 +409,8 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 	
 		final DocumentWriter output = targetSupport.getDefaultOutput();
 		
+		output.clear();
+
 		String port = (String) arduinoPort.getSelectedItem();
 		if (port == null || port.trim().equals("")) {
 			output.writeError("Please specify a port");
@@ -453,62 +456,28 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 			(String) arduinoPort.getSelectedItem()};
 			/* (String)props.getUploadRate()}; */
 	
-		
-		for (String s : readArduinoCommand) {
-			Log.log(Log.MESSAGE, this, "CMD: " + s);
+		final ArrayList<String> runEnv = new ArrayList<String>();
+
+		String pythonPath = host.getPath("all", "python", null);
+		if(pythonPath != null)
+		{
+			runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX(pythonPath));
 		}
-
-		final Runnable[] readFinalisers =
-		{
-				new Runnable() {
-					public void run() {
-						final ArrayList<String> runEnv = new ArrayList<String>();
-
-						String pythonPath = host.getPath("all", "python");
-						if(pythonPath != null)
-						{
-							runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX(pythonPath));
-						}
-						OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
-						
-						/* Clear the terminal */
-						output.clear();
-						ExecWorker execWorker = new ExecWorker(readArduinoCommand,
-								(String[]) runEnv.toArray(new String[0]), 
-								curDir,
-								new TargetExecWorkerHelper("read-arduino", output,
-									finalisers));
-
-						OccPlug.getOccPlugInstance().setExecWorker(execWorker);
-
-						execWorker.start();
-		 				// targetSupport.startWorker(execWorker);
-						
-					}
-				}
+		OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
+		
+		Command[] commands = new Command[] {
+			new Command(ihexCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new Command(runCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			/* FIXME: I'd really like to print a message here, but only if the last command ran ok
+			 *        a message along the lines of:
+			 *        "Any output from the Arduino will be displayed below"
+			 */
+			new Command(readArduinoCommand, (String[]) runEnv.toArray(new String[0]), curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
 		};
 		
-
-		final Runnable[] intermediaryFinalisers =
-		{
-				new Runnable() {
-					public void run() {
-						ExecWorker execWorker = new ExecWorker(runCommand, 
-								null, 
-								curDir,
-								new TargetExecWorkerHelper("run", output,
-										readFinalisers));
-						execWorker.start();
-					}
-				}
-		};
-
-		ExecWorker worker = new ExecWorker(ihexCommand, 
-			null, 
-			curDir,
-			new TargetExecWorkerHelper("run", output,
-				intermediaryFinalisers));
-		 targetSupport.startWorker(worker);
+		ExecWorker worker = new ExecWorker(commands, finalisers);
+			
+		targetSupport.startWorker(worker);
 
 		/* Show the VT terminal. */
 		/*
