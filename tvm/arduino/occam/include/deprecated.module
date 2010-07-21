@@ -18,7 +18,8 @@
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-
+--WARNING: Do we need this anymore? It's just one function that I don't think
+--  even works anymore...
 
 -- This is a module of deprecated code. The kind of cruft we'd like to keep
 -- as a reference, but should not actually be used anywhere.
@@ -63,69 +64,6 @@ PROC adc (VAL INT pin, CHAN SIGNAL req?, CHAN INT val!)
         val ! (INT result)
 :
 
-
--- This version of digital.input is so much specific to the arduino.
--- I think the version above is better, but it mgiht not be tested yet..
---* Read digital levels on pin 2 or 3.
--- For only pin 2 or pin 3 on the Arduino, this procedure
--- will output a LEVEL (either LOW or HIGH) whenever the
--- pin changes value.
---
--- @param pin The Arduino pin number (2 or 3 only)
--- @param out The LEVEL, output when the pin changes level.
-PROC digital.input (VAL INT pin, CHAN LEVEL out!)
-  PLACED [MAX.PORT]BYTE ports 0:
-  #PRAGMA DEFINED ports
-  INT wl:
-  INITIAL INT vintr IS (-1):
-  LEVEL level, last.level:
-  PROC read ()
-    SEQ
-      digital.read (pin, wl)
-      level := LEVEL wl
-  :
-  SEQ
-    CASE pin
-      2
-        SEQ
-          vintr := VINTR.INT0
-          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC00))) \/ (1 << ISC00)
-          ports[EIMSK] := ports[EIMSK] \/ (BV (INT0))
-      3
-        SEQ
-          vintr := VINTR.INT1
-          ports[EICRA] := (ports[EICRA] /\ (~(3 << ISC10))) \/ (1 << ISC10)
-          ports[EIMSK] := ports[EIMSK] \/ (BV (INT1))
-      ELSE
-        die ("pin does not support interrupts")
-    read ()
-    last.level := level
-    WHILE TRUE
-      SEQ
-        IF
-          level <> last.level
-            out ! level
-          TRUE
-            SKIP
-        INT any:
-        wait.for.interrupt (vintr, any)
-        read ()
-:
-
---* Watches for button presses on pin 2 or 3.
--- When a button is pressed (must be attached to pin 2 or 3)
--- a SIGNAL is generated. Uses digital.input, debounce, and 
--- level.to.signal.
---
--- @param pin The pin the button is connected to (must be 2 or 3)
--- @param out SIGNALs generated when the button is pressed.
-PROC button.press (VAL INT pin, CHAN SIGNAL out!)
-  CHAN LEVEL a, b:
-  PAR
-    digital.input (pin, a!)
-    debounce (a?, b!)
-    level.to.signal (b?, out!)
-:
 
 #ENDIF
 --}}}

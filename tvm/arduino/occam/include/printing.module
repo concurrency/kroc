@@ -17,15 +17,7 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** The Plumbing library.
---
 --** Printing support for Plumbing
---
--- [@code PROC]s in this module generally have arguments in this order:
---
--- [@item] non-channels;
--- [@item] input channels;
--- [@item] output channels.
 --
 -- @module printing
 
@@ -39,29 +31,119 @@ VAL REAL32 scaling.REAL32 IS 10000.0:
 
 
 --{{{ PROC serial.setup
---* begins serial operation on the given board pin.
+--* Begins serial operations on the given board pin.
 --
--- @param board.pin Board Pin to being serial operations on.
--- @param baud Baud rate at which to transmit serial data, typically 57600.
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+-- In the case of this process, RX0 and TX0 will both signal the activation
+-- of serial port 0, as RX1 and TX1 will activate port 1, etc. the 'R' and 'T'
+-- can be used interchangeably.
+--
+-- @param board.pin The board pin to being serial operations on.
+-- @param baud The baud rate at which to transmit serial data.
 PROC serial.setup (VAL INT board.pin, VAL INT32 baud)
   VAL INT port IS board.to.serial.port (board.pin):
   serial.start (port, baud)
 :
 --}}}
 
---{{{ REAL32 Helper Functions (useful functions are below)
+--{{{ PROC serial.read.byte
+--* Reads a BYTE from the given pin.
+--
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The pin from which to read.
+-- @param b The resulting byte from the read.
+PROC serial.read.byte (VAL INT board.pin, RESULT BYTE b)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.in (port, b)
+:
+--}}}
+
+--{{{ PROC serial.write.byte
+--* Write a BYTE to the given pin.
+--
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The board pin to be written to.
+-- @param b The BYTE to be written.
+PROC serial.write.byte (VAL INT board.pin, VAL BYTE b)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.out (port, b)
+:
+--}}}
+
+--{{{ PROC serial.write.int
+--* Write an INT to the serial port in hex.
+--
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The board pin to be written to.
+-- @param n The INT to write.
+PROC serial.write.int (VAL INT board.pin, VAL INT n)
+  VAL INT port IS board.to.serial.port (board.pin):
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 3 FOR 4 STEP -1
+    serial.byte.out (port, digits[(n >> (i * 4)) /\ #F])
+:
+--}}}
+
+--{{{ PROC serial.write.int32
+--* Write an INT32 to the serial port in hex.
+--
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The board pin to be written to.
+-- @param n The long integer (INT32) to write.
+PROC serial.write.int32 (VAL INT board.pin, VAL INT32 n)
+  VAL INT port IS board.to.serial.port (board.pin):
+  VAL []BYTE digits IS "0123456789abcdef":
+  SEQ i = 7 FOR 8 STEP -1
+    serial.byte.out (port, digits[INT ((n >> (i * 4)) /\ #F)])
+:
+--}}}
+
+--{{{ PROC serial.write.string
+--* Write a string to the serial port.
+--
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The board pin to be written to.
+-- @param string The array of BYTEs to write.
+PROC serial.write.string (VAL INT board.pin, VAL []BYTE string)
+  VAL INT port IS board.to.serial.port (board.pin):
+  SEQ i = 0 FOR SIZE string
+    serial.byte.out (port, string[i])
+:
+--}}}
+
+--{{{ PROC serial.write.newline
+--* Write a newline.
+--
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The board pin to be written to.
+PROC serial.write.newline (VAL INT board.pin)
+  VAL INT port IS board.to.serial.port (board.pin):
+  serial.byte.out (port, '*n')
+:
+--}}}
+
+--{{{ REAL32 Helper Functions
 --* Fills the passed array with the [@em character] '0'.
--- @param arr The array to be filled with 0s.
+--
+-- @param arr The array to be filled with '0's.
 PROC printing.zeroArray([]BYTE arr)
   SEQ i = 0 FOR (SIZE arr)
     arr[i] := '0'
 :
 
---* Trims the trailing 0s from an array of BYTEs by decrementing the `total`
--- value by one for every consecutive '0' at the end of the BYTE array.
--- @param arr The array of BYTEs to be printed
+--* Helps the user trim the trailing 0s from an array of BYTEs by
+-- decrementing [@code total] by one for every consecutive '0' at the end
+-- of the BYTE array.
+--
+-- @param arr The array of BYTEs to be processed.
 -- @param total On completion of the PROC, this will be the number of
---   elements of arr useful to printing.
+--   elements of the array useful to printing.
 PROC printing.trimTrailing0s (VAL []BYTE arr, INT total)
   SEQ
     total := (SIZE arr)
@@ -76,6 +158,7 @@ PROC printing.trimTrailing0s (VAL []BYTE arr, INT total)
 :
 
 --* Real 32 to array helper function.
+--
 -- Honestly, this is magic to me. You probably don't need to invoke this.
 PROC printing.real32toa.helper (VAL INT lhs, []BYTE arr, INT length)
   [(SIZE dec.powers)]BYTE dest:
@@ -104,14 +187,20 @@ PROC printing.real32toa.helper (VAL INT lhs, []BYTE arr, INT length)
               arr[length] := dest[index]
               length := length + 1
 :
+--}}}
 
---* Converts the given REAL32 number into a printable array of character,
--- and the `total` number of elements of said array useful for printing.
+--{{{ PROC real32toa
+--* Converts [@code n] into a printable array.
+-- The BYTE array [@code arr] and the INT [@code total] should be passed to
+-- this process blank, as [@code arr] will be populated with printable
+-- characters, and [@code total] will suggest the number of useful elements
+-- to write.
+--
 -- @param n The REAL32 to be printed.
 -- @param arr The [@em initially empty] array to be used for storing BYTEs
---   for future printing.
--- @param total The [@em initially zero] INT that store the total number of
---   elements of arr useful for printing.
+--   for printing.
+-- @param total The [@em initially zero] INT that will store the total number
+--   of elements of [@code arr] useful for printing.
 PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
   INITIAL REAL32 scaled IS n * scaling.REAL32:
   INT32 lhs32:
@@ -132,61 +221,16 @@ PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
 :
 --}}}
 
-
---{{{ PROC serial.read.byte
---* Reads a [@code BYTE] fom the given pin.
---
--- @param board.pin The pin from which to read.
--- @param b The resulting byte from the read.
-PROC serial.read.byte (VAL INT board.pin, RESULT BYTE b)
-  VAL INT port IS board.to.serial.port (board.pin):
-  serial.byte.in (port, b)
-:
-
---{{{ PROC serial.write.byte
---* Write a [@code BYTE] to the given pin.
---
--- @param board.pin The board pin to be printed to.
--- @param b The BYTE to be written.
-PROC serial.write.byte (VAL INT board.pin, VAL BYTE b)
-  VAL INT port IS board.to.serial.port (board.pin):
-  serial.byte.out (port, b)
-:
-
---{{{ PROC serial.write.int
---* Write an [@code INT] to the serial port in hex.
---
--- @param board.pin The board pin to be printed to.
--- @param n The integer to write.
-PROC serial.write.int (VAL INT board.pin, VAL INT n)
-  VAL INT port IS board.to.serial.port (board.pin):
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 3 FOR 4 STEP -1
-    serial.byte.out (port, digits[(n >> (i * 4)) /\ #F])
-:
---}}}
-
---{{{ PROC serial.write.int32
---* Write an [@code INT32] to the serial port in hex.
---
--- @param board.pin The board pin to be printed to.
--- @param n The long integer ([@code INT32]) to write.
-PROC serial.write.int32 (VAL INT board.pin, VAL INT32 n)
-  VAL INT port IS board.to.serial.port (board.pin):
-  VAL []BYTE digits IS "0123456789abcdef":
-  SEQ i = 7 FOR 8 STEP -1
-    serial.byte.out (port, digits[INT ((n >> (i * 4)) /\ #F)])
-:
---}}}
-
 #IF FALSE
--- So this puppy is broken. Not sure why.
+-- This puppy is broken. Not sure why.
 --{{{ PROC serial.write.real32
---* Write an [@code REAL32] to the serial port in decimal form.
+--* Write a REAL32 to the serial port in decimal form.
 --
--- @param board.pin The board pin to be printed to.
--- @param n The ([@code REAL32]) to write.
--- @param precision The maximum length of the printed number
+-- [@code board.pin] [@em must] be written as TX0, RX0, TX1, RX1, etc.
+--
+-- @param board.pin The board pin to be written to.
+-- @param n The code REAL32 to write.
+-- @param precision The maximum length of the printed number.
 PROC serial.write.real32 (VAL INT board.pin, VAL REAL32 n, VAL INT precision)
   VAL INT port IS board.to.serial.port (board.pin):
   [precision]BYTE arr:
@@ -199,27 +243,5 @@ PROC serial.write.real32 (VAL INT board.pin, VAL REAL32 n, VAL INT precision)
 :
 --}}}
 #ENDIF
-
---{{{ PROC serial.write.string
---* Write a string to the serial port.
---
--- @param board.pin The board pin to be printed to.
--- @param string Bytes to write.
-PROC serial.write.string (VAL INT board.pin, VAL []BYTE string)
-  VAL INT port IS board.to.serial.port (board.pin):
-  SEQ i = 0 FOR SIZE string
-    serial.byte.out (port, string[i])
-:
---}}}
-
---{{{ PROC serial.write.newline
---* Write a newline.
---
--- @param board.pin The board pin to be printed to.
-PROC serial.write.newline (VAL INT board.pin)
-  VAL INT port IS board.to.serial.port (board.pin):
-  serial.byte.out (port, '*n')
-:
---}}}
 
 #ENDIF
