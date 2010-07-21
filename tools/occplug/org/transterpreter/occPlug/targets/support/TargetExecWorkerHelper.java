@@ -36,13 +36,19 @@ public class TargetExecWorkerHelper extends ExecWorkerHelper {
 	protected final OccPlug.DocumentWriter	output;
 	protected final String					cmdName;
 	protected final Runnable[]				finalisers;
+	private boolean quiet;
 
 	public TargetExecWorkerHelper(String cmdName, DocumentWriter output,
 			Runnable[] finalisers) {
+		this(cmdName, output, finalisers, false);
+	}
+	public TargetExecWorkerHelper(String cmdName, DocumentWriter output,
+			Runnable[] finalisers, boolean quiet) {
 		super(true, true, true);
 		this.cmdName = cmdName;
 		this.finalisers = finalisers;
 		this.output = output;
+		this.quiet = quiet;
 	}
 
 	public Thread stdoutHandlerSetup(InputStream stdout) {
@@ -59,8 +65,11 @@ public class TargetExecWorkerHelper extends ExecWorkerHelper {
 	}
 
 	public void finalizer() {
-		for (int i = 0; i < finalisers.length; i++) {
-			finalisers[i].run();
+		if(finalisers != null)
+		{
+			for (int i = 0; i < finalisers.length; i++) {
+				finalisers[i].run();
+			}
 		}
 	}
 
@@ -84,11 +93,14 @@ public class TargetExecWorkerHelper extends ExecWorkerHelper {
 	}
 
 	public void cmdExited(int status) {
-		if (status != 0) {
-			output.writeError(cmdName + " exited with error code: " + status
-					+ "\n");
-		} else {
-			output.writeOK(cmdName + " completed sucessfully\n");
+		if(!quiet)
+		{
+			if (status != 0) {
+				output.writeError(cmdName + " exited with error code: " + status
+						+ "\n");
+			} else {
+				output.writeOK(cmdName + " completed sucessfully\n");
+			}
 		}
 	}
 }
