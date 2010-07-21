@@ -17,7 +17,7 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** Occam header for Arduino Arduino specific pin mappings.
+--** Occam header for Arduino specific pin mappings.
 --
 -- @module boardmap.arduino
 #IF NOT (DEFINED (BOARDMAP.MODULE))
@@ -126,7 +126,7 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
 -- with the API adhered to by all platform boardmap.modules.
 --
 -- @param board.pin The board pin to be mapped to a serial port.
--- @return The serial port corrisponding to the given board pin.
+-- @return The serial port corresponding to the given board pin.
 INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   INT serial.port:
   VALOF

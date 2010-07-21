@@ -96,9 +96,9 @@ VAL INT A14 IS 68:
 -- sake of saving space.
 VAL INT A15 IS 69:
 
---* Symbolic constant for accessing the fisrt read port.
+--* Symbolic constant for accessing the first read port.
 VAL INT RX0 IS 0:
---* Symbolic constant for accessing the fisrt transmit port.
+--* Symbolic constant for accessing the first transmit port.
 VAL INT TX0 IS 1:
 VAL INT RX1 IS 19:
 VAL INT TX1 IS 18:
@@ -106,12 +106,12 @@ VAL INT RX2 IS 17:
 VAL INT TX2 IS 16:
 --* Symbolic constant for accessing the last read port.
 --
--- Constatns RX1:2 do exist, they are simply not documented here for the
+-- Constants RX1:2 do exist, they are simply not documented here for the
 -- sake of saving space.
 VAL INT RX3 IS 15:
 --* Symbolic constant for accessing the last transmit port.
 --
--- Constatns TX1:2 do exist, they are simply not documented here for the
+-- Constants TX1:2 do exist, they are simply not documented here for the
 -- sake of saving space.
 VAL INT TX3 IS 14:
 
@@ -200,7 +200,7 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
 -- being part of the same port -- are both mapped to '2'.
 --
 -- @param board.pin The board pin to be mapped to a serial port.
--- @return The serial port corrisponding to the given board pin.
+-- @return The serial port corresponding to the given board pin.
 INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   INT serial.port:
   VALOF
