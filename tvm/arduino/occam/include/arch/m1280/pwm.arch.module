@@ -22,8 +22,9 @@
 #DEFINE PWMARCH.MODULE
 
 --{{{ FUNCTION pwm8.lookup
---* Lookup function that returns a variety of useful numbers invloved with
--- the operation of Puse Width Modulation on 8 bit timers.
+--* Lookup function that returns a variety of useful numbers involved with
+-- the operation of Pulse Width Modulation on 8 bit timers.
+--
 -- @param avr.pin The [@em AVR] pin connected to the PWM operations.
 -- @returns TCCRnA Timer/Counter Control Register A for the given PWM pin.
 -- @returns TCCRnB Timer/Counter Control Register B for the given PWM pin.
@@ -136,8 +137,9 @@ INT, INT, INT, BYTE, BYTE FUNCTION pwm8.lookup (VAL INT avr.pin)
 --}}}
 
 --{{{ FUNCTION pwm16.lookup
---* Lookup function that returns a variety of useful numbers invloved with
--- the operation of Puse Width Modulation on 16 bit timers.
+--* Lookup function that returns a variety of useful numbers involved with
+-- the operation of Pluse Width Modulation on 16 bit timers.
+--
 -- @param avr.pin The [@em AVR] pin connected to the PWM operations.
 -- @returns TCCRnA Timer/Counter Control Register A for the given PWM pin.
 -- @returns TCCRnB Timer/Counter Control Register B for the given PWM pin.
@@ -245,8 +247,10 @@ INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
 
 --{{{ FUNCTION pwm8.TCCRnB.helper
 --* Helper function that modifies the TCCRnB.bits BYTE initially found in
--- pwm8.lookup based on the desired prescale value to be used with in the
--- PWM operations.
+-- pwm8.lookup.
+-- The modifications are based on the desired prescale value to be used with
+-- the PWM operations.
+--
 -- @param TCCRnB.bits The TCCRnB.bits BYTE initially found in pwm8.lookup.
 -- @param prescale The desired prescale value.
 -- @returns TCCRnB.bits The modified TCCRnB.bits BYTE to
@@ -274,8 +278,10 @@ BYTE FUNCTION pwm8.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
 
 --{{{ FUNCTION pwm16.TCCRnB.helper
 --* Helper function that modifies the TCCRnB.bits BYTE initially found in
--- pwm16.lookup based on the desired prescale value to be used with in the
--- PWM operations.
+-- pwm16.lookup.
+-- The modifications are based on the desired prescale value to be used with
+-- the PWM operations.
+--
 -- @param TCCRnB.bits The TCCRnB.bits BYTE initially found in pwm16.lookup.
 -- @param prescale The desired prescale value.
 -- @returns TCCRnB.bits The modified TCCRnB.bits BYTE to
@@ -302,10 +308,10 @@ BYTE FUNCTION pwm16.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
 --}}}
 
 --{{{ FUNCTION pwm8.compare.lookup
---* Lookup FUNCTION for finding only the Output Compare Register for the
--- given [@em AVR] pin being used for PWM operations.
--- @param avr.pin The given AVR pin being used for PWM operations.
--- @returns OCRnx Output Compare Register for the given PWM pin.
+--* Lookup FUNCTION for finding the appropriate Output Compare Register.
+--
+-- @param avr.pin The [@em AVR] pin being used for PWM operations.
+-- @returns OCRnx The Output Compare Register for the given PWM pin.
 INT FUNCTION pwm8.compare.lookup (VAL INT avr.pin)
   INT OCRnx:
   VALOF
@@ -347,10 +353,10 @@ INT FUNCTION pwm8.compare.lookup (VAL INT avr.pin)
 --}}}
 
 --{{{ FUNCTION pwm16.compare.lookup
---* Lookup FUNCTION for finding only the Output Compare Register for the
--- given [@em AVR] pin being used for PWM operations.
--- @param avr.pin The given AVR pin being used for PWM operations.
--- @returns OCRnx Output Compare Register for the given PWM pin.
+--* Lookup FUNCTION for finding the appropriate Output Compare Register.
+--
+-- @param avr.pin The [@em AVR] pin being used for PWM operations.
+-- @returns OCRnx The Output Compare Register for the given PWM pin.
 INT FUNCTION pwm16.compare.lookup (VAL INT avr.pin)
   INT OCRnx:
   VALOF
@@ -387,9 +393,10 @@ INT FUNCTION pwm16.compare.lookup (VAL INT avr.pin)
 --}}}
 
 --{{{ FUNCTION pwm16.ICRn.lookup
---* Looup FUNCTION for finding only the Input Capture Register for the given
--- [@em 16bit], [@em AVR] pin being used for PWM operations.
--- @param avr.pin The given AVR pin being used for PWM operations.
+--* Lookup FUNCTION for finding the appropriate Input Capture Register
+-- for the given [@em 16bit], [@em AVR] pin being used for PWM operations.
+--
+-- @param avr.pin The [@em AVR] pin being used for PWM operations.
 -- @returns ICRn The Input Capture Register for the given PWM pin.
 INT FUNCTION pwm16.ICRn.lookup (VAL INT avr.pin)
   INT ICRn:
