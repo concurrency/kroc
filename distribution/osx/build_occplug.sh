@@ -13,11 +13,11 @@ if ! [ -d build/jedit ] ; then
   tar -xvjf ../installer/jedit-program.tar.bz2
   cd $ROOT/build/
   curl -L -O \
-    http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.5-bin.zip \
+    http://prdownloads.sourceforge.net/jedit-plugins/ErrorList-1.9-bin.zip \
     || exit 1
   mkdir -p jedit/jedit-program/jars
   cd jedit/jedit-program/jars
-  unzip ../../../ErrorList-1.5-bin.zip
+  unzip ../../../ErrorList-1.9-bin.zip
 fi
 
 cd $ROOT
