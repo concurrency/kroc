@@ -69,7 +69,7 @@ PROC adc.base (VAL INT avr.pin, VAL INT ref, RESULT INT v)
       ref = VCC
         ports[ADMUX] := ports[ADMUX] \/ BV (REFS0)
       ref = INTERNAL
-        ports[ADMUX] := ports[ADMUX] \/ (BV (REFS0) \/ BV (REFS1))
+        ports[ADMUX] := ports[ADMUX] \/ BV (REFS1)
       TRUE --ref = AREF
         SKIP
 
