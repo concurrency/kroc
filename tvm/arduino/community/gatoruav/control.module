@@ -49,7 +49,7 @@ PROC turn.to.heading (CHAN INT theta.x?, theta.y?, heading?, CHAN SIGNAL sig, CH
         SKIP
 :
 #ENDIF
-PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
+PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2) -- This PROC acts as a feedback mechanism keeping the airplane in level flight.  As the attitude of the airplane changes, the servos are moved to positions to return the plane to level flight.
   INT pitch, roll, servo.pos.pitch, servo.pos.roll:
   SEQ
     s ! pos ; 90
@@ -66,7 +66,7 @@ PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2)
         
       
 :  
-PROC servo.setup(CHAN SERVO s)
+PROC servo.setup(CHAN SERVO s) --Wrapped the initialization of the servo
 
   SEQ
     s ! min ; 650
