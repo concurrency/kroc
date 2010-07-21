@@ -251,7 +251,7 @@ PROC adc (VAL INT analog.pin, VAL INT ref, CHAN SIGNAL in?, CHAN INT out!)
 -- one writes A0, A1, etc. to avoid confusion. 
 --
 -- @param analog.pin The analog pin the potentiometer is connected to.
--- @oaram in The request line.
+-- @param in The request line.
 -- @param out The output chanel for mapped values. 0-255.
 PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL in?, CHAN BYTE out!)
   INITIAL INT avr.pin IS board.analog.to.chip (analog.pin):
