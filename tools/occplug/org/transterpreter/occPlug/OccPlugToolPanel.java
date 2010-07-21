@@ -81,6 +81,7 @@ public class OccPlugToolPanel extends JPanel {
 		
 		compileBtn = makeCustomButton("occPlug.compile", new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
+				savePreferences();
 				stop((CompileTarget) target.getSelectedItem());
 				compile((CompileTarget) target.getSelectedItem());
 			}
