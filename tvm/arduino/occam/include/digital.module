@@ -25,6 +25,10 @@
 #DEFINE DIGITAL.MODULE
 
 --* Symbolic constant for setting the level of a digital pin.
+--
+-- Can be
+-- [@item] [@code VAL LEVEL HIGH] or
+-- [@item] [@code VAL LEVEL LOW]
 DATA TYPE LEVEL IS INT:
 VAL LEVEL LOW IS #0:
 VAL LEVEL HIGH IS #1:
