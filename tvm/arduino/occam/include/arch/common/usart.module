@@ -17,16 +17,18 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
---** USART/serial reoutines for the ATmega1280
+--** USART/serial routines for the ATmega1280
+--
 -- @module usart
 
 #IF NOT (DEFINED (USART.MODULE))
 #DEFINE USART.MODULE
 
 --{{{ PROC serial.start
---* Initialise iterrupt-driven serial IO
--- @param port Serial port (eg: 0, 1, 2, or 3).
--- @param baud Baud rate. Typically 57600.
+--* Initialize serial IO. (Interrupt-driven)
+--
+-- @param port The serial port to activate (eg. 0, 1, 2, or 3).
+-- @param baud The baud rate at which to transmit information.
 PROC serial.start (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
@@ -43,9 +45,10 @@ PROC serial.start (VAL INT port, VAL INT32 baud)
 --}}}
 
 --{{{ PROC serial.byte.out
---* Write a byte to the serial port (interrupt-driven)
--- @param port Serial port (eg: 0, 1, 2, or 3).
--- @param b Byte to write.
+--* Write a BYTE to the serial port. (Interrupt-driven)
+--
+-- @param port The serial port to write to (eg. 0, 1, 2, or 3).
+-- @param b The BYTE to write.
 PROC serial.byte.out (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -67,9 +70,10 @@ PROC serial.byte.out (VAL INT port, VAL BYTE b)
 --}}}
 
 --{{{ PROC serial.byte.in
---* Read a byte from the serial port (interrupt-driven)
--- @param port Serial port (eg: 0, 1, 2, or 3).
--- @param b Byte to be read.
+--* Read a byte from the serial port. (Interrupt-driven)
+--
+-- @param port The serial port to read from (eg. 0, 1, 2, or 3).
+-- @param b The BYTE to be read.
 PROC serial.byte.in (VAL INT port, RESULT BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
@@ -90,9 +94,10 @@ PROC serial.byte.in (VAL INT port, RESULT BYTE b)
 --}}}
 
 --{{{ PROC serial.start.blocking
---* Initialise the serial port (blocking).
--- @param port Serial port (eg: 0, 1, 2, or 3).
--- @param baud Baud rate. Typically 57600.
+--* Initialize the serial port (blocking).
+--
+-- @param port The serial port to activate (eg. 0, 1, 2, or 3).
+-- @param baud The baud rate at which to transmit information.
 PROC serial.start.blocking (VAL INT port, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
@@ -110,8 +115,9 @@ PROC serial.start.blocking (VAL INT port, VAL INT32 baud)
 
 --{{{ PROC serial.byte.out.blocking
 --* Write a byte to the serial port (blocking).
--- @param port Serial port (eg: 0, 1, 2, or 3)
--- @param b BYTE Byte to write.
+--
+-- @param port The serial port to write to (eg. 0, 1, 2, or 3).
+-- @param b BYTE The BYTE to write.
 PROC serial.byte.out.blocking (VAL INT port, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports

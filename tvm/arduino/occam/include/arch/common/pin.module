@@ -17,7 +17,8 @@
 --
 --** Procs for low-level digital manipulation of pins on any ATmega.
 -- PROCs in this module take registers for direction (DDRn), pin (PINn)
--- and port (PORTn) to manipulate digital pins on the ATmega.
+-- and port (PORTn) to manipulate digital pins on ATmega processors.
+--
 -- @module pin
 
 #IF NOT (DEFINED (REGISTER.MODULE))
@@ -29,6 +30,7 @@
 -- Typically, no user is going to directly call this PROC. The process of
 -- locating r.port is taken care of in the Architecture-specific
 -- chipmap.module. 
+--
 -- @param r.port The port (PORTB, PORTC, etc.) on the ATmega
 -- @param bit The bit in the port (0 - 7)
 -- @param state Either HIGH or LOW
@@ -46,6 +48,7 @@ INLINE PROC pin.write (VAL INT r.port, bit, state)
 -- Typically, no user is going to directly call this PROC. The process of
 -- locating r.pin is taken care of in the Architecture-specific
 -- chipmap.module. 
+--
 -- @param r.pin A pin register (PINA, PINB)
 -- @param bit The bit in the port
 -- @param state The state of the bit (HIGH or LOW)
@@ -62,6 +65,7 @@ INLINE PROC pin.read (VAL INT r.pin, bit, RESULT INT state)
 -- Typically, no user is going to directly call this PROC. The process of
 -- locating r.ddr is taken care of in the Architecture-specific
 -- chipmap.module. 
+--
 -- @param r.ddr The data direction register (DDRA, etc.)
 -- @param bit The bit in the register
 -- @param mode Either INPUT or OUTPUT
