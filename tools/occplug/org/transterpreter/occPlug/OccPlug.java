@@ -159,6 +159,11 @@ public class OccPlug extends JPanel implements EBComponent {
 			}
 			return false;
 		}
+		
+		public String toString()
+		{
+			return fileName + ":" + lineNo;
+		}
 	}
 
 	public class Error {
@@ -183,6 +188,13 @@ public class OccPlug extends JPanel implements EBComponent {
 		public void addTxt(int type, String msg) {
 			setType(type);
 			msgs.add(msg);
+		}
+		
+		public String toString()
+		{
+			if(this.type == ErrorSource.WARNING)
+				return "warning: " + msgs;
+			return "error: " + msgs;
 		}
 	}
 
@@ -466,22 +478,14 @@ public class OccPlug extends JPanel implements EBComponent {
 			Map.Entry item = (Map.Entry) errors.next();
 			ErrorKey key = (ErrorKey) item.getKey();
 			Error err = (Error) item.getValue();
-			/*
-			 * errorSource.addError( err.type, MiscUtilities.constructPath(path,
-			 * key.fileName), key.lineNo, 0, 0, err.msgs.get(0));
-			 */
-			DefaultErrorSource.DefaultError newError = new DefaultErrorSource.DefaultError(
-					errorSource, err.type, MiscUtilities.constructPath(path,
-							key.fileName), key.lineNo, 0, 0, (String) err.msgs
-							.get(0));
-
-			if (err.msgs.size() > 1) {
-				for (int i = 1; i < err.msgs.size(); i++) {
-					newError.addExtraMessage((String) err.msgs.get(i));
-				}
+			
+			for(String m : (String[]) err.msgs.toArray(new String[0]))
+			{
+				DefaultErrorSource.DefaultError newError = new DefaultErrorSource.DefaultError(
+						errorSource, err.type, MiscUtilities.constructPath(path,
+								key.fileName), key.lineNo, 0, 0, m.trim());
+				errorSource.addError(newError);
 			}
-
-			errorSource.addError(newError);
 		}
 	}
 
