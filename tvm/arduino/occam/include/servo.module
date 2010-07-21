@@ -35,21 +35,26 @@ PROTOCOL SERVO
     --* Number of divisions in the span between [@code max] - [@code min.]
     -- @item div Initially 180. Must be <= [@code max] - [@code min].
     div ; INT
-    --* Positition of the servo. [@em This is what you'll be using the most].
+    --* Positition of the servo; [@em This is what you will be using the most].
     -- @item pos Initially 90. Must be between 0:[@code pos].
     pos ; INT
     --* Number of microseconds (greater than [@code min]) the pulse to the
-    -- servo will last. [@em We strongly recommend using [@code div] and
-    -- [@code pos] to effect the position of the servo].
+    -- servo will last. 
+    --
+    -- [@em We strongly recommend using [@code div] and [@code pos] to
+    -- effect the position of the servo].
     -- @item usec Automatically calculated when [@code pos] is reset.
     usec ; INT
-    --* Frequency of the servo pulse. [@em Do not change this casually.]
-    -- Most servos require a pulse once every 20 milliseconds,
-    -- which is what [@code frequency] defaults to.
+    --* Frequency of the servo pulse.
+    --
+    -- [@em Do not change this casually.] Most servos require a pulse once
+    -- every 20 milliseconds, which is what [@code frequency] defaults to.
     -- @item frequency Initially 20000. Measured in microseconds.
     frequency ; INT
-    --* Starts servo operations. We recommened setting [@code div] and
-    -- [@code pos] before sending the [@code start] signal, and not
+    --* Starts servo operations.
+    --
+    -- We recommened setting [@code div] and [@code pos] before sending
+    -- the [@code start] signal, and not
     -- changing [@code div] after.
     start
     --* Supposed to stop servo operations. We've not added that
