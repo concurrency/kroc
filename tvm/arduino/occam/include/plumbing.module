@@ -187,7 +187,6 @@ PROC blink (VAL INT pin, delay.time)
 --}}}
 
 --{{{ PROC heartbeat
---* A parallel health monitor.
 --FIXME: 20100714 drew
 --  There are more boards w/o board LEDs... Do we even want this PROC?
 -- Blinks the LED.PIN  every 500 ms.
@@ -202,6 +201,8 @@ PROC blink (VAL INT pin, delay.time)
 -- 64 9c 1f f3 b3 22 f0 22 4b d3 21 f0 iptr>22 f0 60 bd 22 23 f7 d2 42 d1 21 42 
 --
 -- We may want to improve that... perhaps by using die() in some way. 
+
+--* A parallel health monitor.
 PROC heartbeat ()
   IF
     LED.PIN > 0
@@ -212,41 +213,54 @@ PROC heartbeat ()
 --}}}
 
 --{{{ PROC ADC
---* Reads the analog value of a given pin on a signal request.
--- Currently not parallel safe.
+--* Reads the analog value of a given pin.
+-- Upon request, performs an analog to digital conversion, comparing the
+-- voltage at [@code analog.pin] with the specified reference voltage.
+-- No matter which reference is used, the value of [@code out] will always
+-- rest between 0 and 1023.
 --
--- @param analog.pin The Arduino pin number (A0 - A5)
--- @param ref The source of the reference voltage. Either VCC (internal) or
---   AREF (external).
--- @param req The request line.
--- @param val The current analog reading, 0 - 1023
-PROC adc (VAL INT analog.pin, VAL INT ref, CHAN SIGNAL req?, CHAN INT val!)
+-- There is a safeguard put in place that should allow [@code analog.pin] to be
+-- properly read if written as 0, 1, 2, etc., but it is still recommended that
+-- one writes A0, A1, etc. to avoid confusion. 
+--
+-- @param analog.pin The Analog pin number. (A0, A1, A2)
+-- @param ref The source of the reference voltage. Either VCC (default),
+--   AREF (external), or INTERNAL (1.1v internal reference).
+-- @param in The request line.
+-- @param out The output channel for converted readings. 0 - 1023.
+PROC adc (VAL INT analog.pin, VAL INT ref, CHAN SIGNAL in?, CHAN INT out!)
   INITIAL INT avr.pin IS board.analog.to.chip(analog.pin):
   INT v:
   SEQ
     WHILE TRUE
       SEQ
-        req ? SIGNAL
+        in ? SIGNAL
         adc.base (avr.pin, ref, v)
-        val ! v
+        out ! v
 :
 --}}}
 
 --{{{ PROC potentiometer.byte
---* Maps the incoming values from a potentiometer (knob, slider, etc.)
--- connected to analog.pin to apropriate values between min and max.
+--* Reads from a potentiometer and maps the incoming value to a BYTE.
+-- Upon request, the incoming value from a potentiometer (a knob, slider...)
+-- connected to [@code analog.pin] to will be mapped to an appropriate value
+-- between 0-255.
+--
+-- There is a safeguard put in place that should allow [@code analog.pin] to be
+-- properly read if written as 0, 1, 2, etc., but it is still recommended that
+-- one writes A0, A1, etc. to avoid confusion. 
+--
 -- @param analog.pin The analog pin the potentiometer is connected to.
--- @param min, max The minimum and maximum values that will be output.
--- @oaram ping In signal that activated a new reading and mapping.
--- @param out The output chanel mapped values are sent out on.
-PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL ping?, CHAN BYTE out!)
+-- @oaram in The request line.
+-- @param out The output chanel for mapped values. 0-255.
+PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL in?, CHAN BYTE out!)
   INITIAL INT avr.pin IS board.analog.to.chip (analog.pin):
   INT  v:
   BYTE x:
 
   WHILE TRUE
     SEQ
-      ping ? SIGNAL
+      in ? SIGNAL
       adc.base (avr.pin, VCC, v)
       x := (BYTE ((v * 25) / 102)) --v == in, x == out. (v / 1023) = (x / 255)
       out ! x
@@ -255,9 +269,9 @@ PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL ping?, CHAN BYTE out!)
  
 --{{{ PROC clamp.[byte/int]
 --* Limits the range of values in a stream.
--- Takes a low and high limit, and any bytes read in that
--- are below the 'low' value are clamped to low, and likewise
--- with the 'high' value. 
+-- Takes [@code low] and [@code high] as limits, and any BYTEs read in that
+-- are below [@code low] are clamped to [@code low], and likewise
+-- with the [@code high] value. 
 --
 -- @param low The lower limit for valid numbers.
 -- @param high The upper limit for valid numbers.
@@ -279,9 +293,9 @@ PROC clamp.byte (VAL BYTE low, high, CHAN BYTE in?, out!)
 :
 
 --* Limits the range of values in a stream.
--- Takes a low and high limit, and any integers read in that
--- are below the 'low' value are clamped to low, and likewise
--- with the 'high' value. 
+-- Takes [@code low] and [@code high] as limits, and any INTs read in that
+-- are below [@code low] are clamped to [@code low], and likewise
+-- with the [@code high] value. 
 --
 -- @param low The lower limit for valid numbers.
 -- @param high The upper limit for valid numbers.
@@ -304,15 +318,14 @@ PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
 --}}}
 
 --{{{ PROC crawl.[byte/int]
---FIXME: 20100714 drew These PROCs are just shoddy. Re-write them.
-
---* Crawls a BYTE from [low] to [high] and back down (and back up, etc.)
--- by [step]. Does not cap pos at low or high, it simply checks for
--- <= or >=.
+--* Crawls a BYTE from 0 to [@code high] and back down (and back up, etc.).
+-- Pausing [@code wait] milliseconds between each signal send, and incrementing
+-- (in either direction) [@code step] between each send, the outgoing value
+-- is capped at 0 and [@code high].
 --
--- @param high The upper limit at which the pos begins moving downward.
--- @param step The step pos moves for every send.
--- @param wait The time -- in miliseconds -- to wait after a successful send
+-- @param high The upper limit of output values.
+-- @param step The increment between each send.
+-- @param wait The time - in milliseconds - to wait after a successful send
 --   before attempting another.
 -- @param out The output stream of BYTEs.
 PROC crawl.byte (VAL BYTE high, step, VAL INT wait, CHAN BYTE out!)
@@ -350,13 +363,14 @@ PROC crawl.byte (VAL BYTE high, step, VAL INT wait, CHAN BYTE out!)
       delay (wait)
 :
 
---* Crawls a INT from [low] to [high] and back down (and back up, etc.)
--- by [step]. Does not cap pos at low or high, it simply checks for
--- <= or >=.
+--* Crawls an INT from 0 to [@code high] and back down (and back up, etc.).
+-- Pausing [@code wait] milliseconds between each signal send, and incrementing
+-- (in either direction) [@code step] between each send, the outgoing value
+-- is capped at 0 and [@code high].
 --
--- @param high The upper limit at which the pos begins moving downward.
--- @param step the step pos moves for every send.
--- @param wait The time -- in miliseconds -- to wait after a successful send
+-- @param high The upper limit of output values.
+-- @param step The increment between each send.
+-- @param wait The time - in milliseconds - to wait after a successful send
 --   before attempting another.
 -- @param out The output stream of INTs.
 PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
@@ -395,46 +409,36 @@ PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
 :
 --}}}
 
---{{{ PROC pwm[16]
+--{{{ PROC pwm[-/16]
 --* Writes an analog value to a pin.
 -- For a given (PWM) pin, sets the observed analog level to a value between
 -- 0 and 255. Negative values are treated as 0, and values greater
 -- than 255 are treated as 255.
 --
--- @param board.pin The Arduino pin number.
+-- @param board.pin The pin number.
 -- @param level The input level channel.
 PROC pwm (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
   INITIAL INT avr.pin IS board.to.chip (board.pin):
   CHAN BYTE clamped:
   SEQ
-    -- WARNING: 20100712
-    -- Debugging the odd compiler/CASE problem in pwmarch.module.
-    -- Left the debug for now in case we find more problems.
-    --serial.write.string("Setting digital mode*n")
-    --serial.write.string("Board: ")
-    --serial.write.int(board.pin)
-    --serial.write.string("*n")
-    --serial.write.string("AVR: ")
-    --serial.write.int(avr.pin)
-    --serial.write.string("*n")
     digital.mode (board.pin, OUTPUT)
-    --serial.write.string("pwm8.setup*n")
     pwm8.setup (avr.pin, 64)
     PAR
       clamp.byte (0, 255, level?, clamped!)
       WHILE TRUE
         SEQ
           clamped ? lvl
-          --serial.write.string("set.compare*n")
           pwm8.set.compare (avr.pin, lvl)
-          --serial.write.string("after compare*n")
 :
 
 --* Writes an analog value to a pin.
--- For a given (analog) pin, sets the level to a value between
--- 0 and TOP. Negative values are treated as 0, and values greater
--- than TOP are treated as TOP.
+-- For a given (PWM) pin, sets the level to a value between
+-- 0 and [@code top]. Negative values are treated as 0, and values greater
+-- than [@code top] are treated as [code top].
+--
+-- [@em Be careful]. Not every PWM pin is connected to a 16 bit timer, so
+-- not every pin labeled as a PWM can be used with this PROC.
 --
 -- @param board.pin The Arduino pin number
 -- @param top The highest level top can be set to.
@@ -444,18 +448,7 @@ PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
   INITIAL INT avr.pin IS board.to.chip (board.pin):
   CHAN INT clamped:
   SEQ
-    -- WARNING 20100712
-    -- Debugging the odd compiler/CASE problem in pwmarch.module.
-    -- Left the debug for now in case we find more problems.
-    --serial.write.string("Setting digital mode*n")
-    --serial.write.string("Board: ")
-    --serial.write.int(board.pin)
-    --serial.write.string("*n")
-    --serial.write.string("AVR: ")
-    --serial.write.int(avr.pin)
-    --serial.write.string("*n")
     digital.mode (board.pin, OUTPUT)
-    --serial.write.string("pwm8.setup*n")
     pwm16.setup (avr.pin, 8)
     pwm16.set.top (avr.pin, top)
     PAR
@@ -463,24 +456,22 @@ PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
       WHILE TRUE
         SEQ
           clamped ? lvl
-          --serial.write.string("set.compare*n")
           pwm16.set.compare (avr.pin, lvl)
-          --serial.write.string("after compare*n")
 :
 --}}}
 
 --{{{ PROC button.press
---* Watches for button presses on pin 2 or 3.
--- When a button is pressed (must be attached to pin 2 or 3)
--- a SIGNAL is generated. Uses digital.input, debounce, and 
--- level.to.signal.
+--* Watches for button presses on external level interrupt pins.
+-- When a button is pressed a SIGNAL is generated. Uses digital.input,
+-- debounce, and level.to.signal.
 --
--- @param pin The pin the button is connected to (must be 2 or 3)
+-- @param board.pin The pin the button is connected to
+--   (pins 2 and 3 are safe bets).
 -- @param out SIGNALs generated when the button is pressed.
-PROC button.press (VAL INT pin, CHAN SIGNAL out!)
+PROC button.press (VAL INT board.pin, CHAN SIGNAL out!)
   CHAN LEVEL a, b:
   PAR
-    digital.input (pin, a!)
+    digital.input (board.pin, a!)
     debounce (a?, b!)
     level.to.signal (b?, out!)
 :
