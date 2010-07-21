@@ -16,6 +16,7 @@
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 --** A wrapper for platform-specific code on the ATmega328.
+--
 -- @module 328.avr
 
 #IF NOT (DEFINED (AVR.MODULE))
