@@ -53,6 +53,8 @@ import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.hosts.BaseHost;
 import org.transterpreter.occPlug.process.Command;
+import org.transterpreter.occPlug.process.CommandExternal;
+import org.transterpreter.occPlug.process.CommandRunnable;
 import org.transterpreter.occPlug.process.ExecWorker;
 import org.transterpreter.occPlug.process.helpers.TerminalExecWorkerHelper;
 import org.transterpreter.occPlug.targets.support.BaseTarget;
@@ -65,6 +67,8 @@ import org.transterpreter.occPlug.targets.support.OccbuildHelper;
 import org.transterpreter.occPlug.targets.support.OccbuildOptions;
 import org.transterpreter.occPlug.targets.support.OccbuildTVMOptions;
 import org.transterpreter.occPlug.targets.support.TargetExecWorkerHelper;
+
+import com.sun.tools.doclets.internal.toolkit.util.DocFinder.Output;
 
 import de.mud.terminal.vt320;
 
@@ -466,13 +470,15 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
 		
 		Command[] commands = new Command[] {
-			new Command(ihexCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
-			new Command(runCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
-			/* FIXME: I'd really like to print a message here, but only if the last command ran ok
-			 *        a message along the lines of:
-			 *        "Any output from the Arduino will be displayed below"
-			 */
-			new Command(readArduinoCommand, (String[]) runEnv.toArray(new String[0]), curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
+			new CommandExternal(ihexCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new CommandExternal(runCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new CommandRunnable(new Runnable() { 
+				public void run() { 
+					output.writeRegular("Any output from the connected device will appear below\n");
+					output.writeRegular("(hit stop to disconnect)\n");
+					output.writeRegular("------------------------------------------------------\n");
+				} }),
+			new CommandExternal(readArduinoCommand, (String[]) runEnv.toArray(new String[0]), curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
 		};
 		
 		ExecWorker worker = new ExecWorker(commands, finalisers);
