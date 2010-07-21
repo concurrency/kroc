@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
 
 import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
@@ -40,6 +41,7 @@ public class CompileExecWorkerHelper extends ExecWorkerHelper {
 	protected final OccPlug.DocumentWriter	output;
 	protected final String					cmdName;
 	protected final Runnable[]				finalisers;
+	protected final ArrayList<String>		stdoutBuffer = new ArrayList<String>();
 
 	public CompileExecWorkerHelper(String cmdName, DocumentWriter output,
 			Runnable[] finalisers) {
@@ -51,9 +53,10 @@ public class CompileExecWorkerHelper extends ExecWorkerHelper {
 		OccPlug.getOccPlugInstance().errorSource.clear();
 	}
 
-	public Thread stdoutHandlerSetup(InputStream stdout) {
+	
+	public Thread stderrHandlerSetup(InputStream stderr) {
 		return new ReaderConduit(new BufferedReader(new InputStreamReader(
-				stdout)), new SimpleWriter() {
+				stderr)), new SimpleWriter() {
 			public void write(String str) {
 				ErrorSet errStatus = OccPlug.getOccPlugInstance().checkForErrors(str);
 				if(errStatus != null)
@@ -75,8 +78,13 @@ public class CompileExecWorkerHelper extends ExecWorkerHelper {
 		});
 	}
 
-	public Thread stderrHandlerSetup(InputStream stderr) {
-		return stdoutHandlerSetup(stderr);
+	public Thread stdoutHandlerSetup(InputStream stdout) {
+		return new ReaderConduit(new BufferedReader(new InputStreamReader(
+				stdout)), new SimpleWriter() {
+			public void write(String str) {
+				stdoutBuffer.add(str);
+			}
+		});
 	}
 
 	public void finalizer() {
@@ -105,6 +113,10 @@ public class CompileExecWorkerHelper extends ExecWorkerHelper {
 	}
 
 	public void cmdExited(int status) {
+		for(String str: stdoutBuffer)
+		{
+			output.writeRegular(str);
+		}
 		if (status != 0) {
 			output.writeError(cmdName + " exited with error code: " + status
 					+ "\n");
