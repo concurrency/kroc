@@ -280,6 +280,12 @@ CHAN TYPE G3D.SCENE.TRANS
 :
 
 --}}}
+--{{{  reporting for polygon clicking
+
+--* Used to provide information about polygon clicks, order is (id; x; y).
+PROTOCOL G3D.POLY.CLICK IS [3]INT:
+
+--}}}
 
 #ENDIF
 
