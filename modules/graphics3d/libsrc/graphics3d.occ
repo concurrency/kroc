@@ -556,6 +556,85 @@ PROC fbypoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN
               SKIP
 :
 --}}}
+--{{{  PROC squarepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Flat square point generator.
+-- Generates a square around the origin (lying flat by default).
+--
+-- @param trigger Trigger channel.
+-- @param out Points generated.
+-- @param ctrl Control channel.
+--
+PROC squarepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  MOBILE []G3D.POINT3 cpnts, opnts:
+
+  PROC reset () --{{{
+    SEQ
+      opnts := MOBILE [4]G3D.POINT3
+
+      opnts[0] := [1.0, 0.0, 1.0]
+      opnts[1] := [1.0, 0.0, -1.0]
+      opnts[2] := [-1.0, 0.0, -1.0]
+      opnts[3] := [-1.0, 0.0, 1.0]
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    reset ()
+    cpnts := CLONE opnts
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        PRI ALT
+          ctrl ? CASE
+            reset
+              SEQ
+                reset ()
+                cpnts := CLONE opnts
+            [3]REAL32 scale:
+            add.scale; scale
+              --{{{  add scale (to cpnts)
+              SEQ i = 0 FOR 4
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] * scale[0]
+                  cpnts[i][y] := cpnts[i][y] * scale[1]
+                  cpnts[i][z] := cpnts[i][z] * scale[2]
+              --}}}
+            [3]REAL32 scale:
+            set.scale; scale
+              --{{{  set scale (from opnts)
+              SEQ i = 0 FOR 4
+                SEQ
+                  cpnts[i][x] := opnts[i][x] * scale[0]
+                  cpnts[i][y] := opnts[i][y] * scale[1]
+                  cpnts[i][z] := opnts[i][z] * scale[2]
+              --}}}
+            [3]REAL32 trans:
+            add.trans; trans
+              --{{{  add translation (to cpnts)
+              SEQ i = 0 FOR 4
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] + trans[0]
+                  cpnts[i][y] := cpnts[i][y] + trans[1]
+                  cpnts[i][z] := cpnts[i][z] + trans[2]
+              --}}}
+            [3]REAL32 trans:
+            set.trans; trans
+              --{{{  set translation (from opnts)
+              SEQ i = 0 FOR 4
+                SEQ
+                  cpnts[i][x] := opnts[i][x] + trans[0]
+                  cpnts[i][y] := opnts[i][y] + trans[1]
+                  cpnts[i][z] := opnts[i][z] + trans[2]
+              --}}}
+          INT any:
+          trigger ? any
+            out ! CLONE cpnts
+:
+--}}}
 
 --{{{  PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
 --* Point rotator.
@@ -1810,9 +1889,9 @@ PROC cubify.points.int (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY o
               l := SIZE cols
               IF
                 trimap AND (l >= 12)
-                  l := 11
+                  l := 12
                 (NOT trimap) AND (l >= 6)
-                  l := 5
+                  l := 6
                 TRUE
                   SKIP
               SEQ i = 0 FOR l
@@ -2051,6 +2130,163 @@ PROC flutterby.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY ou
                         polys[i][y][p] := pnts[polymap[i][p]][y]
                         polys[i][z][p] := pnts[polymap[i][p]][z]
 
+                out ! polys
+:
+--}}}
+--{{{  PROC squarify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates square polygons from square points.
+-- Expects to receive 4 points at a time, and from these generates a polygon
+-- that represents a square.  Characteristics are controllable through the control channel.
+--
+-- @param in Points in (2D with Z-depth).
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC squarify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+  INT polyid, colour1, colour2:
+  BOOL trimap:
+  SEQ
+    colour1 := #00800080
+    colour2 := #00008080
+    polyid := 0
+    trimap := FALSE
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          --{{{  reset: reset
+          reset
+            trimap := FALSE
+          --}}}
+          --{{{  set.trimap: triangular polygon generation control
+          set.trimap; trimap
+            SKIP
+          --}}}
+          --{{{  set.backfaces: backface generation control (not relevant)
+          BOOL any:
+          set.backfaces; any
+            SKIP
+          --}}}
+          --{{{  set.face.colour: set face colours
+          INT fn, col:
+          set.face.colour; fn; col
+            IF
+              trimap AND (fn = 0)
+                colour1 := col
+              trimap AND (fn = 1)
+                colour2 := col
+              NOT trimap
+                colour1 := col
+              TRUE
+                SKIP
+          --}}}
+          --{{{  set.face.colours: set all face colours
+          MOBILE []INT cols:
+          set.face.colours; cols
+            INT l:
+            SEQ
+              l := SIZE cols
+              IF
+                trimap AND (l >= 2)
+                  SEQ
+                    colour1 := cols[0]
+                    colour2 := cols[1]
+                (NOT trimap) AND (l >= 1)
+                  colour1 := cols[0]
+                TRUE
+                  SKIP
+          --}}}
+          --{{{  set.poly.id: set polygon ID
+          set.polyid; polyid
+            polyid := polyid /\ #FF
+          --}}}
+
+        MOBILE []G3D.POINT2.3 pnts:
+        in ? pnts
+          IF
+            (SIZE pnts) <> 4
+              SKIP
+            TRUE
+              MOBILE []G3D.POLY polys:
+              INT npoly:
+              INT norm:
+              [2]INT pixels:
+              SEQ
+                --{{{  number of polygons
+                IF
+                  trimap
+                    npoly := 2
+                  TRUE
+                    npoly := 1
+                --}}}
+                --{{{  compute normal and pixel colours
+                SEQ
+                  norm := ((pnts[3][y] MINUS pnts[0][y]) TIMES (pnts[1][x] MINUS pnts[0][x])) MINUS
+                          ((pnts[1][y] MINUS pnts[0][y]) TIMES (pnts[3][x] MINUS pnts[0][x]))
+                  IF
+                    trimap
+                      SEQ
+                        pixels[0] := colour1
+                        pixels[1] := colour2
+                    TRUE
+                      pixels[0] := colour1
+                --}}}
+                --{{{  allocate polygons
+                polys := MOBILE [npoly]G3D.POLY
+
+                #PRAGMA DEFINED polys, pixels, norm
+                --}}}
+                --{{{  generate polygons
+                IF
+                  trimap
+                    SEQ
+                      polys[0][npoints] := 3
+                      polys[0][norm] := norm
+                      polys[0][pixel] := pixels[0]
+                      polys[0][polyid] := polyid
+                      polys[0][x][0] := pnts[0][x]
+                      polys[0][y][0] := pnts[0][y]
+                      polys[0][z][0] := pnts[0][z]
+                      polys[0][x][1] := pnts[1][x]
+                      polys[0][y][1] := pnts[1][y]
+                      polys[0][z][1] := pnts[1][z]
+                      polys[0][x][2] := pnts[2][x]
+                      polys[0][y][2] := pnts[2][y]
+                      polys[0][z][2] := pnts[2][z]
+
+                      polys[1][npoints] := 3
+                      polys[1][norm] := norm
+                      polys[1][pixel] := pixels[1]
+                      polys[1][polyid] := polyid
+                      polys[1][x][0] := pnts[0][x]
+                      polys[1][y][0] := pnts[0][y]
+                      polys[1][z][0] := pnts[0][z]
+                      polys[1][x][1] := pnts[2][x]
+                      polys[1][y][1] := pnts[2][y]
+                      polys[1][z][1] := pnts[2][z]
+                      polys[1][x][2] := pnts[3][x]
+                      polys[1][y][2] := pnts[3][y]
+                      polys[1][z][2] := pnts[3][z]
+                  TRUE
+                    SEQ
+                      polys[0][npoints] := 4
+                      polys[0][norm] := norm
+                      polys[0][pixel] := pixels[0]
+                      polys[0][polyid] := polyid
+                      polys[0][x][0] := pnts[0][x]
+                      polys[0][y][0] := pnts[0][y]
+                      polys[0][z][0] := pnts[0][z]
+                      polys[0][x][1] := pnts[1][x]
+                      polys[0][y][1] := pnts[1][y]
+                      polys[0][z][1] := pnts[1][z]
+                      polys[0][x][2] := pnts[2][x]
+                      polys[0][y][2] := pnts[2][y]
+                      polys[0][z][2] := pnts[2][z]
+                      polys[0][x][3] := pnts[3][x]
+                      polys[0][y][3] := pnts[3][y]
+                      polys[0][z][3] := pnts[3][z]
+                --}}}
                 out ! polys
 :
 --}}}
