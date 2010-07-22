@@ -2653,8 +2653,8 @@ PROC render.polyscans.int (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENGINE?
                     SEQ x = stx FOR (edx - stx)
                       [4]BYTE pval RETYPES r[i][x]:
                       SEQ
-                        pval[0] := BYTE scan[polyid]
-                        SEQ pv = 1 FOR 3
+                        pval[3] := BYTE scan[polyid]
+                        SEQ pv = 0 FOR 3
                           IF
                             pixel[pv] = #00               -- leave this component alone
                               SKIP
@@ -3402,6 +3402,100 @@ PROC raster.polyidclick (CHAN RASTER in?, out!, CHAN RASTER.EVENT ev.in?, ev.out
                       SEQ
                         id := (r[ry][rx] >> 24) /\ #FF
                         ids.out ! id
+                  report := 0
+              TRUE
+                SKIP
+            out ! r
+          --}}}
+:
+--}}}
+--{{{  PROC raster.polyidclick.pos (CHAN RASTER in?, out!, CHAN RASTER.EVENT ev.in?, ev.out!, CHAN G3D.POLY.CLICK ids.out!, VAL INT dclk)
+--* Connects into the raster chain and event pipeline to extract IDs (0-255) of polygons.
+-- Responds to single or double click.
+--
+-- @param in Rasters in.
+-- @param out Rasters out.
+-- @param ev.in Events in.
+-- @param ev.out Events out.
+-- @param ids.out Polygon IDs and absolute X-Y position out (extracted from high 8 bits of the rendered pixel).
+-- @param dclk Double click time (0 = single click).
+--
+PROC raster.polyidclick.pos (CHAN RASTER in?, out!, CHAN RASTER.EVENT ev.in?, ev.out!, CHAN G3D.POLY.CLICK ids.out!, VAL INT dclk)
+  INT report:
+  INT rx, ry:
+  INT t1:
+  TIMER tim:
+  BOOL timing:
+  SEQ
+    report := 0
+    timing := FALSE
+    rx := 0
+    ry := 0
+    tim ? t1
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        timing & tim ? AFTER t1
+          --{{{  double-click timeout
+          SEQ
+            report := 0
+            timing := FALSE
+          --}}}
+        RASTER.EVENT ev:
+        ev.in ? ev
+          --{{{  handle event
+          SEQ
+            IF
+              ev[type] = RASTER.ET.MOUSEBUTTONDOWN
+                IF
+                  dclk = 0
+                    SEQ
+                      -- single clicks only
+                      report := 1
+                      rx := INT ev[x]
+                      ry := INT ev[y]
+                  TRUE
+                    SEQ
+                      -- double click needed
+                      IF
+                        report = 0
+                          SEQ
+                            -- first of double click
+                            tim ? t1
+                            t1 := t1 PLUS dclk
+                            timing := TRUE
+                            report := 1
+                            rx := INT ev[x]
+                            ry := INT ev[y]
+                        report = 1
+                          SEQ
+                            -- double click in time
+                            report := 2
+                            timing := FALSE
+                        TRUE
+                          SKIP
+              TRUE
+                SKIP
+            ev.out ! ev
+          --}}}
+        RASTER r:
+        in ? r
+          --{{{  raster on its way through
+          SEQ
+            IF
+              report = 0
+                SKIP
+              ((dclk = 0) AND (report = 1)) OR ((dclk <> 0) AND (report = 2))
+                SEQ
+                  IF
+                    ((rx < 0) OR (ry < 0)) OR ((ry >= (SIZE r)) OR (rx >= (SIZE r[0])))
+                      SKIP        -- out of raster bounds
+                    TRUE
+                      INT id:
+                      SEQ
+                        id := (r[ry][rx] >> 24) /\ #FF
+                        ids.out ! [id, rx, ry]
                   report := 0
               TRUE
                 SKIP
