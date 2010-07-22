@@ -33,8 +33,8 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
     gyro.to.degrees(gyro.smooth[Y]?, gyro.degree[Y]!)
     gyro.to.degrees(gyro.smooth[X]?, gyro.degree[X]!)
 
-    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, 80, 1)
-    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 80, 1)
+    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, 90, 1)
+    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 90, 1)
     
 :
 
