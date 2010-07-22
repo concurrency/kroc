@@ -1,30 +1,37 @@
 #IF NOT (DEFINED (CONTROL.MODULE))
 #DEFINE CONTROL.MODULE
-#IF FALSE
-PROC turn (VAL INT pitch, roll, bank.angle)
+
+PROC turn (CHAN INT x?, y?, VAL INT bank.angle, CHAN SERVO s, s2)
+  INT servo.pos.roll, servo.pos.pitch, pitch, roll:
+  
   SEQ
+    x ? pitch
+    y ? roll
     IF 
-      servo.pos.roll <> roll + 90 + bank.angle
+      servo.pos.roll <> ((roll + 90) + bank.angle)
         SEQ
-          SEQ i = 0 for bank.angle    --This slowly initiates servo movement to the specified angle to initiate a roll condition
-            servo.pos.pitch := (pitch) + 100
-            s ! pos ; servo.pos.pitch
+        --This slowly initiates servo movement to the specified angle to initiate a roll condition
+          SEQ i = 0 FOR bank.angle    
+            SEQ
+              servo.pos.pitch := (pitch) + 100
+              s ! pos ; servo.pos.pitch
             
-            servo.pos.roll := roll + 90 + i
-            s ! pos ; servo.pos.roll
+              servo.pos.roll := ((roll + 90) + i)
+              s ! pos ; servo.pos.roll
         
       TRUE
         SEQ
-          servo.pos.pitch := (pitch * (-1)) + 90 + bank.angle -- This stabilizes the airplane at the specified bank angle
+          servo.pos.pitch := (((pitch * (-1)) + 90) + bank.angle) -- This stabilizes the airplane at the specified bank angle
           s ! pos ; servo.pos.pitch
         
-          servo.pos.roll := (roll * (-1)) + 90 + bank.angle
+          servo.pos.roll := (((roll * (-1)) + 90) + bank.angle)
           s2 ! pos ; servo.pos.roll
     
 :    
-    
-VAL BOOL LEFT, RIGHT IS TRUE, FALSE: 
-PROC turn.to.heading (CHAN INT theta.x?, theta.y?, heading?, CHAN SIGNAL sig, CHAN SERVO s, s2, VAL BOOL direction, VAL INT new.heading)
+#IF FALSE    
+VAL BOOL LEFT IS TRUE:
+VAL BOOL RIGHT IS FALSE: 
+PROC turn.to.heading (CHAN INT theta.x?, theta.y?, heading?, CHAN SIGNAL sig, CHAN SERVO s, s2, VAL BOOL turn.dir, VAL INT new.heading)
   INT pitch, roll, curr.dir:
   
   SEQ
@@ -35,16 +42,16 @@ PROC turn.to.heading (CHAN INT theta.x?, theta.y?, heading?, CHAN SIGNAL sig, CH
     
     
     IF 
-      curr.dirr = new.heading  -- If we are flying at the same heading as the new heading we want, then just keep flying
+      curr.dir = new.heading  -- If we are flying at the same heading as the new heading we want, then just keep flying
         SKIP
       turn.dir = LEFT
-        WHILE (curr.dirr > (5 + new.heading)) AND (curr.dirr < (5 + new.heading))  -- If we want to specify a left turn, then we will turn to the left until we are within 5 degrees of our intended new heading.
+        WHILE (curr.dir > (5 + new.heading)) AND (curr.dir < (5 + new.heading))  -- If we want to specify a left turn, then we will turn to the left until we are within 5 degrees of our intended new heading.
           SEQ
-            turn (pitch, roll, s, s2 35)
+            turn (pitch, roll, 35, s, s2)
       turn.dir = RIGHT
-        WHILE (curr.dirr > (5 + new.heading)) AND (curr.dirr < (5 + new.heading)) -- If we want to specify a right turn, then we will turn to the right until we are within 5 degrees of our intended new heading.
+        WHILE (curr.dir > (5 + new.heading)) AND (curr.dir < (5 + new.heading)) -- If we want to specify a right turn, then we will turn to the right until we are within 5 degrees of our intended new heading.
           SEQ
-            turn (pitch, roll, s, s2, -35)
+            turn (pitch, roll, (-35), s, s2)
       TRUE
         SKIP
 :
@@ -75,53 +82,4 @@ PROC servo.setup(CHAN SERVO s) --Wrapped the initialization of the servo
     s ! pos ; 0
     s ! start
 : 
-PROC navlights(VAL INT tail.left, tail.right, wingstrobe.left, wingstrobe.right, wingnav.left, wingnav.right)
-  SEQ
-    digital.mode(wingnav.left, OUTPUT)
-    digital.write(wingnav.left, 1)
-    digital.mode(wingnav.right, OUTPUT)
-    digital.write(wingnav.right, 1)
-    PAR
-      SEQ
-        blink(wingstrobe.left, 1000)
-      SEQ
-        delay(1000)
-        blink(wingstrobe.right, 1000)
-      SEQ
-        delay(1000)
-        blink(tail.left, 800)
-      SEQ
-        delay(1000)
-        blink(tail.right, 800)
-:
-PROC lights(VAL INT pin1, pin2, pin3, pin4, CHAN INT bogo)
-  INITIAL INT c, b IS 0, 0:
-  WHILE TRUE
-    SEQ
-      c := c + 1
-      IF
-        c = 30
-          SEQ
-            digital.mode(pin1, OUTPUT)
-            digital.write(pin1, 1)
-            digital.mode(pin2, OUTPUT)
-            digital.write(pin2, 1)
-            digital.mode(pin3, OUTPUT)
-            digital.mode(pin4, OUTPUT)
-            digital.write(pin3, 0)
-            digital.write(pin4, 1)
-        c = 60
-          SEQ
-            digital.mode(pin1, OUTPUT)
-            digital.write(pin1, 0)
-            digital.mode(pin2, OUTPUT)
-            digital.write(pin2, 0)
-            digital.mode(pin3, OUTPUT)
-            digital.mode(pin4, OUTPUT)
-            digital.write(pin3, 1)
-            digital.write(pin4, 0)
-            c := 0
-        TRUE
-          bogo ! 0
-:
 #ENDIF

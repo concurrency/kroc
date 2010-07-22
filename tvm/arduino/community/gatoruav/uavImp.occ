@@ -10,7 +10,7 @@ PROC display(CHAN INT theta?)
       serialWriteDecInt(angle)
       serial.write.string(TX0, "*n")
 :
-VAL INT NUM.READINGS.TO.AVERAGE IS 10:
+VAL INT NUM.READINGS.TO.AVERAGE IS 5:
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT  sum:
@@ -33,24 +33,39 @@ PROC av (CHAN INT input?, output!)
 PROC main ()
   CHAN SERVO s, s2:
   CHAN INT roll, pitch, filtered.x, filtered.y, bogo:
+  TIMER turntime:
+  INT t:
+
   SEQ
-    digital.mode (9, OUTPUT)
-    digital.mode (10, OUTPUT)
+    
+    digital.mode (45, OUTPUT)
+    digital.mode (44, OUTPUT)
+    --IF
+      --t < 10000
+        --turn(filtered.x?, filtered.y?, 35, s, s2)
+      --TRUE
+        --SKIP
     PAR
+      digital.mode(32, OUTPUT)
+      digital.write(32, 1)
+      digital.mode(30, OUTPUT)
+      digital.write(30, 1)
+      
+      SEQ           -- Blinks navigation LED's in a nice pattern 
+        delay (500)
+        blink (31, 1000)
+      SEQ
+        blink (33, 1000)
+      SEQ
+        delay (250)
+        blink (40, 1000)
+      
+      
       servo (45, s)
       servo (44, s2)
+      
       SEQ
-         
-        digital.mode(32, OUTPUT)
-        digital.write(32, 1)
-        digital.mode(30, OUTPUT)
-        digital.write(30, 1)
-        
-        digital.mode(40, OUTPUT)
-        digital.write(40, 1)
-        digital.mode(41, OUTPUT)
-        digital.write(41, 1)
-        s2 ! min ; 650
+        s2 ! min ; 650      --Startup for both servos
         s2 ! max ; 2350
         s2 ! div ; 180
         s2 ! pos ; 0
@@ -60,15 +75,17 @@ PROC main ()
         s ! div ; 180
         s ! pos ; 0
         s ! start
-        --servo.setup(s)       
-        --servo.setup(s2)
         delay (2000)
-        level.flight (filtered.x?, filtered.y?, s, s2)
-      angles(A4, A5, A0, A1, pitch!, roll!)
+        serial.write.int (TX0, t)
+        turntime ? t
+        IF 
+          t <= 10000
+            level.flight (filtered.x?, filtered.y?, s, s2)
+          t > 10000
+            turn(filtered.x?, filtered.y?, 35, s, s2)
+          TRUE
+            SKIP
+      angles(A4, A5, A0, A1, pitch!, roll!)  
       av(pitch?, filtered.x!)
       av(roll?, filtered.y!)
-      --lights(40,41,31,33,bogo!)
-      --navlights(40, 41, 31, 33, 30, 32)
-       --display(roll?)
-
 :

@@ -154,6 +154,7 @@ PROC accel.conv.x (CHAN INT in?, out!)
     SEQ
       in ? reading
       i := 0
+      reading := reading - 2
       IF
         (reading <= 542) AND (reading >= 478)
           SEQ
