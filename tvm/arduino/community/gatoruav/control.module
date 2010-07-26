@@ -3,29 +3,15 @@
 
 PROC turn (CHAN INT x?, y?, VAL INT bank.angle, CHAN SERVO s, s2)
   INT servo.pos.roll, servo.pos.pitch, pitch, roll:
-  
-  SEQ
-    x ? pitch
-    y ? roll
-    IF 
-      servo.pos.roll <> ((roll + 90) + bank.angle)
-        SEQ
-        --This slowly initiates servo movement to the specified angle to initiate a roll condition
-          SEQ i = 0 FOR bank.angle    
-            SEQ
-              servo.pos.pitch := (pitch) + 100
-              s ! pos ; servo.pos.pitch
-            
-              servo.pos.roll := ((roll + 90) + i)
-              s ! pos ; servo.pos.roll
-        
-      TRUE
-        SEQ
-          servo.pos.pitch := (((pitch * (-1)) + 90) + bank.angle) -- This stabilizes the airplane at the specified bank angle
-          s ! pos ; servo.pos.pitch
-        
-          servo.pos.roll := (((roll * (-1)) + 90) + bank.angle)
-          s2 ! pos ; servo.pos.roll
+  WHILE TRUE
+    SEQ
+      x ? pitch
+      y ? roll
+      servo.pos.pitch := (pitch * (-1)) + 100
+      s ! pos ; servo.pos.pitch
+      servo.pos.roll := (roll * (-1)) + (bank.angle + 90)
+      s2 ! pos ; servo.pos.roll
+     
     
 :    
 #IF FALSE    
@@ -68,7 +54,7 @@ PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2) -- This PROC a
         servo.pos.pitch := (pitch * (-1)) + 90
         s ! pos ; servo.pos.pitch
         
-        servo.pos.roll := (roll * (-1)) + 90
+        servo.pos.roll := (roll * (-1)) + 88
         s2 ! pos ; servo.pos.roll
         
       
