@@ -635,6 +635,105 @@ PROC squarepoints.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT3 out!, C
             out ! CLONE cpnts
 :
 --}}}
+--{{{  PROC gridpoints.generator (CHAN INT trigger?, VAL INT nx, nz, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Flat grid points generator.
+-- Generates a set of points used to draw a grid (lying flat by default).  The default size is 2.0 by 2.0.
+--
+-- @param trigger Trigger channel.
+-- @param nx Number of points on X axis (including edges).
+-- @param nz Number of points on Z axis (including edges).
+-- @param out Points generated.
+-- @param ctrl Control channel.
+--
+PROC gridpoints.generator (CHAN INT trigger?, VAL INT nx, nz, CHAN MOBILE []G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  MOBILE []G3D.POINT3 cpnts, opnts:
+  INT npoints:
+
+  PROC reset () --{{{
+    REAL32 sx, sz:
+    INITIAL INT pp IS 0:
+    SEQ
+      opnts := MOBILE [npoints]G3D.POINT3
+
+      sx := 2.0 / (REAL32 TRUNC (nx - 1))
+      sz := 2.0 / (REAL32 TRUNC (nz - 1))
+
+      SEQ x = 0 FOR nx
+        REAL32 tx:
+        SEQ
+          tx := (-1.0) + (sx * (REAL32 TRUNC x))
+          opnts[pp] := [tx, 0.0, -1.0]
+          opnts[pp+1] := [tx, 0.0, 1.0]
+          pp := pp + 2
+
+      SEQ z = 0 FOR nz
+        REAL32 tz:
+        SEQ
+          tz := (-1.0) + (sz * (REAL32 TRUNC z))
+          opnts[pp] := [-1.0, 0.0, tz]
+          opnts[pp+1] := [1.0, 0.0, tz]
+          pp := pp + 2
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    npoints := (nx * 2) + (nz * 2)
+    reset ()
+    cpnts := CLONE opnts
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        PRI ALT
+          ctrl ? CASE
+            reset
+              SEQ
+                reset ()
+                cpnts := CLONE opnts
+            [3]REAL32 scale:
+            add.scale; scale
+              --{{{  add scale (to cpnts)
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] * scale[0]
+                  cpnts[i][y] := cpnts[i][y] * scale[1]
+                  cpnts[i][z] := cpnts[i][z] * scale[2]
+              --}}}
+            [3]REAL32 scale:
+            set.scale; scale
+              --{{{  set scale (from opnts)
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := opnts[i][x] * scale[0]
+                  cpnts[i][y] := opnts[i][y] * scale[1]
+                  cpnts[i][z] := opnts[i][z] * scale[2]
+              --}}}
+            [3]REAL32 trans:
+            add.trans; trans
+              --{{{  add translation (to cpnts)
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := cpnts[i][x] + trans[0]
+                  cpnts[i][y] := cpnts[i][y] + trans[1]
+                  cpnts[i][z] := cpnts[i][z] + trans[2]
+              --}}}
+            [3]REAL32 trans:
+            set.trans; trans
+              --{{{  set translation (from opnts)
+              SEQ i = 0 FOR npoints
+                SEQ
+                  cpnts[i][x] := opnts[i][x] + trans[0]
+                  cpnts[i][y] := opnts[i][y] + trans[1]
+                  cpnts[i][z] := opnts[i][z] + trans[2]
+              --}}}
+          INT any:
+          trigger ? any
+            out ! CLONE cpnts
+:
+--}}}
 
 --{{{  PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
 --* Point rotator.
@@ -2919,6 +3018,197 @@ PROC render.polyscans.trigger (CHAN MOBILE []G3D.POLY.SCAN data?, G3D.RENDER.ENG
     g3d.debug.writer (ch?, kill?)
 :
 --}}}
+--{{{  PROC render2d.do.line (RASTER r, ZBUFFER zb, VAL INT x1, y1, z1, x2, y2, z2, pixel, vp.width, vp.height)
+--* Draws a line on a raster with Z-buffer info.
+-- @private
+PROC render2d.do.line (RASTER r, ZBUFFER zb, VAL INT x1, y1, z1, x2, y2, z2, pixel, vp.width, vp.height)
+  INITIAL INT x1 IS x1:
+  INITIAL INT y1 IS y1:
+  INITIAL INT z1 IS z1:
+  INITIAL INT x2 IS x2:
+  INITIAL INT y2 IS y2:
+  INITIAL INT z2 IS z2:
+  SEQ
+    IF
+      y2 < y1
+        SEQ
+          -- swap points around
+          y2, y1 := y1, y2
+          x2, x1 := x1, x2
+          z2, z1 := z1, z2
+      TRUE
+        SKIP
+
+    IF
+      y1 = y2
+        --{{{  flat horizontal line
+        IF
+          (y1 >= 0) AND (y1 < vp.height)
+            SEQ
+              IF
+                (x1 < 0) AND (x2 < 0)
+                  SKIP
+                (x1 >= vp.width) AND (x2 >= vp.width)
+                  SKIP
+                TRUE
+                  INT zdiff, z:
+                  SEQ
+                    IF
+                      x1 > x2
+                        x1, x2 := x2, x1
+                      TRUE
+                        SKIP
+
+                    IF
+                      x2 = x1
+                        zdiff := 0
+                      TRUE
+                        zdiff := (z2 - z1) / (x2 - x1)
+                    z := z1
+
+                    SEQ i = x1 FOR (x2 - x1)
+                      SEQ
+                        IF
+                          i < 0
+                            SKIP
+                          i >= vp.width
+                            SKIP
+                          (zb[y1][i] = 0) OR (zb[y1][i] > z)
+                            SEQ
+                              zb[y1][i] := z
+                              r[y1][i] := pixel
+                          TRUE
+                            SKIP
+                        z := z + zdiff
+
+          TRUE
+            SKIP
+        --}}}
+      x1 = x2
+        --{{{  flat vertical line
+        IF
+          (x1 >= 0) AND (x2 < vp.width)
+            IF
+              (y1 < 0) AND (y2 < 0)
+                SKIP
+              (y1 >= vp.height) AND (y2 >= vp.height)
+                SKIP
+              TRUE
+                INT zdiff, z:
+                SEQ
+                  IF
+                    y1 > y2
+                      y1, y2 := y2, y1
+                    TRUE
+                      SKIP
+
+                  zdiff := (z2 - z1) / (y2 - y1)
+                  z := z1
+
+                  SEQ j = y1 FOR (y2 - y1)
+                    SEQ
+                      IF
+                        j < 0
+                          SKIP
+                        j >= vp.height
+                          SKIP
+                        (zb[j][x1] = 0) OR (zb[j][x1] > z)
+                          SEQ
+                            zb[j][x1] := z
+                            r[j][x1] := pixel
+                        TRUE
+                          SKIP
+                      z := z + zdiff
+          TRUE
+            SKIP
+        --}}}
+      TRUE
+        INITIAL INT grad IS (y2 - y1) / (x2 - x1):
+        IF
+          grad = 0
+            --{{{  low gradient, draw by X
+            SEQ
+              IF
+                x1 > x2
+                  SEQ
+                    x1, x2 := x2, x1
+                    y1, y2 := y2, y1
+                    z1, z2 := z2, z1
+                TRUE
+                  SKIP
+
+              INT y, step:
+              INT z, zdiff:
+              SEQ
+                y := y1 << 16
+                step := ((y2 - y1) << 16) / (x2 - x1)
+                y := y + step
+                x1 := x1 + 1
+
+                IF
+                  x2 = x1
+                    zdiff := 0
+                  TRUE
+                    zdiff := (z2 - z1) / (x2 - x1)
+                z := z1
+
+                SEQ x = x1 FOR ((x2 - x1) + 1)
+                  SEQ
+                    IF
+                      (x >= 0) AND (x < vp.width)
+                        VAL INT sy IS y >> 16:
+                        IF
+                          (sy < 0) OR (sy >= vp.height)
+                            SKIP
+                          (zb[sy][x] = 0) OR (zb[sy][x] > z)
+                            SEQ
+                              zb[sy][x] := z
+                              r[sy][x] := pixel
+                          TRUE
+                            SKIP
+                      TRUE
+                        SKIP
+                    y := y + step
+                    z := z + zdiff
+            --}}}
+          TRUE
+            --{{{  steep gradient, draw by Y
+            INT x, step:
+            INT z, zdiff:
+            SEQ
+              x := x1 << 16
+              step := ((x2 - x1) << 16) / (y2 - y1)
+              x := x + step
+              y1 := y1 + 1
+
+              IF
+                y2 = y1
+                  zdiff := 0
+                TRUE
+                  zdiff := (z2 - z1) / (y2 - y1)
+              z := z1
+
+              SEQ y = y1 FOR ((y2 - y1) + 1)
+                SEQ
+                  IF
+                    (y >= 0) AND (y < vp.height)
+                      VAL INT sx IS x >> 16:
+                      IF
+                        (sx < 0) OR (sx >= vp.width)
+                          SKIP
+                        (zb[y][sx] = 0) OR (zb[y][sx] > z)
+                          SEQ
+                            zb[y][sx] := z
+                            r[y][sx] := pixel
+                        TRUE
+                          SKIP
+                    TRUE
+                      SKIP
+                  x := x + step
+                  z := z + zdiff
+            --}}}
+:
+--}}}
 --{{{  PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
 --* Renders wireframe polygons (directly from polygon data).
 -- @private
@@ -2937,206 +3227,18 @@ PROC render.polyframe.int (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlin
           vp.height := G3D.MAX.SCAN.HEIGHT
   :
   --}}}
-  PROC do.line (RASTER r, ZBUFFER zb, VAL INT x1, y1, z1, x2, y2, z2, pixel) --{{{
-    INITIAL INT x1 IS x1:
-    INITIAL INT y1 IS y1:
-    INITIAL INT z1 IS z1:
-    INITIAL INT x2 IS x2:
-    INITIAL INT y2 IS y2:
-    INITIAL INT z2 IS z2:
-    SEQ
-      IF
-        y2 < y1
-          SEQ
-            -- swap points around
-            y2, y1 := y1, y2
-            x2, x1 := x1, x2
-            z2, z1 := z1, z2
-        TRUE
-          SKIP
-
-      IF
-        y1 = y2
-          --{{{  flat horizontal line
-          IF
-            (y1 >= 0) AND (y1 < vp.height)
-              SEQ
-                IF
-                  (x1 < 0) AND (x2 < 0)
-                    SKIP
-                  (x1 >= vp.width) AND (x2 >= vp.width)
-                    SKIP
-                  TRUE
-                    INT zdiff, z:
-                    SEQ
-                      IF
-                        x1 > x2
-                          x1, x2 := x2, x1
-                        TRUE
-                          SKIP
-
-                      IF
-                        x2 = x1
-                          zdiff := 0
-                        TRUE
-                          zdiff := (z2 - z1) / (x2 - x1)
-                      z := z1
-
-                      SEQ i = x1 FOR (x2 - x1)
-                        SEQ
-                          IF
-                            i < 0
-                              SKIP
-                            i >= vp.width
-                              SKIP
-                            (zb[y1][i] = 0) OR (zb[y1][i] > z)
-                              SEQ
-                                zb[y1][i] := z
-                                r[y1][i] := pixel
-                            TRUE
-                              SKIP
-                          z := z + zdiff
-
-            TRUE
-              SKIP
-          --}}}
-        x1 = x2
-          --{{{  flat vertical line
-          IF
-            (x1 >= 0) AND (x2 < vp.width)
-              IF
-                (y1 < 0) AND (y2 < 0)
-                  SKIP
-                (y1 >= vp.height) AND (y2 >= vp.height)
-                  SKIP
-                TRUE
-                  INT zdiff, z:
-                  SEQ
-                    IF
-                      y1 > y2
-                        y1, y2 := y2, y1
-                      TRUE
-                        SKIP
-
-                    zdiff := (z2 - z1) / (y2 - y1)
-                    z := z1
-
-                    SEQ j = y1 FOR (y2 - y1)
-                      SEQ
-                        IF
-                          j < 0
-                            SKIP
-                          j >= vp.height
-                            SKIP
-                          (zb[j][x1] = 0) OR (zb[j][x1] > z)
-                            SEQ
-                              zb[j][x1] := z
-                              r[j][x1] := pixel
-                          TRUE
-                            SKIP
-                        z := z + zdiff
-            TRUE
-              SKIP
-          --}}}
-        TRUE
-          INITIAL INT grad IS (y2 - y1) / (x2 - x1):
-          IF
-            grad = 0
-              --{{{  low gradient, draw by X
-              SEQ
-                IF
-                  x1 > x2
-                    SEQ
-                      x1, x2 := x2, x1
-                      y1, y2 := y2, y1
-                      z1, z2 := z2, z1
-                  TRUE
-                    SKIP
-
-                INT y, step:
-                INT z, zdiff:
-                SEQ
-                  y := y1 << 16
-                  step := ((y2 - y1) << 16) / (x2 - x1)
-                  y := y + step
-                  x1 := x1 + 1
-
-                  IF
-                    x2 = x1
-                      zdiff := 0
-                    TRUE
-                      zdiff := (z2 - z1) / (x2 - x1)
-                  z := z1
-
-                  SEQ x = x1 FOR ((x2 - x1) + 1)
-                    SEQ
-                      IF
-                        (x >= 0) AND (x < vp.width)
-                          VAL INT sy IS y >> 16:
-                          IF
-                            (sy < 0) OR (sy >= vp.height)
-                              SKIP
-                            (zb[sy][x] = 0) OR (zb[sy][x] > z)
-                              SEQ
-                                zb[sy][x] := z
-                                r[sy][x] := pixel
-                            TRUE
-                              SKIP
-                        TRUE
-                          SKIP
-                      y := y + step
-                      z := z + zdiff
-              --}}}
-            TRUE
-              --{{{  steep gradient, draw by Y
-              INT x, step:
-              INT z, zdiff:
-              SEQ
-                x := x1 << 16
-                step := ((x2 - x1) << 16) / (y2 - y1)
-                x := x + step
-                y1 := y1 + 1
-
-                IF
-                  y2 = y1
-                    zdiff := 0
-                  TRUE
-                    zdiff := (z2 - z1) / (y2 - y1)
-                z := z1
-
-                SEQ y = y1 FOR ((y2 - y1) + 1)
-                  SEQ
-                    IF
-                      (y >= 0) AND (y < vp.height)
-                        VAL INT sx IS x >> 16:
-                        IF
-                          (sx < 0) OR (sx >= vp.width)
-                            SKIP
-                          (zb[y][sx] = 0) OR (zb[y][sx] > z)
-                            SEQ
-                              zb[y][sx] := z
-                              r[y][sx] := pixel
-                          TRUE
-                            SKIP
-                      TRUE
-                        SKIP
-                    x := x + step
-                    z := z + zdiff
-              --}}}
-  :
-  --}}}
   PROC poly.frame.render (RASTER r, ZBUFFER zb, VAL G3D.POLY poly) --{{{
     IF
       poly[npoints] < 2
         SKIP
       poly[npoints] = 2
-        do.line (r, zb, poly[x][0], poly[y][0], poly[z][0], poly[x][1], poly[y][1], poly[z][1], poly[pixel])
+        render2d.do.line (r, zb, poly[x][0], poly[y][0], poly[z][0], poly[x][1], poly[y][1], poly[z][1], poly[pixel], vp.width, vp.height)
       TRUE
         SEQ
           SEQ i = 0 FOR poly[npoints] - 1
-            do.line (r, zb, poly[x][i], poly[y][i], poly[z][i], poly[x][i+1], poly[y][i+1], poly[z][i+1], poly[pixel])
+            render2d.do.line (r, zb, poly[x][i], poly[y][i], poly[z][i], poly[x][i+1], poly[y][i+1], poly[z][i+1], poly[pixel], vp.width, vp.height)
           VAL INT lp IS poly[npoints] - 1:
-          do.line (r, zb, poly[x][lp], poly[y][lp], poly[z][lp], poly[x][0], poly[y][0], poly[z][0], poly[pixel])
+          render2d.do.line (r, zb, poly[x][lp], poly[y][lp], poly[z][lp], poly[x][0], poly[y][0], poly[z][0], poly[pixel], vp.width, vp.height)
   :
   --}}}
 
@@ -3216,6 +3318,103 @@ PROC render.polyframe (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in
 PROC render.polyframe.trigger (CHAN MOBILE []G3D.POLY data?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
   SEQ
     render.polyframe.int (data?, rlink.in?, ctrl?, trigger!, TRUE, width, height)
+:
+--}}}
+--{{{  PROC render.pointpairs.int (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
+--* Renders a set of lines.  Expects pairs of points on its input channel (G3D.POINT2.3 style).
+-- @private
+PROC render.pointpairs.int (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL BOOL use.trigger, VAL INT width, height)
+  INT mode:
+  INT vp.width, vp.height:
+
+  PROC reset () --{{{
+    SEQ
+      mode := G3D.RENDER.MODE.NORM
+      vp.width := width
+      vp.height := height
+  :
+  --}}}
+
+  G3D.RENDER.ENGINE! rlink.out:
+  SEQ
+    reset ()
+
+    INT n:
+    rlink.in[link] ? CASE set.next; n; rlink.out
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          set.mode; mode
+            SKIP
+
+        rlink.in[link] ? CASE
+          RASTER r:
+          ZBUFFER zb:
+          raster; r; zb
+            --{{{  render and pass on
+            MOBILE []G3D.POINT2.3 points:
+            SEQ
+              IF
+                use.trigger
+                  trigger ! 0                   -- trigger generator and wait
+                TRUE
+                  SKIP
+
+              in ? points
+
+              SEQ i = 0 FOR ((SIZE points) / 2) STEP 2
+                SEQ
+                  render2d.do.line (r, zb, points[i][x], points[i][y], points[i][z], points[i+1][x], points[i+1][y], points[i+1][z], #00FFFFFF, vp.width, vp.height)
+
+              rlink.out[link] ! raster; r; zb
+            --}}}
+          INT n:
+          G3D.RENDER.ENGINE! tmp:
+          set.next; n; tmp
+            --{{{  set next or pass on
+            IF
+              n > 0
+                rlink.out[link] ! set.next; n-1; tmp
+              TRUE
+                SEQ
+                  tmp[link] ! set.next; 0; rlink.out
+                  rlink.out := tmp
+            --}}}
+:
+--}}}
+--{{{  PROC render.pointpairs (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)
+--* Renders a set of lines.  Expects pairs of points on its input channel (G3D.POINT2.3 style).
+--
+-- @param in Sets of points to draw lines between.
+-- @param rlink.in Render link.
+-- @param ctrl Control channel for rendering.
+-- @param trigger Trigger channel.
+-- @param width Width of render space.
+-- @param height Height of render space.
+--
+PROC render.pointpairs (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, VAL INT width, height)
+  SEQ
+    CHAN INT dummy:
+    render.pointpairs.int (in?, rlink.in?, ctrl?, dummy!, FALSE, width, height)
+:
+--}}}
+--{{{  PROC render.pointpairs.trigger (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
+--* Renders a set of lines.  Expects pairs of points on its input channel (G3D.POINT2.3 style).
+--
+-- @param in Sets of points to draw lines between.
+-- @param rlink.in Render link.
+-- @param ctrl Control channel for rendering.
+-- @param trigger Trigger channel.
+-- @param width Width of render space.
+-- @param height Height of render space.
+--
+PROC render.pointpairs.trigger (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? rlink.in, CHAN G3D.RDR.CONTROL ctrl?, CHAN INT trigger!, VAL INT width, height)
+  SEQ
+    render.pointpairs.int (in?, rlink.in?, ctrl?, trigger!, TRUE, width, height)
 :
 --}}}
 
