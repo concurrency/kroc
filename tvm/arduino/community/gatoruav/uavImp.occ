@@ -10,7 +10,7 @@ PROC display(CHAN INT theta?)
       serialWriteDecInt(angle)
       serial.write.string(TX0, "*n")
 :
-VAL INT NUM.READINGS.TO.AVERAGE IS 5:
+VAL INT NUM.READINGS.TO.AVERAGE IS 3:
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT  sum:
@@ -31,7 +31,7 @@ PROC av (CHAN INT input?, output!)
         ndx := (ndx + 1) REM (SIZE readings)
 :
 
-PROC brain (CHAN INT pitch?, roll?, turn.x!, turn.y!, level.x!, level.y!)
+PROC brain (CHAN INT pitch?, roll?, turn.x!, turn.y!, level.x!, level.y!) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
   TIMER time:
   INT pitch.angle, roll.angle,t:
   INITIAL BOOL TURN, LEVEL IS TRUE, TRUE:
@@ -44,7 +44,7 @@ PROC brain (CHAN INT pitch?, roll?, turn.x!, turn.y!, level.x!, level.y!)
         TRUE
           SKIP
       IF 
-        ((t < 12000) AND (t > 10000)) OR  (t > 30000) 
+        ((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
           PAR
             SEQ
               pitch ? pitch.angle
@@ -65,18 +65,18 @@ PROC brain (CHAN INT pitch?, roll?, turn.x!, turn.y!, level.x!, level.y!)
 :
 PROC main ()
   CHAN SERVO s, s2, s3, s4:
-  CHAN INT roll, pitch, filtered.x, filtered.y, bogo, turn.x, turn.y, level.x, level.y:
+  CHAN INT roll, pitch, filtered.x, filtered.y,turn.x, turn.y, level.x, level.y:
   SEQ
     digital.mode (45, OUTPUT)
     digital.mode (44, OUTPUT)
 
     PAR
-      --digital.mode(32, OUTPUT)
+      --digital.mode(32, OUTPUT) -- Solid navigation lights
       --digital.write(32, 1)
       --digital.mode(30, OUTPUT)
       --digital.write(30, 1)
       
-      --SEQ           -- Blinks navigation LED's in a nice pattern 
+      --SEQ           -- Blinks White strobe LED's in a nice pattern 
         --delay (500)
         --blink (31, 1000)
       --SEQ
