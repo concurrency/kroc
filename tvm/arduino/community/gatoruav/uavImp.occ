@@ -10,7 +10,7 @@ PROC display(CHAN INT theta?)
       serialWriteDecInt(angle)
       serial.write.string(TX0, "*n")
 :
-VAL INT NUM.READINGS.TO.AVERAGE IS 3:
+VAL INT NUM.READINGS.TO.AVERAGE IS 10:
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT  sum:
@@ -114,9 +114,10 @@ PROC main ()
         delay (2000)
         PAR
           level.flight (level.x?, level.y?, s, s2)
-          turn (turn.x?, turn.y?, 5, s3, s4)
+          turn (turn.x?, turn.y?, 8, s3, s4)
           brain (filtered.x?, filtered.y?, turn.x!, turn.y!, level.x!, level.y!)
-      angles(A4, A5, A0, A1, pitch!, roll!)  
+      angles(A4, A5, A0, A1, pitch!, roll!)
+      --display(filtered.y?)
       av(pitch?, filtered.x!)
       av(roll?, filtered.y!)
 :
