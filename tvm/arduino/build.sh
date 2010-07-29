@@ -11,8 +11,21 @@ cleanup()
 MCUS="atmega328p atmega1280"
 FCPUS="16000000 8000000"
 
-for mcu in $MCUS
-do
+mcu="atmega1280"
+	for fcpu in $FCPUS
+	do
+		cleanup
+		./configure \
+			--host=avr \
+			--with-bytecode-addr=0x5200 \
+			--with-mcu=$mcu \
+			--with-fcpu=$fcpu \
+			"$@"
+		make
+		make firmware.hex
+	done
+
+mcu="atmega328p"
 	for fcpu in $FCPUS
 	do
 		cleanup
@@ -24,5 +37,3 @@ do
 		make
 		make firmware.hex
 	done
-done
-
