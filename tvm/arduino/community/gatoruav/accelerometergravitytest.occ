@@ -42,7 +42,7 @@ PROC display (CHAN INT input?)
       serial.write.string (TX0,"*n")
 :
 
-VAL INT NUM.READINGS.TO.AVERAGE IS 40:
+VAL INT NUM.READINGS.TO.AVERAGE IS 10:
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT val, average, sum:
