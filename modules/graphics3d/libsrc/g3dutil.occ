@@ -39,6 +39,23 @@ PROC g3d.point3.delta (CHAN MOBILE []G3D.POINT3 in?, out.0!, out.1!)
         out.1 ! p
 :
 --}}}
+--{{{  PROC g3d.point3s.delta (CHAN MOBILE []G3D.POINT3S in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT3S] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point3s.delta (CHAN MOBILE []G3D.POINT3S in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT3S p:
+    SEQ
+      in ? p
+      SEQ
+        out.0 ! CLONE p
+        out.1 ! p
+:
+--}}}
 --{{{  PROC g3d.point2.3.delta (CHAN MOBILE []G3D.POINT2.3 in?, out.0!, out.1!)
 --* Delta for mobile arrays of the [@ref G3D.POINT2.3] type.
 --
@@ -49,6 +66,22 @@ PROC g3d.point3.delta (CHAN MOBILE []G3D.POINT3 in?, out.0!, out.1!)
 PROC g3d.point2.3.delta (CHAN MOBILE []G3D.POINT2.3 in?, out.0!, out.1!)
   WHILE TRUE
     MOBILE []G3D.POINT2.3 p:
+    SEQ
+      in ? p
+      out.0 ! CLONE p
+      out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.point2.3s.delta (CHAN MOBILE []G3D.POINT2.3S in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT2.3S] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point2.3s.delta (CHAN MOBILE []G3D.POINT2.3S in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT2.3S p:
     SEQ
       in ? p
       out.0 ! CLONE p
