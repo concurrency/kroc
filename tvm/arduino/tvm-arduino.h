@@ -30,6 +30,7 @@ extern int ffi_wait_for_interrupt (ECTX ectx, WORD args[]);
 /*}}}*/
 /*{{{  serial.c */
 extern void serial_stdout_init(long speed);
+extern int ffi_read_buffer_blocking (ECTX ectx, WORD args[]);
 /*}}}*/
 /*{{{  tbc.c */
 extern int tbc_file_and_line (const prog_char *data, UWORD offset, const prog_char **file, UWORD *line);

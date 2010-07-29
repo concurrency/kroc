@@ -247,7 +247,7 @@ PROC serial.write.real32 (VAL INT board.pin, VAL REAL32 n, VAL INT precision)
 
 PROC serial.buffer.read (VAL INT board.pin, VAL BYTE start, end, RESULT []BYTE buffer, RESULT INT length)
   VAL INT port IS board.to.serial.port (board.pin):
-  read.buffer.blocking (UCSRA[port], RXC[port], UDR[port], start, end, buffer, length)
+  read.buffer.blocking (port, start, end, buffer, length)
 :
 
 #ENDIF
