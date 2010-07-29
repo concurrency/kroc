@@ -316,6 +316,11 @@ PROC g3d.rdr.control.delta (CHAN G3D.RDR.CONTROL in?, out.0!, out.1!)
         SEQ
           out.0 ! set.mode; m
           out.1 ! set.mode; m
+      INT p:
+      set.pixel; p
+        SEQ
+          out.0 ! set.pixel; p
+          out.1 ! set.pixel; p
 :
 --}}}
 
