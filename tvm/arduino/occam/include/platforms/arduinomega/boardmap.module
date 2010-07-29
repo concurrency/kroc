@@ -96,6 +96,7 @@ VAL INT A14 IS 68:
 -- sake of saving space.
 VAL INT A15 IS 69:
 
+
 --* Symbolic constant for accessing the first read port.
 VAL INT RX0 IS 0:
 --* Symbolic constant for accessing the first transmit port.
@@ -114,6 +115,7 @@ VAL INT RX3 IS 15:
 -- Constants TX1:2 do exist, they are simply not documented here for the
 -- sake of saving space.
 VAL INT TX3 IS 14:
+
 
 --* Symbolic constant for accessing the Serial DAta register.
 VAL INT SDA IS 20:
@@ -206,18 +208,31 @@ INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
   VALOF
     SEQ
       IF
-        (board.pin =  0) OR (board.pin = 1)
+        (board.pin =  TX0) OR (board.pin = RX0)
           serial.port := 0
-        (board.pin = 18) OR (board.pin = 19)
+        (board.pin = TX1) OR (board.pin = RX1)
           serial.port := 1
-        (board.pin = 16) OR (board.pin = 17)
+        (board.pin = TX2) OR (board.pin = RX2)
           serial.port := 2
-        (board.pin = 14) OR (board.pin = 15)
+        (board.pin = TX3) OR (board.pin = RX3)
           serial.port := 3
         TRUE
           die ("The given Board Pin is not connected to any Serial Ports.")
     RESULT serial.port
 :
+
+
+--      IF
+--        (board.pin =  0) OR (board.pin = 1)
+--          serial.port := 0
+--        (board.pin = 18) OR (board.pin = 19)
+--          serial.port := 1
+--        (board.pin = 16) OR (board.pin = 17)
+--          serial.port := 2
+--        (board.pin = 14) OR (board.pin = 15)
+--          serial.port := 3
+--        TRUE
+--          die ("The given Board Pin is not connected to any Serial Ports.")
 --}}}
 
 #ENDIF

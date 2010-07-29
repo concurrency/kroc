@@ -29,18 +29,18 @@
 --
 -- @param port The serial port to activate (eg. 0, 1, 2, or 3).
 -- @param baud The baud rate at which to transmit information.
-PROC serial.start (VAL INT port, VAL INT32 baud)
+PROC serial.start (VAL INT serial, VAL INT32 baud)
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    ports[UBRRH[port]] := factor.bytes[1]
-    ports[UBRRL[port]] := factor.bytes[0]
+    ports[UBRRH[serial]] := factor.bytes[1]
+    ports[UBRRL[serial]] := factor.bytes[0]
     -- I'm really not sure what this does, actually...
     -- I was wrong at first. I'm pretty sure this is == to UPMn0
-    ports[UCSRC[port]] := 3 << UCSZN0[port]
-    ports[UCSRB[port]] := BV (TXEN[port]) \/ BV (RXEN[port])
+    ports[UCSRC[serial]] := 3 << UCSZN0[serial]
+    ports[UCSRB[serial]] := BV (TXEN[serial]) \/ BV (RXEN[serial])
 :
 --}}}
 
@@ -49,23 +49,39 @@ PROC serial.start (VAL INT port, VAL INT32 baud)
 --
 -- @param port The serial port to write to (eg. 0, 1, 2, or 3).
 -- @param b The BYTE to write.
-PROC serial.byte.out (VAL INT port, VAL BYTE b)
+PROC serial.byte.out (VAL INT serial, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
     IF
-      (ports[UCSRA[port]] /\ BV (UDRE[port])) = 0
+      (ports[UCSRA[serial]] /\ BV (UDRE[serial])) = 0
         --{{{  transmit buffer full; wait for it to empty
         SEQ
           -- Enable the interrupt; UDRIE0 will be cleared by the (C-side)
           -- interrupt handler.
-          ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (UDRIE[port])
+          ports[UCSRB[serial]] := ports[UCSRB[serial]] \/ BV (UDRIE[serial])
           INT dummy:
-          wait.for.interrupt (VINTR.UDRE[port], dummy)
+          wait.for.interrupt (VINTR.UDRE[serial], dummy)
         --}}}
       TRUE
         SKIP
-    ports[UDR[port]] := b
+    ports[UDR[serial]] := b
+:
+--}}}
+
+
+--{{{ PROC serial.byte.in.blocking
+--* Read a byte from the serial port. (Blocks.)
+--
+-- @param port The serial port to read from (eg. 0, 1, 2, or 3).
+-- @param b The BYTE to be read.
+PROC serial.byte.in.blocking (VAL INT serial, RESULT BYTE b)  
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    WHILE ((ports[UCSRA[serial]] /\ BV (RXC[serial])) = 0)
+      SKIP
+    b := ports[UDR[serial]]
 :
 --}}}
 
@@ -74,22 +90,22 @@ PROC serial.byte.out (VAL INT port, VAL BYTE b)
 --
 -- @param port The serial port to read from (eg. 0, 1, 2, or 3).
 -- @param b The BYTE to be read.
-PROC serial.byte.in (VAL INT port, RESULT BYTE b)
+PROC serial.byte.in (VAL INT serial, RESULT BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
     IF
-      (ports[UCSRA[port]] /\ BV (RXC[port])) = 0
+      (ports[UCSRA[serial]] /\ BV (RXC[serial])) = 0
         --{{{  receive buffer empty; wait for something to come in
         SEQ
           -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
-          ports[UCSRB[port]] := ports[UCSRB[port]] \/ BV (RXCIE[port])
+          ports[UCSRB[serial]] := ports[UCSRB[serial]] \/ BV (RXCIE[serial])
           INT dummy:
-          wait.for.interrupt (VINTR.RX[port], dummy)
+          wait.for.interrupt (VINTR.RX[serial], dummy)
         --}}}
       TRUE
         SKIP
-    b := ports[UDR[port]]
+    b := ports[UDR[serial]]
 :
 --}}}
 
@@ -98,18 +114,18 @@ PROC serial.byte.in (VAL INT port, RESULT BYTE b)
 --
 -- @param port The serial port to activate (eg. 0, 1, 2, or 3).
 -- @param baud The baud rate at which to transmit information.
-PROC serial.start.blocking (VAL INT port, VAL INT32 baud)
+PROC serial.start.blocking (VAL INT serial, VAL INT32 baud) 
   VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
   VAL [4]BYTE factor.bytes RETYPES factor:
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    ports[UBRRH[port]] := factor.bytes[1]
-    ports[UBRRL[port]] := factor.bytes[0]
+    ports[UBRRH[serial]] := factor.bytes[1]
+    ports[UBRRL[serial]] := factor.bytes[0]
     -- WARNING: Should we replace this, then? Is one "more correct" than the other?
-    -- (3 << UCSZN0[port]) is the same as (UCSZN0[port] \/ UCSZN1[port])
-    ports[UCSRC[port]] := 3 << UCSZ00
-    ports[UCSRB[port]] := BV (TXEN[port])
+    -- (3 << UCSZN0[serial]) is the same as (UCSZN0[serial] \/ UCSZN1[serial])
+    ports[UCSRC[serial]] := 3 << UCSZ00
+    ports[UCSRB[serial]] := BV (TXEN[serial])
 :
 --}}}
 
@@ -118,13 +134,13 @@ PROC serial.start.blocking (VAL INT port, VAL INT32 baud)
 --
 -- @param port The serial port to write to (eg. 0, 1, 2, or 3).
 -- @param b BYTE The BYTE to write.
-PROC serial.byte.out.blocking (VAL INT port, VAL BYTE b)
+PROC serial.byte.out.blocking (VAL INT serial, VAL BYTE b)
   PLACED [MAX.PORT]BYTE ports 0:
   #PRAGMA DEFINED ports
   SEQ
-    WHILE (ports[UCSRA[port]] /\ BV (UDRE[port])) = 0
+    WHILE (ports[UCSRA[serial]] /\ BV (UDRE[serial])) = 0
       SKIP
-    ports[UDR[port]] := b
+    ports[UDR[serial]] := b
 :
 --}}}
 
