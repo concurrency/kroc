@@ -3930,9 +3930,12 @@ PROC render.pointpairs.int (CHAN MOBILE []G3D.POINT2.3 in?, G3D.RENDER.ENGINE? r
 
               in ? points
 
-              SEQ i = 0 FOR ((SIZE points) / 2) STEP 2
-                SEQ
-                  render2d.do.line (r, zb, points[i][x], points[i][y], points[i][z], points[i+1][x], points[i+1][y], points[i+1][z], #00FFFFFF, vp.width, vp.height)
+              IF
+                mode = G3D.RENDER.MODE.HIDE
+                  SKIP
+                TRUE
+                  SEQ i = 0 FOR ((SIZE points) / 2) STEP 2
+                    render2d.do.line (r, zb, points[i][x], points[i][y], points[i][z], points[i+1][x], points[i+1][y], points[i+1][z], #00FFFFFF, vp.width, vp.height)
 
               rlink.out[link] ! raster; r; zb
             --}}}
@@ -4016,24 +4019,22 @@ PROC render.spherepoint.int (CHAN MOBILE []G3D.POINT2.3S in?, G3D.RENDER.ENGINE?
           RASTER r:
           ZBUFFER zb:
           raster; r; zb
+            MOBILE []G3D.POINT2.3S points:
             SEQ
+              IF
+                use.trigger
+                  trigger ! 0                       -- trigger generator and wait
+                TRUE
+                  SKIP
+
+              in ? points
+
               IF
                 mode = G3D.RENDER.MODE.HIDE
                   SKIP
                 TRUE
-                  MOBILE []G3D.POINT2.3S points:
-                  SEQ
-                    IF
-                      use.trigger
-                        trigger ! 0                       -- trigger generator and wait
-                      TRUE
-                        SKIP
-
-                    in ? points
-
-                    SEQ i = 0 FOR SIZE points
-                      SEQ
-                        render2d.do.circle (r, zb, points[i][x], points[i][y], points[i][z], points[i][r], points[i][r], #00800000, vp.width, vp.height)
+                  SEQ i = 0 FOR SIZE points
+                    render2d.do.circle (r, zb, points[i][x], points[i][y], points[i][z], points[i][r], points[i][r], #00800000, vp.width, vp.height)
 
               rlink.out[link] ! raster; r; zb
           --}}}
