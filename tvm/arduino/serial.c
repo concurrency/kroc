@@ -62,16 +62,18 @@ int ffi_read_buffer_blocking (ECTX ectx, WORD args[]) {
 	char  start_char  = VAL_BYTE(args[1]);
 	char  end_char    = VAL_BYTE(args[2]);
 	char* buffer      = BYTE(args[3]);
-	int   buffer_leng = VAL_INT(args[4]);
+	/* int   buffer_leng = VAL_INT(args[4]); */
 	int*  result      = INT(args[5]);
 
 	int   count = 0;
-	int   running = 1;
 	char  ch;
 	/* Declare the fn ptr */
 	char (*rca[])(void) = { rc0, rc1, rc2, rc3 };
 
 	cli();	
+
+	/* Flush the USART */
+	rca[port]();
 
 	/* Look for the start character */
 	do {
@@ -81,16 +83,11 @@ int ffi_read_buffer_blocking (ECTX ectx, WORD args[]) {
 	/* Fill the buffer */
 	do {
 		ch = rca[port]();
-		if ((ch == end_char) 
-				|| (count >= buffer_leng)) {
-			running = 0;
-		} else {
-			buffer[count] = ch;
-			count++;
-		}
-	} while (running);
+		buffer[count] = ch;
+		count++;
+	} while (ch != end_char);
 	
-	*result = count;
+	*result = count - 1;
 	sei();
 
 	return SFFI_OK;
