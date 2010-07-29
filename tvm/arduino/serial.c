@@ -27,42 +27,35 @@ void serial_stdout_init (long speed) {
 	stdout = fdevopen (serial_write, NULL);
 }
 
-/* Params:
- * VAL BYTE start.char
- * VAL BYTE end.char
- * []BYTE buffer
- * RESULT INT count
- */
-#define VAL_BYTE(w) (*(char*)&(w))
-#define BYTE(w) ((char *)(w)) 
-#define INT(w) ((int *)(w))
-#define VAL_INT(w) (w)
 
-
-char read_char_0() {
+char rc0(void) {
 			while ( !(UCSR0A & (1 << RXC0)) )
 				;
 			return UDR0;
 }
 
-char read_char_1() {
+char rc1(void) {
 			while ( !(UCSR1A & (1 << RXC1)) )
 				;
 			return UDR1;
 }
 
-char read_char_2() {
+char rc2(void) {
 			while ( !(UCSR2A & (1 << RXC2)) )
 				;
 			return UDR2;
 }
 
-char read_char_3() {
+char rc3(void) {
 			while ( !(UCSR3A & (1 << RXC3)) )
 				;
 			return UDR3;
 }
 
+#define VAL_BYTE(w) (*(char*)&(w))
+#define BYTE(w) ((char *)(w)) 
+#define INT(w) ((int *)(w))
+#define VAL_INT(w) (w)
 int ffi_read_buffer_blocking (ECTX ectx, WORD args[]) {
 	int   port         = VAL_INT(args[0]);
 
@@ -75,32 +68,27 @@ int ffi_read_buffer_blocking (ECTX ectx, WORD args[]) {
 	int   count = 0;
 	int   running = 1;
 	char  ch;
-
-	char (*read_chars[])() = { read_char_0, read_char_1, read_char_2, read_char_3 };
-	char (*read_char)();
-	read_char = read_chars[port];
+	/* Declare the fn ptr */
+	char (*rca[])(void) = { rc0, rc1, rc2, rc3 };
 
 	cli();	
 
 	/* Look for the start character */
 	do {
-		ch = read_char();
+		ch = rca[port]();
 	} while (ch != start_char);
 
 	/* Fill the buffer */
-	while (running) {
-		if (count >= buffer_leng) {
+	do {
+		ch = rca[port]();
+		if ((ch == end_char) 
+				|| (count >= buffer_leng)) {
 			running = 0;
-		} else { 
-			ch = read_char();
-			if (ch == end_char) {
-				running = 0;
-			} else {
-				buffer[count] = ch;
-				count++;
-			}
+		} else {
+			buffer[count] = ch;
+			count++;
 		}
-	}
+	} while (running);
 	
 	*result = count;
 	sei();
