@@ -17,7 +17,8 @@ EXTRA_DIST = \
 	g3dcogs.occ \
 	g3dcube.occ \
 	g3dcubes.occ \
-	g3dtest.occ 
+	g3dtest.occ \
+	g3dspheres.occ
 
 if BUILD_GRAPHICS3D_EXAMPLES
 examples = \
@@ -28,7 +29,8 @@ examples = \
 	g3dcogs \
 	g3dcube \
 	g3dcubes \
-	g3dtest
+	g3dtest \
+	g3dspheres
 endif
 
 all-local: $(examples)
@@ -56,6 +58,9 @@ g3dcubes: g3dcubes.occ
 
 g3dtest: g3dtest.occ
 	$(OCCBUILD) --program $(srcdir)/g3dtest.occ
+
+g3dspheres: g3dspheres.occ
+	$(OCCBUILD) --program $(srcdir)/g3dspheres.occ
 
 install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples graphics3d --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
