@@ -117,6 +117,7 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
               pwm16.set.compare (avr.pin, usec)
             TRUE
               SKIP 
+      INT refresh:
       frequency ; refresh
         SKIP
       start
