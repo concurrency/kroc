@@ -9,8 +9,8 @@ cleanup()
 }
 
 MCUS="atmega328p atmega1280"
-# FCPUS="16000000 8000000"
-FCPUS="16000000"
+FCPUS="16000000 8000000"
+# FCPUS="16000000"
 
 mcu="atmega1280"
 	for fcpu in $FCPUS
