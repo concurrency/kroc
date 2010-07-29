@@ -6,6 +6,7 @@ CPPFLAGS = \
 	-I../../runtime/libtvm \
 	-I$(top_srcdir)/../../runtime/libtvm \
 	-DF_CPU=$(F_CPU) \
+	-D$(MCU) \
 	-DBYTECODE_ADDR=$(BYTECODE_ADDR) \
 	@CPPFLAGS@
 LDFLAGS = -Llibtvm @LDFLAGS@

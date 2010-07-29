@@ -46,7 +46,7 @@ if [ "$3" == "firmware" ]; then
   avrdude \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
     -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c arduino \
-    -U flash:w:$SHARE/firmwares/$TVM_ARDUINO_FIRMWARE
+    -U flash:w:$SHARE/firmware/$TVM_ARDUINO_FIRMWARE
   exit
 fi
 
