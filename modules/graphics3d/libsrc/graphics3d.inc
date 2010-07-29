@@ -200,6 +200,7 @@ PROTOCOL G3D.RDR.CONTROL
   CASE
     reset                     --* Resets shader to default state.
     set.mode; INT             --* Set shader mode (see [@ref G3D.RENDER.MODE]).
+    set.pixel; INT            --* Set pixel colour (for non-polygon rendering).
 :
 
 --* Overall control for graphics pipeline.
