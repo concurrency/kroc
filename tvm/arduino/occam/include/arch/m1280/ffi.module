@@ -30,4 +30,10 @@ INLINE PROC wait.for.interrupt (VAL INT interrupt, INT time)
 :
 --}}}
 
+
+#PRAGMA EXTERNAL "PROC C.tvmspecial.1.read.buffer.blocking (VAL INT interrupt, INT time) = 0"
+INLINE PROC read.buffer.blocking (VAL INT interrupt, INT time)
+  C.tvmspecial.1.read.buffer.blocking (interrupt, time)
+:
+
 #ENDIF
