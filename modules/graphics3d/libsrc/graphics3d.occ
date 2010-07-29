@@ -217,6 +217,143 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
           --}}}
 :
 --}}}
+--{{{  PROC points3ds.rotate (CHAN MOBILE []G3D.POINT3S in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
+--* Point rotator.
+-- Rotates an arbitrary set of points around the origin, such that it passes
+-- through the same sequence of moves repeatedly (e.g. for a spinning cube).  Can
+-- also be used for static rotation when set with a zero increment.
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel.
+--
+PROC points3ds.rotate (CHAN MOBILE []G3D.POINT3S in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
+  REAL32 angle, diff:
+  INT mode:
+
+  PROC reset ()
+    SEQ
+      angle := 0.0
+      diff := 0.0
+      mode := G3D.ROTATE.MODE.DEMO
+  :
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          REAL32 inc:
+          add.increment; inc
+            SEQ
+              diff := diff + inc
+          set.increment; diff
+            SKIP
+          set.mode; mode
+            SKIP
+          set.angle; angle
+            SKIP
+        MOBILE []G3D.POINT3S blk:
+        in ? blk
+          --{{{  do rotations
+          IF
+            ((diff = 0.0) AND (angle = 0.0)) OR (mode = G3D.ROTATE.MODE.NONE)
+              out ! blk
+            TRUE
+              REAL32 sin.val, cos.val:
+              MOBILE []G3D.POINT3S nblk:
+              SEQ
+                angle := angle + diff
+
+                sin.val := SIN (angle)
+                cos.val := COS (angle)
+
+                nblk := MOBILE [SIZE blk]G3D.POINT3S
+
+                #PRAGMA DEFINED nblk
+
+                IF
+                  (mode /\ G3D.ROTATE.MODE.DEMO) <> 0
+                    SEQ i = 0 FOR SIZE blk
+                      REAL32 tmp:
+                      SEQ
+                        nblk[i][x] := (blk[i][x] * cos.val) + (blk[i][y] * sin.val)
+                        nblk[i][y] := (blk[i][y] * cos.val) - (blk[i][x] * sin.val)
+                        nblk[i][z] := (blk[i][z] * cos.val) - (nblk[i][x] * sin.val)
+                        nblk[i][x] := (nblk[i][x] * cos.val) + (blk[i][z] * sin.val)
+                        tmp := (nblk[i][y] * cos.val) + (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) - (nblk[i][y] * sin.val)
+                        nblk[i][y] := tmp
+                        nblk[i][r] := blk[i][r]
+                  TRUE
+                    SEQ i = 0 FOR SIZE blk
+                      SEQ
+                        nblk[i][x] := blk[i][x]
+                        nblk[i][y] := blk[i][y]
+                        nblk[i][z] := blk[i][z]
+                        nblk[i][r] := blk[i][r]
+
+                IF
+                  (mode /\ G3D.ROTATE.MODE.X) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][y]
+                        nblk[i][y] := (nblk[i][y] * cos.val) + (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NX) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][y]
+                        nblk[i][y] := (nblk[i][y] * cos.val) - (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                IF
+                  (mode /\ G3D.ROTATE.MODE.Y) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) + (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NY) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) - (nblk[i][z] * sin.val)
+                        nblk[i][z] := (nblk[i][z] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                IF
+                  (mode /\ G3D.ROTATE.MODE.Z) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) + (nblk[i][y] * sin.val)
+                        nblk[i][y] := (nblk[i][y] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NZ) <> 0
+                    SEQ i = 0 FOR SIZE nblk
+                      REAL32 tmp:
+                      SEQ
+                        tmp := nblk[i][x]
+                        nblk[i][x] := (nblk[i][x] * cos.val) - (nblk[i][y] * sin.val)
+                        nblk[i][y] := (nblk[i][y] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                 
+                out ! nblk
+          --}}}
+:
+--}}}
 --{{{  PROC points3d.translate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.TRN.CONTROL ctrl?)
 --* Point translator.
 -- Translates an arbitrary set of points in 3D space.
@@ -1318,7 +1455,23 @@ PROC points.3ds.to.2d3s (CHAN MOBILE []G3D.POINT3S in?, CHAN MOBILE []G3D.POINT2
                 p2d[i][x] := (INT ROUND (((p3d[i][x] + x.shift) / ez) * x.scale)) + x2.shift
                 p2d[i][y] := (INT ROUND (((p3d[i][y] + y.shift) / ez) * y.scale)) + y2.shift
 
-                p2d[i][r] := (INT ROUND (p3d[i][r]))
+                #IF FALSE
+                CHAN BYTE c:
+                CHAN BOOL k:
+                PAR
+                  g3d.debug.writer (c?, k?)
+                  SEQ
+                    out.string ("ez = ", 0, c!)
+                    out.real32 (ez, 4, 2, c!)
+                    out.string ("  x.scale = ", 0, c!)
+                    out.real32 (x.scale, 4, 2, c!)
+                    out.string ("  y.scale = ", 0, c!)
+                    out.real32 (y.scale, 4, 2, c!)
+                    out.string ("    *n", 0, c!)
+                    k ! FALSE
+                #ENDIF
+
+                p2d[i][r] := (INT ROUND ((p3d[i][r] * 12.0) / ez))
                 IF
                   p2d[i][r] < 1
                     p2d[i][r] := 1
@@ -2618,10 +2771,34 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                   INITIAL INT j IS 0:
                   WHILE f < aabb
                     SEQ
-                      r[y - i][x - j] := pixel
-                      r[y - i][x + j] := pixel
-                      r[y + i][x - j] := pixel
-                      r[y + i][x + j] := pixel
+                      IF
+                        (zb[y - i][x - j] = 0) OR (zb[y - i][x - j] > z)
+                          SEQ
+                            r[y - i][x - j] := pixel
+                            zb[y - i][x - j] := z
+                        TRUE
+                          SKIP
+                      IF
+                        (zb[y - i][x + j] = 0) OR (zb[y - i][x + j] > z)
+                          SEQ
+                            r[y - i][x + j] := pixel
+                            zb[y - i][x + j] := z
+                        TRUE
+                          SKIP
+                      IF
+                        (zb[y + i][x - j] = 0) OR (zb[y + i][x - j] > z)
+                          SEQ
+                            r[y + i][x - j] := pixel
+                            zb[y + i][x - j] := z
+                        TRUE
+                          SKIP
+                      IF
+                        (zb[y + i][x + j] = 0) OR (zb[y + i][x + j] > z)
+                          SEQ
+                            r[y + i][x + j] := pixel
+                            zb[y + i][x + j] := z
+                        TRUE
+                          SKIP
                       j := j + 1
                       e := e + (bb << 1)
                       f := (f + e) + bb
@@ -2640,13 +2817,21 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                             IF
                               ((x - j) < 0) OR ((x - j) >= vp.width)
                                 SKIP            -- left point outside raster
+                              (zb[y - i][x - j] = 0) OR (zb[y - i][x - j] > z)
+                                SEQ
+                                  r[y - i][x - j] := pixel
+                                  zb[y - i][x - j] := z
                               TRUE
-                                r[y - i][x - j] := pixel
+                                SKIP
                             IF
                               ((x + j) < 0) OR ((x + j) >= vp.width)
                                 SKIP            -- right point outside raster
+                              (zb[y - i][x + j] = 0) OR (zb[y - i][x + j] > z)
+                                SEQ
+                                  r[y - i][x + j] := pixel
+                                  zb[y - i][x + j] := z
                               TRUE
-                                r[y - i][x + j] := pixel
+                                SKIP
                             j := j + 1
                             e := e + (bb << 1)
                             f := (f + e) + bb
@@ -2664,13 +2849,21 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                             IF
                               ((x - j) < 0) OR ((x - j) >= vp.width)
                                 SKIP            -- left point outside raster
+                              (zb[y + i][x - j] = 0) OR (zb[y + i][x - j] > z)
+                                SEQ
+                                  r[y + i][x - j] := pixel
+                                  zb[y + i][x - j] := z
                               TRUE
-                                r[y + i][x - j] := pixel
+                                SKIP
                             IF
                               ((x + j) < 0) OR ((x + j) >= vp.width)
                                 SKIP            -- right point outside raster
+                              (zb[y + i][x + j] = 0) OR (zb[y + i][x + j] > z)
+                                SEQ
+                                  r[y + i][x + j] := pixel
+                                  zb[y + i][x + j] := z
                               TRUE
-                                r[y + i][x + j] := pixel
+                                SKIP
                             j := j + 1
                             e := e + (bb << 1)
                             f := (f + e) + bb
