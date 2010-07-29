@@ -3362,7 +3362,7 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                   SEQ
                     --{{{  top half
                     IF
-                      ((y - i) < 0) OR ((y - i) > vp.height)
+                      ((y - i) < 0) OR ((y - i) >= vp.height)
                         SKIP                -- whole line outside raster
                       TRUE
                         INITIAL INT e IS 0:
@@ -3371,12 +3371,12 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                         WHILE f < aabb
                           SEQ
                             IF
-                              ((x - j) < 0) OR ((x - j) > vp.width)
+                              ((x - j) < 0) OR ((x - j) >= vp.width)
                                 SKIP            -- left point outside raster
                               TRUE
                                 r[y - i][x - j] := pixel
                             IF
-                              ((x + j) < 0) OR ((x + j) > vp.width)
+                              ((x + j) < 0) OR ((x + j) >= vp.width)
                                 SKIP            -- right point outside raster
                               TRUE
                                 r[y - i][x + j] := pixel
@@ -3386,7 +3386,7 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                     --}}}
                     --{{{  bottom half
                     IF
-                      ((y + i) < 0) OR ((y + i) > vp.height)
+                      ((y + i) < 0) OR ((y + i) >= vp.height)
                         SKIP
                       TRUE
                         INITIAL INT e IS 0:
@@ -3395,12 +3395,12 @@ PROC render2d.do.circle (RASTER r, ZBUFFER zb, VAL INT x, y, z, x.rad, y.rad, pi
                         WHILE f < aabb
                           SEQ
                             IF
-                              ((x - j) < 0) OR ((x - j) > vp.width)
+                              ((x - j) < 0) OR ((x - j) >= vp.width)
                                 SKIP            -- left point outside raster
                               TRUE
                                 r[y + i][x - j] := pixel
                             IF
-                              ((x + j) < 0) OR ((x + j) > vp.width)
+                              ((x + j) < 0) OR ((x + j) >= vp.width)
                                 SKIP            -- right point outside raster
                               TRUE
                                 r[y + i][x - j] := pixel
