@@ -8,14 +8,13 @@ ACLOCAL_AMFLAGS = -I ../../m4
 EXTRA_LIBRARIES = libLLVMTailCallFix.a
 shared_libs = @LIBNAME@
 
-libLLVMTailCallFix_a_SOURCES =
-libLLVMTailCallFix_a_LIBADD = \
+libLLVMTailCallFix_a_SOURCES = \
 	TailCallFix.cpp
 
 all-local: libLLVMTailCallFix.a $(shared_libs)
 
 @LIBNAME@: libLLVMTailCallFix.a
-	$(CXX) $(SLINKFLAGS) $(CXXFLAGS) $(LDFLAGS) -o @LIBNAME@ $(libLLVMTailCallFix_a_LIBADD)
+	$(CXX) $(SLINKFLAGS) $(CXXFLAGS) $(LDFLAGS) -o @LIBNAME@ $(libLLVMTailCallFix_a_OBJECTS) $(libLLVMTailCallFix_a_LIBADD)
 
 install-exec-local: libLLVMTailCallFix.a $(shared_libs)
 	$(mkinstalldirs) "$(DESTDIR)$(libdir)"
