@@ -1874,7 +1874,7 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 				fprintf (fptr, "%d, lexlevel = %d ", NVVarNumOf (n), NLexLevelOf (n));
 				/*fprintf(fptr, "lexlevel = %d ", NLexLevelOf(n)); */
 				if ((TagOf (n) != T_REGTEMP) && (NVOffsetOf (n) != vti_no_slot_value)) {
-					fprintf (fptr, "Offset = %ld ", NVOffsetOf (n));
+					fprintf (fptr, "Offset = %d ", NVOffsetOf (n));
 				}
 				fprintf (fptr, "Type = ");
 				pitag (fptr, TagOf (NTypeOf (n)));
@@ -1893,7 +1893,7 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 			case S_PARAM_MPP:
 			case S_HIDDEN_TYPE:
 		#endif
-				fprintf (fptr, "Dim: %d, offset: %ld, ArgNo: %ld", HDimensionOf (n), NVOffsetOf (n), HArgNoOf (n));
+				fprintf (fptr, "Dim: %d, offset: %d, ArgNo: %d", HDimensionOf (n), NVOffsetOf (n), HArgNoOf (n));
 				/* bug 1012 - if we try to see what's inside an actual result,
 				   we get stuck into an infinite loop */
 				if (TagOf (n) == S_FNACTUALRESULT)
@@ -2050,7 +2050,7 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 				const BOOL item = (TagOf (n) == S_ARRAYITEM) || (TagOf (n) == S_RECORDITEM);
 				indent += 2;
 				if (item)
-					fprintf (fptr, "ASOffsetOf: %ld", ASOffsetOf (n));
+					fprintf (fptr, "ASOffsetOf: %d", ASOffsetOf (n));
 				printtree (fptr, indent, ASBaseOf (n));
 				if (item) {
 					printtree (fptr, indent, ASIndexOf (n));
@@ -2072,7 +2072,7 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 			/*}}} */
 			/*{{{  constant expression node */
 		case CONSTEXPNODE:
-			fprintf (fptr, "offset: %ld", CEOffsetOf (n));
+			fprintf (fptr, "offset: %d", CEOffsetOf (n));
 			indent += 2;
 			setindent (fptr, indent);
 			fprintf (fptr, "%d (Lo:#%X, Hi:#%X)", (int) LoValOf (n), (int) LoValOf (n), (int) HiValOf (n));
@@ -2120,9 +2120,9 @@ PUBLIC void printtree (FILE * const fptr, int indent, treenode * n)
 			/*}}} */
 			/*{{{  space usage node */
 		case SPACENODE:
-			fprintf (fptr, "maxwsp = %ld, datasize = %ld, vsusage = %ld, nestedvs = %ld", SpMaxwspOf (n), SpDatasizeOf (n), SpVSUsageOf (n), SpNestedVSOf (n));
+			fprintf (fptr, "maxwsp = %d, datasize = %d, vsusage = %d, nestedvs = %d", SpMaxwspOf (n), SpDatasizeOf (n), SpVSUsageOf (n), SpNestedVSOf (n));
 #ifdef MOBILES
-			fprintf (fptr, ", msusage = %ld, nestedms = %ld, wsmap = %p", SpMSUsageOf (n), SpNestedMSOf (n), SpWSMapOf (n));
+			fprintf (fptr, ", msusage = %d, nestedms = %d, wsmap = %p", SpMSUsageOf (n), SpNestedMSOf (n), SpWSMapOf (n));
 #endif
 			n = SpBodyOf (n);
 			break;
@@ -2452,7 +2452,7 @@ PRIVATE void printsrctype (FILE * const fptr, treenode * type)
 					printsrcexp (fptr, ARDimLengthOf (type));
 					fputc (']', fptr);
 				} else {
-					fprintf (fptr, "[%ld]", ARDimOf (type));
+					fprintf (fptr, "[%d]", ARDimOf (type));
 				}
 				type = ARTypeOf (type);
 				break;

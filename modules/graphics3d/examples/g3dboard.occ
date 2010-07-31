@@ -1,0 +1,447 @@
+--
+--	g3dboard.occ -- chess board demo program (polygon test more than anything)
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+
+--{{{  local types/protocols
+--* Records information about a single piece.
+DATA TYPE PIECE.INFO
+  RECORD
+    INT piece:
+    INT colour:
+    INT x, y:
+    INT polyid:
+    BOOL selected:
+:
+
+--* Game control input protocol.
+PROTOCOL GAME.CTL.IN
+  CASE
+    click; INT                      --* Double-click on polygon ID.
+:
+
+--* Game control channel-type.
+CHAN TYPE CT.GAME.CTL
+  MOBILE RECORD
+    CHAN GAME.CTL.IN in?:           --* Commands.
+:
+
+--* Chess engine input protocol.
+PROTOCOL GAME.ENGINE.IN
+  CASE
+    try.move; [4]INT                --* Attempt to move something from [0,1] to [2,3].
+    reset                           --* Reset game engine.
+:
+
+--* Chess engine output protocol.
+PROTOCOL GAME.ENGINE.OUT
+  CASE
+    move.square; [4]INT             --* Do move.
+    illegal.move                    --* Illegal move.
+:
+
+--* Chess engine channel-type.
+CHAN TYPE CT.GAME.ENGINE
+  MOBILE RECORD
+    CHAN GAME.ENGINE.IN in?:        --* Commands.
+    CHAN GAME.ENGINE.OUT out!:      --* Responses.
+:
+
+BOOL FUNCTION "=" (VAL []BYTE s1, s2)
+  BOOL r:
+  VALOF
+    IF
+      (SIZE s1) <> (SIZE s2)
+        r := FALSE
+      IF i = 0 FOR SIZE s1
+        s1[i] <> s2[i]
+          r := FALSE
+      TRUE
+        r := TRUE
+    RESULT r
+:
+
+--}}}
+--{{{  PROC chess.engine (CT.GAME.ENGINE? svr, SHARED CHAN BYTE scr!)
+--* Deals with the chess engine (uses gnuchess if available).
+-- @private
+PROC chess.engine (CT.GAME.ENGINE? svr, SHARED CHAN BYTE scr!)
+  SEQ
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        svr[in] ? CASE
+          [4]INT pos:
+          try.move; pos
+            --{{{  try moving piece (numb implementation)
+            svr[out] ! move.square; pos
+            --}}}
+          reset
+            --{{{  reset board
+            SKIP
+            --}}}
+:
+--}}}
+--{{{  PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHARED CHAN G3D.RENDER.ENGINE! rre!, CT.GAME.CTL? svr, CT.GAME.ENGINE! engine, SHARED CHAN BYTE scr!)
+--* Deals with chess-board layout and piece control.
+-- @private
+PROC chess.game (CHAN G3D.SCENE.TRANS! sclink!, VAL INT width, height, bdim, SHARED CHAN G3D.RENDER.ENGINE! rre!, CT.GAME.CTL? svr, CT.GAME.ENGINE! engine, SHARED CHAN BYTE scr!)
+  [32]PIECE.INFO pieces:
+  MOBILE []G3DC.PIECE.CTL! ctls:
+  INT sel.pid:
+  TIMER tim:
+  INT seed:
+  SEQ
+    --{{{  setup pieces
+    tim ? seed
+    seed := (seed >> 2) + 1
+
+    SEQ
+      -- colours (black then white)
+      SEQ i = 0 FOR 16
+        INT r, g, b:
+        SEQ
+          r, seed := random (20, seed)
+          g, seed := random (20, seed)
+          b, seed := random (20, seed)
+          pieces[i][colour] := ((r + 16) \/ ((g + 16) << 8)) \/ ((b + 16) << 16)
+      SEQ i = 16 FOR 16
+        INT r, g, b:
+        SEQ
+          r, seed := random (40, seed)
+          g, seed := random (40, seed)
+          b, seed := random (40, seed)
+          pieces[i][colour] := ((r + 140) \/ ((g + 140) << 8)) \/ ((b + 140) << 16)
+      SEQ i = 0 FOR 32
+        SEQ
+          pieces[i][polyid] := i+1
+          pieces[i][selected] := FALSE
+
+      -- positions
+      SEQ i = 0 FOR 8
+        SEQ
+          pieces[i+0][x] := i
+          pieces[i+0][y] := 0
+          pieces[i+8][x] := i
+          pieces[i+8][y] := 1
+          pieces[i+16][x] := i
+          pieces[i+16][y] := 6
+          pieces[i+24][x] := i
+          pieces[i+24][y] := 7
+
+      -- pieces
+      SEQ i = 0 FOR 8
+        SEQ
+          pieces[i+8][piece] := G3D.CP.PAWN
+          pieces[i+16][piece] := G3D.CP.PAWN
+
+      pieces[0][piece] := G3D.CP.ROOK
+      pieces[1][piece] := G3D.CP.KNIGHT
+      pieces[2][piece] := G3D.CP.BISHOP
+      pieces[3][piece] := G3D.CP.KING
+      pieces[4][piece] := G3D.CP.QUEEN
+      pieces[5][piece] := G3D.CP.BISHOP
+      pieces[6][piece] := G3D.CP.KNIGHT
+      pieces[7][piece] := G3D.CP.ROOK
+      pieces[24][piece] := G3D.CP.ROOK
+      pieces[25][piece] := G3D.CP.KNIGHT
+      pieces[26][piece] := G3D.CP.BISHOP
+      pieces[27][piece] := G3D.CP.KING
+      pieces[28][piece] := G3D.CP.QUEEN
+      pieces[29][piece] := G3D.CP.BISHOP
+      pieces[30][piece] := G3D.CP.KNIGHT
+      pieces[31][piece] := G3D.CP.ROOK
+    --}}}
+    --{{{  local init
+    ctls := MOBILE [32]G3DC.PIECE.CTL!
+    sel.pid := -1
+
+    --}}}
+    #PRAGMA DEFINED ctls
+
+    --{{{  create pieces
+    SEQ i = 0 FOR SIZE pieces
+      IF
+        pieces[i][piece] > 0
+          G3DC.PIECE.CTL! p.ctl:
+          G3D.SCENE.TRANS! sct:
+          SEQ
+            CLAIM rre!
+              chesspiece.network.spawn (width, height, rre!, pieces[i][piece], 16, 8, 1.2, 0.3, p.ctl, sct)
+            sclink ! sct
+            p.ctl[in] ! set.pos; pieces[i][x]; pieces[i][y]
+            p.ctl[pgn.ctl] ! set.face.colours; [#00000000,pieces[i][colour],#00000000]
+            p.ctl[pgn.ctl] ! set.polyid; pieces[i][polyid]
+
+            ctls[i] := p.ctl
+        TRUE
+          SKIP
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        svr[in] ? CASE
+          INT id:
+          click; id
+            --{{{  double-clicked something, select or move
+            INT pid:
+            INT bx, by:
+            SEQ
+              pid := -1
+              bx := -1
+              by := -1
+
+              IF
+                id = 0
+                  SKIP
+                id <= 32
+                  --{{{  clicking on a real piece
+                  SEQ
+                    pid := id - 1
+                    bx := pieces[pid][x]
+                    by := pieces[pid][y]
+                  --}}}
+                (id > 64) AND (id <= 128)
+                  --{{{  clicking on a board square
+                  SEQ
+                    by := bdim - (((id - 65) / bdim) + 1)
+                    bx := bdim - (((id - 65) \ bdim) + 1)
+
+                    -- see if the square is occupied
+                    IF
+                      IF i = 0 FOR 32
+                        (pieces[i][x] = bx) AND (pieces[i][y] = by)
+                          pid := i
+                      TRUE
+                        SEQ
+                          pid := -1
+
+                  --}}}
+                TRUE
+                  SKIP
+
+              #IF TRUE --{{{  debug
+              CLAIM scr!
+                SEQ
+                  out.string ("game: board click (", 0, scr!)
+                  out.int (bx, 0, scr!)
+                  out.string (",", 0, scr!)
+                  out.int (by, 0, scr!)
+                  out.string ("), piece ", 0, scr!)
+                  out.int (pid, 0, scr!)
+                  out.string ("*n", 0, scr!)
+              #ENDIF --}}}
+              IF
+                (((bx >= 0) AND (by >= 0)) AND ((pid >= 0) AND (sel.pid >= 0))) AND (pid <> sel.pid)
+                  --{{{  two different pieces involved, take?
+                  SEQ
+                    engine[in] ! try.move; [pieces[sel.pid][x], pieces[sel.pid][y], bx, by]
+                  --}}}
+                pid >= 0
+                  --{{{  select or unselect a piece
+                  SEQ
+                    IF
+                      pieces[pid][selected]
+                        SEQ
+                          -- unselect
+                          pieces[pid][selected] := FALSE
+                          ctls[pid][pgn.ctl] ! set.face.colours; [#00000000,pieces[pid][colour],#00000000]
+                          sel.pid := -1
+                      TRUE
+                        INT bw:
+                        SEQ
+                          IF
+                            pid < 16
+                              bw := 0
+                            TRUE
+                              bw := 1
+                          -- select
+                          pieces[pid][selected] := TRUE
+                          ctls[pid][pgn.ctl] ! set.face.colours; [#00000000,[#00900000,#00FF0000][bw],#00000000]
+                          sel.pid := pid
+                    SKIP
+                  --}}}
+                (bx >= 0) AND (by >= 0)
+                  IF
+                    sel.pid >= 0
+                      --{{{  try and move selected piece
+                      SEQ
+                        engine[in] ! try.move; [pieces[sel.pid][x], pieces[sel.pid][y], bx, by]
+                      --}}}
+                    TRUE
+                      SKIP
+
+            --}}}
+        engine[out] ? CASE
+          [4]INT pos:
+          move.square; pos
+            --{{{  move something on the board
+            INT pid, t.pid:
+            INT bx, by:
+            SEQ
+              -- find it (again maybe!)
+              bx := pos[0]
+              by := pos[1]
+
+              IF
+                IF i = 0 FOR 32
+                  (pieces[i][x] = bx) AND (pieces[i][y] = by)
+                    pid := i
+                TRUE
+                  SEQ
+                    pid := -1
+
+              IF
+                IF i = 0 FOR 32
+                  (pieces[i][x] = pos[2]) AND (pieces[i][y] = pos[3])
+                    t.pid := i
+                TRUE
+                  SEQ
+                    t.pid := -1
+              
+              IF
+                pid >= 0
+                  SEQ
+                    -- do move
+                    IF
+                      (t.pid >= 0) AND (pid <> t.pid)
+                        SEQ
+                          -- something at the target location, remove it from the game ;)
+                          #IF TRUE --{{{  debug
+                          CLAIM scr!
+                            SEQ
+                              out.string ("removing piece ID ", 0, scr!)
+                              out.int (t.pid, 0, scr!)
+                              out.string (" from board*n", 0, scr!)
+                          #ENDIF --}}}
+                          ctls[t.pid][in] ! hide; TRUE
+                      TRUE
+                        SKIP
+
+                    ctls[pid][in] ! move.pos; pos[2]; pos[3]
+
+                    pieces[pid][x] := pos[2]
+                    pieces[pid][y] := pos[3]
+
+                TRUE
+                  SKIP
+
+              IF
+                sel.pid >= 0
+                  SEQ
+                    -- unselect
+                    pieces[sel.pid][selected] := FALSE
+                    ctls[sel.pid][pgn.ctl] ! set.face.colours; [#00000000,pieces[sel.pid][colour],#00000000]
+                    sel.pid := -1
+                TRUE
+                  SKIP
+            --}}}
+          illegal.move
+            --{{{  illegal move
+            SEQ
+              CLAIM scr!
+                SEQ
+                  out.string ("engine: illegal move!*n", 0, scr!)
+              IF
+                sel.pid >= 0
+                  SEQ
+                    -- unselect
+                    pieces[sel.pid][selected] := FALSE
+                    ctls[sel.pid][pgn.ctl] ! set.face.colours; [#00000000,pieces[sel.pid][colour],#00000000]
+                    sel.pid := -1
+                TRUE
+                  SKIP
+            --}}}
+:
+--}}}
+
+
+--{{{  PROC main (...)
+--* Top-level process.
+--
+-- @param kyb Keyboard channel.
+-- @param scr Screen channel.
+-- @private
+--
+PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+
+  PROC id.dump (CHAN INT in?, SHARED CT.GAME.CTL! gcli, SHARED CHAN BYTE out!) --{{{
+    WHILE TRUE
+      INT i:
+      SEQ
+        in ? i
+        CLAIM out!
+          SEQ
+            out.string ("poly.id click: ", 0, out!)
+            out.int (i, 0, out!)
+            out.string ("*n", 0, out!)
+        CLAIM gcli!
+          SEQ
+            gcli[in] ! click; i
+  :
+  --}}}
+
+  VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
+  VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+  CT.GAME.CTL? g.svr:
+  SHARED CT.GAME.CTL! g.cli:
+  CT.GAME.ENGINE? e.svr:
+  CT.GAME.ENGINE! e.cli:
+  SEQ
+
+    g.cli, g.svr := MOBILE CT.GAME.CTL
+    e.cli, e.svr := MOBILE CT.GAME.ENGINE
+
+    CHAN RASTER rc1, rc2, rc3, rc4:
+    SHARED! CHAN G3D.RENDER.ENGINE! rre:
+    CHAN G3D.TMR.CONTROL tmr.ctl:
+    CHAN RASTER.EVENT events, events.in:
+    CHAN G3D.SCENE.TRANS! sclink:
+    CHAN INT poly.id:
+    PAR
+      raster.timed.buffer (rc1?, rc2!, 25, tmr.ctl?)
+      raster.display ("Board test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
+      raster.chain (rc3?, rc4!, rre?, FALSE)
+      raster.polyidclick (rc4?, rc1!, events?, events.in!, poly.id!, 250000)
+
+      id.dump (poly.id?, g.cli, scr!)
+
+      G3D.SCENE.TRANS! sc.ctl:
+      SEQ
+        g3d.scene.spawn (sc.ctl)
+        sc.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
+
+        g3d.scene.camera (events.in?, sclink?, sc.ctl!)
+
+      SEQ
+        G3D.SCENE.TRANS! sc.tmp:
+        SEQ
+          CLAIM rre!
+            chessboard.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 8, 256+64, 1.2, 0.3, sc.tmp)
+          sclink ! sc.tmp
+  
+        chess.game (sclink!, SCR.WIDTH, SCR.HEIGHT, 8, rre!, g.svr?, e.cli!, scr!)
+
+      chess.engine (e.svr?, scr!)
+:
+--}}}
+

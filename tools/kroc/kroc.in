@@ -68,7 +68,12 @@ ARCH_ASFLAGS="@KROC_CCSP_ASFLAGS@"
 #PATH=$KROC/bin:$PATH
 
 package_version="@VERSION@"
-dversion='2.0'
+
+if [ "x@KROC_RMOX@" = "x" ]; then
+  dversion='2.0'
+else
+  dversion='2.0 (RMoX)'
+fi
 target_canonical="@KROC_CANONICAL_TARGET@"
 target_cpu="@KROC_TARGET_CPU@"
 target_os="@KROC_TARGET_OS@"
@@ -379,7 +384,7 @@ do
 		fs | filesystem)
 			octranopts="$octranopts -kr --rmoxmode fs"
 			occopts="$occopts -zdme"
-			rmoxlink=fs
+			rmoxlink=fsm
 			;;
 		net | network)
 			octranopts="$octranopts -kr --rmoxmode net"
@@ -767,9 +772,10 @@ kroc_krocdir="@KROC_KROCDIR@"
 #{{{  path-dependant options
 
 if [ "$intree" = "" ]; then
-	occ21="$kroc_archbindir/occ21"
-	octran="$kroc_archbindir/lletc.pl"
-	tcedump="$kroc_archbindir/tce-dump.pl"
+	# Pull paths from env in preference of hardcoded path
+	occ21=${OCC21:-"$kroc_archbindir/occ21"}
+	octran=${OCTRAN:-"$kroc_archbindir/lletc.pl"}
+	tcedump=${TCEDUMP:-"$kroc_archbindir/tce-dump.pl"}
 else
 	occ21="$intree/tools/occ21/occ21"
 	octran="$intree/tools/plinker/lletc.pl"
@@ -803,6 +809,8 @@ else
   cincludepath="@KROC_CCSP_CINCPATH@"
 fi
 
+#}}}
+#{{{  add LLVM plugin paths
 if [ "$intree" = "" ]; then
   octranopts="$octranopts -p libLLVMTailCallFix$llvmpluginext"
 else
@@ -963,6 +971,10 @@ if [ $showautovars ]; then
 	printf 'KROC_CCSP_ENABLE_CTTD="%s";\n' "@KROC_CCSP_ENABLE_CTTD@"
 	printf 'KROC_CCSP_ENABLE_PONY="%s";\n' "@KROC_CCSP_ENABLE_PONY@"
 	printf 'KROC_CCSP_ENABLE_DYNPROC="%s";\n' "@KROC_CCSP_ENABLE_DYNPROC@"
+	printf 'KROC_CCSP_ENABLE_SSE2="%s";\n' "@KROC_CCSP_ENABLE_SSE2@"
+	printf 'KROC_CCSP_ENABLE_CPUTIMERS="%s";\n' "@KROC_CCSP_ENABLE_CPUTIMERS@"
+
+	printf 'KROC_RMOX="%s";\n' "@KROC_RMOX@"
 
 	exit 0
 fi

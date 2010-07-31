@@ -151,6 +151,8 @@ PUBLIC const char *genmessagestring (const int n)
 		return ("code-generation error: %s");
 	case GEN_WARN_BADCODE:
 		return ("generating possibly bad code -- source may need simplifying, sorry");
+	case GEN_FORKED_EXPORT_NO_VS:
+		return ("Cannot export name \"%s\", FORKing name must use vectorspace");
 		/*}}}  */
 		/*{{{  cgr added errors / warnings */
 	case GEN_NO_MOBILESPACE:

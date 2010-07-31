@@ -6,7 +6,8 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
-	test-random.occ
+	test-random.occ \
+	test-random.py
 
 examples = \
 	test-random

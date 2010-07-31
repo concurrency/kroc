@@ -442,6 +442,9 @@
 #define CHK_BAD_FMTYPES_TYPE		335
 #define CHK_BAD_FMTYPES_NAMEDTYPE	336
 
+/* protocol inclusion errors */
+#define CHK_BAD_CASE_INCLUSION		337
+
 
 /*}}}*/
 /*{{{  error macros */

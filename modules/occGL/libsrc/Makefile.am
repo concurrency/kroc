@@ -32,8 +32,8 @@ includes = $(occGL_includes)
 all-local: $(libs) $(includes)
 
 if HAVE_SWIG_OCCAM
-GL_wrap.c GL_wrap.h occGL.inc: $(SWIG_SOURCE_FILES)
-	$(SWIG_OCCAM) opengl.i
+$(srcdir)/GL_wrap.c $(srcdir)/GL_wrap.h $(srcdir)/occGL.inc: $(SWIG_SOURCE_FILES)
+	cd $(srcdir) && $(SWIG_OCCAM) opengl.i
 endif
 
 occGL.lib: $(occGL_lib_objs)

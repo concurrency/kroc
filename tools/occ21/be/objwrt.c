@@ -173,11 +173,7 @@ PUBLIC void write_id (char *const libname, const BOOL write_lib_id)
 	(void) write_lib_id;	/* ditto */
 
 	/*{{{  Calculate the "unique" origin string */
-#ifdef LONG64
 	sprintf (unique_id, "%s:%08X", sourcefilename, get_sourcehash ());
-#else
-	sprintf (unique_id, "%s:%08lX", sourcefilename, get_sourcehash ());
-#endif
 	/*}}} */
 	/*{{{  Write the standard preamble */
 	tcoff_putrec (objfile, LINKED_OUTPUT_FILE ? LINKED_UNIT_TAG : LINKABLE_TAG, "");
@@ -466,10 +462,10 @@ PUBLIC void write_asm_desc (FILE * const asm_file, treenode * const nptr)
 						(object_file_wrt_flags & OBJ_FILE_WRT_SPACES_DESCRIPTORS) != 0);
 
 #ifdef MOBILES
-	fprintf (asm_file, "\n\tdescriptor $%s \"%s\" %s %ld %ld %ld ",
+	fprintf (asm_file, "\n\tdescriptor $%s \"%s\" %s %d %d %d ",
 		 name, name, language_name == LANG_OCCAM ? "occam" : "occam_harness", NPDatasizeOf (nptr), NPVSUsageOf (nptr), NPMSUsageOf (nptr));
 #else
-	fprintf (asm_file, "\n\tdescriptor $%s \"%s\" %s %ld %ld ",
+	fprintf (asm_file, "\n\tdescriptor $%s \"%s\" %s %d %d ",
 		 name, name, language_name == LANG_OCCAM ? "occam" : "occam_harness", NPDatasizeOf (nptr), NPVSUsageOf (nptr));
 #endif
 	fprintf (asm_file, "\"%s\"\n", desc_buffer);
@@ -535,13 +531,13 @@ PUBLIC void write_linker_map (const char *const filename, const INT32 toplevel_s
 	/*sprintf(buf, "LINKER TCOFF\n"); */
 	ptr = buf + strlen (buf);
 	start = tot_size - toplevel_size;
-	sprintf (ptr, "SC %s (%ld) %ld %ld : -\n", filename, seek_pos, start, start + toplevel_size - 1);
+	sprintf (ptr, "SC %s (%ld) %d %d : -\n", filename, seek_pos, start, start + toplevel_size - 1);
 	ptr += strlen (ptr);
 
 	for (list = module_list; !EndOfList (list); list = NextItem (list)) {
 		const module_t *const module = (module_t *) ThisItem (list);
 		start -= module->m_size;
-		sprintf (ptr, "PRE %s (%ld) %ld %ld : -\n",
+		sprintf (ptr, "PRE %s (%ld) %d %d : -\n",
 			 lookupfilename (module->m_filenum), module->m_seek_ptr, start, start + module->m_size - 1);
 		ptr += strlen (ptr);
 	}

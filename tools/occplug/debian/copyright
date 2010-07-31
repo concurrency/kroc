@@ -1,0 +1,23 @@
+This package was debianized by Christian L. Jacobsen <clj3@dhcp298C.ukc.ac.uk> on
+Sun, 18 Mar 2007 18:40:05 +0000.
+
+It was downloaded from http://www.transterpreter.org/
+
+Upstream Author: Christian L. Jacobsen
+
+Copyright: (C) 2007, Christian L. Jacobsen, Matt C. Jadud, Damian D. Dimmich,
+                     Jon Simpson
+
+License:
+The entire code base may be distributed under the terms of the GNU General
+Public License (GPL), which appears immediately below.  Alternatively, all
+of the source code as any code derived from that code may instead be
+distributed under the GNU Lesser General Public License (LGPL), at the
+choice of the distributor. The complete text of the LGPL appears at the
+bottom of this file.
+
+See /usr/share/common-licenses/GPL
+
+The Debian packaging is (C) 2007, Christian L. Jacobsen
+<christian@transterpreter.org> and is licensed under the GPL, see
+`/usr/share/common-licenses/GPL'.

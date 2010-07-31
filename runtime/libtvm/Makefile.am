@@ -48,9 +48,10 @@ libtvm_a_SOURCES = \
 	mem_bigendian.c \
 	scheduler.c \
 	tencode.c
+nodist_libtvm_a_SOURCES =
 
 if TVM_DISPATCH_SWITCH
-$(top_srcdir)/interpreter.c: $(top_builddir)/dispatch_ins.c
+interpreter.$(OBJEXT): $(top_builddir)/dispatch_ins.c
 else
 libtvm_a_SOURCES += \
 	ins_alt.c \
@@ -67,10 +68,11 @@ libtvm_a_SOURCES += \
 	ins_t800.c \
 	ins_t9000.c \
 	instructions.c \
+	mem.c
+nodist_libtvm_a_SOURCES += \
 	$(top_builddir)/jumptbl_pri.c \
 	$(top_builddir)/jumptbl_sec.c \
-	$(top_builddir)/jumptbl_ex_sec.c \
-	mem.c
+	$(top_builddir)/jumptbl_ex_sec.c
 endif
 
 if TVM_TLSF
@@ -102,10 +104,16 @@ DISPATCH_OUTPUT_FILES = \
 
 make_dispatch = $(top_srcdir)/make-dispatch.py
 
-$(DISPATCH_OUTPUT_FILES): $(make_dispatch) $(DISPATCH_SOURCE_FILES)
+dispatch-cookie: $(make_dispatch) $(DISPATCH_SOURCE_FILES)
 	$(PYTHON) $(make_dispatch) $(DISPATCH_SOURCE_FILES)
+	touch dispatch-cookie
+
+$(DISPATCH_OUTPUT_FILES): dispatch-cookie
+
+BUILT_SOURCES = \
+	$(DISPATCH_OUTPUT_FILES)
 
 EXTRA_DIST = \
 	make-dispatch.py
 
-CLEANFILES = $(DISPATCH_OUTPUT_FILES)
+CLEANFILES = $(DISPATCH_OUTPUT_FILES) dispatch-cookie

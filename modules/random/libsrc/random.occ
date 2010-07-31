@@ -123,6 +123,9 @@ REAL32, RANDOM.STATE FUNCTION random.real32 (VAL REAL32 max, VAL RANDOM.STATE st
 --{{{  FUNCTION random.gaussian.real32s
 --* Generate two random [@code REAL32]s from a Gaussian distribution.
 --
+-- This function exists because the Box-Muller transform used to generate
+-- Gaussian-distributed numbers in this module produces two results at a time.
+--
 -- @param state Current RNG state
 -- @returns value1, value2 Two output values from a Gaussian distribution with
 --   mean 0.0 and standard deviation 1.0
@@ -151,7 +154,7 @@ REAL32, REAL32, RANDOM.STATE FUNCTION random.gaussian.real32s (VAL RANDOM.STATE 
           x2, new.state := random.real32 (2.0, new.state)
           x2 := x2 - 1.0
           w := (x1 * x1) + (x2 * x2)
-      w := SQRT ((-2.0) * ALOG (w)) / w
+      w := SQRT (((-2.0) * ALOG (w)) / w)
       value1 := x1 * w
       value2 := x2 * w
       --}}}

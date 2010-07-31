@@ -3970,7 +3970,7 @@ printtreenl (stderr, 4, inputitem);
 #endif
 			/* always a temporary */
 			gencomment0 ("dereference for channel-type hash from type description");
-			genprimary (I_LDNL, 2);
+			// genprimary (I_LDNL, 2);
 			#if 0
 			loadname (inputitem, 0);
 			gensecondary (I_DUP);

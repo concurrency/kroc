@@ -5626,9 +5626,27 @@ INLINE PROC glGetTexLevelParameteriv (VAL INT target, VAL INT level, VAL INT pna
   C.glGetTexLevelParameteriv (target, level, pname, params)
 :
 --}}}
---  not wrapped: function glTexImage1D
---  not wrapped: function glTexImage2D
---  not wrapped: function glGetTexImage
+--{{{  function glTexImage1D
+#PRAGMA EXTERNAL "PROC C.glTexImage1D (VAL INT target, VAL INT level, VAL INT internalFormat, VAL INT width, VAL INT border, VAL INT format, VAL INT type, VAL INT pixels) = 0"
+--* Foreign function [@text glTexImage1D].
+INLINE PROC glTexImage1D (VAL INT target, VAL INT level, VAL INT internalFormat, VAL INT width, VAL INT border, VAL INT format, VAL INT type, VAL INT pixels)
+  C.glTexImage1D (target, level, internalFormat, width, border, format, type, pixels)
+:
+--}}}
+--{{{  function glTexImage2D
+#PRAGMA EXTERNAL "PROC C.glTexImage2D (VAL INT target, VAL INT level, VAL INT internalFormat, VAL INT width, VAL INT height, VAL INT border, VAL INT format, VAL INT type, VAL INT pixels) = 0"
+--* Foreign function [@text glTexImage2D].
+INLINE PROC glTexImage2D (VAL INT target, VAL INT level, VAL INT internalFormat, VAL INT width, VAL INT height, VAL INT border, VAL INT format, VAL INT type, VAL INT pixels)
+  C.glTexImage2D (target, level, internalFormat, width, height, border, format, type, pixels)
+:
+--}}}
+--{{{  function glGetTexImage
+#PRAGMA EXTERNAL "PROC C.glGetTexImage (VAL INT target, VAL INT level, VAL INT format, VAL INT type, VAL INT pixels) = 0"
+--* Foreign function [@text glGetTexImage].
+INLINE PROC glGetTexImage (VAL INT target, VAL INT level, VAL INT format, VAL INT type, VAL INT pixels)
+  C.glGetTexImage (target, level, format, type, pixels)
+:
+--}}}
 --{{{  function glGenTextures
 #PRAGMA EXTERNAL "PROC C.glGenTextures (VAL INT n, []INT textures) = 0"
 --* Foreign function [@text glGenTextures].

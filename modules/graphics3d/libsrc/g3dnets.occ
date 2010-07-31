@@ -25,6 +25,7 @@
 #INCLUDE "graphics3d.inc"
 
 #USE "graphics3d"
+#USE "g3dgenerators"
 #USE "rasterutil"
 
 --{{{  PROC rotate.orchestra1 (CHAN G3D.ROT.CONTROL rot.out!)

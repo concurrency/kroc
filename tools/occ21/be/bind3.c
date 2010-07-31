@@ -89,6 +89,12 @@ PRIVATE int wsmap_max = 0;
 
 /*}}}*/
 
+
+#if 0
+PRIVATE int stretchdebug = 0;
+#endif
+
+
 #ifdef MOBILES
 /*{{{  constants/private vars for mobile-space mapping*/
 /* added May 2001 */
@@ -900,8 +906,25 @@ printtreenl (stderr, 4, nptr);
 #define WORDSHIFT 5		/* such that 2^WORDSHIFT = (MAXVAR/VARROW) */
 #define BYTEMASK  ((1 << WORDSHIFT) - 1)	/* (2^WORDSHIFT) - 1 */
 
-#define wordnum(n) ((n) >> WORDSHIFT)
-#define bitnum(n)  ((n) &  BYTEMASK)
+// #define wordnum(n) ((n) >> WORDSHIFT)
+// #define bitnum(n)  ((n) &  BYTEMASK)
+
+/*{{{  PRIVATE int wordnum (unsigned long long bit)*/
+PRIVATE int wordnum (unsigned long long bit)
+{
+	int w = (int)(bit >> WORDSHIFT);
+
+	return w;
+}
+/*}}}*/
+/*{{{  PRIVATE int bitnum (unsigned long long bit)*/
+PRIVATE int bitnum (unsigned long long bit)
+{
+	int b = (int)(bit & BYTEMASK);
+
+	return b;
+}
+/*}}}*/
 
 #define setbit(array,n)   ((array)[wordnum(n)] |=  (1 << (bitnum(n))))
 #define clearbit(array,n) ((array)[wordnum(n)] &= ~(1 << (bitnum(n))))
@@ -913,42 +936,47 @@ printtreenl (stderr, 4, nptr);
  * This macro is used to map a row number to its position in a linear array
  */
 
-#define startofrow(n)    ((((n)+1)*(n)) >> 1)	/* 1/2 n(n+1) */
+// #define startofrow(n)    ((int)((((long long)(n)+1)*(long long)(n)) >> 1))	/* 1/2 n(n+1) */
+/*{{{  PRIVATE unsigned long long startofrow (int n)*/
+/*
+ *	this version of startofrow() computes things as unsigned long long.
+ */
+PRIVATE unsigned long long startofrow (int n)
+{
+	unsigned long long v = (unsigned long long)n + 1;
+
+	v *= (unsigned long long)n;
+	v >>= 1;
+
+	return v;
+}
+/*}}}*/
+
 /*}}}*/
 
 /*{{{  PRIVATE void setbitmap (map, i, j)*/
 PRIVATE void setbitmap (int *map, int i, int j)
 {
-	int bitpsn;
-	if (i > j)
-		bitpsn = startofrow (i) + j;
-	else
-		bitpsn = startofrow (j) + i;
+	unsigned long long bitpsn;
+
+	if (i > j) {
+		bitpsn = startofrow (i) + (unsigned long long)j;
+	} else {
+		bitpsn = startofrow (j) + (unsigned long long)i;
+	}
 	setbit (map, bitpsn);
 }
 
 /*}}}*/
-/*{{{  PRIVATE void clearbitmap (map, i, j)*/
-#if 0				/* clearbitmap is never used */
-PRIVATE void clearbitmap (int *map, int i, int j)
-{
-	int bitpsn;
-	if (i > j)
-		bitpsn = startofrow (i) + j;
-	else
-		bitpsn = startofrow (j) + i;
-	clearbit (map, bitpsn);
-}
-#endif /* 0 */
-/*}}}*/
 /*{{{  PRIVATE int testbitmap (map, i, j)*/
 PRIVATE int testbitmap (int *map, int i, int j)
 {
-	int bitpsn;
+	unsigned long long bitpsn;
+
 	if (i > j) {
-		bitpsn = startofrow (i) + j;
+		bitpsn = startofrow (i) + (unsigned long long)j;
 	} else {
-		bitpsn = startofrow (j) + i;
+		bitpsn = startofrow (j) + (unsigned long long)i;
 	}
 	return (testbit (map, bitpsn) != 0);
 }
@@ -1145,11 +1173,19 @@ PRIVATE void initrow (int *row)
 /*{{{  PRIVATE int numwords_of()*/
 PRIVATE int numwords_of (const int n)
 {
-	const int i = startofrow (n);
+	const unsigned long long i = startofrow (n);
 	int numwords = wordnum (i);
+
 	if (bitnum (i) > 0) {
 		numwords++;
 	}
+
+#if 0
+	if (stretchdebug) {
+		fprintf (stderr, "numwords_of (%d) = %d: startofrow() = %Lu, wordnum() = %d, bitnum() = %d\n", n, numwords, i, wordnum(i), bitnum(i));
+	}
+#endif
+
 	return numwords;
 }
 
@@ -1198,7 +1234,13 @@ PRIVATE int nextvarnum (void)
 		varrow *= 2;
 		maxvar *= 2;
 		DEBUG_MSG (("nextvarnum: stretching maxvar from %d to %d\n", old_maxvar, maxvar));
-		/*printf("nextvarnum: stretching maxvar from %d to %d\n", old_maxvar, maxvar); */
+#if 0
+		stretchdebug = 1;
+fprintf (stderr, "nextvarnum: stretching maxvar from %d to %d, bytes %d to %d\n", old_maxvar, maxvar, numwords_of (old_maxvar) * sizeof (*var_map),
+		numwords_of (maxvar) * sizeof (*var_map));
+		stretchdebug = 0;
+#endif
+
 		{
 			int *const new_var_map = alloc_var_map ();
 
@@ -1388,9 +1430,9 @@ PRIVATE void printbitmap (int sorted_var[])
 		const int varnum = sorted_var[i];
 		treenode *nptr = var_list[varnum];
 		if (NVOffsetOf (nptr) == NO_SLOT) {
-			fprintf (outfile, "%-3d:NONE %3ld %5ld : ", i, numslots (nptr), NVUseCountOf (nptr));
+			fprintf (outfile, "%-3d:NONE %3d %5d : ", i, numslots (nptr), NVUseCountOf (nptr));
 		} else {
-			fprintf (outfile, "%-3d:%4ld %3ld %5ld : ", i, NVOffsetOf (nptr), numslots (nptr), NVUseCountOf (nptr));
+			fprintf (outfile, "%-3d:%4d %3d %5d : ", i, NVOffsetOf (nptr), numslots (nptr), NVUseCountOf (nptr));
 		}
 		printname (nptr);
 		for (j = var_base; j < num_var; j++) {
@@ -1706,13 +1748,13 @@ PRIVATE void printdiagnostic (treenode * const var, const BOOL show_ws, const BO
 {
 	printname (var);
 	if (show_ws) {
-		fprintf (outfile, " at workspace offset %ld", NVOffsetOf (var));
+		fprintf (outfile, " at workspace offset %d", NVOffsetOf (var));
 	} else if (mapped_onto_vsptr) {
 		fputs (" mapped onto vsptr", outfile);
 	}
 	if (isinvectorspace (var)) {
 		INT32 vsoffset = NVVSOffsetOf (var);
-		fprintf (outfile, "  vector space [%ld..%ld]", vsoffset, vsoffset + allocsize (var) - 1);
+		fprintf (outfile, "  vector space [%d..%d]", vsoffset, vsoffset + allocsize (var) - 1);
 	}
 	fputc ('\n', outfile);
 }
@@ -2518,7 +2560,7 @@ PUBLIC INT32 allocvars (const int first_var, const int free_paramslots, const BO
 						if (diagnostics) {
 							/*{{{  print some diagnostics */
 							printname (var);
-							fprintf (outfile, " moved to param slot, ws offset = %ld\n", NVOffsetOf (var));
+							fprintf (outfile, " moved to param slot, ws offset = %d\n", NVOffsetOf (var));
 							/*}}} */
 						}
 						/*}}} */
@@ -2533,7 +2575,7 @@ PUBLIC INT32 allocvars (const int first_var, const int free_paramslots, const BO
 									fputs (" + ", outfile);
 									printname (nextvar);
 									if (old_diff != 0) {
-										fprintf (outfile, " moved to overlay, ws offset = %ld", NVOffsetOf (nextvar));
+										fprintf (outfile, " moved to overlay, ws offset = %d", NVOffsetOf (nextvar));
 									}
 									fputc ('\n', outfile);
 									/*}}} */
@@ -2884,7 +2926,7 @@ PUBLIC void allocparams (treenode * nptr)
 					/*{{{  allocate the parameter */
 					SetNVOffset (thisfparam, paramposn);
 					if (diagnostics) {
-						fprintf (outfile, "Parameter %s at workspace offset %ld, use count = %ld\n",
+						fprintf (outfile, "Parameter %s at workspace offset %d, use count = %d\n",
 							 WNameOf (NNameOf (thisfparam)), NVOffsetOf (thisfparam), NVUseCountOf (thisfparam));
 					}
 					allocate_overlays (NVNextOf (thisfparam), paramposn);
@@ -2906,14 +2948,14 @@ PUBLIC void allocparams (treenode * nptr)
 				/* added for more readability of assembly output: */
 				SetNVVarNum (HExpOf (thisfparam), hiddentempno--);	/* 14/3/91 */
 				if (diagnostics) {
-					fprintf (outfile, "Hidden param at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Hidden param at workspace offset %d\n", paramposn);
 				}
 				break;
 				/*}}} */
 				/*{{{  static link */
 			case S_PARAM_STATICLINK:
 				if (diagnostics) {
-					fprintf (outfile, "Static link at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Static link at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_STATICLINK, 1, NULL);
@@ -2932,7 +2974,7 @@ PUBLIC void allocparams (treenode * nptr)
 						allocate_overlays (NVNextOf (vptr), paramposn);
 					}
 					if (diagnostics) {
-						fprintf (outfile, "Vectorspace pointer at workspace offset %ld\n", paramposn);
+						fprintf (outfile, "Vectorspace pointer at workspace offset %d\n", paramposn);
 					}
 					if (need_wsmap) {
 						wsmap_new_entry (paramposn, thisfparam, WSMAP_VSPTR, 1, NULL);
@@ -2943,7 +2985,7 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  fork-barrier pointer*/
 			case S_PARAM_FB:
 				if (diagnostics) {
-					fprintf (outfile, "Fork barrier at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Fork barrier at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_FB, 1, NULL);
@@ -2953,14 +2995,14 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  workspace size*/
 			case S_PARAM_WS:
 				if (diagnostics) {
-					fprintf (outfile, "Workspace size at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Workspace size at workspace offset %d\n", paramposn);
 				}
 				/*}}}*/
 #ifdef MOBILES
 				/*{{{  mobile-space pointer*/
 			case S_PARAM_MSP:
 				if (diagnostics) {
-					fprintf (outfile, "Mobilespace pointer at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Mobilespace pointer at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_MSPTR, 1, NULL);
@@ -2970,7 +3012,7 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  mobile-process pointer*/
 			case S_PARAM_MPP:
 				if (diagnostics) {
-					fprintf (outfile, "Mobile process pointer at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Mobile process pointer at workspace offset %d\n", paramposn);
 				}
 				if (need_wsmap) {
 					wsmap_new_entry (paramposn, thisfparam, WSMAP_MPP, 1, NULL);
@@ -2980,7 +3022,7 @@ PUBLIC void allocparams (treenode * nptr)
 				/*{{{  hidden type node*/
 			case S_HIDDEN_TYPE:
 				if (diagnostics) {
-					fprintf (outfile, "Hidden type at workspace offset %ld\n", paramposn);
+					fprintf (outfile, "Hidden type at workspace offset %d\n", paramposn);
 				}
 				break;
 				/*}}}*/

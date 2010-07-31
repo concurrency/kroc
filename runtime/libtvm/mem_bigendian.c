@@ -28,7 +28,7 @@ void write_word(WORDPTR ptr, WORD val)
 	*ptr = (WORD)SwapTwoBytes((UWORD)val);
 #elif TVM_WORD_LENGTH == 4
 	*ptr = (WORD)SwapFourBytes((UWORD)val);
-#elif
+#else
 #	error "Unsupported wordlength"
 #endif
 }
@@ -39,7 +39,7 @@ WORD read_word(WORDPTR ptr)
 	return (WORD)SwapTwoBytes((UWORD)*ptr);
 #elif TVM_WORD_LENGTH == 4
 	return (WORD)SwapFourBytes((UWORD)*ptr);
-#elif
+#else
 #	error "Unsupported wordlength"
 #endif
 }

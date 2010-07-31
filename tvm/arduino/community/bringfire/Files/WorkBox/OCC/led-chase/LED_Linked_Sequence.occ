@@ -1,0 +1,52 @@
+#INCLUDE "plumbing.module"
+
+PROC led.fade (VAL INT pin, millisFadeIn, millisFadeOut, CHAN SIGNAL in?,CHAN SIGNAL out!)
+  WHILE TRUE
+    SEQ
+      in ? SIGNAL
+      SEQ i = 0 FOR 100 
+        SEQ
+          analogWrite(pin, (BYTE i))
+          delay(millisFadeIn)
+      SEQ
+        out ! SIGNAL
+      SEQ i = 100 FOR 100 STEP (- 1)
+        SEQ
+          analogWrite(pin, (BYTE i))
+          delay(millisFadeOut)
+      SEQ
+        analogWrite(pin, 0)
+:
+
+PROC beginAnalog.multiPin(VAL INT pinA,pinB,pinC,pinD,pinE,pinF)
+  PAR
+    beginAnalog(pinA)
+    beginAnalog(pinB)
+    beginAnalog(pinC)
+    beginAnalog(pinD)
+    beginAnalog(pinE)
+    beginAnalog(pinF)
+:
+
+PROC endListen (CHAN SIGNAL in?)
+  PAR
+    in ? SIGNAL
+    
+    
+:  
+
+
+PROC main()
+  CHAN SIGNAL start,f.5,f.6,f.9,f.10,f.11,end:
+  WHILE TRUE
+    PAR
+      beginAnalog.multiPin(3,5,6,9,10,11)
+      button.press(2, start!)
+      led.fade(3,7,10,start?,f.5!)
+      led.fade(5,7,10,f.5?,f.6!)
+      led.fade(6,7,10,f.6?,f.9!)
+      led.fade(9,7,10,f.9?,f.10!)
+      led.fade(10,7,10,f.10?,f.11!)
+      led.fade(11,7,10,f.11?,end!)
+      --endListen(end?)
+:

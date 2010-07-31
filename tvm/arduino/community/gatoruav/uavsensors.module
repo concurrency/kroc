@@ -1,0 +1,41 @@
+#IF NOT (DEFINED (UAVSENSORS.MODULE))
+#DEFINE UAVSENSORS.MODULE
+#INCLUDE "imu.module"
+
+VAL INT X IS 0:
+VAL INT Y IS 1:
+
+-- This runs at around 143 reading per second
+PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
+  
+  [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree:
+  [2]CHAN SIGNAL sig.gyro, sig.accel:
+  
+  PAR
+
+    ping(sig.gyro[X]!)
+    ping(sig.gyro[Y]!)
+    ping(sig.accel[X]!)
+    ping(sig.accel[Y]!)
+    -- Gyro adcs
+    adc(GYRO.X, AREF, sig.gyro[X]?, gyro.out[X]!)
+    adc(GYRO.Y, AREF, sig.gyro[Y]?, gyro.out[Y]!)
+    -- Accel adcs
+    adc(ACCEL.X,AREF, sig.accel[X]?, accel.out[X]!)
+    adc(ACCEL.Y,AREF, sig.accel[Y]?, accel.out[Y]!)
+  
+    accel.conv.y(accel.out[Y]?, accel.conv[Y]!)
+    accel.conv.x(accel.out[X]?, accel.conv[X]!)
+
+    gyro.filter(gyro.out[Y]?, gyro.smooth[Y]!)
+    gyro.filter(gyro.out[X]?, gyro.smooth[X]!)
+
+    gyro.to.degrees(gyro.smooth[Y]?, gyro.degree[Y]!)
+    gyro.to.degrees(gyro.smooth[X]?, gyro.degree[X]!)
+
+    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, 85, 1)
+    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 85, 1)
+    
+:
+
+#ENDIF

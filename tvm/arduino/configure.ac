@@ -11,23 +11,41 @@ AC_CHECK_HEADERS([stdio.h stdint.h])
 
 BYTECODE_ADDR=0x5000
 F_CPU=16000000
-MCU=atmega328p
+#MCU=atmega328p
 UPLOAD_PORT=/dev/ttyUSB0
 UPLOAD_RATE=57600
 
 AC_ARG_WITH([target-board],
             AC_HELP_STRING([--with-target-board=...],
-                           [target board (arduino, sanguino)]),
+                           [target board (arduino, sanguino, arduinomega, seeedmega)]),
             [target_board=$withval], [target_board=arduino])
-if test "x$target_board" = "xsanguino"; then
+if test "x$target_board" = "xsanguino" 
+then
 	MCU=atmega644p
+	DUDEMCU=m664p
 	UPLOAD_RATE=38400
-else
-	# Defaults above are suitable for Arduino.
-	if test "x$target_board" != "xarduino"; then
-		AC_MSG_WARN([unknown target board type; assuming arduino])
-	fi
 fi
+
+if test "x$target_board" = "xarduinomega"
+then
+	MCU=atmega1280
+	DUDEMCU=m1280
+fi 
+
+if test "x$target_board" = "xseeedmega"
+then
+	MCU=atmega1280
+	DUDEMCU=m1280
+fi
+	
+# Defaults above are suitable for Arduino.
+if test "x$target_board" = ""
+then
+	AC_MSG_WARN([unknown target board type; assuming arduino])
+	DUDEMCU=m328p
+	MCU=atmega328p
+fi
+
 
 AC_ARG_WITH([bytecode-addr],
             AC_HELP_STRING([--with-bytecode-addr=...],
@@ -58,7 +76,7 @@ AC_SUBST(UPLOAD_RATE)
 
 CFLAGS="-g -Wall -Os -mmcu=$MCU"
 
-AVRDUDE_FLAGS='-V -F -p $(MCU) -P $(UPLOAD_PORT) -b $(UPLOAD_RATE) -c stk500v1'
+AVRDUDE_FLAGS='-V -F -p $(MCU) -P $(UPLOAD_PORT) -b $(UPLOAD_RATE) -c arduino'
 AC_SUBST(AVRDUDE_FLAGS)
 
 AC_OUTPUT([Makefile config.mk])

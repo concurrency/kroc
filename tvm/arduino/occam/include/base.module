@@ -1,0 +1,63 @@
+--
+--      Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Matt Jadud
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--      Copyright (C) 2009-2010   Adam Sampson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+--** Very basic, nothing-specific code that is called at every level of code.
+--
+--@module base
+
+#IF NOT (DEFINED (BASE.MODULE))
+#DEFINE BASE.MODULE
+
+--{{{ PROC die
+--* Kills everything and reports an error back to the user.
+--
+-- @param error A string containing the error message.
+INLINE PROC die (VAL []BYTE error)
+  SEQ
+    --{{{  force error to be used
+    INT n:
+    n := SIZE error
+    --}}}
+    CAUSEERROR ()
+:
+--}}}
+
+--{{{ FUNCTION BV
+--* Convert a bit number to a bit value.
+-- This is just [@code 1 << bit], like [@text _BV] in the C headers.
+--
+-- @param bit How far to shift 1 left.
+-- @returns - 1 shifted [@code bit] to the left
+BYTE INLINE FUNCTION BV (VAL INT bit) IS 1 << bit:
+--}}}
+
+--{{{  PROC delay
+--* Wait for a period of time.
+--
+-- @param millis Time to wait, in milliseconds
+PROC delay (VAL INT millis)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS millis
+:
+--}}}
+
+#ENDIF

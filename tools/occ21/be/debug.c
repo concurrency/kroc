@@ -289,7 +289,7 @@ PRIVATE void add_to_index_table (treenode * const address, const int index)
 	/* modified to distinguish ALT setup code and body */
 
 	if (debug_diagnostics) {
-		fprintf (outfile, "add_to_index_table: (index = %d) treenode: %lX, tag: %s, hash: %d\n",
+		fprintf (outfile, "add_to_index_table: (index = %d) treenode: %X, tag: %s, hash: %d\n",
 			 index, altaddr,
 			 address == NULL ? "<<NULL>>" : ((BIT32) address & 1) != 0 ? "ENDBODY" : itagstring (TagOf (address)), hash_value);
 	}
@@ -1080,7 +1080,7 @@ gendebugvar (treenode * const nptr)
 					dimoffset = 0;
 				}
 				if (debug_diagnostics)
-					fprintf (outfile, "%d:%s:%ld ", i, accessstr (dimaccess), dimoffset);
+					fprintf (outfile, "%d:%s:%d ", i, accessstr (dimaccess), dimoffset);
 				else {
 					b = addbuf_3L_num (b, dimaccess);
 					b = addbuf_3L_num (b, dimoffset);
@@ -1090,7 +1090,7 @@ gendebugvar (treenode * const nptr)
 		}
 		/*}}} */
 		if (debug_diagnostics) {
-			fprintf (outfile, "%ld %s\n", output_offset, WNameOf (NNameOf (nptr)));
+			fprintf (outfile, "%d %s\n", output_offset, WNameOf (NNameOf (nptr)));
 		} else {
 			b = addbuf_3L_num (b, output_offset);
 			b = addbuf_3L_str (b, WNameOf (NNameOf (nptr)));
@@ -1366,7 +1366,7 @@ gendebugproc (treenode * const nptr)
 		getprocwsandvs (nptr, &wsusage, &vsusage);
 		if (debug_diagnostics)
 			/*{{{  write text to output file */
-			fprintf (outfile, "%4d Procedure : %s dummy %ld %ld %s\n", debuginfo_index, proctypestr (proctype), wsusage, vsusage, name);
+			fprintf (outfile, "%4d Procedure : %s dummy %d %d %s\n", debuginfo_index, proctypestr (proctype), wsusage, vsusage, name);
 		/*}}} */
 		else if (debug_to_file)
 			/*{{{  write record to object file */
@@ -1485,7 +1485,7 @@ gendebugtypedef (treenode * const nptr)
 		debug_typedef_number++;
 
 		if (debug_diagnostics) {
-			fprintf (outfile, "%4d Typedef : %s (%ld)\n", debuginfo_index, WNameOf (NNameOf (nptr)), NVOffsetOf (nptr));
+			fprintf (outfile, "%4d Typedef : %s (%d)\n", debuginfo_index, WNameOf (NNameOf (nptr)), NVOffsetOf (nptr));
 		} else {
 			*b++ = RTL_TYPEDEF;
 			b = addbuf_3L_num (b, debuginfo_index);

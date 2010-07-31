@@ -1,0 +1,480 @@
+--
+--	Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Matt Jadud
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--      Copyright (C) 2009-2010   Adam Sampson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+--** The Plumbing library.
+--
+-- [@code PROC]s in this module generally have arguments in this order:
+--
+-- [@item] non-channels;
+-- [@item] input channels;
+-- [@item] output channels.
+--
+-- @module plumbing
+
+#IF NOT (DEFINED (PLUMBING.MODULE))
+#DEFINE PLUMBING.MODULE
+
+#INCLUDE "avr.module"
+#INCLUDE "boardmap.module"
+#INCLUDE "digital.module"
+#INCLUDE "printing.module"
+#INCLUDE "servo.module"
+
+--{{{ Constants
+-- LEVEL, INPUT and OUTPUT are now defined in digital.module
+--DATA TYPE LEVEL IS INT:
+--VAL LEVEL LOW IS #0:
+--VAL LEVEL HIGH IS #1:
+
+--VAL INT INPUT IS #0:
+--VAL INT OUTPUT IS #1:
+
+-- VCC, INTERNAL, and AREF are actually defined in adc.module. Here for ref.
+--VAL INT VCC IS #0:
+--VAL INT INTERNAL IS #1:
+--VAL INT AREF IS #2:
+
+VAL INT DEBOUNCE.TIME IS 50:
+--}}}
+
+
+--{{{ PROC debounce
+--* Debounce a channel.
+-- Debounces a channel of LEVELs. Specifically, if 
+-- multiple values come in within the DEBOUNCE.TIME 
+-- (currently 50ms), only the first value is passed through.
+--
+-- @param in The incoming LEVEL values
+-- @param out The outgoing LEVEL values, debounced
+PROC debounce (CHAN LEVEL in?, out!)
+  LEVEL v:
+  WHILE TRUE
+    TIMER tim:
+    INT t:
+    SEQ
+      in ? v
+      tim ? t
+      t := t PLUS DEBOUNCE.TIME
+      INITIAL BOOL ignoring IS TRUE:
+      WHILE ignoring
+        ALT
+          LEVEL any:
+          in ? any
+            SKIP
+          tim ? AFTER t
+            ignoring := FALSE
+      out ! v
+:
+--}}}
+
+--{{{ PROC level.to.signal
+--* Convert a LEVEL to a SIGNAL.
+-- Consumes a stream of LEVEL values, and emits a SIGNAL
+-- for each LEVEL received, regardless of whether it is
+-- LOW or HIGH.
+--
+-- @param in Input LEVEL values.
+-- @param out Output SIGNALs.
+PROC level.to.signal (CHAN LEVEL in?, CHAN SIGNAL out!)
+  WHILE TRUE
+    SEQ
+      LEVEL any:
+      in ? any
+      out ! SIGNAL
+:
+--}}}
+
+--{{{ PROC invert.level
+--* Invert LEVELs.
+-- Reads in LEVEL values, and outputs the opposite.
+-- Upon receiving a LOW, sends a HIGH, and visa versa.
+--
+-- @param in Incoming LEVEL values.
+-- @param out Outgoing LEVEL values, inverted.
+PROC invert.level (CHAN LEVEL in?, out!)
+  WHILE TRUE
+    LEVEL v:
+    SEQ
+      in ? v
+      IF
+        v = HIGH
+          out ! LOW
+        TRUE -- If v = LOW
+          out ! HIGH
+:
+--}}}
+
+--{{{ PROC tick
+--* Generates a consistent stream of SIGNALs.
+-- Every [@code period] milliseconds, a SIGNAL is generated.
+--
+-- @param period A delay time in milliseconds.
+-- @param out SIGNALs generated after the given delay.
+PROC tick (VAL INT period, CHAN SIGNAL out!)
+  WHILE TRUE
+    SEQ
+      delay (period)
+      out ! SIGNAL
+:
+--}}}
+
+--{{{ PROC toggle
+--* Outputs an alternating stream of LEVEL values.
+-- Starting with an initial level (either LOW or HIGH), this 
+-- process outputs a stream of alternating LEVEL values upon 
+-- request. On receiving a SIGNAL, the next LEVEL is emitted
+--
+-- @param initial.level Either LOW or HIGH to start.
+-- @param in The request line.
+-- @param out The alternating stream of LEVEL values.
+PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
+  INITIAL LEVEL level IS initial.level:
+  WHILE TRUE
+    SEQ
+      out ! level
+      in ? SIGNAL
+      IF
+        level = HIGH
+          level := LOW
+        TRUE -- If level = LOW
+          level := HIGH
+:
+--}}}
+
+--{{{ PROC pin.toggle
+--* Drives a pin alternately LOW and HIGH.
+-- Upon request, alternates the level of a pin from LOW to HIGH.
+-- 
+-- @param pin The (digital) Arduino pin we want to drive.
+-- @param initial.level Either LOW or HIGH.
+-- @param in The request line.
+PROC pin.toggle (VAL INT pin, VAL LEVEL initial.level, CHAN SIGNAL in?)
+  CHAN LEVEL v:
+  PAR
+    toggle (initial.level, in?, v!)
+    digital.output (pin, v?)
+:
+--}}}
+
+--{{{ PROC blink
+--* Drives a pin alternately LOW and HIGH on a fixed cycle.
+-- Every [@code delay.time] milliseconds, toggles a pin.
+-- 
+-- @param pin The Arduino pin.
+-- @param delay.time The number of milliseconds between toggles.
+PROC blink (VAL INT pin, delay.time)
+  CHAN SIGNAL s:
+  PAR
+    tick (delay.time, s!)
+    pin.toggle (pin, LOW, s?)
+:
+--}}}
+
+--{{{ PROC heartbeat
+--FIXME: 20100714 drew
+--  There are more boards w/o board LEDs... Do we even want this PROC?
+-- Blinks the LED.PIN  every 500 ms.
+--FIXME: If there is no LED.PIN, I'd like to see a board-specific die(..)
+-- 20100710 MCJ
+-- Further, death looks like this:
+-- Final machine state:
+-- file=plumbing.module line=273
+-- wptr=0326 (rel=004a)  iptr=d56b (rel=0537)  eflags=0001 sflags=0000
+-- areg=d580 breg=0004 creg=0004  oreg=0000
+-- 8000 8000 0000 d582 8000 8000 8000 wptr>d580 0320 0004 002b d58b 0002 0000 
+-- 64 9c 1f f3 b3 22 f0 22 4b d3 21 f0 iptr>22 f0 60 bd 22 23 f7 d2 42 d1 21 42 
+--
+-- We may want to improve that... perhaps by using die() in some way. 
+
+--* A parallel health monitor.
+PROC heartbeat ()
+  IF
+    LED.PIN > 0
+      blink (LED.PIN, 500)
+    TRUE
+      die("This board does not have an LED pin. Sorry.")
+:
+--}}}
+
+--{{{ PROC ADC
+--* Reads the analog value of a given pin.
+-- Upon request, performs an analog to digital conversion, comparing the
+-- voltage at [@code analog.pin] with the specified reference voltage.
+-- No matter which reference is used, the value of [@code out] will always
+-- rest between 0 and 1023.
+--
+-- There is a safeguard put in place that should allow [@code analog.pin] to be
+-- properly read if written as 0, 1, 2, etc., but it is still recommended that
+-- one writes A0, A1, etc. to avoid confusion. 
+--
+-- @param analog.pin The Analog pin number. (A0, A1, A2)
+-- @param ref The source of the reference voltage. Either VCC (default),
+--   AREF (external), or INTERNAL (1.1v internal reference).
+-- @param in The request line.
+-- @param out The output channel for converted readings. 0 - 1023.
+PROC adc (VAL INT analog.pin, VAL INT ref, CHAN SIGNAL in?, CHAN INT out!)
+  INITIAL INT avr.pin IS board.analog.to.chip(analog.pin):
+  INT v:
+  SEQ
+    WHILE TRUE
+      SEQ
+        in ? SIGNAL
+        adc.base (avr.pin, ref, v)
+        out ! v
+:
+--}}}
+
+--{{{ PROC potentiometer.byte
+--* Reads from a potentiometer and maps the incoming value to a BYTE.
+-- Upon request, the incoming value from a potentiometer (a knob, slider...)
+-- connected to [@code analog.pin] to will be mapped to an appropriate value
+-- between 0-255.
+--
+-- There is a safeguard put in place that should allow [@code analog.pin] to be
+-- properly read if written as 0, 1, 2, etc., but it is still recommended that
+-- one writes A0, A1, etc. to avoid confusion. 
+--
+-- @param analog.pin The analog pin the potentiometer is connected to.
+-- @param in The request line.
+-- @param out The output chanel for mapped values. 0-255.
+PROC potentiometer.byte (VAL INT analog.pin, CHAN SIGNAL in?, CHAN BYTE out!)
+  INITIAL INT avr.pin IS board.analog.to.chip (analog.pin):
+  INT  v:
+  BYTE x:
+
+  WHILE TRUE
+    SEQ
+      in ? SIGNAL
+      adc.base (avr.pin, VCC, v)
+      x := (BYTE ((v * 25) / 102)) --v == in, x == out. (v / 1023) = (x / 255)
+      out ! x
+:
+--}}}
+ 
+--{{{ PROC clamp.[byte/int]
+--* Limits the range of values in a stream.
+-- Takes [@code low] and [@code high] as limits, and any BYTEs read in that
+-- are below [@code low] are clamped to [@code low], and likewise
+-- with the [@code high] value. 
+--
+-- @param low The lower limit for valid numbers.
+-- @param high The upper limit for valid numbers.
+-- @param in The input stream of BYTEs.
+-- @param out The output stream of BYTEs.
+PROC clamp.byte (VAL BYTE low, high, CHAN BYTE in?, out!)
+  BYTE v:
+  WHILE TRUE
+    SEQ
+      in ? v
+      IF
+        v < low
+          v := low
+        v > high
+          v := high
+        TRUE
+          SKIP
+      out ! v
+:
+
+--* Limits the range of values in a stream.
+-- Takes [@code low] and [@code high] as limits, and any INTs read in that
+-- are below [@code low] are clamped to [@code low], and likewise
+-- with the [@code high] value. 
+--
+-- @param low The lower limit for valid numbers.
+-- @param high The upper limit for valid numbers.
+-- @param in The input stream of INTs.
+-- @param out The output stream of INTs.
+PROC clamp.int (VAL INT low, high, CHAN INT in?, out!)
+  INT v:
+  WHILE TRUE
+    SEQ
+      in ? v
+      IF
+        v < low
+          v := low
+        v > high
+          v := high
+        TRUE
+          SKIP
+      out ! v
+:
+--}}}
+
+--{{{ PROC crawl.[byte/int]
+--* Crawls a BYTE from 0 to [@code high] and back down (and back up, etc.).
+-- Pausing [@code wait] milliseconds between each signal send, and incrementing
+-- (in either direction) [@code step] between each send, the outgoing value
+-- is capped at 0 and [@code high].
+--
+-- @param high The upper limit of output values.
+-- @param step The increment between each send.
+-- @param wait The time - in milliseconds - to wait after a successful send
+--   before attempting another.
+-- @param out The output stream of BYTEs.
+PROC crawl.byte (VAL BYTE high, step, VAL INT wait, CHAN BYTE out!)
+  INITIAL BYTE pos IS 0:
+  INITIAL BOOL up IS TRUE:
+
+  WHILE TRUE
+    SEQ
+      IF
+        up = TRUE
+          SEQ
+            pos := pos + step
+            IF
+              pos < high
+                SKIP
+              pos > high
+                SEQ
+                  pos := high
+                  up := FALSE
+              TRUE
+                up := FALSE
+        TRUE
+          SEQ
+            pos := pos - step
+            IF
+              pos > 0
+                SKIP
+              pos < 0
+                SEQ
+                  pos := 0
+                  up := TRUE
+              TRUE
+                up := TRUE
+      out ! pos
+      delay (wait)
+:
+
+--* Crawls an INT from 0 to [@code high] and back down (and back up, etc.).
+-- Pausing [@code wait] milliseconds between each signal send, and incrementing
+-- (in either direction) [@code step] between each send, the outgoing value
+-- is capped at 0 and [@code high].
+--
+-- @param high The upper limit of output values.
+-- @param step The increment between each send.
+-- @param wait The time - in milliseconds - to wait after a successful send
+--   before attempting another.
+-- @param out The output stream of INTs.
+PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
+  INITIAL INT pos IS 0:
+  INITIAL BOOL up IS TRUE:
+  
+  WHILE TRUE
+    SEQ
+      IF
+        up = TRUE
+          SEQ
+            pos := pos + step
+            IF
+              pos < high
+                SKIP
+              pos > high
+                SEQ
+                  pos := high
+                  up := FALSE
+              TRUE
+                up := FALSE
+        TRUE
+          SEQ
+            pos := pos - step
+            IF
+              pos > 0
+                SKIP
+              pos < 0
+                SEQ
+                  pos := 0
+                  up := TRUE
+              TRUE
+                up := TRUE
+      out ! pos
+      delay (wait)
+:
+--}}}
+
+--{{{ PROC pwm[-/16]
+--* Writes an analog value to a pin.
+-- For a given (PWM) pin, sets the observed analog level to a value between
+-- 0 and 255. Negative values are treated as 0, and values greater
+-- than 255 are treated as 255.
+--
+-- @param board.pin The pin number.
+-- @param level The input level channel.
+PROC pwm (VAL INT board.pin, CHAN BYTE level?)
+  INITIAL BYTE lvl IS 0:
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  CHAN BYTE clamped:
+  SEQ
+    digital.mode (board.pin, OUTPUT)
+    pwm8.setup (avr.pin, 64)
+    PAR
+      clamp.byte (0, 255, level?, clamped!)
+      WHILE TRUE
+        SEQ
+          clamped ? lvl
+          pwm8.set.compare (avr.pin, lvl)
+:
+
+--* Writes an analog value to a pin.
+-- For a given (PWM) pin, sets the level to a value between
+-- 0 and [@code top]. Negative values are treated as 0, and values greater
+-- than [@code top] are treated as [code top].
+--
+-- [@em Be careful]. Not every PWM pin is connected to a 16 bit timer, so
+-- not every pin labeled as a PWM can be used with this PROC.
+--
+-- @param board.pin The Arduino pin number
+-- @param top The highest level top can be set to.
+-- @param level The input level channel.
+PROC pwm16 (VAL INT board.pin, VAL INT top, CHAN INT level?)
+  INITIAL INT lvl IS 0:
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  CHAN INT clamped:
+  SEQ
+    digital.mode (board.pin, OUTPUT)
+    pwm16.setup (avr.pin, 8)
+    pwm16.set.top (avr.pin, top)
+    PAR
+      clamp.int (0, top, level?, clamped!)
+      WHILE TRUE
+        SEQ
+          clamped ? lvl
+          pwm16.set.compare (avr.pin, lvl)
+:
+--}}}
+
+--{{{ PROC button.press
+--* Watches for button presses on external level interrupt pins.
+-- When a button is pressed a SIGNAL is generated. Uses digital.input,
+-- debounce, and level.to.signal.
+--
+-- @param board.pin The pin the button is connected to
+--   (pins 2 and 3 are safe bets).
+-- @param out SIGNALs generated when the button is pressed.
+PROC button.press (VAL INT board.pin, CHAN SIGNAL out!)
+  CHAN LEVEL a, b:
+  PAR
+    digital.input (board.pin, a!)
+    debounce (a?, b!)
+    level.to.signal (b?, out!)
+:
+--}}}
+
+#ENDIF

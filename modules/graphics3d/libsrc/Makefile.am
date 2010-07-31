@@ -12,6 +12,7 @@ EXTRA_DIST = \
 	g3dchess.occ \
 	g3dnets.occ \
 	g3dutil.occ \
+	g3dgenerators.occ \
 	graphics3d.inc \
 	graphics3d.occ \
 	rasterutil.occ
@@ -21,11 +22,12 @@ graphics3d_lib_objs = \
 	g3dchess.tce \
 	g3dnets.tce \
 	g3dutil.tce \
+	g3dgenerators.tce \
 	graphics3d.tce \
 	rasterutil.tce
 
 libs = graphics3d.lib
-includes = $(srcdir)/graphics3d.inc
+includes = $(srcdir)/graphics3d.inc $(srcdir)/g3dchess.inc
 endif
 
 all-local: $(libs)
@@ -55,8 +57,10 @@ g3dchess.tce: $(srcdir)/graphics3d.inc
 g3dchess.tce: graphics3d.tce
 g3dnets.tce: $(srcdir)/graphics3d.inc
 g3dnets.tce: graphics3d.tce
+g3dnets.tce: g3dgenerators.tce
 g3dnets.tce: rasterutil.tce
 g3dutil.tce: $(srcdir)/graphics3d.inc
+g3dgenerators.tce: $(srcdir)/graphics3d.inc
 graphics3d.tce: $(srcdir)/graphics3d.inc
 rasterutil.tce: $(srcdir)/graphics3d.inc
 ## end pideps dependencies

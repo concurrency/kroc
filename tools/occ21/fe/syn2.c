@@ -5246,8 +5246,9 @@ fprintf (stderr, "syn2: rdescriptorbody ... indent = %d, symbindent = %d\n", ind
 		/*}}} */
 	} else {
 		/*{{{  SEQ */
-		if (checkfor (S_SEQ))
+		if (checkfor (S_SEQ)) {
 			goto error2;
+		}
 		tag = S_SEQ;
 		/*}}} */
 	}

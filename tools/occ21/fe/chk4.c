@@ -1327,6 +1327,8 @@ PRIVATE treenode *cpragma (treenode * volatile tptr, treenode * last_decl, treen
 					case N_PROCDEF:
 					case N_LFUNCDEF:
 					case N_SFUNCDEF:
+					case N_LIBPROCDEF:
+					case N_LIBFUNCDEF:
 						break;
 					default:
 						if (nodetypeoftag (TagOf (pname)) == NAMENODE) {

@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stddef.h>
 
 /* alignment */
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__SUNPRO_C)
 #define TVM_WORD_ALIGN __attribute__ ((aligned (TVM_WORD_LENGTH)))
 #else
 #define TVM_WORD_ALIGN
@@ -40,12 +40,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 /* structure packing */
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #define TVM_PACK	__attribute__ ((packed))
-#define TVM_UNUSED_OK	__attribute__ ((unused))
 #else
 #define TVM_PACK
-#define TMV_UNUSED_OK
+#endif
+
+/* unused */
+#if defined(__GNUC__) || defined(__SUNPRO_C)
+#define TVM_UNUSED_OK	__attribute__ ((unused))
+#else
+#define TVM_UNUSED_OK
 #endif
 
 #endif /* !TVM_COMPILER_H */

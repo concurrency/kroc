@@ -1,6 +1,6 @@
 --
 --	rasterio: libpng interface
---	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+--	Copyright (C) 2007, 2009  Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -22,18 +22,19 @@
 #INCLUDE "raster.module"
 
 --{{{  externals
-#PRAGMA EXTERNAL "PROC C.read.raster.png (VAL []BYTE filename, RESULT RASTER r, INT rc) = 0"
+#PRAGMA EXTERNAL "PROC C.read.raster.png.1 (VAL []BYTE filename, RESULT INT height, width, magic) = 0"
+#PRAGMA EXTERNAL "PROC C.read.raster.png.2 (VAL INT magic, [][]INT raster, INT rc) = 0"
 #PRAGMA EXTERNAL "PROC C.write.raster.png (VAL []BYTE filename, VAL [][]INT raster, RESULT INT rc) = 0"
 --}}}
 
 --{{{  PROC read.raster.png
 --* Load a PNG file as a raster.
 PROC read.raster.png (VAL []BYTE filename, RESULT RASTER raster)
-  INT rc:
+  INT height, width, magic, rc:
   SEQ
-    rc := SIZE filename
-    raster := MOBILE [123][456]INT
-    C.read.raster.png (filename, raster, rc)
+    C.read.raster.png.1 (filename, height, width, magic)
+    raster := MOBILE [height][width]INT
+    C.read.raster.png.2 (magic, raster, rc)
     ASSERT (rc = 0)
 :
 --}}}

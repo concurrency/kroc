@@ -1,0 +1,30 @@
+Source: kroc
+Section: devel
+Priority: extra
+Maintainer: KRoC Maintainers <kroc-bugs@kent.ac.uk>
+Standards-Version: 3.8.4
+Homepage: http://projects.cs.kent.ac.uk/projects/kroc/
+
+Package: kroc
+Architecture: i386
+Depends:
+  ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, ${perl:Depends},
+  gcc, binutils, gawk, perl, python, xsltproc
+Build-Depends:
+  debhelper (>= 7.0.50~), autotools-dev,
+  automake, autoconf, pkg-config,
+  libsdl1.2-dev, libsdl-sound1.2-dev, libgl1-mesa-dev,
+  libmysqlclient15-dev, libpng12-dev, libxmu-dev, libxi-dev,
+  libplayercore2-dev, libplayerc2-dev, libltdl3-dev
+Description: a suite of software for occam-pi development
+ KRoC is a suite of software for occam-pi development. It includes:
+ .
+   * occ21, an occam-pi compiler derived from the INMOS occam 2 compiler
+   * tranx86, an ETC-to-native-code translator
+   * CCSP, a highly-efficient concurrent runtime for occam-pi, C and other
+     languages on single- and multicore IA32 machines
+   * The Transterpreter, a bytecode-based runtime for occam-pi, portable to
+     most 16-bit and 32-bit platforms
+   * The occam-pi standard libraries, including course, filelib, socklib,
+     inmoslibs, pony, sdlraster, occade and many others
+   * occamdoc, a documentation extraction tool for occam

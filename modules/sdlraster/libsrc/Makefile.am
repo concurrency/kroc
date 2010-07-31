@@ -17,8 +17,8 @@ EXTRA_DIST = \
 
 if BUILD_SDLRASTER
 sdlraster_lib_objs = \
-	sdlrcompat.tce \
 	sdlraster.tce \
+	sdlrcompat.tce \
 	sdlrcompat-c.o
 
 sdlraster_libs = sdlraster.lib miniraster.lib

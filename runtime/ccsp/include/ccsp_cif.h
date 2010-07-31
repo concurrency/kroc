@@ -520,13 +520,13 @@ static inline void MTSync (Workspace wptr, void *ptr)
 /*{{{  void MTEnroll (Workspace wptr, void *ptr, word count) */
 static inline void MTEnroll (Workspace wptr, void *ptr, word count)
 {
-	ccsp_cif_X_mt_enroll (wptr, ptr, count);
+	ccsp_cif_X_mt_enroll (wptr, count, ptr);
 }
 /*}}}*/
 /*{{{  void MTResign (Workspace wptr, void *ptr, word count) */
 static inline void MTResign (Workspace wptr, void *ptr, word count)
 {
-	ccsp_cif_X_mt_resign (wptr, ptr, count);
+	ccsp_cif_X_mt_resign (wptr, count, ptr);
 }
 /*}}}*/
 /*}}}*/

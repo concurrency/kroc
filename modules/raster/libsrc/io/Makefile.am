@@ -14,6 +14,7 @@ CFLAGS = @CFLAGS@ @DEFS@ @LIBPNG_CFLAGS@
 EXTRA_DIST = \
 	png-c.c \
 	png.occ \
+	ppmread.occ \
 	ppmwrite.occ \
 	rasterio.occ
 
@@ -27,6 +28,7 @@ endif
 
 rasterio_lib_objs = \
 	$(png_objs) \
+	ppmread.tce \
 	ppmwrite.tce \
 	rasterio.tce
 
@@ -54,4 +56,4 @@ SUFFIXES = .occ .tce .lib
 .occ.tce:
 	$(OCCBUILD) --object $<
 
-rasterio.tce: ppmwrite.tce $(png_objs)
+rasterio.tce: ppmread.tce ppmwrite.tce $(png_objs)

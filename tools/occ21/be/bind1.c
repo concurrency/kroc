@@ -1074,7 +1074,7 @@ fprintf (stderr, "mapreplpar: marking hidden STATICLINK..\n");
 	/*}}} */
 	/*{{{  debug message */
 	if (diagnostics) {
-		fprintf (outfile, "Workspace for replpar: maxwsp = %ld, datasize = %ld, maxvsp = %ld\n\n", maxwsp, datasize, maxvsp);
+		fprintf (outfile, "Workspace for replpar: maxwsp = %d, datasize = %d, maxvsp = %d\n\n", maxwsp, datasize, maxvsp);
 	}
 	/*}}} */
 	/*{{{  restore & update environment */
@@ -1946,7 +1946,7 @@ printtreenl (stderr, 4, fe_lookupname (lookupword ("MPBARSYNC", 9)));
 							/*{{{  debug message */
 							if (diagnostics)
 								fprintf (outfile,
-									 "for branch of par maxwsp = %ld, datasize = %ld, maxvsp = %ld\n",
+									 "for branch of par maxwsp = %d, datasize = %d, maxvsp = %d\n",
 									 maxwsp, datasize, maxvsp);
 
 							/*}}} */
@@ -2625,10 +2625,10 @@ PRIVATE void mapnestedblocks (treenode * tptr)
 					}
 					if (diagnostics) {	/* added to track down a bug */
 #ifdef MOBILES
-						fprintf (outfile, "Workspace allocation for library %s; ws:%ld, vs:%ld, ms:%ld\n",
+						fprintf (outfile, "Workspace allocation for library %s; ws:%d, vs:%d, ms:%d\n",
 							 WNameOf (NNameOf (n)), ws, vs, ms);
 #else
-						fprintf (outfile, "Workspace allocation for library %s; ws:%ld, vs:%ld\n",
+						fprintf (outfile, "Workspace allocation for library %s; ws:%d, vs:%d\n",
 							 WNameOf (NNameOf (n)), ws, vs);
 #endif
 					}
@@ -2793,11 +2793,11 @@ PRIVATE void mapnestedblocks (treenode * tptr)
 					if (diagnostics) {
 #ifdef MOBILES
 						fprintf (outfile,
-							 "Workspace for routine: maxwsp = %ld, datasize = %ld, maxvsp = %ld, mswords = %d\n",
+							 "Workspace for routine: maxwsp = %d, datasize = %d, maxvsp = %d, mswords = %d\n",
 							 maxwsp, datasize, maxvsp, mswords);
 #else
 						fprintf (outfile,
-							 "Workspace for routine: maxwsp = %ld, datasize = %ld, maxvsp = %ld\n",
+							 "Workspace for routine: maxwsp = %d, datasize = %d, maxvsp = %d\n",
 							 maxwsp, datasize, maxvsp);
 #endif
 					}
@@ -2919,12 +2919,12 @@ PRIVATE void mapnestedblocks (treenode * tptr)
 				treenode *const type = NTypeOf (nptr);
 				if (TagOf (type) == S_RECORD) {
 					treenode *decl;
-					fprintf (outfile, "\nLayout of %sRECORD %s (%ld bytes, %ld words)\n",
+					fprintf (outfile, "\nLayout of %sRECORD %s (%d bytes, %d words)\n",
 						 ((TypeAttrOf (type) & TypeAttr_packed) != 0) ? "PACKED " : "",
 						 WNameOf (NNameOf (nptr)), ARDimOf (type), ARDimOf (type) / bytesperword);
 					for (decl = ARTypeOf (type); decl != NULL; decl = DBodyOf (decl)) {
 						treenode *const field_name = DNameOf (decl);
-						fprintf (outfile, "  size: %3ld at: %3ld (%3ld) %s\n",
+						fprintf (outfile, "  size: %3d at: %3d (%3d) %s\n",
 							 bytesin (NTypeOf (field_name)),
 							 NVOffsetOf (field_name),
 							 NVOffsetOf (field_name) / bytesperword, WNameOf (NNameOf (field_name)));

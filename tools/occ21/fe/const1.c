@@ -2609,6 +2609,11 @@ PUBLIC BOOL isconst (treenode * tptr)
 		case S_OVERLAPCHECK:
 			return overlaps_are_const;
 			/*}}}  */
+			/*{{{  things that are effectively errors (captured elsewhere)*/
+		case S_ASOUTPUT:
+		case S_ASINPUT:
+			return FALSE;
+			/*}}}*/
 		default:
 			badtag (LocnOf (tptr), TagOf (tptr), "isconst");
 		}
@@ -2833,8 +2838,9 @@ PUBLIC treenode *foldexp (treenode * tptr)
 				chkreport (CHK_INV_SHIFT, /*chklocn */ LocnOf (tptr));
 			}
 
-			if (isconst (LeftOpOf (tptr)) && rightisconst)
+			if (isconst (LeftOpOf (tptr)) && rightisconst) {
 				tptr = newconstexp (tptr);
+			}
 		}
 		break;
 #ifdef OCCAM2_5
@@ -3165,8 +3171,10 @@ PUBLIC treenode *foldexp (treenode * tptr)
 	case S_ASOUTPUT:
 		break;
 		/*}}}*/
-		/*{{{  LIST -- bug, but can happen in error cases*/
+		/*{{{  LIST, N_TPROTDEF, N_SPROTDEF -- bug, but can happen in error cases*/
 	case S_LIST:
+	case N_TPROTDEF:
+	case N_SPROTDEF:
 		break;
 		/*}}}*/
 	default:

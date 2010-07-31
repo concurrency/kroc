@@ -1,0 +1,223 @@
+#INCLUDE "sdlraster.module"
+#INCLUDE "rastergraphics.module"
+#INCLUDE "course.module"
+#INCLUDE "pioneer.module"
+
+
+-- FIXME: this needs rewriting to work with the pioneer module (CGR 20100625)
+
+
+VAL INT SECONDS IS 1000000:
+VAL INT MILLIS IS 1000:
+
+PROC delay (VAL INT delay, CHAN RASTER in?, out!)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        in ? r
+        tim ? AFTER t PLUS delay
+        out ! r
+:
+
+PROTOCOL P.UI.SONAR IS [8]REAL32; [8]REAL32:
+PROC pioneer.viz (CHAN P.UI.SONAR sonar, CHAN RASTER r.in?, r.out!)
+  VAL [16]INT y IS [69, 114, 148, 166, 166, 148, 114, 69, -157, -203, -237, -255, -255, -237, -203, -157]:
+  VAL [16]INT x IS [136, 119, 78, 27, -27, -78, -119, -136, -136, -119, -78, -27, 27, 78, 119, 136]:
+  VAL [16]INT a IS [90, 50, 30, 10, -10, -30, -50, -90, -90, -130, -150, -170, 170, 150, 130, 90]:
+  VAL INT radius IS 250:
+  VAL INT diagonal IS 120:
+  VAL INT width IS 425:
+  VAL INT length IS 511:
+  VAL INT length.front IS 210:
+  VAL INT length.rear IS 301:
+  INITIAL [8]REAL32 front.pc IS [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0]:
+  INITIAL [8]REAL32 back.pc IS [100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0, 100.0]:
+  WHILE TRUE
+    PRI ALT
+      RASTER r:
+      r.in ? r
+        REAL32 scale:
+        INT width, height:
+        INT c.x, c.y:
+        SEQ
+          raster.clear(r, COLOUR.BLACK)
+          height  := SIZE r
+          width   := SIZE r[0]
+          c.x     := width >> 1
+          c.y     := height >> 1
+          IF
+            height < width
+              scale := (REAL32 TRUNC height) / 6000.0
+            TRUE
+              scale := (REAL32 TRUNC width) / 6000.0
+          
+          -- Draw pioneer.
+          VAL INT a IS INT TRUNC ((REAL32 TRUNC radius) * scale):
+          VAL INT b IS INT TRUNC ((REAL32 TRUNC length.rear) * scale):
+          SEQ
+            fill.ellipse.radii (c.x, c.y, a, b, COLOUR.RED, r)
+            fill.rectangle (c.x - a, c.y - b, a << 1, b, COLOUR.BLACK, r)
+          
+          VAL INT a IS INT TRUNC ((REAL32 TRUNC radius) * scale):
+          VAL INT b IS INT TRUNC ((REAL32 TRUNC length.front) * scale):
+          --VAL INT y IS c.y + (b >> 1):
+          fill.ellipse.radii (c.x, c.y, a, b, COLOUR.RED, r)
+          
+          RESCHEDULE ()
+
+          -- Top (front)
+          SEQ i = 0 FOR 8
+            INT x.0, y.0, d.x, d.y, len:
+            ANGLE rotation:
+            SEQ
+              rotation := a[i] * ANGLE.DEGREE
+              x.0 := (INT TRUNC ((REAL32 TRUNC x[i]) * scale)) + c.x 
+              y.0 := (INT TRUNC ((REAL32 TRUNC y[i]) * (-scale))) + c.y
+              len := (INT ROUND (front.pc[i] * scale))
+              d.x, d.y := CORDIC (0, -len, rotation)
+              draw.line (x.0, y.0, d.x, d.y, COLOUR.GREEN, COLOUR.YELLOW, r)
+          
+          RESCHEDULE ()
+    
+          -- Bottom (back)
+          SEQ i = 0 FOR 8
+            VAL INT j IS i + 8:
+            INT x.0, y.0, d.x, d.y, len:
+            ANGLE rotation:
+            SEQ
+              rotation := a[j] * ANGLE.DEGREE
+              x.0 := (INT TRUNC ((REAL32 TRUNC x[j]) * scale)) + c.x 
+              y.0 := (INT TRUNC ((REAL32 TRUNC y[j]) * (-scale))) + c.y
+              len := (INT ROUND (back.pc[i] * scale))
+              d.x, d.y := CORDIC (0, -len, rotation)
+              draw.line (x.0, y.0, d.x, d.y, COLOUR.GREEN, COLOUR.YELLOW, r)
+          
+          RESCHEDULE ()
+    
+          r.out ! r
+      sonar ? front.pc; back.pc
+        SKIP
+:
+
+PROC p3 (CHAN BYTE kyb?, scr!, err!)
+  SHARED! CHAN P.PIONEER.CMD cmd.svr:
+  CHAN MOBILE []BYTE pkt.out:
+  CHAN P.PIONEER.CMD cmd.out:
+  CHAN P.PKT pkt.in, pkt.svr:
+  CHAN BYTE serial.in, serial.out:
+  CHAN BOOL pkt.req, shutdown:
+  CHAN INT error:
+  PAR
+    serial.port ("/dev/ttyUSB0", 9600, PARITY.NONE, 8, 1, FLOW.NONE, error!, shutdown?, serial.out?, serial.in!, err!)
+    INT e:
+    SEQ
+      error ? e
+      STOP
+
+    packet.decoder (serial.in?, pkt.in!)
+    packet.encoder (pkt.out?, serial.out!)
+    command.encoder (cmd.out?, pkt.out!)
+
+    CT.POSITION? position.svr:
+    CT.POSITION! position.cli:
+    CT.GRIPPER? gripper.svr:
+    CT.GRIPPER! gripper.cli:
+    CT.SONAR? sonar.svr:
+    CT.SONAR! sonar.cli:
+    CT.DRIVE? drive.svr:
+    CT.DRIVE! drive.cli:
+    SEQ
+      initialise (pkt.in?, cmd.out!, scr!)
+      cmd.out ! cmd; CMD.OPEN
+
+      position.svr, position.cli := MOBILE CT.POSITION
+      gripper.svr, gripper.cli := MOBILE CT.GRIPPER
+      sonar.svr, sonar.cli := MOBILE CT.SONAR
+      drive.svr, drive.cli := MOBILE CT.DRIVE
+
+      CHAN P.RAW.SONAR ss:
+      CHAN MOTOR ms:
+      CHAN GRIP gs:
+      CHAN POS ps:
+      PAR
+        command.sequencer (5000, cmd.svr?, cmd.out!)
+        packet.server (pkt.req?, pkt.in?, pkt.svr!)
+        packet.processor (pkt.req!, pkt.svr?, ps!, ss!, ms!, gs!)
+        position.server (ps?, position.svr)
+        sonar.server (1.0, ss?, sonar.svr, cmd.svr!)
+        drive.server (ms?, drive.svr, cmd.svr!)
+        gripper.server (gs?, gripper.svr, cmd.svr!)
+        SEQ
+          drive.cli[req] ! enable.motors
+          drive.cli[rsp] ? CASE ok
+          gripper.cli[req] ! set.pressure; 100
+          WHILE TRUE
+            BYTE b:
+            SEQ
+              kyb ? b
+              IF
+                b = 'w'
+                  drive.cli[req] ! translate; 200
+                b = 's'
+                  drive.cli[req] ! translate; -200
+                b = 'd'
+                  drive.cli[req] ! adjust.heading; -15
+                b = 'a'
+                  drive.cli[req] ! adjust.heading; 15
+                b = ' '
+                  drive.cli[req] ! stop; FALSE; FALSE
+                b = 'o'
+                  gripper.cli[req] ! open.paddles
+                b = 'p'
+                  gripper.cli[req] ! close.paddles
+                b = 'i'
+                  gripper.cli[req] ! raise.lift
+                b = 'k'
+                  gripper.cli[req] ! lower.lift
+                b = '1'
+                  drive.cli[req] ! set.velocity; 100
+                b = '2'
+                  drive.cli[req] ! set.velocity; 200
+                b = '3'
+                  drive.cli[req] ! set.velocity; 300
+                b = '4'
+                  drive.cli[req] ! set.velocity; 400
+                b = '5'
+                  drive.cli[req] ! set.velocity; 500
+                b = '6'
+                  drive.cli[req] ! set.velocity; 600
+                b = '7'
+                  drive.cli[req] ! set.velocity; 700
+                b = '8'
+                  drive.cli[req] ! set.velocity; 800
+                b = '9'
+                  drive.cli[req] ! set.velocity; 900
+                b = 'z'
+                  drive.cli[req] ! set.angular.velocity; 100
+                b = 'c'
+                  drive.cli[req] ! set.angular.velocity; -100
+                TRUE
+                  SKIP
+        CHAN P.UI.SONAR sonar.viz:
+        PAR
+          SONAR sonar:
+          [8]REAL32 front, back:
+          SEQ
+            sonar.cli[req] ! get.latest.sonar
+            sonar.cli[rsp] ? sonar
+            WHILE TRUE
+              SEQ
+                SEQ i = 0 FOR 8
+                  front[i], back[i] := sonar[front][7 - i], sonar[back][7 - i]
+                sonar.viz ! front; back
+                sonar.cli[req] ! get.newer.sonar; sonar[time]
+                sonar.cli[rsp] ? sonar
+          CHAN RASTER r.in, r.out, r.ctl:
+          PAR
+            raster.display.simple ("P3Mon", 700, 700, 2, r.in?, r.out!)
+            pioneer.viz (sonar.viz?, r.out?, r.in!)
+:

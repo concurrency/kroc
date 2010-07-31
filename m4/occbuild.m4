@@ -24,9 +24,6 @@ dnl top of the source tree if we are, and both to the empty string if we
 dnl aren't.
 AC_DEFUN([OCCAM_IN_TREE],
 [dnl
-AC_ARG_VAR(KROC_BUILD_ROOT, [Path to top of KRoC build tree])
-AC_ARG_VAR(KROC_SRC_ROOT, [Path to top of KRoC source tree])
-
 AC_MSG_CHECKING([whether we're building as part of KRoC])
 if test "x$KROC_BUILD_ROOT" != "x" -a "x$KROC_SRC_ROOT" != "x"; then
   AC_MSG_RESULT([yes])
@@ -35,6 +32,8 @@ else
   KROC_BUILD_ROOT=""
   KROC_SRC_ROOT=""
 fi
+AC_SUBST(KROC_BUILD_ROOT)
+AC_SUBST(KROC_SRC_ROOT)
 ])dnl
 dnl
 dnl Determine the toolchain we're using (based on configure arguments), and set
@@ -177,6 +176,33 @@ else
 fi
 AC_RUN_LOG([$OCCBUILD --clean conftest.tce])
 rm -f conftest.occ
+])dnl
+dnl
+dnl Check the occam target platform's word size.
+dnl TEST should be a "test" numeric condition, such as "-ge 4".
+dnl OCCAM_WORD_SIZE(TEST, [ACTION-IF-TRUE], [ACTION-IF-FALSE])
+AC_DEFUN([OCCAM_WORD_SIZE],
+[dnl
+AC_MSG_CHECKING([target word size])
+# If you add a new CPU to this list, please also update the CPU configuration
+# section in runtime/libtvm/configure.ac.
+case "$host_cpu" in
+  avr*|h8300|msp430)
+    word_size=2
+    ;;
+  *)
+    word_size=4
+    ;;
+esac
+AC_MSG_RESULT([$word_size])
+
+if test $word_size $1; then
+  :
+  $2
+else
+  :
+  $3
+fi
 ])dnl
 dnl
 dnl Record that this package provides some modules (or other include files).

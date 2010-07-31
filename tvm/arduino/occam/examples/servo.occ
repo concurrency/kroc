@@ -1,0 +1,107 @@
+#INCLUDE "plumbing.module"
+
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+
+INLINE PROC set16 (VAL INT reg, VAL INT16 val)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    -- It looks like the high byte is always one greater
+    -- than the low byte. For example:
+    -- OCR1A = OCR1AL
+    -- OCR1AL + 1 = OCR1AH
+    -- According to the datasheet, we have to write the high byte first.
+    ports[reg+1] := (BYTE (val >> 8)) 
+    ports[reg] := (BYTE (val BITAND #FF))
+:
+
+PROC set.bv.or (VAL INT reg, VAL []INT vals)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ i = 0 FOR SIZE vals
+    ports[reg] := ports[reg] BITOR BV(vals[i])
+:
+
+PROC main ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    SEQ i = 0 FOR 10
+      pinMode(i+2, OUTPUT)
+    
+    -- Clear TCCR registers
+    ports[TCCR1A] := 0
+    ports[TCCR1B] := 0
+
+    -- Phase correct, ICR1 TOP
+    set.bv.or(TCCR1A, [WGM11])
+    set.bv.or(TCCR1B, [WGM13])
+    
+    -- Set on upcounting, clear on downcounting
+    set.bv.or(TCCR1A, [COM1A1])   
+
+    -- Set prescaler to 8
+    -- This is for a top of 20K and a frequency of 50Hz
+    set.bv.or(TCCR1B, [CS11])
+ 
+    -- TOP set for 20ms
+    set16(ICR1, 20000)
+
+    -- Center the servo?
+    -- set16(OCR1A, 1500)
+
+    VAL INT SERVO.MIN IS 700: -- 600 MIN
+    VAL INT SERVO.MAX IS 2300: -- 2400 MAX
+    VAL INT INCREMENT IS 5:
+    INITIAL INT width IS 0:
+    INITIAL BOOL up IS TRUE:
+    WHILE TRUE
+      SEQ   
+
+        IF
+          up
+            width := width + INCREMENT
+          TRUE
+            width := width - INCREMENT
+        IF
+          width = 0
+            up := TRUE
+          width = (SERVO.MAX - SERVO.MIN)
+            up := FALSE
+          TRUE
+            SKIP
+
+        serialWrite("Setting servo to: ")
+        serialWriteDecInt((width + SERVO.MIN))
+        serialWrite("*n")
+        
+        set16(OCR1A, INT16 (width + SERVO.MIN))
+        delay(2000)
+:

@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #	define LONG_HI_MASK	0xFFFFFFFF00000000
 #	define LONG_LO_MASK	0x00000000FFFFFFFF
 #	define WORD_BITS	32
-#	define DWORD_BITS	64
+#	define TWOWORD_BITS	64
 #	define WSH		2
 #elif TVM_WORD_LENGTH == 2
 #	define MIN_INT		0x8000
@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #	define LONG_HI_MASK	0xFFFF0000
 #	define LONG_LO_MASK	0x0000FFFF
 #	define WORD_BITS	16
-#	define DWORD_BITS	32
+#	define TWOWORD_BITS	32
 #	define WSH		1
 #else
 #	error Wordlength not supported
@@ -179,7 +179,6 @@ typedef int (*SFFI_FUNCTION)(ECTX ectx, WORD w[]);
 /*{{{  Transputer registers, etc that make up the execution context */
 #define TVM_ECTX_TLP_ARGS 8
 
-TVM_PACK
 struct _tvm_ectx_t {
 	/* Machine state */
 	BYTEPTR		iptr;	/* Instruction pointer */
@@ -288,7 +287,11 @@ struct _tvm_ectx_t {
 
 	/* Private data */
 	tvm_ectx_priv_t	priv;
-};
+}
+#if defined (TVM_PACKED_ECTX)
+TVM_PACK
+#endif
+;
 /*}}}*/
 
 /*{{{  Execution context returns */

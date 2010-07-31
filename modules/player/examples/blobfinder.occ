@@ -3,6 +3,7 @@
 
 #INCLUDE "occplayer.module"
 #INCLUDE "useful.module"
+#INCLUDE "random.module"
 
 PROC robot (VAL INT id)
   playerc.client.t client:
@@ -27,7 +28,7 @@ PROC robot (VAL INT id)
     --}}}
 
     INITIAL INT cycle IS 0:
-    INITIAL INT seed IS 250981 + id:
+    INITIAL RANDOM.STATE rs IS random.init (INT32 id):
     INITIAL REAL64 speed IS 0.0:
     INITIAL REAL64 angle IS 0.0:
     WHILE TRUE
@@ -97,9 +98,9 @@ PROC robot (VAL INT id)
             --{{{  set random speed and direction
             REAL32 r:
             SEQ
-              r, seed := random.real32 (3.0, seed)
+              r, rs := random.real32 (3.0, rs)
               speed := REAL64 ROUND (r - 1.0)
-              r, seed := random.real32 (2.0, seed)
+              r, rs := random.real32 (2.0, rs)
               angle := REAL64 ROUND (r - 1.0)
             --}}}
           TRUE

@@ -1,0 +1,115 @@
+<project name="OccPlug" default="dist" basedir=".">
+
+	<!-- FIXME: Check to see if the buildfile exists, and that the 
+	jedit.* properties are defined.
+	-->
+	<!-- 
+      This file needs to exist, and have various user properties set, 
+      see documentation. You can also use this file to override various
+      other properties in this file.
+      The following properties should be set:
+        jedit.install.dir
+        jedit.user.install.dir
+	-->
+	<property file="build.properties"/>
+	
+	<property name="jar.name"  value="OccPlug.jar"/>
+	<property name="build.dir" location="build/"/>
+	
+	<property environment="env"/>
+
+	<!-- Default property values -->
+	<property name="jedit.user.install.dir" location="install"/>
+
+	<!-- <property name="install.dir"  value=".."/>  -->
+	<property name="install.dir"  location="${jedit.user.install.dir}"/>
+
+  <path id="project.class.path">
+		<pathelement location="${jedit.install.dir}/jedit.jar"/>
+		<pathelement location="."/>
+		<pathelement location="${jedit.install.dir}/ErrorList.jar"/>
+		<pathelement location="${jar.dir}/ErrorList.jar"/>
+		<pathelement location="${jedit.user.install.dir}/ErrorList.jar"/>
+		<pathelement location="AppleJavaExtensions/AppleJavaExtensions.jar"/>
+		<pathelement location="${jedit.install.dir}/jars/ErrorList.jar"/>
+	</path>
+
+  <target name="init" description="Initialises this project">
+		<mkdir dir="${build.dir}" /> 
+		<condition property="can.reload.plugins">
+			<and>
+				<available classname="org.gjt.sp.jedit.jEdit"/>
+				<available classname="ReloadPluginTask"/>
+			</and>
+		</condition>
+		<available classname="com.apple.eio.FileManager" property="has.AppleJavaExtensions">
+			<classpath refid="project.class.path"/>
+		</available>
+	</target>
+  
+	<target name="compile" depends="init,AppleJavaExtensions,mkRevision">
+    <javac
+      srcdir="."
+			destdir="${build.dir}"
+      deprecation="on"
+      includeJavaRuntime="yes"
+			debug="yes"
+			debuglevel="lines,vars,source"
+			source="1.5"
+			target="1.5"
+    >
+    <classpath refid="project.class.path"/>
+    <!--<compilerarg value="-Xlint"/>-->
+    </javac>
+  </target>
+
+	<target name="mkRevision">
+		<exec executable="svnversion" outputproperty="svn.version">
+			<env key="PATH" path="${env.PATH}:${path}"/>
+		</exec>
+		<echo file="org/transterpreter/occPlug/Revision.java" append="false">
+package org.transterpreter.occPlug;
+class Revision
+{
+	public static final String svnRevision = "${svn.version}"; 
+}
+		</echo>
+	</target>
+
+	<!-- Unless we have the AppleJavaExtensions already (ie we are on a Mac or we
+	have expanded the AppleJavaExtensions.zip file), expand the zip -->
+	<target name="AppleJavaExtensions" unless="has.AppleJavaExtensions"> 
+		<echo message="Extracting AppleJavaExtensions..."/>
+		<unzip src="AppleJavaExtensions.zip" dest="."/>
+	</target>
+
+  <target name="dist" depends="compile">
+    <mkdir dir="${install.dir}"/>
+    <jar jarfile="${install.dir}/${jar.name}">
+      <fileset dir=".">
+        <include name="**/*.props"/>
+        <include name="**/*.html"/>
+				<include name="**/*.png"/>
+        <include name="actions.xml"/>
+        <include name="dockables.xml"/>
+      </fileset>
+			<fileset dir="${build.dir}">
+				<include name="**/*.class"/>
+			</fileset>
+    </jar>
+		<antcall target="reload"/>
+  </target>
+	
+	<target name="reload" if="can.reload.plugins">
+		<echo message="Reloading plugin..."/>
+		<taskdef name="reloadPlugin" classname="ReloadPluginTask"/>
+		<reloadPlugin jarfile="${jedit.user.install.dir}/${jar.name}"/>
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="AppleJavaExtensions"/>
+		<delete dir="install"/>
+	</target>
+
+</project>

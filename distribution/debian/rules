@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+get-orig-source:
+	set -e; \
+		version=`dpkg-parsechangelog --count 1 | perl -ne '/^Version: (.*)-\d+$$/ && print "$$1\n"'`; \
+		name=kroc-$$version; \
+		revision=`echo $$version | perl -ne '/svn(\d+)/ && print "$$1\n"'`; \
+		svn export -r $$revision https://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk $$name; \
+		(cd $$name; autoreconf -vfi); \
+		GZIP='--best --no-name' tar --exclude autom4te.cache -czvf kroc_$$version.orig.tar.gz $$name; \
+		rm -fr $$name

@@ -571,7 +571,7 @@ PUBLIC void xml_printtree (FILE *const fptr, int indent, treenode *n)
 			case T_PREEVALTEMP:
 				fprintf (fptr, " varnum=\"%d\" lexlevel=\"%d\"", NVVarNumOf (n), NLexLevelOf (n));
 				if ((TagOf (n) != T_REGTEMP) && (NVOffsetOf (n) != vti_no_slot_value)) {
-					fprintf (fptr, " offset=\"%ld\"", NVOffsetOf (n));
+					fprintf (fptr, " offset=\"%d\"", NVOffsetOf (n));
 				}
 				fprintf (fptr, " />\n");
 				/* xml_printtree (fptr, indent + 1, NTypeOf (n)); */
@@ -585,7 +585,7 @@ PUBLIC void xml_printtree (FILE *const fptr, int indent, treenode *n)
 			case S_PARAM_MSP:
 			case S_PARAM_MPP:
 			case S_HIDDEN_TYPE:
-				fprintf (fptr, " dim=\"%d\" offset=\"%ld\" argno=\"%ld\">\n", HDimensionOf (n), NVOffsetOf (n), HArgNoOf (n));
+				fprintf (fptr, " dim=\"%d\" offset=\"%d\" argno=\"%d\">\n", HDimensionOf (n), NVOffsetOf (n), HArgNoOf (n));
 				if (TagOf (n) != S_FNACTUALRESULT) {
 					xml_printtree (fptr, indent + 1, HExpOf (n));
 				}
@@ -626,7 +626,7 @@ PUBLIC void xml_printtree (FILE *const fptr, int indent, treenode *n)
 		case CONSTEXPNODE:
 			fprintf (fptr, "<constexp type=\"");
 			xml_pitag (fptr, TagOf (n));
-			fprintf (fptr, "\" offset=\"%ld\" valhi=\"%d\" vallo=\"%d\">\n", CEOffsetOf (n), (int)HiValOf (n), (int)LoValOf (n));
+			fprintf (fptr, "\" offset=\"%d\" valhi=\"%d\" vallo=\"%d\">\n", CEOffsetOf (n), (int)HiValOf (n), (int)LoValOf (n));
 
 			xml_printtree (fptr, indent + 1, CExpOf (n));
 
@@ -714,7 +714,7 @@ PUBLIC void xml_printtree (FILE *const fptr, int indent, treenode *n)
 			xml_pitag (fptr, TagOf (n));
 			fprintf (fptr, "\"");
 			if ((TagOf (n) == S_ARRAYITEM) || (TagOf (n) == S_RECORDITEM)) {
-				fprintf (fptr, " asoffset=\"%ld\"", ASOffsetOf (n));
+				fprintf (fptr, " asoffset=\"%d\"", ASOffsetOf (n));
 			}
 			fprintf (fptr, ">\n");
 

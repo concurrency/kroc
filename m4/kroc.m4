@@ -22,6 +22,7 @@ AC_DEFUN([KROC_CCSP_FLAGS],
 [dnl
 AC_REQUIRE([AC_CANONICAL_SYSTEM])
 AC_REQUIRE([OCCAM_IN_TREE])
+AC_REQUIRE([KROC_RMOX_BUILD])
 
 # If you add new variables here, make sure you update tools/kroc/Makefile.am
 # and tools/kroc/kroc.in too.
@@ -40,13 +41,15 @@ KROC_CCSP_ENABLE_MP=""
 KROC_CCSP_ENABLE_CTTD=""
 KROC_CCSP_ENABLE_PONY=""
 KROC_CCSP_ENABLE_DYNPROC=""
+KROC_CCSP_ENABLE_SSE2=""
+KROC_CCSP_ENABLE_CPUTIMERS=""
 
 if test "x$KROC_BUILD_ROOT" != "x"; then
   # We're configuring inside the KRoC source tree; we need to figure out the
   # flags based on the target and configure options.
 
   AC_ARG_ENABLE([pthreads],
-                AS_HELP_STRING([--enable-pthreads],
+                AS_HELP_STRING([--disable-pthreads],
                                [enable pthreads support (default enabled)]),
                 KROC_CCSP_ENABLE_PTHREADS=$enableval,
                 KROC_CCSP_ENABLE_PTHREADS=yes)
@@ -66,10 +69,20 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
                 KROC_CCSP_ENABLE_PONY=$enableval,
                 KROC_CCSP_ENABLE_PONY=no)
   AC_ARG_ENABLE([dynproc],
-                AS_HELP_STRING([--enable-dynproc],
+                AS_HELP_STRING([--disable-dynproc],
                                [enable dynamic process loading (default enabled)]),
                 KROC_CCSP_ENABLE_DYNPROC=$enableval,
                 KROC_CCSP_ENABLE_DYNPROC=yes)
+  AC_ARG_ENABLE([sse2],
+                AS_HELP_STRING([--disable-sse2],
+                               [do not use SSE2 even if supported on build system]),
+                KROC_CCSP_ENABLE_SSE2=$enableval,
+                KROC_CCSP_ENABLE_SSE2=yes)
+  AC_ARG_ENABLE([cpu-timers],
+                AS_HELP_STRING([--enable-cpu-timers],
+                               [enable CPU timers (default disabled)]),
+                KROC_CCSP_ENABLE_CPUTIMERS=$enableval,
+                KROC_CCSP_ENABLE_CPUTIMERS=no)
 
   KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -fomit-frame-pointer -fno-defer-pop"
 
@@ -147,7 +160,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
   # For multiprocessor support, we must have either pthreads or RMoX.
   if test $KROC_CCSP_ENABLE_PTHREADS = yes; then
     :
-  elif test $KROC_CCSP_ENABLE_RMOX = yes; then
+  elif test "x$KROC_RMOX" != "x" ; then
     :
   else
     KROC_CCSP_ENABLE_MP=no
@@ -200,6 +213,8 @@ AC_SUBST(KROC_CCSP_ENABLE_MP)
 AC_SUBST(KROC_CCSP_ENABLE_CTTD)
 AC_SUBST(KROC_CCSP_ENABLE_PONY)
 AC_SUBST(KROC_CCSP_ENABLE_DYNPROC)
+AC_SUBST(KROC_CCSP_ENABLE_SSE2)
+
 ])dnl
 dnl
 dnl Find the "kroc" script, and define KROC.
@@ -215,4 +230,26 @@ else
     AC_MSG_ERROR([kroc not found; set \$KROC or \$PATH appropriately])
   fi
 fi
+])dnl
+dnl
+dnl Settings for the RMoX specific build of KRoC
+AC_DEFUN([KROC_RMOX_BUILD],
+[dnl
+AC_REQUIRE([OCCAM_IN_TREE])
+
+KROC_RMOX=""
+
+if test "x$KROC_BUILD_ROOT" != "x"; then
+  # We're configuring inside the KRoC source tree; we need to figure out the
+  # flags based on the target and configure options.
+
+  AC_ARG_WITH([rmox],
+              AS_HELP_STRING([--with-rmox=...],
+                             [location of RMoX source tree (building for RMoX only)]),
+              KROC_RMOX="$withval",
+              KROC_RMOX="")
+fi
+
+AC_SUBST(KROC_RMOX)
+
 ])dnl

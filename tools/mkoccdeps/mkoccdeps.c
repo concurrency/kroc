@@ -61,11 +61,11 @@ static struct {
 	int localonly;
 	DYNARRAY(char *, ipath);
 } options = {
-	follow: FOLLOW_NONE,
-	verbose: 0,
-	outfile: NULL,
-	allobjs: 0,
-	localonly: 0
+	.follow = FOLLOW_NONE,
+	.verbose = 0,
+	.outfile = NULL,
+	.allobjs = 0,
+	.localonly = 0
 };
 
 #define FTYPE_UNKNOWN 0
@@ -284,7 +284,7 @@ static char *find_include_file (char *fname)
 static int process_file (dfile_t *file)
 {
 	if (file->skip) {
-		return;
+		return 0;
 	}
 	if (options.verbose) {
 		fprintf (stderr, "processing %s...\n", file->name);

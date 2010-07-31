@@ -26,6 +26,7 @@
 #IF DEFINED (HAVE.LIBPNG)
 #USE "png.tce"
 #ENDIF
+#USE "ppmread.tce"
 #USE "ppmwrite.tce"
 
 --{{{  PROC read.raster
@@ -33,13 +34,16 @@
 -- based on the extension.
 --
 -- The following extensions are currently supported:
--- [@item] [@text .png]
+-- [@item] [@text .png] (if your occam system was built with PNG support)
+-- [@item] [@text .ppm]
 PROC read.raster (VAL []BYTE filename, RESULT RASTER raster)
   IF
     #IF DEFINED (HAVE.LIBPNG)
     ends.with.string (".png", filename)
       read.raster.png (filename, raster)
     #ENDIF
+    ends.with.string (".ppm", filename)
+      read.raster.ppm (filename, raster)
     TRUE
       CAUSEERROR ()
 :
@@ -50,7 +54,7 @@ PROC read.raster (VAL []BYTE filename, RESULT RASTER raster)
 -- the extension.
 --
 -- The following extensions are currently supported:
--- [@item] [@text .png]
+-- [@item] [@text .png] (if your occam system was built with PNG support)
 -- [@item] [@text .ppm]
 PROC write.raster (VAL []BYTE filename, VAL [][]INT raster)
   IF

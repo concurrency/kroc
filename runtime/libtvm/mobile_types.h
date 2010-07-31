@@ -25,7 +25,7 @@
 #ifdef __GNUC__
 #define _PACK_STRUCT __attribute__ ((packed))
 #else
-#warning "Unable to enforce alignment and packing on structures."
+#warning "Unable to enforce packing on structures."
 #define _PACK_STRUCT
 #endif
 #endif /* defined(MT_DEFINES) && !defined(_PACK_STRUCT) */

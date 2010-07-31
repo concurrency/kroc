@@ -2,7 +2,7 @@
 #INCLUDE "random.module"
 
 PROC main ()
-  VAL INT NUM.ITERATIONS IS 100000:
+  VAL INT NUM.ITERATIONS IS 10000:
   VAL INT NUM.BINS IS 20:
   [NUM.BINS]INT bins:
   INT outside:

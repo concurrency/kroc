@@ -94,6 +94,82 @@ static int load_uint (const prog_char **data, UWORD *length, const char *id, UWO
 	return 0;
 }
 
+static int load_str (const prog_char **data, UWORD *length, const char *id, const prog_char **dst)
+{
+	avr_tenc_element_t element;
+	int ret;
+
+	if ((ret = avr_tenc_walk_to_element (*data, length, id, &element)) < 0)
+		return ret;
+	
+	/* Make sure the string has room for a terminator */
+	if (element.length < 1)
+		return -1;
+
+	*dst 	= element.data.str;
+	*data	= element.next;
+
+	return 0;
+}
+
+static int avr_tbc_debug_file_and_line (const prog_char *data, UWORD length, UWORD offset, const prog_char **file, UWORD *line)
+{
+	avr_tenc_element_t element, files;
+	UWORD bc_off, line_off;
+	int file_off;
+	const prog_char *str;
+	int ret;
+
+	*file = NULL;
+	*line = 0;
+
+	if ((ret = avr_tenc_walk_to_element (data, &length, "dbgL", &element)) < 0)
+		return ret;
+
+	data = element.data.bytes;
+	length = element.length;
+
+	if (avr_tenc_walk_to_element (data, &length, "fn L", &files) < 0)
+		return -1;
+
+	data = files.next;
+	
+	if (avr_tenc_walk_to_element (data, &length, "lndB", &element) < 0)
+		return -1;
+
+	data = element.data.bytes;
+	length = element.length;
+
+	while (length >= (sizeof (UWORD) * 3)) {
+		bc_off = avr_tenc_decode_int (data);
+		data += sizeof (UWORD);
+
+		if (bc_off > offset)
+			break;
+
+		file_off = (int) avr_tenc_decode_int (data);
+		data += sizeof (UWORD);
+		line_off = avr_tenc_decode_int (data);
+		data += sizeof (UWORD);
+
+		length -= sizeof (UWORD) * 3;
+	}
+
+	data = files.data.bytes;
+	length = files.length;
+
+	while (file_off >= 0) {
+		if ((ret = load_str (&data, &length, "fn S", &str)) < 0)
+			return ret;
+		file_off--;
+	}
+	
+	*file = str;
+	*line = line_off;
+
+	return 0;
+}
+
 static int avr_tbc_decode (const prog_char *data, UWORD length, ECTX context, WORDPTR memory, UWORD memory_size)
 {
 	UWORD ws_size, vs_size;
@@ -159,10 +235,7 @@ static int avr_tbc_decode (const prog_char *data, UWORD length, ECTX context, WO
 }
 /*}}}*/
 
-/* Initialise a Transputer context from a TBC file in program memory.
-   Returns 0 on success, -1 on failure. */
-int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, UWORD memory_size) {
-	avr_tenc_element_t element;
+static int load_tbc (const prog_char *data, avr_tenc_element_t *element) {
 	UWORD length;
 
 	if (memcmp_P ("tenc", data, 4) != 0) {
@@ -173,13 +246,33 @@ int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, 
 	/* Skip over the first header. */
 	data += 6;
 
-	if (avr_tenc_walk_to_element (data, &length, "tbcL", &element) < 0) {
-		return -1;
-	}
-
-	if (avr_tbc_decode (element.data.bytes, element.length, context, memory, memory_size)) {
+	if (avr_tenc_walk_to_element (data, &length, "tbcL", element) < 0) {
 		return -1;
 	}
 
 	return 0;
+}
+
+/* Fetch file and line number information for a given iptr offset.
+   Returns 0 on success, -1 on failure. */
+int tbc_file_and_line (const prog_char *data, UWORD offset, const prog_char **file, UWORD *line) {
+	avr_tenc_element_t element;
+
+	if (load_tbc (data, &element) != 0) {
+		return -1;
+	}
+
+	return avr_tbc_debug_file_and_line (element.data.bytes, element.length, offset, file, line);
+}
+
+/* Initialise a Transputer context from a TBC file in program memory.
+   Returns 0 on success, -1 on failure. */
+int init_context_from_tbc (ECTX context, const prog_char *data, WORDPTR memory, UWORD memory_size) {
+	avr_tenc_element_t element;
+
+	if (load_tbc (data, &element) != 0) {
+		return -1;
+	}
+
+	return avr_tbc_decode (element.data.bytes, element.length, context, memory, memory_size);
 }

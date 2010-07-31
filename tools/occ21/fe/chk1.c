@@ -2638,9 +2638,8 @@ printtreenl (stderr, 4, t);
 		#endif
 		/*}}} */
 		/*{{{  old occam 2.1 code to deal with normal cases - (and a #ifdef'd }) */
-		if (TagOf (rt) == S_INT)
+		if (TagOf (rt) == S_INT) {
 			/*{{{  check type of operand */
-		{
 			primitive_type = TagOf (follow_user_type (t));
 			switch (primitive_type) {
 			case S_INT:
@@ -2664,11 +2663,12 @@ printtreenl (stderr, 4, t);
 				break;
 			}
 			SetDOpType (tptr, primitive_type);
-		}
-		/*}}} */
-		else {
+			/*}}} */
+		} else {
 			/*chkreport (CHK_INVCOUNT, chklocn); */
 			chkerr (CHK_INVCOUNT, chklocn);	/* bug TS/1956 10/11/92 */
+			/* FIX: set operator type to something valid (avoids fallout later) */
+			SetDOpType (tptr, S_UNDECLARED);
 		}
 		return (t);
 		#ifdef USER_DEFINED_OPERATORS

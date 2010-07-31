@@ -26,6 +26,7 @@ AC_ARG_ENABLE([dispatch-switch], AS_HELP_STRING([--disable-dispatch-switch], [di
 AC_ARG_WITH([endian], AC_HELP_STRING([--with-endian=...], [endian mode: big/little/host, default: host]), [endian=$withval], [endian=host])
 AC_ARG_ENABLE([external-channel-bundles], AC_HELP_STRING([--enable-external-channel-bundles], [enable support for externally hooked channel bundles]), [external_channel_bundles=$enableval], [external_channel_bundles=no])
 AC_ARG_WITH([memory-allocator], AC_HELP_STRING([--with-memory-allocator=...], [select memory allocator: none/malloc/tlsf, default host dependent]), [memory_allocator=$withval], [memory_allocator=auto])
+AC_ARG_ENABLE([packed-ectx], AS_HELP_STRING([--disable-packed-ectx], [disable execution context packing, can improve code size trading memory usage and compatibility]), [packed_ectx=$enableval], [packed_ectx=yes])
 AC_ARG_ENABLE([profiling], AC_HELP_STRING([--enable-profiling], [enable support for (bytecode) profiling]), [profiling=$enableval], [profiling=no])
 AC_ARG_WITH([python], AS_HELP_STRING([--with-python=PATH], [use python, optionally specifying the path to the python executable directory]), [python=$withval], [python=])
 AC_ARG_ENABLE([occam-pi], AC_HELP_STRING([--disable-occam-pi], [disable support for occam-pi, actual support level depends on memory allocator]), [enable_pi=$enableval], [enable_pi=yes])
@@ -37,7 +38,7 @@ AC_ARG_ENABLE([type-shadow], AC_HELP_STRING([--enable-type-shadow], [enable shad
 #  Host Configuration
 #########################
 
-have_dword=no
+have_twoword=no
 memory_ops=native
 memory_interface=native
 word_length=4
@@ -46,13 +47,15 @@ x_os=none
 x_endian=little
 
 # CPU configuration
+# If you add a new CPU to this list, please also update OCCAM_WORD_SIZE in
+# m4/occbuild.m4.
 case "$host_cpu" in
   arm*)
     ;;
   avr*)
     word_length=2
     memory_interface=avr
-    have_dword=yes
+    have_twoword=yes
     ;;
   bfin*)
     ;;
@@ -62,7 +65,7 @@ case "$host_cpu" in
     ;;
   i*86)
     x_fpu=yes
-    have_dword=yes
+    have_twoword=yes
     ;;
   mips | mipsbe)
     x_endian=big
@@ -73,7 +76,7 @@ case "$host_cpu" in
     x_endian=big
     word_length=2
     ;;
-  ppc)
+  powerpc | ppc)
     x_endian=big
     x_fpu=yes
     ;;
@@ -182,7 +185,8 @@ esac
 #  Defines
 #########################
 
-TVM_CFLAGS="-Wall -DTVM_INTERNALS"
+TVM_CFLAGS="-DTVM_INTERNALS"
+OCCAM_CHECK_CFLAGS([-Wall], [TVM_CFLAGS="$TVM_CFLAGS -Wall"])
 
 # Dispatch switch
 if test "x$dispatch_switch" = "xyes"; then
@@ -247,6 +251,11 @@ case "$memory_ops" in
     ;;
 esac
 
+# packed ECTX
+if test "x$packed_ectx" = "xyes"; then
+  AC_DEFINE([TVM_PACKED_ECTX], 1, [define to enable packed execution context])
+fi
+
 # occam-pi
 if test "x$enable_pi" = "xyes"; then
   AC_DEFINE([TVM_OCCAM_PI], 1, [define to enable occam-pi support])
@@ -309,9 +318,9 @@ fi
 # Word length
 AC_DEFINE_UNQUOTED([TVM_WORD_LENGTH], [$word_length], [define emulated word length])
 
-# DWORDs
-if test "$have_dword" = "yes"; then
-  AC_DEFINE([TVM_HAVE_DWORD], 1, [define if C compiler supports maths on double words])
+# TWOWORDs
+if test "$have_twoword" = "yes"; then
+  AC_DEFINE([TVM_HAVE_TWOWORD], 1, [define if C compiler supports maths on double words])
 fi
 
 #########################
@@ -320,13 +329,14 @@ fi
 
 AC_MSG_NOTICE([----------------------------------------------------])
 AC_MSG_NOTICE([dispatch-switch : $dispatch_switch])
-AC_MSG_NOTICE([DWORD           : $have_dword])
+AC_MSG_NOTICE([TWOWORD         : $have_twoword])
 AC_MSG_NOTICE([endian          : $endian])
 AC_MSG_NOTICE([external bundles: $external_channel_bundles])
 AC_MSG_NOTICE([FPU             : $x_fpu])
 AC_MSG_NOTICE([memory allocator: $memory_allocator])
 AC_MSG_NOTICE([memory ops      : $memory_ops])
 AC_MSG_NOTICE([memory interface: $memory_interface])
+AC_MSG_NOTICE([packed ectx     : $packed_ectx])
 AC_MSG_NOTICE([occam-pi support: $enable_pi])
 AC_MSG_NOTICE([OS support      : $x_os])
 AC_MSG_NOTICE([profiling       : $profiling])

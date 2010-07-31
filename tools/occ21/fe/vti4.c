@@ -408,6 +408,9 @@ PUBLIC int bytesinscalar (const int tag)
 	case S_ARRAY:
 	case S_UNDECLARED:
 		return -1;
+	case N_DECL:
+		/* this happens in various error conditions */
+		return 0;
 	default:
 		badtag (0, tag, "bytesinscalar");
 		return (-1);
@@ -430,7 +433,9 @@ PUBLIC BOOL check_array_overflow (const SOURCEPOSN locn, const BIT32 elemsize, c
 	const BIT32 max_array_size = (current_fe_data->fe_txlib->bpw != 2) ? MAX_32BIT_ARRAY_SIZE :
 		(in_RETYPE) ? MAX_16BIT_RETYPE_SIZE : MAX_32BIT_ARRAY_SIZE;
 
-	if (elemsize > (max_array_size / nelements)) {
+	if (nelements == 0) {
+		return FALSE;
+	} else if (elemsize > (max_array_size / nelements)) {
 		vtiabort (VTI_ARRAY_SIZE_OVERFLOW, locn);
 		return TRUE;
 	}

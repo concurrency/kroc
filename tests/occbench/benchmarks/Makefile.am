@@ -8,7 +8,7 @@ OCCBUILD = @OCCBUILD@ --occ21-opts '-NU'
 
 EXTRA_DIST = \
 	fft2.occ \
-	fft2-nosched.occ \
+	fft2-noresched.occ \
 	fft2-base.occ \
 	fft3.occ \
 	mandelbrot.occ

@@ -47,6 +47,7 @@ VAL INT G3D.MAX.SCAN.HEIGHT IS 500:
 VAL INT G3D.RENDER.MODE.NONE IS #0000:          --* Constant shading.
 VAL INT G3D.RENDER.MODE.GLENZ IS #0001:         --* Glenz-effect shading.
 VAL INT G3D.RENDER.MODE.NORM IS #0002:          --* Normal vector based shading.
+VAL INT G3D.RENDER.MODE.HIDE IS #0004:          --* No rendering.
 --*}
 --*{ G3D.ROTATE.MODE  point/polygon rotation modes.
 VAL INT G3D.ROTATE.MODE.NONE IS #0000:          --* No rotation.
@@ -67,6 +68,13 @@ DATA TYPE G3D.POINT3
     REAL32 x, y, z:
 :
 
+--* Real point in 3D space (REAL32) with size.
+DATA TYPE G3D.POINT3S
+  RECORD
+    REAL32 x, y, z:
+    REAL32 r:
+:
+
 --* Integer point in 2D space, original Z multiplied up.
 DATA TYPE G3D.POINT2.3
   RECORD
@@ -78,6 +86,14 @@ DATA TYPE G3D.POINT2
   RECORD
     INT x, y:
 :
+
+--* Integer point in 2D space with size, original Z multiplied up.
+DATA TYPE G3D.POINT2.3S
+  RECORD
+    INT x, y, z:
+    INT r:
+:
+
 --}}}
 --{{{  polygon types
 --* General polygon in 2D space, orignal Z multiplied up.
@@ -184,6 +200,7 @@ PROTOCOL G3D.RDR.CONTROL
   CASE
     reset                     --* Resets shader to default state.
     set.mode; INT             --* Set shader mode (see [@ref G3D.RENDER.MODE]).
+    set.pixel; INT            --* Set pixel colour (for non-polygon rendering).
 :
 
 --* Overall control for graphics pipeline.
@@ -278,6 +295,12 @@ CHAN TYPE G3D.SCENE.TRANS
   MOBILE RECORD
     CHAN G3D.SCENE.TRANS.LINK link?:        --* Link channel.
 :
+
+--}}}
+--{{{  reporting for polygon clicking
+
+--* Used to provide information about polygon clicks, order is (id; x; y).
+PROTOCOL G3D.POLY.CLICK IS [3]INT:
 
 --}}}
 

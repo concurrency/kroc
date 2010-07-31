@@ -1501,17 +1501,17 @@ GLAPI void GLAPIENTRY glTexImage1D( GLenum target, GLint level,
                                     GLint internalFormat,
                                     GLsizei width, GLint border,
                                     GLenum format, GLenum type,
-                                    const GLvoid pixels[] );
+                                    const GLvoid *pixels );
 
 GLAPI void GLAPIENTRY glTexImage2D( GLenum target, GLint level,
                                     GLint internalFormat,
                                     GLsizei width, GLsizei height,
                                     GLint border, GLenum format, GLenum type,
-                                    const GLvoid pixels[] );
+                                    const GLvoid *pixels );
 
 GLAPI void GLAPIENTRY glGetTexImage( GLenum target, GLint level,
                                      GLenum format, GLenum type,
-                                     GLvoid pixels[] );
+                                     GLvoid *pixels );
 
 
 

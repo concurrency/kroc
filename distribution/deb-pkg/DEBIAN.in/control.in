@@ -1,0 +1,8 @@
+Package: @STEM@-@TOOLCHAIN@-@TARGET@-@WRAPPER@
+Version: @VERSION@
+Section: main
+Priority: optional
+Architecture: @BUILD_ARCHITECTURE@
+Depends: @DEPENDS@
+Maintainer: matt@concurrency.cc
+Description: @PACKAGE_DESCRIPTION@

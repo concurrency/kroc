@@ -1,0 +1,767 @@
+--
+--	Pioneer Robotics Module - Pioneer 3DX Driver
+--	Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+--** @module pioneer
+
+#INCLUDE "ioport.module"
+#INCLUDE "pioneer.inc"
+
+PROC p3dx (VAL []BYTE device, CHAN BOOL ok.and.ready!, CT.DRIVE? drive, CT.GRIPPER? gripper, CT.POSITION? position, CT.SONAR? sonar)
+
+  PROTOCOL P.PKT IS INT; MOBILE []BYTE:
+
+  INT FUNCTION calculate.checksum (VAL []BYTE data)
+    INT sum:
+    VALOF
+      SEQ
+        sum := 0
+        IF
+          (SIZE data) >= 2
+            SEQ i = 0 FOR ((SIZE data) >> 1) STEP 2
+              VAL INT v IS ((INT data[i]) << 8) \/ (INT data[i + 1]):
+              sum := (sum + v) /\ #FFFF
+          TRUE
+            SKIP
+        IF
+          ((SIZE data) /\ 1) <> 0
+            sum := sum >< (INT data[(SIZE data) - 1])
+          TRUE
+            SKIP
+      RESULT sum
+  :
+
+  PROC packet.decoder (CHAN BYTE in?, CHAN BOOL shutdown?, CHAN P.PKT out!)
+    INITIAL BOOL done IS FALSE:
+    TIMER time:
+    WHILE NOT done
+      INITIAL BYTE b1 IS #00:
+      INITIAL BYTE b2 IS #00:
+      SEQ
+        b1 := #00
+        WHILE b1 <> #FA
+          PRI ALT
+            shutdown ? done
+              SKIP
+            in ? b1
+              IF
+                b1 = #FA
+                  in ? b2
+                TRUE
+                  SKIP
+        IF
+          done
+            SKIP
+          (b1 = #FA) AND (b2 = #FB)
+            INT length:
+            INT now:
+            SEQ
+              time ? now
+              in ? b1
+              length := INT b1
+              IF
+                (length >= 2) AND (length < 204)
+                  INITIAL MOBILE []BYTE buffer IS MOBILE [length - 2]BYTE:
+                  INT cksum:
+                  SEQ
+                    SEQ i = 0 FOR (SIZE buffer)
+                      in ? buffer[i]
+                    in ? b1
+                    in ? b2
+                    cksum := ((INT b1) << 8) \/ (INT b2)
+                    IF
+                      cksum = calculate.checksum (buffer)
+                        out ! now; buffer
+                      TRUE
+                        SKIP
+                TRUE
+                  SKIP
+          TRUE
+            SKIP
+  :
+
+  PROC packet.encoder (CHAN MOBILE []BYTE in?, CHAN BOOL shutdown?, CHAN BYTE out!)
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      PRI ALT
+        shutdown ? done
+          SKIP
+        MOBILE []BYTE data:
+        in ? data
+          IF
+            (SIZE data) < 204
+              INITIAL INT cksum IS calculate.checksum (data):
+              SEQ
+                out ! #FA
+                out ! #FB
+                out ! BYTE ((SIZE data) + 2)
+                SEQ i = 0 FOR (SIZE data)
+                  out ! data[i]
+                out ! BYTE ((cksum >> 8) /\ #FF)
+                out ! BYTE (cksum /\ #FF)
+            TRUE
+              SKIP
+  :
+
+  PROC command.encoder (CHAN P.PIONEER.CMD in?, CHAN MOBILE []BYTE out!)
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      MOBILE []BYTE buffer:
+      BYTE cmd:
+      in ? CASE
+        cmd; cmd
+          SEQ
+            buffer := MOBILE [1]BYTE
+            buffer[0] := cmd
+            out ! buffer
+
+        BOOL signed:
+        INT arg:
+        cmd.int; cmd; signed; arg
+          SEQ
+            buffer := MOBILE [4]BYTE
+            buffer[0] := cmd
+            IF
+              signed AND (arg < 0)
+                SEQ
+                  buffer[1] := #1B -- argument type: negative/absolute integer
+                  arg := arg * (-1)
+              TRUE
+                buffer[1] := #3B -- argument type: positive integer
+            buffer[2] := BYTE (arg /\ #FF)
+            buffer[3] := BYTE ((arg >> 8) /\ #FF)
+            out ! buffer
+
+        MOBILE []BYTE arg:
+        cmd.str; cmd; arg
+          SEQ
+            buffer := MOBILE [3 + (SIZE arg)]BYTE
+            buffer[0] := cmd
+            buffer[1] := #2B -- argument type: string
+            buffer[2] := BYTE ((SIZE arg) /\ #FF)
+            SEQ i = 0 FOR (SIZE arg)
+              buffer[3 + i] := arg[i]
+            out ! buffer
+        
+        shutdown
+          done := TRUE
+  :
+
+  PROC wait.for.packet (VAL INT timeout.us, CHAN P.PKT pkt.in?, RESULT MOBILE []BYTE buffer)
+    TIMER time:
+    INT timeout:
+    SEQ
+      time ? timeout
+      timeout := timeout PLUS timeout.us
+      PRI ALT
+        INT t:
+        pkt.in ? t; buffer
+          SKIP
+        time ? AFTER timeout
+          SEQ
+            buffer := MOBILE [1]BYTE
+            buffer[0] := #FF
+  :
+
+  PROC try.command (VAL BYTE cmd, RESULT BOOL ready, RESULT MOBILE []BYTE buffer, CHAN P.PKT pkt.in?, CHAN P.PIONEER.CMD cmd.out!)
+    SEQ
+      buffer := MOBILE [1]BYTE
+      buffer[0] := #FF
+      INITIAL INT count IS 5:
+      WHILE (buffer[0] <> cmd) AND (count > 0)
+        SEQ
+          cmd.out ! cmd; cmd
+          wait.for.packet (1000000, pkt.in?, buffer)
+          count := count - 1
+      ready := (buffer[0] = cmd)
+  :
+
+  PROC delay.us (VAL INT delay)
+    TIMER time:
+    INT now:
+    SEQ
+      time ? now
+      time ? AFTER (now PLUS delay)
+  :
+
+  PROC initialise (CHAN P.PKT pkt.in?, CHAN P.PIONEER.CMD cmd.out!, RESULT BOOL ready)
+    INITIAL MOBILE []BYTE buffer IS MOBILE [1]BYTE:
+    SEQ
+      ready := FALSE
+      cmd.out ! cmd; CMD.CLOSE
+      wait.for.packet (250000, pkt.in, buffer)
+      delay.us (250000)
+      try.command (CMD.SYNC0, ready, buffer, pkt.in?, cmd.out!)
+      try.command (CMD.SYNC1, ready, buffer, pkt.in?, cmd.out!)
+      try.command (CMD.SYNC2, ready, buffer, pkt.in?, cmd.out!)
+      -- FIXME: report version information, 3 null separated strings in buffer
+  :
+
+  PROC command.sequencer (VAL INT spacing, CHAN P.PIONEER.CMD in?, out!)
+    TIMER time:
+    INT next.pulse:
+    SEQ
+      time ? next.pulse
+      next.pulse := next.pulse PLUS 500000
+      WHILE TRUE
+        SEQ
+          PRI ALT
+            BYTE cmd:
+            in ? CASE
+              cmd; cmd
+                out ! cmd; cmd
+              BOOL signed:
+              INT arg:
+              cmd.int; cmd; signed; arg
+                out ! cmd.int; cmd; signed; arg
+              MOBILE []BYTE arg:
+              cmd.str; cmd; arg
+                out ! cmd.str; cmd; arg
+            time ? AFTER next.pulse
+              out ! cmd; CMD.PULSE
+                
+          time ? next.pulse
+          next.pulse := next.pulse PLUS 1000000
+          
+          delay.us (spacing)
+  :
+
+  PROC packet.server (CHAN BOOL req?, CHAN P.PKT in?, out!)
+    INITIAL MOBILE []BYTE pkt IS MOBILE [0]BYTE:
+    INITIAL INT time IS 0:
+    WHILE TRUE
+      PRI ALT
+        BOOL b:
+        ((SIZE pkt) > 0) & req ? b
+          SEQ
+            out ! time; pkt
+            pkt := MOBILE [0]BYTE
+        in ? time; pkt
+          SKIP
+  :
+
+  PROTOCOL P.RAW.SONAR IS INT; MOBILE []SONAR.UPDATE:
+
+  PROC packet.processor (CHAN BOOL req!, CHAN P.PKT in?, CHAN POS ps!, CHAN P.RAW.SONAR ss!, CHAN MOTOR ms!, CHAN GRIP gs!)
+    INT FUNCTION decode.int (VAL []BYTE data) IS (INT data[0]) \/ ((INT data[1]) << 8):
+    INT FUNCTION decode.sint (VAL []BYTE data)
+      INT n:
+      VALOF
+        SEQ
+          n := decode.int (data)
+          IF
+            (n /\ #8000) <> 0
+              n := n \/ #FFFF0000
+            TRUE
+              SKIP
+        RESULT n
+    :
+   
+    MOTOR motor:
+    GRIP grip:
+    INT battery:
+    POS pos:
+    SEQ
+      WHILE TRUE
+        MOBILE []BYTE pkt:
+        INT time:
+        SEQ
+          req ! TRUE
+          in ? time; pkt
+          IF
+            ((pkt[0] /\ #F8) = #30) AND ((SIZE pkt) >= 25) -- SIP
+              MOBILE []SONAR.UPDATE sonar:
+              INT p, readings:
+              SEQ
+                motor[time] := time
+                pos[time] := time
+
+                motor[running] := (pkt[0] /\ #3) = 3
+                pos[x] := decode.int ([pkt FROM 1 FOR 2])
+                pos[y] := decode.int ([pkt FROM 3 FOR 2])
+                pos[th] := decode.sint ([pkt FROM 5 FOR 2])
+                motor[left.v] := decode.sint ([pkt FROM 7 FOR 2])
+                motor[right.v] := decode.sint ([pkt FROM 9 FOR 2])
+                battery := INT pkt[11]
+                motor[left.stall] := (pkt[12] /\ 1) <> 0
+                motor[right.stall] := (pkt[13] /\ 1) <> 0
+                motor[enabled] := (pkt[16] /\ 1) <> 0
+                pos[compass] := INT pkt[18]
+                readings := INT pkt[19]
+                sonar := MOBILE [readings]SONAR.UPDATE
+                p := 20
+                WHILE readings > 0
+                  SEQ
+                    readings := readings - 1
+                    sonar[readings][sensor] := INT pkt[p]
+                    sonar[readings][value] := decode.int ([pkt FROM (p + 1) FOR 2])
+                    p := p + 3
+                grip[uio] := INT pkt[p + 3]
+                PAR
+                  ps ! pos
+                  ms ! motor
+                  IF
+                    (SIZE sonar) > 0
+                      ss ! time; sonar
+                    TRUE
+                      SKIP
+            (pkt[0] = #E0) AND ((SIZE pkt) >= 4) -- GRIPPERpac
+              SEQ
+                grip[time] := time
+                grip[state] := INT pkt[2]
+                grip[grasp] := INT pkt[3]
+                gs ! grip
+            TRUE
+              SKIP
+  :
+
+  PROC position.server (CHAN POS state.in?, CT.POSITION? svr)
+    INITIAL BOOL waiting IS FALSE:
+    INITIAL INT wait.time IS 0:
+    POS data:
+    SEQ
+      -- FIXME: convert x,y values
+      state.in ? data
+      WHILE TRUE
+        PRI ALT
+          state.in ? data
+            IF
+              waiting AND (data[time] AFTER wait.time)
+                SEQ
+                  svr[rsp] ! data
+                  waiting := FALSE
+              TRUE
+                SKIP
+          (NOT waiting) & svr[req] ? CASE
+            get.latest.position
+              svr[rsp] ! data
+            get.newer.position; wait.time
+              IF
+                data[time] AFTER wait.time
+                  svr[rsp] ! data
+                TRUE
+                  waiting := TRUE
+  :
+
+  PROC sonar.server (VAL REAL32 range.conv.factor, CHAN P.RAW.SONAR state.in?, CT.SONAR? svr, SHARED CHAN P.PIONEER.CMD cmd.svr!)
+    INITIAL BOOL waiting IS FALSE:
+    INITIAL INT wait.time IS 0:
+    SONAR data:
+    SEQ
+      data[new] := 0
+
+      INITIAL BOOL ready IS FALSE:
+      WHILE NOT ready
+        TIMER time:
+        INT now:
+        SEQ
+          CLAIM cmd.svr!
+            cmd.svr ! cmd.int; CMD.SONAR; FALSE; 1
+          time ? now
+          PRI ALT
+            MOBILE []SONAR.UPDATE scan:
+            state.in ? data[time]; scan
+              ready := TRUE
+            time ? AFTER (now PLUS 250000)
+              SKIP
+      
+      WHILE (data[new] /\ #FFFF) <> #FFFF
+        MOBILE []SONAR.UPDATE scan:
+        SEQ
+          state.in ? data[time]; scan
+          SEQ i = 0 FOR SIZE scan
+            VAL SONAR.UPDATE update IS scan[i]:
+            VAL INT sensor IS update[sensor]:
+            VAL REAL32 value IS (REAL32 TRUNC update[value]) * range.conv.factor:
+            SEQ
+              data[new] := data[new] \/ (1 << sensor)
+              IF
+                sensor < 8
+                  data[front][sensor] := value
+                sensor < 16
+                  data[back][sensor - 8] := value
+                TRUE
+                  SKIP
+
+      WHILE TRUE
+        PRI ALT
+          MOBILE []SONAR.UPDATE scan:
+          state.in ? data[time]; scan
+            SEQ
+              data[new] := 0
+              SEQ i = 0 FOR SIZE scan
+                VAL SONAR.UPDATE update IS scan[i]:
+                VAL INT sensor IS update[sensor]:
+                VAL REAL32 value IS (REAL32 TRUNC update[value]) * range.conv.factor:
+                SEQ
+                  data[new] := data[new] \/ (1 << sensor)
+                  IF
+                    sensor < 8
+                      data[front][sensor] := value
+                    sensor < 16
+                      data[back][sensor - 8] := value
+                    TRUE
+                      SKIP
+              IF
+                waiting AND (data[time] AFTER wait.time)
+                  SEQ
+                    svr[rsp] ! data
+                    waiting := FALSE
+                TRUE
+                  SKIP
+          (NOT waiting) & svr[req] ? CASE
+            get.latest.sonar
+              svr[rsp] ! data
+            get.newer.sonar; wait.time
+              IF
+                data[time] AFTER wait.time
+                  svr[rsp] ! data
+                TRUE
+                  waiting := TRUE
+            enable.sonar
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.SONAR; FALSE; 1
+            disable.sonar
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.SONAR; FALSE; 0
+  :
+
+  INT FUNCTION limit.int (VAL INT v, l, u)
+    INT n:
+    VALOF
+      IF
+        v < l
+          n := l
+        v > u
+          n := u
+        TRUE
+          n := v
+      RESULT n
+  :
+  INT FUNCTION limit.to.int17 (VAL INT v) IS limit.int (v, -65535, 65535):
+
+  PROC drive.server (CHAN MOTOR state.in?, CT.DRIVE? svr, SHARED CHAN P.PIONEER.CMD cmd.svr!)
+    VAL INT WAIT.NONE IS 0:
+    VAL INT WAIT.STATE IS 1:
+    VAL INT WAIT.ENABLE IS 2:
+    VAL INT WAIT.DISABLE IS 3:
+    VAL INT WAIT.STOP IS 4:
+
+    INITIAL BOOL emergency IS FALSE: -- is emergency stop
+    INITIAL INT waiting IS WAIT.NONE:
+    INITIAL INT wait.time IS 0:
+    MOTOR state:
+    SEQ
+      state.in ? state
+      WHILE TRUE
+        PRI ALT
+          state.in ? state
+            IF
+              (waiting = WAIT.STATE) AND (state[time] AFTER wait.time)
+                SEQ
+                  svr[rsp] ! motor.state; state
+                  waiting := WAIT.NONE
+              (waiting = WAIT.ENABLE)
+                IF
+                  state[enabled]
+                    SEQ
+                      svr[rsp] ! ok
+                      waiting := WAIT.NONE
+                  TRUE
+                    CLAIM cmd.svr!
+                      cmd.svr ! cmd.int; CMD.ENABLE; FALSE; 1
+              (waiting = WAIT.DISABLE)
+                IF
+                  state[enabled]
+                    CLAIM cmd.svr!
+                      cmd.svr ! cmd.int; CMD.ENABLE; FALSE; 0
+                  TRUE
+                    SEQ
+                      svr[rsp] ! ok
+                      waiting := WAIT.NONE
+              (waiting = WAIT.STOP)
+                IF
+                  (state[left.v] = 0) AND (state[right.v] = 0)
+                    SEQ
+                      svr[rsp] ! ok
+                      waiting := WAIT.NONE
+                  TRUE
+                    CLAIM cmd.svr!
+                      IF
+                        emergency
+                          cmd.svr ! cmd; CMD.E.STOP
+                        TRUE
+                          cmd.svr ! cmd; CMD.STOP
+              TRUE
+                SKIP
+          (waiting = WAIT.NONE) & svr[req] ? CASE
+            get.latest.motor.state
+              svr[rsp] ! motor.state; state
+            get.newer.motor.state; wait.time
+              IF
+                state[time] AFTER wait.time
+                  svr[rsp] ! motor.state; state
+                TRUE
+                  waiting := WAIT.STATE
+            enable.motors
+              SEQ
+                CLAIM cmd.svr!
+                  cmd.svr ! cmd.int; CMD.ENABLE; FALSE; 1
+                waiting := WAIT.ENABLE
+            disable.motors
+              SEQ
+                CLAIM cmd.svr!
+                  cmd.svr ! cmd.int; CMD.ENABLE; FALSE; 0
+                waiting := WAIT.DISABLE
+            INT heading:
+            adjust.heading; heading
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.DCHEAD; TRUE; limit.int (heading, -360, 360)
+            INT distance:
+            translate; distance
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.MOVE; TRUE; limit.to.int17 (distance)
+            INT velocity:
+            set.velocity; velocity
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.VEL; TRUE; limit.to.int17 (velocity)
+            INT rotation:
+            set.angular.velocity; rotation
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.ROTATE; TRUE; limit.int (rotation, -360, 360)
+            INT left, right:
+            set.motors; left; right
+              INT v:
+              SEQ
+                left := limit.int (left / 20, -128, 127)
+                right := limit.int (right / 20, -128, 127)
+                -- FIXME: signing
+                left := left /\ #FF
+                right := right /\ #FF
+                v := right \/ (left << 8)
+                CLAIM cmd.svr!
+                  cmd.svr ! cmd.int; CMD.VEL2; FALSE; v
+            BOOL wait:
+            stop; wait; emergency
+              SEQ
+                CLAIM cmd.svr!
+                  IF
+                    emergency
+                      cmd.svr ! cmd; CMD.E.STOP
+                    TRUE
+                      cmd.svr ! cmd; CMD.STOP
+                IF
+                  wait
+                    waiting := WAIT.STOP
+                  TRUE
+                    SKIP
+  :
+
+  PROC gripper.server (CHAN GRIP state.in?, CT.GRIPPER? svr, SHARED CHAN P.PIONEER.CMD cmd.svr!)
+    PROC convert.state (GRIPPER state, GRIP grip)
+      SEQ
+        state[time] := grip[time]
+
+        state[right.paddle] := (grip[uio] /\ (1 << 5)) = 0
+        state[left.paddle] := (grip[uio] /\ (1 << 4)) = 0
+        state[inner.beam] := (grip[uio] /\ (1 << 3)) <> 0
+        state[outer.beam] := (grip[uio] /\ (1 << 2)) <> 0
+        state[lift.limit] := (grip[uio] /\ (1 << 1)) = 0
+        state[paddles.limit] := (grip[uio] /\ (1 << 0)) = 0
+
+        state[gripper.open] := (grip[state] /\ (1 << 0)) <> 0
+        state[gripper.closed] := (grip[state] /\ (1 << 1)) <> 0
+        state[paddles.moving] := (grip[state] /\ (1 << 2)) <> 0
+        state[paddles.error] := (grip[state] /\ (1 << 3)) <> 0
+        state[gripper.up] := (grip[state] /\ (1 << 4)) <> 0
+        state[gripper.down] := (grip[state] /\ (1 << 5)) <> 0
+        state[lift.moving] := (grip[state] /\ (1 << 6)) <> 0
+        state[lift.error] := (grip[state] /\ (1 << 7)) <> 0
+
+        state[pressure] := grip[grasp]
+    :
+    
+    VAL INT WAIT.NONE IS 0:
+    VAL INT WAIT.STATE IS 1:
+
+    INITIAL INT waiting IS WAIT.NONE:
+    INITIAL INT wait.time IS 0:
+    GRIPPER state:
+    SEQ
+      INITIAL BOOL ready IS FALSE:
+      WHILE NOT ready
+        TIMER time:
+        INT now:
+        SEQ
+          CLAIM cmd.svr!
+            cmd.svr ! cmd.int; CMD.GRIPREQUEST; FALSE; 2
+          time ? now
+          PRI ALT
+            GRIP update:
+            state.in ? update
+              SEQ
+                convert.state (state, update)
+                ready := TRUE
+            time ? AFTER (now PLUS 250000)
+              SKIP
+
+      WHILE TRUE
+        PRI ALT
+          GRIP update:
+          state.in ? update
+            SEQ
+              convert.state (state, update)
+              IF
+                (waiting = WAIT.STATE) AND (state[time] AFTER wait.time)
+                  SEQ
+                    svr[rsp] ! gripper; state
+                    waiting := WAIT.NONE
+                TRUE
+                  SKIP
+          (waiting = WAIT.NONE) & svr[req] ? CASE
+            get.latest.gripper.state
+              svr[rsp] ! gripper; state
+            get.newer.gripper.state; wait.time
+              IF
+                state[time] AFTER wait.time
+                  svr[rsp] ! gripper; state
+                TRUE
+                  waiting := WAIT.STATE
+            open.paddles
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 1
+            close.paddles
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 2
+            stop.paddles
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 3
+            raise.lift
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 4
+            lower.lift
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 5
+            stop.lift
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 6
+            store.gripper
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 7
+            deploy.gripper
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 8
+            halt.gripper
+              CLAIM cmd.svr!
+                cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 15
+            INT pressure:
+            set.pressure; pressure
+              SEQ
+                pressure := limit.int (pressure, 1, 100)
+                CLAIM cmd.svr!
+                  SEQ
+                    cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 16
+                    cmd.svr ! cmd.int; CMD.GRIPPERVAL; FALSE; pressure
+            INT level:
+            set.lift.move; level
+              SEQ
+                level := limit.int (level, 1, 255)
+                CLAIM cmd.svr!
+                  SEQ
+                    cmd.svr ! cmd.int; CMD.GRIPPER; FALSE; 17
+                    cmd.svr ! cmd.int; CMD.GRIPPERVAL; FALSE; level
+  :
+
+  SHARED! CHAN P.PIONEER.CMD cmd.svr:
+  CHAN MOBILE []BYTE pkt.out:
+  CHAN P.PIONEER.CMD cmd.out:
+  CHAN P.PKT pkt.in, pkt.svr:
+  CHAN BYTE serial.in, serial.out:
+  CHAN BOOL pkt.req, serial.s, pkt.dec.s, pkt.enc.s:
+  CHAN INT serial.err:
+  PAR
+    serial.port (device, 9600, PARITY.NONE, 8, 1, FLOW.NONE, serial.err!, serial.s?, serial.out?, serial.in!)
+
+    packet.decoder (serial.in?, pkt.dec.s?, pkt.in!)
+    packet.encoder (pkt.out?, pkt.enc.s?, serial.out!)
+    command.encoder (cmd.out?, pkt.out!)
+
+    BOOL ready, error:
+    SEQ
+      initialise (pkt.in?, cmd.out!, ready)
+      
+      -- Send open command and wait for SIPs.
+      INITIAL MOBILE []BYTE buffer IS MOBILE [1]BYTE:
+      INITIAL INT count IS 5:
+      WHILE ((SIZE buffer) <= 1) AND (count > 0)
+        SEQ
+          cmd.out ! cmd; CMD.OPEN
+          -- We should get a SIP every 100ms, so wait 200ms.
+          wait.for.packet (200000, pkt.in?, buffer)
+          count := count - 1
+          ready := (SIZE buffer) > 1 
+
+      PRI ALT
+        INT e:
+        serial.err ? e
+          ready, error := FALSE, TRUE
+        SKIP
+          error := FALSE
+      
+      IF
+        ready
+          CHAN P.RAW.SONAR ss:
+          CHAN MOTOR ms:
+          CHAN GRIP gs:
+          CHAN POS ps:
+          PAR
+            ok.and.ready ! TRUE
+            command.sequencer (5000, cmd.svr?, cmd.out!)
+            packet.server (pkt.req?, pkt.in?, pkt.svr!)
+            packet.processor (pkt.req!, pkt.svr?, ps!, ss!, ms!, gs!)
+            position.server (ps?, position)
+            sonar.server (1.0, ss?, sonar, cmd.svr!)
+            drive.server (ms?, drive, cmd.svr!)
+            gripper.server (gs?, gripper, cmd.svr!)
+        TRUE
+          ok.and.ready ! FALSE
+
+      CHAN BOOL c:
+      PAR
+        cmd.out ! shutdown
+        pkt.enc.s ! TRUE
+        serial.s ! TRUE
+        IF
+          error
+            SKIP
+          TRUE
+            INT e:
+            serial.err ? e
+        SEQ
+          pkt.dec.s ! TRUE
+          c ! TRUE
+        INITIAL BOOL done IS FALSE:
+        WHILE NOT done
+          PRI ALT
+            c ? done
+              SKIP
+            MOBILE []BYTE pkt:
+            INT time:
+            pkt.in ? time; pkt
+              SKIP
+:
+

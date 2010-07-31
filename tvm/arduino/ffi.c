@@ -14,6 +14,7 @@ static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
 }
 
 SFFI_FUNCTION sffi_table[] = {
-	ffi_wait_for_interrupt
+	ffi_wait_for_interrupt,
+	ffi_read_buffer_blocking
 };
 const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);

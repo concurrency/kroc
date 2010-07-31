@@ -134,8 +134,9 @@ freeing */
 #define CLOBBER_WHEN_FREEING (0xFF)
 /*}}}*/
 /*{{{  definitions*/
-#define WORKSPACESIZE     50000	/* Must be a multiple of HOST_ALIGN_SIZE */
-#define TEMPWORKSPACESIZE 10000	/* Must be a multiple of HOST_ALIGN_SIZE */
+/* Both of these must be integer multiples of the host's alignment requirement. */
+#define WORKSPACESIZE     50000
+#define TEMPWORKSPACESIZE 10000
 
 struct wsblock
 {
@@ -322,22 +323,16 @@ PUBLIC void *newvec (const size_t asked_n)
 #else
 	size_t n;
 	/*{{{  align n to a multiple of HOST_ALIGN_SIZE */
-#if   HOST_ALIGN_SIZE == 1
-	n = asked_n;
-#elif HOST_ALIGN_SIZE == 4
-	n = (asked_n + 3) & (~3);	/* round up to a multiple of 4 */
-#elif HOST_ALIGN_SIZE == 8
-	n = (asked_n + 7) & (~7);	/* round up to a multiple of 8 */
-#else
+	/* n must be a multiple of the host's alignment size, and at least as
+	   big as a pointer (since blocks on the freelist have the pointer to the next
+	   block stored in them). We assume the host needs pointer alignment. */
 	{
-		const int tmp = asked_n % HOST_ALIGN_SIZE;
+		const int tmp = asked_n % sizeof (void *);
 		if (tmp != 0)
-			n = asked_n + (HOST_ALIGN_SIZE - tmp);
+			n = asked_n + (sizeof (void *) - tmp);
 		else
 			n = asked_n;
 	}
-#endif
-
 	/*}}} */
 	if (tempworkspaceflag)
 		/*{{{  allocate from temporary workspace */
@@ -854,7 +849,7 @@ PUBLIC treenode *newintconstant (const BIT32 n, const int type)
 {
 	char num[30];		/* plenty big enough for a 32-bit integer */
 	wordnode *literal;
-	sprintf (num, "%ld", n);
+	sprintf (num, "%d", n);
 	literal = lookupword (num, strlen (num));
 
 	return newconstexpnode (S_CONSTEXP, NOPOSN, newlitnode (S_UINTLIT, NOPOSN, (treenode *) literal, newleafnode (type, NOPOSN)), 0, n);

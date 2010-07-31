@@ -1,6 +1,6 @@
 /*
 	rasterio: libpng interface
-	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+	Copyright (C) 2007, 2009  Adam Sampson <ats@offog.org>
 
 	This library is free software; you can redistribute it and/or
 	modify it under the terms of the GNU Lesser General Public
@@ -21,18 +21,13 @@
 #include <stdlib.h>
 #include <png.h>
 
-/* FIXME: This code shouldn't be CCSP specific. */
-#include <ccsp.h>
-/* FIXME: etc_error_null from libkrocif */
-extern void etc_error_null (void *sched, word *Wptr, char *file, int line);
-
 /*{{{  terminate*/
 static char *terminate (const char *s, int len)
 {
 	char *buf = malloc (len + 1);
 
 	if (buf == NULL)
-		etc_error_null (NULL, NULL, __FILE__, __LINE__);
+		return NULL;
 
 	memcpy (buf, s, len);
 	buf[len] = '\0';
@@ -41,87 +36,125 @@ static char *terminate (const char *s, int len)
 }
 /*}}}*/
 
-/*{{{  _read_raster_png */
-/* #PRAGMA EXTERNAL "PROC C.read.raster.png (VAL []BYTE filename, RESULT RASTER raster, RESULT INT rc) = 0" */
-void _read_raster_png (int *w)
+/*{{{  read_raster_png_state */
+/* We have to split read_raster_png into two parts so we can do the mobile
+   allocation from occam -- so this structure saves the internal state. */
+typedef struct {
+	int stage1_ok;
+	FILE *f;
+	png_structp png;
+	png_infop info;
+} read_raster_png_state;
+/*}}}*/
+
+/*{{{  _read_raster_png_1 */
+/* #PRAGMA EXTERNAL "PROC C.read.raster.png.1 (VAL []BYTE filename, RESULT INT height, width, magic) = 0" */
+void _read_raster_png_1 (int *w)
 {
 	char *filename = terminate ((const char *) w[0], w[1]);
-	mt_array_t **raster = (mt_array_t **) &w[3];
-	int *rc = (int *) w[6];
+	int *height = (int *) w[2];
+	int *width = (int *) w[3];
+	read_raster_png_state **magic = (read_raster_png_state **) w[4];
 
-	FILE *f = NULL;
-	png_structp png = NULL;
-	png_infop info = NULL;
-	png_uint_32 width, height;
+	read_raster_png_state *state;
+	png_uint_32 uwidth, uheight;
 	int bit_depth, color_type, interlace_method, compression_method, filter_method;
-	png_bytep *rows;
 	int i;
-	int *data;
 
-	*rc = -1;
+	*height = 0;
+	*width = 0;
+	*magic = NULL;
+
+	/*{{{  initialise state */
+	state = malloc (sizeof *state);
+	if (state == NULL)
+		return;
+	*magic = state;
+	state->stage1_ok = 0;
+	state->f = NULL;
+	state->png = NULL;
+	state->info = NULL;
+	/*}}}*/
 
 	/*{{{  open the file */
-	f = fopen (filename, "rb");
+	if (filename == NULL)
+		return;
+	state->f = fopen (filename, "rb");
 	free (filename);
-	if (f == NULL)
-		goto out;
+	if (state->f == NULL)
+		return;
 	/*}}}*/
 
 	/*{{{  set up libpng */
-	png = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (png == NULL)
-		goto out;
+	state->png = png_create_read_struct (PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (state->png == NULL)
+		return;
 
-	info = png_create_info_struct (png);
-	if (info == NULL)
-		goto out;
+	state->info = png_create_info_struct (state->png);
+	if (state->info == NULL)
+		return;
 
-	if (setjmp (png_jmpbuf (png)))
-		goto out;
+	if (setjmp (png_jmpbuf (state->png)))
+		return;
 
-	png_init_io (png, f);
+	png_init_io (state->png, state->f);
 	/*}}}*/
 
 	/*{{{  read header */
-	png_read_info (png, info);
-	png_get_IHDR (png, info, &width, &height, &bit_depth, &color_type,
+	png_read_info (state->png, state->info);
+	png_get_IHDR (state->png, state->info, &uwidth, &uheight, &bit_depth, &color_type,
 	              &interlace_method, &compression_method, &filter_method);
+	*width = uwidth;
+	*height = uheight;
 	/*}}}*/
 
 	/*{{{  set up transformations to #AARRGGBB */
-	png_set_palette_to_rgb (png);
-	png_set_strip_16 (png);
-	png_set_invert_alpha (png);
-	png_set_packing (png);
-	png_set_gray_to_rgb (png);
+	png_set_palette_to_rgb (state->png);
+	png_set_strip_16 (state->png);
+	png_set_invert_alpha (state->png);
+	png_set_packing (state->png);
+	png_set_gray_to_rgb (state->png);
 
 	i = 1;
 	if (((char *) &i)[0] == 0) {
 		/* Big-endian machine -- ARGB. */
-		png_set_filler (png, 0, PNG_FILLER_BEFORE);
-		png_set_swap_alpha (png);
+		png_set_filler (state->png, 0, PNG_FILLER_BEFORE);
+		png_set_swap_alpha (state->png);
 	} else {
-		/* Little-endian machine -- BGRA */
-		png_set_filler (png, 0, PNG_FILLER_AFTER);
-		png_set_bgr (png);
+		/* Little-endian machine -- BGRA. */
+		png_set_filler (state->png, 0, PNG_FILLER_AFTER);
+		png_set_bgr (state->png);
 	}
 	/* FIXME: Do gamma correction? */
 	/*}}}*/
 
-	/*{{{  allocate raster */
-	/* FIXME: This shouldn't be CCSP-specific */
-	*raster = ccsp_mt_alloc (MT_MAKE_ARRAY_TYPE (2, MT_MAKE_NUM (MT_NUM_INT32)), width * height);
-	(*raster)->dimensions[0] = height;
-	(*raster)->dimensions[1] = width;
-	data = (int *) (*raster)->data;
-	/*}}}*/
+	state->stage1_ok = 1;
+}
+/*}}}*/
+
+/*{{{  _read_raster_png_2 */
+/* #PRAGMA EXTERNAL "PROC C.read.raster.png.2 (VAL INT magic, [][]INT raster, INT rc) = 0" */
+void _read_raster_png_2 (int *w)
+{
+	read_raster_png_state *state = (read_raster_png_state *) w[0];
+	int *raster = (int *) w[1];
+	int height = w[2];
+	int width = w[3];
+	int *rc = (int *) w[4];
+
+	png_bytep *rows;
+	int i;
+
+	*rc = -1;
+	if (state == NULL || !state->stage1_ok)
+		goto out;
 
 	/*{{{  read image data */
 	rows = malloc (height * sizeof *rows);
 	for (i = 0; i < height; i++) {
-		rows[i] = (png_bytep) &data[width * i];
+		rows[i] = (png_bytep) &raster[width * i];
 	}
-	png_read_image (png, rows);
+	png_read_image (state->png, rows);
 	free (rows);
 	/*}}}*/
 
@@ -129,10 +162,13 @@ void _read_raster_png (int *w)
 
 out:
 	/*{{{  clean up */
-	if (png != NULL)
-		png_destroy_read_struct (&png, &info, NULL);
-	if (f != NULL)
-		fclose (f);
+	if (state != NULL) {
+		if (state->png != NULL)
+			png_destroy_read_struct (&state->png, &state->info, NULL);
+		if (state->f != NULL)
+			fclose (state->f);
+		free (state);
+	}
 	/*}}}*/
 }
 /*}}}*/
@@ -156,6 +192,8 @@ void _write_raster_png (int *w)
 	*rc = -1;
 
 	/*{{{  open the file */
+	if (filename == NULL)
+		goto out;
 	f = fopen (filename, "wb");
 	free (filename);
 	if (f == NULL)
