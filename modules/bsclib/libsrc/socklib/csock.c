@@ -105,29 +105,57 @@ static int r_encode_address_family (int af) {
 		case OCC_AF_UNIX:	return AF_UNIX;
 		/* case OCC_AF_LOCAL:	return AF_LOCAL; */
 		case OCC_AF_INET:	return AF_INET;
+		#ifdef AF_AX25
 		case OCC_AF_AX25:	return AF_AX25;
+		#endif /* AF_AX25 */
 		case OCC_AF_IPX:	return AF_IPX;
 		case OCC_AF_APPLETALK:	return AF_APPLETALK;
+		#ifdef AF_NETROM
 		case OCC_AF_NETROM:	return AF_NETROM;
+		#endif /* AF_NETROM */
+		#ifdef AF_BRIDGE
 		case OCC_AF_BRIDGE:	return AF_BRIDGE;
+		#endif /* AF_BRIDGE */
+		#ifdef AF_ATMPVC
 		case OCC_AF_ATMPVC:	return AF_ATMPVC;
+		#endif /* AF_ATMPVC */
+		#ifdef AF_X25
 		case OCC_AF_X25:	return AF_X25;
+		#endif /* AF_X25 */
 		case OCC_AF_INET6:	return AF_INET6;
+		#ifdef AF_ROSE
 		case OCC_AF_ROSE:	return AF_ROSE;
+		#endif /* AF_ROSE */
 		#ifdef AF_DECNET
 		case OCC_AF_DECNET:	return AF_DECNET;
 		#endif /* AF_DECNET */
+		#ifdef AF_NETBEUI
 		case OCC_AF_NETBEUI:	return AF_NETBEUI;
+		#endif /* AF_NETBEUI */
+		#ifdef AF_SECURITY
 		case OCC_AF_SECURITY:	return AF_SECURITY;
+		#endif /* AF_SECURITY */
+		#ifdef AF_KEY
 		case OCC_AF_KEY:	return AF_KEY;
+		#endif /* AF_KEY */
 		/* case OCC_AF_NETLINK:	return AF_NETLINK */
 		case OCC_AF_ROUTE:	return AF_ROUTE;
+		#ifdef AF_PACKET
 		case OCC_AF_PACKET:	return AF_PACKET;
+		#endif /* AF_PACKET */
+		#ifdef AF_ASH
 		case OCC_AF_ASH:	return AF_ASH;
+		#endif /* AF_ASH */
+		#ifdef AF_ECONET
 		case OCC_AF_ECONET:	return AF_ECONET;
+		#endif /* AF_ECONET */
+		#ifdef AF_ATMSVC
 		case OCC_AF_ATMSVC:	return AF_ATMSVC;
+		#endif /* AF_ATMSVC */
 		case OCC_AF_SNA:	return AF_SNA;
+		#ifdef AF_IRDA
 		case OCC_AF_IRDA:	return AF_IRDA;
+		#endif /* AF_IRDA */
 		case OCC_AF_MAX:	return AF_MAX;
 		default:
 			return AF_UNSPEC;
@@ -212,12 +240,22 @@ static int r_encode_sockopt_optname (int level, int opt)
 			case OCC_SO_RCVBUF:	return SO_RCVBUF;
 			case OCC_SO_KEEPALIVE:	return SO_KEEPALIVE;
 			case OCC_SO_OOBINLINE:	return SO_OOBINLINE;
+			#ifdef SO_NO_CHECK
 			case OCC_SO_NO_CHECK:	return SO_NO_CHECK;
+			#endif /* SO_NO_CHECK */
+			#ifdef SO_PRIORITY
 			case OCC_SO_PRIORITY:	return SO_PRIORITY;
+			#endif /* SO_PRIORITY */
 			case OCC_SO_LINGER:	return SO_LINGER;
+			#ifdef SO_BSDCOMPAT
 			case OCC_SO_BSDCOMPAT:	return SO_BSDCOMPAT;
+			#endif /* SO_BSDCOMPAT */
+			#ifdef SO_PASSCRED
 			case OCC_SO_PASSCRED:	return SO_PASSCRED;
+			#endif /* SO_PASSCRED */
+			#ifdef SO_PEERCRED
 			case OCC_SO_PEERCRED:	return SO_PEERCRED;
+			#endif /* SO_PEERCRED */
 			case OCC_SO_RCVLOWAT:	return SO_RCVLOWAT;
 			case OCC_SO_SNDLOWAT:	return SO_SNDLOWAT;
 			case OCC_SO_RCVTIMEO:	return SO_RCVTIMEO;
@@ -229,16 +267,36 @@ static int r_encode_sockopt_optname (int level, int opt)
 		switch (opt) {
 			case OCC_TCP_NODELAY:	return TCP_NODELAY;
 			case OCC_TCP_MAXSEG:	return TCP_MAXSEG;
+			#ifdef TCP_CORK
 			case OCC_TCP_CORK:	return TCP_CORK;
+			#endif /* TCP_CORK */
+			#ifdef TCP_KEEPIDLE
 			case OCC_TCP_KEEPIDLE:	return TCP_KEEPIDLE;
+			#endif /* TCP_KEEPIDLE */
+			#ifdef TCP_KEEPINTVL
 			case OCC_TCP_KEEPINTVL:	return TCP_KEEPINTVL;
+			#endif /* TCP_INTVL */
+			#ifdef TCP_KEEPCNT
 			case OCC_TCP_KEEPCNT:	return TCP_KEEPCNT;
+			#endif /* TCP_KEEPCNT */
+			#ifdef TCP_SYNCNT
 			case OCC_TCP_SYNCNT:	return TCP_SYNCNT;
+			#endif /* TCP_SYNCNT */
+			#ifdef TCP_LINGER2
 			case OCC_TCP_LINGER2:	return TCP_LINGER2;
+			#endif /* TCP_LINGER2 */
+			#ifdef TCP_DEFER_ACCEPT
 			case OCC_TCP_DEFER_ACCEPT: return TCP_DEFER_ACCEPT;
+			#endif /* TCP_DEFER_ACCEPT */
+			#ifdef TCP_WINDOW_CLAMP
 			case OCC_TCP_WINDOW_CLAMP: return TCP_WINDOW_CLAMP;
+			#endif /* TCP_WINDOW_CLAMP */
+			#ifdef TCP_INFO
 			case OCC_TCP_INFO:	return TCP_INFO;
+			#endif /* TCP_INFO */
+			#ifdef TCP_QUICKACK
 			case OCC_TCP_QUICKACK:	return TCP_QUICKACK;
+			#endif /* TCP_QUICKACK */
 			default:
 				return opt;
 		}
@@ -280,8 +338,10 @@ static int r_encode_msg_flags (int flags)
 		ret |= MSG_DONTROUTE;
 	if (flags & OCC_MSG_CTRUNC)
 		ret |= MSG_CTRUNC;
+	#ifdef MSG_PROXY
 	if (flags & OCC_MSG_PROXY)
 		ret |= MSG_PROXY;
+	#endif /* MSG_PROXY */
 	if (flags & OCC_MSG_TRUNC)
 		ret |= MSG_TRUNC;
 	if (flags & OCC_MSG_DONTWAIT)
@@ -290,20 +350,30 @@ static int r_encode_msg_flags (int flags)
 		ret |= MSG_EOR;
 	if (flags & OCC_MSG_WAITALL)
 		ret |= MSG_WAITALL;
+	#ifdef MSG_FIN
 	if (flags & OCC_MSG_FIN)
 		ret |= MSG_FIN;
+	#endif /* MSG_FIN */
+	#ifdef MSG_SYN
 	if (flags & OCC_MSG_SYN)
 		ret |= MSG_SYN;
+	#endif /* MSG_SYN */
 	#ifdef MSG_URG
 	if (flags & OCC_MSG_URG)
 		ret |= MSG_URG;
 	#endif /* MSG_URG */
+	#ifdef MSG_RST
 	if (flags & OCC_MSG_RST)
 		ret |= MSG_RST;
+	#endif /* MSG_RST */
+	#ifdef MSG_ERRQUEUE
 	if (flags & OCC_MSG_ERRQUEUE)
 		ret |= MSG_ERRQUEUE;
+	#endif /* MSG_ERRQUEUE */
+	#ifdef MSG_NOSIGNAL
 	if (flags & OCC_MSG_NOSIGNAL)
 		ret |= MSG_NOSIGNAL;
+	#endif /* MSG_NOSIGNAL */
 
 	return ret;
 }
