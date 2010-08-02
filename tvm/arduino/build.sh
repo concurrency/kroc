@@ -26,8 +26,6 @@ mcu="atmega1280"
 		make firmware.hex
 	done
 
-exit
-
 mcu="atmega328p"
 	for fcpu in $FCPUS
 	do
