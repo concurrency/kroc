@@ -7,7 +7,7 @@ PROC turn (CHAN INT x?, y?, VAL INT bank.angle, CHAN SERVO s, s2)
     SEQ
       x ? pitch
       y ? roll
-      servo.pos.pitch := (pitch * (-1)) + 100
+      servo.pos.pitch := (pitch * (-1)) + 120
       s ! pos ; servo.pos.pitch
       servo.pos.roll := (roll * (-1)) + (bank.angle + 90)
       s2 ! pos ; servo.pos.roll
@@ -54,7 +54,7 @@ PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2) -- This PROC a
         servo.pos.pitch := (pitch * (-2)) + 90
         s ! pos ; servo.pos.pitch
         
-        servo.pos.roll := (roll * (-2)) + 90
+        servo.pos.roll := (roll * (-1)) + 90
         s2 ! pos ; servo.pos.roll
         
       

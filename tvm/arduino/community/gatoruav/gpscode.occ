@@ -1,29 +1,19 @@
 #INCLUDE "plumbing.module"
-
-PROC serial.rx (VAL INT pin, CHAN BYTE received!)
-  BYTE ch:
-  WHILE TRUE
-    SEQ
-      serial.read.byte(pin, ch)
-      received ! ch
-:
-
-PROC serial.tx (VAL INT pin, CHAN BYTE received?)
-  BYTE ch:
-  WHILE TRUE
-    SEQ
-      received ? ch
-      serial.write.byte(pin, ch)
-:
-
+VAL INT BAUD IS 9600:
 PROC main ()
-  CHAN BYTE b:
   SEQ
-    serial.setup(0, 57600)
-    serial.setup(2, 9600) -- or whatever...
-    PAR
-      serial.tx(TX0, b?) -- looks a lot like rx, but opposite...
-      serial.rx(RX2, b!)
+    serial.setup(TX0, 57600)
+    serial.setup(RX3, 9600)
+
+    [80]BYTE buff:
+    INT leng:
+    WHILE TRUE
+      SEQ
+        serial.buffer.read(RX3, '$','*n',buff,leng)
+
+        SEQ i = 0 FOR leng
+          serial.write.byte(TX0, buff[i])
+
+        serial.write.newline(TX0)
+
 :
-    
-  

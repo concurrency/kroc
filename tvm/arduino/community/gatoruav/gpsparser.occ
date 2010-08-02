@@ -30,10 +30,10 @@ PROC part (VAL []BYTE gps.in, []BYTE section, VAL INT comma)
 :    
     
 
-VAL []BYTE string IS "$GPRMC,183731,A,3907.482,N,12102.436,W,000.0,360.0,080301,015.5,E**67":
-PROC gps.treasure ()
-  [6]BYTE nmea.tag:
-  [6]BYTE time:
+VAL []BYTE target.tag IS "GPVTG":
+PROC gps.treasure (CHAN [80]BYTE buffer?, CHAN INT length?)
+  [5]BYTE nmea.tag:
+  [5]BYTE heading:
   [1]BYTE validity:
   [8]BYTE latitude: 
   [1]BYTE lat.dir:
@@ -41,33 +41,58 @@ PROC gps.treasure ()
   [1]BYTE long.dir:
   [4]BYTE speed:
   [4]BYTE course:
-  INITIAL INT pos IS 0:
+  INITIAL INT pos, len, c IS 0, 0, 0:
+  [80] BYTE string:
   
+  WHILE TRUE
+    SEQ
+      length ? len
+      
+      buffer ? string
+      
+      
+      part (string, nmea.tag, 0)
+      IF i= 0 FOR SIZE(target.tag)
+        nmea.tag [i] = target.tag[i]
+          c := (c +1)
+      IF
+        c = (SIZE (target.tag))
+        
+        
+          SEQ
+          
+            part(string, heading, 1)
+            SEQ i=0 FOR (SIZE heading)
+              serial.write.string (TX0, [heading [i]])
+            serial.write.string(TX0,"*n")  
+        
+
+:
+PROC gps.data (CHAN [80]BYTE buffer!, CHAN INT length! )
   SEQ
-    part (string, nmea.tag, 0)
-    SEQ i=0 FOR (SIZE nmea.tag)
-      serialWrite ([nmea.tag [i]])
-    serialWrite("*n")
-    
-    part(string, time, 1)
-    SEQ i=0 FOR (SIZE time)
-      serialWrite ([time [i]])
-    serialWrite("*n")  
-    
-    part(string, validity, 2)
-    SEQ i=0 FOR (SIZE validity)
-      serialWrite ([validity [i]])      
-    serialWrite("*n")
-    
-    part(string, latitude, 3)
-    SEQ i=0 FOR (SIZE latitude)
-      serialWrite ([latitude [i]])      
-    serialWrite("*n")
+    serial.setup(TX0, 57600)
+    serial.setup(RX3, 9600)
+
+    [80]BYTE buff:
+    INT leng:
+    WHILE TRUE
+      SEQ
+        serial.buffer.read(RX3, '$','*n',buff,leng)
+        buffer ! buff
+        length ! leng
+        --SEQ i = 0 FOR leng
+          --serial.write.byte(TX0, buff[i])
+
+        --serial.write.newline(TX0)
+
 :
    
 PROC main ()
-  SEQ
-    gps.treasure()
+  CHAN [80]BYTE buffer:
+  CHAN INT length:
+  PAR
+    gps.treasure(buffer?, length?)
+    gps.data(buffer!, length!)
         
 :
 
