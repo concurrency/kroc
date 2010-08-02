@@ -1,6 +1,6 @@
 #INCLUDE "plumbing.module"
 VAL [1]BYTE com IS ",":
-PROC part (VAL []BYTE gps.in, []BYTE section, VAL INT comma)
+PROC part ([]BYTE gps.in, []BYTE section, VAL INT comma)
   INITIAL INT i, j, num.comma IS 0,0,0:
   --WHILE i < (SIZE (gps.in))
   SEQ 
@@ -31,7 +31,7 @@ PROC part (VAL []BYTE gps.in, []BYTE section, VAL INT comma)
     
 
 VAL []BYTE target.tag IS "GPVTG":
-PROC gps.treasure (CHAN [80]BYTE buffer?, CHAN INT length?)
+PROC gps.treasure (CHAN [80]BYTE buffer?)
   [5]BYTE nmea.tag:
   [5]BYTE heading:
   [1]BYTE validity:
@@ -46,18 +46,22 @@ PROC gps.treasure (CHAN [80]BYTE buffer?, CHAN INT length?)
   
   WHILE TRUE
     SEQ
-      length ? len
-      
+      c := 0
       buffer ? string
       
-      
       part (string, nmea.tag, 0)
-      IF i= 0 FOR SIZE(target.tag)
-        nmea.tag [i] = target.tag[i]
-          c := (c +1)
+
+      SEQ i= 0 FOR SIZE(target.tag)
+        IF
+          nmea.tag [i] = target.tag[i]
+            SEQ  
+              c := (c +1)
+
+          TRUE 
+            SKIP
       IF
         c = (SIZE (target.tag))
-        
+       
         
           SEQ
           
@@ -66,9 +70,10 @@ PROC gps.treasure (CHAN [80]BYTE buffer?, CHAN INT length?)
               serial.write.string (TX0, [heading [i]])
             serial.write.string(TX0,"*n")  
         
-
+        TRUE
+          SKIP
 :
-PROC gps.data (CHAN [80]BYTE buffer!, CHAN INT length! )
+PROC gps.data (CHAN [80]BYTE buffer!)
   SEQ
     serial.setup(TX0, 57600)
     serial.setup(RX3, 9600)
@@ -79,7 +84,7 @@ PROC gps.data (CHAN [80]BYTE buffer!, CHAN INT length! )
       SEQ
         serial.buffer.read(RX3, '$','*n',buff,leng)
         buffer ! buff
-        length ! leng
+
         --SEQ i = 0 FOR leng
           --serial.write.byte(TX0, buff[i])
 
@@ -91,8 +96,8 @@ PROC main ()
   CHAN [80]BYTE buffer:
   CHAN INT length:
   PAR
-    gps.treasure(buffer?, length?)
-    gps.data(buffer!, length!)
+    gps.treasure(buffer?)
+    gps.data(buffer!)
         
 :
 

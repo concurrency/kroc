@@ -92,7 +92,7 @@ PROC main()
   
   PAR
     ping (s!)
-    adc (A0,AREF, s?, val!)
+    adc (A1,AREF, s?, val!)
     av (val?, average!)
     --conv (average?, converted!)
     display (average?)
