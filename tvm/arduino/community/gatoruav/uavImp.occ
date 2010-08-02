@@ -115,7 +115,7 @@ PROC main ()
         delay (2000)
         PAR
           level.flight (level.x?, level.y?, s, s2)
-          turn (turn.x?, turn.y?, 10, s3, s4)
+          turn (turn.x?, turn.y?, 6, s3, s4)
           brain (filtered.x?, filtered.y?, turn.x!, turn.y!, level.x!, level.y!)
       angles(A4, A5, A0, A1, pitch!, roll!)
       --display(filtered.y?)
