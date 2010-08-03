@@ -51,7 +51,7 @@ PROC level.flight (CHAN INT theta.x?, theta.y?, CHAN SERVO s, s2) -- This PROC a
         theta.x ? pitch
         theta.y ? roll
         
-        servo.pos.pitch := (pitch * (-2)) + 90
+        servo.pos.pitch := (pitch * (-2)) + 91
         s ! pos ; servo.pos.pitch
         
         servo.pos.roll := (roll * (-2)) + 90
