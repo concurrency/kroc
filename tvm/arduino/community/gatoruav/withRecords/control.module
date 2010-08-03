@@ -1,0 +1,59 @@
+#IF NOT (DEFINED (CONTROL.MODULE))
+#DEFINE CONTROL.MODULE
+
+PROC turn (CHAN IMU.DATA position, VAL INT bank.angle, CHAN SERVO s, s2)
+  INT servo.pos.roll, servo.pos.pitch:
+  IMU.DATA pos:
+  WHILE TRUE
+    SEQ
+      position ? pos
+      servo.pos.pitch := (pos[pitch] * (-2)) + 90
+      s ! pos ; servo.pos.pitch
+      servo.pos.roll := (pos[roll] * (-1)) + (bank.angle + 90)
+      s2 ! pos ; servo.pos.roll
+     
+    
+:    
+#IF FALSE
+VAL INT TURN IS 5
+PROC turn.to.heading (CHAN ATTITUDE at?, CHAN SIGNAL sig, CHAN SERVO servo.pitch, servo.roll, VAL INT new.heading)
+  ATTITUDE attitude:
+  INT  servo.pos.pitch, servo.pos.roll:
+  WHILE TRUE
+    SEQ
+      at ? attitude
+      IF
+        attitude[heading] < (new.heading)
+          SEQ
+            servo.pos.roll := (pos[roll] * (-2)) + 90 + TURN
+            s2 ! pos ; servo.pos.roll
+:
+#ENDIF
+VAL INT OFFSET.PITCH IS 1:
+PROC level.flight (CHAN IMU.DATA imu, CHAN SERVO s, s2) -- This PROC acts as a feedback mechanism keeping the airplane in level flight.  As the attitude of the airplane changes, the servos are moved to positions to return the plane to level flight.
+  INT  servo.pos.pitch, servo.pos.roll:
+  IMU.DATA pos:
+  SEQ
+    s ! pos ; 90
+    WHILE TRUE
+      SEQ
+        imu ? pos
+          
+        servo.pos.pitch := (pos[pitch] * (-2)) + (90 + OFFSET.PITCH)
+        s ! pos ; servo.pos.pitch
+        
+        servo.pos.roll := (pos[roll] * (-2)) + 90
+        s2 ! pos ; servo.pos.roll
+        
+      
+:  
+PROC servo.setup(CHAN SERVO s) --Wrapped the initialization of the servo
+
+  SEQ
+    s ! min ; 650
+    s ! max ; 2350
+    s ! div ; 180
+    s ! pos ; 0
+    s ! start
+: 
+#ENDIF

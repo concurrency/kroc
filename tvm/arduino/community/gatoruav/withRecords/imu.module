@@ -1,0 +1,210 @@
+#IF NOT (DEFINED (IMU.MODULE))
+#DEFINE IMU.MODULE
+#INCLUDE "plumbing.module"
+
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serial.write.string(TX0, "-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serial.write.string(TX0,[BYTE digit])
+        index := index + 1
+    
+:
+PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
+  -- gyr is the angular velocity from the gyro
+  -- accel is the angle from the accelerometer
+  -- dt is the change in time
+  -- w is the weight of the gyro
+  -- angle is the angle
+  INT gyr, accel:
+  INITIAL INT angle IS 0:
+  WHILE TRUE
+    SEQ
+      gyro ? gyr
+      accelerometer ? accel
+    
+      accel := accel * (-1) 
+
+      angle := (((tau * (angle + (gyr * dt))) + (( 100 - tau) * accel))/100)
+
+      theta ! angle
+:
+PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
+
+  INITIAL INT counter, shift, n IS 0, 0, 0:
+
+  WHILE TRUE
+    SEQ
+      input ? n
+      --                was -1.26
+      n := (((((n-33)/10230)-13)/30) * 1000)/10
+       
+      IF  
+        counter < 11
+          SEQ
+            shift := n  
+            counter := counter + 1
+            --IF statement used to initially zero the reading to whatever the first value is
+        TRUE
+          SKIP
+      n := n - shift
+              -- in milliseconds
+      output ! n
+:
+
+PROC gyro.filter (CHAN INT input?, rate!)
+  [4]INT filter.arr:
+  INT filtered:
+  INITIAL INT current.rate IS 0:
+  
+  -- Following SEQs are for initialization
+  SEQ
+    SEQ i=0 FOR 4  
+      SEQ  
+        input ? filter.arr[i]
+    SEQ
+      input ? current.rate
+    
+    -- Now filtering begins
+    WHILE TRUE
+      SEQ
+        filtered := (filter.arr[1] + filter.arr[3]) 
+        filtered := (filtered + (filter.arr[2] *2))
+        filtered := filtered / 4
+        current.rate := ((current.rate) + (filtered))/2
+        rate ! current.rate
+
+        filter.arr [0] := filter.arr [1]
+        filter.arr [1] := filter.arr [2]
+        filter.arr [2] := filter.arr [3]
+        filter.arr [3] := current.rate
+        
+        input ? current.rate
+:
+PROC gyro.drift (CHAN INT drift!)
+  WHILE TRUE  
+    SEQ
+      drift ! 0
+:
+
+PROC accel.conv.y (CHAN INT in?, out!)
+  WHILE TRUE
+    INITIAL INT i IS 0:
+    INT reading, theta:
+    SEQ
+      in ? reading
+      i := 0
+      IF
+        (reading <= 536) AND (reading >= 468)
+          SEQ
+            theta := (((reading * 10) - 5029) / 17) * (-1) 
+            out ! theta
+        (reading >= 536) AND (reading <= 567)
+          SEQ
+            theta := (((reading * 10) - 5064) / 15) * (-1) 
+            out ! theta
+        (reading <= 468 ) AND (reading >= 438)
+          SEQ
+            theta := (((reading * 10) - 4993) / 15) * (-1) 
+            out ! theta
+        (reading >= 567) AND (reading <= 588)
+          SEQ
+            theta := (((reading * 10) - 5223) / 11) * (-1) 
+            out ! theta
+        (reading <= 438) AND (reading >= 416)
+          SEQ
+            theta := (((reading * 10) - 4768) / 10) * (-1) 
+            out ! theta
+        (reading >= 588) AND (reading <= 603)
+          SEQ
+            theta := (((reading * 10) - 5546) / 6) * (-1) 
+            out ! theta
+        (reading <= 416) AND (reading >= 398)
+          SEQ
+            theta := (((reading * 10) - 4441) / 5) * (-1) 
+            out ! theta
+        TRUE
+          SKIP
+        
+:
+PROC accel.conv.x (CHAN INT in?, out!)
+  WHILE TRUE
+    INITIAL INT i IS 0:
+    INT reading, theta:
+    SEQ
+      in ? reading
+      i := 0
+      reading := reading - 2
+      IF
+        (reading <= 542) AND (reading >= 478)
+          SEQ
+            theta := (((reading * 10) - 5102) / 16) 
+            out ! theta
+        (reading >= 448) AND (reading <= 478)
+          SEQ
+            theta := (((reading * 10) - 5083) / 15) 
+            out ! theta
+        (reading <= 573) AND (reading >= 542)
+          SEQ
+            theta := (((reading * 10) - 5139) / 15) 
+            out ! theta
+        (reading >= 427) AND (reading <= 448)
+          SEQ
+            theta := (((reading * 10) - 4934) / 11) 
+            out ! theta
+        (reading <= 598) AND (reading >= 573)
+          SEQ
+            theta := (((reading * 10) - 5299) / 11) 
+            out ! theta
+        (reading >= 410) AND (reading <= 427)
+          SEQ
+            theta := (((reading * 10) - 4650) / 7) 
+            out ! theta
+        (reading <= 616) AND (reading >= 598)
+          SEQ
+            theta := (((reading * 10) - 5699) / 5)  
+            out ! theta
+        TRUE
+          SKIP
+        
+:
+PROC ping (CHAN SIGNAL s!)
+  WHILE TRUE 
+    SEQ
+      s ! SIGNAL
+:
+PROC time.int (CHAN INT v?, VAL BYTE axis)
+  TIMER tim:
+  INT start, end, hole:
+  WHILE TRUE
+    SEQ
+      tim ? start
+      SEQ i = 0 FOR 100
+        v ? hole
+      tim ? end
+      serial.write.string(TX0, [axis])
+      serialWriteDecInt(end MINUS start)
+      serial.write.string(TX0, "*n")
+:
+
+#ENDIF
