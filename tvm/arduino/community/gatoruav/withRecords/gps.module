@@ -1,0 +1,81 @@
+VAL [1]BYTE com IS ",":
+VAL INT BUFFER.SIZE IS 80:
+PROC part ([]BYTE gps.in, []BYTE section, VAL INT comma)
+  INITIAL INT i, j, num.comma IS 0,0,0:
+  --WHILE i < (SIZE (gps.in))
+  SEQ 
+    WHILE num.comma < comma
+      IF
+        gps.in [i] = com[0]
+          SEQ
+            num.comma := num.comma + 1
+            i := i + 1
+        TRUE
+          SEQ
+            i := i + 1
+            --serialWrite ("true")
+            
+    WHILE num.comma = comma
+      IF 
+        gps.in [i] = com[0]
+          num.comma := num.comma + 1
+        gps.in [i] <> com [0]
+          SEQ
+            section [j] := gps.in [i]
+            j := j + 1
+            i := i + 1
+        TRUE
+          i := i + 1
+          
+:    
+    
+
+VAL []BYTE target.tag IS "GPVTG":
+PROC gps.course (CHAN [BUFFER.SIZE]BYTE buffer?, CHAN INT course!)
+  [5]BYTE heading:
+  [5]BYTE nmea.tag:
+  INITIAL INT pos, len, c IS 0, 0, 0:
+  [BUFFER.SIZE] BYTE string:
+  
+  WHILE TRUE
+    SEQ
+      c := 0
+      buffer ? string
+      
+      part (string, nmea.tag, 0)
+
+      SEQ i= 0 FOR SIZE(target.tag)
+        IF
+          nmea.tag [i] = target.tag[i]
+            SEQ  
+              c := (c +1)
+
+          TRUE 
+            SKIP
+      IF
+        c = (SIZE (target.tag))
+          SEQ
+            part(string, heading, 1)
+            course ! heading
+        TRUE
+          SKIP
+:
+PROC gps.reader (CHAN [BUFFER.SIZE]BYTE buffer!)
+  SEQ
+    serial.setup(TX0, 57600)
+    serial.setup(RX3, 9600)
+
+    [BUFFER.SIZE]BYTE buff:
+    INT leng:
+    WHILE TRUE
+      SEQ
+        serial.buffer.read(RX3, '$','*n',buff,leng)
+        buffer ! buff
+
+        --SEQ i = 0 FOR leng
+          --serial.write.byte(TX0, buff[i])
+
+        --serial.write.newline(TX0)
+
+:
+--PROC get.heading(CHAN []INT)
