@@ -1,8 +1,8 @@
+#INCLUDE "uavConstants.module"
 #INCLUDE "uavsensors.module"
 #INCLUDE "servo.module"
 #INCLUDE "control.module"
 #INCLUDE "gps.module"
---#INCLUDE "control.module"
 PROC display(CHAN INT theta?)
   INT angle:
   WHILE TRUE
@@ -11,7 +11,6 @@ PROC display(CHAN INT theta?)
       serialWriteDecInt(angle)
       serial.write.string(TX0, "*n")
 :
-VAL INT NUM.READINGS.TO.AVERAGE IS 10:
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT  sum:
@@ -45,7 +44,7 @@ PROC brain (CHAN IMU.DATA orientation?, turning!, level!) -- This proc chooses w
         TRUE
           SKIP
       IF 
-        ((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
+        FALSE --((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
           PAR
             SEQ
               orientation ? pos
@@ -86,10 +85,10 @@ PROC main ()
       servo (44, s4)
       
       SEQ
-        servo.setup(s4)
-        servo.setup(s4)
-        servo.setup(s4)
-        servo.setup(s4)
+        servo.setup(s, AILERON.START)
+        servo.setup(s2, ELEVATOR.START)
+        servo.setup(s3, AILERON.START)
+        servo.setup(s4, ELEVATOR.START)
         delay (2000)
 
         PAR
@@ -98,7 +97,7 @@ PROC main ()
           brain (orientation?, level!, turning!)
 
       angles(A4, A5, A0, A1, pitch!, roll!)
-      packer(filtered.x?, filtered.y?, orientation!)
-      av(pitch?, filtered.x!)
-      av(roll?, filtered.y!)
+      packer(pitch?, roll?, orientation!)
+      --av(pitch?, filtered.x!)
+      --av(roll?, filtered.y!)
 :

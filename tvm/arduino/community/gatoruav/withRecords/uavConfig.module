@@ -1,0 +1,10 @@
+-- Number of readings that av averages
+VAL INT NUM.READINGS.TO.AVERAGE IS 10:
+-- The starting positions of the control surfaces
+VAL INT AILERON.START IS 90:
+VAL INT ELEVATOR.START IS 90:
+-- The offsets for pitch and roll
+VAL INT OFFSET.PITCH IS 1:
+VAL INT OFFSET.ROLL IS (-1):
+-- The buffer size that the gps is read into
+VAL INT BUFFER.SIZE IS 80:
