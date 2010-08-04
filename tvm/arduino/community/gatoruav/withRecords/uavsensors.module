@@ -1,16 +1,18 @@
 #IF NOT (DEFINED (UAVSENSORS.MODULE))
 #DEFINE UAVSENSORS.MODULE
 #INCLUDE "imu.module"
-
+--* INT representing the X-axis
 VAL INT X IS 0:
+--* INT representing the Y-axis
 VAL INT Y IS 1:
 
-DATA TYPE IMU.DATA
-  RECORD
-    INT pitch, roll:
-:
-
--- This runs at around 143 reading per second
+--* Finds the pitch and roll angles from an imu.
+-- @param GYRO.X The adc pin that the X axis gyro is on
+-- @param GYRO.Y The adc pin that the Y axis gyro is on
+-- @param ACCEL.X The adc pin that the X axis accelerometer is on
+-- @param ACCEL.Y The adc pin that the y axis accelerometer is on
+-- @param pitch A INT channel that the pitch will be put in
+-- @param roll A INT channel that the roll will be put in
 PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
   
   [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree:
@@ -42,6 +44,10 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
     comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 93, 1)
     
 :
+--* This process takes in two values and packs them in an IMU.DATA record
+-- @param pitch a channel for the incoming pitch
+-- @param roll a channel for the incoming roll
+-- @param packed a channel for the packed up IMU.DATA record
 PROC packer(CHAN INT pitch?, roll?, CHAN IMU.DATA packed)
   INT p, r:
   IMU.DATA data:
@@ -53,4 +59,14 @@ PROC packer(CHAN INT pitch?, roll?, CHAN IMU.DATA packed)
       data[roll] := r
       packed ! data
 :
+--* Obtains the heading from a gps
+-- @param heading The channel that the heading will be put in
+PROC get.heading(CHAN INT heading!)
+  CHAN [BUFFER.SIZE]BYTE buffer:
+  WHILE TRUE
+    PAR
+      gps.reader(buffer!)
+      gps.course(buffer?, heading!)
+:
+
 #ENDIF

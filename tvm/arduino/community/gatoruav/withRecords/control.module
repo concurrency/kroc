@@ -1,7 +1,11 @@
 #IF NOT (DEFINED (CONTROL.MODULE))
 #DEFINE CONTROL.MODULE
-
-PROC turn (CHAN IMU.DATA position, VAL INT bank.angle, CHAN SERVO s, s2)
+--* This process turns the uav by adjusting the control surfaces via servos.
+-- @param position A IMU.DATA record containing the current pitch and roll of the aricraft.
+-- @param bank.angle The angle that Ailerons should be to make the turn
+-- @param s The Elevator(pitch) servo
+-- @param s2 the Aileron(roll) servo
+PROC turn (CHAN IMU.DATA position?, VAL INT bank.angle, CHAN SERVO s, s2)
   INT servo.pos.roll, servo.pos.pitch:
   IMU.DATA pos:
   WHILE TRUE
@@ -29,6 +33,10 @@ PROC turn.to.heading (CHAN ATTITUDE at?, CHAN SIGNAL sig, CHAN SERVO servo.pitch
             s2 ! pos ; servo.pos.roll
 :
 #ENDIF
+--* Keeps the aricraft in level flight
+-- @param imu A IMU.DATA record containing the current pitch and roll of the aricraft.
+-- @param s The Elevator(pitch) servo
+-- @param s2 the Aileron(roll) servo
 PROC level.flight (CHAN IMU.DATA imu, CHAN SERVO s, s2) -- This PROC acts as a feedback mechanism keeping the airplane in level flight.  As the attitude of the airplane changes, the servos are moved to positions to return the plane to level flight.
   INT  servo.pos.pitch, servo.pos.roll:
   IMU.DATA pos:
@@ -44,7 +52,10 @@ PROC level.flight (CHAN IMU.DATA imu, CHAN SERVO s, s2) -- This PROC acts as a f
         s2 ! pos ; servo.pos.roll
         
       
-:  
+:
+--* This wraps up the setting up of a servo
+-- @param s The servo pin
+-- @param pos.starting The starting position of the servo  
 PROC servo.setup(CHAN SERVO s,VAL INT pos.starting) --Wrapped the initialization of the servo
 
   SEQ
