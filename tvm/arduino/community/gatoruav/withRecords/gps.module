@@ -1,3 +1,4 @@
+#INCLUDE "convert.module"
 VAL [1]BYTE com IS ",":
 VAL INT BUFFER.SIZE IS 80:
 PROC part ([]BYTE gps.in, []BYTE section, VAL INT comma)
@@ -13,7 +14,6 @@ PROC part ([]BYTE gps.in, []BYTE section, VAL INT comma)
         TRUE
           SEQ
             i := i + 1
-            --serialWrite ("true")
             
     WHILE num.comma = comma
       IF 
@@ -34,6 +34,8 @@ VAL []BYTE target.tag IS "GPVTG":
 PROC gps.course (CHAN [BUFFER.SIZE]BYTE buffer?, CHAN INT course!)
   [5]BYTE heading:
   [5]BYTE nmea.tag:
+  INT heading.int:
+  BOOL error:
   INITIAL INT pos, len, c IS 0, 0, 0:
   [BUFFER.SIZE] BYTE string:
   
@@ -56,7 +58,8 @@ PROC gps.course (CHAN [BUFFER.SIZE]BYTE buffer?, CHAN INT course!)
         c = (SIZE (target.tag))
           SEQ
             part(string, heading, 1)
-            course ! heading
+            STRINGTOINT(error,heading.int,heading)
+            course ! heading.int
         TRUE
           SKIP
 :
