@@ -1,10 +1,28 @@
--- Number of readings that av averages
+
+--* This is a package of the uavs pitch, roll, and yaw(heading) data
+DATA TYPE ATTITUDE
+  RECORD
+    INT pitch: --* The pitch 
+    INT roll: --* the roll
+    INT heading: --* the yaw
+:
+--* This is a package of the uavs pitch and roll data
+DATA TYPE IMU.DATA
+  RECORD
+    INT pitch: --* The pitch
+    INT roll: --* The roll
+:
+--* Number of readings that av averages
 VAL INT NUM.READINGS.TO.AVERAGE IS 10:
--- The starting positions of the control surfaces
+--* The starting positions of the Aileron surfaces
 VAL INT AILERON.START IS 90:
+--* The starting positions of the Elevator surfaces
 VAL INT ELEVATOR.START IS 90:
--- The offsets for pitch and roll
+--* The offsets for the pitch
 VAL INT OFFSET.PITCH IS 1:
+--* The offsets for the roll
 VAL INT OFFSET.ROLL IS (-1):
--- The buffer size that the gps is read into
+--* The buffer size that the gps is read into
 VAL INT BUFFER.SIZE IS 80:
+--* The serial port the the gps is transmiting to
+VAL INT GPS.PORT IS RX1:

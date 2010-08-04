@@ -1,6 +1,5 @@
 #IF NOT (DEFINED (IMU.MODULE))
 #DEFINE IMU.MODULE
-#INCLUDE "plumbing.module"
 
 VAL []INT powers IS [10000, 1000, 100, 10, 1]:
 PROC serialWriteDecInt (VAL INT n)
@@ -30,12 +29,13 @@ PROC serialWriteDecInt (VAL INT n)
         index := index + 1
     
 :
+--* This is a complementary filter. It makes sure the data from an imu is good.
+-- @param gyro The angular velocity from the gyro
+-- @param accelerometer The angle from the accelerometer
+-- @param theta The filtered angle
+-- @param tau The weight of the gyroscope on theta
+-- @param dt The change in time between readings from the imu
 PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
-  -- gyr is the angular velocity from the gyro
-  -- accel is the angle from the accelerometer
-  -- dt is the change in time
-  -- w is the weight of the gyro
-  -- angle is the angle
   INT gyr, accel:
   INITIAL INT angle IS 0:
   WHILE TRUE
@@ -49,6 +49,9 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
 
       theta ! angle
 :
+--* Converts raw adc valuse to degrees/seconds
+-- @param input The raw adc values
+-- @param output The processed values, in degrees/seconds
 PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
 
   INITIAL INT counter, shift, n IS 0, 0, 0:
@@ -71,7 +74,9 @@ PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
               -- in milliseconds
       output ! n
 :
-
+--* A simple filter for a jittery gyroscope
+-- @param input The gyroscope data. Must be in degrees/seconds
+-- @param rate The filtered gyroscope rate in degrees/second
 PROC gyro.filter (CHAN INT input?, rate!)
   [4]INT filter.arr:
   INT filtered:
@@ -106,7 +111,10 @@ PROC gyro.drift (CHAN INT drift!)
     SEQ
       drift ! 0
 :
-
+--* Converts raw adc values from an imu to angles. This process is
+--  for the y axis(roll)
+-- @param in The incoming raw data
+-- @param out The outgoing angular values
 PROC accel.conv.y (CHAN INT in?, out!)
   WHILE TRUE
     INITIAL INT i IS 0:
@@ -147,6 +155,10 @@ PROC accel.conv.y (CHAN INT in?, out!)
           SKIP
         
 :
+--* Converts raw adc values from an imu to angles. This process is
+--  for the x axis(pitch)
+-- @param in The incoming raw data
+-- @param out The outgoing angular values
 PROC accel.conv.x (CHAN INT in?, out!)
   WHILE TRUE
     INITIAL INT i IS 0:
@@ -193,13 +205,14 @@ PROC ping (CHAN SIGNAL s!)
     SEQ
       s ! SIGNAL
 :
-PROC time.int (CHAN INT v?, VAL BYTE axis)
+PROC time.int (CHAN IMU.DATA v?, VAL BYTE axis)
   TIMER tim:
-  INT start, end, hole:
+  INT start, end:
+  IMU.DATA hole:
   WHILE TRUE
     SEQ
       tim ? start
-      SEQ i = 0 FOR 100
+      SEQ i = 0 FOR 1
         v ? hole
       tim ? end
       serial.write.string(TX0, [axis])

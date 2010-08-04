@@ -1,8 +1,9 @@
-#INCLUDE "uavConstants.module"
-#INCLUDE "uavsensors.module"
+#INCLUDE "plumbing.module"
+#INCLUDE "uavConfig.module"
 #INCLUDE "servo.module"
 #INCLUDE "control.module"
 #INCLUDE "gps.module"
+#INCLUDE "uavsensors.module"
 PROC display(CHAN INT theta?)
   INT angle:
   WHILE TRUE
@@ -58,7 +59,7 @@ PROC brain (CHAN IMU.DATA orientation?, turning!, level!) -- This proc chooses w
 :
 PROC main ()
   CHAN SERVO s, s2, s3, s4:
-  CHAN INT roll, pitch, filtered.x, filtered.y:
+  CHAN INT roll, pitch, filtered.x, filtered.y, course:
   CHAN IMU.DATA orientation, level, turning:
   SEQ
     digital.mode (45, OUTPUT)
@@ -92,12 +93,14 @@ PROC main ()
         delay (2000)
 
         PAR
-          level.flight (level?, s, s2)
+          --level.flight (level?, s, s2)
           turn (turning?, 6, s3, s4)
           brain (orientation?, level!, turning!)
-
+      
+      --time.int(level?, 'A')
       angles(A4, A5, A0, A1, pitch!, roll!)
       packer(pitch?, roll?, orientation!)
+      get.heading(course!)
       --av(pitch?, filtered.x!)
       --av(roll?, filtered.y!)
 :
