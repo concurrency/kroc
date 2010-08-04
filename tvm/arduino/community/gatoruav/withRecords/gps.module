@@ -1,6 +1,5 @@
 #INCLUDE "convert.module"
 VAL [1]BYTE com IS ",":
-VAL INT BUFFER.SIZE IS 80:
 PROC part ([]BYTE gps.in, []BYTE section, VAL INT comma)
   INITIAL INT i, j, num.comma IS 0,0,0:
   --WHILE i < (SIZE (gps.in))
