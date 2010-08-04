@@ -1,6 +1,7 @@
 #INCLUDE "uavsensors.module"
 #INCLUDE "servo.module"
 #INCLUDE "control.module"
+#INCLUDE "gps.module"
 --#INCLUDE "control.module"
 PROC display(CHAN INT theta?)
   INT angle:
