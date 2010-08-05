@@ -32,7 +32,7 @@ PROC av (CHAN INT input?, output!)
         ndx := (ndx + 1) REM (SIZE readings)
 :
 
-PROC brain (CHAN IMU.DATA orientation?, turning!, level!) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
+PROC brain (CHAN IMU.DATA orientation?, level!, turning!) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
   TIMER time:
   INT t:
   IMU.DATA pos:
@@ -45,7 +45,7 @@ PROC brain (CHAN IMU.DATA orientation?, turning!, level!) -- This proc chooses w
         TRUE
           SKIP
       IF 
-        FALSE --((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
+        FALSE--((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
           PAR
             SEQ
               orientation ? pos
@@ -64,26 +64,28 @@ PROC main ()
   SEQ
     digital.mode (45, OUTPUT)
     digital.mode (44, OUTPUT)
-
+    
+    digital.mode(34, OUTPUT) -- Solid navigation lights
+    digital.write(34, 1)
+    digital.mode(36, OUTPUT)
+    digital.write(36, 1)
+    
     PAR
-      --digital.mode(32, OUTPUT) -- Solid navigation lights
-      --digital.write(32, 1)
-      --digital.mode(30, OUTPUT)
-      --digital.write(30, 1)
-      
-      --SEQ           -- Blinks White strobe LED's in a nice pattern 
-        --delay (500)
-        --blink (31, 1000)
-      --SEQ
-        --blink (33, 1000)
-      --SEQ
-        --delay (250)
-        --blink (40, 1000)
-      
-      servo (45, s)
-      servo (44, s2)
-      servo (45, s3)
-      servo (44, s4)
+
+      SEQ           -- Blinks White strobe LED's in a nice pattern 
+        delay (750)
+        blink (33, 750)
+      SEQ
+        blink (35, 750)
+      SEQ
+        delay (375)
+        blink (40, 750)
+
+        
+      servo (ELEVATOR.SERVO.PIN, s)
+      servo (AILERON.SERVO.PIN, s2)
+      servo (ELEVATOR.SERVO.PIN, s3)
+      servo (AILERON.SERVO.PIN, s4)
       
       SEQ
         servo.setup(s, AILERON.START)
@@ -93,14 +95,14 @@ PROC main ()
         delay (2000)
 
         PAR
-          --level.flight (level?, s, s2)
+          level.flight (level?, s, s2)
           turn (turning?, 6, s3, s4)
           brain (orientation?, level!, turning!)
       
       --time.int(level?, 'A')
       angles(A4, A5, A0, A1, pitch!, roll!)
       packer(pitch?, roll?, orientation!)
-      get.heading(course!)
+      --get.heading(course!)
       --av(pitch?, filtered.x!)
       --av(roll?, filtered.y!)
 :

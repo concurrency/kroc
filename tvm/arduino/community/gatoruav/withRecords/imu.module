@@ -1,34 +1,6 @@
 #IF NOT (DEFINED (IMU.MODULE))
 #DEFINE IMU.MODULE
 
-VAL []INT powers IS [10000, 1000, 100, 10, 1]:
-PROC serialWriteDecInt (VAL INT n)
-  INITIAL INT index IS 0:
-  INITIAL INT number IS n:
-  INITIAL BOOL neg IS FALSE:
-  SEQ
-    IF
-      n < 0
-        SEQ
-          neg := TRUE
-          number := n * (- 1)
-      TRUE
-        SKIP
-    IF 
-      neg 
-        serial.write.string(TX0, "-")
-      TRUE 
-        SKIP
-    WHILE (index < 5)
-      INT digit:
-      SEQ
-        digit := number / powers[index]
-        number := number REM powers[index]
-        digit := digit + (INT '0')
-        serial.write.string(TX0,[BYTE digit])
-        index := index + 1
-    
-:
 --* This is a complementary filter. It makes sure the data from an imu is good.
 -- @param gyro The angular velocity from the gyro
 -- @param accelerometer The angle from the accelerometer
@@ -49,11 +21,11 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
 
       theta ! angle
 :
+
 --* Converts raw adc valuse to degrees/seconds
 -- @param input The raw adc values
 -- @param output The processed values, in degrees/seconds
 PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
-
   INITIAL INT counter, shift, n IS 0, 0, 0:
 
   WHILE TRUE
@@ -74,6 +46,7 @@ PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
               -- in milliseconds
       output ! n
 :
+
 --* A simple filter for a jittery gyroscope
 -- @param input The gyroscope data. Must be in degrees/seconds
 -- @param rate The filtered gyroscope rate in degrees/second
@@ -106,11 +79,13 @@ PROC gyro.filter (CHAN INT input?, rate!)
         
         input ? current.rate
 :
+
 PROC gyro.drift (CHAN INT drift!)
   WHILE TRUE  
     SEQ
       drift ! 0
 :
+
 --* Converts raw adc values from an imu to angles. This process is
 --  for the y axis(roll)
 -- @param in The incoming raw data
@@ -121,7 +96,6 @@ PROC accel.conv.y (CHAN INT in?, out!)
     INT reading, theta:
     SEQ
       in ? reading
-      i := 0
       IF
         (reading <= 536) AND (reading >= 468)
           SEQ
@@ -153,8 +127,8 @@ PROC accel.conv.y (CHAN INT in?, out!)
             out ! theta
         TRUE
           SKIP
-        
 :
+
 --* Converts raw adc values from an imu to angles. This process is
 --  for the x axis(pitch)
 -- @param in The incoming raw data
@@ -165,8 +139,6 @@ PROC accel.conv.x (CHAN INT in?, out!)
     INT reading, theta:
     SEQ
       in ? reading
-      i := 0
-      reading := reading - 2
       IF
         (reading <= 542) AND (reading >= 478)
           SEQ
@@ -198,13 +170,14 @@ PROC accel.conv.x (CHAN INT in?, out!)
             out ! theta
         TRUE
           SKIP
-        
 :
+
 PROC ping (CHAN SIGNAL s!)
   WHILE TRUE 
     SEQ
       s ! SIGNAL
 :
+
 PROC time.int (CHAN IMU.DATA v?, VAL BYTE axis)
   TIMER tim:
   INT start, end:
