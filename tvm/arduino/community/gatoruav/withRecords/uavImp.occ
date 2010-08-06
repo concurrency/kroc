@@ -31,44 +31,55 @@ PROC av (CHAN INT input?, output!)
         output ! (sum / (SIZE readings))
         ndx := (ndx + 1) REM (SIZE readings)
 :
-
-PROC brain (CHAN IMU.DATA orientation?, level!, turning!) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
+PROC brain (CHAN SIGNAL level.signal!, turn.signal!)
   TIMER time:
   INT t:
-  IMU.DATA pos:
-  WHILE  TRUE
+  WHILE TRUE
     SEQ
       time ? t
-      IF
+      IF 
         t < 0
           t := t * (-1)
         TRUE
           SKIP
-      IF 
-        FALSE--((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
-          PAR
-            SEQ
-              orientation ? pos
-              turning ! pos      
-
+      IF
+        ((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000)
+          turn.signal ! SIGNAL
         TRUE
-          PAR
-            SEQ
-              orientation ? pos
-              level ! pos
+          level.signal ! SIGNAL
+:
+          
+PROC mux (CHAN IMU.DATA orientation?, level!, turning!, CHAN SIGNAL level.signal?, turn.signal?) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
+  TIMER time:
+  INT t:
+  IMU.DATA pos:
+  WHILE  TRUE
+    ALT
+      turn.signal ? SIGNAL   
+        SEQ
+          orientation ? pos
+          turning ! pos      
+
+      level.signal ? SIGNAL
+        SEQ  
+          orientation ? pos
+          level ! pos
 :
 PROC main ()
   CHAN SERVO s, s2, s3, s4:
   CHAN INT roll, pitch, filtered.x, filtered.y, course:
   CHAN IMU.DATA orientation, level, turning:
+  CHAN SIGNAL level.signal, turn.signal:
   SEQ
-    digital.mode (45, OUTPUT)
-    digital.mode (44, OUTPUT)
+    digital.mode (ELEVATOR.SERVO.PIN, OUTPUT)
+    digital.mode (AILERON.SERVO.PIN, OUTPUT)
     
-    digital.mode(34, OUTPUT) -- Solid navigation lights
-    digital.write(34, 1)
+    digital.mode(LEFT.WING.NAV, OUTPUT) -- Solid navigation lights
+    digital.write(LEFT.WING.NAV, 1)
     digital.mode(36, OUTPUT)
     digital.write(36, 1)
+    digital.mode(40, OUTPUT)
+    digital.write(40, 1)
     
     PAR
 
@@ -77,9 +88,7 @@ PROC main ()
         blink (33, 750)
       SEQ
         blink (35, 750)
-      SEQ
-        delay (375)
-        blink (40, 750)
+
 
         
       servo (ELEVATOR.SERVO.PIN, s)
@@ -97,10 +106,11 @@ PROC main ()
         PAR
           level.flight (level?, s, s2)
           turn (turning?, 6, s3, s4)
-          brain (orientation?, level!, turning!)
-      
+          mux (orientation?, level!, turning!,level.signal?, turn.signal?)
+          brain (level.signal!, turn.signal!)
+          
       --time.int(level?, 'A')
-      angles(A4, A5, A0, A1, pitch!, roll!)
+      angles(GYRO.X.PIN, GYRO.Y.PIN, ACCELEROMETER.X.PIN, ACCELEROMETER.Y.PIN, pitch!, roll!)
       packer(pitch?, roll?, orientation!)
       --get.heading(course!)
       --av(pitch?, filtered.x!)
