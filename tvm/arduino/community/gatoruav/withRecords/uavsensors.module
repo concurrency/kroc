@@ -30,8 +30,8 @@ PROC offset (CHAN INT pitch?, roll?, pitch.out!, roll.out!)
 -- @param GYRO.Y The adc pin that the Y axis gyro is on
 -- @param ACCEL.X The adc pin that the X axis accelerometer is on
 -- @param ACCEL.Y The adc pin that the y axis accelerometer is on
--- @param pitch A INT channel that the pitch will be put in
--- @param roll A INT channel that the roll will be put in
+-- @param adjusted.pitch A INT channel that the pitch will be put in
+-- @param adjusted.roll A INT channel that the roll will be put in
 PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT adjusted.pitch!, adjusted.roll!)
   
   [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree:

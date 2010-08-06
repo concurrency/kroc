@@ -13,44 +13,63 @@ DATA TYPE IMU.DATA
     INT roll: --* The roll
 :
 
+
+--*{ LEVEL.FLIGHT.SENSITIVITY  These values change how reactive the servos are to changes in attitude
+VAL INT PITCH.SERVO.MULTIPLIER IS (2):  --* Increases the amount of pitch (elevator) correction that occurs
+VAL INT ROLL.SERVO.MULTIPLIER IS (4):  --* Increases the amount of roll (aileron) correction that occurs
+--*}
+
+--*{ FILTER.GAIN This tells the filtering process how much to favor the gyros over the accelerometers in calculating the attitude
+VAL INT ROLL.FILTER.GAIN IS (92):  --* The Gain for our complementary filtering of roll.  The higher the value the more biased the filter is towards the gyro values
+VAL INT PITCH.FILTER.GAIN IS (85):  --* The Gain for our complementary filtering of pitch.  The higher the value the more biased the filter is towards the gyro values
+--*}
+
+
+--*{ SERVO.START.POSITION This sets where the initial servo positions are
+VAL INT AILERON.START IS (90):  --* The starting positions of the Aileron surfaces
+VAL INT ELEVATOR.START IS (90):  --* The starting positions of the Elevator surfaces
+--*}
+
+
+--*{ ATTITUDE.OFFSET  This adjusts what the angles process outputs from the filtered IMU data.  Use if you are off by a degree or two.
+VAL INT OFFSET.PITCH IS (0):  --* The offsets for the pitch angle
+VAL INT OFFSET.ROLL IS (0):  --* The offsets for the roll angle
+--*}
+
+
+--*{ SERVO.PINS  The pin numbers the control servos are attached to
+VAL INT ELEVATOR.SERVO.PIN IS (45):  --* The PWM pin number that the elevator servo is hooked up to
+VAL INT AILERON.SERVO.PIN IS (44):  --* The PWM pin number that the aileron servo is hooked up to
+--*}
+
+
+--*{ IMU.PINS Analog in pin numbers for the gyros and accelerometers
+VAL INT GYRO.X.PIN IS (A4):  --* The analog in pin that the X axis gyro is hooked up to 
+VAL INT GYRO.Y.PIN IS (A5):  --* The analog in pin that the Y axis gyro is hooked up to
+VAL INT ACCELEROMETER.X.PIN IS (A0):  --* The analog in pin that the X axis accelerometer is hooked up to
+VAL INT ACCELEROMETER.Y.PIN IS (A1):  --* The analog in pin that the Y axis accelerometer is hooked up to
+--*}
+
+
+--*{ NAVLIGHTS Navigation Light Pins
+VAL INT RIGHT.WING.NAV IS (34):  --* The digital pin that the right wing green LED is hooked up to.  
+VAL INT LEFT.WING.NAV IS (36):  --* The digital pin that the right wing red LED is hooked up to.
+VAL INT RIGHT.WING.STROBE IS (33):  --* The digital pin that the right wing strobe LED is hooked up to.  
+VAL INT LEFT.WING.STROBE IS (35):  --* The digital pin that the left wing strobe LED is hooked up to.
+VAL INT TAIL.STROBE IS (40):  --* The digital pin that the tail strobe LED's are hooked up to.
+--*}
+
+
 --* Number of readings that av averages
 VAL INT NUM.READINGS.TO.AVERAGE IS (10):
 
---* Increases the amount of pitch (elevator) correction that occurs
-VAL INT PITCH.SERVO.MULTIPLIER IS (2):
-
---* Increases the amount of roll (aileron) correction that occurs
-VAL INT ROLL.SERVO.MULTIPLIER IS (4):
-
---* The Gain for our complementary filtering of roll.  The higher the value the more biased the filter is towards the gyro values
-VAL INT ROLL.FILTER.GAIN IS (92):
-
---* The Gain for our complementary filtering of pitch.  The higher the value the more biased the filter is towards the gyro values
-VAL INT PITCH.FILTER.GAIN IS (85):
-
---* The starting positions of the Aileron surfaces
-VAL INT AILERON.START IS (90):
-
---* The starting positions of the Elevator surfaces
-VAL INT ELEVATOR.START IS (90):
-
---* The offsets for the pitch angle
-VAL INT OFFSET.PITCH IS (0):
-
---* The offsets for the roll angle
-VAL INT OFFSET.ROLL IS (0):
 
 --* The buffer size that the gps is read into
 VAL INT BUFFER.SIZE IS (80):
 
+
 --* The serial port the the gps is transmiting to
 VAL INT GPS.PORT IS (RX1):
-
---* The PWM pin number that the elevator servo is hooked up to
-VAL INT ELEVATOR.SERVO.PIN IS (45):
-
---* The PWM pin number that the aileron servo is hooked up to
-VAL INT AILERON.SERVO.PIN IS (44):
 
 
 VAL []INT powers IS [10000, 1000, 100, 10, 1]:
