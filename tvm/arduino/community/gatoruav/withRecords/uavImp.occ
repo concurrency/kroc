@@ -4,14 +4,7 @@
 #INCLUDE "control.module"
 #INCLUDE "gps.module"
 #INCLUDE "uavsensors.module"
-PROC display(CHAN INT theta?)
-  INT angle:
-  WHILE TRUE
-    SEQ
-      theta ? angle
-      serialWriteDecInt(angle)
-      serial.write.string(TX0, "*n")
-:
+
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT  sum:
@@ -31,6 +24,8 @@ PROC av (CHAN INT input?, output!)
         output ! (sum / (SIZE readings))
         ndx := (ndx + 1) REM (SIZE readings)
 :
+
+--* This is our brain.  It tells the plane what is up.
 PROC brain (CHAN SIGNAL level.signal!, turn.signal!)
   TIMER time:
   INT t:
@@ -43,15 +38,14 @@ PROC brain (CHAN SIGNAL level.signal!, turn.signal!)
         TRUE
           SKIP
       IF
-        ((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000)
+        FALSE --((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000)
           turn.signal ! SIGNAL
         TRUE
           level.signal ! SIGNAL
 :
-          
+ 
+
 PROC mux (CHAN IMU.DATA orientation?, level!, turning!, CHAN SIGNAL level.signal?, turn.signal?) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
-  TIMER time:
-  INT t:
   IMU.DATA pos:
   WHILE  TRUE
     ALT
@@ -65,6 +59,7 @@ PROC mux (CHAN IMU.DATA orientation?, level!, turning!, CHAN SIGNAL level.signal
           orientation ? pos
           level ! pos
 :
+
 PROC main ()
   CHAN SERVO s, s2, s3, s4:
   CHAN INT roll, pitch, filtered.x, filtered.y, course:
@@ -74,23 +69,9 @@ PROC main ()
     digital.mode (ELEVATOR.SERVO.PIN, OUTPUT)
     digital.mode (AILERON.SERVO.PIN, OUTPUT)
     
-    digital.mode(LEFT.WING.NAV, OUTPUT) -- Solid navigation lights
-    digital.write(LEFT.WING.NAV, 1)
-    digital.mode(36, OUTPUT)
-    digital.write(36, 1)
-    digital.mode(40, OUTPUT)
-    digital.write(40, 1)
-    
     PAR
+      nav.lights()
 
-      SEQ           -- Blinks White strobe LED's in a nice pattern 
-        delay (750)
-        blink (33, 750)
-      SEQ
-        blink (35, 750)
-
-
-        
       servo (ELEVATOR.SERVO.PIN, s)
       servo (AILERON.SERVO.PIN, s2)
       servo (ELEVATOR.SERVO.PIN, s3)
@@ -105,14 +86,12 @@ PROC main ()
 
         PAR
           level.flight (level?, s, s2)
-          turn (turning?, 6, s3, s4)
+          turn (turning?, TURN.BANK.ANGLE, s3, s4)
           mux (orientation?, level!, turning!,level.signal?, turn.signal?)
           brain (level.signal!, turn.signal!)
-          
-      --time.int(level?, 'A')
+
       angles(GYRO.X.PIN, GYRO.Y.PIN, ACCELEROMETER.X.PIN, ACCELEROMETER.Y.PIN, pitch!, roll!)
       packer(pitch?, roll?, orientation!)
       --get.heading(course!)
-      --av(pitch?, filtered.x!)
-      --av(roll?, filtered.y!)
+
 :

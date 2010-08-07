@@ -1,3 +1,7 @@
+--** This is a config file for all the constants and data types used in imu.module, uavsensors.module, gps.module, and control.module
+-- @maintainer Ian Armstrong armstri@allegheny.edu
+-- @maintainer Anthony Smith smitha7@allegheny.edu
+
 --* This is a package of the uavs pitch, roll, and yaw(heading) data
 DATA TYPE ATTITUDE
   RECORD
@@ -5,6 +9,7 @@ DATA TYPE ATTITUDE
     INT roll: --* The roll
     INT heading: --* The yaw
 :
+
 
 --* This is a package of the uavs pitch and roll data
 DATA TYPE IMU.DATA
@@ -15,9 +20,10 @@ DATA TYPE IMU.DATA
 
 
 --*{ LEVEL.FLIGHT.SENSITIVITY  These values change how reactive the servos are to changes in attitude
-VAL INT PITCH.SERVO.MULTIPLIER IS (2):  --* Increases the amount of pitch (elevator) correction that occurs
+VAL INT PITCH.SERVO.MULTIPLIER IS (4):  --* Increases the amount of pitch (elevator) correction that occurs
 VAL INT ROLL.SERVO.MULTIPLIER IS (4):  --* Increases the amount of roll (aileron) correction that occurs
 --*}
+
 
 --*{ FILTER.GAIN This tells the filtering process how much to favor the gyros over the accelerometers in calculating the attitude
 VAL INT ROLL.FILTER.GAIN IS (92):  --* The Gain for our complementary filtering of roll.  The higher the value the more biased the filter is towards the gyro values
@@ -51,7 +57,7 @@ VAL INT ACCELEROMETER.Y.PIN IS (A1):  --* The analog in pin that the Y axis acce
 --*}
 
 
---*{ NAVLIGHTS Navigation Light Pins
+--*{ NAV.LIGHTS Navigation Light Pins
 VAL INT RIGHT.WING.NAV IS (34):  --* The digital pin that the right wing green LED is hooked up to.  
 VAL INT LEFT.WING.NAV IS (36):  --* The digital pin that the right wing red LED is hooked up to.
 VAL INT RIGHT.WING.STROBE IS (33):  --* The digital pin that the right wing strobe LED is hooked up to.  
@@ -72,31 +78,6 @@ VAL INT BUFFER.SIZE IS (80):
 VAL INT GPS.PORT IS (RX1):
 
 
-VAL []INT powers IS [10000, 1000, 100, 10, 1]:
-PROC serialWriteDecInt (VAL INT n)
-  INITIAL INT index IS 0:
-  INITIAL INT number IS n:
-  INITIAL BOOL neg IS FALSE:
-  SEQ
-    IF
-      n < 0
-        SEQ
-          neg := TRUE
-          number := n * (- 1)
-      TRUE
-        SKIP
-    IF 
-      neg 
-        serial.write.string(TX0, "-")
-      TRUE 
-        SKIP
-    WHILE (index < 5)
-      INT digit:
-      SEQ
-        digit := number / powers[index]
-        number := number REM powers[index]
-        digit := digit + (INT '0')
-        serial.write.string(TX0,[BYTE digit])
-        index := index + 1
-    
-:
+--* The bank angle which the turn proc tries to achieve throughout the entire turn
+VAL INT TURN.BANK.ANGLE IS (6):
+

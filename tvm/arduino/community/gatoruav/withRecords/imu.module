@@ -1,3 +1,7 @@
+--** A library of code for crunching numbers from an IMU connected to a 10-bit adc
+-- @maintainer Ian Armstrong armstri@allegheny.edu
+-- @maintainer Anthony Smith smitha7@allegheny.edu
+
 #IF NOT (DEFINED (IMU.MODULE))
 #DEFINE IMU.MODULE
 
@@ -22,7 +26,7 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
       theta ! angle
 :
 
---* Converts raw adc valuse to degrees/seconds
+--* Converts raw adc values to degrees/seconds
 -- @param input The raw adc values
 -- @param output The processed values, in degrees/seconds
 PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
@@ -176,21 +180,6 @@ PROC ping (CHAN SIGNAL s!)
   WHILE TRUE 
     SEQ
       s ! SIGNAL
-:
-
-PROC time.int (CHAN IMU.DATA v?, VAL BYTE axis)
-  TIMER tim:
-  INT start, end:
-  IMU.DATA hole:
-  WHILE TRUE
-    SEQ
-      tim ? start
-      SEQ i = 0 FOR 1
-        v ? hole
-      tim ? end
-      serial.write.string(TX0, [axis])
-      serialWriteDecInt(end MINUS start)
-      serial.write.string(TX0, "*n")
 :
 
 #ENDIF
