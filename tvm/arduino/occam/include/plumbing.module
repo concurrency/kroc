@@ -37,7 +37,7 @@
 #INCLUDE "servo.module"
 
 --{{{ Constants
--- LEVEL, INPUT and OUTPUT are now defined in digital.module
+-- LEVEL, INPUT and OUTPUT are defined in digital.module. Here for reference.
 --DATA TYPE LEVEL IS INT:
 --VAL LEVEL LOW IS #0:
 --VAL LEVEL HIGH IS #1:
@@ -45,7 +45,7 @@
 --VAL INT INPUT IS #0:
 --VAL INT OUTPUT IS #1:
 
--- VCC, INTERNAL, and AREF are actually defined in adc.module. Here for ref.
+-- VCC, INTERNAL, and AREF are defined in adc.module. Here for reference.
 --VAL INT VCC IS #0:
 --VAL INT INTERNAL IS #1:
 --VAL INT AREF IS #2:

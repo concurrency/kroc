@@ -1,8 +1,5 @@
 --
---	Copyright (C) 2009-2010   Christian Jacobsen
---      Copyright (C) 2009-2010   Matt Jadud
 --      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
---      Copyright (C) 2009-2010   Adam Sampson
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -18,14 +15,7 @@
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
---WARNGING: 20100721 drew Most of this code is the most broken. I've been
--- trying to balance getting these processes and functions to look and act
--- as much like arduino.cc's version of wiring as I can, while still writing
--- all of this in Occam, but that's mostly ending in this entire module
--- not compiling.
--- Work is ongoing.
-
---** occam bindings for the Wiring API.
+--** Occam bindings written to resemble the C-like wiring API
 --
 -- @module wiring
 
@@ -37,32 +27,34 @@
 #INCLUDE "digital.module"
 #INCLUDE "printing.module"
 
---{{{  constants
-VAL INT LOW IS #0:
-VAL INT HIGH IS #1:
+--{{{ Constants
+-- LEVEL, INPUT and OUTPUT are defined in digital.module. Here for reference.
+--DATA TYPE LEVEL IS INT:
+--VAL LEVEL LOW IS #0:
+--VAL LEVEL HIGH IS #1:
 
-VAL INT INPUT IS #0:
-VAL INT OUTPUT IS #1:
+--VAL INT INPUT IS #0:
+--VAL INT OUTPUT IS #1:
 
-VAL INT DEFAULT IS #0:
-VAL INT INTERNAL IS #1:
-VAL INT EXTERNAL IS #2:
+-- VCC, INTERNAL, and AREF are defined in adc.module. Here for reference.
+--VAL INT VCC IS #0:
+--VAL INT INTERNAL IS #1:
+--VAL INT AREF IS #2:
+-- These are the comperable variables used in wiring. Here for compatability.
+VAL INT DEFAULT IS VCC:
+VAL INT EXTERNAL IS AREF:
 
 
-VAL INT SERIAL  IS #0:
-VAL INT DISPLAY IS #1:
-
-VAL INT LSBFIRST IS 0:
-VAL INT MSBFIRST IS 1:
-
-VAL INT CHANGE IS 1:
-VAL INT FALLING IS 2:
-VAL INT RISING IS 3:
-
-VAL INT INTERNAL IS 3:
-VAL INT DEFAULT IS 1:
-VAL INT EXTERNAL IS 0:
-
+-- I don't think these are used anywhere...
+--VAL INT SERIAL  IS #0:
+--VAL INT DISPLAY IS #1:
+--
+--VAL INT LSBFIRST IS 0:
+--VAL INT MSBFIRST IS 1:
+--
+--VAL INT CHANGE IS 1:
+--VAL INT FALLING IS 2:
+--VAL INT RISING IS 3:
 --}}}
 
 
@@ -86,39 +78,42 @@ PROC digitalWrite (VAL INT board.pin, level)
     pin.write(r.port, bit, level)
 :
 
-INT FUNCTION digitalRead (VAL INT board.pin)
+PROC digitalRead (VAL INT board.pin, RESULT INT level)
   VAL INT avr.pin IS board.to.chip(board.pin):
   --INT r.ddr, r.port, r.pin, bit:
-  INT dummy1, dummy2, r.pin, bit, level:
-  VALOF
-    SEQ
-      --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
-      dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
-      pin.read(r.pin, bit, level)
-    RESULT level
+  INT dummy1, dummy2, r.pin, bit:
+  SEQ
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
+    pin.read(r.pin, bit, level)
 :
 
-INT FUNCTION analogReference (VAL INT type)
-  VALOF
-    IF
-      type = DEFAULT
-        ADC.REF := DEFAULT
-      type = INTERNAL
-        ADC.REF := INTERNAL
-      type = EXTERNAL
-        ADC.REF := EXTERNAL
-      TRUE
-        die ("Analog processes do not support this type.")
-    RESULT type
-:
+-- Bah. No good. If I had shared channels, I could make this work, where
+--  analogReference and analogRead both talked to a PROTOCOL function, and
+--  shared information that way. I don't think it'd fly.
+--  It would also requre a CHAN to be declaired on the same level as constants.
 
-INT FUNCTION analogRead (VAL INT analog.pin)
+--PROC analogReference (VAL INT type)
+--  IF
+--    (((type <> DEFAULT) AND (type <> INTERNAL)) AND (type <> EXTERNAL))
+--      die ("Analog processes do not support this type.")
+--    TRUE
+--      ADC.HELP ! set ; type
+----  IF
+----    type = DEFAULT
+----      ADC.REF := DEFAULT
+----    type = INTERNAL
+----      ADC.REF := INTERNAL
+----    type = EXTERNAL
+----      ADC.REF := EXTERNAL
+----    TRUE
+----      die ("Analog processes do not support this type.")
+--:
+
+PROC analogRead (VAL INT analog.pin, adc.ref, RESULT INT val)
   VAL INT avr.pin IS board.analog.to.chip(analog.pin):
   INT val:
-  VALOF
-    SEQ
-      adc.base (avr.pin, ADC.REF, val)
-    RESULT val
+  adc.base (avr.pin, adc.ref, val)
 :
 
 PROC analogWrite (VAL INT board.pin, VAL BYTE value) -- This is PWM, fyi
@@ -142,11 +137,8 @@ INT FUNCTION Serial.available () IS (-1):
   --Another stub function that we've yet to impliment in plumbing.
   -- Might be worth looking into though? ::shrugs::
 
-BYTE FUNCTION Serial.read ()
-  BYTE b:
-  VALOF
-    serial.byte.in (RX0, b)
-    RESULT b
+PROC Serial.read (RESULT BYTE b)
+  serial.byte.in (RX0, b)
 :
 
 PROC Serial.flush ()
