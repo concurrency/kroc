@@ -1,9 +1,14 @@
+--** This relies on imu.module, gps.module and uavConfig.module.
+-- It contains a couple wrapper proccesses to simpifiy interaction with sensors
+-- @maintainer Ian Armstrong armstri@allegheny.edu
+-- @maintainer Anthony Smith smitha7@allegheny.edu
+
 #IF NOT (DEFINED (UAVSENSORS.MODULE))
 #DEFINE UAVSENSORS.MODULE
 #INCLUDE "imu.module"
---* INT representing the X-axis
+--* [@code INT] representing the X-axis
 VAL INT X IS 0:
---* INT representing the Y-axis
+--* [@code INT] representing the Y-axis
 VAL INT Y IS 1:
 
 --* Alters the angles by the specified offset that is set in the configuration file.
@@ -30,8 +35,8 @@ PROC offset (CHAN INT pitch?, roll?, pitch.out!, roll.out!)
 -- @param GYRO.Y The adc pin that the Y axis gyro is on
 -- @param ACCEL.X The adc pin that the X axis accelerometer is on
 -- @param ACCEL.Y The adc pin that the y axis accelerometer is on
--- @param adjusted.pitch A INT channel that the pitch will be put in
--- @param adjusted.roll A INT channel that the roll will be put in
+-- @param adjusted.pitch A [@code INT] channel that the pitch will be put in
+-- @param adjusted.roll A [@code INT] channel that the roll will be put in
 PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT adjusted.pitch!, adjusted.roll!)
   
   [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree:
@@ -66,10 +71,10 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT adjusted.pitch!, 
     offset(pitch?, roll?, adjusted.pitch!, adjusted.roll!)
     
 :
---* This process takes in two values and packs them in an IMU.DATA record
--- @param pitch a channel for the incoming pitch
--- @param roll a channel for the incoming roll
--- @param packed a channel for the packed up IMU.DATA record
+--* This process takes in two values and packs them in an [@code IMU.DATA] record
+-- @param pitch A channel for the incoming pitch
+-- @param roll A channel for the incoming roll
+-- @param packed A channel for the packed up [@code IMU.DATA] record
 PROC packer(CHAN INT pitch?, roll?, CHAN IMU.DATA packed)
   INT p, r:
   IMU.DATA data:

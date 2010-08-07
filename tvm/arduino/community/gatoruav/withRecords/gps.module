@@ -1,11 +1,14 @@
+--** A library for interacting with a GPS
+-- @maintainer Ian Armstrong armstri@allegheny.edu
+-- @maintainer Anthony Smith smitha7@allegheny.edu
+
 #IF NOT (DEFINED (GPS.MODULE))
 #DEFINE GPS.MODULE
 #INCLUDE "convert.module"
---* A BYTE that part uses to parse sections of GPS strings
 VAL [1]BYTE com IS ",":
 --* Puts part of a GPS string in section
 -- @param gps.in The GPS string to be parsed
--- @param target A BYTE Array that will be filled with the target chunk
+-- @param target A [@code BYTE] Array that will be filled with the target chunk
 -- of the GPS string
 -- @param comma The number of the comma preceding the target chunk
 PROC part ([]BYTE gps.in, []BYTE target, VAL INT comma)
