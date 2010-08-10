@@ -38,8 +38,8 @@ VAL INT ELEVATOR.START IS (90):  --* The starting positions of the Elevator surf
 
 
 --*{ ATTITUDE.OFFSET  This adjusts what the angles process outputs from the filtered IMU data.  Use if you are off by a degree or two.
-VAL INT OFFSET.PITCH IS (0):  --* The offsets for the pitch angle
-VAL INT OFFSET.ROLL IS (0):  --* The offsets for the roll angle
+VAL INT OFFSET.PITCH IS (-5):  --* The offsets for the pitch angle
+VAL INT OFFSET.ROLL IS (-2):  --* The offsets for the roll angle
 --*}
 
 

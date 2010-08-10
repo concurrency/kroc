@@ -31,21 +31,21 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
 -- @param output The processed values, in degrees/seconds
 PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
   INITIAL INT counter, shift, n IS 0, 0, 0:
-
+SEQ
+  SEQ
+    IF i = 0 FOR 11
+      SEQ
+        input ? n
+        shift := n  
+	    --IF statement used to initially zero the reading to whatever the first value is
+      TRUE
+        SKIP
   WHILE TRUE
     SEQ
       input ? n
       --                was -1.26
       n := (((((n-33)/10230)-13)/30) * 1000)/10
        
-      IF  
-        counter < 11
-          SEQ
-            shift := n  
-            counter := counter + 1
-            --IF statement used to initially zero the reading to whatever the first value is
-        TRUE
-          SKIP
       n := n - shift
               -- in milliseconds
       output ! n
