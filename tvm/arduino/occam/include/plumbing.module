@@ -420,16 +420,13 @@ PROC crawl.int (VAL INT high, step, VAL INT wait,  CHAN INT out!)
 PROC pwm (VAL INT board.pin, CHAN BYTE level?)
   INITIAL BYTE lvl IS 0:
   INITIAL INT avr.pin IS board.to.chip (board.pin):
-  CHAN BYTE clamped:
   SEQ
     digital.mode (board.pin, OUTPUT)
     pwm8.setup (avr.pin, 64)
-    PAR
-      clamp.byte (0, 255, level?, clamped!)
-      WHILE TRUE
-        SEQ
-          clamped ? lvl
-          pwm8.set.compare (avr.pin, lvl)
+    WHILE TRUE
+      SEQ
+        level ? lvl
+        pwm8.set.compare (avr.pin, lvl)
 :
 
 --* Writes an analog value to a pin.
