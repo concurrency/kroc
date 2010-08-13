@@ -9,9 +9,9 @@
 -- @param gyro The angular velocity from the gyro
 -- @param accelerometer The angle from the accelerometer
 -- @param theta The filtered angle
--- @param tau The weight of the gyroscope on theta
+-- @param gain The weight of the gyroscope on theta
 -- @param dt The change in time between readings from the imu
-PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
+PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT gain, dt)
   INT gyr, accel:
   INITIAL INT angle IS 0:
   WHILE TRUE
@@ -21,7 +21,7 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT tau, dt)
     
       accel := accel * (-1) 
 
-      angle := (((tau * (angle + (gyr * dt))) + (( 100 - tau) * accel))/100)
+      angle := (((gain * (angle + (gyr * dt))) + (( 100 - gain) * accel))/100)
 
       theta ! angle
 :
