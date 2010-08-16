@@ -1,15 +1,47 @@
+--** This relies on imu.module, gps.module and uavConfig.module.
+-- It contains a couple wrapper proccesses to simpifiy interaction with sensors
+-- @maintainer Ian Armstrong armstri@allegheny.edu
+-- @maintainer Anthony Smith smitha7@allegheny.edu
+
 #IF NOT (DEFINED (UAVSENSORS.MODULE))
 #DEFINE UAVSENSORS.MODULE
 #INCLUDE "imu.module"
-
+--* [@code INT] representing the X-axis
 VAL INT X IS 0:
+--* [@code INT] representing the Y-axis
 VAL INT Y IS 1:
 
--- This runs at around 143 reading per second
-PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
+--* Alters the angles by the specified offset that is set in the configuration file.
+-- @param pitch Incoming pitch angle
+-- @param roll Incoming roll angle
+-- @param pitch.out Adjusted pitch angle
+-- @param roll.out Adjusted roll angle
+PROC offset (CHAN INT pitch?, roll?, pitch.out!, roll.out!)
+  INT x, y:
+  WHILE TRUE
+    SEQ
+      PAR
+        pitch ? x
+        roll ? y
+    
+      x := x + OFFSET.PITCH
+      y := y + OFFSET.ROLL
+    
+      pitch.out ! x
+      roll.out ! y
+:
+--* Finds the pitch and roll angles from an imu.
+-- @param GYRO.X The adc pin that the X axis gyro is on
+-- @param GYRO.Y The adc pin that the Y axis gyro is on
+-- @param ACCEL.X The adc pin that the X axis accelerometer is on
+-- @param ACCEL.Y The adc pin that the y axis accelerometer is on
+-- @param adjusted.pitch A [@code INT] channel that the pitch will be put in
+-- @param adjusted.roll A [@code INT] channel that the roll will be put in
+PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT adjusted.pitch!, adjusted.roll!)
   
   [2]CHAN INT gyro.out, accel.out, accel.conv, gyro.smooth, gyro.degree:
   [2]CHAN SIGNAL sig.gyro, sig.accel:
+  CHAN INT pitch, roll:
   
   PAR
 
@@ -33,9 +65,35 @@ PROC angles(VAL INT GYRO.X, GYRO.Y, ACCEL.X, ACCEL.Y, CHAN INT pitch!, roll!)
     gyro.to.degrees(gyro.smooth[Y]?, gyro.degree[Y]!)
     gyro.to.degrees(gyro.smooth[X]?, gyro.degree[X]!)
 
-    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, 92, 1)
-    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, 93, 1)
+    comp.filter(gyro.degree[Y]?, accel.conv[Y]?, roll!, ROLL.FILTER.GAIN, 1)
+    comp.filter(gyro.degree[X]?, accel.conv[X]?, pitch!, PITCH.FILTER.GAIN, 1)
     
+    offset(pitch?, roll?, adjusted.pitch!, adjusted.roll!)
+    
+:
+--* This process takes in two values and packs them in an [@code IMU.DATA] record
+-- @param pitch A channel for the incoming pitch
+-- @param roll A channel for the incoming roll
+-- @param packed A channel for the packed up [@code IMU.DATA] record
+PROC packer(CHAN INT pitch?, roll?, CHAN IMU.DATA packed)
+  INT p, r:
+  IMU.DATA data:
+  WHILE TRUE
+    SEQ
+      pitch ? p
+      roll ? r
+      data[pitch] := p
+      data[roll] := r
+      packed ! data
+:
+--* Obtains the heading from a gps
+-- @param heading The channel that the heading will be put in
+PROC get.heading(CHAN INT heading!)
+  CHAN [BUFFER.SIZE]BYTE buffer:
+  WHILE TRUE
+    PAR
+      gps.reader(buffer!)
+      gps.course(buffer?, heading!)
 :
 
 #ENDIF

@@ -1,16 +1,10 @@
-#INCLUDE "uavsensors.module"
+#INCLUDE "plumbing.module"
+#INCLUDE "uavConfig.module"
 #INCLUDE "servo.module"
 #INCLUDE "control.module"
---#INCLUDE "control.module"
-PROC display(CHAN INT theta?)
-  INT angle:
-  WHILE TRUE
-    SEQ
-      theta ? angle
-      serialWriteDecInt(angle)
-      serial.write.string(TX0, "*n")
-:
-VAL INT NUM.READINGS.TO.AVERAGE IS 10:
+#INCLUDE "gps.module"
+#INCLUDE "uavsensors.module"
+
 PROC av (CHAN INT input?, output!)
   [NUM.READINGS.TO.AVERAGE]INT readings:
   INT  sum:
@@ -31,94 +25,73 @@ PROC av (CHAN INT input?, output!)
         ndx := (ndx + 1) REM (SIZE readings)
 :
 
-PROC brain (CHAN INT pitch?, roll?, turn.x!, turn.y!, level.x!, level.y!) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
+--* This is our brain.  It tells the plane what is up.
+PROC brain (CHAN SIGNAL level.signal!, turn.signal!)
   TIMER time:
-  INT pitch.angle, roll.angle,t:
-  INITIAL BOOL TURN, LEVEL IS TRUE, TRUE:
-  WHILE  TRUE
+  INT t:
+  WHILE TRUE
     SEQ
       time ? t
-      IF
+      IF 
         t < 0
           t := t * (-1)
         TRUE
           SKIP
-      IF 
-        ((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000) 
-          PAR
-            SEQ
-              pitch ? pitch.angle
-              roll ? roll.angle
-      
-              turn.x ! pitch.angle
-              turn.y ! roll.angle
-
+      IF
+        FALSE --((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000)
+          turn.signal ! SIGNAL
         TRUE
-          PAR
-            SEQ
-              pitch ? pitch.angle
-              roll ? roll.angle
-        
-              level.x ! pitch.angle
-              level.y ! roll.angle
-
+          level.signal ! SIGNAL
 :
+ 
+
+PROC mux (CHAN IMU.DATA orientation?, level!, turning!, CHAN SIGNAL level.signal?, turn.signal?) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
+  IMU.DATA pos:
+  WHILE  TRUE
+    ALT
+      turn.signal ? SIGNAL   
+        SEQ
+          orientation ? pos
+          turning ! pos      
+
+      level.signal ? SIGNAL
+        SEQ  
+          orientation ? pos
+          level ! pos
+:
+
 PROC main ()
   CHAN SERVO s, s2, s3, s4:
-  CHAN INT roll, pitch, filtered.x, filtered.y,turn.x, turn.y, level.x, level.y:
+  CHAN INT roll, pitch, filtered.x, filtered.y, course:
+  CHAN IMU.DATA orientation, level, turning:
+  CHAN SIGNAL level.signal, turn.signal:
   SEQ
-    digital.mode (45, OUTPUT)
-    digital.mode (44, OUTPUT)
-
+    digital.mode (ELEVATOR.SERVO.PIN, OUTPUT)
+    digital.mode (AILERON.SERVO.PIN, OUTPUT)
+    
     PAR
-      --digital.mode(32, OUTPUT) -- Solid navigation lights
-      --digital.write(32, 1)
-      --digital.mode(30, OUTPUT)
-      --digital.write(30, 1)
-      
-      --SEQ           -- Blinks White strobe LED's in a nice pattern 
-        --delay (500)
-        --blink (31, 1000)
-      --SEQ
-        --blink (33, 1000)
-      --SEQ
-        --delay (250)
-        --blink (40, 1000)
-      
-      servo (45, s)
-      servo (44, s2)
-      servo (45, s3)
-      servo (44, s4)
+      nav.lights()
+
+      servo (ELEVATOR.SERVO.PIN, s)
+      servo (AILERON.SERVO.PIN, s2)
+      servo (ELEVATOR.SERVO.PIN, s3)
+      servo (AILERON.SERVO.PIN, s4)
       
       SEQ
-        s2 ! min ; 650      --Startup for both servos
-        s2 ! max ; 2350
-        s2 ! div ; 180
-        s2 ! pos ; 0
-        s2 ! start
-        s ! min ; 650
-        s ! max ; 2350
-        s ! div ; 180
-        s ! pos ; 0
-        s ! start
-        s3 ! min ; 650
-        s3 ! max ; 2350
-        s3 ! div ; 180
-        s3 ! pos ; 0
-        s3 ! start
-        s4 ! min ; 650
-        s4 ! max ; 2350
-        s4 ! div ; 180
-        s4 ! pos ; 0
-        s4 ! start
-
+        servo.setup(s, AILERON.START)
+        servo.setup(s2, ELEVATOR.START)
+        servo.setup(s3, AILERON.START)
+        servo.setup(s4, ELEVATOR.START)
         delay (2000)
+
         PAR
-          level.flight (level.x?, level.y?, s, s2)
-          turn (turn.x?, turn.y?, 6, s3, s4)
-          brain (filtered.x?, filtered.y?, turn.x!, turn.y!, level.x!, level.y!)
-      angles(A4, A5, A0, A1, pitch!, roll!)
-      --display(filtered.y?)
-      av(pitch?, filtered.x!)
-      av(roll?, filtered.y!)
+          level.flight (level?, s, s2)
+          turn (turning?, TURN.BANK.ANGLE, s3, s4)
+          mux (orientation?, level!, turning!,level.signal?, turn.signal?)
+          brain (level.signal!, turn.signal!)
+
+      angles(GYRO.X.PIN, GYRO.Y.PIN, ACCELEROMETER.X.PIN, ACCELEROMETER.Y.PIN, pitch!, roll!)
+      packer(pitch?, roll?, orientation!)
+      --get.heading(course!)
+
 :

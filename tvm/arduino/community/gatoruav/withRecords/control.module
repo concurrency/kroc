@@ -42,12 +42,11 @@ PROC turn (CHAN IMU.DATA position?, VAL INT bank.angle, CHAN SERVO s, s2)
     
 :    
 
---* Keeps the aricraft in level flight
+--* This acts as a feedback mechanism keeping the airplane in level flight.  As the attitude of the airplane changes, the servos are moved to positions to return the plane to level flight.
 -- @param imu A [@code IMU.DATA] record containing the current pitch and roll of the aircraft.
 -- @param s The Elevator(pitch) servo
 -- @param s2 the Aileron(roll) servo
-PROC level.flight (CHAN IMU.DATA imu?, CHAN SERVO s, s2) -- This PROC acts as a feedback mechanism keeping the airplane in level flight.  As the attitude of the airplane changes, the servos are moved to positions to return the plane to level flight.
-  INT  servo.pos.pitch, servo.pos.roll, r:
+PROC level.flight (CHAN IMU.DATA imu?, CHAN SERVO s, s2) INT  servo.pos.pitch, servo.pos.roll:
   IMU.DATA pos:
   SEQ
     WHILE TRUE
