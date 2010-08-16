@@ -27,7 +27,10 @@ void serial_stdout_init (long speed) {
 	stdout = fdevopen (serial_write, NULL);
 }
 
-
+/* FIXME: We really don't want these IFDEF statements.
+   Further, this should be made to work on the Arduino as well.
+*/
+#if defined(atmega1280)
 char rc0(void) {
 			while ( !(UCSR0A & (1 << RXC0)) )
 				;
@@ -92,3 +95,5 @@ int ffi_read_buffer_blocking (ECTX ectx, WORD args[]) {
 
 	return SFFI_OK;
 }
+#endif
+
