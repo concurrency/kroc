@@ -19,7 +19,7 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT gain, dt)
       gyro ? gyr
       accelerometer ? accel
     
-      accel := accel * (-1) 
+      accel := accel * (-1) --This is because our IMU was mounted upside down
 
       angle := (((gain * (angle + (gyr * dt))) + (( 100 - gain) * accel))/100)
 
@@ -31,24 +31,23 @@ PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT gain, dt)
 -- @param output The processed values, in degrees/seconds
 PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
   INITIAL INT counter, shift, n IS 0, 0, 0:
-SEQ
   SEQ
-    IF i = 0 FOR 11
+    SEQ
+      SEQ i = 0 FOR 11
+        SEQ
+          input ? n
+          shift := n  
+          --IF statement used to initially zero the reading to whatever the first value is
+          
+    WHILE TRUE
       SEQ
         input ? n
-        shift := n  
-	    --IF statement used to initially zero the reading to whatever the first value is
-      TRUE
-        SKIP
-  WHILE TRUE
-    SEQ
-      input ? n
-      --                was -1.26
-      n := (((((n-33)/10230)-13)/30) * 1000)/10
-       
-      n := n - shift
-              -- in milliseconds
-      output ! n
+        --                was -1.26
+        n := (((((n-33)/10230)-13)/30) * 1000)/10
+         
+        n := n - shift
+                -- in milliseconds
+        output ! n
 :
 
 --* A simple filter for a jittery gyroscope
@@ -69,13 +68,11 @@ PROC gyro.filter (CHAN INT input?, rate!)
     
     -- Now filtering begins
     WHILE TRUE
-      SEQ
-        filtered := (filter.arr[1] + filter.arr[3]) 
-        filtered := (filtered + (filter.arr[2] *2))
-        filtered := filtered / 4
-        current.rate := ((current.rate) + (filtered))/2
+      SEQ 
+        current.rate := ((current.rate) + ((((filter.arr[1] + filter.arr[3]) + (filter.arr[2] *2))/4)))/2
         rate ! current.rate
-
+        
+        --Cycles old values through temporary variables and holding the last four values
         filter.arr [0] := filter.arr [1]
         filter.arr [1] := filter.arr [2]
         filter.arr [2] := filter.arr [3]
