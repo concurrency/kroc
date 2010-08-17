@@ -132,4 +132,34 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
 :
 --}}}
 
+--{{{ PROC simple.servo
+--* Stepping-stone servo control process.
+--  The idea is this is a simpler process to work with servos than the
+--  PROTOCOL. You need to know your servo's bounds for this one, but it does
+--  allow for a single-channel servo control.
+--
+-- @param board.pin The board pin to be used for servo operations. For the
+--   time being, only PWM pins connected to a 16 bit timer can be used to
+--   operate servos.
+-- @param umin The shortest pulse the servo is designed to recieve.
+-- @param umax The longest pluse the servo is designed to recieve.
+-- @param p? The input BYTE channel for setting the position of the servo.
+--   [@em This is hard-coded to be a range from 0 to 180. Do not attempt to
+--   send anything outside of that range.]
+PROC simple.servo (VAL INT board.pin, umin, umax, CHAN BYTE p?)
+  CHAN SERVO s:
+  BYTE p:
+  PAR
+    servo (board.pin, s?)
+    SEQ
+      s ! min ; umin
+      s ! max ; umax
+      s ! start
+      WHILE TRUE
+        SEQ
+          npos ? p
+          s ! pos ; p
+:
+--}}}
+
 #ENDIF
