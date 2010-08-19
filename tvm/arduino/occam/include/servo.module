@@ -148,7 +148,7 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
 --   send anything outside of that range.]
 PROC simple.servo (VAL INT board.pin, umin, umax, CHAN BYTE p?)
   CHAN SERVO s:
-  BYTE p:
+  BYTE b:
   PAR
     servo (board.pin, s?)
     SEQ
@@ -157,8 +157,8 @@ PROC simple.servo (VAL INT board.pin, umin, umax, CHAN BYTE p?)
       s ! start
       WHILE TRUE
         SEQ
-          npos ? p
-          s ! pos ; p
+          p ? b
+          s ! pos ; (INT b)
 :
 --}}}
 
