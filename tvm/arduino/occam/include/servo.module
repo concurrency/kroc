@@ -117,7 +117,8 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
               pwm16.set.compare (avr.pin, usec)
             TRUE
               SKIP 
-      INT refresh:
+      INT refresh:  --FIXME: I'm guessing this is one of those things that
+                        --really ought to get revised one of these days..
       frequency ; refresh
         SKIP
       start
@@ -152,8 +153,8 @@ PROC simple.servo (VAL INT board.pin, umin, umax, CHAN BYTE p?)
   PAR
     servo (board.pin, s?)
     SEQ
-      s ! min ; umin
-      s ! max ; umax
+      s ! min ; 1000
+      s ! max ; 2000
       s ! start
       WHILE TRUE
         SEQ
