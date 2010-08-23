@@ -6,14 +6,18 @@ CPPFLAGS = \
 	-I../../runtime/libtvm \
 	@CPPFLAGS@
 LDFLAGS = -Llibtvm @LDFLAGS@
-LIBS = -ltvm -lnxos @LIBGCC@ @LIBS@
+LIBS = -ltvm @LIBGCC@ @LIBS@
 
 noinst_PROGRAMS = tvm_nxt
 
 tvm_nxt_SOURCES = \
+	init.S \
+	interrupts.S \
+	samba_init.S \
 	sffi.c \
 	tbc.c \
-	tvm.c
+	tvm.c \
+	vectors.S
 
 %.samba.elf: $(tvm_nxt_OBJECTS)
 	$(LD) $(LDFLAGS) \

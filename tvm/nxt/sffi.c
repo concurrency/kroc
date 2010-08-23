@@ -6,14 +6,14 @@
  */
 
 #include "tvm-nxt.h"
-#include <base/at91sam7s256.h>
-#include <base/display.h>
-#include <base/drivers/avr.h>
-#include <base/drivers/bt.h>
-#include <base/drivers/i2c_memory.h>
-#include <base/drivers/motors.h>
-#include <base/drivers/sensors.h>
-#include <base/drivers/sound.h>
+//#include <base/at91sam7s256.h>
+//#include <base/display.h>
+//#include <base/drivers/avr.h>
+//#include <base/drivers/bt.h>
+//#include <base/drivers/i2c_memory.h>
+//#include <base/drivers/motors.h>
+//#include <base/drivers/sensors.h>
+//#include <base/drivers/sound.h>
 
 #ifdef UNUSED 
 #elif defined(__GNUC__) 
@@ -21,6 +21,8 @@
 #else
 #define UNUSED(x) x 
 #endif
+
+#if 0
 
 /* PROC nx.display.clear () */
 int _nx_display_clear (ECTX UNUSED(ectx), WORD UNUSED(args[])) {
@@ -473,4 +475,8 @@ SFFI_FUNCTION sffi_table[] = {
 	_nx_bt_has_dev_waiting_for_pin,
 	_nx_bt_send_pin
 };
+#else /* 0 */
+SFFI_FUNCTION sffi_table[] = { };
+#endif /* 0 */
+
 const int sffi_table_length = sizeof(sffi_table) / sizeof(SFFI_FUNCTION);

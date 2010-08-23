@@ -1,11 +1,11 @@
 #include "tvm-nxt.h"
-#include <base/display.h>
-#include <base/drivers/_avr.h>
-#include <base/drivers/_sensors.h>
-#include <base/drivers/_usb.h>
-#include <base/drivers/bt.h>
-#include <base/drivers/motors.h>
-#include <base/drivers/sensors.h>
+//#include <base/display.h>
+//#include <base/drivers/_avr.h>
+//#include <base/drivers/_sensors.h>
+//#include <base/drivers/_usb.h>
+//#include <base/drivers/bt.h>
+//#include <base/drivers/motors.h>
+//#include <base/drivers/sensors.h>
 
 static void *mem_pool = NX_USERSPACE_START; 
 static tvm_t tvm;
