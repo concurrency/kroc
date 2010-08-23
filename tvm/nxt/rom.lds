@@ -42,7 +42,7 @@ SECTIONS {
    * boot time.
    */
   .vectors : {
-    KEEP(base/vectors.o (*.text *.text.*))
+    KEEP(vectors.o (*.text *.text.*))
   } > vector_ram
    AT> rom
 

@@ -1,3 +1,12 @@
+/*
+ * tvm.c - NXT TVM wrapper
+ *
+ * Copyright (C) 2010  Carl G. Ritson
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #include "tvm-nxt.h"
 //#include <base/display.h>
 //#include <base/drivers/_avr.h>
@@ -7,33 +16,31 @@
 //#include <base/drivers/motors.h>
 //#include <base/drivers/sensors.h>
 
-static void *mem_pool = NX_USERSPACE_START; 
+//static void *mem_pool = NX_USERSPACE_START; 
 static tvm_t tvm;
 static tvm_ectx_t context;
 
 static WORD nxt_get_time (ECTX ectx) {
 	(void) ectx;
-	return nx_systick_get_ms ();
+	return 0; /* FIXME: */
+	//return nx_systick_get_ms ();
 }
 
 static void nxt_modify_sync_flags (ECTX ectx, WORD set, WORD clear) {
-	nx_interrupts_disable ();
+	/* FIXME: */
+	//nx_interrupts_disable ();
 	ectx->sflags = (ectx->sflags & (~clear)) | set;
-	nx_interrupts_enable ();
+	//nx_interrupts_enable ();
 }
 
-void main (void) {
+void tvm_main (void) {
 	UWORD tbc_length 	= 0;
 	BYTE *tbc_data 		= NULL;
 	tbc_t *tbc 		= NULL;
 		
-	nx_systick_wait_ms (1000);
-	nx__avr_init ();
-	nx_systick_wait_ms (1000);
-	
-	nx_bt_init ();
-
 	tvm_init (&tvm);
+	
+	#if 0
 
 	for (;;) {
 		U8 buffer[NX_USB_PACKET_SIZE];
@@ -202,5 +209,6 @@ void main (void) {
 		nx_systick_wait_ms (3000);
 	}
 
+	#endif
 	/* NOTREACHED */
 }

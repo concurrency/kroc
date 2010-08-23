@@ -1,6 +1,6 @@
 /* Copyright (C) 2007 the NxOS developers
  *
- * See AUTHORS for a full list of the developers.
+ * See NXOS for a full list of the developers.
  *
  * Redistribution of this file is permitted under
  * the terms of the GNU Public License (GPL) version 2.
@@ -22,15 +22,15 @@
  * Default handlers for unknown IRQ and FIQ interrupts, and
  * the spurious IRQ handler and unknown exception handler.
  */
-        .global nx__default_irq
-        .global nx__default_fiq
-        .global nx__spurious_irq
-        .global nx__unhandled_exception
-nx__default_irq:
-nx__default_fiq:
-nx__spurious_irq:
-nx__unhandled_exception:
-        b nx__unhandled_exception
+        .global nxt__default_irq
+        .global nxt__default_fiq
+        .global nxt__spurious_irq
+        .global nxt__unhandled_exception
+nxt__default_irq:
+nxt__default_fiq:
+nxt__spurious_irq:
+nxt__unhandled_exception:
+        b nxt__unhandled_exception
 
 
 /**********************************************************
@@ -40,8 +40,8 @@ nx__unhandled_exception:
  * routing that was registered with the AIC for the given
  * IRQ.
  */
-        .global nx__irq_handler
-nx__irq_handler:
+        .global nxt__irq_handler
+nxt__irq_handler:
         /* Save the return address and return processor mode registers
          * on the IRQ stack. This is needed to allow nested interrupts,
          * where a higher-priority interrupt halts execution of a lower
@@ -137,22 +137,22 @@ nx__irq_handler:
 /**********************************************************
  * Abort entry points. These get run when the CPU enters
  * prefetch or data abort modes. These handlers just set
- * up the necessary arguments and invoke nx__abort().
+ * up the necessary arguments and invoke nxt_abort().
  */
-        .extern nx__abort
-        .global nx__prefetch_abort_handler
-nx__prefetch_abort_handler:
+        .extern nxt_abort
+        .global nxt__prefetch_abort_handler
+nxt__prefetch_abort_handler:
         sub r1, lr, #4
         mov r0, #0
         mrs r2, spsr
-        b nx__abort
+        b nxt_abort
 
-        .global nx__data_abort_handler
-nx__data_abort_handler:
+        .global nxt__data_abort_handler
+nxt__data_abort_handler:
         sub r1, lr, #8
         mov r0, #1
         mrs r2, spsr
-        b nx__abort
+        b nxt_abort
 
 
 /**********************************************************
@@ -166,9 +166,9 @@ nx__data_abort_handler:
  * interrupts disabled with 1 level of nesting (ie. calling
  * interrupts_enable once will enable interrupts).
  */
-        .global nx_interrupts_disable
-        .global nx_interrupts_enable
-nx_interrupts_disable:
+        .global nxt_interrupts_disable
+        .global nxt_interrupts_enable
+nxt_interrupts_disable:
         mrs r0, cpsr
         orr r0, r0, #IRQ_FIQ_MASK
         msr cpsr_c, r0
@@ -180,7 +180,7 @@ nx_interrupts_disable:
 
         bx lr
 
-nx_interrupts_enable:
+nxt_interrupts_enable:
         ldr r0, =interrupts_count
         ldr r1, [r0]
         subs r1, r1, #1

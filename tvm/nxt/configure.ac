@@ -10,6 +10,7 @@ AC_CHECK_TOOL([OBJCOPY], [objcopy], [no])
 AC_CHECK_HEADERS([stdio.h stdint.h])
 
 CFLAGS="$CFLAGS -mcpu=arm7tdmi -Os -Wextra -Wall -ffreestanding -fsigned-char -ffunction-sections -std=gnu99 -fdata-sections -fomit-frame-pointer -msoft-float -mthumb-interwork"
+CCASFLAGS="$CCASFLAGS -Wall -Werror -Os -Wa,-mcpu=arm7tdmi,-mfpu=softfpa,-mthumb-interwork"
 #CPPFLAGS="$CPPFLAGS \"-I$NXOS_PATH\""
 #LDFLAGS="$LDFLAGS \"-L$NXOS_PATH\""
 

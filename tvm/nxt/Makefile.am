@@ -13,6 +13,7 @@ noinst_PROGRAMS = tvm_nxt
 tvm_nxt_SOURCES = \
 	init.S \
 	interrupts.S \
+	nxt.c \
 	samba_init.S \
 	sffi.c \
 	tbc.c \

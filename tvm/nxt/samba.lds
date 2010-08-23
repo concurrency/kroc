@@ -41,7 +41,7 @@ SECTIONS {
    * boot time.
    */
   .vectors : {
-    KEEP(base/vectors.o (*.text *.text.*))
+    KEEP(vectors.o (*.text *.text.*))
   } > vector_ram
 
 
@@ -119,7 +119,7 @@ SECTIONS {
 
   /* SAMBA stage 0.5 */
    .samba_boot ADDR(.bss) : {
-     KEEP(base/samba_init.o (.samba_init));
+     KEEP(samba_init.o (.samba_init));
    }
 
 

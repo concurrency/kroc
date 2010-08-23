@@ -1,16 +1,23 @@
 #ifndef TVM_NXT_H
 #define TVM_NXT_H
 
+/* Platform type definitions */
+typedef unsigned char uint8_t; 
+typedef signed char int8_t;
+typedef unsigned short uint16_t;
+typedef signed short int16_t;
+typedef unsigned long uint32_t;
+typedef signed long int32_t;
+
+typedef uint32_t size_t;
+
+typedef uint8_t bool;
+#define FALSE (0)
+#define TRUE (!FALSE)
+
+
 /* Define for lots of useful printed-out stuff. */
 #undef DEBUG
-
-//#include "base/types.h"
-//#include "base/memmap.h"
-//#include "base/assert.h"
-//#include "base/util.h"
-
-//#include "base/interrupts.h"
-//#include "base/drivers/_systick.h"
 
 
 #define TVM_ECTX_PRIVATE_DATA 	tvm_ectx_priv_t

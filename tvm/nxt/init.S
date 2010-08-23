@@ -1,6 +1,6 @@
 /* Copyright (C) 2007 the NxOS developers
  *
- * See AUTHORS for a full list of the developers.
+ * See NXOS for a full list of the developers.
  *
  * Redistribution of this file is permitted under
  * the terms of the GNU Public License (GPL) version 2.
@@ -44,14 +44,14 @@
         bl mem_init_func
         .endm
 
-        .global nx_start
-        .extern nx__kernel_main
+        .global nxt__start
+        .extern nxt_init
 
 
 /**********************************************************
  * Execution starts here after a reset.
  */
-nx_start:
+nxt__start:
         /* Disable interrupts. They will be enabled if we are
          * rebooting.
          */
@@ -227,7 +227,7 @@ wait_mclk_3:
         mov r7, #0
 
         /* Start the main kernel code using an interworking branch. */
-        ldr r5, =nx__kernel_main
+        ldr r5, =nxt_init
         mov lr, pc
         bx  r5
 
