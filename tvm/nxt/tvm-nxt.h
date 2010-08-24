@@ -1,7 +1,7 @@
 #ifndef TVM_NXT_H
 #define TVM_NXT_H
 
-/* Platform type definitions */
+/*{{{ Platform type definitions */
 typedef unsigned char uint8_t; 
 typedef signed char int8_t;
 typedef unsigned short uint16_t;
@@ -14,6 +14,19 @@ typedef uint32_t size_t;
 typedef uint8_t bool;
 #define FALSE (0)
 #define TRUE (!FALSE)
+/*}}}*/
+
+/*{{{ Hardware access defines and functions */
+#define NXT_CLOCK_FREQ 48000000
+
+/* interrupts.S */
+void nxt_interrupts_disable (void);
+void nxt_interrupts_enable (void);
+void nxt__default_irq (void);
+void nxt__default_fiq (void);
+void nxt__spurious_irq (void);
+
+/*}}}*/
 
 
 /* Define for lots of useful printed-out stuff. */
