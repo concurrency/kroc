@@ -143,6 +143,7 @@ static void systick_isr (void)
 	systick_time++;
 
 	/* FIXME: do management */
+	avr_systick_update ();
 }
 
 void init_systick (void) {
@@ -168,7 +169,9 @@ void init_systick (void) {
 void nxt_init (void)
 {
 	init_interrupts ();
+	avr_data_init ();
 	init_systick ();
+	avr_init ();
 	return;
 }
 

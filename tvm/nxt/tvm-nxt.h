@@ -18,6 +18,16 @@ typedef uint8_t bool;
 
 /*{{{ Hardware access defines and functions */
 #define NXT_CLOCK_FREQ 48000000
+#define NXT_N_MOTORS   4
+#define NXT_N_SENSORS  4
+
+enum {
+	BUTTON_NONE	= 0,
+	BUTTON_OK,
+	BUTTON_CANCEL,
+	BUTTON_LEFT,
+	BUTTON_RIGHT
+};
 
 /* interrupts.S */
 void nxt_interrupts_disable (void);
@@ -25,6 +35,11 @@ void nxt_interrupts_enable (void);
 void nxt__default_irq (void);
 void nxt__default_fiq (void);
 void nxt__spurious_irq (void);
+
+/* avr.c */
+void avr_init (void);
+void avr_data_init (void);
+void avr_systick_update (void);
 
 /*}}}*/
 

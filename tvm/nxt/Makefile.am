@@ -11,6 +11,7 @@ LIBS = -ltvm @LIBGCC@ @LIBS@
 noinst_PROGRAMS = tvm_nxt
 
 tvm_nxt_SOURCES = \
+	avr.c \
 	init.S \
 	interrupts.S \
 	nxt.c \
