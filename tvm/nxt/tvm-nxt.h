@@ -1,7 +1,7 @@
 #ifndef TVM_NXT_H
 #define TVM_NXT_H
 
-/*{{{ Platform type definitions */
+/*{{{  Platform type definitions */
 typedef unsigned char uint8_t; 
 typedef signed char int8_t;
 typedef unsigned short uint16_t;
@@ -16,7 +16,12 @@ typedef uint8_t bool;
 #define TRUE (!FALSE)
 /*}}}*/
 
-/*{{{ Hardware access defines and functions */
+/*{{{  Memory functions */
+/* mem.c */
+void memset (void *dest, int8_t val, size_t len);
+/*}}}*/
+
+/*{{{  Hardware access defines and functions */
 #define NXT_CLOCK_FREQ 48000000
 #define NXT_N_MOTORS   4
 #define NXT_N_SENSORS  4
@@ -36,10 +41,35 @@ void nxt__default_irq (void);
 void nxt__default_fiq (void);
 void nxt__spurious_irq (void);
 
+/* aic.c */
+enum {
+	AIC_TRIG_LEVEL		= 0,
+	AIC_TRIG_EDGE		= 1
+};
+enum {
+	AIC_PRIO_LOW		= 1,
+	AIC_PRIO_DRIVER		= 3,
+	AIC_PRIO_SOFTMAC 	= 4,
+	AIC_PRIO_SCHED		= 5,
+	AIC_PRIO_RT 		= 6,
+	AIC_PRIO_TICK		= 7
+};
+void aic_enable (int vector);
+void aic_disable (int vector);
+void aic_set (int vector);
+void aic_clear (int vector);
+void aic_install_isr (int vector, uint32_t prio, uint32_t trig_mode, void *isr);
+void aic_init (void);
+
 /* avr.c */
 void avr_init (void);
 void avr_data_init (void);
 void avr_systick_update (void);
+
+/* nxt.c */
+uint32_t systick_get_ms (void);
+void systick_wait_ms (uint32_t ms);
+void systick_wait_ns (uint32_t ns);
 
 /*}}}*/
 

@@ -11,96 +11,6 @@
 #include "tvm-nxt.h"
 #include "at91sam7s256.h"
 
-/*{{{  Interrupt Controller */
-enum {
-	AIC_TRIG_LEVEL		= 0,
-	AIC_TRIG_EDGE		= 1
-};
-
-enum {
-	AIC_PRIO_LOW		= 1,
-	AIC_PRIO_DRIVER		= 3,
-	AIC_PRIO_SOFTMAC 	= 4,
-	AIC_PRIO_SCHED		= 5,
-	AIC_PRIO_RT 		= 6,
-	AIC_PRIO_TICK		= 7
-};
-
-static inline void aic_enable (int vector)
-{
-	*AT91C_AIC_IECR = (1 << vector);
-}
-
-static inline void aic_disable (int vector)
-{
-	*AT91C_AIC_IDCR = (1 << vector);
-}
-
-static inline void aic_set (int vector)
-{
-	*AT91C_AIC_ISCR = (1 << vector);
-}
-
-static inline void aic_clear (int vector)
-{
-	*AT91C_AIC_ICCR = (1 << vector);
-}
-
-static void aic_install_isr (int vector, uint32_t prio,
-                     uint32_t trig_mode, void *isr)
-{
-	/* Disable the interrupt we're installing. Getting interrupted while
-	 * we are tweaking it could be bad.
-	 */
-	aic_disable (vector);
-	aic_clear (vector);
-
-	AT91C_AIC_SMR[vector] = (trig_mode << 5) | prio;
-	AT91C_AIC_SVR[vector] = (uint32_t) isr;
-
-	aic_enable (vector);
-}
-
-static void init_interrupts (void)
-{
-	int i;
-
-	/* Prevent the ARM core from being interrupted while we set up the
-	 * AIC.
-	 */
-	nxt_interrupts_disable ();
-
-	/* If we're coming from a warm boot, the AIC may be in a weird
-	 * state. Do some cleaning up to bring the AIC back into a known
-	 * state:
-	 *  - All interrupt lines disabled,
-	 *  - No interrupt lines handled by the FIQ handler,
-	 *  - No pending interrupts,
-	 *  - AIC idle, not handling an interrupt.
-	 */
-	*AT91C_AIC_IDCR = 0xFFFFFFFF;
-	*AT91C_AIC_FFDR = 0xFFFFFFFF;
-	*AT91C_AIC_ICCR = 0xFFFFFFFF;
-	*AT91C_AIC_EOICR = 1;
-
-	/* Enable debug protection. This is necessary for JTAG debugging, so
-	 * that the hardware debugger can read AIC registers without
-	 * triggering side-effects.
-	 */
-	*AT91C_AIC_DCR = 1;
-
-	/* Set default handlers for all interrupt lines. */
-	for (i = 0; i < 32; i++) {
-		AT91C_AIC_SMR[i] = 0;
-		AT91C_AIC_SVR[i] = (uint32_t) nxt__default_irq;
-	}
-	AT91C_AIC_SVR[AT91C_ID_FIQ] = (uint32_t) nxt__default_fiq;
-	*AT91C_AIC_SPU = (uint32_t) nxt__spurious_irq;
-
-	nxt_interrupts_enable ();
-}
-/*}}}*/
-
 /*{{{  System Clock */
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get
  * its base timer frequency.
@@ -146,7 +56,7 @@ static void systick_isr (void)
 	avr_systick_update ();
 }
 
-void init_systick (void) {
+static void systick_init (void) {
 	nxt_interrupts_disable ();
 
 	systick_time = 0;
@@ -163,16 +73,34 @@ void init_systick (void) {
 
 	nxt_interrupts_enable ();
 }
+
+uint32_t systick_get_ms (void)
+{
+	return systick_time;
+}
+
+void systick_wait_ms (uint32_t ms)
+{
+	uint32_t final = systick_time + ms;
+
+	while (systick_time < final);
+}
+
+void systick_wait_ns (uint32_t ns)
+{
+	volatile uint32_t x = (ns >> 7) + 1;
+
+	while (x--);
+}
 /*}}}*/
 
 
 void nxt_init (void)
 {
-	init_interrupts ();
+	aic_init ();
 	avr_data_init ();
-	init_systick ();
+	systick_init ();
 	avr_init ();
-	return;
 }
 
 void nxt_abort (bool data, uint32_t pc, uint32_t cpsr)

@@ -10,17 +10,34 @@
 
 #include "tvm-nxt.h"
 #include "at91sam7s256.h"
-
+/*{{{  Defines */
 #define AVR_ADDRESS 1
 #define AVR_MAX_FAILED_CHECKSUMS 3
+/*}}}*/
 
-const char avr_init_handshake[] =
-"\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
+/*{{{  Static Data */
+static const char avr_init_handshake[] =
+	"\xCC" "Let's samba nxt arm in arm, (c)LEGO System A/S";
+
+static volatile struct {
+	/* The current state of the TWI driver state machine. */
+	enum twi_mode {
+		TWI_UNINITIALISED = 0,
+		TWI_FAILED,
+		TWI_READY,
+		TWI_TX_BUSY,
+		TWI_RX_BUSY,
+	} mode;
+
+	/* Address and size of a send/receive buffer. */
+	uint8_t *ptr;
+	uint32_t len;
+} twi_state;
 
 static volatile struct {
 	/* The current mode of the AVR state machine. */
 	enum {
-		AVR_UNINITIALIZED = 0, /* Initialization not completed. */
+		AVR_UNINITIALISED = 0, /* Initialization not completed. */
 		AVR_LINK_DOWN,         /* No handshake has been sent. */
 		AVR_INIT,              /* Handshake send in progress. */
 		AVR_WAIT_2MS,          /* Timed wait after the handshake. */
@@ -98,7 +115,171 @@ static uint8_t raw_to_avr[
 	1 + /* Output modes (brakes) */
 	1 + /* Input modes (sensor power) */
 	1]; /* Checksum */
+/*}}}*/
 
+/*{{{  Two-Wire Interface */
+static void twi_isr (void)
+{
+	/* Read the status register once to acknowledge all TWI interrupts. */
+	uint32_t status = *AT91C_TWI_SR;
+
+	/* Read mode and the status indicates a byte was received. */
+	if (twi_state.mode == TWI_RX_BUSY && (status & AT91C_TWI_RXRDY)) {
+		*twi_state.ptr = *AT91C_TWI_RHR;
+		twi_state.ptr++;
+		twi_state.len--;
+
+		/* If only one byte is left to read, instruct the TWI to send a STOP
+		 * condition after the next byte.
+		 */
+		if (twi_state.len == 1) {
+			*AT91C_TWI_CR = AT91C_TWI_STOP;
+		}
+
+		/* If the read is over, inhibit all TWI interrupts and return to the
+		 * ready state.
+		 */
+		if (twi_state.len == 0) {
+			*AT91C_TWI_IDR = ~0;
+			twi_state.mode = TWI_READY;
+		}
+	}
+
+	/* Write mode and the status indicated a byte was transmitted. */
+	if (twi_state.mode == TWI_TX_BUSY && (status & AT91C_TWI_TXRDY)) {
+		/* If that was the last byte, inhibit TWI interrupts and return to
+		 * the ready state.
+		 */
+		if (twi_state.len == 0) {
+			*AT91C_TWI_IDR = ~0;
+			twi_state.mode = TWI_READY;
+		} else {
+			/* Instruct the TWI to send a STOP condition at the end of the
+			 * next byte if this is the last byte.
+			 */
+			if (twi_state.len == 1)
+				*AT91C_TWI_CR = AT91C_TWI_STOP;
+
+			/* Write the next byte to the transmit register. */
+			*AT91C_TWI_THR = *twi_state.ptr;
+			twi_state.ptr++;
+			twi_state.len--;
+		}
+	}
+
+	/* Check for error conditions. There are pretty critical failures,
+	 * since they indicate something is very wrong with either this
+	 * driver, or the coprocessor, or the hardware link between them.
+	 */
+	if (status & (AT91C_TWI_OVRE | AT91C_TWI_UNRE | AT91C_TWI_NACK)) {
+		*AT91C_TWI_CR = AT91C_TWI_STOP;
+		*AT91C_TWI_IDR = ~0;
+		twi_state.mode = TWI_FAILED;
+		/* TODO: This should be an assertion failed, ie. a hard crash. */
+	}
+}
+
+static void twi_init (void)
+{
+	uint32_t clocks = 9;
+
+	nxt_interrupts_disable ();
+
+	/* Power up the TWI and PIO controllers. */
+	*AT91C_PMC_PCER = (1 << AT91C_ID_TWI) | (1 << AT91C_ID_PIOA);
+
+	/* Inhibit all TWI interrupt sources. */
+	*AT91C_TWI_IDR = ~0;
+
+	/* If the system is rebooting, the coprocessor might believe that it
+	 * is in the middle of an I2C transaction. Furthermore, it may be
+	 * pulling the data line low, in the case of a read transaction.
+	 *
+	 * The TWI hardware has a bug that will lock it up if it is
+	 * initialized when one of the clock or data lines is low.
+	 *
+	 * So, before initializing the TWI, we manually take control of the
+	 * pins using the PIO controller, and manually drive a few clock
+	 * cycles, until the data line goes high.
+	 */
+	*AT91C_PIOA_MDER = AT91C_PA3_TWD | AT91C_PA4_TWCK;
+	*AT91C_PIOA_PER = AT91C_PA3_TWD | AT91C_PA4_TWCK;
+	*AT91C_PIOA_ODR = AT91C_PA3_TWD;
+	*AT91C_PIOA_OER = AT91C_PA4_TWCK;
+
+	while (clocks > 0 && !(*AT91C_PIOA_PDSR & AT91C_PA3_TWD)) {
+		*AT91C_PIOA_CODR = AT91C_PA4_TWCK;
+		systick_wait_ns (1500);
+		*AT91C_PIOA_SODR = AT91C_PA4_TWCK;
+		systick_wait_ns (1500);
+		clocks--;
+	}
+
+	nxt_interrupts_enable ();
+
+	/* Now that the I2C lines are clean, hand them back to the TWI
+	 * controller.
+	 */
+	*AT91C_PIOA_PDR = AT91C_PA3_TWD | AT91C_PA4_TWCK;
+	*AT91C_PIOA_ASR = AT91C_PA3_TWD | AT91C_PA4_TWCK;
+
+	/* Reset the controller and configure its clock. The clock setting
+	 * makes the TWI run at 380kHz.
+	 */
+	*AT91C_TWI_CR = AT91C_TWI_SWRST | AT91C_TWI_MSDIS;
+	*AT91C_TWI_CWGR = 0x020f0f;
+	*AT91C_TWI_CR = AT91C_TWI_MSEN;
+	twi_state.mode = TWI_READY;
+
+	/* Install the TWI interrupt handler. */
+	aic_install_isr (AT91C_ID_TWI, AIC_PRIO_RT, AIC_TRIG_LEVEL, twi_isr);
+}
+
+void twi_read_async (uint32_t dev_addr, uint8_t *data, uint32_t len)
+{
+	uint32_t mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO | AT91C_TWI_MREAD;
+
+	//NX_ASSERT(dev_addr == 1);
+	//NX_ASSERT(data != NULL);
+	//NX_ASSERT(len > 0);
+	//NX_ASSERT(nx__twi_ready());
+
+	/* TODO: assert(nx__twi_ready()) */
+
+	twi_state.mode = TWI_RX_BUSY;
+	twi_state.ptr = data;
+	twi_state.len = len;
+
+	*AT91C_TWI_MMR = mode;
+	*AT91C_TWI_CR = AT91C_TWI_START | AT91C_TWI_MSEN;
+	*AT91C_TWI_IER = AT91C_TWI_RXRDY;
+}
+
+static void twi_write_async (uint32_t dev_addr, uint8_t *data, uint32_t len)
+{
+	uint32_t mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO;
+
+	//NX_ASSERT(dev_addr == 1);
+	//NX_ASSERT(data != NULL);
+	//NX_ASSERT(len > 0);
+	//NX_ASSERT(nx__twi_ready());
+
+	twi_state.mode = TWI_TX_BUSY;
+	twi_state.ptr = data;
+	twi_state.len = len;
+
+	*AT91C_TWI_MMR = mode;
+	*AT91C_TWI_CR = AT91C_TWI_START | AT91C_TWI_MSEN;
+	*AT91C_TWI_IER = AT91C_TWI_TXRDY;
+}
+
+static bool twi_ready (void)
+{
+	return (twi_state.mode == TWI_READY) ? TRUE : FALSE;
+}
+/*}}}*/
+
+/*{{{  AVR Interface */
 /* Serialize the to_avr data structure into raw_to_avr, ready for
  * sending to the AVR.
  */
@@ -237,13 +418,17 @@ void avr_data_init (void)
 {
 	int i;
 
-	avr_state.mode		= AVR_UNINITIALIZED;
+	avr_state.mode		= AVR_UNINITIALISED;
 	avr_state.failed_consecutive_checksums = 0;
 	
 	to_avr.power_mode	= AVR_RUN;
 	to_avr.motor_brake	= 0;
 	for (i = 0; i < NXT_N_MOTORS; ++i)
 		to_avr.motor_speed[i] = 0;
+	
+	twi_state.mode		= TWI_UNINITIALISED;
+	twi_state.ptr		= NULL;
+	twi_state.len		= 0;
 }
 
 /* The main AVR driver state machine. This routine gets called
@@ -258,7 +443,7 @@ void avr_systick_update (void)
 	 * communication.
 	 */
 	switch (avr_state.mode) {
-		case AVR_UNINITIALIZED:
+		case AVR_UNINITIALISED:
 			/* Because the system timer can call this update routine before
 			 * the driver is initialized, we have this safe state. It does
 			 * nothing and immediately returns.
@@ -344,7 +529,7 @@ void avr_systick_update (void)
 			break;
 	}
 }
-
+/*}}}*/
 
 #if 0
 
