@@ -166,9 +166,8 @@ nxt__data_abort_handler:
  * interrupts disabled with 1 level of nesting (ie. calling
  * interrupts_enable once will enable interrupts).
  */
-        .global nxt_interrupts_disable
-        .global nxt_interrupts_enable
-nxt_interrupts_disable:
+        .global nxt__interrupts_disable
+nxt__interrupts_disable:
         mrs r0, cpsr
         orr r0, r0, #IRQ_FIQ_MASK
         msr cpsr_c, r0
@@ -180,7 +179,8 @@ nxt_interrupts_disable:
 
         bx lr
 
-nxt_interrupts_enable:
+        .global nxt__interrupts_enable
+nxt__interrupts_enable:
         ldr r0, =interrupts_count
         ldr r1, [r0]
         subs r1, r1, #1

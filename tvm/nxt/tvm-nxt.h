@@ -35,11 +35,15 @@ enum {
 };
 
 /* interrupts.S */
-void nxt_interrupts_disable (void);
-void nxt_interrupts_enable (void);
+void nxt__interrupts_disable (void);
+void nxt__interrupts_enable (void);
 void nxt__default_irq (void);
 void nxt__default_fiq (void);
 void nxt__spurious_irq (void);
+
+/* lock.S */
+uint32_t nxt__atomic_cas32 (uint32_t *dest, uint32_t val);
+uint8_t nxt__atomic_cas8 (uint8_t *dest, uint8_t val);
 
 /* aic.c */
 enum {
@@ -70,6 +74,14 @@ void avr_systick_update (void);
 uint32_t systick_get_ms (void);
 void systick_wait_ms (uint32_t ms);
 void systick_wait_ns (uint32_t ns);
+
+/* lcd.c */
+void lcd_init (void);
+void lcd_update (void);
+void lcd_set_display (uint8_t *display);
+void lcd_dirty_display (void);
+void lcd_shutdown (void);
+void lcd_sync_refresh (void);
 
 /*}}}*/
 

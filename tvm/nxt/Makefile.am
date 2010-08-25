@@ -15,6 +15,8 @@ tvm_nxt_SOURCES = \
 	avr.c \
 	init.S \
 	interrupts.S \
+	lcd.c \
+	lock.S \
 	mem.c \
 	nxt.c \
 	samba_init.S \

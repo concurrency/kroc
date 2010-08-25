@@ -52,7 +52,7 @@ void aic_init (void)
 	/* Prevent the ARM core from being interrupted while we set up the
 	 * AIC.
 	 */
-	nxt_interrupts_disable ();
+	nxt__interrupts_disable ();
 
 	/* If we're coming from a warm boot, the AIC may be in a weird
 	 * state. Do some cleaning up to bring the AIC back into a known
@@ -81,5 +81,5 @@ void aic_init (void)
 	AT91C_AIC_SVR[AT91C_ID_FIQ] = (uint32_t) nxt__default_fiq;
 	*AT91C_AIC_SPU = (uint32_t) nxt__spurious_irq;
 
-	nxt_interrupts_enable ();
+	nxt__interrupts_enable ();
 }

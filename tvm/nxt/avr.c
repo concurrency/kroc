@@ -10,6 +10,7 @@
 
 #include "tvm-nxt.h"
 #include "at91sam7s256.h"
+
 /*{{{  Defines */
 #define AVR_ADDRESS 1
 #define AVR_MAX_FAILED_CHECKSUMS 3
@@ -183,7 +184,7 @@ static void twi_init (void)
 {
 	uint32_t clocks = 9;
 
-	nxt_interrupts_disable ();
+	nxt__interrupts_disable ();
 
 	/* Power up the TWI and PIO controllers. */
 	*AT91C_PMC_PCER = (1 << AT91C_ID_TWI) | (1 << AT91C_ID_PIOA);
@@ -215,7 +216,7 @@ static void twi_init (void)
 		clocks--;
 	}
 
-	nxt_interrupts_enable ();
+	nxt__interrupts_enable ();
 
 	/* Now that the I2C lines are clean, hand them back to the TWI
 	 * controller.

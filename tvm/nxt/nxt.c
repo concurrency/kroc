@@ -57,7 +57,7 @@ static void systick_isr (void)
 }
 
 static void systick_init (void) {
-	nxt_interrupts_disable ();
+	nxt__interrupts_disable ();
 
 	systick_time = 0;
 
@@ -71,7 +71,7 @@ static void systick_init (void) {
 	*AT91C_PITC_PIMR = (((PIT_BASE_FREQUENCY / SYSIRQ_FREQ) - 1) |
 			AT91C_PITC_PITEN | AT91C_PITC_PITIEN);
 
-	nxt_interrupts_enable ();
+	nxt__interrupts_enable ();
 }
 
 uint32_t systick_get_ms (void)
@@ -99,8 +99,15 @@ void nxt_init (void)
 {
 	aic_init ();
 	avr_data_init ();
+
+	/* Interrupt disable nesting starts at 1, 
+	 * so the following line actually enables interrupts.
+	 */
+	nxt__interrupts_enable ();
+
 	systick_init ();
 	avr_init ();
+	lcd_init ();
 }
 
 void nxt_abort (bool data, uint32_t pc, uint32_t cpsr)
