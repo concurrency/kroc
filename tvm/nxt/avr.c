@@ -530,6 +530,12 @@ void avr_systick_update (void)
 			break;
 	}
 }
+
+void avr_power_down (void)
+{
+	while (1)
+		to_avr.power_mode = AVR_POWER_OFF;
+}
 /*}}}*/
 
 #if 0
@@ -550,10 +556,6 @@ void nx__avr_set_motor(uint32_t motor, int power_percent, bool brake) {
     to_avr.motor_brake &= ~(1 << motor);
 }
 
-void nx__avr_power_down(void) {
-  while (1)
-    to_avr.power_mode = AVR_POWER_OFF;
-}
 
 void nx__avr_firmware_update_mode(void) {
   while (1)

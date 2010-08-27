@@ -94,9 +94,11 @@ void systick_wait_ns (uint32_t ns)
 }
 /*}}}*/
 
+static uint8_t disp_buf[(NXT_LCD_HEIGHT * NXT_LCD_WIDTH) / 8];
 
 void nxt_init (void)
 {
+	int i;
 	aic_init ();
 	avr_data_init ();
 
@@ -108,6 +110,22 @@ void nxt_init (void)
 	systick_init ();
 	avr_init ();
 	lcd_init ();
+	
+	for (i = 0; i < sizeof (disp_buf); ++i) {
+		if ((i & 1) == 0) {
+			disp_buf[i] = 0xaa;
+		} else {
+			disp_buf[i] = 0x55;
+		}
+	}
+	lcd_set_display (disp_buf);
+	lcd_dirty_display ();
+	lcd_update ();
+
+	systick_wait_ms (20000);
+
+	lcd_shutdown ();
+	avr_power_down ();
 }
 
 void nxt_abort (bool data, uint32_t pc, uint32_t cpsr)

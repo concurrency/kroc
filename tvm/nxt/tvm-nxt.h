@@ -22,9 +22,11 @@ void memset (void *dest, int8_t val, size_t len);
 /*}}}*/
 
 /*{{{  Hardware access defines and functions */
-#define NXT_CLOCK_FREQ 48000000
-#define NXT_N_MOTORS   4
-#define NXT_N_SENSORS  4
+#define NXT_CLOCK_FREQ	48000000
+#define NXT_N_MOTORS	4
+#define NXT_N_SENSORS	4
+#define NXT_LCD_HEIGHT	64
+#define NXT_LCD_WIDTH	100
 
 enum {
 	BUTTON_NONE	= 0,
@@ -69,6 +71,7 @@ void aic_init (void);
 void avr_init (void);
 void avr_data_init (void);
 void avr_systick_update (void);
+void avr_power_down (void);
 
 /* nxt.c */
 uint32_t systick_get_ms (void);
