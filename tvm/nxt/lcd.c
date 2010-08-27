@@ -59,14 +59,7 @@ static volatile struct {
 	uint8_t *data;
 	uint8_t page;
 	bool send_padding;
-} spi_state = {
-	COMMAND, /* We're initialized in command tx mode */
-	NULL,    /* No screen buffer */
-	FALSE,   /* ... So obviously not dirty */
-	NULL,    /* No current refresh data pointer */
-	0,       /* Current state: 1st data page... */
-	FALSE    /* And about to send display data */
-};
+} spi_state;
 
 /*
  * Set the data transmission mode.
@@ -97,7 +90,7 @@ static void spi_set_tx_mode (spi_mode mode)
  */
 static void spi_write_command_byte (uint8_t command)
 {
-	spi_set_tx_mode(COMMAND);
+	spi_set_tx_mode (COMMAND);
 
 	/* Wait for the transmit register to empty. */
 	while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE));
@@ -136,7 +129,7 @@ static void spi_isr (void)
 	 * every interrupt.
 	 */
 	spi_set_tx_mode (DATA);
-
+	
 	if (!spi_state.send_padding) {
 		/* We are at the start of a page, so we need to send 100 bytes of
 		 * pixel data to display. We also set the state for the next
