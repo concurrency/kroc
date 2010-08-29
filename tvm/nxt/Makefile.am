@@ -23,6 +23,7 @@ tvm_nxt_SOURCES = \
 	sffi.c \
 	tbc.c \
 	tvm.c \
+	usb.c \
 	vectors.S
 
 %.samba.elf: $(tvm_nxt_OBJECTS)

@@ -86,6 +86,9 @@ void lcd_dirty_display (void);
 void lcd_shutdown (void);
 void lcd_sync_refresh (void);
 
+/* usb.c */
+void usb_init (void);
+
 /*}}}*/
 
 

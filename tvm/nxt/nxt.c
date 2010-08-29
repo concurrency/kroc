@@ -110,6 +110,7 @@ void nxt_init (void)
 	systick_init ();
 	avr_init ();
 	lcd_init ();
+	usb_init ();
 	
 	for (i = 0; i < sizeof (disp_buf); ++i) {
 		if ((i & 1) == 0) {
@@ -122,7 +123,7 @@ void nxt_init (void)
 	lcd_dirty_display ();
 	lcd_update ();
 
-	systick_wait_ms (20000);
+	systick_wait_ms (120000);
 
 	lcd_shutdown ();
 	avr_power_down ();
