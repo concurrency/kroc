@@ -308,6 +308,7 @@ static void avr_pack_to_avr (void)
 			/* Tell the AVR to boot SAM-BA. */
 			raw_to_avr[0] = 0x5A;
 			raw_to_avr[1] = 0xA5;
+			break;
 	}
 
 	/* Marshal the motor speed settings. */
@@ -349,7 +350,7 @@ static void avr_unpack_from_avr (void)
 	 * the unsigned sum of all the bytes in the received buffer. They
 	 * should add up to 0xFF.
 	 */
-	for (i =0; i < sizeof (raw_from_avr); i++)
+	for (i = 0; i < sizeof (raw_from_avr); i++)
 		checksum += raw_from_avr[i];
 
 	if (checksum != 0xff) {

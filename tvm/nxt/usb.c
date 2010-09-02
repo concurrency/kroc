@@ -28,37 +28,43 @@
 
 /* Various constants for the setup packets.
  */
-#define USB_BMREQUEST_DIR            0x80
-#define USB_BMREQUEST_H_TO_D         0x0
-#define USB_BMREQUEST_D_TO_H         0x80
+#define USB_BMREQUEST_DIR		0x80
+#define USB_BMREQUEST_H_TO_D		0x00
+#define USB_BMREQUEST_D_TO_H		0x80
 
-#define USB_BMREQUEST_RCPT           0x0F
-#define USB_BMREQUEST_RCPT_DEV       0x0 /* device */
-#define USB_BMREQUEST_RCPT_INT       0x1 /* interface */
-#define USB_BMREQUEST_RCPT_EPT       0x2 /* endpoint */
-#define USB_BMREQUEST_RCPT_OTH       0x3 /* other */
+#define USB_BMREQUEST_RCPT		0x0F
+#define USB_BMREQUEST_RCPT_DEV		0x00 /* device */
+#define USB_BMREQUEST_RCPT_INT		0x01 /* interface */
+#define USB_BMREQUEST_RCPT_EPT		0x02 /* endpoint */
+#define USB_BMREQUEST_RCPT_OTH		0x03 /* other */
 
-#define USB_BREQUEST_GET_STATUS      0x0
-#define USB_BREQUEST_CLEAR_FEATURE   0x1
-#define USB_BREQUEST_SET_FEATURE     0x3
-#define USB_BREQUEST_SET_ADDRESS     0x5
-#define USB_BREQUEST_GET_DESCRIPTOR  0x6
-#define USB_BREQUEST_SET_DESCRIPTOR  0x7
-#define USB_BREQUEST_GET_CONFIG      0x8
-#define USB_BREQUEST_SET_CONFIG      0x9
-#define USB_BREQUEST_GET_INTERFACE   0xA
-#define USB_BREQUEST_SET_INTERFACE   0xB
+#define USB_BMREQUEST_CLASS		0x20
 
-#define USB_WVALUE_TYPE        (0xFF << 8)
-#define USB_DESC_TYPE_DEVICE           1
-#define USB_DESC_TYPE_CONFIG           2
-#define USB_DESC_TYPE_STR              3
-#define USB_DESC_TYPE_INT              4
-#define USB_DESC_TYPE_ENDPT            5
-#define USB_DESC_TYPE_DEVICE_QUALIFIER 6
+#define USB_BREQUEST_GET_STATUS		0x00
+#define USB_BREQUEST_CLEAR_FEATURE	0x01
+#define USB_BREQUEST_SET_FEATURE	0x03
+#define USB_BREQUEST_SET_ADDRESS	0x05
+#define USB_BREQUEST_GET_DESCRIPTOR	0x06
+#define USB_BREQUEST_SET_DESCRIPTOR	0x07
+#define USB_BREQUEST_GET_CONFIG		0x08
+#define USB_BREQUEST_SET_CONFIG		0x09
+#define USB_BREQUEST_GET_INTERFACE	0x0A
+#define USB_BREQUEST_SET_INTERFACE	0x0B
 
-#define USB_WVALUE_INDEX       0xFF
+#define USB_BREQUEST_BULK_RESET		0xFF
+#define USB_BREQUEST_GET_MAX_LUN	0xFE
 
+#define USB_WVALUE_TYPE			(0xFF << 8)
+#define USB_DESC_TYPE_DEVICE		1
+#define USB_DESC_TYPE_CONFIG		2
+#define USB_DESC_TYPE_STR		3
+#define USB_DESC_TYPE_INT		4
+#define USB_DESC_TYPE_ENDPT		5
+#define USB_DESC_TYPE_DEVICE_QUALIFIER	6
+
+#define USB_WVALUE_INDEX		0xFF
+
+#define USB_FEAT_ENDPOINT_HALT		0
 
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
@@ -76,7 +82,7 @@
 static const uint8_t usb_device_descriptor[] = {
 	18, USB_DESC_TYPE_DEVICE, /* Packet size and type. */
 	0x00, 0x20, /* This packet is USB 2.0. */
-	2, /* Class code. */
+	0, /* Class code. */
 	0, /* Sub class code. */
 	0, /* Device protocol. */
 	MAX_EP0_SIZE, /* Maximum packet size for EP0 (control endpoint). */
@@ -92,7 +98,7 @@ static const uint8_t usb_device_descriptor[] = {
 static const uint8_t usb_dev_qualifier_desc[] = {
 	10, USB_DESC_TYPE_DEVICE_QUALIFIER, /* Packet size and type. */
 	0x00, 0x20, /* This packet is USB 2.0. */
-	2, /* Class code */
+	0, /* Class code */
 	0, /* Sub class code */
 	0, /* Device protocol */
 	MAX_EP0_SIZE, /* Maximum packet size for EP0. */
@@ -101,7 +107,7 @@ static const uint8_t usb_dev_qualifier_desc[] = {
 };
 
 
-static const uint8_t usb_nxos_full_config[] = {
+static const uint8_t usb_full_config[] = {
 	0x09, USB_DESC_TYPE_CONFIG, /* Descriptor size and type. */
 	0x20, 0x00, /* Total length of the configuration, interface
 		     * description included.
@@ -128,9 +134,9 @@ static const uint8_t usb_nxos_full_config[] = {
 	0x02, /* The number of endpoints defined by this interface
 	       * (excluding EP0).
 	       */
-	0xFF, /* Interface class ("Vendor specific"). */
-	0xFF, /* Interface subclass (see above). */
-	0xFF, /* Interface protocol (see above). */
+	0x08, /* Interface class ("MASS STORAGE"). */
+	0x06, /* Interface subclass ("SCSI transparent"). */
+	0x50, /* Interface protocol ("BULK-ONLY TRANSPORT"). */
 	0x00, /* Index of the string descriptor for this interface (none). */
 
 
@@ -138,8 +144,8 @@ static const uint8_t usb_nxos_full_config[] = {
 	 * Descriptor for EP1.
 	 */
 	7, USB_DESC_TYPE_ENDPT, /* Descriptor length and type. */
-	0x1, /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
-	0x2, /* Endpoint type (bulk). */
+	0x01, /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
+	0x02, /* Endpoint type (bulk). */
 	MAX_RCV_SIZE, 0x00, /* Maximum packet size (64). */
 	0, /* EP maximum NAK rate (device never NAKs). */
 
@@ -149,7 +155,7 @@ static const uint8_t usb_nxos_full_config[] = {
 	 */
 	7, USB_DESC_TYPE_ENDPT, /* Descriptor length and type. */
 	0x82, /* Endpoint number. MSB is one, meaning this is an IN EP. */
-	0x2, /* Endpoint type (bulk). */
+	0x02, /* Endpoint type (bulk). */
 	MAX_RCV_SIZE, 0x00, /* Maximum packet size (64). */
 	0, /* EP maximum NAK rate (device never NAKs). */
 };
@@ -168,23 +174,26 @@ static const uint8_t usb_lego_str[] = {
 	'O', 0
 };
 
-static const uint8_t usb_nxt_str[] = {
-	10, USB_DESC_TYPE_STR,
+static const uint8_t usb_tvm_str[] = {
+	16, USB_DESC_TYPE_STR,
 	'N', 0,
-	'x', 0,
-	'O', 0,
-	'S', 0,
+	'X', 0,
+	'T', 0,
+	' ', 0,
+	'T', 0,
+	'V', 0,
+	'M', 0
 };
-
 
 /* Internal lookup table mapping string descriptors to their indices
  * in the USB string descriptor table.
  */
 static const uint8_t *usb_strings[] = {
 	usb_lego_str,
-	usb_nxt_str,
+	usb_tvm_str
 };
-
+static const uint8_t usb_string_count = 
+	(uint8_t) (sizeof (usb_strings) / sizeof (uint8_t *));
 
 /*
  * The USB device state. Contains the current USB state (selected
@@ -193,7 +202,7 @@ static const uint8_t *usb_strings[] = {
 static volatile struct {
 	/* The current state of the device. */
 	enum usb_status {
-		USB_UNINITIALIZED = 0,
+		USB_UNINITIALISED = 0,
 		USB_READY,
 		USB_BUSY,
 		USB_SUSPENDED,
@@ -210,12 +219,15 @@ static volatile struct {
 
 	/* The currently selected USB configuration. */
 	uint8_t current_config;
+	
+	/* Bitmap of endpoint halt bits */
+	uint8_t halted;
 
-	/* Holds the state of the data transmissions on both EP0 and
-	 * EP2. This only gets used if the transmission needed to be split
+	/* Holds the state of the data transmissions on endpoints.
+	 * This only gets used if the transmission needed to be split
 	 * into several USB packets.
-	 *  0 = EP0
-	 *  1 = EP2
+	 * 0 = EP0
+	 * 1 = EP2
 	 */
 	uint8_t *tx_data[2];
 	uint32_t tx_len[2];
@@ -223,13 +235,10 @@ static volatile struct {
 	/* Used to write the data from the EP1
 	*/
 	uint8_t *rx_data;
-
 	/* size of the rx data buffer */
 	uint32_t rx_size;
-
 	/* length of the read packet (0 if none) */
 	uint32_t rx_len;
-
 
 	/* The USB controller has two hardware input buffers. This remembers
 	 * the one currently in use.
@@ -337,7 +346,6 @@ static void usb_read_data (int endpoint)
 
 	usb_state.rx_len = i;
 
-
 	/* if we have read all the byte ... */
 	if (i == total) {
 		/* Acknowledge reading the current RX bank, and switch to the other. */
@@ -347,6 +355,7 @@ static void usb_read_data (int endpoint)
 		else
 			usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
 	}
+	/* FIXME: check this ... */
 	/* else we let the interruption running :
 	 * after this function, the interruption should be disabled until
 	 * a new buffer to read is provided */
@@ -361,7 +370,8 @@ static void usb_read_data (int endpoint)
  */
 static void usb_send_stall (int endpoint)
 {
-	usb_state.status = USB_UNINITIALIZED;
+	if (endpoint == 0)
+		usb_state.status = USB_UNINITIALISED;
 	usb_csr_set_flag (endpoint, AT91C_UDP_FORCESTALL);
 }
 
@@ -385,9 +395,8 @@ static uint32_t usb_manage_setup_packet (void)
 		uint16_t length; /* The number of bytes transferred in the (optional)
 			     * second phase of the control transfer. */
 	} packet;
-	uint16_t response;
-	uint32_t size;
-	uint8_t index;
+	uint16_t response = 0;
+	uint8_t byte_resp;
 
 	/* Read the packet from the FIFO into the above packet struct. */
 	packet.request_attrs = AT91C_UDP_FDR[0];
@@ -396,16 +405,31 @@ static uint32_t usb_manage_setup_packet (void)
 	packet.index         = (AT91C_UDP_FDR[0] & 0xFF) | (AT91C_UDP_FDR[0] << 8);
 	packet.length        = (AT91C_UDP_FDR[0] & 0xFF) | (AT91C_UDP_FDR[0] << 8);
 
-
 	if ((packet.request_attrs & USB_BMREQUEST_DIR) == USB_BMREQUEST_D_TO_H) {
 		usb_csr_set_flag (0, AT91C_UDP_DIR); /* TODO: contradicts atmel doc p475 */
 	}
 
 	usb_csr_clear_flag (0, AT91C_UDP_RXSETUP);
 
-
-	response = 0;
-
+	/* Intercept class requests */
+	if (usb_state.current_config == 1 
+			&& (packet.request_attrs & (USB_BMREQUEST_CLASS | USB_BMREQUEST_RCPT))
+				== (USB_BMREQUEST_CLASS | USB_BMREQUEST_RCPT_INT)
+			&& (packet.index == 0)) {
+		switch (packet.request) {
+			case USB_BREQUEST_BULK_RESET:
+				/* forward reset to MSD; */
+				usb_send_null ();
+				break;
+			case USB_BREQUEST_GET_MAX_LUN:
+				byte_resp = 1;
+				usb_write_data (0, (uint8_t *)&byte_resp, 1);
+				break;
+			default:
+				usb_send_stall (0);
+				break;
+		}
+	}
 
 	/* Respond to the control request. */
 	switch (packet.request) {
@@ -414,26 +438,74 @@ static uint32_t usb_manage_setup_packet (void)
 			 *
 			 * If it wants the device status, just reply that the NXT is still
 			 * self-powered (as first declared by the setup packets). If it
-			 * wants endpoint status, reply that the endpoint has not
-			 * halted. Any other status request types are reserved, which
+			 * wants endpoint status, reply with that endpoints halt bit.
+			 * Any other status request types are reserved, which
 			 * translates to replying zero.
 			 */
-			if ((packet.request_attrs & USB_BMREQUEST_RCPT) == USB_BMREQUEST_RCPT_DEV)
-				response = 1;
-			else
-				response = 0;
+			switch (packet.request_attrs & USB_BMREQUEST_RCPT) {
+				case USB_BMREQUEST_RCPT_DEV:
+					response = 1; /* self powered */
+					break;
+				case USB_BMREQUEST_RCPT_EPT:
+					{
+						int ep = packet.index & 0x7f;
+						
+						if (ep < 8) {
+							response = (usb_state.halted >> ep) & 1;
+						} else {
+							response = 0;
+						}
+					}
+					break;
+				default:
+					response = 0;
+					break;
+			}
 
-			usb_write_data (0, (uint8_t*)&response, 2);
+			usb_write_data (0, (uint8_t *)&response, 2);
+			break;
+
+		case USB_BREQUEST_SET_DESCRIPTOR:
+			/* No descriptors that can be updated, so return Request Error. */
+			usb_send_stall (0);
 			break;
 
 		case USB_BREQUEST_CLEAR_FEATURE:
-		case USB_BREQUEST_SET_INTERFACE:
 		case USB_BREQUEST_SET_FEATURE:
-			/* TODO: Refer back to the specs and send the right
-			 * replies. This is wrong, even though it happens to not break
-			 * on linux.
-			 */
-			usb_send_null ();
+			/* No features that can be set/cleared, so return Request Error. */
+			if (((packet.request_attrs & USB_BMREQUEST_RCPT) == USB_BMREQUEST_RCPT_EPT)
+					&& (packet.value == USB_FEAT_ENDPOINT_HALT)) {
+				uint8_t ep = packet.index & 0x7f;
+				
+				if (ep < 4) {
+					if (packet.value == USB_BREQUEST_SET_FEATURE) {
+						usb_state.halted |= 1 << ep;
+						usb_send_stall (ep);
+					} else {
+						usb_state.halted &= ~(1 << ep);
+						*AT91C_UDP_RSTEP = (1 << ep);
+						*AT91C_UDP_RSTEP = 0;
+					}
+				} else {
+					usb_send_stall (0);
+				}
+			} else {
+				usb_send_stall (0);
+			}
+			break;
+
+		case USB_BREQUEST_GET_INTERFACE:
+			if (usb_state.current_config == 1 && packet.index == 0) {
+				byte_resp = 0;
+				usb_write_data (0, (uint8_t *)&byte_resp, 1);
+			} else {
+				usb_send_stall (0);
+			}
+			break;
+
+		case USB_BREQUEST_SET_INTERFACE:
+			/* No alternate settings available, so return Request Error. */
+			usb_send_stall (0);
 			break;
 
 		case USB_BREQUEST_SET_ADDRESS:
@@ -457,47 +529,51 @@ static uint32_t usb_manage_setup_packet (void)
 
 		case USB_BREQUEST_GET_DESCRIPTOR:
 			/* The host requested a descriptor. */
+			{
+				uint32_t size;
+				uint8_t index = (packet.value & USB_WVALUE_INDEX);
+				switch ((packet.value & USB_WVALUE_TYPE) >> 8) {
+					case USB_DESC_TYPE_DEVICE: /* Device descriptor */
+						size = usb_device_descriptor[0];
+						usb_write_data (0, usb_device_descriptor,
+								MIN(size, packet.length));
+						break;
 
-			index = (packet.value & USB_WVALUE_INDEX);
-			switch ((packet.value & USB_WVALUE_TYPE) >> 8) {
-				case USB_DESC_TYPE_DEVICE: /* Device descriptor */
-					size = usb_device_descriptor[0];
-					usb_write_data (0, usb_device_descriptor,
-							MIN(size, packet.length));
-					break;
+					case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
+						usb_write_data (0, usb_full_config,
+								MIN(usb_full_config[2], packet.length));
 
-				case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
-					usb_write_data (0, usb_nxos_full_config,
-							MIN(usb_nxos_full_config[2], packet.length));
+						/* FIXME: Why? This is not specified in the USB specs. */
+						if (usb_full_config[2] < packet.length)
+							usb_send_null ();
+						break;
 
-					/* TODO: Why? This is not specified in the USB specs. */
-					if (usb_nxos_full_config[2] < packet.length)
-						usb_send_null ();
-					break;
+					case USB_DESC_TYPE_STR: /* String or language info. */
+						if ((packet.value & USB_WVALUE_INDEX) == 0) {
+							usb_write_data (0, usb_string_desc,
+									MIN(usb_string_desc[0], packet.length));
+						} else if (index <= usb_string_count) {
+							/* The host wants a specific string. */
+							usb_write_data (0, usb_strings[index-1],
+									MIN(usb_strings[index-1][0],
+										packet.length));
+						} else {
+							/* Not a string we have. */
+							usb_send_stall (0);
+						}
+						break;
 
-				case USB_DESC_TYPE_STR: /* String or language info. */
-					if ((packet.value & USB_WVALUE_INDEX) == 0) {
-						usb_write_data (0, usb_string_desc,
-								MIN(usb_string_desc[0], packet.length));
-					} else {
-						/* The host wants a specific string. */
-						/* TODO: This should check if the requested string exists. */
-						usb_write_data (0, usb_strings[index-1],
-								MIN(usb_strings[index-1][0],
-									packet.length));
-					}
-					break;
+					case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
+						size = usb_dev_qualifier_desc[0];
+						usb_write_data (0, usb_dev_qualifier_desc,
+								MIN(size, packet.length));
+						break;
 
-				case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
-					size = usb_dev_qualifier_desc[0];
-					usb_write_data (0, usb_dev_qualifier_desc,
-							MIN(size, packet.length));
-					break;
-
-				default: /* Unknown descriptor, tell the host by stalling. */
-					usb_send_stall (0);
+					default: /* Unknown descriptor, tell the host by stalling. */
+						usb_send_stall (0);
+				}
+				break;
 			}
-			break;
 
 		case USB_BREQUEST_GET_CONFIG:
 			/* The host wants to know the ID of the current configuration. */
@@ -506,40 +582,37 @@ static uint32_t usb_manage_setup_packet (void)
 
 		case USB_BREQUEST_SET_CONFIG:
 			/* The host selected a new configuration. */
-			usb_state.current_config = packet.value;
+			if (packet.value == 0 || packet.value == 1) {
+				uint32_t csr1 = 0, csr2 = 0, csr3 = 0;
 
-			/* we ack */
-			usb_send_null ();
+				/* we ack */
+				usb_send_null ();
 
-			/* we set the register in configured mode */
-			*AT91C_UDP_GLBSTATE = packet.value > 0 ?
-				(AT91C_UDP_CONFG | AT91C_UDP_FADDEN)
-				: AT91C_UDP_FADDEN;
+				usb_state.current_config = packet.value;
+				usb_state.halted = 0x00;
+				
+				if (usb_state.current_config == 0) {
+					*AT91C_UDP_GLBSTATE = AT91C_UDP_FADDEN;
+					usb_state.status = USB_UNINITIALISED;
+				} else {
+					/* we set the register in configured mode */
+					*AT91C_UDP_GLBSTATE = AT91C_UDP_CONFG | AT91C_UDP_FADDEN;
+					csr1 = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+					csr2 = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
+					usb_state.status = USB_READY;
+				}
 
-			/* TODO: Make this a little nicer. Not quite sure how. */
-
-			/* we can only active the EP1 if we have a buffer to get the data */
-			/* TODO: This was:
-			 *
-			 * if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
-			 *
-			 * The second part always evaluates to TRUE.
-			 */
-			if (usb_state.rx_len == 0) {
-				AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-				while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+				AT91C_UDP_CSR[1] = csr1;
+				while (AT91C_UDP_CSR[1] != csr1);
+				AT91C_UDP_CSR[2] = csr2;
+				while (AT91C_UDP_CSR[2] != csr2);
+				AT91C_UDP_CSR[3] = csr3;
+				while (AT91C_UDP_CSR[3] != csr3);
+			} else {
+				usb_send_stall (0);
 			}
-
-			AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
-			while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
-			AT91C_UDP_CSR[3] = 0;
-			while (AT91C_UDP_CSR[3] != 0);
-
-			usb_state.status = USB_READY;
 			break;
-
-		case USB_BREQUEST_GET_INTERFACE: /* TODO: This should respond, not stall. */
-		case USB_BREQUEST_SET_DESCRIPTOR:
+		
 		default:
 			usb_send_stall (0);
 			break;
@@ -563,7 +636,7 @@ static void usb_isr (void)
 
 	/* End of bus reset. Starting the device setup procedure. */
 	if (isr & AT91C_UDP_ENDBUSRES) {
-		usb_state.status = USB_UNINITIALIZED;
+		usb_state.status = USB_UNINITIALISED;
 
 		/* Disable and clear all interruptions, reverting to the base
 		 * state.
@@ -625,8 +698,6 @@ static void usb_isr (void)
 		usb_state.status = usb_state.pre_suspend_status;
 	}
 
-
-
 	for (endpoint = 0; endpoint < N_ENDPOINTS ; endpoint++) {
 		if (isr & (1 << endpoint))
 			break;
@@ -634,7 +705,6 @@ static void usb_isr (void)
 
 
 	if (endpoint == 0) {
-
 		if (AT91C_UDP_CSR[0] & AT91C_UDP_RXSETUP) {
 			csr = usb_manage_setup_packet ();
 			return;
@@ -655,11 +725,14 @@ static void usb_isr (void)
 
 			usb_read_data (endpoint);
 
+			if (endpoint == 1) {
+				/* FIXME: plum in MSD */
+			}
+
 			return;
 		}
 
 		if (csr & AT91C_UDP_TXCOMP) {
-
 			/* so first we will reset this flag */
 			usb_csr_clear_flag (endpoint, AT91C_UDP_TXCOMP);
 
@@ -675,7 +748,6 @@ static void usb_isr (void)
 				usb_state.new_device_address = 0;
 			}
 
-
 			/* and we will send the following data */
 			if (usb_state.tx_len[endpoint] > 0
 					&& usb_state.tx_data[endpoint] != NULL) {
@@ -685,6 +757,11 @@ static void usb_isr (void)
 				/* then it means that we sent all the data and the host has acknowledged it */
 				usb_state.status = USB_READY;
 			}
+			
+			if (usb_state.status == USB_READY && endpoint == 2) {
+				/* FIXME: plum in MSD */
+			}
+			
 			return;
 		}
 
@@ -776,7 +853,7 @@ bool usb_can_write (void)
 void usb_write (uint8_t *data, uint32_t length)
 {
 	/*
-	   NX_ASSERT_MSG(usb_state.status != USB_UNINITIALIZED,
+	   NX_ASSERT_MSG(usb_state.status != USB_UNINITIALISED,
 	   "USB not init");
 	   NX_ASSERT_MSG(usb_state.status != USB_SUSPENDED,
 	   "USB asleep");
@@ -799,7 +876,7 @@ bool usb_data_written (void)
 
 bool usb_is_connected (void)
 {
-	return (usb_state.status != USB_UNINITIALIZED);
+	return (usb_state.status != USB_UNINITIALISED);
 }
 
 
@@ -809,7 +886,7 @@ void usb_read (uint8_t *data, uint32_t length)
 	usb_state.rx_size = length;
 	usb_state.rx_len  = 0;
 
-	if (usb_state.status > USB_UNINITIALIZED
+	if (usb_state.status > USB_UNINITIALISED
 			&& usb_state.status != USB_SUSPENDED) {
 		AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
 	}
