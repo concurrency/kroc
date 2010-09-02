@@ -246,6 +246,23 @@ static volatile struct {
 	uint8_t current_rx_bank;
 } usb_state;
 
+/*
+ * Mass Storage Driver state. 
+ */
+static volatile struct {
+	/* The current state of the device. */
+	enum msd_status {
+		MSD_UNINITIALISED = 0,
+		MSD_WAIT_CBW,
+		MSD_WAIT_DATA,
+		MSD_WAIT_CSW
+	} status;
+
+	/* Backing store for the storage drive. */
+	uint8_t *data;
+	uint32_t data_len;
+
+} msd_state;
 
 /* The flags in the UDP_CSR register are a little strange: writing to
  * them does not instantly change their value. Their value will change
@@ -450,7 +467,7 @@ static uint32_t usb_manage_setup_packet (void)
 					{
 						int ep = packet.index & 0x7f;
 						
-						if (ep < 8) {
+						if (ep < N_ENDPOINTS) {
 							response = (usb_state.halted >> ep) & 1;
 						} else {
 							response = 0;
@@ -477,7 +494,7 @@ static uint32_t usb_manage_setup_packet (void)
 					&& (packet.value == USB_FEAT_ENDPOINT_HALT)) {
 				uint8_t ep = packet.index & 0x7f;
 				
-				if (ep < 4) {
+				if (ep < N_ENDPOINTS) {
 					if (packet.value == USB_BREQUEST_SET_FEATURE) {
 						usb_state.halted |= 1 << ep;
 						usb_send_stall (ep);
@@ -621,6 +638,18 @@ static uint32_t usb_manage_setup_packet (void)
 	return packet.request;
 }
 
+static void msd_wait_cbw (int endpoint)
+{
+}
+
+static void msd_handle_rx (int endpoint)
+{
+}
+
+static void msd_handle_tx_complete (int endpoint)
+{
+}
+
 
 /* The main USB interrupt handler. */
 static void usb_isr (void)
@@ -724,10 +753,7 @@ static void usb_isr (void)
 			}
 
 			usb_read_data (endpoint);
-
-			if (endpoint == 1) {
-				/* FIXME: plum in MSD */
-			}
+			msd_handle_rx (endpoint);
 
 			return;
 		}
@@ -758,9 +784,8 @@ static void usb_isr (void)
 				usb_state.status = USB_READY;
 			}
 			
-			if (usb_state.status == USB_READY && endpoint == 2) {
-				/* FIXME: plum in MSD */
-			}
+			if (usb_state.status == USB_READY && endpoint > 0)
+				msd_handle_tx_complete (endpoint);
 			
 			return;
 		}
@@ -806,7 +831,8 @@ void usb_init (void)
 {
 	usb_disable ();
 
-	memset ((void*)&usb_state, 0, sizeof(usb_state));
+	memset ((void *)&usb_state, 0, sizeof (usb_state));
+	memset ((void *)&msd_state, 0, sizeof (msd_state));
 
 	nxt__interrupts_disable ();
 
