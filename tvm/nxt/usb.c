@@ -66,6 +66,11 @@
 
 #define USB_FEAT_ENDPOINT_HALT		0
 
+#define MSD_DATA_EP_IN			2
+#define MSD_DATA_EP_OUT			1
+#define MSD_CBW_LEN			31
+#define MSD_CSW_LEN			13
+
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
  * packets are all constant, and mostly boilerplate. Don't be too
@@ -239,6 +244,8 @@ static volatile struct {
 	uint32_t rx_size;
 	/* length of the read packet (0 if none) */
 	uint32_t rx_len;
+	/* length of pending data in FIFO */
+	uint16_t rx_pending;
 
 	/* The USB controller has two hardware input buffers. This remembers
 	 * the one currently in use.
@@ -254,13 +261,20 @@ static volatile struct {
 	enum msd_status {
 		MSD_UNINITIALISED = 0,
 		MSD_WAIT_CBW,
-		MSD_WAIT_DATA,
+		MSD_DATA_RX,
+		MSD_DATA_TX,
 		MSD_WAIT_CSW
 	} status;
 
 	/* Backing store for the storage drive. */
 	uint8_t *data;
 	uint32_t data_len;
+
+	/* Command Block Wrapper (CBW) buffer. */
+	uint8_t cbw_buf[MSD_CBW_LEN];
+
+	/* Command Status Wrapper (CSW) buffer. */
+	uint8_t csw_buf[MSD_CSW_LEN];
 
 } msd_state;
 
@@ -329,14 +343,23 @@ static void usb_write_data (int endpoint, const uint8_t *ptr, uint32_t length)
 	usb_csr_set_flag (endpoint, AT91C_UDP_TXPKTRDY);
 }
 
+/* Setup read on USB endpoint.
+ */
+static void usb_read_start (int endpoint, uint8_t *buf, uint32_t len)
+{
+	usb_state.rx_data = buf;
+	usb_state.rx_size = len;
+	usb_state.rx_len = 0;
+	usb_csr_set_flag (endpoint, AT91C_UDP_EPEDS);
+}
 
-/* Read one data packet from the USB controller.
- * Assume that usb_state.rx_data and usb_state.rx_len are set.
+/* Read data from the USB controller in buffers.
  */
 static void usb_read_data (int endpoint)
 {
-	uint16_t i;
+	uint32_t len, size;
 	uint16_t total;
+	uint8_t *ptr;
 
 	/* Given our configuration, we should only be getting packets on
 	 * endpoint 1. Ignore data on any other endpoint.
@@ -350,32 +373,40 @@ static void usb_read_data (int endpoint)
 		return;
 	}
 
-	/* must not happen ! */
-	if (usb_state.rx_len > 0)
-		return;
-
 	total = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
 
 	/* we start reading */
 	/* all the bytes will be put in rx_data */
-	for (i = 0; i < total && i < usb_state.rx_size; i++)
-		usb_state.rx_data[i] = AT91C_UDP_FDR[1];
-
-	usb_state.rx_len = i;
+	len = usb_state.rx_len;
+	size = usb_state.rx_size;
+	ptr = &(usb_state.rx_data[len]);
+	do {
+		if (len < size) {
+			uint8_t byte = AT91C_UDP_FDR[1];
+			*(ptr++) = byte;
+			len++;
+			total--;
+		} else {
+			break;
+		}
+	} while (total > 0);
+	
+	usb_state.rx_len = len;
+	usb_state.rx_pending = total;
 
 	/* if we have read all the byte ... */
-	if (i == total) {
+	if (total == 0) {
 		/* Acknowledge reading the current RX bank, and switch to the other. */
 		usb_csr_clear_flag (1, usb_state.current_rx_bank);
+		
 		if (usb_state.current_rx_bank == AT91C_UDP_RX_DATA_BK0)
 			usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK1;
 		else
 			usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
+	} else if (/* total > 0 && */ len == size) {
+		/* If there is no buffer space left then disable the endpoint. */
+		usb_csr_clear_flag (1, AT91C_UDP_EPEDS);
 	}
-	/* FIXME: check this ... */
-	/* else we let the interruption running :
-	 * after this function, the interruption should be disabled until
-	 * a new buffer to read is provided */
 }
 
 
@@ -397,6 +428,33 @@ static void usb_send_stall (int endpoint)
 static void usb_send_null (void)
 {
 	usb_write_data (0, NULL, 0);
+}
+
+
+static void msd_wait_cbw (int endpoint)
+{
+	msd_state.status = MSD_WAIT_CBW;
+	usb_read_start (endpoint, (uint8_t *) msd_state.cbw_buf, MSD_CBW_LEN);
+}
+
+static void msd_handle_rx (int endpoint)
+{
+	if (msd_state.status == MSD_WAIT_CBW) {
+		/* FIXME: decode CBW */ 
+	} else if (msd_state.status == MSD_DATA_RX) {
+		/* FIXME: check data read has complete, finish command, send CSW */
+	}
+}
+
+static void msd_handle_tx_complete (int endpoint)
+{
+	if (msd_state.status == MSD_WAIT_CSW) {
+		/* CSW has been sent, wait for new command. */
+		/* FIXME: check send completed */
+		msd_wait_cbw (endpoint);
+	} else if (msd_state.status == MSD_DATA_TX) {
+		/* FIXME: check send completed, send CSW */
+	}
 }
 
 
@@ -437,6 +495,7 @@ static uint32_t usb_manage_setup_packet (void)
 			case USB_BREQUEST_BULK_RESET:
 				/* forward reset to MSD; */
 				usb_send_null ();
+				msd_wait_cbw (MSD_DATA_EP_IN);
 				break;
 			case USB_BREQUEST_GET_MAX_LUN:
 				byte_resp = 1;
@@ -638,17 +697,6 @@ static uint32_t usb_manage_setup_packet (void)
 	return packet.request;
 }
 
-static void msd_wait_cbw (int endpoint)
-{
-}
-
-static void msd_handle_rx (int endpoint)
-{
-}
-
-static void msd_handle_tx_complete (int endpoint)
-{
-}
 
 
 /* The main USB interrupt handler. */
@@ -744,17 +792,9 @@ static void usb_isr (void)
 	if (endpoint < N_ENDPOINTS) { /* if an endpoint was specified */
 		csr = AT91C_UDP_CSR[endpoint];
 
-		if (csr & AT91C_UDP_RX_DATA_BK0
-				|| csr & AT91C_UDP_RX_DATA_BK1) {
-
-			if (endpoint == 1) {
-				AT91C_UDP_CSR[1] &= ~AT91C_UDP_EPEDS;
-				while (AT91C_UDP_CSR[1] & AT91C_UDP_EPEDS);
-			}
-
+		if (csr & (AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1)) {
 			usb_read_data (endpoint);
 			msd_handle_rx (endpoint);
-
 			return;
 		}
 
