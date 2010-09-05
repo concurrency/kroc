@@ -70,6 +70,20 @@
 #define MSD_DATA_EP_OUT			1
 #define MSD_CBW_LEN			31
 #define MSD_CSW_LEN			13
+#define MSD_STATUS_CMD_PASSED		0x00
+#define MSD_STATUS_CMD_FAILED		0x01
+#define MSD_STATUS_PHASE_ERROR		0x02
+
+#define SCSI_CMD_TEST_UNIT_READY	0x00
+#define SCSI_CMD_REQUEST_SENSE		0x03
+#define SCSI_CMD_INQUIRY		0x12
+#define SCSI_CMD_MODE_SENSE6		0x1a
+#define SCSI_CMD_PREVENT_REMOVAL	0x1e
+#define SCSI_CMD_READ_CAPACITY10	0x25
+#define SCSI_CMD_READ10			0x28
+#define SCSI_CMD_WRITE10		0x2a
+#define SCSI_CMD_MODE_VERIFY10		0x2f
+
 
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
@@ -260,6 +274,7 @@ static volatile struct {
 	/* The current state of the device. */
 	enum msd_status {
 		MSD_UNINITIALISED = 0,
+		MSD_WAIT_RESET,
 		MSD_WAIT_CBW,
 		MSD_DATA_RX,
 		MSD_DATA_TX,
@@ -270,11 +285,17 @@ static volatile struct {
 	uint8_t *data;
 	uint32_t data_len;
 
-	/* Command Block Wrapper (CBW) buffer. */
-	uint8_t cbw_buf[MSD_CBW_LEN];
+	/* Command state */
+	uint32_t tag;
+	uint32_t transfer_len;
 
-	/* Command Status Wrapper (CSW) buffer. */
-	uint8_t csw_buf[MSD_CSW_LEN];
+	union {
+		/* Command Block Wrapper (CBW) buffer. */
+		uint8_t cbw[MSD_CBW_LEN];
+
+		/* Command Status Wrapper (CSW) buffer. */
+		uint8_t csw[MSD_CSW_LEN];
+	} buf;
 
 } msd_state;
 
@@ -423,6 +444,18 @@ static void usb_send_stall (int endpoint)
 	usb_csr_set_flag (endpoint, AT91C_UDP_FORCESTALL);
 }
 
+static void usb_set_halt (int endpoint)
+{
+	usb_state.halted |= 1 << endpoint;
+	usb_send_stall (endpoint);
+}
+
+static void usb_clear_halt (int endpoint)
+{
+	usb_state.halted &= ~(1 << endpoint);
+	*AT91C_UDP_RSTEP = (1 << endpoint);
+	*AT91C_UDP_RSTEP = 0;
+}
 
 /* During setup, we need to send packets with null data. */
 static void usb_send_null (void)
@@ -430,17 +463,78 @@ static void usb_send_null (void)
 	usb_write_data (0, NULL, 0);
 }
 
+static void msd_send_csw (int endpoint, uint8_t status)
+{
+	uint8_t *buf = (uint8_t *) msd_state.buf.csw;
+	*((uint32_t *)&(buf[0]))	= 0x53425355;
+	*((uint32_t *)&(buf[4]))	= msd_state.tag;
+	*((uint32_t *)&(buf[8]))	= msd_state.transfer_len;
+	buf[12]				= status;
+	usb_write_data (endpoint, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
+}
 
 static void msd_wait_cbw (int endpoint)
 {
 	msd_state.status = MSD_WAIT_CBW;
-	usb_read_start (endpoint, (uint8_t *) msd_state.cbw_buf, MSD_CBW_LEN);
+	usb_read_start (endpoint, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
+}
+
+static int msd_handle_cbw (uint8_t *cbw)
+{
+	uint8_t cmd;
+	int pos = 15;
+	int cmd_len;
+
+	/* Validate CBW */
+	if (*((uint32_t *) cbw) != 0x43425355) /* header */
+		return 0;
+	if ((cbw[12] & 0x7f) != 0) /* reserve bits */
+		return 0;
+	if (cbw[13] != 0) /* LUN plus reserve bits */
+		return 0;
+	if ((cbw[14] & 0xe0) != 0) /* reserve bits */
+		return 0;
+	if ((cmd_len = cbw[14]) > 16) /* cmd length */
+		return 0;
+	if (cmd_len < 1) /* cmd length */
+		return 0;
+	
+	/* Setup command state */
+	msd_state.tag		= *((uint32_t *) &(cbw[4]));
+	msd_state.transfer_len	= *((uint32_t *) &(cbw[8]));
+
+	/* Decode command */
+	cmd = cbw[pos++];
+	switch (cmd) {
+		case SCSI_CMD_TEST_UNIT_READY:
+		case SCSI_CMD_REQUEST_SENSE:
+		case SCSI_CMD_INQUIRY:
+		case SCSI_CMD_MODE_SENSE6:
+		case SCSI_CMD_PREVENT_REMOVAL:
+		case SCSI_CMD_READ_CAPACITY10:
+		case SCSI_CMD_READ10:
+		case SCSI_CMD_WRITE10:
+		case SCSI_CMD_MODE_VERIFY10:
+		default:
+			/* FIXME: set CSW? */
+			return 0;
+	}
+
+	return 1;
 }
 
 static void msd_handle_rx (int endpoint)
 {
 	if (msd_state.status == MSD_WAIT_CBW) {
-		/* FIXME: decode CBW */ 
+		int ok = 0;
+		if (usb_state.rx_len == MSD_CBW_LEN) {
+			ok = msd_handle_cbw ((uint8_t *) msd_state.buf.cbw);
+		}
+		if (!ok) {
+			msd_state.status = MSD_WAIT_RESET;
+			usb_set_halt (MSD_DATA_EP_IN);
+			usb_set_halt (MSD_DATA_EP_OUT);
+		}
 	} else if (msd_state.status == MSD_DATA_RX) {
 		/* FIXME: check data read has complete, finish command, send CSW */
 	}
@@ -555,12 +649,10 @@ static uint32_t usb_manage_setup_packet (void)
 				
 				if (ep < N_ENDPOINTS) {
 					if (packet.value == USB_BREQUEST_SET_FEATURE) {
-						usb_state.halted |= 1 << ep;
-						usb_send_stall (ep);
+						usb_set_halt (ep);
 					} else {
-						usb_state.halted &= ~(1 << ep);
-						*AT91C_UDP_RSTEP = (1 << ep);
-						*AT91C_UDP_RSTEP = 0;
+						usb_clear_halt (ep);
+						/* FIXME: trigger MSD state changes */
 					}
 				} else {
 					usb_send_stall (0);
