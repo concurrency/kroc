@@ -66,8 +66,9 @@
 
 #define USB_FEAT_ENDPOINT_HALT		0
 
-#define MSD_DATA_EP_IN			2
-#define MSD_DATA_EP_OUT			1
+#define MSD_DATA_EP_IN			1
+#define MSD_DATA_EP_OUT			2
+#define MSD_FLAG_DEV_TO_HOST		0x1
 #define MSD_CBW_LEN			31
 #define MSD_CSW_LEN			13
 #define MSD_STATUS_CMD_PASSED		0x00
@@ -78,12 +79,14 @@
 #define SCSI_CMD_REQUEST_SENSE		0x03
 #define SCSI_CMD_INQUIRY		0x12
 #define SCSI_CMD_MODE_SENSE6		0x1a
+#define SCSI_CMD_START_STOP_UNIT	0x1b
 #define SCSI_CMD_PREVENT_REMOVAL	0x1e
 #define SCSI_CMD_READ_CAPACITY10	0x25
 #define SCSI_CMD_READ10			0x28
 #define SCSI_CMD_WRITE10		0x2a
-#define SCSI_CMD_MODE_VERIFY10		0x2f
+#define SCSI_CMD_VERIFY10		0x2f
 
+#define SCSI_SENSE_DATA_LEN		18
 
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
@@ -214,6 +217,22 @@ static const uint8_t *usb_strings[] = {
 static const uint8_t usb_string_count = 
 	(uint8_t) (sizeof (usb_strings) / sizeof (uint8_t *));
 
+
+/* Precomputed SCSI response. */
+/* FIXME: might want to use something lower than SPC-3 */
+static const uint8_t scsi_standard_inquiry[] = {
+	0x00,	/* 000b = Peripheral Device, 00h = SBC-3 */
+	0x00,	/* No Removable Media */
+	0x05,	/* Supports SPC-3 */
+	0x05,	/* No ACA, No HiSup, Response Format SPC-3 */
+	32,	/* Remaining Length */
+	0x00, 0x00, 0x00, 			/* No flags set */
+	'L', 'E', 'G', 'O', ' ', ' ', ' ', ' ', /* Vendor ID */
+	'M', 'I', 'N', 'D', 'S', 'T', 'O', 'R', /* Product ID */
+	'M', 'S', ' ', 'N', 'X', 'T', ' ', ' ', 
+	'T', 'V', 'M', ' '			/* Revision ID */
+};
+
 /*
  * The USB device state. Contains the current USB state (selected
  * configuration, etc.) and transitory state for data transfers.
@@ -278,7 +297,9 @@ static volatile struct {
 		MSD_WAIT_CBW,
 		MSD_DATA_RX,
 		MSD_DATA_TX,
-		MSD_WAIT_CSW
+		MSD_WAIT_CSW,
+		MSD_WAIT_CLEAR_RX,
+		MSD_WAIT_CLEAR_TX
 	} status;
 
 	/* Backing store for the storage drive. */
@@ -286,8 +307,12 @@ static volatile struct {
 	uint32_t data_len;
 
 	/* Command state */
+	uint8_t flags;
+	uint8_t cmd_status;
+	uint8_t pad[2];
 	uint32_t tag;
 	uint32_t transfer_len;
+	uint32_t error;
 
 	union {
 		/* Command Block Wrapper (CBW) buffer. */
@@ -295,6 +320,9 @@ static volatile struct {
 
 		/* Command Status Wrapper (CSW) buffer. */
 		uint8_t csw[MSD_CSW_LEN];
+
+		/* SCSI Request Sense Response */
+		uint8_t sense[SCSI_SENSE_DATA_LEN];
 	} buf;
 
 } msd_state;
@@ -463,24 +491,43 @@ static void usb_send_null (void)
 	usb_write_data (0, NULL, 0);
 }
 
-static void msd_send_csw (int endpoint, uint8_t status)
+static void msd_send_csw (uint8_t status)
 {
 	uint8_t *buf = (uint8_t *) msd_state.buf.csw;
 	*((uint32_t *)&(buf[0]))	= 0x53425355;
 	*((uint32_t *)&(buf[4]))	= msd_state.tag;
 	*((uint32_t *)&(buf[8]))	= msd_state.transfer_len;
 	buf[12]				= status;
-	usb_write_data (endpoint, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
+	usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
 }
 
-static void msd_wait_cbw (int endpoint)
+static void msd_send_data (const uint8_t *data, uint32_t len)
+{
+	if (msd_state.flags & MSD_FLAG_DEV_TO_HOST) {
+		msd_state.status = MSD_DATA_TX;
+		if (len > msd_state.transfer_len) {
+			msd_state.cmd_status = MSD_STATUS_PHASE_ERROR;
+			usb_write_data (MSD_DATA_EP_OUT, data, msd_state.transfer_len);
+		} else {
+			msd_state.cmd_status = MSD_STATUS_CMD_PASSED;
+			usb_write_data (MSD_DATA_EP_OUT, data, len);
+		}
+	} else {
+		msd_state.status	= MSD_WAIT_CLEAR_TX;
+		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
+		usb_send_stall (MSD_DATA_EP_OUT);
+	}
+}
+
+static void msd_wait_cbw (void)
 {
 	msd_state.status = MSD_WAIT_CBW;
-	usb_read_start (endpoint, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
+	usb_read_start (MSD_DATA_EP_IN, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
 }
 
-static int msd_handle_cbw (uint8_t *cbw)
+static int msd_handle_cbw (const uint8_t *cbw)
 {
+	const uint8_t *ptr;
 	uint8_t cmd;
 	int pos = 15;
 	int cmd_len;
@@ -502,30 +549,113 @@ static int msd_handle_cbw (uint8_t *cbw)
 	/* Setup command state */
 	msd_state.tag		= *((uint32_t *) &(cbw[4]));
 	msd_state.transfer_len	= *((uint32_t *) &(cbw[8]));
+	msd_state.flags		= cbw[12] >> 7;
 
+	/* FIXME: break this out? */
 	/* Decode command */
-	cmd = cbw[pos++];
+	cmd = cbw[pos];
+	ptr = cbw + pos;
 	switch (cmd) {
 		case SCSI_CMD_TEST_UNIT_READY:
+			if (cmd_len == 6) {
+				/* 1-4	= Reserved */
+				/* 5	= Control */
+			}
+			break;
 		case SCSI_CMD_REQUEST_SENSE:
+			if (cmd_len == 6) {
+				/* 1	= DESC(0) */
+				/* 2-3	= Reserved */
+				/* 4	= Allocation Length */
+				/* 5	= Control */
+
+				/* DESC = 1 => ILLEGAL REQUEST */
+			}
+			break;
 		case SCSI_CMD_INQUIRY:
+			if (cmd_len == 6) {
+				/* 1	= EVPD(0) */
+				/* 2	= Page Code */
+				/* 3-4	= Allocation Length */
+				/* 5	= Control */
+				if ((ptr[1] == 0) && (ptr[2] == 0)) {
+					/* Page Code = 0, EVPD = 0 */
+					/* Standard Inquiry */
+					uint16_t length = (ptr[3] << 8) | ptr[4];
+					if (length > sizeof (scsi_standard_inquiry))
+						length = sizeof (scsi_standard_inquiry);
+					msd_send_data (scsi_standard_inquiry, length);
+					return 1;
+				}
+			}
+			break;
 		case SCSI_CMD_MODE_SENSE6:
+			if (cmd_len == 6) {
+				/* 1	= DBD(3) */
+				/* 2	= PC(7-6), Page Code */
+				/* 3	= Subpage Code */
+				/* 4	= Allocation Length */
+				/* 5	= Control */
+			}
+			break;
 		case SCSI_CMD_PREVENT_REMOVAL:
+			if (cmd_len == 6) {
+				/* 1-3	= Reserved */
+				/* 4	= Prevent(1-0) */
+				/* 5	= Control */
+			}
+			break;
 		case SCSI_CMD_READ_CAPACITY10:
+			if (cmd_len == 10) {
+				/* 1	= Reserved */
+				/* 2-3	= LBA */
+				/* 6-7	= Reserved */
+				/* 8	= PMI(0) */
+				/* 9	= Control */
+			}
+			break;
 		case SCSI_CMD_READ10:
+			if (cmd_len == 10) {
+				/* 1	= RDPROTECT(7-5), DPO(4), FUA(3), FUA_NV(1) */
+				/* 2-5	= LBA */
+				/* 6	= Group Number(4-0) */
+				/* 7-8	= Transfer Length */
+				/* 9	= Control */
+			}
+			break;
 		case SCSI_CMD_WRITE10:
-		case SCSI_CMD_MODE_VERIFY10:
+			if (cmd_len == 10) {
+				/* 1	= WRPROTECT(5-7), DPO(4), FUA(3), FUV_NV(1) */
+				/* 2-5	= LBA */
+				/* 6	= Group Number(4-0) */
+				/* 7-8	= Transfer Length */
+				/* 9	= Control */
+			}
+			break;
+		case SCSI_CMD_VERIFY10:
+			if (cmd_len == 10) {
+				/* 1	= VRPROTECT(5-7), DPO(4), BYTCHK(1) */
+				/* 2-5	= LBA */
+				/* 6	= Group Number(4-0) */
+				/* 7-8	= Transfer Length */
+				/* 9	= Control */
+			}
+			break;
 		default:
-			/* FIXME: set CSW? */
-			return 0;
+			/* FIXME: set sense */
+			break;
 	}
 
+errout:
+	msd_send_csw (MSD_STATUS_CMD_FAILED); 
 	return 1;
 }
 
 static void msd_handle_rx (int endpoint)
 {
-	if (msd_state.status == MSD_WAIT_CBW) {
+	if (endpoint != MSD_DATA_EP_IN) {
+		return;
+	} else if (msd_state.status == MSD_WAIT_CBW) {
 		int ok = 0;
 		if (usb_state.rx_len == MSD_CBW_LEN) {
 			ok = msd_handle_cbw ((uint8_t *) msd_state.buf.cbw);
@@ -542,10 +672,12 @@ static void msd_handle_rx (int endpoint)
 
 static void msd_handle_tx_complete (int endpoint)
 {
-	if (msd_state.status == MSD_WAIT_CSW) {
+	if (endpoint != MSD_DATA_EP_OUT) {
+		return;
+	} else if (msd_state.status == MSD_WAIT_CSW) {
 		/* CSW has been sent, wait for new command. */
 		/* FIXME: check send completed */
-		msd_wait_cbw (endpoint);
+		msd_wait_cbw ();
 	} else if (msd_state.status == MSD_DATA_TX) {
 		/* FIXME: check send completed, send CSW */
 	}
@@ -589,7 +721,7 @@ static uint32_t usb_manage_setup_packet (void)
 			case USB_BREQUEST_BULK_RESET:
 				/* forward reset to MSD; */
 				usb_send_null ();
-				msd_wait_cbw (MSD_DATA_EP_IN);
+				msd_wait_cbw ();
 				break;
 			case USB_BREQUEST_GET_MAX_LUN:
 				byte_resp = 1;
@@ -652,7 +784,18 @@ static uint32_t usb_manage_setup_packet (void)
 						usb_set_halt (ep);
 					} else {
 						usb_clear_halt (ep);
-						/* FIXME: trigger MSD state changes */
+						switch (ep) {
+							case MSD_DATA_EP_OUT:
+								if (msd_state.status == MSD_WAIT_CLEAR_TX)
+									msd_send_csw (msd_state.cmd_status);
+								break;
+							case MSD_DATA_EP_IN:
+								if (msd_state.status == MSD_WAIT_CLEAR_RX)
+									msd_send_csw (msd_state.cmd_status);
+								break;
+							default:
+								break;
+						}
 					}
 				} else {
 					usb_send_stall (0);
