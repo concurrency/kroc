@@ -68,15 +68,19 @@
 
 #define MSD_DATA_EP_IN			1
 #define MSD_DATA_EP_OUT			2
-#define MSD_FLAG_DEV_TO_HOST		0x1
+#define MSD_FLAG_DEV_TO_HOST		0x01
+#define MSD_FLAG_READ_ONLY		0x80
 #define MSD_CBW_LEN			31
 #define MSD_CSW_LEN			13
 #define MSD_STATUS_CMD_PASSED		0x00
 #define MSD_STATUS_CMD_FAILED		0x01
 #define MSD_STATUS_PHASE_ERROR		0x02
 
+#define MSD_BLOCK_SIZE			256
+
 #define SCSI_CMD_TEST_UNIT_READY	0x00
 #define SCSI_CMD_REQUEST_SENSE		0x03
+#define SCSI_CMD_READ6			0x08
 #define SCSI_CMD_INQUIRY		0x12
 #define SCSI_CMD_MODE_SENSE6		0x1a
 #define SCSI_CMD_START_STOP_UNIT	0x1b
@@ -85,8 +89,22 @@
 #define SCSI_CMD_READ10			0x28
 #define SCSI_CMD_WRITE10		0x2a
 #define SCSI_CMD_VERIFY10		0x2f
+#define SCSI_CMD_REPORT_LUNS		0xa0
 
 #define SCSI_SENSE_DATA_LEN		18
+
+#define SCSI_SENSE_KEY_NO_SENSE		0
+#define SCSI_SENSE_KEY_SOFT_ERROR	1
+#define SCSI_SENSE_KEY_NOT_READY	2
+#define SCSI_SENSE_KEY_MEDIUM_ERROR	3
+#define SCSI_SENSE_KEY_HARDWARE_ERROR	4
+#define SCSI_SENSE_KEY_ILLEGAL_REQUEST	5
+#define SCSI_SENSE_KEY_UNIT_ATTENTION	6
+#define SCSI_SENSE_KEY_WRITE_PROTECT	7
+#define SCSI_SENSE_KEY_ABORTED_COMMAND	8
+
+#define SCSI_SENSE_CODE_INVALID_FIELD_IN_CDB			0x24
+#define SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE	0x21
 
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
@@ -219,12 +237,12 @@ static const uint8_t usb_string_count =
 
 
 /* Precomputed SCSI response. */
-/* FIXME: might want to use something lower than SPC-3 */
+/* FIXME: might want to use something lower than SPC-4 */
 static const uint8_t scsi_standard_inquiry[] = {
 	0x00,	/* 000b = Peripheral Device, 00h = SBC-3 */
 	0x00,	/* No Removable Media */
-	0x05,	/* Supports SPC-3 */
-	0x05,	/* No ACA, No HiSup, Response Format SPC-3 */
+	0x06,	/* Supports SPC-4 */
+	0x06,	/* No ACA, No HiSup, Response Format SPC-4 */
 	32,	/* Remaining Length */
 	0x00, 0x00, 0x00, 			/* No flags set */
 	'L', 'E', 'G', 'O', ' ', ' ', ' ', ' ', /* Vendor ID */
@@ -309,10 +327,12 @@ static volatile struct {
 	/* Command state */
 	uint8_t flags;
 	uint8_t cmd_status;
-	uint8_t pad[2];
+	uint8_t scsi_sense_key;
+	uint8_t scsi_sense_code;
+	uint8_t scsi_sense_qualifier;
+	uint8_t pad[3];
 	uint32_t tag;
 	uint32_t transfer_len;
-	uint32_t error;
 
 	union {
 		/* Command Block Wrapper (CBW) buffer. */
@@ -525,11 +545,26 @@ static void msd_wait_cbw (void)
 	usb_read_start (MSD_DATA_EP_IN, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
 }
 
+static void msd_stall_tx_with_error (uint8_t key, uint8_t code, uint8_t qual)
+{
+	msd_state.status		= MSD_WAIT_CLEAR_TX;
+	msd_state.cmd_status		= MSD_STATUS_CMD_FAILED;
+	msd_state.scsi_sense_key	= key;
+	msd_state.scsi_sense_code	= code;
+	msd_state.scsi_sense_qualifier	= qual;
+	usb_send_stall (MSD_DATA_EP_OUT);
+}
+
 static int scsi_test_unit_ready (const uint8_t *cmd)
 {
 	/* 1-4	= Reserved */
 	/* 5	= Control */
-	return 0;
+	if ((cmd[1] | cmd[2] | cmd[3] | cmd[4]) == 0) {
+		msd_send_csw (MSD_STATUS_CMD_PASSED);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 static int scsi_request_sense (const uint8_t *cmd)
@@ -538,9 +573,33 @@ static int scsi_request_sense (const uint8_t *cmd)
 	/* 2-3	= Reserved */
 	/* 4	= Allocation Length */
 	/* 5	= Control */
+	if (cmd[1] == 0) {
+		uint8_t *desc = (uint8_t *) msd_state.buf.sense;
+		uint8_t len = cmd[4];
 
-	/* DESC = 1 => ILLEGAL REQUEST */
-	return 0;
+		/* fill buffer */
+		memset (desc, 0, sizeof (msd_state.buf.sense));
+		desc[0]		= 0x70; /* current errors, with no info */
+		desc[2] 	= msd_state.scsi_sense_key;
+		desc[7] 	= 11; /* additional bytes */
+		desc[12]	= msd_state.scsi_sense_code;
+		desc[13]	= msd_state.scsi_sense_qualifier;
+
+		if (len > sizeof (msd_state.buf.sense))
+			len = sizeof (msd_state.buf.sense);
+
+		/* send fixed sense descriptor */
+		msd_send_data (desc, len);
+
+		/* reset sense data */
+		msd_state.scsi_sense_key	= SCSI_SENSE_KEY_NO_SENSE;
+		msd_state.scsi_sense_code	= 0;
+		msd_state.scsi_sense_qualifier	= 0;
+
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 static int scsi_inquiry (const uint8_t *cmd)
@@ -549,25 +608,42 @@ static int scsi_inquiry (const uint8_t *cmd)
 	/* 2	= Page Code */
 	/* 3-4	= Allocation Length */
 	/* 5	= Control */
-	if ((cmd[1] == 0) && (cmd[2] == 0)) {
-		/* Page Code = 0, EVPD = 0 */
-		/* Standard Inquiry */
-		uint16_t length = (cmd[3] << 8) | cmd[4];
-		if (length > sizeof (scsi_standard_inquiry))
-			length = sizeof (scsi_standard_inquiry);
-		msd_send_data (scsi_standard_inquiry, length);
-		return 1;
-	}
-	return 0;
-}
+	
+	uint16_t length = (cmd[3] << 8) | cmd[4];
+	
+	if (cmd[1] == 0) {
+		/* EVPD = 0 */
+		if (cmd[2] == 0) {
+			/* Standard Inquiry */
+			if (length > sizeof (scsi_standard_inquiry))
+				length = sizeof (scsi_standard_inquiry);
+			
+			msd_send_data (scsi_standard_inquiry, length);
+			
+			return 1;
+		}
+	} else if (cmd[1] == 1) {
+		/* EVPD = 1 */
+		/* FIXME: need to support 2 other mandatory pages */
+		if (cmd[2] == 0) {
+			/* Page 00 */
+			uint8_t *buf = (uint8_t *) msd_state.buf.sense;
 
-static int scsi_mode_sense6 (const uint8_t *cmd)
-{
-	/* 1	= DBD(3) */
-	/* 2	= PC(7-6), Page Code */
-	/* 3	= Subpage Code */
-	/* 4	= Allocation Length */
-	/* 5	= Control */
+			if (length > 5)
+				length = 5;
+
+			buf[0] = scsi_standard_inquiry[0];
+			buf[1] = 0x00;	/* page code 00 */
+			buf[2] = 0x00;
+			buf[3] = 1;	/* no. supported pages */
+			buf[4] = 0x00;	/* only page 00 is supported */
+
+			msd_send_data (buf, length);
+
+			return 1;
+		}
+	}
+
 	return 0;
 }
 
@@ -576,30 +652,95 @@ static int scsi_prevent_removal (const uint8_t *cmd)
 	/* 1-3	= Reserved */
 	/* 4	= Prevent(1-0) */
 	/* 5	= Control */
-	return 0;
+	if ((cmd[1] | cmd[2] | cmd[3] | (cmd[4] & 0xfb)) == 0) {
+		msd_send_csw (MSD_STATUS_CMD_PASSED);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
-static int scsi_read_capacity10 (const uint8_t *cmd)
+static int scsi_read_capacity (const uint8_t *cmd)
 {
 	/* 1	= Reserved */
-	/* 2-3	= LBA */
+	/* 2-5	= LBA */
 	/* 6-7	= Reserved */
 	/* 8	= PMI(0) */
 	/* 9	= Control */
+	if ((cmd[1] | cmd[6] | cmd[7]) == 0) {
+		uint32_t block_size = MSD_BLOCK_SIZE;
+		uint32_t blocks = (msd_state.data_len / block_size) - 1;
+		uint32_t lba = (cmd[2] << 24) | (cmd[3] << 16) | (cmd[4] << 8) | cmd[5];
+		uint8_t *buf = (uint8_t *) msd_state.buf.sense;
+		uint8_t pmi = cmd[8] & 1;
+
+		if (pmi && (lba > blocks)) {
+			buf[0] = (lba >> 24) & 0xff;
+			buf[1] = (lba >> 16) & 0xff;
+			buf[2] = (lba >>  8) & 0xff;
+			buf[3] = (lba >>  0) & 0xff;
+		} else {
+			buf[0] = (blocks >> 24) & 0xff;
+			buf[1] = (blocks >> 16) & 0xff;
+			buf[2] = (blocks >>  8) & 0xff;
+			buf[3] = (blocks >>  0) & 0xff;
+		}
+		
+		buf[4] = (block_size >> 24) & 0xff;
+		buf[5] = (block_size >> 16) & 0xff;
+		buf[6] = (block_size >>  8) & 0xff;
+		buf[7] = (block_size >>  0) & 0xff;
+
+		msd_send_data (buf, 8);
+
+		return 1;
+	}
+
 	return 0;
 }
 
-static int scsi_read10 (const uint8_t *cmd)
+static int scsi_read (const uint8_t *cmd)
 {
-	/* 1	= RDPROTECT(7-5), DPO(4), FUA(3), FUA_NV(1) */
-	/* 2-5	= LBA */
-	/* 6	= Group Number(4-0) */
-	/* 7-8	= Transfer Length */
-	/* 9	= Control */
-	return 0;
+	uint32_t lba;
+	uint32_t len;
+	int valid = 1;
+	
+	if (cmd[0] == SCSI_CMD_READ6) {
+		valid	&= ((cmd[1] & 0xe0) == 0);
+		lba	= ((cmd[1] & 0x1f) << 16) | (cmd[2] << 8) | (cmd[3]);
+		len	= cmd[4];
+		if (len == 0)
+			len = 256;
+	} else {
+		/* 1	= RDPROTECT(7-5), DPO(4), FUA(3), FUA_NV(1) */
+		/* 2-5	= LBA */
+		/* 6	= Group Number(4-0) */
+		/* 7-8	= Transfer Length */
+		/* 9	= Control */
+		valid	&= ((cmd[1] & 0xf0) == 0);
+		valid	&= (cmd[6] == 0);
+		lba	= (cmd[2] << 24) | (cmd[3] << 16) | (cmd[4] << 8) | (cmd[5]);
+		len	= (cmd[7] << 8) | (cmd[8]);
+	}
+
+	if (valid) {
+		lba *= MSD_BLOCK_SIZE;
+		len *= MSD_BLOCK_SIZE;
+		if ((lba < msd_state.data_len) && ((lba + len) <= msd_state.data_len)) {
+			msd_send_data (msd_state.data + lba, len);
+		} else {
+			msd_stall_tx_with_error (
+				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
+				SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE, 0
+			);
+		}
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
-static int scsi_write10 (const uint8_t *cmd)
+static int scsi_write (const uint8_t *cmd)
 {
 	/* 1	= WRPROTECT(5-7), DPO(4), FUA(3), FUV_NV(1) */
 	/* 2-5	= LBA */
@@ -609,13 +750,29 @@ static int scsi_write10 (const uint8_t *cmd)
 	return 0;
 }
 
-static int scsi_verify10 (const uint8_t *cmd)
+static int scsi_report_luns (const uint8_t *cmd)
 {
-	/* 1	= VRPROTECT(5-7), DPO(4), BYTCHK(1) */
-	/* 2-5	= LBA */
-	/* 6	= Group Number(4-0) */
-	/* 7-8	= Transfer Length */
-	/* 9	= Control */
+	/* 1	= Reserved */
+	/* 2	= Select Report */
+	/* 3-5	= Reserved */
+	/* 6-9	= Allocation Length */
+	/* 10	= Reserved */
+	/* 11	= Control */
+	if ((cmd[1] | cmd[3] | cmd[4] | cmd[5] | cmd[10]) == 0) {
+		if (cmd[2] <= 2) {
+			uint32_t len = (cmd[6] << 24) | (cmd[7] << 16) | (cmd[8] << 8) | cmd[9];
+			uint8_t *buf = (uint8_t *) msd_state.buf.sense;
+
+			if (len > 16)
+				len = 16;
+
+			memset (buf, 0, 16);
+			buf[3] = 8; /* LUN list is 8 bytes */
+			
+			msd_send_data (buf, len);
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -642,7 +799,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 		/* Setup command state */
 		msd_state.tag		= *((uint32_t *) &(cbw[4]));
 		msd_state.transfer_len	= *((uint32_t *) &(cbw[8]));
-		msd_state.flags		= cbw[12] >> 7;
+		msd_state.flags		= (msd_state.flags & (~MSD_FLAG_DEV_TO_HOST)) | (cbw[12] >> 7);
 		
 		cmd_len = cbw[14];
 		cmd	= &(cbw[15]);
@@ -650,22 +807,29 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 
 		if (cmd_len == 6) {
 			switch (cmd[0]) {
-				case SCSI_CMD_TEST_UNIT_READY: 	ok = scsi_test_unit_ready (cmd); break;
+				case SCSI_CMD_TEST_UNIT_READY: 	ok = scsi_test_unit_ready (cmd);break;
 				case SCSI_CMD_REQUEST_SENSE:	ok = scsi_request_sense (cmd); 	break;
 				case SCSI_CMD_INQUIRY:		ok = scsi_inquiry (cmd);	break;
-				case SCSI_CMD_MODE_SENSE6:	ok = scsi_mode_sense6 (cmd);	break;
 				case SCSI_CMD_PREVENT_REMOVAL:	ok = scsi_prevent_removal (cmd);break;
+				case SCSI_CMD_READ6:		ok = scsi_read (cmd);		break;
 			}
 		} else if (cmd_len == 10) {
 			switch (cmd[0]) {
-				case SCSI_CMD_READ_CAPACITY10:	ok = scsi_read_capacity10 (cmd);break;
-				case SCSI_CMD_READ10:		ok = scsi_read10 (cmd);		break;
-				case SCSI_CMD_WRITE10:		ok = scsi_write10 (cmd);	break;
-				case SCSI_CMD_VERIFY10:		ok = scsi_verify10 (cmd);	break;
+				case SCSI_CMD_READ_CAPACITY10:	ok = scsi_read_capacity (cmd);	break;
+				case SCSI_CMD_READ10:		ok = scsi_read (cmd);		break;
+				case SCSI_CMD_WRITE10:		ok = scsi_write (cmd);		break;
 			}
-		} else {
-			/* Invalid length */
-			msd_send_csw (MSD_STATUS_CMD_FAILED); 
+		} else if (cmd_len == 12) {
+			switch (cmd[0]) {
+				case SCSI_CMD_REPORT_LUNS:	ok = scsi_report_luns (cmd);	break;
+			}
+		}
+
+		if (!ok) {
+			msd_stall_tx_with_error (
+				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
+				SCSI_SENSE_CODE_INVALID_FIELD_IN_CDB, 0
+			);
 		}
 	}
 }
