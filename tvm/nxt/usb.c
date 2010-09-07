@@ -525,130 +525,149 @@ static void msd_wait_cbw (void)
 	usb_read_start (MSD_DATA_EP_IN, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
 }
 
-static int msd_handle_cbw (const uint8_t *cbw)
+static int scsi_test_unit_ready (const uint8_t *cmd)
 {
-	const uint8_t *ptr;
-	uint8_t cmd;
-	int pos = 15;
-	int cmd_len;
+	/* 1-4	= Reserved */
+	/* 5	= Control */
+	return 0;
+}
+
+static int scsi_request_sense (const uint8_t *cmd)
+{
+	/* 1	= DESC(0) */
+	/* 2-3	= Reserved */
+	/* 4	= Allocation Length */
+	/* 5	= Control */
+
+	/* DESC = 1 => ILLEGAL REQUEST */
+	return 0;
+}
+
+static int scsi_inquiry (const uint8_t *cmd)
+{
+	/* 1	= EVPD(0) */
+	/* 2	= Page Code */
+	/* 3-4	= Allocation Length */
+	/* 5	= Control */
+	if ((cmd[1] == 0) && (cmd[2] == 0)) {
+		/* Page Code = 0, EVPD = 0 */
+		/* Standard Inquiry */
+		uint16_t length = (cmd[3] << 8) | cmd[4];
+		if (length > sizeof (scsi_standard_inquiry))
+			length = sizeof (scsi_standard_inquiry);
+		msd_send_data (scsi_standard_inquiry, length);
+		return 1;
+	}
+	return 0;
+}
+
+static int scsi_mode_sense6 (const uint8_t *cmd)
+{
+	/* 1	= DBD(3) */
+	/* 2	= PC(7-6), Page Code */
+	/* 3	= Subpage Code */
+	/* 4	= Allocation Length */
+	/* 5	= Control */
+	return 0;
+}
+
+static int scsi_prevent_removal (const uint8_t *cmd)
+{
+	/* 1-3	= Reserved */
+	/* 4	= Prevent(1-0) */
+	/* 5	= Control */
+	return 0;
+}
+
+static int scsi_read_capacity10 (const uint8_t *cmd)
+{
+	/* 1	= Reserved */
+	/* 2-3	= LBA */
+	/* 6-7	= Reserved */
+	/* 8	= PMI(0) */
+	/* 9	= Control */
+	return 0;
+}
+
+static int scsi_read10 (const uint8_t *cmd)
+{
+	/* 1	= RDPROTECT(7-5), DPO(4), FUA(3), FUA_NV(1) */
+	/* 2-5	= LBA */
+	/* 6	= Group Number(4-0) */
+	/* 7-8	= Transfer Length */
+	/* 9	= Control */
+	return 0;
+}
+
+static int scsi_write10 (const uint8_t *cmd)
+{
+	/* 1	= WRPROTECT(5-7), DPO(4), FUA(3), FUV_NV(1) */
+	/* 2-5	= LBA */
+	/* 6	= Group Number(4-0) */
+	/* 7-8	= Transfer Length */
+	/* 9	= Control */
+	return 0;
+}
+
+static int scsi_verify10 (const uint8_t *cmd)
+{
+	/* 1	= VRPROTECT(5-7), DPO(4), BYTCHK(1) */
+	/* 2-5	= LBA */
+	/* 6	= Group Number(4-0) */
+	/* 7-8	= Transfer Length */
+	/* 9	= Control */
+	return 0;
+}
+
+static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
+{
+	int ok = 1;
 
 	/* Validate CBW */
-	if (*((uint32_t *) cbw) != 0x43425355) /* header */
-		return 0;
-	if ((cbw[12] & 0x7f) != 0) /* reserve bits */
-		return 0;
-	if (cbw[13] != 0) /* LUN plus reserve bits */
-		return 0;
-	if ((cbw[14] & 0xe0) != 0) /* reserve bits */
-		return 0;
-	if ((cmd_len = cbw[14]) > 16) /* cmd length */
-		return 0;
-	if (cmd_len < 1) /* cmd length */
-		return 0;
+	ok &= (len == 31);
+	ok &= (*((uint32_t *) cbw) == 0x43425355); 	/* header */
+	ok &= ((cbw[12] & 0x7f) == 0);			/* reserve bits */
+	ok &= (cbw[13] == 0);				/* LUN = 0, reserve bits */
+	ok &= ((cbw[14] & 0xe0) == 0);			/* reserve bits */
+	ok &= (cbw[14] >= 1) && (cbw[14] <= 16);	/* cmd length */
 	
-	/* Setup command state */
-	msd_state.tag		= *((uint32_t *) &(cbw[4]));
-	msd_state.transfer_len	= *((uint32_t *) &(cbw[8]));
-	msd_state.flags		= cbw[12] >> 7;
+	if (!ok) {
+		msd_state.status = MSD_WAIT_RESET;
+		usb_set_halt (MSD_DATA_EP_IN);
+		usb_set_halt (MSD_DATA_EP_OUT);
+	} else {
+		const uint8_t *cmd;
+		int cmd_len;
 
-	/* FIXME: break this out? */
-	/* Decode command */
-	cmd = cbw[pos];
-	ptr = cbw + pos;
-	switch (cmd) {
-		case SCSI_CMD_TEST_UNIT_READY:
-			if (cmd_len == 6) {
-				/* 1-4	= Reserved */
-				/* 5	= Control */
-			}
-			break;
-		case SCSI_CMD_REQUEST_SENSE:
-			if (cmd_len == 6) {
-				/* 1	= DESC(0) */
-				/* 2-3	= Reserved */
-				/* 4	= Allocation Length */
-				/* 5	= Control */
+		/* Setup command state */
+		msd_state.tag		= *((uint32_t *) &(cbw[4]));
+		msd_state.transfer_len	= *((uint32_t *) &(cbw[8]));
+		msd_state.flags		= cbw[12] >> 7;
+		
+		cmd_len = cbw[14];
+		cmd	= &(cbw[15]);
+		ok	= 0;
 
-				/* DESC = 1 => ILLEGAL REQUEST */
+		if (cmd_len == 6) {
+			switch (cmd[0]) {
+				case SCSI_CMD_TEST_UNIT_READY: 	ok = scsi_test_unit_ready (cmd); break;
+				case SCSI_CMD_REQUEST_SENSE:	ok = scsi_request_sense (cmd); 	break;
+				case SCSI_CMD_INQUIRY:		ok = scsi_inquiry (cmd);	break;
+				case SCSI_CMD_MODE_SENSE6:	ok = scsi_mode_sense6 (cmd);	break;
+				case SCSI_CMD_PREVENT_REMOVAL:	ok = scsi_prevent_removal (cmd);break;
 			}
-			break;
-		case SCSI_CMD_INQUIRY:
-			if (cmd_len == 6) {
-				/* 1	= EVPD(0) */
-				/* 2	= Page Code */
-				/* 3-4	= Allocation Length */
-				/* 5	= Control */
-				if ((ptr[1] == 0) && (ptr[2] == 0)) {
-					/* Page Code = 0, EVPD = 0 */
-					/* Standard Inquiry */
-					uint16_t length = (ptr[3] << 8) | ptr[4];
-					if (length > sizeof (scsi_standard_inquiry))
-						length = sizeof (scsi_standard_inquiry);
-					msd_send_data (scsi_standard_inquiry, length);
-					return 1;
-				}
+		} else if (cmd_len == 10) {
+			switch (cmd[0]) {
+				case SCSI_CMD_READ_CAPACITY10:	ok = scsi_read_capacity10 (cmd);break;
+				case SCSI_CMD_READ10:		ok = scsi_read10 (cmd);		break;
+				case SCSI_CMD_WRITE10:		ok = scsi_write10 (cmd);	break;
+				case SCSI_CMD_VERIFY10:		ok = scsi_verify10 (cmd);	break;
 			}
-			break;
-		case SCSI_CMD_MODE_SENSE6:
-			if (cmd_len == 6) {
-				/* 1	= DBD(3) */
-				/* 2	= PC(7-6), Page Code */
-				/* 3	= Subpage Code */
-				/* 4	= Allocation Length */
-				/* 5	= Control */
-			}
-			break;
-		case SCSI_CMD_PREVENT_REMOVAL:
-			if (cmd_len == 6) {
-				/* 1-3	= Reserved */
-				/* 4	= Prevent(1-0) */
-				/* 5	= Control */
-			}
-			break;
-		case SCSI_CMD_READ_CAPACITY10:
-			if (cmd_len == 10) {
-				/* 1	= Reserved */
-				/* 2-3	= LBA */
-				/* 6-7	= Reserved */
-				/* 8	= PMI(0) */
-				/* 9	= Control */
-			}
-			break;
-		case SCSI_CMD_READ10:
-			if (cmd_len == 10) {
-				/* 1	= RDPROTECT(7-5), DPO(4), FUA(3), FUA_NV(1) */
-				/* 2-5	= LBA */
-				/* 6	= Group Number(4-0) */
-				/* 7-8	= Transfer Length */
-				/* 9	= Control */
-			}
-			break;
-		case SCSI_CMD_WRITE10:
-			if (cmd_len == 10) {
-				/* 1	= WRPROTECT(5-7), DPO(4), FUA(3), FUV_NV(1) */
-				/* 2-5	= LBA */
-				/* 6	= Group Number(4-0) */
-				/* 7-8	= Transfer Length */
-				/* 9	= Control */
-			}
-			break;
-		case SCSI_CMD_VERIFY10:
-			if (cmd_len == 10) {
-				/* 1	= VRPROTECT(5-7), DPO(4), BYTCHK(1) */
-				/* 2-5	= LBA */
-				/* 6	= Group Number(4-0) */
-				/* 7-8	= Transfer Length */
-				/* 9	= Control */
-			}
-			break;
-		default:
-			/* FIXME: set sense */
-			break;
+		} else {
+			/* Invalid length */
+			msd_send_csw (MSD_STATUS_CMD_FAILED); 
+		}
 	}
-
-errout:
-	msd_send_csw (MSD_STATUS_CMD_FAILED); 
-	return 1;
 }
 
 static void msd_handle_rx (int endpoint)
@@ -656,15 +675,7 @@ static void msd_handle_rx (int endpoint)
 	if (endpoint != MSD_DATA_EP_IN) {
 		return;
 	} else if (msd_state.status == MSD_WAIT_CBW) {
-		int ok = 0;
-		if (usb_state.rx_len == MSD_CBW_LEN) {
-			ok = msd_handle_cbw ((uint8_t *) msd_state.buf.cbw);
-		}
-		if (!ok) {
-			msd_state.status = MSD_WAIT_RESET;
-			usb_set_halt (MSD_DATA_EP_IN);
-			usb_set_halt (MSD_DATA_EP_OUT);
-		}
+		msd_handle_cbw ((uint8_t *) msd_state.buf.cbw, usb_state.rx_len);
 	} else if (msd_state.status == MSD_DATA_RX) {
 		/* FIXME: check data read has complete, finish command, send CSW */
 	}
