@@ -81,6 +81,7 @@
 #define SCSI_CMD_TEST_UNIT_READY	0x00
 #define SCSI_CMD_REQUEST_SENSE		0x03
 #define SCSI_CMD_READ6			0x08
+#define SCSI_CMD_WRITE6			0x0a
 #define SCSI_CMD_INQUIRY		0x12
 #define SCSI_CMD_MODE_SENSE6		0x1a
 #define SCSI_CMD_START_STOP_UNIT	0x1b
@@ -100,11 +101,12 @@
 #define SCSI_SENSE_KEY_HARDWARE_ERROR	4
 #define SCSI_SENSE_KEY_ILLEGAL_REQUEST	5
 #define SCSI_SENSE_KEY_UNIT_ATTENTION	6
-#define SCSI_SENSE_KEY_WRITE_PROTECT	7
+#define SCSI_SENSE_KEY_DATA_PROTECT	7
 #define SCSI_SENSE_KEY_ABORTED_COMMAND	8
 
 #define SCSI_SENSE_CODE_INVALID_FIELD_IN_CDB			0x24
 #define SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE	0x21
+#define SCSI_SENSE_CODE_WRITE_PROTECTED				0x27
 
 /* The following definitions are 'raw' USB setup packets. They are all
  * standard responses to various setup requests by the USB host. These
@@ -539,6 +541,24 @@ static void msd_send_data (const uint8_t *data, uint32_t len)
 	}
 }
 
+static void msd_recv_data (uint8_t *data, uint32_t len)
+{
+	if (!(msd_state.flags & MSD_FLAG_DEV_TO_HOST)) {
+		msd_state.status = MSD_DATA_RX;
+		if (len > msd_state.transfer_len) {
+			msd_state.cmd_status = MSD_STATUS_PHASE_ERROR;
+			usb_read_start (MSD_DATA_EP_IN, data, msd_state.transfer_len);
+		} else {
+			msd_state.cmd_status = MSD_STATUS_CMD_PASSED;
+			usb_read_start (MSD_DATA_EP_IN, data, len);
+		}
+	} else {
+		msd_state.status	= MSD_WAIT_CLEAR_RX;
+		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
+		usb_send_stall (MSD_DATA_EP_IN);
+	}
+}
+
 static void msd_wait_cbw (void)
 {
 	msd_state.status = MSD_WAIT_CBW;
@@ -548,6 +568,16 @@ static void msd_wait_cbw (void)
 static void msd_stall_tx_with_error (uint8_t key, uint8_t code, uint8_t qual)
 {
 	msd_state.status		= MSD_WAIT_CLEAR_TX;
+	msd_state.cmd_status		= MSD_STATUS_CMD_FAILED;
+	msd_state.scsi_sense_key	= key;
+	msd_state.scsi_sense_code	= code;
+	msd_state.scsi_sense_qualifier	= qual;
+	usb_send_stall (MSD_DATA_EP_OUT);
+}
+
+static void msd_stall_rx_with_error (uint8_t key, uint8_t code, uint8_t qual)
+{
+	msd_state.status		= MSD_WAIT_CLEAR_RX;
 	msd_state.cmd_status		= MSD_STATUS_CMD_FAILED;
 	msd_state.scsi_sense_key	= key;
 	msd_state.scsi_sense_code	= code;
@@ -706,6 +736,9 @@ static int scsi_read (const uint8_t *cmd)
 	int valid = 1;
 	
 	if (cmd[0] == SCSI_CMD_READ6) {
+		/* 1-3	= LBA (24 bits) */
+		/* 4	= Transfer Length */
+		/* 5	= Control */
 		valid	&= ((cmd[1] & 0xe0) == 0);
 		lba	= ((cmd[1] & 0x1f) << 16) | (cmd[2] << 8) | (cmd[3]);
 		len	= cmd[4];
@@ -742,12 +775,51 @@ static int scsi_read (const uint8_t *cmd)
 
 static int scsi_write (const uint8_t *cmd)
 {
-	/* 1	= WRPROTECT(5-7), DPO(4), FUA(3), FUV_NV(1) */
-	/* 2-5	= LBA */
-	/* 6	= Group Number(4-0) */
-	/* 7-8	= Transfer Length */
-	/* 9	= Control */
-	return 0;
+	uint32_t lba;
+	uint32_t len;
+	int valid = 1;
+	
+	if (cmd[0] == SCSI_CMD_WRITE6) {
+		/* 1-3	= LBA (24 bits) */
+		/* 4	= Transfer Length */
+		/* 5	= Control */
+		valid	&= ((cmd[1] & 0xe0) == 0);
+		lba	= ((cmd[1] & 0x1f) << 16) | (cmd[2] << 8) | (cmd[3]);
+		len	= cmd[4];
+		if (len == 0)
+			len = 256;
+	} else {
+		/* 1	= WRPROTECT(7-5), DPO(4), FUA(3), FUA_NV(1) */
+		/* 2-5	= LBA */
+		/* 6	= Group Number(4-0) */
+		/* 7-8	= Transfer Length */
+		/* 9	= Control */
+		valid	&= ((cmd[1] & 0xf0) == 0);
+		valid	&= (cmd[6] == 0);
+		lba	= (cmd[2] << 24) | (cmd[3] << 16) | (cmd[4] << 8) | (cmd[5]);
+		len	= (cmd[7] << 8) | (cmd[8]);
+	}
+
+	if (valid) {
+		lba *= MSD_BLOCK_SIZE;
+		len *= MSD_BLOCK_SIZE;
+		if (msd_state.flags & MSD_FLAG_READ_ONLY) {
+			msd_stall_rx_with_error (
+				SCSI_SENSE_KEY_DATA_PROTECT,
+				SCSI_SENSE_CODE_WRITE_PROTECTED, 0
+			);
+		} else if ((lba < msd_state.data_len) && ((lba + len) <= msd_state.data_len)) {
+			msd_recv_data (msd_state.data + lba, len);
+		} else {
+			msd_stall_rx_with_error (
+				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
+				SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE, 0
+			);
+		}
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 static int scsi_report_luns (const uint8_t *cmd)
@@ -812,6 +884,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 				case SCSI_CMD_INQUIRY:		ok = scsi_inquiry (cmd);	break;
 				case SCSI_CMD_PREVENT_REMOVAL:	ok = scsi_prevent_removal (cmd);break;
 				case SCSI_CMD_READ6:		ok = scsi_read (cmd);		break;
+				case SCSI_CMD_WRITE6:		ok = scsi_write (cmd);		break;
 			}
 		} else if (cmd_len == 10) {
 			switch (cmd[0]) {
