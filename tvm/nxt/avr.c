@@ -537,6 +537,12 @@ void avr_power_down (void)
 	while (1)
 		to_avr.power_mode = AVR_POWER_OFF;
 }
+
+int avr_get_button (void)
+{
+	return from_avr.buttons;
+}
+
 /*}}}*/
 
 #if 0
@@ -563,9 +569,6 @@ void nx__avr_firmware_update_mode(void) {
     to_avr.power_mode = AVR_RESET_MODE;
 }
 
-nx_avr_button_t nx_avr_get_button(void) {
-  return from_avr.buttons;
-}
 
 uint32_t nx_avr_get_battery_voltage(void) {
   return from_avr.battery.charge;

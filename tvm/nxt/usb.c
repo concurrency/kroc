@@ -511,8 +511,10 @@ static void usb_read_data (int endpoint)
  */
 static void usb_send_stall (int endpoint)
 {
-	if (endpoint == 0)
+	if (endpoint == 0) {
 		usb_state.status = USB_UNINITIALISED;
+		debug_msg (0xf0);
+	}
 	usb_csr_set_flag (endpoint, AT91C_UDP_FORCESTALL);
 }
 
@@ -551,11 +553,12 @@ static void msd_send_data (const uint8_t *data, uint32_t len)
 		msd_state.status = MSD_DATA_TX;
 		if (len > msd_state.transfer_len) {
 			msd_state.cmd_status = MSD_STATUS_PHASE_ERROR;
-			usb_write_data (MSD_DATA_EP_OUT, data, msd_state.transfer_len);
+			len = msd_state.transfer_len;
 		} else {
 			msd_state.cmd_status = MSD_STATUS_CMD_PASSED;
-			usb_write_data (MSD_DATA_EP_OUT, data, len);
 		}
+		usb_write_data (MSD_DATA_EP_OUT, data, len);
+		msd_state.transfer_len -= len;
 	} else {
 		msd_state.status	= MSD_WAIT_CLEAR_TX;
 		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
@@ -569,11 +572,12 @@ static void msd_recv_data (uint8_t *data, uint32_t len)
 		msd_state.status = MSD_DATA_RX;
 		if (len > msd_state.transfer_len) {
 			msd_state.cmd_status = MSD_STATUS_PHASE_ERROR;
-			usb_read_start (MSD_DATA_EP_IN, data, msd_state.transfer_len);
+			len = msd_state.transfer_len;
 		} else {
 			msd_state.cmd_status = MSD_STATUS_CMD_PASSED;
-			usb_read_start (MSD_DATA_EP_IN, data, len);
 		}
+		usb_read_start (MSD_DATA_EP_IN, data, len);
+		msd_state.transfer_len -= len;
 	} else {
 		msd_state.status	= MSD_WAIT_CLEAR_RX;
 		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
@@ -935,7 +939,16 @@ static void msd_handle_rx (int endpoint)
 	} else if (msd_state.status == MSD_WAIT_CBW) {
 		msd_handle_cbw ((uint8_t *) msd_state.buf.cbw, usb_state.rx_len);
 	} else if (msd_state.status == MSD_DATA_RX) {
-		/* FIXME: check data read has complete, finish command, send CSW */
+		if (usb_state.rx_len == usb_state.rx_size) {
+			/* all data sent */
+			if (msd_state.transfer_len > 0) {
+				/* Stall if residue != 0 */
+				msd_state.status = MSD_WAIT_CLEAR_RX;
+				usb_send_stall (MSD_DATA_EP_IN);
+			} else {
+				msd_send_csw (msd_state.cmd_status);
+			}
+		}
 	}
 }
 
@@ -945,10 +958,16 @@ static void msd_handle_tx_complete (int endpoint)
 		return;
 	} else if (msd_state.status == MSD_WAIT_CSW) {
 		/* CSW has been sent, wait for new command. */
-		/* FIXME: check send completed */
 		msd_wait_cbw ();
 	} else if (msd_state.status == MSD_DATA_TX) {
-		/* FIXME: check send completed, send CSW */
+		/* all data sent */
+		if (msd_state.transfer_len > 0) {
+			/* Stall if residue != 0 */
+			msd_state.status = MSD_WAIT_CLEAR_TX;
+			usb_send_stall (MSD_DATA_EP_OUT);
+		} else {
+			msd_send_csw (msd_state.cmd_status);
+		}
 	}
 }
 
@@ -1174,12 +1193,14 @@ static uint32_t usb_manage_setup_packet (void)
 				if (usb_state.current_config == 0) {
 					*AT91C_UDP_GLBSTATE = AT91C_UDP_FADDEN;
 					usb_state.status = USB_UNINITIALISED;
+					debug_msg (0x0f);
 				} else {
 					/* we set the register in configured mode */
 					*AT91C_UDP_GLBSTATE = AT91C_UDP_CONFG | AT91C_UDP_FADDEN;
 					csr1 = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
 					csr2 = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
 					usb_state.status = USB_READY;
+					debug_msg (0xff);
 				}
 
 				AT91C_UDP_CSR[1] = csr1;
@@ -1218,6 +1239,7 @@ static void usb_isr (void)
 	/* End of bus reset. Starting the device setup procedure. */
 	if (isr & AT91C_UDP_ENDBUSRES) {
 		usb_state.status = USB_UNINITIALISED;
+		debug_msg (0x0f);
 
 		/* Disable and clear all interruptions, reverting to the base
 		 * state.
@@ -1375,7 +1397,6 @@ void usb_set_msd (uint8_t *msd_data, uint32_t msd_len, int read_only)
 		msd_state.flags |= MSD_FLAG_READ_ONLY;
 	msd_state.data		= msd_data;
 	msd_state.data_len	= msd_len;
-
 }
 
 void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only)
@@ -1410,9 +1431,7 @@ void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only)
 	 * this interruption is always emit (can't be disable with UDP_IER)
 	 */
 	/* other interruptions will be enabled when needed */
-	aic_install_isr (AT91C_ID_UDP, AIC_PRIO_DRIVER,
-			AIC_TRIG_LEVEL, usb_isr);
-
+	aic_install_isr (AT91C_ID_UDP, AIC_PRIO_USB, AIC_TRIG_LEVEL, usb_isr);
 
 	nxt__interrupts_enable ();
 

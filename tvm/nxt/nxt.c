@@ -96,11 +96,46 @@ void systick_wait_ns (uint32_t ns)
 
 static uint8_t disp_buf[(NXT_LCD_HEIGHT * NXT_LCD_WIDTH) / 8];
 
+static void display_pattern (uint8_t odd, uint8_t even)
+{
+	unsigned int i;
+	
+	for (i = 0; i < sizeof (disp_buf); ++i) {
+		if ((i & 1) == 0) {
+			disp_buf[i] = even;
+		} else {
+			disp_buf[i] = odd;
+		}
+	}
+
+	lcd_dirty_display ();
+	lcd_update ();
+}
+
+static void blink (void) {
+	int i;
+
+	for (i = 0; i < 10; ++i)
+		disp_buf[sizeof (disp_buf) - (i + 1)] ^= 0xff;
+
+	lcd_dirty_display ();
+	lcd_update ();
+}
+
+void debug_msg (uint8_t code)
+{
+	int i;
+	for (i = 0; i < 10; ++i)
+		disp_buf[i] = code;
+	lcd_dirty_display ();
+	lcd_update ();
+}
+
 void nxt_init (void)
 {
 	uint32_t msd_len;
 	uint8_t *msd_mem;
-	int i;
+	
 	aic_init ();
 	avr_data_init ();
 
@@ -111,8 +146,14 @@ void nxt_init (void)
 
 	systick_init ();
 	avr_init ();
-	lcd_init ();
 
+	/* LCD and Frame Buffer */
+	lcd_init ();
+	memset (disp_buf, 0, sizeof (disp_buf));
+	lcd_set_display (disp_buf);
+	display_pattern (0x00, 0x01);
+
+	/* USB and Mass Storage */
 	msd_mem = NXT_FREE_MEM_START;
 	msd_len = NXT_FREE_MEM_LEN;
 	if ((((uint32_t) msd_mem) % 256) != 0) {
@@ -121,22 +162,15 @@ void nxt_init (void)
 		msd_len -= diff;
 	}
 	msd_len -= (msd_len % 256);
-	
 	usb_init (msd_mem, msd_len, 0);
-	
-	for (i = 0; i < sizeof (disp_buf); ++i) {
-		if ((i & 1) == 0) {
-			disp_buf[i] = 0xaa;
-		} else {
-			disp_buf[i] = 0x55;
-		}
-	}
-	lcd_set_display (disp_buf);
-	lcd_dirty_display ();
-	lcd_update ();
 
-	systick_wait_ms (120000);
+	/* Wait for shutdown button */
+	do { 
+		systick_wait_ms (500);
+		blink ();
+	} while (avr_get_button () != BUTTON_CANCEL);
 
+	/* Shutdown */
 	lcd_shutdown ();
 	avr_power_down ();
 }

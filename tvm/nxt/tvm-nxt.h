@@ -77,7 +77,8 @@ enum {
 };
 enum {
 	AIC_PRIO_LOW		= 1,
-	AIC_PRIO_DRIVER		= 3,
+	AIC_PRIO_DRIVER		= 2,
+	AIC_PRIO_USB		= 3,
 	AIC_PRIO_SOFTMAC 	= 4,
 	AIC_PRIO_SCHED		= 5,
 	AIC_PRIO_RT 		= 6,
@@ -95,6 +96,7 @@ void avr_init (void);
 void avr_data_init (void);
 void avr_systick_update (void);
 void avr_power_down (void);
+int avr_get_button (void);
 
 /* nxt.c */
 uint32_t systick_get_ms (void);
@@ -114,6 +116,9 @@ void usb_disable (void);
 void usb_enable (void);
 void usb_set_msd (uint8_t *msd_data, uint32_t msd_len, int read_only);
 void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only);
+
+/* nxt.c */
+void debug_msg (uint8_t code);
 
 /*}}}*/
 
