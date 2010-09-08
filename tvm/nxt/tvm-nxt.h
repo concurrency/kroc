@@ -118,7 +118,7 @@ void usb_set_msd (uint8_t *msd_data, uint32_t msd_len, int read_only);
 void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only);
 
 /* nxt.c */
-void debug_msg (uint8_t code);
+void debug_msg (unsigned int offset, uint8_t code);
 
 /*}}}*/
 

@@ -122,11 +122,11 @@ static void blink (void) {
 	lcd_update ();
 }
 
-void debug_msg (uint8_t code)
+void debug_msg (unsigned offset, uint8_t code)
 {
 	int i;
-	for (i = 0; i < 10; ++i)
-		disp_buf[i] = code;
+	for (i = 0; i < 8; ++i)
+		disp_buf[(offset * 8) + i] = code;
 	lcd_dirty_display ();
 	lcd_update ();
 }
