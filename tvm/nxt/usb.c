@@ -253,6 +253,28 @@ static const uint8_t scsi_standard_inquiry[] = {
 	'T', 'V', 'M', ' '			/* Revision ID */
 };
 
+static const uint8_t scsi_evpd_page_00[] = {
+	0x00,	/* 000b = Peripheral Device, 00h = SBC-3 */
+	0x00,	/* Page Code 00 */
+	0x00,	/* Reserved */
+	2,	/* Number of Pages Supported */
+	0x00,	/* Mandatory Page 00 */
+	0x83	/* Mandatory Page 83 */
+};
+
+static const uint8_t scsi_evpd_page_83[] = {
+	0x00,		/* 000b = Peripheral Device, 00h = SBC-3 */
+	0x83,		/* Page Code 83 */
+	0x00, 0x01, 	/* 1 designator follows */
+
+	0x02,		/* Code Set ASCII */
+	0x00,		/* Vendor Specific ID */
+	0x00,		/* Reserved */
+	0x04,		/* 4 bytes */
+	'L', 'E', 'G', 'O'
+};
+
+
 /*
  * The USB device state. Contains the current USB state (selected
  * configuration, etc.) and transitory state for data transfers.
@@ -654,21 +676,20 @@ static int scsi_inquiry (const uint8_t *cmd)
 		}
 	} else if (cmd[1] == 1) {
 		/* EVPD = 1 */
-		/* FIXME: need to support 2 other mandatory pages */
-		if (cmd[2] == 0) {
+		if (cmd[2] == 0x00) {
 			/* Page 00 */
-			uint8_t *buf = (uint8_t *) msd_state.buf.sense;
+			if (length > sizeof (scsi_evpd_page_00))
+				length = sizeof (scsi_evpd_page_00);
 
-			if (length > 5)
-				length = 5;
 
-			buf[0] = scsi_standard_inquiry[0];
-			buf[1] = 0x00;	/* page code 00 */
-			buf[2] = 0x00;
-			buf[3] = 1;	/* no. supported pages */
-			buf[4] = 0x00;	/* only page 00 is supported */
+			msd_send_data (scsi_evpd_page_00, length);
 
-			msd_send_data (buf, length);
+			return 1;
+		} else if (cmd[2] == 0x83) {
+			if (length > sizeof (scsi_evpd_page_83))
+				length = sizeof (scsi_evpd_page_83);
+			
+			msd_send_data (scsi_evpd_page_83, length);
 
 			return 1;
 		}
@@ -1323,7 +1344,6 @@ static void usb_isr (void)
 	}
 }
 
-
 void usb_disable (void)
 {
 	aic_disable (AT91C_ID_UDP);
@@ -1335,8 +1355,7 @@ void usb_disable (void)
 	systick_wait_ms (200);
 }
 
-
-static inline void usb_enable (void)
+void usb_enable (void)
 {
 	/* Enable the UDP pull up by outputting a zero on PA.16 */
 	/* Enabling the pull up will tell to the host (the computer) that
@@ -1349,8 +1368,17 @@ static inline void usb_enable (void)
 	systick_wait_ms (200);
 }
 
+void usb_set_msd (uint8_t *msd_data, uint32_t msd_len, int read_only)
+{
+	msd_state.flags		&= ~MSD_FLAG_READ_ONLY;
+	if (read_only)
+		msd_state.flags |= MSD_FLAG_READ_ONLY;
+	msd_state.data		= msd_data;
+	msd_state.data_len	= msd_len;
 
-void usb_init (void)
+}
+
+void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only)
 {
 	usb_disable ();
 
@@ -1388,63 +1416,7 @@ void usb_init (void)
 
 	nxt__interrupts_enable ();
 
+	usb_set_msd (msd_data, msd_len, read_only);
 	usb_enable ();
 }
 
-#if 0
-
-bool usb_can_write (void)
-{
-	  return (usb_state.status == USB_READY);
-}
-
-
-void usb_write (uint8_t *data, uint32_t length)
-{
-	/*
-	   NX_ASSERT_MSG(usb_state.status != USB_UNINITIALISED,
-	   "USB not init");
-	   NX_ASSERT_MSG(usb_state.status != USB_SUSPENDED,
-	   "USB asleep");
-	   NX_ASSERT(data != NULL);
-	   NX_ASSERT(length > 0);
-	   */
-
-	/* TODO: Make call asynchronous */
-	while (usb_state.status != USB_READY);
-
-	/* start sending the data */
-	usb_write_data (2, data, length);
-}
-
-bool usb_data_written (void)
-{
-	return (usb_state.tx_len[2] == 0);
-}
-
-
-bool usb_is_connected (void)
-{
-	return (usb_state.status != USB_UNINITIALISED);
-}
-
-
-void usb_read (uint8_t *data, uint32_t length)
-{
-	usb_state.rx_data = data;
-	usb_state.rx_size = length;
-	usb_state.rx_len  = 0;
-
-	if (usb_state.status > USB_UNINITIALISED
-			&& usb_state.status != USB_SUSPENDED) {
-		AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-	}
-}
-
-
-uint32_t usb_data_read (void)
-{
-	return usb_state.rx_len;
-}
-
-#endif

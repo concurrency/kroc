@@ -28,6 +28,29 @@ void memset (void *dest, int8_t val, size_t len);
 #define NXT_LCD_HEIGHT	64
 #define NXT_LCD_WIDTH	100
 
+/* memory map */
+extern uint8_t __ram_userspace_start__;
+extern uint8_t __ram_userspace_end__;
+extern uint8_t __ramtext_ram_start__;
+extern uint8_t __ramtext_ram_end__;
+extern uint8_t __text_start__;
+extern uint8_t __text_end__;
+extern uint8_t __data_ram_start__;
+extern uint8_t __data_ram_end__;
+extern uint8_t __bss_start__;
+extern uint8_t __bss_end__;
+extern uint8_t __stack_start__;
+extern uint8_t __stack_end__;
+extern uint8_t __rom_end__;
+extern uint8_t __boot_from_samba__;
+
+#define SYMADDR(sym)		((uint8_t *)&(sym))
+#define SECSIZE(start, end)	((uint32_t)(end - start))
+#define NXT_FREE_MEM_START	SYMADDR(__ram_userspace_start__)
+#define NXT_FREE_MEM_END	SYMADDR(__ram_userspace_end__)
+#define NXT_FREE_MEM_LEN	SECSIZE(NXT_FREE_MEM_START, NXT_FREE_MEM_END)
+
+/* buttons */
 enum {
 	BUTTON_NONE	= 0,
 	BUTTON_OK,
@@ -87,7 +110,10 @@ void lcd_shutdown (void);
 void lcd_sync_refresh (void);
 
 /* usb.c */
-void usb_init (void);
+void usb_disable (void);
+void usb_enable (void);
+void usb_set_msd (uint8_t *msd_data, uint32_t msd_len, int read_only);
+void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only);
 
 /*}}}*/
 

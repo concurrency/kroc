@@ -98,6 +98,8 @@ static uint8_t disp_buf[(NXT_LCD_HEIGHT * NXT_LCD_WIDTH) / 8];
 
 void nxt_init (void)
 {
+	uint32_t msd_len;
+	uint8_t *msd_mem;
 	int i;
 	aic_init ();
 	avr_data_init ();
@@ -110,7 +112,17 @@ void nxt_init (void)
 	systick_init ();
 	avr_init ();
 	lcd_init ();
-	usb_init ();
+
+	msd_mem = NXT_FREE_MEM_START;
+	msd_len = NXT_FREE_MEM_LEN;
+	if ((((uint32_t) msd_mem) % 256) != 0) {
+		uint32_t diff = 256 - (((uint32_t) msd_mem) % 256);
+		msd_mem += diff;
+		msd_len -= diff;
+	}
+	msd_len -= (msd_len % 256);
+	
+	usb_init (msd_mem, msd_len, 0);
 	
 	for (i = 0; i < sizeof (disp_buf); ++i) {
 		if ((i & 1) == 0) {
