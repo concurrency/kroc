@@ -186,7 +186,7 @@ static const uint8_t usb_full_config[] = {
 	 * Descriptor for EP1.
 	 */
 	7, USB_DESC_TYPE_ENDPT, /* Descriptor length and type. */
-	0x01, /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
+	0x00 | MSD_DATA_EP_IN, /* Endpoint number. MSB is zero, meaning this is an OUT EP. */
 	0x02, /* Endpoint type (bulk). */
 	MAX_RCV_SIZE, 0x00, /* Maximum packet size (64). */
 	0, /* EP maximum NAK rate (device never NAKs). */
@@ -196,10 +196,10 @@ static const uint8_t usb_full_config[] = {
 	 * Descriptor for EP2.
 	 */
 	7, USB_DESC_TYPE_ENDPT, /* Descriptor length and type. */
-	0x82, /* Endpoint number. MSB is one, meaning this is an IN EP. */
+	0x80 | MSD_DATA_EP_OUT, /* Endpoint number. MSB is one, meaning this is an IN EP. */
 	0x02, /* Endpoint type (bulk). */
-	MAX_RCV_SIZE, 0x00, /* Maximum packet size (64). */
-	0, /* EP maximum NAK rate (device never NAKs). */
+	MAX_SND_SIZE, 0x00, /* Maximum packet size (64). */
+	0  /* EP maximum NAK rate (device never NAKs). */
 };
 
 
@@ -382,16 +382,21 @@ static volatile struct {
  */
 static inline void usb_csr_clear_flag (uint8_t endpoint, uint32_t flags)
 {
-	AT91C_UDP_CSR[endpoint] &= ~(flags);
-	while (AT91C_UDP_CSR[endpoint] & (flags));
+	AT91C_UDP_CSR[endpoint] &= ~flags;
+	while (AT91C_UDP_CSR[endpoint] & flags);
 }
 
 static inline void usb_csr_set_flag (uint8_t endpoint, uint32_t flags)
 {
-	AT91C_UDP_CSR[endpoint] |= (flags);
-	while ((AT91C_UDP_CSR[endpoint] & (flags)) != (flags));
+	AT91C_UDP_CSR[endpoint] |= flags;
+	while ((AT91C_UDP_CSR[endpoint] & flags) != flags);
 }
 
+static inline void usb_csr_set_value (uint8_t endpoint, uint32_t value)
+{
+	AT91C_UDP_CSR[endpoint] = value;
+	while (AT91C_UDP_CSR[endpoint] != value);
+}
 
 /* Starts sending data to the host. If the data cannot fit into a
  * single USB packet, the data is split and scheduled to be sent in
@@ -467,7 +472,7 @@ static void usb_read_data (int endpoint)
 		return;
 	}
 
-	total = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
+	total = (AT91C_UDP_CSR[1] & AT91C_UDP_RXBYTECNT) >> 16;
 
 	/* we start reading */
 	/* all the bytes will be put in rx_data */
@@ -501,6 +506,12 @@ static void usb_read_data (int endpoint)
 		/* If there is no buffer space left then disable the endpoint. */
 		usb_csr_clear_flag (1, AT91C_UDP_EPEDS);
 	}
+
+	if (total > 0) {
+		debug_msg (7, 0xff);
+	} else {
+		debug_msg (7, 0xf0);
+	}
 }
 
 
@@ -516,7 +527,7 @@ static void usb_send_stall (int endpoint)
 		usb_state.status = USB_UNINITIALISED;
 		debug_msg (0, 0xf0);
 	}
-	usb_csr_set_flag (endpoint, AT91C_UDP_FORCESTALL);
+	usb_csr_set_flag (endpoint, AT91C_UDP_EPEDS | AT91C_UDP_FORCESTALL);
 }
 
 static void usb_set_halt (int endpoint)
@@ -528,8 +539,13 @@ static void usb_set_halt (int endpoint)
 static void usb_clear_halt (int endpoint)
 {
 	usb_state.halted &= ~(1 << endpoint);
+	usb_csr_clear_flag (endpoint, AT91C_UDP_FORCESTALL | AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1); 
 	*AT91C_UDP_RSTEP = (1 << endpoint);
 	*AT91C_UDP_RSTEP = 0;
+	if (endpoint == 1) {
+		usb_csr_clear_flag (endpoint, AT91C_UDP_EPEDS);
+		usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
+	}
 }
 
 /* During setup, we need to send packets with null data. */
@@ -563,7 +579,7 @@ static void msd_send_data (const uint8_t *data, uint32_t len)
 	} else {
 		msd_state.status	= MSD_WAIT_CLEAR_TX;
 		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
-		usb_send_stall (MSD_DATA_EP_OUT);
+		usb_set_halt (MSD_DATA_EP_OUT);
 	}
 }
 
@@ -582,7 +598,7 @@ static void msd_recv_data (uint8_t *data, uint32_t len)
 	} else {
 		msd_state.status	= MSD_WAIT_CLEAR_RX;
 		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
-		usb_send_stall (MSD_DATA_EP_IN);
+		usb_set_halt (MSD_DATA_EP_IN);
 	}
 }
 
@@ -599,7 +615,7 @@ static void msd_stall_tx_with_error (uint8_t key, uint8_t code, uint8_t qual)
 	msd_state.scsi_sense_key	= key;
 	msd_state.scsi_sense_code	= code;
 	msd_state.scsi_sense_qualifier	= qual;
-	usb_send_stall (MSD_DATA_EP_OUT);
+	usb_set_halt (MSD_DATA_EP_OUT);
 }
 
 static void msd_stall_rx_with_error (uint8_t key, uint8_t code, uint8_t qual)
@@ -609,7 +625,7 @@ static void msd_stall_rx_with_error (uint8_t key, uint8_t code, uint8_t qual)
 	msd_state.scsi_sense_key	= key;
 	msd_state.scsi_sense_code	= code;
 	msd_state.scsi_sense_qualifier	= qual;
-	usb_send_stall (MSD_DATA_EP_OUT);
+	usb_set_halt (MSD_DATA_EP_OUT);
 }
 
 static int scsi_test_unit_ready (const uint8_t *cmd)
@@ -945,7 +961,7 @@ static void msd_handle_rx (int endpoint)
 			if (msd_state.transfer_len > 0) {
 				/* Stall if residue != 0 */
 				msd_state.status = MSD_WAIT_CLEAR_RX;
-				usb_send_stall (MSD_DATA_EP_IN);
+				usb_set_halt (MSD_DATA_EP_IN);
 			} else {
 				msd_send_csw (msd_state.cmd_status);
 			}
@@ -965,7 +981,7 @@ static void msd_handle_tx_complete (int endpoint)
 		if (msd_state.transfer_len > 0) {
 			/* Stall if residue != 0 */
 			msd_state.status = MSD_WAIT_CLEAR_TX;
-			usb_send_stall (MSD_DATA_EP_OUT);
+			usb_set_halt (MSD_DATA_EP_OUT);
 		} else {
 			msd_send_csw (msd_state.cmd_status);
 		}
@@ -974,7 +990,7 @@ static void msd_handle_tx_complete (int endpoint)
 
 
 /* Handle receiving and responding to setup packets on EP0. */
-static void usb_manage_setup_packet (void)
+static void usb_manage_setup_packet (uint8_t endpoint)
 {
 	/* The structure of a USB setup packet. */
 	struct {
@@ -987,6 +1003,12 @@ static void usb_manage_setup_packet (void)
 	} packet;
 	uint16_t response = 0;
 	uint8_t byte_resp;
+
+	/* Ignore setup packets on endpoints other than control 0 */
+	if (endpoint != 0) {
+		usb_csr_clear_flag (endpoint, AT91C_UDP_RXSETUP);
+		return;
+	}
 
 	/* Read the packet from the FIFO into the above packet struct. */
 	packet.request_attrs = AT91C_UDP_FDR[0];
@@ -1186,33 +1208,30 @@ static void usb_manage_setup_packet (void)
 		case USB_BREQUEST_SET_CONFIG:
 			/* The host selected a new configuration. */
 			if (packet.value == 0 || packet.value == 1) {
-				uint32_t csr1 = 0, csr2 = 0, csr3 = 0;
-
-				/* we ack */
-				usb_send_null ();
+				uint32_t csr[4] = { 0, 0, 0, 0 };
+				int i;
 
 				usb_state.current_config = packet.value;
 				usb_state.halted = 0x00;
 				
 				if (usb_state.current_config == 0) {
-					*AT91C_UDP_GLBSTATE = AT91C_UDP_FADDEN;
-					usb_state.status = USB_UNINITIALISED;
+					*AT91C_UDP_GLBSTATE	= AT91C_UDP_FADDEN;
+					usb_state.status	= USB_UNINITIALISED;
 					debug_msg (0, 0x0f);
 				} else {
 					/* we set the register in configured mode */
-					*AT91C_UDP_GLBSTATE = AT91C_UDP_CONFG | AT91C_UDP_FADDEN;
-					csr1 = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-					csr2 = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
-					usb_state.status = USB_READY;
+					*AT91C_UDP_GLBSTATE	= AT91C_UDP_CONFG | AT91C_UDP_FADDEN;
+					csr[MSD_DATA_EP_IN]	= AT91C_UDP_EPTYPE_BULK_OUT;
+					csr[MSD_DATA_EP_OUT]	= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
+					usb_state.status	= USB_READY;
 					debug_msg (0, 0xff);
 				}
 
-				AT91C_UDP_CSR[1] = csr1;
-				while (AT91C_UDP_CSR[1] != csr1);
-				AT91C_UDP_CSR[2] = csr2;
-				while (AT91C_UDP_CSR[2] != csr2);
-				AT91C_UDP_CSR[3] = csr3;
-				while (AT91C_UDP_CSR[3] != csr3);
+				for (i = 1; i < 4; ++i)
+					usb_csr_set_value (i, csr[i]);
+				
+				/* ack */
+				usb_send_null ();
 			} else {
 				usb_send_stall (0);
 			}
@@ -1228,97 +1247,107 @@ static void usb_manage_setup_packet (void)
 /* The main USB interrupt handler. */
 static void usb_isr (void)
 {
-	uint8_t endpoint = 127;
-	uint32_t csr, isr;
+	uint32_t isr = *AT91C_UDP_ISR;
 
-	isr = *AT91C_UDP_ISR;
+	debug_msg (18, (uint8_t) isr >> 8);
+	debug_msg (19, (uint8_t) isr >> 0);
 
-	/* We sent a stall, the host has acknowledged the stall. */
-	if (AT91C_UDP_CSR[0] & AT91C_UDP_ISOERROR)
-		usb_csr_clear_flag (0, AT91C_UDP_FORCESTALL | AT91C_UDP_ISOERROR);
+	if (isr & (AT91C_UDP_ENDBUSRES 
+		| AT91C_UDP_WAKEUP 
+		| AT91C_UDP_SOFINT 
+		| AT91C_UDP_RXSUSP 
+		| AT91C_UDP_RXRSM)) { 
+		
+		/* End of bus reset. Starting the device setup procedure. */
+		if (isr & AT91C_UDP_ENDBUSRES) {
+			usb_state.status = USB_UNINITIALISED;
+			debug_msg (0, 0x00);
 
-	/* End of bus reset. Starting the device setup procedure. */
-	if (isr & AT91C_UDP_ENDBUSRES) {
-		usb_state.status = USB_UNINITIALISED;
-		debug_msg (0, 0x00);
+			/* Disable and clear all interruptions, reverting to the base
+			 * state.
+			 */
+			*AT91C_UDP_IDR = ~0;
+			*AT91C_UDP_ICR = ~0;
 
-		/* Disable and clear all interruptions, reverting to the base
-		 * state.
-		 */
-		*AT91C_UDP_IDR = ~0;
-		*AT91C_UDP_ICR = ~0;
+			/* Reset all endpoint FIFOs. */
+			*AT91C_UDP_RSTEP = ~0;
+			*AT91C_UDP_RSTEP = 0;
 
-		/* Reset all endpoint FIFOs. */
-		*AT91C_UDP_RSTEP = ~0;
-		*AT91C_UDP_RSTEP = 0;
+			/* Reset internal state. */
+			usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
+			usb_state.current_config  = 0;
 
-		/* Reset internal state. */
-		usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
-		usb_state.current_config  = 0;
+			/* Reset EP0 to a basic control endpoint. */
+			usb_csr_set_value (0, AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_CTRL);
 
-		/* Reset EP0 to a basic control endpoint. */
-		/* TODO: The while is ugly. Fix it. */
-		AT91C_UDP_CSR[0] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_CTRL;
-		while (AT91C_UDP_CSR[0] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_CTRL));
+			/* Disable other endpoints */
+			usb_csr_clear_flag (1, AT91C_UDP_EPEDS);
+			usb_csr_clear_flag (2, AT91C_UDP_EPEDS);
+			usb_csr_clear_flag (3, AT91C_UDP_EPEDS);
 
-		/* Enable interrupt handling for all three endpoints, as well as
-		 * suspend/resume.
-		 */
-		*AT91C_UDP_IER = (AT91C_UDP_EPINT0 | AT91C_UDP_EPINT1 |
-				AT91C_UDP_EPINT2 | AT91C_UDP_EPINT3 |
-				AT91C_UDP_RXSUSP | AT91C_UDP_RXRSM);
+			/* Enable interrupt handling for all three endpoints, as well as
+			 * suspend/resume.
+			 */
+			*AT91C_UDP_IER = (AT91C_UDP_EPINT0 | AT91C_UDP_EPINT1 |
+					AT91C_UDP_EPINT2 | AT91C_UDP_EPINT3 |
+					AT91C_UDP_RXSUSP | AT91C_UDP_RXRSM);
 
-		/* Enable the function endpoints, setting address 0, and return
-		 * immediately. Given that we've just reset everything, there's no
-		 * point in continuing.
-		 */
-		*AT91C_UDP_FADDR = AT91C_UDP_FEN;
+			/* Enable the function endpoints, setting address 0, and return
+			 * immediately. Given that we've just reset everything, there's no
+			 * point in continuing.
+			 */
+			*AT91C_UDP_FADDR = AT91C_UDP_FEN;
 
-		return;
-	}
-
-	if (isr & AT91C_UDP_WAKEUP) {
-		*AT91C_UDP_ICR = AT91C_UDP_WAKEUP;
-		isr &= ~AT91C_UDP_WAKEUP;
-	}
-
-
-	if (isr & AT91C_UDP_SOFINT) {
-		*AT91C_UDP_ICR = AT91C_UDP_SOFINT;
-		isr &= ~AT91C_UDP_SOFINT;
-	}
-
-	if (isr & AT91C_UDP_RXSUSP) {
-		*AT91C_UDP_ICR = AT91C_UDP_RXSUSP;
-		isr &= ~AT91C_UDP_RXSUSP;
-		usb_state.pre_suspend_status = usb_state.status;
-		usb_state.status = USB_SUSPENDED;
-	}
-
-	if (isr & AT91C_UDP_RXRSM) {
-		*AT91C_UDP_ICR = AT91C_UDP_RXRSM;
-		isr &= ~AT91C_UDP_RXRSM;
-		usb_state.status = usb_state.pre_suspend_status;
-	}
-
-	for (endpoint = 0; endpoint < N_ENDPOINTS; endpoint++) {
-		if (isr & (1 << endpoint))
-			break;
-	}
-
-	if (endpoint < N_ENDPOINTS) { /* if an endpoint was specified */
-		csr = AT91C_UDP_CSR[endpoint];
-
-		if ((csr & AT91C_UDP_RXSETUP) && endpoint == 0) {
-			usb_manage_setup_packet ();
-			debug_msg (endpoint + 3, 0x44);
 			return;
 		}
 
+		if (isr & AT91C_UDP_WAKEUP) {
+			*AT91C_UDP_ICR = AT91C_UDP_WAKEUP;
+			isr &= ~AT91C_UDP_WAKEUP;
+		}
+
+
+		if (isr & AT91C_UDP_SOFINT) {
+			*AT91C_UDP_ICR = AT91C_UDP_SOFINT;
+			isr &= ~AT91C_UDP_SOFINT;
+		}
+
+		if (isr & AT91C_UDP_RXSUSP) {
+			*AT91C_UDP_ICR = AT91C_UDP_RXSUSP;
+			isr &= ~AT91C_UDP_RXSUSP;
+			usb_state.pre_suspend_status = usb_state.status;
+			usb_state.status = USB_SUSPENDED;
+		}
+
+		if (isr & AT91C_UDP_RXRSM) {
+			*AT91C_UDP_ICR = AT91C_UDP_RXRSM;
+			isr &= ~AT91C_UDP_RXRSM;
+			usb_state.status = usb_state.pre_suspend_status;
+		}
+	}
+
+	if (isr & (AT91C_UDP_EP0 | AT91C_UDP_EP1 | AT91C_UDP_EP2 | AT91C_UDP_EP3)) {
+		uint32_t csr;
+		int endpoint = 0;
+		
+		while (!(isr & (1 << endpoint)))
+			endpoint++;
+
+		csr = AT91C_UDP_CSR[endpoint];
+		debug_msg (7, (uint8_t) (csr >> 8));
+		debug_msg (8, (uint8_t) (csr >> 0));
+		
 		/* Acknowledge stall */
 		if (csr & AT91C_UDP_ISOERROR) {
 			usb_csr_clear_flag (endpoint, AT91C_UDP_FORCESTALL | AT91C_UDP_ISOERROR);
 			debug_msg (endpoint + 3, 0x88);
+			return;
+		}
+
+		/* Setup packet */
+		if (csr & AT91C_UDP_RXSETUP) {
+			usb_manage_setup_packet (endpoint);
+			debug_msg (endpoint + 3, 0x44);
 			return;
 		}
 		
@@ -1337,8 +1366,8 @@ static void usb_isr (void)
 
 			if (usb_state.new_device_address > 0) {
 				/* the previous message received was SET_ADDR */
-				/* now that the computer ACK our send_null(), we can
-				 * set this address for real */
+				/* now that the computer acknowledged our send_null(), 
+				 * we can set this address for real */
 
 				/* we set the specified usb address in the controller */
 				*AT91C_UDP_FADDR    = AT91C_UDP_FEN | usb_state.new_device_address;

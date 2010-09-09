@@ -77,8 +77,8 @@ enum {
 };
 enum {
 	AIC_PRIO_LOW		= 1,
-	AIC_PRIO_DRIVER		= 2,
-	AIC_PRIO_USB		= 3,
+	AIC_PRIO_DRIVER		= 3,
+	AIC_PRIO_USB		= 2,
 	AIC_PRIO_SOFTMAC 	= 4,
 	AIC_PRIO_SCHED		= 5,
 	AIC_PRIO_RT 		= 6,
