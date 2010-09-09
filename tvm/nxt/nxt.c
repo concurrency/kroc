@@ -124,11 +124,24 @@ static void blink (void) {
 
 void debug_msg (unsigned offset, uint8_t code)
 {
+	uint8_t *buf = disp_buf + (offset * 10);
 	int i;
-	for (i = 0; i < 8; ++i)
-		disp_buf[(offset * 8) + i] = code;
-	lcd_dirty_display ();
-	lcd_update ();
+	
+	*(buf) = ((*buf) ^ 0xff) | 0x83;
+	buf++;
+
+	for (i = 0; i < 8; ++i) {
+		uint8_t byte = 0;
+
+		if (code & 0x80)
+			byte = 0x78;
+		code <<= 1;
+		
+		*buf = (*buf & (~0x78)) | byte;
+		buf++;
+	}
+	
+	*(buf) = ((*buf) ^ 0xff) | 0x83;
 }
 
 void nxt_init (void)
