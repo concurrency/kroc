@@ -12,7 +12,11 @@ noinst_PROGRAMS = tvm_nxt
 
 tvm_nxt_SOURCES = \
 	aic.c \
+	asm_decls.h \
+	at91sam7s256.h \
 	avr.c \
+	debug.c \
+	font8x8.h \
 	init.S \
 	interrupts.S \
 	lcd.c \
@@ -26,13 +30,13 @@ tvm_nxt_SOURCES = \
 	usb.c \
 	vectors.S
 
-%.samba.elf: $(tvm_nxt_OBJECTS)
+%.samba.elf: $(tvm_nxt_OBJECTS) samba.lds
 	$(LD) $(LDFLAGS) \
 		-o $@ -T samba.lds -Os --gc-sections --no-check-sections \
 		$(tvm_nxt_OBJECTS) \
 		$(LIBS)
 
-%.rom.elf: $(tvm_nxt_OBJECTS)
+%.rom.elf: $(tvm_nxt_OBJECTS) rom.lds
 	$(LD) $(LDFLAGS) \
 		-o $@ -T rom.lds -Os --gc-sections --no-check-sections \
 		$(tvm_nxt_OBJECTS) \

@@ -98,6 +98,11 @@ void avr_systick_update (void);
 void avr_power_down (void);
 int avr_get_button (void);
 
+/* debug.c */
+void debug_blink (void);
+void debug_init (void);
+void debug_msg (const char *msg, const uint32_t value);
+
 /* nxt.c */
 uint32_t systick_get_ms (void);
 void systick_wait_ms (uint32_t ms);
@@ -117,8 +122,6 @@ void usb_enable (void);
 void usb_set_msd (uint8_t *msd_data, uint32_t msd_len, int read_only);
 void usb_init (uint8_t *msd_data, uint32_t msd_len, int read_only);
 
-/* nxt.c */
-void debug_msg (unsigned int offset, uint8_t code);
 
 /*}}}*/
 

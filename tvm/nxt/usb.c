@@ -907,9 +907,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 		cmd	= &(cbw[15]);
 		ok	= 0;
 		
-		debug_msg (0, cmd[0]);
-		lcd_dirty_display ();
-		lcd_update ();
+		debug_msg ("CMD ", cmd[0]);
 
 		if (cmd_len == 6) {
 			switch (cmd[0]) {
@@ -1242,10 +1240,6 @@ static void usb_isr (void)
 {
 	uint32_t isr = *AT91C_UDP_ISR;
 
-	debug_msg (1, usb_state.halted);
-	debug_msg (12, (isr >> 8));
-	debug_msg (13, (isr >> 0));
-
 	if (isr & (AT91C_UDP_ENDBUSRES 
 		| AT91C_UDP_WAKEUP 
 		| AT91C_UDP_SOFINT 
@@ -1328,10 +1322,6 @@ static void usb_isr (void)
 			endpoint++;
 
 		csr = AT91C_UDP_CSR[endpoint];
-		debug_msg (20 + (endpoint * 2), csr >> 8);
-		debug_msg (21 + (endpoint * 2), csr >> 0);
-		lcd_dirty_display ();
-		lcd_update ();
 
 		/* Acknowledge stall */
 		if (csr & AT91C_UDP_ISOERROR) {
