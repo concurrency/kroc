@@ -75,6 +75,7 @@
 #define MSD_STATUS_CMD_PASSED		0x00
 #define MSD_STATUS_CMD_FAILED		0x01
 #define MSD_STATUS_PHASE_ERROR		0x02
+#define MSD_STATUS_DATA_PHASE		0x03
 
 #define MSD_BLOCK_SIZE			256
 
@@ -317,7 +318,7 @@ static volatile struct {
 	uint8_t *rx_data;
 	/* size of the rx data buffer */
 	uint32_t rx_size;
-	/* length of the read packet (0 if none) */
+	/* length of data in buffer (0 if none) */
 	uint32_t rx_len;
 	/* length of pending data in FIFO */
 	uint16_t rx_pending;
@@ -339,7 +340,6 @@ static volatile struct {
 		MSD_WAIT_CBW,
 		MSD_DATA_RX,
 		MSD_DATA_TX,
-		MSD_WAIT_CSW,
 		MSD_WAIT_CLEAR_HALT
 	} status;
 
@@ -410,6 +410,9 @@ static void usb_write_data (int endpoint, const uint8_t *ptr, uint32_t length)
 		return;
 
 	tx = endpoint / 2;
+
+	/* Acknowledge any existing transmission. */
+	usb_csr_clear_flag (endpoint, AT91C_UDP_TXCOMP);
 
 	/* The bus is now busy. */
 	usb_state.status = USB_BUSY;
@@ -491,8 +494,13 @@ static void usb_read_data (int endpoint)
 	usb_state.rx_len = len;
 	usb_state.rx_pending = total;
 
-	/* if we have read all the data ... */
+	if (len == size) {
+		/* If there is no buffer space left then disable the endpoint. */
+		usb_csr_clear_flag (1, AT91C_UDP_EPEDS);
+	}
+
 	if (total == 0) {
+		/* if we have read all the data ... */
 		/* Acknowledge reading the current RX bank, and switch to the other. */
 		usb_csr_clear_flag (1, usb_state.current_rx_bank);
 		
@@ -500,9 +508,6 @@ static void usb_read_data (int endpoint)
 			usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK1;
 		else
 			usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
-	} else if (/* total > 0 && */ len == size) {
-		/* If there is no buffer space left then disable the endpoint. */
-		usb_csr_clear_flag (1, AT91C_UDP_EPEDS);
 	}
 }
 
@@ -518,7 +523,7 @@ static void usb_send_stall (int endpoint)
 	if (endpoint == 0) {
 		usb_state.status = USB_UNINITIALISED;
 	}
-	usb_csr_set_flag (endpoint, AT91C_UDP_EPEDS | AT91C_UDP_FORCESTALL);
+	usb_csr_set_flag (endpoint, AT91C_UDP_FORCESTALL);
 }
 
 static void usb_set_halt (int endpoint)
@@ -545,6 +550,12 @@ static void usb_send_null (void)
 	usb_write_data (0, NULL, 0);
 }
 
+static void msd_wait_cbw (void)
+{
+	msd_state.status = MSD_WAIT_CBW;
+	usb_read_start (MSD_DATA_EP_IN, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
+}
+
 static void msd_send_csw (uint8_t status)
 {
 	uint8_t *buf = (uint8_t *) msd_state.buf.csw;
@@ -553,6 +564,8 @@ static void msd_send_csw (uint8_t status)
 	*((uint32_t *)&(buf[8]))	= msd_state.transfer_len;
 	buf[12]				= status;
 	usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
+	debug_msg ("CSW ", status);
+	msd_wait_cbw ();
 }
 
 static void msd_send_data (const uint8_t *data, uint32_t len)
@@ -594,12 +607,6 @@ static void msd_recv_data (uint8_t *data, uint32_t len)
 	}
 }
 
-static void msd_wait_cbw (void)
-{
-	msd_state.status = MSD_WAIT_CBW;
-	usb_read_start (MSD_DATA_EP_IN, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
-}
-
 static void msd_stall_tx_with_error (uint8_t key, uint8_t code, uint8_t qual)
 {
 	msd_state.status		= MSD_WAIT_CLEAR_HALT;
@@ -621,10 +628,9 @@ static int scsi_test_unit_ready (const uint8_t *cmd)
 	/* 1-4	= Reserved */
 	/* 5	= Control */
 	if ((cmd[1] | cmd[2] | cmd[3] | cmd[4]) == 0) {
-		msd_send_csw (MSD_STATUS_CMD_PASSED);
-		return 1;
+		return MSD_STATUS_CMD_PASSED;
 	} else {
-		return 0;
+		return MSD_STATUS_CMD_FAILED;
 	}
 }
 
@@ -657,9 +663,9 @@ static int scsi_request_sense (const uint8_t *cmd)
 		msd_state.scsi_sense_code	= 0;
 		msd_state.scsi_sense_qualifier	= 0;
 
-		return 1;
+		return MSD_STATUS_DATA_PHASE;
 	} else {
-		return 0;
+		return MSD_STATUS_CMD_FAILED;
 	}
 }
 
@@ -672,6 +678,8 @@ static int scsi_inquiry (const uint8_t *cmd)
 	
 	uint16_t length = (cmd[3] << 8) | cmd[4];
 	
+	debug_msg ("INQ ", (cmd[1] << 24) | (cmd[2] << 16) | length);
+
 	if (cmd[1] == 0) {
 		/* EVPD = 0 */
 		if (cmd[2] == 0) {
@@ -681,7 +689,7 @@ static int scsi_inquiry (const uint8_t *cmd)
 			
 			msd_send_data (scsi_standard_inquiry, length);
 			
-			return 1;
+			return MSD_STATUS_DATA_PHASE;
 		}
 	} else if (cmd[1] == 1) {
 		/* EVPD = 1 */
@@ -693,18 +701,18 @@ static int scsi_inquiry (const uint8_t *cmd)
 
 			msd_send_data (scsi_evpd_page_00, length);
 
-			return 1;
+			return MSD_STATUS_DATA_PHASE;
 		} else if (cmd[2] == 0x83) {
 			if (length > sizeof (scsi_evpd_page_83))
 				length = sizeof (scsi_evpd_page_83);
 			
 			msd_send_data (scsi_evpd_page_83, length);
 
-			return 1;
+			return MSD_STATUS_DATA_PHASE;
 		}
 	}
 
-	return 0;
+	return MSD_STATUS_CMD_FAILED;
 }
 
 static int scsi_prevent_removal (const uint8_t *cmd)
@@ -713,10 +721,9 @@ static int scsi_prevent_removal (const uint8_t *cmd)
 	/* 4	= Prevent(1-0) */
 	/* 5	= Control */
 	if ((cmd[1] | cmd[2] | cmd[3] | (cmd[4] & 0xfb)) == 0) {
-		msd_send_csw (MSD_STATUS_CMD_PASSED);
-		return 1;
+		return MSD_STATUS_CMD_PASSED;
 	} else {
-		return 0;
+		return MSD_STATUS_CMD_FAILED;
 	}
 }
 
@@ -753,10 +760,10 @@ static int scsi_read_capacity (const uint8_t *cmd)
 
 		msd_send_data (buf, 8);
 
-		return 1;
+		return MSD_STATUS_DATA_PHASE;
 	}
 
-	return 0;
+	return MSD_STATUS_CMD_FAILED;
 }
 
 static int scsi_read (const uint8_t *cmd)
@@ -797,9 +804,9 @@ static int scsi_read (const uint8_t *cmd)
 				SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE, 0
 			);
 		}
-		return 1;
+		return MSD_STATUS_DATA_PHASE;
 	} else {
-		return 0;
+		return MSD_STATUS_CMD_FAILED;
 	}
 }
 
@@ -846,9 +853,9 @@ static int scsi_write (const uint8_t *cmd)
 				SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE, 0
 			);
 		}
-		return 1;
+		return MSD_STATUS_DATA_PHASE;
 	} else {
-		return 0;
+		return MSD_STATUS_CMD_FAILED;
 	}
 }
 
@@ -872,10 +879,10 @@ static int scsi_report_luns (const uint8_t *cmd)
 			buf[3] = 8; /* LUN list is 8 bytes */
 			
 			msd_send_data (buf, len);
-			return 1;
+			return MSD_STATUS_DATA_PHASE;
 		}
 	}
-	return 0;
+	return MSD_STATUS_CMD_FAILED;
 }
 
 static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
@@ -887,9 +894,11 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 	ok &= (*((uint32_t *) cbw) == 0x43425355); 	/* header */
 	ok &= ((cbw[12] & 0x7f) == 0);			/* reserve bits */
 	ok &= (cbw[13] == 0);				/* LUN = 0, reserve bits */
-	ok &= ((cbw[14] & 0xe0) == 0);			/* reserve bits */
 	ok &= (cbw[14] >= 1) && (cbw[14] <= 16);	/* cmd length */
 	
+	debug_msg ("CBW ", *((uint32_t *) cbw));
+	// (ok << 24) | len); (cbw[12] << 16) | (cbw[13] << 8) | cbw[14]);
+
 	if (!ok) {
 		msd_state.status = MSD_RESET;
 		usb_set_halt (MSD_DATA_EP_IN);
@@ -905,7 +914,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 		
 		cmd_len = cbw[14];
 		cmd	= &(cbw[15]);
-		ok	= 0;
+		ok	= MSD_STATUS_CMD_FAILED;
 		
 		debug_msg ("CMD ", cmd[0]);
 
@@ -930,7 +939,12 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 			}
 		}
 
-		if (!ok) {
+		/* FIXME: this needs refactoring (phase error, etc) */
+		if (ok == MSD_STATUS_CMD_PASSED) {
+			msd_send_csw (MSD_STATUS_CMD_PASSED);
+		} else if (ok == MSD_STATUS_DATA_PHASE) {
+			/* nop */
+		} else {
 			msd_stall_tx_with_error (
 				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
 				SCSI_SENSE_CODE_INVALID_FIELD_IN_CDB, 0
@@ -964,9 +978,6 @@ static void msd_handle_tx_complete (int endpoint)
 {
 	if (endpoint != MSD_DATA_EP_OUT) {
 		return;
-	} else if (msd_state.status == MSD_WAIT_CSW) {
-		/* CSW has been sent, wait for new command. */
-		msd_wait_cbw ();
 	} else if (msd_state.status == MSD_DATA_TX) {
 		/* all data sent */
 		if (msd_state.transfer_len == 0) {
@@ -1366,11 +1377,9 @@ static void usb_isr (void)
 			} else {
 				/* then it means that we sent all the data and the host has acknowledged it */
 				usb_state.status = USB_READY;
+				if (endpoint > 0)
+					msd_handle_tx_complete (endpoint);
 			}
-			
-			if (usb_state.status == USB_READY && endpoint > 0) {
-				msd_handle_tx_complete (endpoint);
-			}	
 			
 			return;
 		}
