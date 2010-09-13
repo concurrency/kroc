@@ -76,6 +76,8 @@
 #define MSD_STATUS_CMD_FAILED		0x01
 #define MSD_STATUS_PHASE_ERROR		0x02
 #define MSD_STATUS_DATA_PHASE		0x03
+#define MSD_STATUS_CSW_SENT		0x04
+#define MSD_STATUS_STALL		0x05
 
 #define MSD_BLOCK_SIZE			256
 
@@ -332,10 +334,12 @@ static volatile struct {
 /*
  * Mass Storage Driver state. 
  */
+
 static volatile struct {
 	/* The current state of the device. */
 	enum msd_status {
 		MSD_UNINITIALISED = 0,
+		MSD_WAIT_RESET,
 		MSD_RESET,
 		MSD_WAIT_CBW,
 		MSD_DATA_RX,
@@ -556,71 +560,88 @@ static void msd_wait_cbw (void)
 	usb_read_start (MSD_DATA_EP_IN, (uint8_t *) msd_state.buf.cbw, MSD_CBW_LEN);
 }
 
-static void msd_send_csw (uint8_t status)
+static int msd_send_csw (uint8_t status)
 {
-	uint8_t *buf = (uint8_t *) msd_state.buf.csw;
+	uint8_t *buf			= (uint8_t *) msd_state.buf.csw;
+
 	*((uint32_t *)&(buf[0]))	= 0x53425355;
 	*((uint32_t *)&(buf[4]))	= msd_state.tag;
 	*((uint32_t *)&(buf[8]))	= msd_state.transfer_len;
 	buf[12]				= status;
-	usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
-	debug_msg ("CSW ", status);
-	msd_wait_cbw ();
+
+	if (msd_state.transfer_len > 0) {
+		msd_state.status = MSD_WAIT_CLEAR_HALT;
+		if (!(msd_state.flags & MSD_FLAG_DEV_TO_HOST))
+			usb_set_halt (MSD_DATA_EP_IN);
+		usb_set_halt (MSD_DATA_EP_OUT);
+		return MSD_STATUS_STALL;
+	} else {
+		usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
+		debug_msg ("CSW ", status);
+		msd_wait_cbw ();
+		return MSD_STATUS_CSW_SENT;
+	}
 }
 
-static void msd_send_data (const uint8_t *data, uint32_t len)
+static void msd_cleared_halt (void)
 {
-	if (msd_state.flags & MSD_FLAG_DEV_TO_HOST) {
+	switch (msd_state.status) {
+		case MSD_WAIT_CLEAR_HALT:
+			usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
+			msd_wait_cbw ();
+			break;
+		case MSD_RESET:
+			msd_wait_cbw ();
+			break;
+		default:
+			break;
+	}
+}
+
+static void msd_reset (void)
+{
+	if (usb_state.halted == 0) {
+		msd_wait_cbw ();
+	} else {
+		msd_state.status = MSD_RESET;
+	}
+}
+
+static int msd_send_data (const uint8_t *data, uint32_t len)
+{
+	if ((msd_state.flags & MSD_FLAG_DEV_TO_HOST) && (len <= msd_state.transfer_len)) {
 		msd_state.status = MSD_DATA_TX;
-		if (len > msd_state.transfer_len) {
-			msd_state.cmd_status = MSD_STATUS_PHASE_ERROR;
-			len = msd_state.transfer_len;
-		} else {
-			msd_state.cmd_status = MSD_STATUS_CMD_PASSED;
-		}
 		usb_write_data (MSD_DATA_EP_OUT, data, len);
 		msd_state.transfer_len -= len;
+		return MSD_STATUS_DATA_PHASE;
 	} else {
-		msd_state.status	= MSD_WAIT_CLEAR_HALT;
-		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
-		usb_set_halt (MSD_DATA_EP_OUT);
+		return msd_send_csw (MSD_STATUS_PHASE_ERROR);
 	}
 }
 
-static void msd_recv_data (uint8_t *data, uint32_t len)
+static int msd_recv_data (uint8_t *data, uint32_t len)
 {
-	if (!(msd_state.flags & MSD_FLAG_DEV_TO_HOST)) {
+	if (!(msd_state.flags & MSD_FLAG_DEV_TO_HOST) && (len <= msd_state.transfer_len)) {
 		msd_state.status = MSD_DATA_RX;
-		if (len > msd_state.transfer_len) {
-			msd_state.cmd_status = MSD_STATUS_PHASE_ERROR;
-			len = msd_state.transfer_len;
-		} else {
-			msd_state.cmd_status = MSD_STATUS_CMD_PASSED;
-		}
 		usb_read_start (MSD_DATA_EP_IN, data, len);
 		msd_state.transfer_len -= len;
+		return MSD_STATUS_DATA_PHASE;
 	} else {
-		msd_state.status	= MSD_WAIT_CLEAR_HALT;
-		msd_state.cmd_status	= MSD_STATUS_PHASE_ERROR;
-		usb_set_halt (MSD_DATA_EP_OUT);
-		usb_set_halt (MSD_DATA_EP_IN);
+		return msd_send_csw (MSD_STATUS_PHASE_ERROR);
 	}
 }
 
-static void msd_stall_tx_with_error (uint8_t key, uint8_t code, uint8_t qual)
+static inline void msd_set_sense (uint8_t key, uint8_t code, uint8_t qual)
 {
-	msd_state.status		= MSD_WAIT_CLEAR_HALT;
-	msd_state.cmd_status		= MSD_STATUS_CMD_FAILED;
 	msd_state.scsi_sense_key	= key;
 	msd_state.scsi_sense_code	= code;
 	msd_state.scsi_sense_qualifier	= qual;
-	usb_set_halt (MSD_DATA_EP_OUT);
 }
 
-static void msd_stall_rx_with_error (uint8_t key, uint8_t code, uint8_t qual)
+static int msd_send_error (uint8_t key, uint8_t code, uint8_t qual)
 {
-	msd_stall_tx_with_error (key, code, qual);
-	usb_set_halt (MSD_DATA_EP_IN);
+	msd_set_sense (key, code, qual);
+	return msd_send_csw (MSD_STATUS_CMD_FAILED);
 }
 
 static int scsi_test_unit_ready (const uint8_t *cmd)
@@ -655,15 +676,11 @@ static int scsi_request_sense (const uint8_t *cmd)
 		if (len > sizeof (msd_state.buf.sense))
 			len = sizeof (msd_state.buf.sense);
 
-		/* send fixed sense descriptor */
-		msd_send_data (desc, len);
-
 		/* reset sense data */
-		msd_state.scsi_sense_key	= SCSI_SENSE_KEY_NO_SENSE;
-		msd_state.scsi_sense_code	= 0;
-		msd_state.scsi_sense_qualifier	= 0;
-
-		return MSD_STATUS_DATA_PHASE;
+		msd_set_sense (SCSI_SENSE_KEY_NO_SENSE, 0, 0);
+		
+		/* send fixed sense descriptor */
+		return msd_send_data (desc, len);
 	} else {
 		return MSD_STATUS_CMD_FAILED;
 	}
@@ -687,9 +704,7 @@ static int scsi_inquiry (const uint8_t *cmd)
 			if (length > sizeof (scsi_standard_inquiry))
 				length = sizeof (scsi_standard_inquiry);
 			
-			msd_send_data (scsi_standard_inquiry, length);
-			
-			return MSD_STATUS_DATA_PHASE;
+			return msd_send_data (scsi_standard_inquiry, length);
 		}
 	} else if (cmd[1] == 1) {
 		/* EVPD = 1 */
@@ -698,17 +713,12 @@ static int scsi_inquiry (const uint8_t *cmd)
 			if (length > sizeof (scsi_evpd_page_00))
 				length = sizeof (scsi_evpd_page_00);
 
-
-			msd_send_data (scsi_evpd_page_00, length);
-
-			return MSD_STATUS_DATA_PHASE;
+			return msd_send_data (scsi_evpd_page_00, length);
 		} else if (cmd[2] == 0x83) {
 			if (length > sizeof (scsi_evpd_page_83))
 				length = sizeof (scsi_evpd_page_83);
 			
-			msd_send_data (scsi_evpd_page_83, length);
-
-			return MSD_STATUS_DATA_PHASE;
+			return msd_send_data (scsi_evpd_page_83, length);
 		}
 	}
 
@@ -758,12 +768,10 @@ static int scsi_read_capacity (const uint8_t *cmd)
 		buf[6] = (block_size >>  8) & 0xff;
 		buf[7] = (block_size >>  0) & 0xff;
 
-		msd_send_data (buf, 8);
-
-		return MSD_STATUS_DATA_PHASE;
+		return msd_send_data (buf, 8);
+	} else {
+		return MSD_STATUS_CMD_FAILED;
 	}
-
-	return MSD_STATUS_CMD_FAILED;
 }
 
 static int scsi_read (const uint8_t *cmd)
@@ -797,14 +805,13 @@ static int scsi_read (const uint8_t *cmd)
 		lba *= MSD_BLOCK_SIZE;
 		len *= MSD_BLOCK_SIZE;
 		if ((lba < msd_state.data_len) && ((lba + len) <= msd_state.data_len)) {
-			msd_send_data (msd_state.data + lba, len);
+			return msd_send_data (msd_state.data + lba, len);
 		} else {
-			msd_stall_tx_with_error (
+			return msd_send_error (
 				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
 				SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE, 0
 			);
 		}
-		return MSD_STATUS_DATA_PHASE;
 	} else {
 		return MSD_STATUS_CMD_FAILED;
 	}
@@ -841,19 +848,18 @@ static int scsi_write (const uint8_t *cmd)
 		lba *= MSD_BLOCK_SIZE;
 		len *= MSD_BLOCK_SIZE;
 		if (msd_state.flags & MSD_FLAG_READ_ONLY) {
-			msd_stall_rx_with_error (
+			return msd_send_error (
 				SCSI_SENSE_KEY_DATA_PROTECT,
 				SCSI_SENSE_CODE_WRITE_PROTECTED, 0
 			);
 		} else if ((lba < msd_state.data_len) && ((lba + len) <= msd_state.data_len)) {
-			msd_recv_data (msd_state.data + lba, len);
+			return msd_recv_data (msd_state.data + lba, len);
 		} else {
-			msd_stall_rx_with_error (
+			return msd_send_error (
 				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
 				SCSI_SENSE_CODE_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE, 0
 			);
 		}
-		return MSD_STATUS_DATA_PHASE;
 	} else {
 		return MSD_STATUS_CMD_FAILED;
 	}
@@ -878,8 +884,7 @@ static int scsi_report_luns (const uint8_t *cmd)
 			memset (buf, 0, 16);
 			buf[3] = 8; /* LUN list is 8 bytes */
 			
-			msd_send_data (buf, len);
-			return MSD_STATUS_DATA_PHASE;
+			return msd_send_data (buf, len);
 		}
 	}
 	return MSD_STATUS_CMD_FAILED;
@@ -900,7 +905,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 	// (ok << 24) | len); (cbw[12] << 16) | (cbw[13] << 8) | cbw[14]);
 
 	if (!ok) {
-		msd_state.status = MSD_RESET;
+		msd_state.status = MSD_WAIT_RESET;
 		usb_set_halt (MSD_DATA_EP_IN);
 		usb_set_halt (MSD_DATA_EP_OUT);
 	} else {
@@ -939,16 +944,19 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 			}
 		}
 
-		/* FIXME: this needs refactoring (phase error, etc) */
-		if (ok == MSD_STATUS_CMD_PASSED) {
-			msd_send_csw (MSD_STATUS_CMD_PASSED);
-		} else if (ok == MSD_STATUS_DATA_PHASE) {
-			/* nop */
-		} else {
-			msd_stall_tx_with_error (
-				SCSI_SENSE_KEY_ILLEGAL_REQUEST,
-				SCSI_SENSE_CODE_INVALID_FIELD_IN_CDB, 0
-			);
+		switch (ok) {
+			case MSD_STATUS_DATA_PHASE:
+			case MSD_STATUS_CSW_SENT:
+				break;
+			case MSD_STATUS_CMD_PASSED:
+				msd_send_csw (MSD_STATUS_CMD_PASSED);
+				break;
+			default:
+				msd_send_error (
+					SCSI_SENSE_KEY_ILLEGAL_REQUEST,
+					SCSI_SENSE_CODE_INVALID_FIELD_IN_CDB, 0
+				);
+				break;
 		}
 	}
 }
@@ -961,15 +969,7 @@ static void msd_handle_rx (int endpoint)
 		msd_handle_cbw ((uint8_t *) msd_state.buf.cbw, usb_state.rx_len);
 	} else if (msd_state.status == MSD_DATA_RX) {
 		if (usb_state.rx_len == usb_state.rx_size) {
-			/* all data sent */
-			if (msd_state.transfer_len == 0) {
-				msd_send_csw (msd_state.cmd_status);
-			} else {
-				/* Stall if residue != 0 */
-				msd_state.status = MSD_WAIT_CLEAR_HALT;
-				usb_set_halt (MSD_DATA_EP_OUT);
-				usb_set_halt (MSD_DATA_EP_IN);
-			}
+			msd_send_csw (MSD_STATUS_CMD_PASSED);
 		}
 	}
 }
@@ -979,14 +979,7 @@ static void msd_handle_tx_complete (int endpoint)
 	if (endpoint != MSD_DATA_EP_OUT) {
 		return;
 	} else if (msd_state.status == MSD_DATA_TX) {
-		/* all data sent */
-		if (msd_state.transfer_len == 0) {
-			msd_send_csw (msd_state.cmd_status);
-		} else {
-			/* Stall if residue != 0 */
-			msd_state.status = MSD_WAIT_CLEAR_HALT;
-			usb_set_halt (MSD_DATA_EP_OUT);
-		}
+		msd_send_csw (MSD_STATUS_CMD_PASSED);
 	}
 }
 
@@ -1033,9 +1026,7 @@ static void usb_manage_setup_packet (uint8_t endpoint)
 		switch (packet.request) {
 			case USB_BREQUEST_BULK_RESET:
 				/* forward reset to MSD; */
-				msd_state.status = MSD_RESET;
-				if (usb_state.halted == 0)
-					msd_wait_cbw ();
+				msd_reset ();
 				usb_send_null ();
 				break;
 			case USB_BREQUEST_GET_MAX_LUN:
@@ -1101,13 +1092,8 @@ static void usb_manage_setup_packet (uint8_t endpoint)
 						usb_set_halt (ep);
 					} else {
 						usb_clear_halt (ep);
-						if (usb_state.halted == 0) {
-							if (msd_state.status == MSD_WAIT_CLEAR_HALT) {
-								msd_send_csw (msd_state.cmd_status);
-							} else if (msd_state.status == MSD_RESET) {
-								msd_wait_cbw ();
-							}
-						}
+						if (usb_state.halted == 0)
+							msd_cleared_halt ();
 					}
 					usb_send_null ();
 				} else {
@@ -1229,7 +1215,7 @@ static void usb_manage_setup_packet (uint8_t endpoint)
 				if (usb_state.current_config == 1) {
 					usb_clear_halt (MSD_DATA_EP_IN);
 					usb_clear_halt (MSD_DATA_EP_OUT);
-					msd_wait_cbw ();
+					msd_reset ();
 				}
 				
 				/* ack */
