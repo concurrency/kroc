@@ -338,13 +338,13 @@ static volatile struct {
 static volatile struct {
 	/* The current state of the device. */
 	enum msd_status {
-		MSD_UNINITIALISED = 0,
-		MSD_WAIT_RESET,
-		MSD_RESET,
-		MSD_WAIT_CBW,
-		MSD_DATA_RX,
-		MSD_DATA_TX,
-		MSD_WAIT_CLEAR_HALT
+		MSD_UNINITIALISED 	= 0,
+		MSD_WAIT_RESET		= 1,
+		MSD_RESET		= 2,
+		MSD_WAIT_CBW		= 3,
+		MSD_DATA_RX		= 4,
+		MSD_DATA_TX		= 5,
+		MSD_WAIT_CLEAR_HALT	= 6
 	} status;
 
 	/* Backing store for the storage drive. */
@@ -416,7 +416,7 @@ static void usb_write_data (int endpoint, const uint8_t *ptr, uint32_t length)
 	tx = endpoint / 2;
 
 	/* Acknowledge any existing transmission. */
-	usb_csr_clear_flag (endpoint, AT91C_UDP_TXCOMP);
+	//usb_csr_clear_flag (endpoint, AT91C_UDP_TXCOMP);
 
 	/* The bus is now busy. */
 	usb_state.status = USB_BUSY;
@@ -445,6 +445,23 @@ static void usb_write_data (int endpoint, const uint8_t *ptr, uint32_t length)
 		packet_size--;
 	}
 	usb_csr_set_flag (endpoint, AT91C_UDP_TXPKTRDY);
+}
+
+static inline int usb_cont_write (int endpoint)
+{
+	endpoint /= 2;
+
+	if (usb_state.tx_len[endpoint] > 0 
+			&& usb_state.tx_data[endpoint] != NULL) {
+		usb_write_data (
+			endpoint,
+			usb_state.tx_data[endpoint],
+			usb_state.tx_len[endpoint]
+		);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 /* Setup read on USB endpoint.
@@ -574,6 +591,7 @@ static int msd_send_csw (uint8_t status)
 		if (!(msd_state.flags & MSD_FLAG_DEV_TO_HOST))
 			usb_set_halt (MSD_DATA_EP_IN);
 		usb_set_halt (MSD_DATA_EP_OUT);
+		debug_msg ("STL ", 0);
 		return MSD_STATUS_STALL;
 	} else {
 		usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
@@ -585,9 +603,11 @@ static int msd_send_csw (uint8_t status)
 
 static void msd_cleared_halt (void)
 {
+	debug_msg ("CLR ", msd_state.status);
 	switch (msd_state.status) {
 		case MSD_WAIT_CLEAR_HALT:
 			usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
+			debug_msg ("CSW ", 0xffffffff);
 			msd_wait_cbw ();
 			break;
 		case MSD_RESET:
@@ -600,6 +620,7 @@ static void msd_cleared_halt (void)
 
 static void msd_reset (void)
 {
+	debug_msg ("RST ", usb_state.halted);
 	if (usb_state.halted == 0) {
 		msd_wait_cbw ();
 	} else {
@@ -613,6 +634,7 @@ static int msd_send_data (const uint8_t *data, uint32_t len)
 		msd_state.status = MSD_DATA_TX;
 		usb_write_data (MSD_DATA_EP_OUT, data, len);
 		msd_state.transfer_len -= len;
+		debug_msg ("TX  ", len);
 		return MSD_STATUS_DATA_PHASE;
 	} else {
 		return msd_send_csw (MSD_STATUS_PHASE_ERROR);
@@ -625,6 +647,7 @@ static int msd_recv_data (uint8_t *data, uint32_t len)
 		msd_state.status = MSD_DATA_RX;
 		usb_read_start (MSD_DATA_EP_IN, data, len);
 		msd_state.transfer_len -= len;
+		debug_msg ("RX  ", len);
 		return MSD_STATUS_DATA_PHASE;
 	} else {
 		return msd_send_csw (MSD_STATUS_PHASE_ERROR);
@@ -947,6 +970,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 		switch (ok) {
 			case MSD_STATUS_DATA_PHASE:
 			case MSD_STATUS_CSW_SENT:
+			case MSD_STATUS_STALL: 
 				break;
 			case MSD_STATUS_CMD_PASSED:
 				msd_send_csw (MSD_STATUS_CMD_PASSED);
@@ -963,6 +987,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 
 static void msd_handle_rx (int endpoint)
 {
+	debug_msg ("RXC ", msd_state.status);
 	if (endpoint != MSD_DATA_EP_IN) {
 		return;
 	} else if (msd_state.status == MSD_WAIT_CBW) {
@@ -976,6 +1001,7 @@ static void msd_handle_rx (int endpoint)
 
 static void msd_handle_tx_complete (int endpoint)
 {
+	debug_msg ("TXC ", msd_state.status);
 	if (endpoint != MSD_DATA_EP_OUT) {
 		return;
 	} else if (msd_state.status == MSD_DATA_TX) {
@@ -1356,11 +1382,7 @@ static void usb_isr (void)
 			}
 
 			/* and we will send the following data */
-			if (usb_state.tx_len[endpoint] > 0
-					&& usb_state.tx_data[endpoint] != NULL) {
-				usb_write_data (endpoint, usb_state.tx_data[endpoint],
-						usb_state.tx_len[endpoint]);
-			} else {
+			if (!usb_cont_write (endpoint)) {
 				/* then it means that we sent all the data and the host has acknowledged it */
 				usb_state.status = USB_READY;
 				if (endpoint > 0)
