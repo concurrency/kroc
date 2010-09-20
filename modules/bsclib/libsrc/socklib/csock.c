@@ -29,6 +29,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <netinet/tcp.h>
+
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
@@ -67,6 +69,317 @@ typedef struct __occ_socket occ_socket;
 #endif
 /*}}}*/
 
+/*{{{  address family */
+/* MUST MATCH socklib.inc */
+
+#define OCC_AF_UNSPEC 0
+#define OCC_AF_UNIX 1
+#define OCC_AF_LOCAL 1
+#define OCC_AF_INET 2
+#define OCC_AF_AX25 3
+#define OCC_AF_IPX 4
+#define OCC_AF_APPLETALK 5
+#define OCC_AF_NETROM 6
+#define OCC_AF_BRIDGE 7
+#define OCC_AF_ATMPVC 8
+#define OCC_AF_X25 9
+#define OCC_AF_INET6 10
+#define OCC_AF_ROSE 11
+#define OCC_AF_DECNET 12
+#define OCC_AF_NETBEUI 13
+#define OCC_AF_SECURITY 14
+#define OCC_AF_KEY 15
+#define OCC_AF_NETLINK 16
+#define OCC_AF_ROUTE OCC_AF_NETLINK
+#define OCC_AF_PACKET 17
+#define OCC_AF_ASH 18
+#define OCC_AF_ECONET 19
+#define OCC_AF_ATMSVC 20
+#define OCC_AF_SNA 22
+#define OCC_AF_IRDA 23
+#define OCC_AF_MAX 32
+
+static int r_encode_address_family (int af) {
+	switch (af) {
+		case OCC_AF_UNSPEC:	return AF_UNSPEC;
+		case OCC_AF_UNIX:	return AF_UNIX;
+		/* case OCC_AF_LOCAL:	return AF_LOCAL; */
+		case OCC_AF_INET:	return AF_INET;
+		#ifdef AF_AX25
+		case OCC_AF_AX25:	return AF_AX25;
+		#endif /* AF_AX25 */
+		case OCC_AF_IPX:	return AF_IPX;
+		case OCC_AF_APPLETALK:	return AF_APPLETALK;
+		#ifdef AF_NETROM
+		case OCC_AF_NETROM:	return AF_NETROM;
+		#endif /* AF_NETROM */
+		#ifdef AF_BRIDGE
+		case OCC_AF_BRIDGE:	return AF_BRIDGE;
+		#endif /* AF_BRIDGE */
+		#ifdef AF_ATMPVC
+		case OCC_AF_ATMPVC:	return AF_ATMPVC;
+		#endif /* AF_ATMPVC */
+		#ifdef AF_X25
+		case OCC_AF_X25:	return AF_X25;
+		#endif /* AF_X25 */
+		case OCC_AF_INET6:	return AF_INET6;
+		#ifdef AF_ROSE
+		case OCC_AF_ROSE:	return AF_ROSE;
+		#endif /* AF_ROSE */
+		#ifdef AF_DECNET
+		case OCC_AF_DECNET:	return AF_DECNET;
+		#endif /* AF_DECNET */
+		#ifdef AF_NETBEUI
+		case OCC_AF_NETBEUI:	return AF_NETBEUI;
+		#endif /* AF_NETBEUI */
+		#ifdef AF_SECURITY
+		case OCC_AF_SECURITY:	return AF_SECURITY;
+		#endif /* AF_SECURITY */
+		#ifdef AF_KEY
+		case OCC_AF_KEY:	return AF_KEY;
+		#endif /* AF_KEY */
+		/* case OCC_AF_NETLINK:	return AF_NETLINK */
+		case OCC_AF_ROUTE:	return AF_ROUTE;
+		#ifdef AF_PACKET
+		case OCC_AF_PACKET:	return AF_PACKET;
+		#endif /* AF_PACKET */
+		#ifdef AF_ASH
+		case OCC_AF_ASH:	return AF_ASH;
+		#endif /* AF_ASH */
+		#ifdef AF_ECONET
+		case OCC_AF_ECONET:	return AF_ECONET;
+		#endif /* AF_ECONET */
+		#ifdef AF_ATMSVC
+		case OCC_AF_ATMSVC:	return AF_ATMSVC;
+		#endif /* AF_ATMSVC */
+		case OCC_AF_SNA:	return AF_SNA;
+		#ifdef AF_IRDA
+		case OCC_AF_IRDA:	return AF_IRDA;
+		#endif /* AF_IRDA */
+		case OCC_AF_MAX:	return AF_MAX;
+		default:
+			return AF_UNSPEC;
+	}
+}
+/*}}}*/
+
+/*{{{  sockopt levels and options */
+/* MUST MATCH socklib.inc */
+
+#define OCC_SOL_IP 0
+#define OCC_SOL_SOCKET 1
+#define OCC_SOL_TCP 6
+#define OCC_SOL_UDP 17
+#define OCC_SOL_IPV6 41
+#define OCC_SOL_RAW 255
+#define OCC_SOL_IPX 256
+#define OCC_SOL_AX25 257
+#define OCC_SOL_ATALK 258
+#define OCC_SOL_NETROM 259
+#define OCC_SOL_ROSE 260
+#define OCC_SOL_DECNET 261
+#define OCC_SOL_X25 262
+#define OCC_SOL_PACKET 263
+#define OCC_SOL_ATM 264
+#define OCC_SOL_AAL 265
+#define OCC_SOL_IRDA 266
+
+static int r_encode_sockopt_optlevel (int level) {
+	if (level == OCC_SOL_SOCKET) {
+		return SOL_SOCKET;
+	} else {
+		return level;
+	}
+}
+
+#define OCC_SO_DEBUG 1
+#define OCC_SO_REUSEADDR 2
+#define OCC_SO_TYPE 3
+#define OCC_SO_ERROR 4
+#define OCC_SO_DONTROUTE 5
+#define OCC_SO_BROADCAST 6
+#define OCC_SO_SNDBUF 7
+#define OCC_SO_RCVBUF 8
+#define OCC_SO_KEEPALIVE 9
+#define OCC_SO_OOBINLINE 10
+#define OCC_SO_NO_CHECK 11
+#define OCC_SO_PRIORITY 12
+#define OCC_SO_LINGER 13
+#define OCC_SO_BSDCOMPAT 14
+#define OCC_SO_PASSCRED 16
+#define OCC_SO_PEERCRED 17
+#define OCC_SO_RCVLOWAT 18
+#define OCC_SO_SNDLOWAT 19
+#define OCC_SO_RCVTIMEO 20
+#define OCC_SO_SNDTIMEO 21
+
+#define OCC_TCP_NODELAY 1
+#define OCC_TCP_MAXSEG 2
+#define OCC_TCP_CORK 3
+#define OCC_TCP_KEEPIDLE 4
+#define OCC_TCP_KEEPINTVL 5
+#define OCC_TCP_KEEPCNT 6
+#define OCC_TCP_SYNCNT 7
+#define OCC_TCP_LINGER2 8
+#define OCC_TCP_DEFER_ACCEPT 9
+#define OCC_TCP_WINDOW_CLAMP 10
+#define OCC_TCP_INFO 11
+#define OCC_TCP_QUICKACK 12
+
+static int r_encode_sockopt_optname (int level, int opt)
+{
+	if (level == OCC_SOL_SOCKET) {
+		switch (opt) {
+			case OCC_SO_DEBUG: 	return SO_DEBUG;
+			case OCC_SO_REUSEADDR:	return SO_REUSEADDR;
+			case OCC_SO_TYPE:	return SO_TYPE;
+			case OCC_SO_ERROR:	return SO_ERROR;
+			case OCC_SO_DONTROUTE:	return SO_DONTROUTE;
+			case OCC_SO_BROADCAST:	return SO_BROADCAST;
+			case OCC_SO_SNDBUF:	return SO_SNDBUF;
+			case OCC_SO_RCVBUF:	return SO_RCVBUF;
+			case OCC_SO_KEEPALIVE:	return SO_KEEPALIVE;
+			case OCC_SO_OOBINLINE:	return SO_OOBINLINE;
+			#ifdef SO_NO_CHECK
+			case OCC_SO_NO_CHECK:	return SO_NO_CHECK;
+			#endif /* SO_NO_CHECK */
+			#ifdef SO_PRIORITY
+			case OCC_SO_PRIORITY:	return SO_PRIORITY;
+			#endif /* SO_PRIORITY */
+			case OCC_SO_LINGER:	return SO_LINGER;
+			#ifdef SO_BSDCOMPAT
+			case OCC_SO_BSDCOMPAT:	return SO_BSDCOMPAT;
+			#endif /* SO_BSDCOMPAT */
+			#ifdef SO_PASSCRED
+			case OCC_SO_PASSCRED:	return SO_PASSCRED;
+			#endif /* SO_PASSCRED */
+			#ifdef SO_PEERCRED
+			case OCC_SO_PEERCRED:	return SO_PEERCRED;
+			#endif /* SO_PEERCRED */
+			case OCC_SO_RCVLOWAT:	return SO_RCVLOWAT;
+			case OCC_SO_SNDLOWAT:	return SO_SNDLOWAT;
+			case OCC_SO_RCVTIMEO:	return SO_RCVTIMEO;
+			case OCC_SO_SNDTIMEO:	return SO_SNDTIMEO;
+			default:
+				return opt;
+		}
+	} else if (level == OCC_SOL_TCP) {
+		switch (opt) {
+			case OCC_TCP_NODELAY:	return TCP_NODELAY;
+			case OCC_TCP_MAXSEG:	return TCP_MAXSEG;
+			#ifdef TCP_CORK
+			case OCC_TCP_CORK:	return TCP_CORK;
+			#endif /* TCP_CORK */
+			#ifdef TCP_KEEPIDLE
+			case OCC_TCP_KEEPIDLE:	return TCP_KEEPIDLE;
+			#endif /* TCP_KEEPIDLE */
+			#ifdef TCP_KEEPINTVL
+			case OCC_TCP_KEEPINTVL:	return TCP_KEEPINTVL;
+			#endif /* TCP_INTVL */
+			#ifdef TCP_KEEPCNT
+			case OCC_TCP_KEEPCNT:	return TCP_KEEPCNT;
+			#endif /* TCP_KEEPCNT */
+			#ifdef TCP_SYNCNT
+			case OCC_TCP_SYNCNT:	return TCP_SYNCNT;
+			#endif /* TCP_SYNCNT */
+			#ifdef TCP_LINGER2
+			case OCC_TCP_LINGER2:	return TCP_LINGER2;
+			#endif /* TCP_LINGER2 */
+			#ifdef TCP_DEFER_ACCEPT
+			case OCC_TCP_DEFER_ACCEPT: return TCP_DEFER_ACCEPT;
+			#endif /* TCP_DEFER_ACCEPT */
+			#ifdef TCP_WINDOW_CLAMP
+			case OCC_TCP_WINDOW_CLAMP: return TCP_WINDOW_CLAMP;
+			#endif /* TCP_WINDOW_CLAMP */
+			#ifdef TCP_INFO
+			case OCC_TCP_INFO:	return TCP_INFO;
+			#endif /* TCP_INFO */
+			#ifdef TCP_QUICKACK
+			case OCC_TCP_QUICKACK:	return TCP_QUICKACK;
+			#endif /* TCP_QUICKACK */
+			default:
+				return opt;
+		}
+	} else {
+		return opt;
+	}
+}
+/*}}}*/
+
+/*{{{  message flags */
+/* MUST MATCH socklib.inc */
+#define OCC_MSG_OOB 0x01
+#define OCC_MSG_PEEK 0x02
+#define OCC_MSG_DONTROUTE 0x04
+#define OCC_MSG_TRYHARD OCC_MSG_DONTROUTE:
+#define OCC_MSG_CTRUNC 0x08
+#define OCC_MSG_PROXY 0x10
+#define OCC_MSG_TRUNC 0x20
+#define OCC_MSG_DONTWAIT 0x40
+#define OCC_MSG_EOR 0x80
+#define OCC_MSG_WAITALL 0x100
+#define OCC_MSG_FIN 0x200
+#define OCC_MSG_SYN 0x400
+#define OCC_MSG_URG 0x800
+#define OCC_MSG_RST 0x1000
+#define OCC_MSG_ERRQUEUE 0x2000
+#define OCC_MSG_NOSIGNAL 0x4000
+#define OCC_MSG_MASK 0x7fff
+
+static int r_encode_msg_flags (int flags)
+{
+	int ret = (flags & (~OCC_MSG_MASK));
+
+	if (flags & OCC_MSG_OOB)
+		ret |= MSG_OOB;
+	if (flags & OCC_MSG_PEEK)
+		ret |= MSG_PEEK;
+	if (flags & OCC_MSG_DONTROUTE)
+		ret |= MSG_DONTROUTE;
+	if (flags & OCC_MSG_CTRUNC)
+		ret |= MSG_CTRUNC;
+	#ifdef MSG_PROXY
+	if (flags & OCC_MSG_PROXY)
+		ret |= MSG_PROXY;
+	#endif /* MSG_PROXY */
+	if (flags & OCC_MSG_TRUNC)
+		ret |= MSG_TRUNC;
+	if (flags & OCC_MSG_DONTWAIT)
+		ret |= MSG_DONTWAIT;
+	if (flags & OCC_MSG_EOR)
+		ret |= MSG_EOR;
+	if (flags & OCC_MSG_WAITALL)
+		ret |= MSG_WAITALL;
+	#ifdef MSG_FIN
+	if (flags & OCC_MSG_FIN)
+		ret |= MSG_FIN;
+	#endif /* MSG_FIN */
+	#ifdef MSG_SYN
+	if (flags & OCC_MSG_SYN)
+		ret |= MSG_SYN;
+	#endif /* MSG_SYN */
+	#ifdef MSG_URG
+	if (flags & OCC_MSG_URG)
+		ret |= MSG_URG;
+	#endif /* MSG_URG */
+	#ifdef MSG_RST
+	if (flags & OCC_MSG_RST)
+		ret |= MSG_RST;
+	#endif /* MSG_RST */
+	#ifdef MSG_ERRQUEUE
+	if (flags & OCC_MSG_ERRQUEUE)
+		ret |= MSG_ERRQUEUE;
+	#endif /* MSG_ERRQUEUE */
+	#ifdef MSG_NOSIGNAL
+	if (flags & OCC_MSG_NOSIGNAL)
+		ret |= MSG_NOSIGNAL;
+	#endif /* MSG_NOSIGNAL */
+
+	return ret;
+}
+
+/*}}}*/
+
 /*
  *	Basic socket stuff
  */
@@ -78,7 +391,7 @@ typedef struct __occ_socket occ_socket;
  */
 static __inline__ void r_socket (occ_socket *sock)
 {
-	sock->fd = socket (sock->s_family, sock->s_type, sock->s_proto);
+	sock->fd = socket (r_encode_address_family (sock->s_family), sock->s_type, sock->s_proto);
 	sock->error = errno;
 }
 /*}}}*/
@@ -249,7 +562,7 @@ static __inline__ void r_connect (occ_socket *sock, int *result)
 		*result = -1;
 		sock->error = ENOTCONN;
 	} else {
-		sin.sin_family = sock->s_family;
+		sin.sin_family = r_encode_address_family (sock->s_family);
 		sin.sin_port = htons (sock->remote_port);
 		sin.sin_addr.s_addr = htonl (sock->remote_addr);
 		*result = connect (sock->fd, (struct sockaddr *)&sin, sizeof(sin));
@@ -277,7 +590,7 @@ static __inline__ void r_bind (occ_socket *sock, int *result)
 {
 	struct sockaddr_in sin;
 
-	sin.sin_family = sock->s_family;
+	sin.sin_family = r_encode_address_family (sock->s_family);
 	sin.sin_port = htons (sock->local_port);
 	sin.sin_addr.s_addr = htonl (sock->local_addr);
 	*result = bind (sock->fd, (struct sockaddr *)&sin, sizeof(sin));
@@ -327,7 +640,7 @@ static __inline__ void r_sendto (occ_socket *sock, char *message, int msg_len, i
 	} else {
 		sin.sin_port = htons (sock->remote_port);
 		sin.sin_addr.s_addr = htonl (sock->remote_addr);
-		sin.sin_family = sock->s_family;
+		sin.sin_family = r_encode_address_family (sock->s_family);
 		*result = sendto (sock->fd, message, msg_len, flags, (struct sockaddr *)&sin, sin_size);
 		sock->error = errno;
 	}
@@ -366,7 +679,7 @@ static __inline__ void r_setsockopt (occ_socket *sock, int level, int option, in
 		*result = -1;
 		sock->error = ENOTCONN;
 	} else {
-		*result = setsockopt (sock->fd, level, option, (const void *)&value, sizeof (value));
+		*result = setsockopt (sock->fd, r_encode_sockopt_optlevel (level), r_encode_sockopt_optname (level, option), (const void *)&value, sizeof (value));
 		sock->error = errno;
 	}
 }
@@ -384,7 +697,7 @@ static __inline__ void r_getsockopt (occ_socket *sock, int level, int option, in
 	} else {
 		int valuesize = sizeof (int);
 
-		*result = getsockopt (sock->fd, level, option, (void *)value, (void *)&valuesize);
+		*result = getsockopt (sock->fd, r_encode_sockopt_optlevel (level), r_encode_sockopt_optname (level, option), (void *)value, (void *)&valuesize);
 		if (valuesize != sizeof (int)) {
 			*result = -1;	/* something meaningless probably */
 		}

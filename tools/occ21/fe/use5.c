@@ -77,6 +77,7 @@ typedef enum ENUM_fmflags { /*{{{*/
 	FMF_ISDEFINE = 0x0004,		/* is DEFINE related */
 	FMF_ISUNDEFINE = 0x0008,	/* is UNDEFINE related */
 	FMF_ISSIMPLECHAN = 0x0010,	/* is a simple channel */
+	FMF_ISBARRIER = 0x0020,		/* is a simple BARRIER */
 } fmflags_e;
 
 /*}}}*/
@@ -1667,7 +1668,7 @@ PRIVATE BOOL fmt_issimpleevent (fmnode_t *item)
 {
 	switch (item->type) {
 	case FM_EVENT:
-		return (item->flags & FMF_ISSIMPLECHAN) ? TRUE : FALSE;
+		return (item->flags & (FMF_ISSIMPLECHAN | FMF_ISBARRIER)) ? TRUE : FALSE;
 	default:
 		return FALSE;
 	}
@@ -1720,6 +1721,10 @@ PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var, BOOL donumber, fmstate_
 	treenode *type = chk_gettype (var);
 	char *varname = (char *)WNameOf (NNameOf (var));
 
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): var type is:");
+printtreenl (stderr, 1, type);
+#endif
 	if (TagOf (type) == S_CHAN) {
 		/*{{{  simple channel*/
 		treenode *proto = ProtocolOf (type);
@@ -1728,7 +1733,7 @@ PRIVATE fmnode_t *fmt_createeventfromvar (treenode *var, BOOL donumber, fmstate_
 		int slen = 0;
 
 #if 0
-fprintf (stderr, "do_formalmodelcheck_tree(): CHAN parameter, protocol is:");
+fprintf (stderr, "fmt_createeventfromvar(): CHAN parameter, protocol is:");
 printtreenl (stderr, 1, proto);
 #endif
 		fmt_copyvarname (str, varname);
@@ -1754,6 +1759,28 @@ printtreenl (stderr, 1, proto);
 			}
 		}
 		pnode->flags |= FMF_ISSIMPLECHAN;
+
+		return pnode;
+		/*}}}*/
+	} else if ((TagOf (type) == S_BARRIER) || (TagOf (type) == S_FULLBARRIER)) {
+		/*{{{  basic barrier*/
+		fmnode_t *pnode = fmt_newnode (FM_EVENT, var);
+		char *str = (char *)memalloc (strlen (varname) + 16);
+		int slen = 0;
+
+#if 0
+fprintf (stderr, "fmt_createeventfromvar(): BARRIER parameter\n");
+#endif
+		fmt_copyvarname (str, varname);
+		slen = strlen (str);
+		if (donumber) {
+			/* number this event globally */
+			sprintf (str + slen, "__%d", event_counter++);
+		}
+		pnode->u.fmevent.name = str;
+		pnode->u.fmevent.node = var;
+
+		pnode->flags |= FMF_ISBARRIER;
 
 		return pnode;
 		/*}}}*/
@@ -2095,7 +2122,7 @@ PRIVATE fmnode_t *fmt_createeventfromevent (fmnode_t *event)
 
 		/*}}}*/
 	} else {
-#if 1
+#if 0
 fprintf (stderr, "fmt_createeventfromevent(): about to go pop, event =\n");
 fmt_dumpnode (event, 1, stderr);
 #endif
@@ -4720,6 +4747,25 @@ fmt_dumpnode (fmn, 1, stderr);
 fprintf (stderr, "do_formalmodelgen(): from tree:");
 printtreenl (stderr, 4, n);
 #endif
+
+			fmstate->target = saved_target;
+			fmstate->ioevref = saved_ioevref;
+			*(fmstate->target) = fmn;
+		}
+		return STOP_WALK;
+		/*}}}*/
+		/*{{{  S_SYNC -- return*/
+	case S_SYNC:
+		{
+			fmnode_t **saved_target = fmstate->target;
+			fmnode_t *saved_ioevref = fmstate->ioevref;
+			int saved_seo = fmstate->singleeventonly;
+
+			fmn = fmt_newnode (FM_SYNC, n);
+			fmstate->singleeventonly = 1;
+			fmstate->target = &fmn->u.fmio.lhs;
+			prewalktree (LeafLinkOf (n), do_formalmodelgen, (void *)fmstate);
+			fmstate->singleeventonly = saved_seo;
 
 			fmstate->target = saved_target;
 			fmstate->ioevref = saved_ioevref;
