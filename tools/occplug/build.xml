@@ -87,7 +87,7 @@ class Revision
     <mkdir dir="${install.dir}"/>
     <jar jarfile="${install.dir}/${jar.name}">
       <fileset dir=".">
-        <include name="**/*.props"/>
+        <include name="properties/*.props"/>
         <include name="**/*.html"/>
 				<include name="**/*.png"/>
         <include name="actions.xml"/>
