@@ -190,7 +190,7 @@ void occam_entry (char **tlp_desc,
 		} else if (strcmp (name, "MSPTR") == 0) {
 			Wptr[wspptr++] = (word) ms;
 		} else if (strcmp (name, "FBARPTR") == 0) {
-			if (fbar != NULL) {
+			if (fbar == NULL) {
 				fbar = (word *) ccsp_mt_alloc (MT_MAKE_BARRIER (MT_BARRIER_FORKING), 0);
 			}
 			Wptr[wspptr++] = (word) fbar;
