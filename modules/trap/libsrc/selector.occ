@@ -19,12 +19,12 @@
 
 --** @module selector
 
-#INCLUDE "cif.module"
+--#INCLUDE "cif.module"
 #INCLUDE "selector.inc"
 
 --{{{  externs
-#PRAGMA EXTERNAL "PROC CIF.selector.make.nonblocking (VAL INT fd) = 4096"
-#PRAGMA EXTERNAL "PROC CIF.selector.server (SELECTOR.CT? svr) = 16384"
+--#PRAGMA EXTERNAL "PROC CIF.selector.make.nonblocking (VAL INT fd) = 4096"
+--#PRAGMA EXTERNAL "PROC CIF.selector.server (SELECTOR.CT? svr) = 16384"
 --}}}
 
 --{{{  PROC selector.make.nonblocking
@@ -34,7 +34,8 @@
 PROC selector.make.nonblocking (VAL INT fd)
   -- Dummy variable necessary owing to occ21 bug.
   INITIAL INT real.fd IS fd:
-  CIF.selector.make.nonblocking (real.fd)
+  SKIP
+  --CIF.selector.make.nonblocking (real.fd)
 :
 --}}}
 --{{{  PROC selector.add
@@ -71,7 +72,16 @@ PROC selector.start (RESULT SHARED SELECTOR.CT! sel)
     sel, svr := MOBILE SELECTOR.CT
     -- Wrapper PROC necessary owing to occ21 bug.
     PROC t (SELECTOR.CT? svr)
-      CIF.selector.server (svr)
+      INITIAL BOOL done IS FALSE:
+      WHILE NOT done
+        svr[req] ? CASE
+          SELECTOR.SIGNAL! signal:
+          INT fd, events:
+          add; fd; events; signal
+            SKIP
+          shutdown
+            done := TRUE
+      --CIF.selector.server (svr)
     :
     FORK t (svr)
 :

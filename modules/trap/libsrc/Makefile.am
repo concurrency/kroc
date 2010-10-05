@@ -38,7 +38,7 @@ tools = $(trap_tools)
 all-local: $(libs) $(includes) $(tools)
 
 selector.lib: $(selector_lib_objs)
-	$(OCCBUILD) --library selector.lib --need cif --include selector.inc $(selector_lib_objs)
+	$(OCCBUILD) --library selector.lib --include selector.inc $(selector_lib_objs)
 
 trap.lib: $(trap_lib_objs)
 	$(OCCBUILD) --library trap.lib --need selector --need file --need sock --need useful --include trap.inc $(trap_lib_objs)

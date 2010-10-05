@@ -23,6 +23,8 @@
 #include <poll.h>
 #include <errno.h>
 
+#if 0
+
 #include <cif.h>
 
 /*{{{  types */
@@ -250,3 +252,5 @@ void selector_server (Workspace wptr)
 	close (pipe_fds[1]);
 }
 /*}}}*/
+
+#endif

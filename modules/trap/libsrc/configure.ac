@@ -10,7 +10,7 @@ OCCAM_OCCBUILD
 build_trap=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([file.module sock.module useful.module cif.module], ,
+OCCAM_INCLUDE([file.module sock.module useful.module], ,
               [build_trap=no])
 
 AC_MSG_CHECKING([whether to build trap.module])
