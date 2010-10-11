@@ -33,6 +33,32 @@ DATA TYPE LEVEL IS INT:
 VAL LEVEL LOW IS #0:
 VAL LEVEL HIGH IS #1:
 
+--{{{ FUNCTION NOT (user defined operator: LEVEL->LEVEL)
+--* Unary (logical) negation operator for the LEVEL type
+-- Enables the use of [@code level := NOT level], where [@code level] 
+-- is of type [@code LEVEL].
+--
+-- @private
+-- @param l Input value
+-- @returns HIGH if l is LOW, LOW otherwise
+LEVEL INLINE FUNCTION "NOT" (VAL LEVEL level)
+  LEVEL result:
+  VALOF
+    ASM
+      LD level
+      EQC 0
+      ST result
+-- The assembler code is equivalent to the following if, but takes 
+-- 3 instructions rather than 10 for the if version
+--    IF
+--      l = LOW
+--        result := HIGH
+--      TRUE
+--        result := LOW
+    RESULT result
+:
+--}}}
+
 --* Symbolic constant for setting data direction registers to input.
 VAL INT INPUT IS #0:
 --* Symbolic constant for setting data direction registers to output.
