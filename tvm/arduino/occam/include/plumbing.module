@@ -112,11 +112,7 @@ PROC invert.level (CHAN LEVEL in?, out!)
     LEVEL v:
     SEQ
       in ? v
-      IF
-        v = HIGH
-          out ! LOW
-        TRUE -- If v = LOW
-          out ! HIGH
+      out ! NOT v
 :
 --}}}
 
@@ -149,11 +145,7 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
     SEQ
       out ! level
       in ? SIGNAL
-      IF
-        level = HIGH
-          level := LOW
-        TRUE -- If level = LOW
-          level := HIGH
+      level := NOT level
 :
 --}}}
 
