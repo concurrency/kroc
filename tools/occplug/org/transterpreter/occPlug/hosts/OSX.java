@@ -1,5 +1,7 @@
 package org.transterpreter.occPlug.hosts;
 
+import java.util.Arrays;
+
 /*
  * OSX.java
  * part of the occPlug plugin for the jEdit text editor
@@ -30,5 +32,17 @@ public class OSX extends Unix {
 		{
 			base = "osx-ppc";
 		}
+	}
+
+	public String[] getSerialPorts() {
+		String []ttys = {"/dev/ttys0", "/dev/ttys1", "/dev/ttys2", "/dev/ttys3"};
+		String []usbs = Native.getSerialPortNames();
+		Arrays.sort(usbs);
+		
+		String[] all = new String[ttys.length+usbs.length];
+		System.arraycopy(usbs, 0, all, 0, usbs.length);
+		System.arraycopy(ttys, 0, all, usbs.length, ttys.length);
+		
+		return all;
 	}
 }
