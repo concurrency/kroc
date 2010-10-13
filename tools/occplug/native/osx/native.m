@@ -109,7 +109,7 @@ static char *get_string_property(io_object_t service, CFStringRef property, JNIE
 	return str_ptr;
 }
 
-JNIEXPORT jobject JNICALL Java_org_transterpreter_occPlug_hosts_Native_getSerialPorts (JNIEnv *env, jobject this)
+JNIEXPORT jobject JNICALL Java_org_transterpreter_occPlug_hosts_Native__1getSerialPorts (JNIEnv *env, jclass this)
 {
 	jclass      dict_class;
 	jmethodID   dict_init;

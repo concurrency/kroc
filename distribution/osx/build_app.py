@@ -159,6 +159,7 @@ copy_file('install/etc/avrdude.conf', BIN_DIR)
 mkdirs(JEDIT_DIR)
 copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar'])
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
+copy_file('build/occPlug/native.dylib', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
 
 # Updater

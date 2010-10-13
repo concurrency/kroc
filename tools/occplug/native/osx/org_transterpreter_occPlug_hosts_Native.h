@@ -7,12 +7,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Inaccessible static: kUSBVendorID */
+/* Inaccessible static: kUSBProductID */
+/* Inaccessible static: kUSBProductString */
+/* Inaccessible static: kUSBVendorString */
+/* Inaccessible static: kUSBSerialNumberString */
 /*
  * Class:     org_transterpreter_occPlug_hosts_Native
- * Method:    getSerialPorts
+ * Method:    _getSerialPorts
  * Signature: ()Ljava/util/Map;
  */
-JNIEXPORT jobject JNICALL Java_org_transterpreter_occPlug_hosts_Native_getSerialPorts
+JNIEXPORT jobject JNICALL Java_org_transterpreter_occPlug_hosts_Native__1getSerialPorts
   (JNIEnv *, jclass);
 
 #ifdef __cplusplus

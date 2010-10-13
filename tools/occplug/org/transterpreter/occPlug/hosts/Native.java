@@ -1,9 +1,16 @@
 package org.transterpreter.occPlug.hosts;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Enumeration;
 import java.util.Set;
+
+import org.gjt.sp.jedit.MiscUtilities;
+import org.gjt.sp.jedit.PluginJAR;
+import org.gjt.sp.jedit.jEdit;
+import org.gjt.sp.util.Log;
+import org.transterpreter.occPlug.OccPlugPlugin;
 
 
 /*
@@ -28,14 +35,26 @@ import java.util.Set;
 
 public class Native {
 
-	public static String kUSBVendorID           = "idVendor";
-	public static String kUSBProductID          = "idProduct";
-	public static String kUSBProductString		= "USB Product Name";
-	public static String kUSBVendorString		= "USB Vendor Name";
-	public static String kUSBSerialNumberString	= "USB Serial Number";
+	public static String kUSBVendorID            = "idVendor";
+	public static String kUSBProductID           = "idProduct";
+	public static String kUSBProductString       = "USB Product Name";
+	public static String kUSBVendorString        = "USB Vendor Name";
+	public static String kUSBSerialNumberString	 = "USB Serial Number";
 	
-	public static native Map<String, Map<String, Object>> getSerialPorts();
-
+	public static native Map<String, Map<String, Object>> _getSerialPorts();
+	
+	public static Map<String, Map<String, Object>> getSerialPorts()
+	{
+    	try
+    	{
+            return _getSerialPorts();
+    	}
+    	catch(UnsatisfiedLinkError e)
+    	{
+    		return new HashMap<String, Map<String, Object>>();
+    	}		
+	}
+	
 	public static String[] getSerialPortNames()
 	{
 		Map<String, Map<String, Object>> m = getSerialPorts();
@@ -69,8 +88,25 @@ public class Native {
 		}
 	}
 	
-    static {
-        //System.loadLibrary("native");
-    	System.load("/Users/clj/work/kroc/kroc-trunk/tools/occplug/build/native.dylib");
+    static 
+    {
+    	/* FIXME: This will change for other platforms. I think there is a way to get 
+    	 * the right extension though I can't remember how
+    	 */
+    	final String jarLibName = "native.dylib";
+    	
+        final PluginJAR jar = jEdit.getPlugin(OccPlugPlugin.class.getName()).getPluginJAR();
+        final String libraryPath = MiscUtilities.constructPath(
+                MiscUtilities.getParentOfPath(jar.getPath()), jarLibName);
+
+    	try
+    	{
+    		System.load(libraryPath);
+    	}
+    	catch(UnsatisfiedLinkError e)
+    	{
+    		Log.log(Log.ERROR, null, "Could not find the native library, the following exception was caught:");
+    		Log.log(Log.ERROR, null, e);
+    	}	
     }
 }
