@@ -96,7 +96,12 @@ class Revision
 			<fileset dir="${build.dir}">
 				<include name="**/*.class"/>
 			</fileset>
-    </jar>
+		</jar>
+		<copy todir="${install.dir}">
+			<fileset dir="${build.dir}">
+				<include name="native.*"/>
+			</fileset>
+		</copy>
 		<antcall target="reload"/>
   </target>
 	
@@ -144,7 +149,7 @@ class Revision
     </exec>
   </target>
 
-  <target name="jni">
+  <target name="jni" depends="compile">
 	  <antcall target="jni-osx"/>
   </target>
 
