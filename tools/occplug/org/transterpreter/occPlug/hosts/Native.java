@@ -93,7 +93,7 @@ public class Native {
     	/* FIXME: This will change for other platforms. I think there is a way to get 
     	 * the right extension though I can't remember how
     	 */
-    	final String jarLibName = "native.dylib";
+    	final String jarLibName = "occplug_native.dylib";
     	
         final PluginJAR jar = jEdit.getPlugin(OccPlugPlugin.class.getName()).getPluginJAR();
         final String libraryPath = MiscUtilities.constructPath(
