@@ -99,7 +99,7 @@ class Revision
 		</jar>
 		<copy todir="${install.dir}">
 			<fileset dir="${build.dir}">
-				<include name="native.*"/>
+				<include name="occplug_native.*"/>
 			</fileset>
 		</copy>
 		<antcall target="reload"/>
@@ -140,7 +140,7 @@ class Revision
       <arg value="-Inative"/>
       <arg value="native/osx/native.m"/>
       <arg value="-o"/>
-      <arg value="${build.dir}/native.dylib"/>
+      <arg value="${build.dir}/occplug_native.dylib"/>
       <arg value="-lobjc"/>
       <arg value="-framework"/>
       <arg value="Foundation"/>
