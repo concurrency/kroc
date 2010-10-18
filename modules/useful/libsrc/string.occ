@@ -96,7 +96,7 @@ BOOL FUNCTION same.string (VAL []BYTE a, b)
 --{{{  FUNCTION is.whitespace
 --* Is a character whitespace?
 -- @param ch Character to examine
--- @return [@code TRUE] if [@code ch] is a space, tab, carriage-return or line-feed
+-- @return [@code TRUE] if [@code ch] is a space, tab, carriage-return, line-feed, form-feed or vertical-tab
 BOOL FUNCTION is.whitespace (VAL BYTE ch)
   BOOL result:
   VALOF
