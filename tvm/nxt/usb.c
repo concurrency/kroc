@@ -449,17 +449,19 @@ static void usb_write_data (int endpoint, const uint8_t *ptr, uint32_t length)
 
 static inline int usb_cont_write (int endpoint)
 {
-	endpoint /= 2;
+	int buf_n = endpoint / 2;
 
-	if (usb_state.tx_len[endpoint] > 0 
-			&& usb_state.tx_data[endpoint] != NULL) {
+	if (usb_state.tx_len[buf_n] > 0 
+			&& usb_state.tx_data[buf_n] != NULL) {
+		//debug_msg ("CW1 ", endpoint);
 		usb_write_data (
 			endpoint,
-			usb_state.tx_data[endpoint],
-			usb_state.tx_len[endpoint]
+			usb_state.tx_data[buf_n],
+			usb_state.tx_len[buf_n]
 		);
 		return 1;
 	} else {
+		//debug_msg ("CW0 ", endpoint);
 		return 0;
 	}
 }
@@ -603,7 +605,7 @@ static int msd_send_csw (uint8_t status)
 
 static void msd_cleared_halt (void)
 {
-	debug_msg ("CLR ", msd_state.status);
+	//debug_msg ("CLR ", msd_state.status);
 	switch (msd_state.status) {
 		case MSD_WAIT_CLEAR_HALT:
 			usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
