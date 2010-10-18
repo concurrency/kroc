@@ -1,6 +1,6 @@
 --
 --	String utilities
---	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--	Copyright (C) 2008, 2010 Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -123,5 +123,57 @@ PROC rstrip.string (MOBILE []BYTE s)
         TRUE
           scanning := FALSE
     resize.string (s, len)
+:
+--}}}
+--{{{  FUNCTION string.char
+--* Return the position of [@code needle] inside [@code haystack], or
+--[@code -1] if it isn't found.
+INT FUNCTION string.char (VAL []BYTE haystack, VAL BYTE needle)
+  INT result:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE haystack
+        haystack[i] = needle
+          result := i
+      TRUE
+        result := (-1)
+    RESULT result
+:
+--}}}
+--{{{  PROC tail.string
+--* Remove [@code n] bytes from the start of [@code src],
+-- writing the result into [@code dest].
+PROC tail.string (VAL INT n, VAL []BYTE src, MOBILE []BYTE dest)
+  SEQ
+    dest := MOBILE [(SIZE src) - n]BYTE
+    [dest FOR SIZE dest] := [src FROM n]
+:
+--}}}
+--{{{  PROC split.string
+--* Split [@code src] on [@code sep], writing each substring to [@code out],
+-- terminated by [@code []].
+PROC split.string (VAL []BYTE src, VAL BYTE sep, CHAN MOBILE []BYTE out!)
+  INITIAL INT start IS 0:
+  SEQ
+    WHILE start < (SIZE src)
+      INT pos, end:
+      SEQ
+        --{{{  find the next separator
+        pos := string.char ([src FROM start], sep)
+        IF
+          pos = (-1)
+            end := SIZE src
+          TRUE
+            end := start + pos
+        --}}}
+        --{{{  send out that string
+        INITIAL MOBILE []BYTE s IS MOBILE [end - start]BYTE:
+        SEQ
+          s := [src FROM start FOR (end - start)]
+          out ! s
+        --}}}
+        start := end + 1
+
+    out ! MOBILE [0]BYTE
 :
 --}}}
