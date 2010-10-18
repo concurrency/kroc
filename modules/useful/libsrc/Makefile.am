@@ -9,6 +9,7 @@ CFLAGS = @CFLAGS@ @DEFS@ @OCCBUILD_CFLAGS@
 EXTRA_DIST = \
 	make-format.py \
 	format.occ \
+	io.occ \
 	math.occ \
 	matrix.occ \
 	string.occ \
@@ -19,6 +20,7 @@ EXTRA_DIST = \
 useful_lib_objs = \
 	format.tce \
 	format-gen.tce \
+	io.tce \
 	math.tce \
 	matrix.tce \
 	string.tce \

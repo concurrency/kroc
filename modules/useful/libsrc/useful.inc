@@ -1,7 +1,7 @@
 --
 --	Definitions for the useful module
 --	Copyright (C) 1997 D.C. Wood <D.C.Wood@kent.ac.uk>
---	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+--	Copyright (C) 2008, 2009, 2010 Adam Sampson <ats@offog.org>
 --
 --	This library is free software; you can redistribute it and/or
 --	modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@
 -- @module useful
 
 --{{{  DATA TYPE VECTOR2
---* A two-dimensional vector.
+--* A two-dimensional vector of [@code REAL]s.
 DATA TYPE VECTOR2
   RECORD
     REAL32 x, y:
@@ -86,6 +86,22 @@ REAL32 INLINE FUNCTION mag.squared2 (VAL VECTOR2 v) IS (v[x] * v[x]) + (v[y] * v
 --}}}
 --{{{  FUNCTION dot.product2
 REAL32 INLINE FUNCTION dot.product2 (VAL VECTOR2 a, b) IS (a[x] * b[x]) + (a[y] * b[y]):
+--}}}
+
+--{{{  DATA TYPE VECTOR2.INT
+--* A two-dimensional vector of [@code INT]s.
+DATA TYPE VECTOR2.INT
+  RECORD
+    INT x, y:
+:
+--}}}
+--{{{  VECTOR2.INT operators
+BOOL INLINE FUNCTION "=" (VAL VECTOR2.INT a, b) IS ((a[x] = b[x]) AND (a[y] = b[y])):
+VECTOR2.INT INLINE FUNCTION "+" (VAL VECTOR2.INT a, b) IS [a[x] + b[x], a[y] + b[y]]:
+VECTOR2.INT INLINE FUNCTION "-" (VAL VECTOR2.INT a, b) IS [a[x] - b[x], a[y] - b[y]]:
+VECTOR2.INT INLINE FUNCTION "-" (VAL VECTOR2.INT a) IS [-a[x], -a[y]]:
+VECTOR2.INT INLINE FUNCTION "**" (VAL VECTOR2.INT a, VAL INT b) IS [a[x] * b, a[y] * b]:
+VECTOR2.INT INLINE FUNCTION "/" (VAL VECTOR2.INT a, VAL INT b) IS [a[x] / b, a[y] / b]:
 --}}}
 
 --{{{  DATA TYPE VECTOR3
