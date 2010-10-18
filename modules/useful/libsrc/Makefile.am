@@ -29,6 +29,14 @@ if TRACE_VIA_FFI
 useful_lib_objs += useful-c.o
 endif
 
+useful_needs = \
+	--need course \
+	--need maths \
+	--need time
+if WITH_IO
+useful_needs += --need file
+endif
+
 useful_libs = useful.lib
 useful_includes = $(srcdir)/useful.inc
 libs = $(useful_libs)
@@ -37,7 +45,7 @@ includes = $(useful_includes)
 all-local: $(libs)
 
 useful.lib: $(useful_lib_objs)
-	$(OCCBUILD) --library useful.lib --include useful.inc --need course --need maths --need time $(useful_lib_objs)
+	$(OCCBUILD) --library useful.lib --include useful.inc $(useful_needs) $(useful_lib_objs)
 
 install-exec-local: $(libs)
 	$(OCCBUILD) --install --prefix "$(prefix)" --destdir "$(DESTDIR)" $(libs) $(includes)

@@ -34,6 +34,7 @@ if test $with_io = yes; then
 fi
 AC_SUBST(OCCAM_DEFS)
 AM_CONDITIONAL([TRACE_VIA_FFI], [test $trace_mechanism = ffi])
+AM_CONDITIONAL([WITH_IO], [test $with_io = yes])
 
 dnl Checks for occam modules.
 OCCAM_INCLUDE([course.module maths.module time.module], ,
