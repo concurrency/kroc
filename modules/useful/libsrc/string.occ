@@ -101,7 +101,7 @@ BOOL FUNCTION is.whitespace (VAL BYTE ch)
   BOOL result:
   VALOF
     CASE ch
-      ' ', '*t', '*c', '*n'
+      ' ', '*t', '*c', '*n', 11, 12
         result := TRUE
       ELSE
         result := FALSE
