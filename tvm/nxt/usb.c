@@ -827,6 +827,8 @@ static int scsi_read (const uint8_t *cmd)
 	}
 
 	if (valid) {
+		debug_msg ("LBA ", lba);
+		debug_msg ("LEN ", len);
 		lba *= MSD_BLOCK_SIZE;
 		len *= MSD_BLOCK_SIZE;
 		if ((lba < msd_state.data_len) && ((lba + len) <= msd_state.data_len)) {
@@ -915,6 +917,30 @@ static int scsi_report_luns (const uint8_t *cmd)
 	return MSD_STATUS_CMD_FAILED;
 }
 
+static int scsi_mode_sense (const uint8_t *cmd)
+{
+	uint8_t page_code = cmd[2];
+
+	debug_msg ("SNS ", page_code);
+
+	if (page_code == 0) {
+		uint8_t len = cmd[4];
+		uint8_t *desc = (uint8_t *) msd_state.buf.sense;
+
+		desc[0] = 3;	/* Mode Data Length */
+		desc[1] = 0x00;	/* Medium Type */
+		desc[2] = 0x00;	/* Reserved (0-3,5), DPO/FUA (4), WP (7) */
+		desc[3] = 0x00;	/* Block Descriptors Length */
+
+		if (len > 4)
+			len = 4;
+
+		return msd_send_data (desc, len);
+	} else {
+		return MSD_STATUS_CMD_FAILED;
+	}
+}
+
 static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 {
 	int ok = 1;
@@ -933,6 +959,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 		msd_state.status = MSD_WAIT_RESET;
 		usb_set_halt (MSD_DATA_EP_IN);
 		usb_set_halt (MSD_DATA_EP_OUT);
+		debug_msg ("ERRC", 0);
 	} else {
 		const uint8_t *cmd;
 		int cmd_len;
@@ -956,6 +983,7 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 				case SCSI_CMD_PREVENT_REMOVAL:	ok = scsi_prevent_removal (cmd);break;
 				case SCSI_CMD_READ6:		ok = scsi_read (cmd);		break;
 				case SCSI_CMD_WRITE6:		ok = scsi_write (cmd);		break;
+				case SCSI_CMD_MODE_SENSE6:	ok = scsi_mode_sense (cmd);	break;
 			}
 		} else if (cmd_len == 10) {
 			switch (cmd[0]) {
@@ -989,12 +1017,13 @@ static void msd_handle_cbw (const uint8_t *cbw, const int32_t len)
 
 static void msd_handle_rx (int endpoint)
 {
-	debug_msg ("RXC ", msd_state.status);
 	if (endpoint != MSD_DATA_EP_IN) {
 		return;
 	} else if (msd_state.status == MSD_WAIT_CBW) {
+		debug_msg ("RXC ", msd_state.status);
 		msd_handle_cbw ((uint8_t *) msd_state.buf.cbw, usb_state.rx_len);
 	} else if (msd_state.status == MSD_DATA_RX) {
+		debug_msg ("RXC ", msd_state.status);
 		if (usb_state.rx_len == usb_state.rx_size) {
 			msd_send_csw (MSD_STATUS_CMD_PASSED);
 		}
@@ -1003,7 +1032,7 @@ static void msd_handle_rx (int endpoint)
 
 static void msd_handle_tx_complete (int endpoint)
 {
-	debug_msg ("TXC ", msd_state.status);
+	//debug_msg ("TXC ", msd_state.status);
 	if (endpoint != MSD_DATA_EP_OUT) {
 		return;
 	} else if (msd_state.status == MSD_DATA_TX) {
