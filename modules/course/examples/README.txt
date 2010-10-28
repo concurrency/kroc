@@ -129,6 +129,13 @@ These files are all main compilation units:
     functions provided by the utils.occ library (whose source code
     and documentation are in the kroc/course/libsrc directory).
 
+  test_bell.occ
+
+    This is a process showing the effect (if any) of sending the BELL
+    character to the screen and error channels.  It also illustrates
+    the need to FLUSH incomplete lines on the screen channel, but not
+    for the error channel.
+
   demo.occ
 
     This process will be explained in the course.  It demonstrates
@@ -172,4 +179,4 @@ Please check out <http://transterpreter.org/docs/get_started>.]
 
 
 Peter Welch.
-(10-19-2007)
+(28-10-2010)

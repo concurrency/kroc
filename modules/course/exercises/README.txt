@@ -19,6 +19,19 @@ You will need your own copies of all the `.occ' files in this directory.
   q2.occ
 
     Use the `Legoland' processes to undo the integrate (i.e. differentiate).
+  
+  extra-exercises.doc/pdf
+
+    This gives just one extra exercise that can be taken early.  See the
+    e1.occ starter file below.
+  
+  e1.occ
+
+    This is the starter file for the extra exercise above.  A simple
+    component to merge two sorted ascending number streams has to be
+    implemented.  This is then used to build mergers for three, four
+    and *any* number of input streams - the latter needing recursion
+    with the concurrency.
 
   more-exercises.doc/pdf
 
