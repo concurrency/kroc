@@ -76,9 +76,14 @@
       </fileset>
       <fileset dir="${build.dir}">
          <include name="**/*.class"/>
-         <include name="*.dylib"/>
       </fileset>
     </jar>
+
+    <copy todir="${install.dir}">
+      <fileset dir="${build.dir}">
+        <include name="*.dylib"/>
+      </fileset>
+    </copy>
     <antcall target="reload"/>
   </target>
 
