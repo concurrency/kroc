@@ -77,9 +77,13 @@
       </fileset>
       <fileset dir="${build.dir}">
          <include name="**/*.class"/>
-         <include name="*.dll"/>
       </fileset>
     </jar>
+    <copy todir="${install.dir}">
+      <fileset dir="${build.dir}">
+         <include name="*.dll"/>
+      </fileset>
+    </copy>
     <antcall target="reload"/>
   </target>
 
