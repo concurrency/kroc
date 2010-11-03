@@ -45,8 +45,7 @@ SPARKLE_ZIP         = SPARKLE + '.zip'
 SPARKLE_FEED        = 'http://download.transterpreter.org/appcast/mac-dev.xml'
 
 LIPO_BINARIES       = ['occ21', 'tvm', 'ilibr', 'mkoccdeps'] 
-# FIXME: tranx86 did not seem to get built?
-BINARIES            = 'kmakef kroc occbuild plinker.pl tce-dump.pl'.split()
+BINARIES            = 'tranx86 kmakef kroc occbuild plinker.pl tce-dump.pl'.split()
 LIBRARIES           = ('libSDL*.dylib libplayer*.dylib liboccam_*.a ' + 
                         'tvm/liboccam_tvm_*.dylib libkrocif.a libccsp.a').split()
 
