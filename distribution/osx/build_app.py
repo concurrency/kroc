@@ -163,6 +163,7 @@ copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
 
 # Updater
 copy_file('build/macupdater/JEditSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
+copy_file('build/macupdater/JEditSparkleNativeBridge.dylib', os.path.join(JEDIT_DIR, 'jars'))
 
 # Copy custom properties
 copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))
