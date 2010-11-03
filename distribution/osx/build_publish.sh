@@ -44,12 +44,12 @@ cat >build/feed.xml <<EOF
 			<title>Transterpreter - Development Version $VERSION</title>
 			<description><![CDATA[
 			<style>
-				$include(changelog.css)
+				\$include(changelog.css)
 			</style>
 
-			$changes
+			\$changes
 
-			    <h2>Development version</h2>
+			    <h3>Development version</h3>
 			    <p>Please note that you are using a development version of the
 			    Transterpreter, which may break, blow up,
 			    dissintigrate, or otherwise harm itself at any
@@ -75,11 +75,11 @@ EOF
 if ! [ -f "changes/version_$VERSION.markdown" ] ; then
   svn mv changes/version_CURRENT.markdown changes/version_$VERSION.markdown && \
   echo "# Changes Since $VERSION\n\n" > changes/version_CURRENT.markdown && \
-  svn commit -m "OSX Dist: (automatic commit) activating changelog entry"
+  svn commit changes/version_$VERSION.markdown \
+             changes/version_CURRENT.markdown \
+     -m "OSX Dist: (automatic commit) activating changelog entry"
 fi
 
-	echo "moo"
-	exit 1
 scp "changes/version_$VERSION.markdown" $HOST:$CHANGES_PATH
 scp "$ARCHIVE_PATH" $HOST:$FILES_PATH
 scp "build/feed.xml" $HOST:$FEED_PATH
