@@ -113,9 +113,9 @@ if ! [ -d $BUILD/$AVRDUDE ] ; then
     || exit 1
   tar -xvzf $AVRDUDE.tar.gz
   cd $AVRDUDE
-  ./configure --prefix=$INSTALL CFLAGS=-I$INSTALL/include LDFLAGS=-L$INSTALL/lib \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+  ./configure --prefix=$INSTALL \
+   CFLAGS="-I$INSTALL/include -arch i386" CXXFLAGS="-arch i386" \
+   LDFLAGS="-L$INSTALL/lib -arch i386" OBJCFLAGS="-arch i386"
   make
   make install
 fi
