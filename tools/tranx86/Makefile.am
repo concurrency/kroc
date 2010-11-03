@@ -11,7 +11,6 @@ VPATH = @srcdir@
 INCLUDES=-I.
 DEFS=@DEFS@ @ARCH_DEFS@ @KROC_CCSP_CINCPATH@
 EXTRALDFLAGS=@ARCH_DEFS@
-CFLAGS=-g -O2 -Wall
 
 ## Cannot use ansi2knr because it is under GPL
 ## AUTOMAKE_OPTIONS=ansi2knr
