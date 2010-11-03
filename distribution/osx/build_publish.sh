@@ -74,7 +74,7 @@ EOF
 
 if ! [ -f "changes/version_$VERSION.markdown" ] ; then
   svn mv changes/version_CURRENT.markdown changes/version_$VERSION.markdown && \
-  echo "# Changes Since $VERSION\n\n" > changes/version_CURRENT.markdown && \
+  echo -e "# Changes Since $VERSION\n\n" > changes/version_CURRENT.markdown && \
   svn commit changes/version_$VERSION.markdown \
              changes/version_CURRENT.markdown \
      -m "OSX Dist: (automatic commit) activating changelog entry"
