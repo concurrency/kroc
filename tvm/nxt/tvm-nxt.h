@@ -18,7 +18,8 @@ typedef uint8_t bool;
 
 /*{{{  Memory functions */
 /* mem.c */
-void memset (void *dest, int8_t val, size_t len);
+void memcpy (void *dest, const void *source, size_t len);
+void memset (void *dest, const int8_t val, size_t len);
 /*}}}*/
 
 /*{{{  Hardware access defines and functions */

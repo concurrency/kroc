@@ -95,7 +95,7 @@
 #define SCSI_CMD_VERIFY10		0x2f
 #define SCSI_CMD_REPORT_LUNS		0xa0
 
-#define SCSI_SENSE_DATA_LEN		18
+#define SCSI_INQUIRY_MAX_LEN		96
 
 #define SCSI_SENSE_KEY_NO_SENSE		0
 #define SCSI_SENSE_KEY_SOFT_ERROR	1
@@ -242,12 +242,11 @@ static const uint8_t usb_string_count =
 
 
 /* Precomputed SCSI response. */
-/* FIXME: might want to use something lower than SPC-4 */
 static const uint8_t scsi_standard_inquiry[] = {
 	0x00,	/* 000b = Peripheral Device, 00h = SBC-3 */
 	0x00,	/* No Removable Media */
 	0x06,	/* Supports SPC-4 */
-	0x06,	/* No ACA, No HiSup, Response Format SPC-4 */
+	0x02,	/* No ACA, No HiSup, Response Format = 2 */
 	32,	/* Remaining Length */
 	0x00, 0x00, 0x00, 			/* No flags set */
 	'L', 'E', 'G', 'O', ' ', ' ', ' ', ' ', /* Vendor ID */
@@ -368,8 +367,8 @@ static volatile struct {
 		/* Command Status Wrapper (CSW) buffer. */
 		uint8_t csw[MSD_CSW_LEN];
 
-		/* SCSI Request Sense Response */
-		uint8_t sense[SCSI_SENSE_DATA_LEN];
+		/* SCSI Inquiry / Request Sense Response */
+		uint8_t inquiry[SCSI_INQUIRY_MAX_LEN];
 	} buf;
 
 } msd_state;
@@ -687,19 +686,19 @@ static int scsi_request_sense (const uint8_t *cmd)
 	/* 4	= Allocation Length */
 	/* 5	= Control */
 	if (cmd[1] == 0) {
-		uint8_t *desc = (uint8_t *) msd_state.buf.sense;
+		uint8_t *desc = (uint8_t *) msd_state.buf.inquiry;
 		uint8_t len = cmd[4];
 
 		/* fill buffer */
-		memset (desc, 0, sizeof (msd_state.buf.sense));
-		desc[0]		= 0x70; /* current errors, with no info */
+		memset (desc, 0, SCSI_INQUIRY_MAX_LEN);
+		desc[0]		= 0x80 | 0x70; /* valid | current errors */
 		desc[2] 	= msd_state.scsi_sense_key;
-		desc[7] 	= 11; /* additional bytes */
+		desc[7] 	= 18 - 8; /* additional bytes */
 		desc[12]	= msd_state.scsi_sense_code;
 		desc[13]	= msd_state.scsi_sense_qualifier;
 
-		if (len > sizeof (msd_state.buf.sense))
-			len = sizeof (msd_state.buf.sense);
+		if (len > SCSI_INQUIRY_MAX_LEN)
+			len = SCSI_INQUIRY_MAX_LEN;
 
 		/* reset sense data */
 		msd_set_sense (SCSI_SENSE_KEY_NO_SENSE, 0, 0);
@@ -719,35 +718,42 @@ static int scsi_inquiry (const uint8_t *cmd)
 	/* 5	= Control */
 	
 	uint16_t length = (cmd[3] << 8) | cmd[4];
+	uint8_t *desc = (uint8_t *) msd_state.buf.inquiry;
+	int valid = 1;
 	
 	debug_msg ("INQ ", (cmd[1] << 24) | (cmd[2] << 16) | length);
+
+	if (length > SCSI_INQUIRY_MAX_LEN)
+		length = SCSI_INQUIRY_MAX_LEN;
+	memset (desc, 0, SCSI_INQUIRY_MAX_LEN);
 
 	if (cmd[1] == 0) {
 		/* EVPD = 0 */
 		if (cmd[2] == 0) {
 			/* Standard Inquiry */
-			if (length > sizeof (scsi_standard_inquiry))
-				length = sizeof (scsi_standard_inquiry);
-			
-			return msd_send_data (scsi_standard_inquiry, length);
+			memcpy (desc, scsi_standard_inquiry, sizeof (scsi_standard_inquiry));
+			desc[4] = length - 5; /* adjust the additional length field */
+		} else {
+			valid = 0;
 		}
 	} else if (cmd[1] == 1) {
 		/* EVPD = 1 */
 		if (cmd[2] == 0x00) {
 			/* Page 00 */
-			if (length > sizeof (scsi_evpd_page_00))
-				length = sizeof (scsi_evpd_page_00);
-
-			return msd_send_data (scsi_evpd_page_00, length);
+			memcpy (desc, scsi_evpd_page_00, sizeof (scsi_evpd_page_00));
 		} else if (cmd[2] == 0x83) {
-			if (length > sizeof (scsi_evpd_page_83))
-				length = sizeof (scsi_evpd_page_83);
-			
-			return msd_send_data (scsi_evpd_page_83, length);
+			/* Page 83 */
+			memcpy (desc, scsi_evpd_page_83, sizeof (scsi_evpd_page_83));
+		} else {
+			valid = 0;
 		}
 	}
 
-	return MSD_STATUS_CMD_FAILED;
+	if (valid) {
+		return msd_send_data (desc, length);
+	} else {
+		return MSD_STATUS_CMD_FAILED;
+	}
 }
 
 static int scsi_prevent_removal (const uint8_t *cmd)
@@ -773,7 +779,7 @@ static int scsi_read_capacity (const uint8_t *cmd)
 		uint32_t block_size = MSD_BLOCK_SIZE;
 		uint32_t blocks = (msd_state.data_len / block_size) - 1;
 		uint32_t lba = (cmd[2] << 24) | (cmd[3] << 16) | (cmd[4] << 8) | cmd[5];
-		uint8_t *buf = (uint8_t *) msd_state.buf.sense;
+		uint8_t *buf = (uint8_t *) msd_state.buf.inquiry;
 		uint8_t pmi = cmd[8] & 1;
 
 		if (pmi && (lba > blocks)) {
@@ -903,7 +909,7 @@ static int scsi_report_luns (const uint8_t *cmd)
 	if ((cmd[1] | cmd[3] | cmd[4] | cmd[5] | cmd[10]) == 0) {
 		if (cmd[2] <= 2) {
 			uint32_t len = (cmd[6] << 24) | (cmd[7] << 16) | (cmd[8] << 8) | cmd[9];
-			uint8_t *buf = (uint8_t *) msd_state.buf.sense;
+			uint8_t *buf = (uint8_t *) msd_state.buf.inquiry;
 
 			if (len > 16)
 				len = 16;
@@ -925,7 +931,7 @@ static int scsi_mode_sense (const uint8_t *cmd)
 
 	if (page_code == 0) {
 		uint8_t len = cmd[4];
-		uint8_t *desc = (uint8_t *) msd_state.buf.sense;
+		uint8_t *desc = (uint8_t *) msd_state.buf.inquiry;
 
 		desc[0] = 3;	/* Mode Data Length */
 		desc[1] = 0x00;	/* Medium Type */

@@ -9,7 +9,16 @@
 
 #include "tvm-nxt.h"
 
-void memset (void *dest, int8_t val, size_t len)
+void memcpy (void *dest, const void *source, size_t len)
+{
+	int8_t *dst = (int8_t *) dest;
+	int8_t *src = (int8_t *) source;
+	
+	while (len--)
+		*(dst++) = *(src++);
+}
+
+void memset (void *dest, const int8_t val, size_t len)
 {
 	int8_t *dst = (int8_t *) dest;
 	
