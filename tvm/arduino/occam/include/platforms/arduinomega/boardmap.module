@@ -72,9 +72,10 @@
 --67(A13) 84    PK2
 --68(A14) 83    PK1
 --69(A15) 82    PK0
+--}}}
 
 
- Symbolic Constants
+--{{{Symbolic Constants
 --* Symbolic constant for accessing the first analog pin.
 VAL INT A0  IS 54:
 VAL INT A1  IS 55:
