@@ -123,6 +123,7 @@ void nxt_init (void)
 		msd_len -= diff;
 	}
 	msd_len -= (msd_len % 256);
+	memset (msd_mem, 0, msd_len);
 	usb_init (msd_mem, msd_len, 0);
 
 	/* Wait for shutdown button */

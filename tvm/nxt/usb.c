@@ -79,7 +79,7 @@
 #define MSD_STATUS_CSW_SENT		0x04
 #define MSD_STATUS_STALL		0x05
 
-#define MSD_BLOCK_SIZE			256
+#define MSD_BLOCK_SIZE			512
 
 #define SCSI_CMD_TEST_UNIT_READY	0x00
 #define SCSI_CMD_REQUEST_SENSE		0x03
@@ -244,9 +244,9 @@ static const uint8_t usb_string_count =
 /* Precomputed SCSI response. */
 static const uint8_t scsi_standard_inquiry[] = {
 	0x00,	/* 000b = Peripheral Device, 00h = SBC-3 */
-	0x00,	/* No Removable Media */
-	0x06,	/* Supports SPC-4 */
-	0x02,	/* No ACA, No HiSup, Response Format = 2 */
+	0x80,	/* Removable Media */
+	0x00,	/* Don't claim to support any SPC version */
+	0x01,	/* No ACA, No HiSup, Response Format = 1 (CSS) */
 	32,	/* Remaining Length */
 	0x00, 0x00, 0x00, 			/* No flags set */
 	'L', 'E', 'G', 'O', ' ', ' ', ' ', ' ', /* Vendor ID */
@@ -592,7 +592,7 @@ static int msd_send_csw (uint8_t status)
 		if (!(msd_state.flags & MSD_FLAG_DEV_TO_HOST))
 			usb_set_halt (MSD_DATA_EP_IN);
 		usb_set_halt (MSD_DATA_EP_OUT);
-		debug_msg ("STL ", 0);
+		debug_msg ("STL ", usb_state.halted);
 		return MSD_STATUS_STALL;
 	} else {
 		usb_write_data (MSD_DATA_EP_OUT, (uint8_t *) msd_state.buf.csw, MSD_CSW_LEN);
@@ -689,16 +689,16 @@ static int scsi_request_sense (const uint8_t *cmd)
 		uint8_t *desc = (uint8_t *) msd_state.buf.inquiry;
 		uint8_t len = cmd[4];
 
+		if (len > SCSI_INQUIRY_MAX_LEN)
+			len = SCSI_INQUIRY_MAX_LEN;
+		
 		/* fill buffer */
-		memset (desc, 0, SCSI_INQUIRY_MAX_LEN);
+		memset (desc, 0, len);
 		desc[0]		= 0x80 | 0x70; /* valid | current errors */
 		desc[2] 	= msd_state.scsi_sense_key;
 		desc[7] 	= 18 - 8; /* additional bytes */
 		desc[12]	= msd_state.scsi_sense_code;
 		desc[13]	= msd_state.scsi_sense_qualifier;
-
-		if (len > SCSI_INQUIRY_MAX_LEN)
-			len = SCSI_INQUIRY_MAX_LEN;
 
 		/* reset sense data */
 		msd_set_sense (SCSI_SENSE_KEY_NO_SENSE, 0, 0);
@@ -725,7 +725,8 @@ static int scsi_inquiry (const uint8_t *cmd)
 
 	if (length > SCSI_INQUIRY_MAX_LEN)
 		length = SCSI_INQUIRY_MAX_LEN;
-	memset (desc, 0, SCSI_INQUIRY_MAX_LEN);
+
+	memset (desc, 0, length);
 
 	if (cmd[1] == 0) {
 		/* EVPD = 0 */
@@ -761,7 +762,7 @@ static int scsi_prevent_removal (const uint8_t *cmd)
 	/* 1-3	= Reserved */
 	/* 4	= Prevent(1-0) */
 	/* 5	= Control */
-	if ((cmd[1] | cmd[2] | cmd[3] | (cmd[4] & 0xfb)) == 0) {
+	if ((cmd[1] | cmd[2] | cmd[3] | (cmd[4] & 0xfc)) == 0) {
 		return MSD_STATUS_CMD_PASSED;
 	} else {
 		return MSD_STATUS_CMD_FAILED;
@@ -929,7 +930,7 @@ static int scsi_mode_sense (const uint8_t *cmd)
 
 	debug_msg ("SNS ", page_code);
 
-	if (page_code == 0) {
+	if (page_code == 0x3f) { /* page_code == RETURN_ALL */
 		uint8_t len = cmd[4];
 		uint8_t *desc = (uint8_t *) msd_state.buf.inquiry;
 
@@ -1153,12 +1154,13 @@ static void usb_manage_setup_packet (uint8_t endpoint)
 				if (ep < N_ENDPOINTS) {
 					if (packet.value == USB_BREQUEST_SET_FEATURE) {
 						usb_set_halt (ep);
+						usb_send_null ();
 					} else {
 						usb_clear_halt (ep);
+						usb_send_null ();
 						if (usb_state.halted == 0)
 							msd_cleared_halt ();
 					}
-					usb_send_null ();
 				} else {
 					usb_send_stall (0);
 				}
