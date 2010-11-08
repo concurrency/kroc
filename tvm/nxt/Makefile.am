@@ -16,6 +16,7 @@ tvm_nxt_SOURCES = \
 	at91sam7s256.h \
 	avr.c \
 	debug.c \
+	fat12.c \
 	font8x8.h \
 	init.S \
 	interrupts.S \

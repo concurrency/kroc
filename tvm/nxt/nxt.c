@@ -117,13 +117,15 @@ void nxt_init (void)
 	/* USB and Mass Storage */
 	msd_mem = NXT_FREE_MEM_START;
 	msd_len = NXT_FREE_MEM_LEN;
-	if ((((uint32_t) msd_mem) % 256) != 0) {
-		uint32_t diff = 256 - (((uint32_t) msd_mem) % 256);
+	if ((((uint32_t) msd_mem) % 512) != 0) {
+		uint32_t diff = 512 - (((uint32_t) msd_mem) % 512);
 		msd_mem += diff;
 		msd_len -= diff;
 	}
-	msd_len -= (msd_len % 256);
-	memset (msd_mem, 0, msd_len);
+	msd_len -= (msd_len % 512);
+	if (msd_len > (40 * 1024))
+		msd_len = 40 * 1024;
+	fat12_init (msd_mem, msd_len);
 	usb_init (msd_mem, msd_len, 0);
 
 	/* Wait for shutdown button */
