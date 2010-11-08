@@ -22,8 +22,9 @@
 
 #INCLUDE "constants.module"
 #INCLUDE "base.module"
+   
 
- Board to Architecture Layout
+--{{{Board to Architecture Layout
 -- Board to Architecture layout w/ register names.
 --
 --B.pin   A.pin *REG  --B.pin A.pin *REG
@@ -139,9 +140,9 @@ VAL INT SS   IS 53:
 -- Apparently, there is an LED pin on the Mega. Committed for 
 -- further testing.
 VAL INT LED.PIN IS 13:
+--}}}
 
-
- Board to Architecture array map
+--{{{Board to Architecture array map
 -- Array (hand written) to convert Arduino Mega pins to ATmega1280 Pins.
 VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
 ------------------ 0                           7
@@ -161,18 +162,18 @@ VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
 ------------------54                          61
                   89, 88, 87, 86, 85, 84, 83, 82]:
 ------------------62                          69
+--}}}
 
-
- FUNCTION board.to.chip
+--{{{FUNCTION board.to.chip
 --* Arduino Mega specific conversion function for finding
 -- chip-specific pins from board-specific pin.
 --
 -- @param board.pin The board pin to be mapped to an AVR pin.
 -- @return The AVR pin connected to the given board pin.
 INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+--}}}
 
-
- FUNCTION board.analog.to.chip
+--{{{FUNCTION board.analog.to.chip
 --* Arduino Mega specific conversion function for finding
 -- chip-specific pins [@em specifically for analog pins].
 --
@@ -192,10 +193,11 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
         TRUE
           avr.pin := board.to.chip (board.analog.pin)
     RESULT avr.pin
-:
+:    
+--}}}
 
 
- FUNCTION board.to.serial.port
+--{{{FUNCTION board.to.serial.port
 --* Arduino Mega specific conversion function for finding
 -- chip-specific pins [@em specifically for serial operations].
 --
@@ -222,8 +224,9 @@ INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
           die ("The given Board Pin is not connected to any Serial Ports.")
     RESULT serial.port
 :
-
-
+--}}}
+    
+--{{{FIXME: Random Misc
 --      IF
 --        (board.pin =  0) OR (board.pin = 1)
 --          serial.port := 0
@@ -235,6 +238,6 @@ INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
 --          serial.port := 3
 --        TRUE
 --          die ("The given Board Pin is not connected to any Serial Ports.")
-
+--}}}
 
 #ENDIF
