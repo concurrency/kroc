@@ -39,7 +39,9 @@ my $llvm	= new Transputer::LLVM ();
 my $tcoff	= new Transputer::TCOFF ();
 
 # Options
+my %input;
 my $output;
+my $output_base;
 my $verbose;
 
 my @files;
@@ -93,7 +95,7 @@ while (my $arg = shift @args) {
 	} elsif ($options && $arg eq '-o') {
 		# -o Set output file
 		$output 		= shift @args;
-		$output 		=~ s/\.o$//;
+		$output_base		= $output;
 	} elsif ($options && $arg eq '-p') {
 		# -p Add plugin
 		my $plugin = shift @args;
@@ -102,13 +104,17 @@ while (my $arg = shift @args) {
 		warnerr ("ignoring unknown option: $arg") if $verbose;
 		shift @args if $arg eq '--cnpfx';
 	} else {
+		$input{$arg} = 1;
 		push (@files, $arg);
 	}
 }
 
 if (!$output) {
-	$output = $files[-1];
-	$output =~ s/\.tce$//i;
+	$output_base	= $files[-1];
+	$output_base =~ s/\.(tce|ll|o)$//i;
+	$output		= $output_base . '.o';
+} else {
+	$output_base =~ s/\.(o)$//i;
 }
 
 if (!$output || !@files) {
@@ -128,100 +134,119 @@ push (@llc_flags, "-march=$machine");
 push (@cc_flags, '-m32') 		if $machine eq 'x86';
 push (@cc_flags, $ENV{'CFLAGS'}) 	if exists($ENV{'CFLAGS'});
 
-# Load ETC
-my $last_file;
-my $endian;
-my %etc_file;
-my @etc;
-my $objects = [];
+my %output = (
+	'll' 	=> $files[-1] =~ /\.ll/i ? $files[-1] : $output_base . '.ll',
+	'bc'	=> $output_base . '.bc',
+	'opt'	=> $output_base . '.opt.bc',
+	's'	=> $output_base . '.s',
+	'o'	=> $output
+);
 
-foreach my $file (@files) {
-	my $data = $tcoff->read_file ($file);
-	die "Failed to read $file" if !$data;
+# Delete intermediate/output files
+# (Early versions of LLVM don't overwrite)
+foreach my $fk (keys (%output)) {
+	my $file = $output{$fk};
+	unlink ($file) if !exists ($input{$file});
+}
 
-	# Check endian
-	if ($data->{'.ENDIAN'}) {
-		my $file_endian = $data->{'.ENDIAN'}->[0];
-		die "Inconsistent endian settings, $file is $file_endian"
-			if defined ($endian) && $file_endian ne $endian;
-		$endian = $file_endian;
+
+# Check input, if already LLVM assembly then bypass ETC phase
+if (@files > 1 || $files[-1] !~ /\.ll$/i) {
+	# Load ETC
+	my $last_file;
+	my $endian;
+	my %etc_file;
+	my @etc;
+	my $objects = [];
+
+	foreach my $file (@files) {
+		my $data = $tcoff->read_file ($file);
+		die "Failed to read $file" if !$data;
+
+		# Check endian
+		if ($data->{'.ENDIAN'}) {
+			my $file_endian = $data->{'.ENDIAN'}->[0];
+			die "Inconsistent endian settings, $file is $file_endian"
+				if defined ($endian) && $file_endian ne $endian;
+			$endian = $file_endian;
+		}
+
+		# Decode text sections
+		my @texts;
+		foreach my $section (@{$data->{'LOAD_TEXT'}}) {
+			my @text = $etc->decode_load_text ($section->{'data'});
+
+			if (!@text) {
+				print STDERR "Failed to decode a text section in $file...\n";
+			} else {
+				my $ref = { 'file' => $file, 'etc' => \@text };
+				push (@texts, $ref);
+				$etc_file{\@text} = $data;
+			}
+		}
+
+		push (@etc, @texts) if @texts;
+		
+		$last_file = $data;
 	}
 
-	# Decode text sections
-	my @texts;
-	foreach my $section (@{$data->{'LOAD_TEXT'}}) {
-		my @text = $etc->decode_load_text ($section->{'data'});
+	# Check we have some ETC to work with
+	die "No valid data loaded (invalid ETC files?)" if !@etc;
 
-		if (!@text) {
-			print STDERR "Failed to decode a text section in $file...\n";
-		} else {
-			my $ref = { 'file' => $file, 'etc' => \@text };
-			push (@texts, $ref);
-			$etc_file{\@text} = $data;
+	my $entry_point;
+	if ($standalone) {
+		# Pick Entry Point
+		my $symbols 	= $last_file->{'symbols'};
+		my $last_text	= $etc[@etc - 1]->{'etc'};
+		my $jentry;
+		foreach my $op (@$last_text) {
+			if (!$jentry && ($op->{'name'} eq '.JUMPENTRY')) {
+				$jentry = $op->{'arg'};
+			}
+		}
+
+		die "No jump entry in the final text section: don't know which process to link"
+			if !defined ($jentry);
+
+		$entry_point = $symbols->{$jentry};
+
+		die "Unable to find symbol definition for entry point $jentry"
+			if !defined ($entry_point) || !exists ($entry_point->{'definition'});
+
+		if ($verbose) {
+			print 	"Entry Point Target:\n",
+				format_symbol_definition ($entry_point->{'definition'}, "  ");
 		}
 	}
 
-	push (@etc, @texts) if @texts;
-	
-	$last_file = $data;
-}
+	my @asm = $llvm->generate (@etc);
 
-# Check we have some ETC to work with
-die "No valid data loaded (invalid ETC files?)" if !@etc;
-
-my $entry_point;
-if ($standalone) {
-	# Pick Entry Point
-	my $symbols 	= $last_file->{'symbols'};
-	my $last_text	= $etc[@etc - 1]->{'etc'};
-	my $jentry;
-	foreach my $op (@$last_text) {
-		if (!$jentry && ($op->{'name'} eq '.JUMPENTRY')) {
-			$jentry = $op->{'arg'};
-		}
+	if ($entry_point) {
+		push (@asm, $llvm->entry_point ($entry_point));
 	}
 
-	die "No jump entry in the final text section: don't know which process to link"
-		if !defined ($jentry);
-
-	$entry_point = $symbols->{$jentry};
-
-	die "Unable to find symbol definition for entry point $jentry"
-		if !defined ($entry_point) || !exists ($entry_point->{'definition'});
-
-	if ($verbose) {
-		print 	"Entry Point Target:\n",
-			format_symbol_definition ($entry_point->{'definition'}, "  ");
+	if (!@asm) {
+		warnerr ("assembly generation failed");
+		exit 0;
 	}
-}
 
-my @asm = $llvm->generate (@etc);
-
-if ($entry_point) {
-	push (@asm, $llvm->entry_point ($entry_point));
+	printf ("Writing %s (%d lines)\n",
+		$output{'ll'}, scalar (@asm)
+	) if $verbose;
+	my $fh;
+	open ($fh, ">" . $output{'ll'}) || die "unable to open output file " . $output{'ll'};
+	foreach my $line (@asm) {
+		print $fh $line, "\n";
+	}
+	close ($fh);
 }
-
-if (!@asm) {
-	warnerr ("assembly generation failed");
-	exit 0;
-}
-
-print "Writing $output.ll (", scalar (@asm), " lines)\n" if $verbose;
-my $fh;
-open ($fh, ">$output.ll") || die "unable to open output file $output.ll";
-foreach my $line (@asm) {
-	print $fh $line, "\n";
-}
-close ($fh);
 
 my $as = $ENV{'LLVM-AS'} || 'llvm-as';
-my @as_cmd = ($as, '-f', $output . '.ll');
+my @as_cmd = ($as, '-o=' . $output{'bc'}, $output{'ll'});
 print "Running: ", join (' ', @as_cmd), "\n" if $verbose;
 if (system (@as_cmd)) {
 	warnerr ("assembly code to bitcode conversion failed");
 	exit 1;
-} elsif (!$verbose) {
-	unlink ($output . '.ll');
 }
 
 my $opt = $ENV{'OPT'} || 'opt';
@@ -229,36 +254,39 @@ my @opt_cmd = ($opt);
 foreach my $plugin (@plugins) {
 	push (@opt_cmd, '-load', $plugin);
 }
-push (@opt_cmd, @optimiser, '-f', '-o='. $output .'.opt.bc', $output . '.bc');
+push (@opt_cmd, @optimiser, '-o='. $output{'opt'}, $output{'bc'});
 print "Running: ", join (' ', @opt_cmd), "\n" if $verbose;
 if (system (@opt_cmd)) {
 	warnerr ("bitcode optimisation failed");
 	exit 1;
-} elsif (!$verbose) {
-	unlink ($output . '.bc');
 }
 
 my $llc = $ENV{'LLC'} || 'llc';
-my @llc_cmd = ($llc, @llc_flags, '-tailcallopt', '-f', '-o=' . $output . '.s', $output . '.opt.bc');
+my @llc_cmd = ($llc, @llc_flags, '-tailcallopt', , '-o=' . $output{'s'}, $output{'opt'});
 print "Running: ", join (' ', @llc_cmd), "\n" if $verbose;
 if (system (@llc_cmd)) {
 	warnerr ("bitcode to system assembly conversion failed");
 	exit 1;
-} elsif (!$verbose) {
-	unlink ($output . '.opt.bc');
 }
 
 my $cc = $ENV{'CC'} || 'cc';
-my @cc_cmd = ($cc, @cc_flags, '-O', '-c', $output . '.s');
+my @cc_cmd = ($cc, @cc_flags, '-O', '-o', $output{'o'}, '-c', $output{'s'});
 print "Running: ", join (' ', @cc_cmd), "\n" if $verbose;
 if (system (@cc_cmd)) {
 	warnerr ("system assembly to object file failed");
 	exit 1;
-} elsif (!$verbose) {
-	unlink ($output . '.s');
 }
 
-print "Output: $output.o\n" if $verbose;
+if (!$verbose) {
+	# Delete intermediate/output files
+	foreach my $fk (keys (%output)) {
+		my $file = $output{$fk};
+		next if $file eq $output;
+		unlink ($file) if !exists ($input{$file});
+	}
+}
+
+print "Output: " . $output{'o'} . "\n" if $verbose;
 
 exit 0;
 
