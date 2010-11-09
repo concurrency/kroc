@@ -17,6 +17,7 @@ tvm_nxt_SOURCES = \
 	avr.c \
 	debug.c \
 	fat12.c \
+	flash.c \
 	font8x8.h \
 	init.S \
 	interrupts.S \

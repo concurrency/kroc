@@ -107,6 +107,9 @@ void debug_msg (const char *msg, const uint32_t value);
 /* fat12.c */
 void fat12_init (uint8_t *data, uint32_t len);
 
+/* flash.c */
+void flash_write (uint8_t *dst, uint8_t *src, size_t len);
+
 /* nxt.c */
 uint32_t systick_get_ms (void);
 void systick_wait_ms (uint32_t ms);
