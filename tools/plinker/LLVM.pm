@@ -2778,10 +2778,10 @@ sub numeric_conversion {
 					sprintf ('%%%s = uitofp i1 %%%s to %s',
 						$neg_val, $neg_cond, $src_type
 					),
-					sprintf ('%%%s = sub %s 0.5, %%%s',
+					sprintf ('%%%s = fsub %s 0.5, %%%s',
 						$add_val, $src_type, $neg_val
 					),
-					sprintf ('%%%s = add %s %%%s, %%%s',
+					sprintf ('%%%s = fadd %s %%%s, %%%s',
 						$n_src, $src_type, $src, $add_val
 					)
 				);
@@ -2987,7 +2987,7 @@ sub gen_fparithop ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my ($op) = ($inst->{'name'} =~ m/FP(.*)/);
 	$op =~ tr/A-Z/a-z/;
-	$op = 'f' . $op if $op =~ /(div|rem)/;
+	$op = 'f' . $op;
 	return sprintf ('%%%s = %s %s %%%s, %%%s',
 		$inst->{'fout'}->[0],
 		$op,
@@ -3019,12 +3019,12 @@ sub gen_fprem ($$$$) {
 			$self->float_type, $div_float,
 			'nearest'
 		),
-		sprintf ('%%%s = mul %s %%%s, %%%s',
+		sprintf ('%%%s = fmul %s %%%s, %%%s',
 			$mul_res,
 			$self->float_type,
 			$inst->{'fin'}->[0], $div_float
 		),
-		sprintf ('%%%s = sub %s %%%s, %%%s',
+		sprintf ('%%%s = fsub %s %%%s, %%%s',
 			$inst->{'fout'}->[0],
 			$self->float_type,
 			$inst->{'fin'}->[1], $mul_res
@@ -3036,7 +3036,7 @@ sub gen_fpxby2 ($$$$) {
 	my ($self, $proc, $label, $inst) = @_;
 	my ($op) = ($inst->{'name'} =~ /FP(.*)BY2/);
 	$op =~ tr/A-Z/a-z/;
-	$op = 'f' . $op if $op =~ /(div|rem)/;
+	$op = 'f' . $op;
 	return sprintf ('%%%s = %s %s %%%s, 2.0',
 		$inst->{'fout'}->[0],
 		$op,
@@ -3115,7 +3115,7 @@ sub gen_fpabs ($$$$) {
 		sprintf ('br label %%%s', $cont_label),
 
 		$inv_label . ':',
-		sprintf ('%%%s = sub %s 0.0, %%%s',
+		sprintf ('%%%s = fsub %s 0.0, %%%s',
 			$res2,
 			$self->float_type, $inst->{'fin'}->[0]
 		),
@@ -3232,6 +3232,7 @@ sub gen_fpldnlop ($$$$) {
 	my $val = $self->tmp_reg ();
 	my ($op) = ($inst->{'name'} =~ m/LDNL(.{3})/);
 	$op =~ tr/A-Z/a-z/;
+	$op = 'f' . $op;
 	return (
 		$self->gen_fpldnl ($proc, $label, {
 			'name' 		=> $inst->{'name'},
