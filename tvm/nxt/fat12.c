@@ -131,8 +131,8 @@ void fat12_init (uint8_t *data, uint32_t len)
 	memcpy (data + 1024, data_1024_to_1026, sizeof (data_1024_to_1026)); 
 	memcpy (data + 1536, data_1536_to_1561, sizeof (data_1536_to_1561));
 
-	/* Rewrite the total sectors to match length */
-	bs->total_sectors 	= len / bs->bytes_per_sector;
+	/* Rewrite the total sectors to match length (on a cluster boundary) */
+	bs->total_sectors 	= (len / bs->bytes_per_sector) & ~(bs->sectors_per_cluster - 1);
 	max_clusters 		= ((bs->sectors_per_fat * bs->bytes_per_sector) * 2) / 3;
 
 	if ((bs->total_sectors / bs->sectors_per_cluster) > max_clusters)
