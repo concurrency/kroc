@@ -56,9 +56,7 @@ SECTIONS {
    */
   .ram_text : {
     . = ALIGN(4);
-    *.oram (*.text *.text.* *.glue*)
-    . = ALIGN(4);
-    *.oram (*.rodata *.rodata.*)
+    *(.text.ram)
   } > ram
    AT> rom
 

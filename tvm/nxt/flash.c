@@ -17,25 +17,34 @@
 #define FLASH_KEY (0x5a << 24)
 #define PAGE_NUM(x) ((((uint32_t) (x)) - FLASH_BASE) / PAGE_SIZE)
 
-static void wait_for_fc (void)
+static void wait_for_flash (void)
+	__attribute__ ((section (".text.ram")));
+static void unlock_region (int area_n)
+	__attribute__ ((section (".text.ram")));
+static void write_page (int page_n)
+	__attribute__ ((section (".text.ram")));
+void flash_write (uint8_t *dst, const uint8_t *src, size_t len)
+	__attribute__ ((section (".text.ram")));
+
+static void wait_for_flash (void)
 {
 	while (!(*AT91C_MC_FSR & AT91C_MC_FRDY)) ;
 }
 
 static void unlock_region (int area_n)
 {
-	wait_for_fc ();
+	wait_for_flash ();
 	if ((*AT91C_MC_FSR >> 16) & (1 << area_n)) {
 		*AT91C_MC_FCR = FLASH_KEY | AT91C_MC_FCMD_UNLOCK | ((area_n * LOCK_REGION_PAGES) << 8); 
-		wait_for_fc ();
+		wait_for_flash ();
 	}
 }
 
 static void write_page (int page_n)
 {
-	wait_for_fc ();
+	wait_for_flash ();
 	*AT91C_MC_FCR = FLASH_KEY | AT91C_MC_FCMD_START_PROG | (page_n << 8);
-	wait_for_fc ();
+	wait_for_flash ();
 }
 
 /* XXX: src must be word aligned */
