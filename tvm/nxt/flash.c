@@ -42,9 +42,11 @@ static void unlock_region (int area_n)
 
 static void write_page (int page_n)
 {
+	nxt__interrupts_disable ();
 	wait_for_flash ();
 	*AT91C_MC_FCR = FLASH_KEY | AT91C_MC_FCMD_START_PROG | (page_n << 8);
 	wait_for_flash ();
+	nxt__interrupts_enable ();
 }
 
 /* XXX: src must be word aligned */
