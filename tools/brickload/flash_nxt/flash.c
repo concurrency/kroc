@@ -11,7 +11,9 @@
 #include "../flash_driver.h"
 
 typedef volatile unsigned int AT91_REG;
+#define AT91C_PMC_MCKR			((AT91_REG *) 0xFFFFFC30)
 #define AT91C_MC_FCR			((AT91_REG *) 0xFFFFFF64)
+#define AT91C_MC_FMR			((AT91_REG *) 0xFFFFFF60)
 #define AT91C_MC_FSR			((AT91_REG *) 0xFFFFFF68)
 #define AT91C_MC_FRDY			((unsigned int) 0x1)
 #define AT91C_MC_FCMD_START_PROG	((unsigned int) 0x1)
@@ -49,6 +51,7 @@ static void write_page (int page_n)
 
 static void setup_clock (void)
 {
+	*AT91C_PMC_MCKR = 0x7;
 }
 
 static void unlock_regions (void)
@@ -56,6 +59,16 @@ static void unlock_regions (void)
 	int i;
 	for (i = 0; i < 16; ++i)
 		unlock_region (i);
+}
+
+static void lock_mode (void)
+{
+	*AT91C_MC_FMR = (0x5 << 16) | AT91C_MC_FRDY;
+}
+
+static void write_mode (void)
+{
+	*AT91C_MC_FMR = (0x34 << 16) | AT91C_MC_FRDY;
 }
 
 void flash_driver (void)
@@ -66,7 +79,9 @@ void flash_driver (void)
 	
 	if (*INIT_VAR) {
 		setup_clock ();
+		lock_mode ();
 		unlock_regions ();
+		write_mode ();
 		*INIT_VAR = 0;
 	}
 	
