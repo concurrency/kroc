@@ -3806,6 +3806,16 @@ fprintf (stderr, "fmt_createtagsetfromprotocol(): TPROTDEF [%s]\n", tpname);
 			char *tagname = (char *)WNameOf (NNameOf (tag));
 			fmnode_t *fmntag = fmt_newnode (FM_TREEREF, tag);
 			int slen;
+#if 0
+treenode *ttype = NTypeOf (tag);
+
+fprintf (stderr, "fmt_createtagsetfromprotocol(): tagname = [%s], type =", tagname);
+printtreenl (stderr, 1, ttype);
+{int c;
+for (c=0; !EndOfList (ttype); c++, ttype = NextItem (ttype));
+fprintf (stderr, "fmt_createtagsetfromprotocol(): count = %d\n", c);
+}
+#endif
 
 			fmntag->u.fmtree.node = tag;
 			fmntag->u.fmtree.name = (char *)memalloc (strlen (tagname) + strlen (tpname) + 8);
