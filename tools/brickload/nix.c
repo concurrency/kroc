@@ -174,7 +174,7 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	}
 }
 
-static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+static int write_intf (brick_t *brick, const uint8_t *data, size_t len, uint32_t timeout) {
 	usb_intf_t *intf = (usb_intf_t *) brick->handle;
 	int ret = LIBUSB_ERROR_PIPE, transferred = 0;
 	
@@ -489,7 +489,7 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	}
 }
 
-static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+static int write_intf (brick_t *brick, const uint8_t *data, size_t len, uint32_t timeout) {
 	usb_intf_t *intf = (usb_intf_t *) brick->handle;
 	int ret = -1;
 	

@@ -15,6 +15,7 @@ noinst_HEADERS = \
 	brickload.h
 
 brickload_SOURCES = \
+	flash_driver.h \
 	brickload.c \
 	nxt.c \
 	rcx.c \

@@ -17,6 +17,7 @@
  */
 
 #include "brickload.h"
+#include "flash_driver.h"
 
 static uint32_t le32_to_uint32 (uint8_t *le) {
 	return (((uint32_t) le[3]) << 24) | (((uint32_t) le[2]) << 16) | 
@@ -125,7 +126,7 @@ static int samba_handshake (brick_t *b) {
 	return -1;
 }
 
-static int samba_write_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t *data) {
+static int samba_write_buffer (brick_t *b, uint32_t addr, uint32_t len, const uint8_t *data) {
 	char cmd_buf[24];
 	int cmd_len, r;
 
@@ -156,6 +157,22 @@ static int samba_read_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t *
 		} else {
 			fprintf (stderr, "Error reading SAMBA data: %d\n", r);
 		}
+	} else {
+		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
+	}
+	
+	return -1;
+}
+
+static int samba_write_word (brick_t *b, uint32_t addr, uint32_t word)
+{
+	char cmd_buf[24];
+	int cmd_len, r;
+
+	cmd_len = sprintf (cmd_buf, "W%08x,%08x#", addr, word);
+
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 1000)) == cmd_len) {
+		return 0;
 	} else {
 		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
 	}
@@ -203,6 +220,76 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 			}
 			
 			free (buf);
+		}
+		b->close (b);
+	} else {
+		fprintf (stderr, "Error; unable to open brick.\n");
+	}
+
+	return ret;
+}
+
+int flash_nxt (brick_t *b, nxt_firmware_t *fw) {
+	int ret = -1;
+	int i, r;
+
+	fprintf (stdout, "Trying to SAMBA NXT @%08x...\n", b->id);
+
+	r = b->open (b);
+	if (!r) {
+		if (samba_handshake (b) == 0) {
+			uint8_t *data = fw->data;
+			size_t len = fw->len;
+
+			fprintf (stdout, "Handshake complete; sending flash driver...\n");
+			if (samba_write_buffer (b, FLASH_DRIVER_ADDR, sizeof (flash_driver), flash_driver) == 0) {
+				int pages = (fw->len + (PAGE_SIZE - 1)) / PAGE_SIZE;
+
+				fprintf (stdout, "Flash loader sent to NXT.\n");
+
+				for (i = 0; i < pages; ++i) {
+					uint8_t buf[PAGE_SIZE];
+
+					if (len > PAGE_SIZE) {
+						memcpy (buf, data, PAGE_SIZE);
+						data += PAGE_SIZE;
+						len -= PAGE_SIZE;
+					} else {
+						memcpy (buf, data, len);
+						memset (buf + len, 0xff, PAGE_SIZE - len);
+					}
+
+					fprintf (stdout, "Flashing page %d...\n", i);
+					if (samba_write_word (b, PAGE_N_ADDR, i) != 0) {
+						fprintf (stderr, "Error; write failed.\n");
+						break;
+					}
+					if (samba_write_buffer (b, PAGE_BUF_ADDR, PAGE_SIZE, buf) != 0) {
+						fprintf (stderr, "Error; write failed.\n");
+						break;
+					}
+					if (samba_jump (b, FLASH_DRIVER_ADDR) != 0) {
+						fprintf (stderr, "Error; flash jump failed.\n");
+						break;
+					}
+				}
+
+				if (i == pages) {
+					uint8_t *buf = (uint8_t *) malloc (fw->len);
+
+					fprintf (stdout, "Verifying firmware...\n");
+					r = samba_read_buffer (b, fw->write_addr, fw->len, buf);
+					if ((r == 0) && (memcmp (buf, fw->data, fw->len) == 0)) {
+						fprintf (stdout, "Firmware verified.\n");
+						if (samba_jump (b, fw->boot_addr) == 0) {
+							fprintf (stdout, "Booted firmware on NXT.\n");
+							ret = 0;
+						}
+					}
+
+					free (buf);
+				}
+			}
 		}
 		b->close (b);
 	} else {

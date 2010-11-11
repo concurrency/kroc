@@ -63,7 +63,7 @@ struct _brick_t {
 	
 	int		(*control)(brick_t *, int req_type, int req, int value, int index, uint8_t *data, size_t len, uint32_t timeout_ms);
 	int		(*read)(brick_t *, uint8_t *data, size_t len, uint32_t timeout_ms);
-	int		(*write)(brick_t *, uint8_t *data, size_t len, uint32_t timeout_ms);
+	int		(*write)(brick_t *, const uint8_t *data, size_t len, uint32_t timeout_ms);
 
 	void		(*release)(brick_t *);
 };
@@ -143,5 +143,6 @@ struct _nxt_firmware_t {
 /* NXT functions */
 nxt_firmware_t *load_nxt_firmware (const char *fn);
 int boot_nxt (brick_t *b, nxt_firmware_t *fw);
+int flash_nxt (brick_t *b, nxt_firmware_t *fw);
 int send_tbc_to_nxt (brick_t *b, tbc_t *tbc);
 

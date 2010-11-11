@@ -306,7 +306,7 @@ static int read_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeou
 	}
 }
 
-static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeout) {
+static int write_intf (brick_t *brick, const uint8_t *data, size_t len, uint32_t timeout) {
 	IOUSBInterfaceInterface182	**intf = (IOUSBInterfaceInterface182 **) brick->handle;
 	IOReturn r;
 
@@ -320,7 +320,7 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 			desc.result	= 0;
 			desc.bytes	= 0;
 
-			r = (*intf)->WritePipeAsync (intf, brick->out_ep, data, len, async_callback, &desc);
+			r = (*intf)->WritePipeAsync (intf, brick->out_ep, (void *) data, len, async_callback, &desc);
 			if (r == kIOReturnSuccess) {
 				SInt32 rlr = CFRunLoopRunInMode (kCFRunLoopDefaultMode, timeout / 1000.0, true);
 				if (rlr == kCFRunLoopRunTimedOut) {
@@ -335,7 +335,7 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 				}
 			}
 		} else {
-			r = (*intf)->WritePipeTO (intf, brick->out_ep, data, len,
+			r = (*intf)->WritePipeTO (intf, brick->out_ep, (void *) data, len,
 				timeout, /* no data timeout */
 				timeout + ((timeout * (len / 1024)) / 1024) /* completion timeout related to data size */
 			);
@@ -344,7 +344,7 @@ static int write_intf (brick_t *brick, uint8_t *data, size_t len, uint32_t timeo
 			}
 		}
 	} else {
-		r = (*intf)->WritePipe (intf, brick->out_ep, data, len);
+		r = (*intf)->WritePipe (intf, brick->out_ep, (void *) data, len);
 	}
 
 	if (r) {

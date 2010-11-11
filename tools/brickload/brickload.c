@@ -219,13 +219,16 @@ static int do_list (void) {
 	return 0;
 }
 
-static int do_bootNXT (int argc, char *argv[]) {
+static int do_bootflashNXT (int flash, int argc, char *argv[]) {
 	int ret	= -1;
 
 	if (argc == 0) {
-		fprintf (stderr, "Usage: %s bootNXT <firmware> [<brick-id>]\n", prog_name);
-		fprintf (stderr, "Boot NXT using firmware via SAMBA.\n");
-		fprintf (stderr, "    e.g. %s bootNXT tvm-nxt.bin @00000001\n", prog_name);
+		fprintf (stderr, "Usage: %s %sNXT <firmware> [<brick-id>]\n", 
+			prog_name, (flash ? "flash" : "boot"));
+		fprintf (stderr, "%s NXT using firmware via SAMBA.\n",
+			(flash ? "Flash" : "Boot"));
+		fprintf (stderr, "    e.g. %s %sNXT tvm-nxt.bin @00000001\n", 
+			prog_name, (flash ? "flash" : "boot"));
 	} else {
 		brick_t *list 	= NULL;
 		brick_t *b	= NULL;
@@ -247,8 +250,14 @@ static int do_bootNXT (int argc, char *argv[]) {
 			nxt_firmware_t *fw = load_nxt_firmware (argv[0]);
 			
 			if (fw != NULL) {
-				if (boot_nxt (b, fw) == 0) {
-					ret = 0;
+				if (flash) {
+					if (flash_nxt (b, fw) == 0) {
+						ret = 0;
+					}
+				} else {
+					if (boot_nxt (b, fw) == 0) {
+						ret = 0;
+					}
 				}
 			}
 		} else if (argc >= 2) {
@@ -391,6 +400,7 @@ static void usage (void) {
 	fprintf (stderr, "    list          (List available bricks)\n");
 	fprintf (stderr, "    bootNXT       (Boot NXT firmware by SAMBA)\n");
 	fprintf (stderr, "    bootRCX       (Boot RCX firmware by IR Tower)\n");
+	fprintf (stderr, "    flashNXT      (Flash NXT firmware by SAMBA)\n");
 	fprintf (stderr, "    sendTBC       (Send bytecode to brick)\n");
 	fprintf (stderr, "\n");
 	fprintf (stderr, "%s <verb> with no options gives help on the verb\n\n",
@@ -413,9 +423,11 @@ int main (int argc, char *argv[]) {
 		if (strcmp (verb, "list") == 0) {
 			ret = do_list ();
 		} else if (strcmp (verb, "bootNXT") == 0) {
-			ret = do_bootNXT (argc - 2, &(argv[2]));
+			ret = do_bootflashNXT (0, argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "bootRCX") == 0) {
 			ret = do_bootRCX (argc - 2, &(argv[2]));
+		} else if (strcmp (verb, "flashNXT") == 0) {
+			ret = do_bootflashNXT (1, argc - 2, &(argv[2]));
 		} else if (strcmp (verb, "sendTBC") == 0) {
 			ret = do_sendTBC (argc - 2, &(argv[2]));
 		} else {
