@@ -1260,8 +1260,8 @@ for src in $srcs; do
 	# .ktX files and TCO (and ETC) files
 	if [ $compile ]; then
 		if [ $usenocc ]; then
-			tcefile="$base.etc"
-			tsuffix="etc"
+			tcefile="$base.ll"
+			tsuffix="ll"
 		else
 			tcefile="$base.tce"
 		fi
