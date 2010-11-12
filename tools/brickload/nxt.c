@@ -164,6 +164,26 @@ static int samba_read_buffer (brick_t *b, uint32_t addr, uint32_t len, uint8_t *
 	return -1;
 }
 
+static int samba_read_word (brick_t *b, uint32_t addr, uint32_t *word)
+{
+	char cmd_buf[24];
+	int cmd_len, r;
+
+	cmd_len = sprintf (cmd_buf, "w%08x,%08x#", addr, (unsigned int) sizeof (*word));
+
+	if ((r = b->write (b, (uint8_t *) cmd_buf, cmd_len, 1000)) == cmd_len) {
+		if ((r = b->read (b, (uint8_t *) word, sizeof (*word), 1000)) == sizeof (*word)) {
+			return 0;
+		} else {
+			fprintf (stderr, "Error reading SAMBA data: %d\n", r);
+		}
+	} else {
+		fprintf (stderr, "Error writing SAMBA command: %d\n", r);
+	}
+	
+	return -1;
+}
+
 static int samba_write_word (brick_t *b, uint32_t addr, uint32_t word)
 {
 	char cmd_buf[24];
@@ -199,6 +219,11 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 	int ret = -1;
 	int r;
 
+	if (fw->in_rom > 0) {
+		fprintf (stderr, "Error; specified firmware image is flash not boot.\n");
+		return ret;
+	}
+
 	fprintf (stdout, "Trying to SAMBA NXT @%08x...\n", b->id);
 
 	r = b->open (b);
@@ -216,6 +241,8 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 						fprintf (stdout, "Booted firmware on NXT.\n");
 						ret = 0;
 					}
+				} else {
+					fprintf (stderr, "Error; firmware does not verify.\n");
 				}
 			}
 			
@@ -229,69 +256,112 @@ int boot_nxt (brick_t *b, nxt_firmware_t *fw) {
 	return ret;
 }
 
+static void wait_for_flash (brick_t *b) {
+	uint32_t status;
+	do {
+		samba_read_word (b, _AT91C_MC_FSR, &status);
+	} while (status & AT91C_MC_FRDY);  
+}
+
 int flash_nxt (brick_t *b, nxt_firmware_t *fw) {
 	int ret = -1;
 	int i, r;
+	
+	if (fw->in_rom == 0) {
+		fprintf (stderr, "Error; specified firmware image for boot not flash.\n");
+		return ret;
+	}
 
 	fprintf (stdout, "Trying to SAMBA NXT @%08x...\n", b->id);
 
 	r = b->open (b);
 	if (!r) {
 		if (samba_handshake (b) == 0) {
+			uint32_t lock_bits;
 			uint8_t *data = fw->data;
 			size_t len = fw->len;
 
-			fprintf (stdout, "Handshake complete; sending flash driver...\n");
+			fprintf (stdout, "Handshake complete; setting clock to PLL...\n");
+			if (samba_write_word (b, _AT91C_PMC_MCKR, 0x7) != 0) {
+				fprintf (stderr, "Error; unable to set clock to PLL\n");
+			}
+
+			fprintf (stdout, "Setting up flash for writing...\n");
+			if (samba_write_word (b, _AT91C_MC_FMR, MC_WRITE_MODE) != 0) {
+				fprintf (stderr, "Error; unable to set flash write settings\n");
+			}
+
+			fprintf (stdout, "Reading lock bits...\n");
+			if (samba_read_word (b, _AT91C_MC_FSR, &lock_bits) == 0) {
+				if (lock_bits) {
+					samba_write_word (b, _AT91C_MC_FMR, MC_UNLOCK_MODE);
+					for (i = 0; i < 16; ++i) {
+						if (!(lock_bits & (1 << i))) {
+							continue;
+						}
+
+						fprintf (stdout, "Unlocking region %i...\n", i);
+						if (samba_write_word (b, _AT91C_MC_FCR, MC_UNLOCK_CMD | (i << 14)) != 0) {
+							fprintf (stderr, "Error; unable to unlock region %d.\n", i);
+						} else {
+							wait_for_flash (b);
+						}
+					}
+					samba_write_word (b, _AT91C_MC_FMR, MC_WRITE_MODE);
+				} else {
+					fprintf (stdout, "All regions already unlocked.\n");
+				}
+			}
+			
+			fprintf (stdout, "Sending flash driver...\n");
 			if (samba_write_buffer (b, FLASH_DRIVER_ADDR, sizeof (flash_driver), flash_driver) == 0) {
 				int pages = (fw->len + (PAGE_SIZE - 1)) / PAGE_SIZE;
 
-				fprintf (stdout, "Flash loader sent to NXT.\n");
-				fprintf (stdout, "Initialising...\n");
-				if (samba_write_word (b, INIT_VAR_ADDR, 1) != 0) {
-					fprintf (stderr, "Error; write failed.\n");
-				} else {
-					for (i = 0; i < pages; ++i) {
-						uint8_t buf[PAGE_SIZE];
+				fprintf (stdout, "Flash driver sent to NXT.\n");
+				
+				for (i = 0; i < pages; ++i) {
+					uint8_t buf[PAGE_SIZE];
 
-						if (len > PAGE_SIZE) {
-							memcpy (buf, data, PAGE_SIZE);
-							data += PAGE_SIZE;
-							len -= PAGE_SIZE;
-						} else {
-							memcpy (buf, data, len);
-							memset (buf + len, 0xff, PAGE_SIZE - len);
-						}
-
-						fprintf (stdout, "Flashing page %d...\n", i);
-						if (samba_write_word (b, PAGE_N_ADDR, i) != 0) {
-							fprintf (stderr, "Error; write failed.\n");
-							break;
-						}
-						if (samba_write_buffer (b, PAGE_BUF_ADDR, PAGE_SIZE, buf) != 0) {
-							fprintf (stderr, "Error; write failed.\n");
-							break;
-						}
-						if (samba_jump (b, FLASH_DRIVER_ADDR) != 0) {
-							fprintf (stderr, "Error; flash jump failed.\n");
-							break;
-						}
+					if (len > PAGE_SIZE) {
+						memcpy (buf, data, PAGE_SIZE);
+						data += PAGE_SIZE;
+						len -= PAGE_SIZE;
+					} else {
+						memcpy (buf, data, len);
+						memset (buf + len, 0xff, PAGE_SIZE - len);
 					}
 
-					if (i == pages) {
-						uint8_t *buf = (uint8_t *) malloc (fw->len);
-
-						fprintf (stdout, "Verifying firmware...\n");
-						r = samba_read_buffer (b, fw->write_addr, fw->len, buf);
-						if ((r == 0) && (memcmp (buf, fw->data, fw->len) == 0)) {
-							fprintf (stdout, "Firmware verified.\n");
-							if (samba_jump (b, fw->boot_addr) == 0) {
-								fprintf (stdout, "Booted firmware on NXT.\n");
-								ret = 0;
-							}
-						}
-
-						free (buf);
+					fprintf (stdout, "Flashing page %d...\n", i);
+					if (samba_write_word (b, PAGE_N_ADDR, i) != 0) {
+						fprintf (stderr, "Error; page number write failed.\n");
+						break;
 					}
+					if (samba_write_buffer (b, PAGE_BUF_ADDR, PAGE_SIZE, buf) != 0) {
+						fprintf (stderr, "Error; page buffer write failed.\n");
+						break;
+					}
+					if (samba_jump (b, FLASH_DRIVER_ADDR) != 0) {
+						fprintf (stderr, "Error; flash jump failed.\n");
+						break;
+					}
+				}
+
+				if (i == pages) {
+					uint8_t *buf = (uint8_t *) malloc (fw->len);
+
+					fprintf (stdout, "Verifying firmware...\n");
+					r = samba_read_buffer (b, fw->write_addr, fw->len, buf);
+					if ((r == 0) && (memcmp (buf, fw->data, fw->len) == 0)) {
+						fprintf (stdout, "Firmware verified.\n");
+						if (samba_jump (b, fw->boot_addr) == 0) {
+							fprintf (stdout, "Booted firmware on NXT.\n");
+							ret = 0;
+						}
+					} else {
+						fprintf (stderr, "Error; firmware does not match.\n");
+					}
+
+					free (buf);
 				}
 			}
 		}
