@@ -13,16 +13,16 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** Occam header for Arduino Mega specific pin mappings.
 --
 -- @module boardmap.arduionmega
+
 #IF NOT (DEFINED (BOARDMAP.MODULE))
 #DEFINE BOARDMAP.MODULE
 
 #INCLUDE "constants.module"
 #INCLUDE "base.module"
-   
 
 --{{{Board to Architecture Layout
 -- Board to Architecture layout w/ register names.
@@ -73,7 +73,6 @@
 --68(A14) 83    PK1
 --69(A15) 82    PK0
 --}}}
-
 
 --{{{Symbolic Constants
 --* Symbolic constant for accessing the first analog pin.
@@ -197,7 +196,6 @@ INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
 :    
 --}}}
 
-
 --{{{FUNCTION board.to.serial.port
 --* Arduino Mega specific conversion function for finding
 -- chip-specific pins [@em specifically for serial operations].
@@ -226,7 +224,7 @@ INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
     RESULT serial.port
 :
 --}}}
-    
+
 --{{{FIXME: Random Misc
 --      IF
 --        (board.pin =  0) OR (board.pin = 1)
