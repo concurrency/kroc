@@ -14,7 +14,7 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** Procs for low-level digital manipulation of pins on any ATmega.
 -- PROCs in this module take registers for direction (DDRn), pin (PINn)
 -- and port (PORTn) to manipulate digital pins on ATmega processors.
@@ -40,7 +40,6 @@ INLINE PROC pin.write (VAL INT r.port, bit, state)
   ports[r.port] := (ports[r.port] /\ (~BV (bit))) \/ ((BYTE state) << bit)
 :
 --}}}
-
 
 --{{{ PROC pin.read
 --* Reads the state of a PIN register. Either HIGH or LOW.

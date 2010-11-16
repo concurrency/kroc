@@ -14,7 +14,7 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** Common routines for configuring PWM on the ATmega family of processors.
 --
 -- The operation of PWMs might be improved and made to be significantly more

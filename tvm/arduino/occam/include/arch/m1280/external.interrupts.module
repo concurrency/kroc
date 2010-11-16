@@ -15,10 +15,10 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** ATmega1280 specific interrupt code.
 --
--- @module 1280.external.interrups.module
+-- @module 1280.external.interrupts
 
 #IF NOT (DEFINED (EXTERNAL.INTERRUPTS.MODULE))
 #DEFINE EXTERNAL.INTERRUPTS.MODULE
