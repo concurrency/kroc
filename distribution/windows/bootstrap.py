@@ -12,6 +12,8 @@ import fnmatch
 import shutil
 import re
 
+VERIFY = False 
+
 paths = dict(
   downloads = 'downloads',
   mingw     = 'mingw',
@@ -67,6 +69,9 @@ def find_file(name, path, ext=''):
 def download(url, dest = None):
     sys.stdout.write('%s\n' % (url, ))
     if dest != None:
+        if not VERIFY and os.path.exists(dest): 
+            sys.stdout.write('  already downloaded, skipping...\n') 
+            return None 
         f = urllib2.urlopen(url)
         expected_size = f.info().getheader('Content-Length')
         try:
