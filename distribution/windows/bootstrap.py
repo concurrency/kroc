@@ -12,6 +12,8 @@ import fnmatch
 import shutil
 import re
 
+VERIFY = False
+
 paths = dict(
   downloads = 'downloads',
   mingw     = 'mingw',
@@ -67,6 +69,9 @@ def find_file(name, path, ext=''):
 def download(url, dest = None):
     sys.stdout.write('%s\n' % (url, ))
     if dest != None:
+        if not VERIFY and os.path.exists(dest):
+            sys.stdout.write('  already downloaded, skipping...\n')
+            return None
         f = urllib2.urlopen(url)
         expected_size = f.info().getheader('Content-Length')
         try:
@@ -114,14 +119,18 @@ def extract(files, dest):
     for f in files:
         sys.stdout.write('extracting: %s\n' %(f, ))
         if f.endswith('.lzma'):
-            lzma = subprocess.Popen([os.path.join(paths['msys'], 'bin', 'lzma'), '-d', '-c', '-q', f], stdout=subprocess.PIPE)
-            a = tarfile.open(fileobj=lzma.stdout, mode='r|')
+            lzma = subprocess.Popen([os.path.join(paths['tmp'], 'xz-5.0.0-windows', 'bin_i486', 'xz'), '-d', '-c', '-q', f], stdout=subprocess.PIPE)
+            a = tarfile.open(fileobj=lzma.stdout, mode='r|', errorlevel=0)
             # FIXME: check that no files will be written outside dest
             a.extractall(dest)
             a.close()
-            r = lzma.wait()
+            # FIXME: both xz (5.0.0) and 7zip cmd line (960) fail (hang) if we wait on lzma.
+            #        not sure who is at fault here, but let us not wait
+            #r = lzma.wait()
+            r=0
             if r != 0:
                 sys.stdout.write('lzma failed with error code: %d %s\n' %(r, f))
+            lzma.stdout.close()
         elif f.endswith('.zip'):
             a = zipfile.ZipFile(f, 'r')
             if is_naughty_archive(a.namelist()):
@@ -138,7 +147,7 @@ def extract(files, dest):
                     a.extract(name, d)
             a.close()
         else:
-            a = tarfile.open(f, 'r')
+            a = tarfile.open(f, 'r', errorlevel=0)
             # FIXME: check that no files will be written outside dest
             a.extractall(dest)
             a.close()
@@ -200,9 +209,9 @@ makedir(paths['msys'])
 makedir(paths['tmp'])
 makedir(os.path.join(paths['tmp'], 'python'))
 
+extract(other_urls.file_list(), paths['tmp'])
 extract(msys_files, paths['msys'])
 extract(mingw_files, paths['mingw'])
-extract(other_urls.file_list(), paths['tmp'])
 extract(python_files, os.path.join(paths['tmp'], 'python'))
 
 print 'moving tools'
