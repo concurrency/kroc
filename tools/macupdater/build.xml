@@ -44,6 +44,7 @@
     <echo message="Compiling native code"/>
     <exec executable="gcc">
       <arg value="-dynamiclib"/>
+      <arg value="-mmacosx-version-min=10.5"/>
       <arg value="-arch"/>
       <arg value="i386"/>
       <arg value="-arch"/>
