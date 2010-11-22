@@ -43,8 +43,10 @@ if [ "$?" == "1" ] ; then
   # does not work w/o this patch
   #patch -p0 < ../../patch-SDL_x11gl_c.h.diff
   ./configure --prefix=$INSTALL \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make install
   cd ../..
 fi
@@ -59,8 +61,10 @@ if [ "$?" == "1" ] ; then
   tar -xvjf $PLAYER.tar.bz2
   cd $PLAYER
   ./configure --prefix=$INSTALL --disable-jplayer \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make install
   cd ../..
 fi
@@ -86,7 +90,7 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
     http://arduino.googlecode.com/files/$ARDUINO-mac.zip \
     || exit 1
   unzip $ARDUINO-mac.zip
-  cd $ARDUINO
+  #cd $ARDUINO
 fi
 
 if ! [ -d $BUILD/$LIBUSB ] ; then
@@ -97,9 +101,12 @@ if ! [ -d $BUILD/$LIBUSB ] ; then
     || exit 1
   tar -xvzf $LIBUSB.tar.gz
   cd $LIBUSB
-  ./configure --prefix=$INSTALL \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+  # FIXME: For some reason shared libs do not get passed -arch i386
+  ./configure --prefix=$INSTALL --enable-shared=no\
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make
   make install
 fi
@@ -114,8 +121,10 @@ if ! [ -d $BUILD/$AVRDUDE ] ; then
   tar -xvzf $AVRDUDE.tar.gz
   cd $AVRDUDE
   ./configure --prefix=$INSTALL \
-   CFLAGS="-I$INSTALL/include -arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-L$INSTALL/lib -arch i386" OBJCFLAGS="-arch i386"
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make
   make install
 fi
@@ -130,8 +139,10 @@ mkdir kroc-ccsp
 cd kroc-ccsp
 
 ../../../../configure --with-toolchain=kroc --prefix=$INSTALL \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
 make
 make install
 
@@ -140,8 +151,10 @@ mkdir kroc-tvm-posix
 cd kroc-tvm-posix
 
 ../../../../configure --with-toolchain=tvm --prefix=$INSTALL \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
 make
 make install
 
@@ -166,8 +179,10 @@ mkdir kroc-tvm-avr
 cd kroc-tvm-avr
 
 ../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr \
-   CFLAGS="-arch i386" CXXFLAGS="-arch i386" \
-   LDFLAGS="-arch i386" OBJCFLAGS="-arch i386"
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
 make
 make install
 cd $BUILD/kroc-tvm-avr/modules/inmoslibs/libsrc
