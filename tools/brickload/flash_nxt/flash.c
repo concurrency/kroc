@@ -36,16 +36,16 @@ static inline void write_page (int page_n)
 void flash_driver (void)
 {
 	volatile unsigned int *dst, *src;
-	unsigned int page_n = 0;
+	unsigned int page_n;
 	unsigned int i;
 	
 	wait_for_flash ();
-	//page_n = *((volatile unsigned int *) PAGE_N_ADDR);
 	
+	page_n = *((volatile unsigned int *)PAGE_N_ADDR);
 	dst = (volatile unsigned int *)(FLASH_BASE + (page_n * PAGE_SIZE)); 
 	src = (volatile unsigned int *)(PAGE_BUF_ADDR);
 	for (i = 0; i < PAGE_WORDS; ++i)
 		*(dst++) = *(src++);
 	
-	//write_page (page_n);
+	write_page (page_n);
 }
