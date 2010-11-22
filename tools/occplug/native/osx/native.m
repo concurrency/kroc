@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 
+#include <Foundation/Foundation.h>
 #include <CoreFoundation/CoreFoundation.h>
 
 #include <IOKit/IOKitLib.h>
@@ -152,7 +153,7 @@ JNIEXPORT jobject JNICALL Java_org_transterpreter_occPlug_hosts_Native__1getSeri
 	}
 
 	io_object_t service;
-	while (service = IOIteratorNext(iterator))
+	while ((service = IOIteratorNext(iterator)))
 	{
 		int32_t     vendor;
 		int32_t     product;
