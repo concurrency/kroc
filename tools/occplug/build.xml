@@ -129,6 +129,8 @@ class Revision
     <echo message="Compiling native code for OS X"/>
     <exec executable="gcc">
       <arg value="-O2"/>
+      <arg value="-Wall"/>
+      <arg value="-mmacosx-version-min=10.5"/>
       <arg value="-dynamiclib"/>
       <arg value="-arch"/>
       <arg value="i386"/>
