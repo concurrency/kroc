@@ -167,7 +167,7 @@ copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
 # Updater
 copy_file('build/winupdater/JEditWinSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('build/winupdater/JEditWinSparkleNativeBridge.dll', os.path.join(JEDIT_DIR, 'jars'))
-copy_file('build/winupdater/WinSparkle.dll', os.path.join(JEDIT_DIR, 'jars'))
+copy_file('build/winsparkle/vslavik-winsparkle-941987c/Release/WinSparkle.dll', os.path.join(JEDIT_DIR, 'jars'))
 
 # Copy custom properties
 copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))
