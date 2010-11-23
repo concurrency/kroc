@@ -1,5 +1,5 @@
 perl: http://www.cpan.org/src/5.0/perl-5.12.1.tar.bz2
 dmake: http://search.cpan.org/CPAN/authors/id/S/SH/SHAY/dmake-4.12-20090907-SHAY.zip 
-curl: http://www.gknw.net/mirror/curl/win32/curl-7.21.0-ssl-sspi-zlib-static-bin-w32.zip
+curl: http://www.gknw.net/mirror/curl/win32/curl-7.21.2-ssl-sspi-zlib-static-bin-w32.zip
 ant: http://archive.apache.org/dist/ant/binaries/apache-ant-1.7.1-bin.tar.bz2
 unzip: http://prdownloads.sourceforge.net/gnuwin32/unzip-5.51-1-bin.zip
