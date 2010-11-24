@@ -82,7 +82,7 @@ def find_file(name, path, ext=''):
 
 
 def adjust_for_windows(cmd):
-	if running_windows():
+	if not running_windows():
 		return cmd
 	command = cmd[0]
 	cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
