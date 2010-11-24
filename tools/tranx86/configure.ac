@@ -25,7 +25,7 @@ case "$host_cpu" in
  i386)
   case "$target" in
    *Darwin* | *darwin*)
-    GNUASFLAGS='-arch", "i386", "-mmacosx-version-min=10.4'
+    GNUASFLAGS='-arch", "i386'
     ;;
   esac
   ;;
