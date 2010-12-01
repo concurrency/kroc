@@ -37,7 +37,7 @@ AM_CONDITIONAL([TRACE_VIA_FFI], [test $trace_mechanism = ffi])
 AM_CONDITIONAL([WITH_IO], [test $with_io = yes])
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([course.module maths.module time.module], ,
+OCCAM_INCLUDE([course.module file.module maths.module time.module], ,
               [AC_MSG_ERROR(Required modules not found)])
 OCCAM_PROVIDE(useful.module)
 
