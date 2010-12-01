@@ -9,7 +9,7 @@ OCCAM_OCCBUILD
 build_ttyutil_examples=yes
 
 dnl Checks for occam modules.
-OCCAM_INCLUDE([course.module file.module useful.module ttyutil.module], ,
+OCCAM_INCLUDE([course.module useful.module ttyutil.module], ,
               [build_ttyutil_examples=no])
 
 AC_MSG_CHECKING([whether to build ttyutil examples])
