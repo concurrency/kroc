@@ -13,7 +13,7 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** Occam header for Seeeduino Mega specific pin mappings.
 --
 -- @module boardmap.seeeduinomega
@@ -97,7 +97,6 @@
 --99  GND
 --100 AVC
 --}}}
-
 
 --{{{ Symbolic Constants
 --* Symbolic constant for accessing SeeduinoMega specific, unnumbered pin.

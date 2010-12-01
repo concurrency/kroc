@@ -16,10 +16,10 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** Very basic, nothing-specific code that is called at every level of code.
 --
---@module base
+-- @module base
 
 #IF NOT (DEFINED (BASE.MODULE))
 #DEFINE BASE.MODULE

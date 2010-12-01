@@ -1,0 +1,5 @@
+# Changes Since 20101122.1608
+
+* Make tranx86 and occbuild compile and link for 10.4
+
+

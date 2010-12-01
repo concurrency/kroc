@@ -120,6 +120,24 @@ REAL32, RANDOM.STATE FUNCTION random.real32 (VAL REAL32 max, VAL RANDOM.STATE st
     RESULT value, new.state
 :
 --}}}
+--{{{  FUNCTION random.real32.signed
+--* Generate a random signed [@code REAL32].
+--
+-- @param max Upper limit
+-- @param state Current RNG state
+-- @return Output value, uniformly distributed in the range [[@code -max],
+--   [@code max]).
+-- @return New RNG state
+REAL32, RANDOM.STATE FUNCTION random.real32.signed (VAL REAL32 max, VAL RANDOM.STATE state)
+  REAL32 value:
+  RANDOM.STATE new.state:
+  VALOF
+    SEQ
+      value, new.state := random.real32 (max, state)
+      value := (value * 2.0) - max
+    RESULT value, new.state
+:
+--}}}
 --{{{  FUNCTION random.gaussian.real32s
 --* Generate two random [@code REAL32]s from a Gaussian distribution.
 --
@@ -176,6 +194,24 @@ REAL32, RANDOM.STATE FUNCTION random.gaussian.real32 (VAL RANDOM.STATE state)
     REAL32 dummy:
     value, dummy, new.state := random.gaussian.real32s (state)
     --}}}
+    RESULT value, new.state
+:
+--}}}
+--{{{  FUNCTION random.bool
+--* Generate a random [@code BOOL].
+--
+-- @param prob Probability that the result will be [@code TRUE]
+-- @param state Current RNG state
+-- @return Output value
+-- @return New RNG state
+BOOL, RANDOM.STATE FUNCTION random.bool (VAL REAL32 prob, VAL RANDOM.STATE state)
+  BOOL value:
+  RANDOM.STATE new.state:
+  VALOF
+    REAL32 r:
+    SEQ
+      r, new.state := random.real32 (1.0, state)
+      value := (r <= prob)
     RESULT value, new.state
 :
 --}}}

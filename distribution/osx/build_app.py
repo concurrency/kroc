@@ -45,8 +45,7 @@ SPARKLE_ZIP         = SPARKLE + '.zip'
 SPARKLE_FEED        = 'http://download.transterpreter.org/appcast/mac-dev.xml'
 
 LIPO_BINARIES       = ['occ21', 'tvm', 'ilibr', 'mkoccdeps'] 
-# FIXME: tranx86 did not seem to get built?
-BINARIES            = 'kmakef kroc occbuild plinker.pl tce-dump.pl'.split()
+BINARIES            = 'tranx86 kmakef kroc occbuild plinker.pl tce-dump.pl'.split()
 LIBRARIES           = ('libSDL*.dylib libplayer*.dylib liboccam_*.a ' + 
                         'tvm/liboccam_tvm_*.dylib libkrocif.a libccsp.a').split()
 
@@ -159,10 +158,12 @@ copy_file('install/etc/avrdude.conf', BIN_DIR)
 mkdirs(JEDIT_DIR)
 copy_tree('build/jedit/jedit-program', JEDIT_DIR, excludes=['LatestVersion.jar'])
 copy_file('build/occPlug/OccPlug.jar', os.path.join(JEDIT_DIR, 'jars'))
+copy_file('build/occPlug/occplug_native.dylib', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
 
 # Updater
 copy_file('build/macupdater/JEditSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
+copy_file('build/macupdater/JEditSparkleNativeBridge.dylib', os.path.join(JEDIT_DIR, 'jars'))
 
 # Copy custom properties
 copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))

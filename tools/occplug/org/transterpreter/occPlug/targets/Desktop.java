@@ -151,6 +151,7 @@ public class Desktop extends BaseTarget implements CompileAbility {
 			
 			runEnv.add("TVM_FIRMWARE_FILE=" + fw_p);
 			String lib_p = OccPlugUtil.pathifyXXX("lib");
+			lib_p = lib_p + ":" + OccPlugUtil.pathifyXXX("bin");
 			runEnv.add("DYLD_LIBRARY_PATH=" + lib_p);
 	
 			String tvm = host.getCommandName("tvm");

@@ -82,7 +82,7 @@ def find_file(name, path, ext=''):
 
 
 def adjust_for_windows(cmd):
-	if running_windows():
+	if not running_windows():
 		return cmd
 	command = cmd[0]
 	cmd[0] = find_file(cmd[0], os.environ['PATH'], '.exe')
@@ -1181,6 +1181,8 @@ def main(args):
 	elif target_os.startswith("darwin"):
 		patterns["so"] = "liboccam_%s.dylib"
 		build_shared = (toolchain.__class__ == toolchains["tvm"])
+		linker_opts.extend(["-arch", "i386", 
+			"-mmacosx-version-min=10.4"])
 	elif target_cpu.startswith("avr"):
 		build_shared = False
 

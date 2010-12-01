@@ -4,9 +4,10 @@ set -o errexit
 VERSION=`defaults read $PWD/output/Transterpreter/Transterpreter.app/Contents/Info CFBundleVersion`
 DOWNLOAD_BASE_URL="http://download.transterpreter.org/files/dev/mac"
 #RELEASENOTES_URL="http://www.absolutepanic.org/pgX/release-notes.html#version-$VERSION"
-FILES_PATH=/data/www/org/transterpreter-download/files/dev/mac
-FEED_PATH=/data/www/org/transterpreter-download/feeds/mac-dev.xml
-HOST=unhosting.org
+FILES_PATH=/srv/www/org/transterpreter.download/files/dev/mac
+FEED_PATH=/srv/www/org/transterpreter.download/cumulative-feeds/mac-dev/feed.xml
+CHANGES_PATH=/srv/www/org/transterpreter.download/cumulative-feeds/mac-dev/changes/
+HOST=download.transterpreter.org
 
 ARCHIVE_FILENAME="Transterpreter-mac-dev-$VERSION.zip"
 ARCHIVE_PATH="output/$ARCHIVE_FILENAME"
@@ -37,12 +38,18 @@ cat >build/feed.xml <<EOF
     <lastBuildDate>$PUBDATE</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>A three-headed monkey!</generator>
-    <webMaster>webmaster@transterpreter.com</webMaster>
+    <webMaster>webmaster@concurrency.cc</webMaster>
 
 		<item>
 			<title>Transterpreter - Development Version $VERSION</title>
 			<description><![CDATA[
-			    <h2>Development version</h2>
+			<style>
+				\$include(changelog.css)
+			</style>
+
+			\$changes
+
+			    <h3>Development version</h3>
 			    <p>Please note that you are using a development version of the
 			    Transterpreter, which may break, blow up,
 			    dissintigrate, or otherwise harm itself at any
@@ -65,6 +72,16 @@ cat >build/feed.xml <<EOF
 </rss>
 EOF
 
+if ! [ -f "changes/version_$VERSION.markdown" ] ; then
+  svn mv changes/version_CURRENT.markdown changes/version_$VERSION.markdown && \
+  echo -e "# Changes Since $VERSION\n\n" > changes/version_CURRENT.markdown && \
+  svn add changes/version_CURRENT.markdown && \
+  svn commit changes/version_$VERSION.markdown \
+             changes/version_CURRENT.markdown \
+     -m "OSX Dist: (automatic commit) activating changelog entry"
+fi
+
+scp "changes/version_$VERSION.markdown" $HOST:$CHANGES_PATH
 scp "$ARCHIVE_PATH" $HOST:$FILES_PATH
 scp "build/feed.xml" $HOST:$FEED_PATH
 #echo scp "'$SOURCE_ROOT/release-notes/release-notes.html'" unhosting.org:/data/www/org/absolutepanic/www/pgX/

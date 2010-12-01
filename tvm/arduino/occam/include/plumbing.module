@@ -16,7 +16,7 @@
 --
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
---
+
 --** The Plumbing library.
 --
 -- [@code PROC]s in this module generally have arguments in this order:
@@ -112,11 +112,7 @@ PROC invert.level (CHAN LEVEL in?, out!)
     LEVEL v:
     SEQ
       in ? v
-      IF
-        v = HIGH
-          out ! LOW
-        TRUE -- If v = LOW
-          out ! HIGH
+      out ! NOT v
 :
 --}}}
 
@@ -149,11 +145,7 @@ PROC toggle (VAL LEVEL initial.level, CHAN SIGNAL in?, CHAN LEVEL out!)
     SEQ
       out ! level
       in ? SIGNAL
-      IF
-        level = HIGH
-          level := LOW
-        TRUE -- If level = LOW
-          level := HIGH
+      level := NOT level
 :
 --}}}
 

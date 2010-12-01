@@ -3806,6 +3806,16 @@ fprintf (stderr, "fmt_createtagsetfromprotocol(): TPROTDEF [%s]\n", tpname);
 			char *tagname = (char *)WNameOf (NNameOf (tag));
 			fmnode_t *fmntag = fmt_newnode (FM_TREEREF, tag);
 			int slen;
+#if 0
+treenode *ttype = NTypeOf (tag);
+
+fprintf (stderr, "fmt_createtagsetfromprotocol(): tagname = [%s], type =", tagname);
+printtreenl (stderr, 1, ttype);
+{int c;
+for (c=0; !EndOfList (ttype); c++, ttype = NextItem (ttype));
+fprintf (stderr, "fmt_createtagsetfromprotocol(): count = %d\n", c);
+}
+#endif
 
 			fmntag->u.fmtree.node = tag;
 			fmntag->u.fmtree.name = (char *)memalloc (strlen (tagname) + strlen (tpname) + 8);
@@ -4306,6 +4316,32 @@ PRIVATE void formalmodel_writeoutset (fmmset_t *fmm, FILE *fp, const char *filen
 	fprintf (fp, "</program>\n");
 }
 /*}}}*/
+/*{{{  PRIVATEPARAM int do_formalmodelgen_iodata (treenode *n, void *const voidptr)*/
+/*
+ *	does formal-model generation on interesting looking data items
+ */
+PRIVATEPARAM int do_formalmodelgen_iodata (treenode *n, void *const voidptr)
+{
+	fmstate_t *fmstate = (fmstate_t *)voidptr;
+
+	if (!n) {
+		return STOP_WALK;
+	}
+
+	switch (TagOf (n)) {
+	case S_CONSTEXP:
+#if 0
+fprintf (stderr, "do_formalmodelgen_ioexpr(): want to scoop up other interesting stuff from (%d):\n", (int)eval_const_treenode (n));
+printtreenl (stderr, 4, n);
+#endif
+		return STOP_WALK;
+	default:
+		break;
+	}
+
+	return CONTINUE_WALK;
+}
+/*}}}*/
 /*{{{  PRIVATEPARAM int do_formalmodelgen_ioexpr (treenode *n, void *const voidptr)*/
 /*
  *	does formal-model generation for an I/O expression, generates into 'fmstate'
@@ -4329,6 +4365,15 @@ fprintf (stderr, "do_formalmodelgen_ioexpr(): tag = %s\n", tagstring (tag));
 #endif
 
 	switch (tag) {
+	case S_LIST:
+		/* in list of (presumably) output */
+		if (!*(fmstate->target)) {
+			prewalktree (ThisItem (n), do_formalmodelgen_ioexpr, (void *)fmstate);
+		}
+		if (*(fmstate->target) && ((*(fmstate->target))->type == FM_TREEREF)) {
+			prewalktree (NextItem (n), do_formalmodelgen_iodata, (void *)fmstate);
+		}
+		return STOP_WALK;
 	case N_TAGDEF:
 		if (settings->do_coll_ct && fmstate->ioevref) {
 			/* means we are looking at a specific tag */

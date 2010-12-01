@@ -172,8 +172,8 @@
 --   'i' ==> reset the running sum in the feedback loop of the integrate
 --           process back to zero;
 --   'p' ==> the first 'p' zaps the adder process within pairs so that it
---           becomes a subtractor, taking the numbers arriving from the tail
---           process from those arriving directly from the delta.  In this
+--           becomes a subtractor, taking the numbers arriving directly from
+--           the delta process from those arriving from the tail.  In this
 --           state, the modified pairs becomes a `differentiator', undoing
 --           the `integration' effect of the process immediately upstream so
 --           that we see the natural numbers sequence.  A second 'p' toggles
@@ -225,8 +225,8 @@
 --   'i' ==> reset the running sum in the feedback loop of the integrate
 --           process back to zero;
 --   'p' ==> the first 'p' zaps the adder process within pairs so that it
---           becomes a subtractor, taking the numbers arriving from the tail
---           process from those arriving directly from the delta.  In this
+--           becomes a subtractor, taking the numbers arriving directly from
+--           the delta process from those arriving from the tail.  In this
 --           state, the modified pairs becomes a `differentiator', undoing
 --           the `integration' effect of the process immediately upstream so
 --           that we see the natural numbers sequence.  A second 'p' toggles
@@ -260,8 +260,8 @@
 --   'i' ==> reset the running sum in the feedback loop of the integrate
 --           process back to zero;
 --   'p' ==> the first 'p' zaps the adder process within pairs so that it
---           becomes a subtractor, taking the numbers arriving from the tail
---           process from those arriving directly from the delta.  In this
+--           becomes a subtractor, taking the numbers arriving directly from
+--           the delta process from those arriving from the tail.  In this
 --           state, the modified pairs becomes a `differentiator', undoing
 --           the `integration' effect of the process immediately upstream so
 --           that we see the natural numbers sequence.  A second 'p' toggles
@@ -271,27 +271,33 @@
 --           keypress (which is NOT processed according to the above rules
 --           -- it is merely the signal to resume output).
 --   '+' ==> double the rate of output of lines of text (up to a maximum of
---           128 lines/second);
+--           256 lines/second);
 --   '-' ==> halve the rate of output of lines of text (down to a minimum of
---           1 line/second -- which should be the initial rate of output);
+--           1 line/second);
 --   anything else ==> accept, but ignore.
 --
 -- Leave the definition of print.streams alone.  Just instance it with a delay
--- of minus one - it plays no part now in controlling speed.  Specify, implement
--- and place a new component to get the necessary effects.
+-- of minus one (-1).  It plays no part now in controlling speed.
+--
+-- Specify, implement and place a new component (speed.control) to manage speed
+-- control. This new component sets an initial speed of 32 lines per second.
+-- Note: the system cannot, of course, generate output faster than the receiving
+-- device (e.g. a terminal screen) can take it. The speed.control process may
+-- ignore this problem - i.e. if the receiving device can only display 200 lines
+-- per second, speed settings beyond that will be automatically cut back to 200
+-- (with no loss of data). This is fine!
 --
 -- The new component should also provide feedback to the user when a '+' or '-'
 -- tries to push the output speed over its limits: the attempt should be ignored
 -- and an error message generated. To keep things simple and not interfere with
 -- the columns of numbers being output, this error message should be a single
 -- BELL character (ASCII code 7) sent to the error output channel (which now
--- must be present in the main process parameter list).  The BELL
--- character is provided (as a BYTE constant) by the course.module.  BYTEs
--- output on the error channel do not need flushing - they are delivered to
--- the user's terminal (window) without delay.  Their effect varies depending
--- on how the terminal has been set up.  Some terminals will emit a short beep.
--- Others will flash the screen by momentarily inverting the colours on the
--- screen.
+-- must be present in the main process parameter list).  The BELL character is
+-- provided (as a BYTE constant) by the course.module.  BYTEs output on the error
+-- channel do not need flushing - they are delivered to the user's terminal
+-- (window) without delay.  Their effect varies depending on how the terminal
+-- has been set up.  Some terminals will emit a short beep.  Others will flash
+-- the screen by momentarily inverting the colours on the screen.
 --
 -- One last piece of low-level help: processing the character input from
 -- the keyboard channel is more neatly handled though the CASE/ELSE construct

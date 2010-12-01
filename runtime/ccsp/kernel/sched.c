@@ -3337,8 +3337,50 @@ static INLINE void mt_io_update_barrier (sched_t *sched, word **pptr)
 	mb->barrier.enroll (sched, &(mb->barrier.data), 1);
 }
 /*}}}*/
+/*{{{  static HOT bool mt_io_update (sched_t *sched, word **pptr)*/
+static void mt_io_update_array (sched_t *sched, word **pptr, word inner);
+static HOT bool mt_io_update (sched_t *sched, word **pptr)
+{
+	word type = (*pptr)[MTType];
+
+	if (expect (type & MT_SIMPLE, MT_SIMPLE)) {
+		if (MT_TYPE(type) == MT_ARRAY) {
+			word temp = type;
+
+			do {
+				temp = MT_ARRAY_INNER_TYPE (temp);
+				if (MT_TYPE(temp) == MT_ARRAY_OPTS) {
+					temp = MT_ARRAY_OPTS_INNER(temp);
+				}
+				if (MT_TYPE(temp) == MT_NUM) {
+					return true;
+				}
+			} while (MT_TYPE(temp) == MT_ARRAY);
+
+			mt_io_update_array (sched, pptr, MT_ARRAY_INNER_TYPE(type));
+
+			return true;
+		} else if (MT_TYPE(type) == MT_CB) {
+			if (type & MT_CB_SHARED) {
+				mt_io_update_shared_cb (pptr);
+				return false;
+			} else {
+				return true;
+			}
+		} else if (MT_TYPE(type) == MT_BARRIER) {
+			mt_io_update_barrier (sched, pptr);
+			return false;
+		} else if (MT_TYPE(type) == MT_DATA) {
+			return true;
+		}
+	} else {
+		mobile_type_error ();
+	}
+	
+	return false;
+}
+/*}}}*/
 /*{{{  static INLINE void mt_io_update_array (sched_t *sched, void *ptr, word inner)*/
-static HOT bool mt_io_update (sched_t *sched, word **pptr);
 static void mt_io_update_array (sched_t *sched, word **pptr, word inner)
 {
 	mt_array_internal_t *ma = (mt_array_internal_t *) ((*pptr) - MT_ARRAY_PTR_OFFSET);
@@ -3388,48 +3430,6 @@ static void mt_io_update_array (sched_t *sched, word **pptr, word inner)
 			/* explode here */
 			break;
 	}
-}
-/*}}}*/
-/*{{{  static HOT bool mt_io_update (sched_t *sched, word **pptr)*/
-static HOT bool mt_io_update (sched_t *sched, word **pptr)
-{
-	word type = (*pptr)[MTType];
-
-	if (expect (type & MT_SIMPLE, MT_SIMPLE)) {
-		if (MT_TYPE(type) == MT_ARRAY) {
-			word temp = type;
-
-			do {
-				temp = MT_ARRAY_INNER_TYPE (temp);
-				if (MT_TYPE(temp) == MT_ARRAY_OPTS) {
-					temp = MT_ARRAY_OPTS_INNER(temp);
-				}
-				if (MT_TYPE(temp) == MT_NUM) {
-					return true;
-				}
-			} while (MT_TYPE(temp) == MT_ARRAY);
-
-			mt_io_update_array (sched, pptr, MT_ARRAY_INNER_TYPE(type));
-
-			return true;
-		} else if (MT_TYPE(type) == MT_CB) {
-			if (type & MT_CB_SHARED) {
-				mt_io_update_shared_cb (pptr);
-				return false;
-			} else {
-				return true;
-			}
-		} else if (MT_TYPE(type) == MT_BARRIER) {
-			mt_io_update_barrier (sched, pptr);
-			return false;
-		} else if (MT_TYPE(type) == MT_DATA) {
-			return true;
-		}
-	} else {
-		mobile_type_error ();
-	}
-	
-	return false;
 }
 /*}}}*/
 /*{{{  static HOT word *mt_alloc (void *allocator, word type, word size)*/

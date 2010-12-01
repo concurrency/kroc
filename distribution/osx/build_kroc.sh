@@ -42,7 +42,11 @@ if [ "$?" == "1" ] ; then
   # Compiling with newer xquartz (xquartz.macosforge.org)
   # does not work w/o this patch
   #patch -p0 < ../../patch-SDL_x11gl_c.h.diff
-  ./configure --prefix=$INSTALL
+  ./configure --prefix=$INSTALL \
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make install
   cd ../..
 fi
@@ -56,7 +60,11 @@ if [ "$?" == "1" ] ; then
     || exit 1
   tar -xvjf $PLAYER.tar.bz2
   cd $PLAYER
-  ./configure --prefix=$INSTALL --disable-jplayer
+  ./configure --prefix=$INSTALL --disable-jplayer \
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make install
   cd ../..
 fi
@@ -82,7 +90,7 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
     http://arduino.googlecode.com/files/$ARDUINO-mac.zip \
     || exit 1
   unzip $ARDUINO-mac.zip
-  cd $ARDUINO
+  #cd $ARDUINO
 fi
 
 if ! [ -d $BUILD/$LIBUSB ] ; then
@@ -93,21 +101,30 @@ if ! [ -d $BUILD/$LIBUSB ] ; then
     || exit 1
   tar -xvzf $LIBUSB.tar.gz
   cd $LIBUSB
-  ./configure --prefix=$INSTALL
+  # FIXME: For some reason shared libs do not get passed -arch i386
+  ./configure --prefix=$INSTALL --enable-shared=no\
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make
   make install
 fi
 
-
+# http://download.savannah.gnu.org/releases-noredirect/avrdude/$AVRDUDE.tar.gz \
 if ! [ -d $BUILD/$AVRDUDE ] ; then
   mkdir -p build
   cd build
-  curl -O \
-  http://download.savannah.gnu.org/releases-noredirect/avrdude/$AVRDUDE.tar.gz \
+  curl -L -O \
+  http://download.savannah.gnu.org/releases/avrdude/$AVRDUDE.tar.gz \
     || exit 1
   tar -xvzf $AVRDUDE.tar.gz
   cd $AVRDUDE
-  ./configure --prefix=$INSTALL CFLAGS=-I$INSTALL/include LDFLAGS=-L$INSTALL/lib
+  ./configure --prefix=$INSTALL \
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
   make
   make install
 fi
@@ -121,7 +138,11 @@ cd $BUILD
 mkdir kroc-ccsp
 cd kroc-ccsp
 
-../../../../configure --with-toolchain=kroc --prefix=$INSTALL
+../../../../configure --with-toolchain=kroc --prefix=$INSTALL \
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
 make
 make install
 
@@ -129,18 +150,23 @@ cd $BUILD
 mkdir kroc-tvm-posix
 cd kroc-tvm-posix
 
-../../../../configure --with-toolchain=tvm --prefix=$INSTALL
+../../../../configure --with-toolchain=tvm --prefix=$INSTALL \
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
 make
 make install
 
+darwin_major=`uname -r | awk -F. '{ print $1 }'`
 cd $BUILD
 mkdir kroc-tvm-posix-ppc
 cd kroc-tvm-posix-ppc
 CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk \
-  -I/usr/lib/gcc/powerpc-apple-darwin9/4.2.1/include/ \
+  -I/usr/lib/gcc/powerpc-apple-darwin$darwin_major/4.2.1/include/ \
   -mmacosx-version-min=10.4" \
-  CC=powerpc-apple-darwin9-gcc-4.2.1 \
-  ../../../../configure --host=powerpc-apple-darwin9 \
+  CC=powerpc-apple-darwin$darwin_major-gcc-4.2.1 \
+  ../../../../configure --host=powerpc-apple-darwin$darwin_major \
   --build=powerpc --with-toolchain=tvm \
   --prefix=$INSTALL-tvm-ppc
 # FIXME: Both of these fail at the moment, though they get far enough to be
@@ -152,7 +178,11 @@ cd $BUILD
 mkdir kroc-tvm-avr
 cd kroc-tvm-avr
 
-../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr
+../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr \
+   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
 make
 make install
 cd $BUILD/kroc-tvm-avr/modules/inmoslibs/libsrc

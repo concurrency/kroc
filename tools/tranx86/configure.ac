@@ -22,6 +22,13 @@ case "$host_cpu" in
   ARCH_DEFS="-m32"
   GNUASFLAGS="--32"
   ;;
+ i386)
+  case "$target" in
+   *Darwin* | *darwin*)
+    GNUASFLAGS='-arch", "i386'
+    ;;
+  esac
+  ;;
 esac
 
 AC_SUBST(ARCH_DEFS)
