@@ -1672,15 +1672,21 @@ PRIVATE wordnode *foldconstarrayexp (treenode * tptr)
 			treenode *type = chk_gettype (tptr);
 			const INT32 len = bytesin (type);
 			const int e = bytesinscalar (basetype (type));
-			BYTE *const cptr = (BYTE *) memalloc ((size_t) (len + 1));
-			(void) foldconstructor (tptr, cptr, e);
+
+			if (len < 0) {
+				chkreport (CHK_INVSIZE_CONST, LocnOf (tptr));
+			} else {
+				BYTE *const cptr = (BYTE *) memalloc ((size_t) (len + 1));
+
+				(void) foldconstructor (tptr, cptr, e);
 #if 0
-			return newwordnode (S_NAME, (char *) cptr, (int) len, NULL);
+				return newwordnode (S_NAME, (char *) cptr, (int) len, NULL);
 #else
-			{
-				wordnode *const result = lookupword ((const char *) cptr, (int) len);
-				memfree (cptr);	/* added 8/1/91 for regaining memory */
-				return result;
+				{
+					wordnode *const result = lookupword ((const char *) cptr, (int) len);
+					memfree (cptr);	/* added 8/1/91 for regaining memory */
+					return result;
+				}
 			}
 #endif
 		}

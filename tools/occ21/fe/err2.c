@@ -541,6 +541,8 @@ PUBLIC const char *chkmessagestring (const int n)
 		return ("constant expression has invalid type %d");
 	case CHK_EXP_NOT_CONST:
 		return ("expression is not constant");
+	case CHK_INVSIZE_CONST:
+		return ("constant has invalid size");
 	case CHK_TOO_MANY_ELSES:
 		return ("more than one ELSE in CASE process");
 	case CHK_MULTIPLE_CASE:
