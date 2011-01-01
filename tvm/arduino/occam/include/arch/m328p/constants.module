@@ -58,6 +58,7 @@ VAL INT VINTR.ADC IS 7:
 VAL INT VINTR.USART.RX0 IS 8:
 VAL INT VINTR.USART.UDRE0 IS 9:
 VAL INT VINTR.USART.TX0 IS 10:
+VAL INT VINTR.TWI IS 11:
 --}}}
 
 --{{{ Constants and array mappings for (8 bit) pulse width modulation
