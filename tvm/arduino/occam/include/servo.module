@@ -147,7 +147,10 @@ PROC servo (VAL INT board.pin, CHAN SERVO s?)
 -- @param p The input BYTE channel for setting the position of the servo.
 --   [@em This is hard-coded to be a range from 0 to 180. Do not attempt to
 --   send anything outside of that range.]
-PROC simple.servo (VAL INT board.pin, umin, umax, CHAN BYTE p?)
+
+-- 20101001 MCJ
+-- Removed 'umin' and 'umax' parameters, since they aren't used.
+PROC simple.servo (VAL INT board.pin, CHAN BYTE p?)
   CHAN SERVO s:
   BYTE b:
   PAR
