@@ -1,0 +1,325 @@
+--** occam implementation of TWI for the AVR
+-- @module twi
+
+#IF NOT (DEFINED (TWI.MODULE))
+#DEFINE TWI.MODULE
+
+-- Constants
+-- Not an official constant; used in this library
+-- to indicate that the init code has completed.
+VAL BYTE TWI.INIT                  IS #42:
+VAL BYTE TWI.STOPPED               IS #43:
+
+VAL BYTE TWI.START                 IS #08:
+VAL BYTE TWI.REP.START             IS #10:
+
+VAL BYTE TWI.MT.DATA.ACK           IS #28:
+VAL BYTE TWI.MT.DATA.NACK          IS #30:
+VAL BYTE TWI.MT.SLA.ACK            IS #18:
+VAL BYTE TWI.MT.SLA.NACK           IS #20:
+VAL BYTE TWI.MT.ARB.LOST           IS #38:
+
+VAL BYTE TWI.MR.DATA.ACK           IS #50:
+VAL BYTE TWI.MR.DATA.NACK          IS #58:
+VAL BYTE TWI.MR.SLA.ACK            IS #40:
+VAL BYTE TWI.MR.SLA.NACK           IS #48:
+VAL BYTE TWI.MR.ARB.LOST           IS #38:
+
+VAL BYTE TWI.ST.DATA.ACK           IS #B8:
+VAL BYTE TWI.ST.DATA.NACK          IS #C0:
+VAL BYTE TWI.ST.SLA.ACK            IS #A8:
+VAL BYTE TWI.ST.ARB.LOST.SLA.ACK   IS #B0:
+VAL BYTE TWI.ST.LAST.DATA          IS #C8:
+
+VAL BYTE TWI.SR.DATA.ACK           IS #80:
+VAL BYTE TWI.SR.DATA.NACK          IS #88:
+VAL BYTE TWI.SR.SLA.ACK            IS #60:
+VAL BYTE TWI.SR.ARB.LOST.SLA.ACK   IS #68:
+VAL BYTE TWI.SR.ARB.LOST.GCALL.ACK IS #78:
+VAL BYTE TWI.SR.GCALL.ACK          IS #70:
+VAL BYTE TWI.SR.GCALL.DATA.ACK     IS #90:
+VAL BYTE TWI.SR.GCALL.DATA.NACK    IS #98:
+VAL BYTE TWI.SR.STOP               IS #A0:
+
+VAL BYTE TWI.NO.INFO               IS #F8:
+VAL BYTE TWI.BUS.ERROR             IS #00:
+
+VAL BYTE TWI.READ                  IS #01:
+VAL BYTE TWI.WRITE                 IS #00:
+
+VAL BYTE TWI.ACK                   IS #00:
+VAL BYTE TWI.NACK                  IS #01:
+
+VAL BYTE TWI.STATUS.MASK IS ((((BV(TWS7) \/ BV(TWS6)) \/ BV(TWS5)) \/ BV(TWS4)) \/ BV(TWS3)):
+
+-- I2C EXPLORATION
+--  My exploration used an Arduino Duemilanove / Atmega328
+--  and an 23LC256 EEPROM.
+-- Follows from:
+-- http://10kohms.com/arduino-external-eeprom-24lc256
+
+-- PINS
+
+-- EEPROM PINS
+-- 1 A0
+-- 2 A1
+-- 3 A3
+-- 4 GND
+-- 5 SDA
+-- 6 SCL
+-- 7 WP
+-- 8 Vcc    
+
+
+PROC sbi (VAL INT sfr, VAL INT bit)
+  PLACED [MAX.PORT]BYTE ports 0: 
+  #PRAGMA DEFINED ports
+  ports[sfr] := ports[sfr] \/ BV(bit)
+:
+
+PROC set.bits (VAL INT sfr, VAL []INT bits)
+  PLACED [MAX.PORT]BYTE ports 0: 
+  #PRAGMA DEFINED ports
+  INITIAL BYTE v IS 0:
+  SEQ
+    SEQ i = 0 FOR SIZE bits
+      v := v \/ BV(bits[i])
+    ports[sfr] := v 
+:
+
+PROC cbi (VAL INT sfr, VAL INT bit)
+  PLACED [MAX.PORT]BYTE ports 0: 
+  #PRAGMA DEFINED ports
+  ports[sfr] := ports[sfr] /\ (BITNOT BV(bit))
+:
+
+PROC get.twi.status (BYTE status)
+  PLACED [MAX.PORT]BYTE ports 0: 
+  #PRAGMA DEFINED ports
+  status := ports[TWSR] /\ TWI.STATUS.MASK
+:
+
+PROTOCOL TWI.REQ 
+  CASE
+    init          = 0
+    start         = 1
+    tx.addr       = 2 ; BYTE
+    rx.addr       = 3 ; BYTE
+    tx            = 4 ; BYTE
+    rx            = 5 ; BYTE
+    stop          = 6
+:
+
+PROTOCOL TWI.RSP
+  CASE
+    ok            = 0 ; BYTE
+    data          = 1 ; BYTE
+    error         = 2 ; BYTE
+:
+
+VAL INT32 TWI.FREQ IS 100000:
+
+VAL []BYTE TWI.STATUS.OK IS [TWI.START,
+                             TWI.MT.SLA.ACK, 
+                             TWI.MT.DATA.ACK,
+                             TWI.MR.SLA.ACK,
+                             TWI.MR.DATA.ACK]:
+
+BOOL FUNCTION is.twi.ok (VAL BYTE status)
+  BOOL res:
+  VALOF
+    SEQ
+      res := FALSE
+      SEQ i = 0 FOR (SIZE TWI.STATUS.OK)
+        IF
+          status = TWI.STATUS.OK[i]
+            res := TRUE
+          TRUE
+            SKIP
+    RESULT res
+:
+
+VAL []BYTE TWI.STATUS.ERROR IS [TWI.MT.SLA.NACK,
+                                TWI.MR.SLA.NACK]:
+
+BOOL FUNCTION is.twi.error (VAL BYTE status)
+  BOOL res:
+  VALOF
+    SEQ
+      res := FALSE
+      SEQ i = 0 FOR (SIZE TWI.STATUS.ERROR)
+        IF
+          status = TWI.STATUS.ERROR[i]
+            res := TRUE
+          TRUE
+            SKIP
+    RESULT res
+:
+
+PROC twi.status(CHAN TWI.RSP rsp!)  
+  BYTE status:
+  SEQ
+    get.twi.status(status)
+    IF
+      is.twi.ok(status)
+        rsp ! ok ; status
+      -- FIXME
+      -- Should handle errors better.
+      is.twi.error(status)
+        SEQ
+          set.bits(TWCR, [TWEN])
+          rsp ! error ; status
+      TRUE
+        rsp ! error ; status
+:
+
+PROC twi.tx (VAL BYTE data)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    -- Load byte into data register
+    ports[TWDR] := data
+    -- Start transmission
+    set.bits(TWCR, [TWEN, TWIE, TWINT])
+    -- Wait for response  
+    INT any:
+    wait.for.interrupt (VINTR.TWI, any)
+:
+
+PROC twi.init ()
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    -- Activate internal pullup resistors
+    sbi(PORTC, 4)
+    sbi(PORTC, 5)
+    -- No prescaler
+    ports[TWSR] := #00
+    -- Set the bitrate
+    ports[TWBR] := (BYTE (((INT ((F.CPU / TWI.FREQ))) - 16) / 2))
+    -- Default content, SDA released
+    ports[TWDR] := #FF
+    -- Enable TWI, release pins, disable interrupt, no reqs
+    ports[TWCR] := BV(TWEN)
+:
+
+PROC twi.start ()
+  SEQ
+    -- Set START condition on TWI bus
+    set.bits(TWCR, [TWEN, TWIE, TWINT, TWSTA])  
+    INT any:
+    wait.for.interrupt (VINTR.TWI, any)
+:
+
+INLINE PROC twi.set.tx.addr (VAL BYTE addr)
+  twi.tx(addr \/ TWI.WRITE)
+:
+
+INLINE PROC twi.set.rx.addr (VAL BYTE addr)
+  twi.tx(addr \/ TWI.READ)
+:
+
+INLINE PROC twi.stop ()
+  set.bits(TWCR, [TWINT, TWEN, TWSTO])
+:
+
+PROC twi.read (VAL BYTE ack)
+  SEQ
+    IF
+      ack = TWI.NACK
+        set.bits(TWCR, [TWINT, TWEN, TWIE])
+      ack = TWI.ACK
+        set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+    INT any:
+    wait.for.interrupt (VINTR.TWI, any)
+:
+
+PROC twi.read.arr([]BYTE data)
+
+
+PROC twi (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  WHILE TRUE
+    req ? CASE
+      init
+        SEQ
+          twi.init()
+          rsp ! ok ; TWI.INIT
+
+      start
+        SEQ
+          twi.start()
+          twi.status(rsp!)
+      BYTE addr:
+      tx.addr ; addr
+        SEQ
+          twi.set.tx.addr(addr)
+          twi.status(rsp!)
+      BYTE addr:
+      rx.addr ; addr
+        SEQ
+          twi.set.rx.addr(addr)
+          twi.status(rsp!)
+      BYTE nibble:
+      tx ; nibble
+        SEQ
+          twi.tx(nibble)
+          twi.status(rsp!)
+      BYTE ack:
+      rx ; ack
+        SEQ
+          IF
+            ack = TWI.NACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE])
+            ack = TWI.ACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          INT any:
+          wait.for.interrupt(VINTR.TWI, any)
+          rsp ! data ; ports[TWDR]
+      stop
+        SEQ
+          set.bits(TWCR, [TWINT, TWEN, TWSTO])
+          rsp ! ok ; TWI.STOPPED
+:
+
+PROC twi.fast (CHAN TWI.REQ req?, CHAN TWI.RSP rsp!) 
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  WHILE TRUE
+    req ? CASE
+      init
+        SEQ
+          twi.init()
+      start
+        SEQ
+          twi.start()
+      BYTE addr:
+      tx.addr ; addr
+        SEQ
+          twi.set.tx.addr(addr)
+      BYTE addr:
+      rx.addr ; addr
+        SEQ
+          twi.set.rx.addr(addr)
+      BYTE nibble:
+      tx ; nibble
+        SEQ
+          twi.tx(nibble)
+      BYTE ack:
+      rx ; ack
+        SEQ
+          IF
+            ack = TWI.NACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE])
+            ack = TWI.ACK
+              set.bits(TWCR, [TWINT, TWEN, TWIE, TWEA])
+          INT any:
+          wait.for.interrupt(VINTR.TWI, any)
+          rsp ! data ; ports[TWDR]
+      stop
+        SEQ
+          set.bits(TWCR, [TWINT, TWEN, TWSTO])
+:
+
+#ENDIF
