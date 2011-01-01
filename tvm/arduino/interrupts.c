@@ -16,6 +16,7 @@ enum {
 	vintr_USART_RX,
 	vintr_USART_UDRE,
 	vintr_USART_TX,
+	vintr_TWI,
 	NUM_INTERRUPTS
 };
 /*}}}*/
@@ -52,6 +53,7 @@ enum {
 	vintr_USART_TX1,
 	vintr_USART_TX2,
 	vintr_USART_TX3,
+	vintr_TWI,
 	NUM_INTERRUPTS
 };
 #endif
@@ -151,6 +153,7 @@ MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
 MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
 MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
 MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
+MAP_SIMPLE_INTERRUPT(TWI_vect, vintr_TWI)
 
 /*{{{ ATmega328 serial interrupts */
 #if defined(atmega328p)
