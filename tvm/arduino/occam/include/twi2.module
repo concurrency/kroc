@@ -202,5 +202,67 @@ PROC twi.read.byte (VAL BYTE ack, BYTE b)
     b := ports[TWDR]
 :
 
+VAL INT TWI.ADDR.8  IS 0:
+VAL INT TWI.ADDR.16 IS 1:
+PROC twi.write (VAL BYTE dev, VAL INT addr.size, VAL INT addr, VAL BYTE b)
+  SEQ
+    twi.init() 
+    twi.start()
+    twi.set.tx.addr((dev << 1))
+    IF
+      addr.size = TWI.ADDR.8
+        twi.tx(BYTE addr)
+      addr.size = TWI.ADDR.16
+        SEQ
+          twi.tx((BYTE (addr >> 8)))
+          twi.tx((BYTE (addr BITAND #FF)))
+      TRUE
+        SKIP
+
+    twi.tx(b)
+    twi.stop()
+:    
+
+PROC twi.read (VAL BYTE dev, VAL INT addr.size, VAL INT addr, RESULT BYTE b)
+  SEQ
+    twi.init()
+    twi.start()
+    twi.set.tx.addr((dev << 1))
+    IF
+      addr.size = TWI.ADDR.8
+        twi.tx(BYTE addr)
+      addr.size = TWI.ADDR.16
+        SEQ
+          twi.tx((BYTE (addr >> 8)))
+          twi.tx((BYTE (addr BITAND #FF)))
+      TRUE
+        SKIP
+    twi.start()
+    twi.set.rx.addr((dev << 1) \/ 1)
+    twi.read.byte(TWI.NACK, b)
+    twi.stop()
+:
+
+PROC twi.read.many (VAL BYTE dev, VAL INT addr.size, VAL INT addr, RESULT []BYTE bs)
+  SEQ
+    twi.init()
+    twi.start()
+    twi.set.tx.addr((dev << 1))
+    IF
+      addr.size = TWI.ADDR.8
+        twi.tx(BYTE addr)
+      addr.size = TWI.ADDR.16
+        SEQ
+          twi.tx((BYTE (addr >> 8)))
+          twi.tx((BYTE (addr BITAND #FF)))
+      TRUE
+        SKIP
+    twi.start()
+    twi.set.rx.addr((dev << 1) \/ 1)
+    SEQ i = 0 FOR ((SIZE bs) - 1)
+      twi.read.byte(TWI.ACK, bs[i])
+    twi.read.byte(TWI.NACK, bs[(SIZE bs) - 1])
+    twi.stop()
+:
 
 #ENDIF
