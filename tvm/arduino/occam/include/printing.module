@@ -221,6 +221,44 @@ PROC real32toa (VAL REAL32 n, []BYTE arr, INT total)
 :
 --}}}
 
+PROC serial.write.dec.int (VAL INT port, VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  IF
+    n = 0
+      serial.write.string (port, "0")
+    TRUE
+      SEQ
+        IF
+          n < 0
+            SEQ
+              neg := TRUE
+              number := n * (- 1)
+          TRUE
+            SKIP
+        IF 
+          neg 
+            serial.write.string (port, "-")
+          TRUE 
+            SKIP
+        INITIAL BOOL LEADING IS TRUE:
+        WHILE (index < 5)
+          INT digit:
+          SEQ
+            digit := number / dec.powers[index]
+            number := number REM dec.powers[index]
+            IF
+              LEADING AND (digit = 0)
+                SKIP 
+              (digit <> 0) OR (NOT LEADING) 
+                SEQ
+                  LEADING := FALSE
+                  digit := digit + (INT '0')
+                  serial.write.byte(port, (BYTE digit))
+            index := index + 1
+:
+
 #IF FALSE
 -- This puppy is broken. Not sure why.
 --{{{ PROC serial.write.real32
