@@ -92,7 +92,7 @@ INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS (INT MAP[board.pin]):
 INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
   INT avr.pin:
   VALOF
-      avr.pin := board.analog.pin
+    avr.pin := board.analog.pin
     RESULT avr.pin
 : 
 --}}}
