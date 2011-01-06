@@ -26,12 +26,14 @@ def convert_value(value):
 	"""Parse a C constant value in decimal or hex.
 	Return None if the input isn't a constant."""
 
-	m = re.match('^(0x[0-9a-fA-F]+|[0-9]+)$', value)
+	# print "Attempting to match value: %s" % value
+
+	m = re.match('^(0(x|X)[0-9a-fA-F]+|[0-9]+)$', value)
 	if m is None:
 		return None
 
 	value = m.group(1)
-	if value.startswith("0x"):
+	if value.startswith("0x") or value.startswith("0X"):
 		return int(value[2:], 16)
 	else:
 		return int(value)
@@ -76,6 +78,7 @@ def convert_define(name, value):
 		conv = convert_value(arg)
 		if conv is None:
 			warn("Unhandled macro argument: ", arg)
+			warn("Name|Value: [%s | %s]" % (name, value))
 			return
 		write("VAL INT %s IS %d:\n" % (name, func(conv)))
 		return
