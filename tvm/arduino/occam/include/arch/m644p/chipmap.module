@@ -1,0 +1,128 @@
+--
+--	Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Matt Jadud
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--      Copyright (C) 2009-2010   Adam Sampson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** Symbolic arrays and FUNCTON(s) for mapping into General Purpose I/O
+-- functionality on ATmega644 based boards.
+--
+-- @module 644.chipmap
+
+#IF NOT (DEFINED (CHIPMAP.MODULE))
+#DEFINE CHIPMAP.MODULE
+
+-- From Atmel document 8011
+
+-- PIN      REG     PIN     REG
+--   1      PB0      21     PA0      
+--   2      PB1      22     PA1 
+--   3      PB2      23     PA2
+--   4      PB3      24     PA3
+--   5      PB4      25     PA4
+--   6      PB5      26     PA5
+--   7      PB6      27     PA6
+--   8      PB7      28     PA7
+--   9      RESET    29     AREF
+--  10      VCC      30     GND
+--  11      GND      31     AVCC
+--  12      XTAL2    32     PC7
+--  13      XTAL1    33     PC6
+--  14      PD0      34     PC5
+--  15      PD1      35     PC4
+--  16      PD2      36     PC3
+--  17      PD3      37     PC2
+--  18      PD4      38     PC1
+--  19      PD5      39     PC0
+--  20      PD6      40     PD7
+
+VAL INT DDRX  IS -1:
+VAL INT PORTX IS -1:
+VAL INT PINX  IS -1:
+
+--------- DDR.MAP --------------------------------------------
+--                       1                                         8
+VAL []INT DDR.MAP IS [DDRB, DDRB, DDRB, DDRB, DDRB, DDRB, DDRB, DDRX,
+--                       9                                        16
+                      DDRX, DDRX, DDRX, DDRX, DDRX, DDRD, DDRD, DDRD,
+--                      17                                        24
+                      DDRD, DDRD, DDRD, DDRD, DDRD, DDRC, DDRC, DDRC,
+--                      25                                        32
+                      DDRC, DDRC, DDRC, DDRC, DDRC, DDRX, DDRX, DDRX,
+--                      33                                        40
+                      DDRA, DDRA, DDRA, DDRA, DDRA, DDRA, DDRA, DDRA]:
+
+--------- PORT.MAP ---------------------------------------------------
+--                        1                                                 8
+VAL []INT PORT.MAP IS [PORTB, PORTB, PORTB, PORTB, PORTB, PORTB, PORTB, PORTX,
+--                        9                                                16
+                       PORTX, PORTX, PORTX, PORTX, PORTX, PORTD, PORTD, PORTD,
+--                       17                                                24
+                       PORTD, PORTD, PORTD, PORTD, PORTD, PORTC, PORTC, PORTC,
+--                       25                                                32
+                       PORTC, PORTC, PORTC, PORTC, PORTC, PORTX, PORTX, PORTX,
+--                       33                                                40
+                       PORTA, PORTA, PORTA, PORTA, PORTA, PORTA, PORTA, PORTA]:
+
+--------- PIN.MAP ---------------------------------------------------
+--                       1                                         8
+VAL []INT PIN.MAP IS [PINB, PINB, PINB, PINB, PINB, PINB, PINB, PINX,
+--                       9                                        16
+                      PINX, PINX, PINX, PINX, PINX, PIND, PIND, PIND,
+--                      17                                        24
+                      PIND, PIND, PIND, PIND, PIND, PINC, PINC, PINC,
+--                      25                                        32
+                      PINC, PINC, PINC, PINC, PINC, PINX, PINX, PINX,
+--                      33                                        40
+                      PINA, PINA, PINA, PINA, PINA, PINA, PINA, PINA]:
+
+--------- BIT.MAP ---------------------------------------------------
+--                     1                           8
+VAL []INT BIT.MAP IS [ 0,  1,  2,  3,  4,  5,  6,  7,
+--                     9                          16
+                      -1, -1, -1, -1, -1,  0,  1,  2,
+--                    17                          24
+                       3,  4,  5,  6,  7,  0,  1,  2,
+--                    25                          32
+                       3,  4,  5,  6,  7, -1, -1, -1,
+--                    33                          40
+                       0,  1,  2,  3,  4,  5,  6,  7]: 
+
+-- FIXME: mjadud It would be nice if this wasn't duplicated in each architecture
+-- COMMENT: mjadud You know, I don't know how I would avoid having to do this for each arch.
+
+--* Looks up the various General Purpose I/O registers connected to the given
+-- [@em AVR] pin.
+--
+-- @param avr.pin The [@em AVR] pin controlled by the given returns.
+-- @returns ddr, port, pin The various control registers that effects the
+--   behavior of the given pin.
+-- @return bit The specific bit of the control registers that alters the
+--   behavior of the given AVR pin.
+INT, INT, INT, INT FUNCTION chip.to.gpio (VAL INT avr.pin) 
+  INT ddr, port, pin, bit:
+  VALOF
+    SEQ
+      -- AVR pins are numbered starting from 1...
+      -- We need to subtract 1 to index into the arrays.
+      ddr  := DDR.MAP[avr.pin - 1]
+      port := PORT.MAP[avr.pin - 1]
+      pin  := PIN.MAP[avr.pin - 1]
+      bit  := BIT.MAP[avr.pin - 1]
+    RESULT ddr, port, pin, bit
+:
+
+#ENDIF
