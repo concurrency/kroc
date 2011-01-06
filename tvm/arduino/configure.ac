@@ -17,12 +17,15 @@ UPLOAD_RATE=57600
 
 AC_ARG_WITH([target-board],
             AC_HELP_STRING([--with-target-board=...],
-                           [target board (arduino, sanguino, arduinomega, seeedmega)]),
+                           [target board (arduino, bare644, arduinomega, seeedmega)]),
             [target_board=$withval], [target_board=arduino])
-if test "x$target_board" = "xsanguino" 
+if test "x$target_board" = "xbare644" 
 then
 	MCU=atmega644p
-	DUDEMCU=m664p
+	# WARNING: DUDEMCU was m664p. That looked wrong.
+	# It may have been right, but I changed it. MCJ 1101106
+	DUDEMCU=m644p
+	# Unsure what the upload rate *should* be.
 	UPLOAD_RATE=38400
 fi
 
