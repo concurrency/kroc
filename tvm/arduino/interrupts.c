@@ -21,7 +21,7 @@ enum {
 };
 /*}}}*/
 /*{{{ ATmega644 enumeration*/
-#if defined(atmega644p)
+#elif defined(atmega644p)
 enum {
 	vintr_INT0 = 0,
 	vintr_INT1,
