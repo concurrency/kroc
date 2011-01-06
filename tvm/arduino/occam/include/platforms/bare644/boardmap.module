@@ -1,0 +1,125 @@
+--
+--	Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Matt Jadud
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--      Copyright (C) 2009-2010   Adam Sampson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** Occam header for Arduino specific pin mappings.
+--
+-- @module boardmap.bare644
+
+#IF NOT (DEFINED (BOARDMAP.MODULE))
+#DEFINE BOARDMAP.MODULE
+
+#INCLUDE "constants.module"
+#INCLUDE "base.module"
+
+--{{{ board to Architecture Layout
+-- board to Architecture layout w/ register names.
+--
+-- Because this is a "bare" layout, board pins map
+-- directly to architecture pins. That is, "board pin 1" is 
+-- pin 1 on the chip. There is no board.
+--
+-- Analog pins must still be mapped via constants.
+--}}}
+
+--{{{ Symbolic Constants
+--* Symbolic constant for accessing the first analog pin.
+VAL INT A0 IS 40:
+VAL INT A1 IS 39:
+VAL INT A2 IS 38:
+VAL INT A3 IS 37:
+VAL INT A4 IS 36:
+VAL INT A5 IS 35:
+VAL INT A6 IS 34:
+VAL INT A7 IS 33:
+
+--* Symbolic constant for accessing read port 0.
+VAL INT RX0 IS 14:
+--* Symbolic constant for accessing transmit port 0.
+VAL INT TX0 IS 15:
+--* Symbolic constant for accessing read port 1.
+VAL INT RX1 IS 16:
+--* Symbolic constant for accessing transmit port 1.
+VAL INT TX1 IS 17:
+
+--* Symbolic constant for on-board LED pin.
+VAL INT LED.PIN IS 13:
+--}}}
+
+--{{{ board to Architecture array map
+-- Array (reused) to keep changes elsewhere minimal.
+VAL []BYTE MAP IS [ 1,  2,  3,  4,  5,  6,  7,  8,
+                    9, 10, 11, 12, 13, 14, 15, 16,
+                   17, 18, 19, 20, 21, 22, 23, 24,
+                   25, 26, 27, 28, 29, 30, 31, 32,
+                   33, 34, 35, 36, 37, 38, 39, 40 ]:
+--}}}
+
+--{{{ FUNCTION board.to.chip
+--* Arduino specific conversion function for finding
+-- chip-specific pins from board-specific pin.
+--
+-- @param board.pin The board pin to be mapped to an AVR pin.
+-- @return The AVR pin connected to the given board pin.
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS (INT MAP[board.pin]):
+--}}}
+
+--{{{ FUNCTION board.analog.to.chip
+--* Arduino specific conversion function for finding
+-- chip-specific pins [@em specifically for analog pins].
+--
+-- If the user inputs 0-5, the appropriate analog pin number is substituted.
+-- For example, if '3' is passed in as [@code board.analog.pin], A3 is
+-- is substituted in before the lookup call. 
+--
+-- @param board.analog.pin The board pin to be mapped to an AVR pin.
+-- @return The AVR pin connected to the given board pin.
+INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
+  INT avr.pin:
+  VALOF
+      avr.pin := board.analog.pin
+    RESULT avr.pin
+: 
+--}}}
+
+--{{{ FUNCTION board.to.serial.port
+--* Arduino specific conversion function for finding
+-- chip-specific pins [@em specifically for serial operations].
+--
+-- There's really only one serial port on the Arduino, so this is a stub
+-- FUNCTION that's really just here to make sure the Arduino code complies
+-- with the API adhered to by all platform boardmap.modules.
+--
+-- @param board.pin The board pin to be mapped to a serial port.
+-- @return The serial port corresponding to the given board pin.
+INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+  INT serial.port:
+  VALOF
+    SEQ
+      IF
+        (board.pin =  RX0) OR (board.pin = TX0)
+          serial.port := 0
+        (board.pin = RX1) OR (board.pin = TX1)
+          serial.port := 1
+        TRUE
+          die ("The given board pin is not connected to any Serial Ports.")
+    RESULT serial.port
+:
+--}}}
+
+#ENDIF
