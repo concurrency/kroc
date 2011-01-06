@@ -20,6 +20,27 @@ enum {
 	NUM_INTERRUPTS
 };
 /*}}}*/
+/*{{{ ATmega644 enumeration*/
+#if defined(atmega644p)
+enum {
+	vintr_INT0 = 0,
+	vintr_INT1,
+	vintr_PCINT0,
+	vintr_PCINT1,
+	vintr_PCINT2,
+	vintr_TIMER1,
+	vintr_TIMER2,
+	vintr_ADC,
+	vintr_USART_RX0,
+	vintr_USART_RX1,
+	vintr_USART_UDRE0,
+	vintr_USART_UDRE1,
+	vintr_USART_TX0,
+	vintr_USART_TX1,
+	vintr_TWI,
+	NUM_INTERRUPTS
+};
+/*}}}*/
 /*{{{ ATmega1280 enumeration */
 #elif defined(atmega1280)
 enum {
