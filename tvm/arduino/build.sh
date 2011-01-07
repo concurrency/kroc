@@ -10,7 +10,7 @@ cleanup()
 
 MCUS="atmega328p atmega644p atmega1280"
 FCPUS="16000000 8000000"
-# FCPUS="16000000"
+#FCPUS="16000000"
 
 mcu="atmega328p"
 	for fcpu in $FCPUS
@@ -18,6 +18,7 @@ mcu="atmega328p"
 		cleanup
 		./configure \
 			--host=avr \
+			--with-bytecode-addr=0x4F00 \
 			--with-mcu=$mcu \
 			--with-fcpu=$fcpu \
 			"$@"
