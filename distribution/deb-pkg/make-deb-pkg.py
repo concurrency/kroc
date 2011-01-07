@@ -651,6 +651,7 @@ def upload():
 		
 		header("PACKAGING AVR")
 		build_avr()
+		build()
 		dependencies()
 		#copy_arduino_config()
 		#copy_arduino_build()
