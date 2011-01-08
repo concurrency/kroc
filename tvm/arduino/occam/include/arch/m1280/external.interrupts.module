@@ -23,15 +23,61 @@
 #IF NOT (DEFINED (EXTERNAL.INTERRUPTS.MODULE))
 #DEFINE EXTERNAL.INTERRUPTS.MODULE
 
+VAL INT INTR    IS 0:
+VAL INT CONTROL IS 1:
+
+VAL []INT ISCn1 IS [ISC01, ISC11, ISC21, ISC31, ISC41, ISC51, ISC61, ISC71]:
+VAL []INT ISCn0 IS [ISC00, ISC00, ISC20, ISC30, ISC40, ISC50, ISC60, ISC70]:
+
+INLINE PROC enable.interrupt (VAL INT intr.num)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  ports[EIMSK] := ports[EIMSK] BITOR BV(intr.num)
+:
+
+INLINE PROC disable.interrupt (VAL INT intr.num)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  ports[EIMSK] := ports[EIMSK] BITAND (BITNOT BV(intr.num))
+:
+
 --{{{ PROC set.interrups
 --* Sets up the interrupt registers for the ATmega328.
 --
 -- [@code vintr] gets set in this process.
 -- @param avr.pin The [@em AVR] pin being setup for interrupts.
 -- @param vintr The interrupt vector associated with the given AVR pin.
-PROC set.interrups (VAL INT avr.pin, INT vintr)
-  SKIP
+PROC set.interrups (VAL INT avr.pin, RESULT INT vintr)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  #PRAGMA DEFINED vintr
+  INT EICR, INTR:
+  #PRAGMA DEFINED INTR
+  INT ISCN1, ISCN0:
+  SEQ
+    IF
+      -- Pins 43, 44, 45, and 46 are INT0:3
+      (avr.pin > 42) AND (avr.pin < 47)
+        SEQ
+          -- Gives us interrupt 0 through 3
+          INTR := avr.pin - 42
+          EICR := EICRA
+      -- Pins 6, 7, 8, 9 are INT 7:4
+      (avr.pin > 5) AND (avr.pin < 10)
+        SEQ
+          INTR := avr.pin - 6
+          EICR := EICRB
+      TRUE
+        die ("No interrupt on pin.")
+    -- We enumerate interrupts sequentially. If we ever
+    -- change the numbering on interrupts, this breaks fast.
+    -- In the meantime, index off VINTR.INT0 and add the number
+    -- to get the constant for the interrupt we're setting.
+    vintr := VINTR.INT0 + INTR
+    ISCN1 := ISCn1[INTR]
+    ISCN0 := ISCn0[INTR]
+    -- disable.interrupt (INTR)
+    ports[EICR] := (ports[EICR] BITAND (BITNOT BV(ISCN1))) BITOR BV(ISCN0)
+    enable.interrupt (INTR)
 :
---}}}
-
 #ENDIF
