@@ -653,18 +653,18 @@ def upload():
 		build_avr()
 		build()
 		dependencies()
-		#copy_arduino_config()
-		#copy_arduino_build()
+		copy_arduino_config()
+		copy_arduino_build()
 		deb()			
 		header("PACKAGING NATIVE KROC")
 		build_native_kroc()
 		dependencies()
-		#copy_native_build()
+		copy_native_build()
 		deb()
 		header("PACKAGING NATIVE TVM")
 		build_native_tvm()
 		dependencies()
-		#copy_native_tvm_build()
+		copy_native_tvm_build()
 		deb()
 		header("PACKAGING META")
 		meta_deb()
@@ -723,7 +723,7 @@ def upload():
 			
 		with pushd():
 			cd(root + '/PACKAGES/binary')
-			cmd(config.get('SCP_CMD'))
+			#cmd(config.get('SCP_CMD'))
 
 
 
