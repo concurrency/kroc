@@ -6,8 +6,9 @@ ARCHIVE_FILENAME=Transterpreter-win-dev-$VERSION.zip
 ARCHIVE_PATH=$OUTPUT/$ARCHIVE_FILENAME
 
 FILES_PATH=/data/www/org/transterpreter-download/files/dev/win/zip
-FEED_PATH=/data/www/org/transterpreter-download/feeds/win-dev-zip.xml
-HOST=clj@unhosting.org
+FEED_PATH=/srv/www/org/transterpreter.download/cumulative-feeds/win-dev-zip/feed.xml
+CHANGES_PATH=/srv/www/org/transterpreter.download/cumulative-feeds/win-dev-zip/changes/
+HOST=clj@concurrency.cc
 
 DOWNLOAD_BASE_URL="http://download.transterpreter.org/files/dev/win/zip"
 DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$ARCHIVE_FILENAME"
@@ -38,15 +39,22 @@ cat >build/feed.xml <<EOF
                 <item>
                         <title>Transterpreter - Development Version $VERSION</title>
                         <description><![CDATA[
-                            <h2>Development version</h2>
-                            <p>Please note that you are using a development version of the
-                            Transterpreter, which may break, blow up,
-                            dissintigrate, or otherwise harm itself at any
-                            point. <!--If you meant to run something less prone to
-                            breakage, please go to
-                            <a href="http://www.transterpreter.org/">http://www.transterpreter.org/</a>
-                            and download one of
-                            the official releases.--></p>
+			<style>
+				\$include(changelog.css)
+			</style>
+
+			\$changes
+
+			    <h3>Development version</h3>
+			    <p>Please note that you are using a development version of the
+			    Transterpreter, which may break, blow up,
+			    dissintigrate, or otherwise harm itself at any
+			    point. <!--If you meant to run something less prone to
+			    breakage, please go to
+			    <a href="http://www.transterpreter.org/">http://www.transterpreter.org/</a>
+			    and download one of
+			    the official releases.--></p>
+
                         ]]></description>
                         <pubDate>$PUBDATE</pubDate>
                         <enclosure
@@ -76,15 +84,23 @@ cat >build/feed.xml <<EOF
     <item>
       <title>Transterpreter - Development Version $VERSION</title>
       <description><![CDATA[
-          <h2>Development version</h2>
-          <p>Please note that you are using a development version of the
-          Transterpreter, which may break, blow up,
-          dissintigrate, or otherwise harm itself at any
-          point. <!--If you meant to run something less prone to
-          breakage, please go to
-          <a href="http://www.transterpreter.org/">http://www.transterpreter.org/</a>
-          and download one of
-          the official releases.--></p>
+			<style>
+				\$include(changelog.css)
+			</style>
+
+			\$changes
+
+			    <h3>Development version</h3>
+			    <p>Please note that you are using a development version of the
+			    Transterpreter, which may break, blow up,
+			    dissintigrate, or otherwise harm itself at any
+			    point. <!--If you meant to run something less prone to
+			    breakage, please go to
+			    <a href="http://www.transterpreter.org/">http://www.transterpreter.org/</a>
+			    and download one of
+			    the official releases.--></p>
+
+
           ]]>
       </description>
       <pubDate>$PUBDATE</pubDate>
@@ -97,6 +113,15 @@ cat >build/feed.xml <<EOF
 </rss>
 EOF
 
+if ! [ -f "changes/version_$VERSION.markdown" ] ; then
+  svn mv changes/version_CURRENT.markdown changes/version_$VERSION.markdown && \
+  echo -e "# Changes Since $VERSION\n\n" > changes/version_CURRENT.markdown && \
+  svn add changes/version_CURRENT.markdown && \
+  svn commit changes/version_$VERSION.markdown \
+             changes/version_CURRENT.markdown \
+     -m "Win Dist: (automatic commit) activating changelog entry"
+fi
 
+scp "changes/version_$VERSION.markdown" $HOST:$CHANGES_PATH
 scp "$ARCHIVE_PATH" $HOST:$FILES_PATH
 scp "build/feed.xml" $HOST:$FEED_PATH
