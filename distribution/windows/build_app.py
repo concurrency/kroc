@@ -23,7 +23,7 @@ ARDUINO_PLUMBING_DIR= os.path.join(APP_DIR, 'arduino', 'plumbing-book')
 ARDUINO_TVM_CONF_DIR= os.path.join(APP_DIR, 'arduino', 'tvm', 'conf')
 JEDIT_DIR           = os.path.join(APP_DIR, 'jEdit')
 
-BINARIES = "occ21.exe ilibr.exe mkoccdeps.exe tvm.exe".split()
+BINARIES = "occ21.exe ilibr.exe mkoccdeps.exe tvm.exe plinker.exe tce-dump.exe".split()
 
 build_date  = datetime.datetime.utcnow()
 version     = build_date.strftime('%Y%m%d.%H%M')
@@ -87,18 +87,10 @@ copy_file('build/stub/Transterpreter.exe', APP_DIR)
 copy_tree('py2exe-dist', BIN_DIR)
 
 # perl files 
-# FIXME: This will need to be generated natively at some point
-import urllib2
-mkdirs('perlfiles')
-if not os.path.exists('perlfiles/plinker.exe'):
-    f = open('perlfiles/plinker.exe', 'wb')
-    f.write(urllib2.urlopen('http://lyderjacobsen.org/misc/plinker.exe').read())
-    f.close()
-if not os.path.exists('perlfiles/tce-dump.exe'):
-    f = open('perlfiles/tce-dump.exe', 'wb')
-    f.write(urllib2.urlopen('http://lyderjacobsen.org/misc/tce-dump.exe').read())
-    f.close()
-copy_files('perlfiles/*', BIN_DIR)
+copy_files('msys/strawberry-perl/perl/bin/perl*.dll', BIN_DIR)
+copy_file('mingw/bin/libgcc_s_dw2-1.dll', BIN_DIR)
+copy_file('msys/strawberry-perl/perl/bin/libgcc_s_sjlj-1.dll', BIN_DIR)
+
 
 # tvm native libraries
 # FIXME: These should go elsewhere
@@ -167,7 +159,7 @@ copy_file('../common/jEdit/occam-pi.xml', os.path.join(JEDIT_DIR, 'modes'))
 # Updater
 copy_file('build/winupdater/JEditWinSparklePlugin.jar', os.path.join(JEDIT_DIR, 'jars'))
 copy_file('build/winupdater/JEditWinSparkleNativeBridge.dll', os.path.join(JEDIT_DIR, 'jars'))
-copy_file('build/winsparkle/vslavik-winsparkle-941987c/Release/WinSparkle.dll', os.path.join(JEDIT_DIR, 'jars'))
+copy_file('build/winsparkle/WinSparkle.dll', os.path.join(JEDIT_DIR, 'jars'))
 
 # Copy custom properties
 copy_file('../common/jEdit/properties.props', os.path.join(JEDIT_DIR, 'properties'))
