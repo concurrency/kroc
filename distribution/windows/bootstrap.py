@@ -120,7 +120,10 @@ def extract(files, dest):
         sys.stdout.write('extracting: %s\n' %(f, ))
         if f.endswith('.lzma'):
             lzma = subprocess.Popen([os.path.join(paths['msys'], 'bin', 'lzma'), '-d', '-c', '-q', f], stdout=subprocess.PIPE)
-            a = tarfile.open(fileobj=lzma.stdout, mode='r|')
+            # FIXME: I am quite unhappy about having errorlevel=0 here
+            #        but otherwise I get permission denied when trying to
+            #        bootstrap in an already boostrapped dir
+            a = tarfile.open(fileobj=lzma.stdout, mode='r|', errorlevel=0)
             # FIXME: check that no files will be written outside dest
             a.extractall(dest)
             a.close()
@@ -143,7 +146,8 @@ def extract(files, dest):
                     a.extract(name, d)
             a.close()
         else:
-            a = tarfile.open(f, 'r')
+            # FIXME: errorlevel as above
+            a = tarfile.open(f, 'r', errorlevel=0)
             # FIXME: check that no files will be written outside dest
             a.extractall(dest)
             a.close()
@@ -213,7 +217,8 @@ extract(python_files, os.path.join(paths['tmp'], 'python'))
 print 'moving tools'
 tools = [(other_urls['curl'], 'curl'), 
          (other_urls['ant'], 'ant'),
-         (other_urls['unzip'], 'unzip')]
+         (other_urls['unzip'], 'unzip'),
+         (other_urls['perl'], 'strawberry-perl')]
 for tool_src, tool_dir in tools:
     tool_path = os.path.abspath(os.path.join(paths['msys'], tool_dir))
     if os.path.exists(tool_path):
@@ -223,8 +228,8 @@ for tool_src, tool_dir in tools:
         dirname = filename2dirname(tool_src, add_ext='-bin.tar.bz2')
     else:
         dirname = filename2dirname(tool_src)
+    print '%s to %s' % (os.path.join(paths['tmp'], dirname), tool_path)
     shutil.move(os.path.join(paths['tmp'], dirname), tool_path)
-
 
 print 'creating fstab'
 tvmdir = os.path.abspath(os.path.join(os.getcwd(), '../../')).replace('\\', '/')
@@ -236,15 +241,16 @@ fp.close()
 
 
 print 'setting extra msys config'
-cfg_dir     = os.path.join(paths['msys'], 'etc', 'profile.d')
-cfg_file    = os.path.join(cfg_dir, 'tvm_config.sh')
-perl_bin    = '/perl/bin'
-install_bin = '/tvm/distribution/windows/install/bin'
-curl_bin    = '/curl'
-ant_bin     = '/ant/bin'
-ant_home    = '/ant'
-unzip_bin   = '/unzip/bin'
-path_var    = [perl_bin, install_bin, curl_bin, ant_bin, unzip_bin]
+cfg_dir       = os.path.join(paths['msys'], 'etc', 'profile.d')
+cfg_file      = os.path.join(cfg_dir, 'tvm_config.sh')
+perl_bin      = '/strawberry-perl/perl/bin'
+perl_site_bin = '/strawberry-perl/perl/site/bin'
+install_bin   = '/tvm/distribution/windows/install/bin'
+curl_bin      = '/curl'
+ant_bin       = '/ant/bin'
+ant_home      = '/ant'
+unzip_bin     = '/unzip/bin'
+path_var      = [perl_bin, perl_site_bin, install_bin, curl_bin, ant_bin, unzip_bin]
 if not os.path.exists(cfg_dir):
     os.makedirs(cfg_dir)
 fp = open(cfg_file, 'w')
@@ -354,36 +360,14 @@ for tool in tools:
     shutil.copy(os.path.join(bindir, versions[0]),
                 os.path.join(bindir, tool))
 
-build_dir   = os.path.join(
-                  paths['tmp'], 
-                  other_urls.file_dict()['perl'][len('downloads/'):-len('.tar.bz2')],
-                  'win32')
-dmake_dir   = os.path.join(os.getcwd(), paths['tmp'], 'dmake')
 mingw_dir   = os.path.join(os.getcwd(), paths['mingw'])
 msys_dir    = os.path.join(os.getcwd(), paths['msys'])
 mingw_bin   = os.path.join(mingw_dir, 'bin')
+dmake_dir   = os.path.join(os.getcwd(), paths['tmp'], 'dmake')
 env         = dict(os.environ)
-env['PATH'] = ';'.join([env['PATH'], dmake_dir, mingw_dir, mingw_bin])
-dmake       = find_file('dmake', env['PATH'], '.exe')
-inst_dir    = os.path.join(msys_dir, 'perl')
+env['PATH'] = ';'.join([env['PATH'], os.path.join(msys_dir, 'strawberry-perl', 'perl', 'bin'), dmake_dir, mingw_dir, mingw_bin])
 
-
-print 'patching perl makefile'
-re1 = re.compile(r'^\s*INST_DRV\s+\*=.*', re.MULTILINE)
-re2 = re.compile(r'^\s*INST_TOP\s+\*=.*', re.MULTILINE)
-re3 = re.compile(r'^\s*CCHOME\s+\*=.*', re.MULTILINE)
-drive, path = os.path.splitdrive(inst_dir)
-fp = open(os.path.join(build_dir, 'makefile.mk'), 'r+')
-text = fp.read()
-text = re1.sub('INST_DRV *= ' + drive, text)
-text = re2.sub('INST_TOP *= $(INST_DRV)' + path.replace('\\', '\\\\'), text)
-text = re3.sub('CCHOME *= ' + mingw_dir.replace('\\', '\\\\'), text)
-fp.seek(0)
-fp.truncate()
-fp.write(text)
-fp.close()
-
-
+print env['PATH']
 print 'installing python packages'
 for p in python_files:
     setup_path = os.path.join(paths['tmp'], 'python', filename2dirname(p))
@@ -393,23 +377,28 @@ for p in python_files:
             print >>sys.stderr, "Child was terminated by signal", -retcode
         elif retcode != 0:
             print >>sys.stderr, "Child returned", retcode
+            sys.exit(retcode)
     except OSError, e:
         print >>sys.stderr, "Execution failed:", e
+        sys.exit(1)
     
-
-print 'compiling perl'
+print 'configuring strawberry perl'
+perl_exe = os.path.join(msys_dir, 'strawberry-perl', 'perl', 'bin', 'perl.exe')
 try:
-    retcode = subprocess.call(dmake, cwd=build_dir, env=env)
+    retcode = subprocess.call([perl_exe, 'relocation.pl.bat'], cwd=os.path.join(msys_dir, 'strawberry-perl'), env=env)
     if retcode < 0:
         print >>sys.stderr, "Child was terminated by signal", -retcode
     elif retcode != 0:
         print >>sys.stderr, "Child returned", retcode
+        sys.exit(retcode)
 except OSError, e:
     print >>sys.stderr, "Execution failed:", e
-
-print 'installing perl'
+    sys.exit(1)
+ 
+print 'installing PAR::Packer'
+cpan_bat = os.path.join(msys_dir, 'strawberry-perl', 'perl', 'bin', 'cpan.bat')
 try:
-    retcode = subprocess.call([dmake, 'install'], cwd=build_dir, env=env)
+    retcode = subprocess.call([cpan_bat, '-fi', 'PAR::Packer'], cwd=os.path.join(msys_dir, 'strawberry-perl'), env=env)
     if retcode < 0:
         print >>sys.stderr, "Child was terminated by signal", -retcode
     elif retcode != 0:
