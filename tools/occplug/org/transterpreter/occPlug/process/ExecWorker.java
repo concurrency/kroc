@@ -81,8 +81,10 @@ public class ExecWorker extends Thread implements Killable {
 					for (int i = 0; i < externalCommand.envp.length; ++i) {
 						String[] bits = externalCommand.envp[i].split("=");
 						env.put(bits[0], bits[1]);
+						System.out.println("Adding " + bits[0] + ": " + bits[1]);
 					}
 				}
+				System.out.println(env);
 				pb.directory(externalCommand.dir);
 
 				/* Execute the command */

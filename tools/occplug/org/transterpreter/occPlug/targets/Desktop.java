@@ -90,6 +90,8 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		final DocumentWriter output = targetSupport.getDefaultOutput();
 		final String occFile        = targetSupport.getActiveFileName();
 		
+		BaseHost host = BaseHost.getHostObject();
+		
 		if (!occFile.toLowerCase().endsWith(".occ")) {
 			output.writeError("Error: Only occam (.occ) source files can be compiled.\n");
 			output.writeError("       The current buffer does not contain a .occ file!\n");
@@ -99,16 +101,24 @@ public class Desktop extends BaseTarget implements CompileAbility {
 	
 		// Set up the command and environment
 		String[] occbuildCommand;
-		String[] env; 
+		String[] env = null; 
+		
+		if(host instanceof Windows)
+		{
+		  /* FIXME: should we add more of the environment?
+		   */
+      env = new String[] { "Path=" + OccPlugUtil.pathifyXXX("bin") + ";" + System.getenv("PATH") };
+		}
+		
 		if(target == target_tvm)
 		{
 			occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand("tvm", occFile);
-			env = OccbuildHelper.makeOccbuildEnvironment("tvm");
+			env = OccbuildHelper.makeOccbuildEnvironment("tvm", env);
 		}
 		else if(target == target_kroc)
 		{
 			occbuildCommand = OccbuildHelper.makeOccbuildProgramCommand("kroc", occFile);
-			env = OccbuildHelper.makeOccbuildEnvironment("kroc");
+			env = OccbuildHelper.makeOccbuildEnvironment("kroc", env);
 		}
 		else
 			throw new RuntimeException("Invalid target passed to compileProgram");
