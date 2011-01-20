@@ -81,7 +81,7 @@ PROC serial.write.byte (VAL INT board.pin, VAL BYTE b)
 -- @param n The INT to write.
 PROC serial.write.int (VAL INT board.pin, VAL INT n)
   VAL INT port IS board.to.serial.port (board.pin):
-  VAL []BYTE digits IS "0123456789abcdef":
+  VAL []BYTE digits IS "0123456789ABCDEF":
   SEQ i = 3 FOR 4 STEP -1
     serial.byte.out (port, digits[(n >> (i * 4)) /\ #F])
 :
@@ -96,7 +96,7 @@ PROC serial.write.int (VAL INT board.pin, VAL INT n)
 -- @param n The long integer (INT32) to write.
 PROC serial.write.int32 (VAL INT board.pin, VAL INT32 n)
   VAL INT port IS board.to.serial.port (board.pin):
-  VAL []BYTE digits IS "0123456789abcdef":
+  VAL []BYTE digits IS "0123456789ABCDEF":
   SEQ i = 7 FOR 8 STEP -1
     serial.byte.out (port, digits[INT ((n >> (i * 4)) /\ #F)])
 :
