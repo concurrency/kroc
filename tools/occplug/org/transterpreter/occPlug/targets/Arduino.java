@@ -52,6 +52,7 @@ import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.hosts.BaseHost;
+import org.transterpreter.occPlug.hosts.Windows;
 import org.transterpreter.occPlug.process.Command;
 import org.transterpreter.occPlug.process.CommandExternal;
 import org.transterpreter.occPlug.process.CommandRunnable;
@@ -392,7 +393,14 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		output.writeRegular("Compiling: " + occFile + "\n");
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(occbuildCommand) + "\n", output);
 
-		final String[] env = OccbuildHelper.makeOccbuildEnvironment("tvm-arduino");
+		String[] env = null;
+		if(host instanceof Windows)
+		{
+		  /* FIXME: should we add more of the environment?
+		   */
+      env = new String[] { "Path=" + OccPlugUtil.pathifyXXX("bin") + ";" + System.getenv("PATH") };
+		}
+		env = OccbuildHelper.makeOccbuildEnvironment("tvm-arduino", env);
 		OccPlugUtil.writeVerbose("Environment: " + Arrays.asList(env) + "\n", output);
 		
 		final Runnable[] finalisers = { finished };
