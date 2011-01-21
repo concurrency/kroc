@@ -4,9 +4,8 @@
 
 <h1>Warning</h1>
 
-The location where bytecode is uploaded to Arduino devices has been changed.
-You must therefore re-upload the Transterpreter firmware on any Arduino device
-you are using so that you are using the new firmware supplied with this update.
+The Transterpreter firmware has been updated in this release. Please re-upload the firmware to your Arduino when you have installed the new version. You
+should also recompile and upload the user code you are running.
 
 </div>
 
