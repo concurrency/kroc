@@ -5,7 +5,7 @@ OUTPUT=output
 ARCHIVE_FILENAME=Transterpreter-win-dev-$VERSION.zip
 ARCHIVE_PATH=$OUTPUT/$ARCHIVE_FILENAME
 
-FILES_PATH=/data/www/org/transterpreter-download/files/dev/win/zip
+FILES_PATH=/srv/www/org/transterpreter.download/files/dev/win/zip
 FEED_PATH=/srv/www/org/transterpreter.download/cumulative-feeds/win-dev-zip/feed.xml
 CHANGES_PATH=/srv/www/org/transterpreter.download/cumulative-feeds/win-dev-zip/changes/
 HOST=clj@concurrency.cc
