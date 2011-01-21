@@ -39,6 +39,11 @@ public class OccbuildHelper {
 
 	public static String[] makeOccbuildEnvironment(String toolchain, String[] additional)
 	{
+		if(additional == null)
+		{
+			return makeOccbuildEnvironment(toolchain);
+		}
+
 		Hashtable h = new Hashtable();
 		for(int i = 0; i < additional.length; i++)
 		{
