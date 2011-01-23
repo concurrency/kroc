@@ -435,7 +435,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
 		DeviceProperties props = new DeviceProperties(selectedDevice);
 		
-		final String fileBase = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName());
+		final String fileBase = OccPlugUtil.removeExtension(targetSupport.getActiveFileName());
 		final String tbcFile = fileBase + ".tbc";
 		final String ihexFile = fileBase + ".ihex";
 		final File curDir = new File(targetSupport.getActiveDirectory());

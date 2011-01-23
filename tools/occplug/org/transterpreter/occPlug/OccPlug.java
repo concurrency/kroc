@@ -644,7 +644,7 @@ public class OccPlug extends JPanel implements EBComponent {
 				.getStyledDocument());
 
 		final String occFile = buffer.getName();
-		final String baseFile = MiscUtilities.getFileNameNoExtension(occFile);
+		final String baseFile = OccPlugUtil.removeExtension(occFile);
 		final String tceFile = baseFile + ".tce";
 		final String tbcFile = baseFile + ".tbc";
 		final String srecFile = baseFile + ".srec";
@@ -1005,7 +1005,7 @@ public class OccPlug extends JPanel implements EBComponent {
 
 		occdocCommand.add(OccPlugUtil.pathify(OccPlugUtil.getOccdocCmd()));
 		occdocCommand.add("-d");
-		occdocCommand.add(MiscUtilities.getFileNameNoExtension(filename)
+		occdocCommand.add(OccPlugUtil.removeExtension(filename)
 				+ "-doc");
 		occdocCommand.add(filename);
 
