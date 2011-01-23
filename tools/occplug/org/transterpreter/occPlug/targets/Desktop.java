@@ -153,7 +153,7 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		final String filename;
 		if(theTarget == target_tvm)
 		{
-			filename = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName()) + ".tbc";
+			filename = OccPlugUtil.removeExtension(targetSupport.getActiveFileName()) + ".tbc";
 			
 			String fw_p;
 			fw_p = host.getPath("tvm", "firmware");
@@ -171,7 +171,7 @@ public class Desktop extends BaseTarget implements CompileAbility {
 		{
 			filename = MiscUtilities.constructPath(
 					targetSupport.getActiveDirectory(),
-					MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName()));
+					OccPlugUtil.removeExtension(targetSupport.getActiveFileName()));
 		}
 		else
 			throw new RuntimeException("invalid target passed to runProgram");
