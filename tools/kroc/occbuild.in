@@ -116,9 +116,8 @@ def split_options(opts):
 	"""Split an argument we've been given into a list of arguments to pass
 	to another program."""
 	if running_windows():
-		return shlex.split(opts, posix=False)
-	else:
-		return shlex.split(opts)
+		opts = opts.replace("\\", "\\\\")
+	return shlex.split(opts)
 
 def split_ext(file):
 	"""Given a filename, return its basename and extension."""
