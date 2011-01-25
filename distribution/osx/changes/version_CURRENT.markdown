@@ -1,3 +1,3 @@
-# Changes Since 20110121.1418
+# Changes Since 20110125.1417
 
-* Fix bytecode upload address for some AtMega328 targets
+
