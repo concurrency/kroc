@@ -202,7 +202,7 @@ def build():
 		with pushd():
 			header("BUILDING  FIRMWARES")
 			cd(concat([config.get('SVN'), "/tvm/arduino"]))
-			cmd("./build.sh")
+			cmd("./build_firmware.sh")
 
 def install():
 	header("DOING MAKE INSTALL")
