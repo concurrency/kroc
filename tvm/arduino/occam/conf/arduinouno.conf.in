@@ -1,5 +1,6 @@
 # Default Arduino Uno config, baud rate is different, otherwise it is an arduino
 TVM_MCU=m328p
+TVM_GCC_MCU=atmega328p
 TVM_BYTECODE_ADDR=0x4F00
 TVM_F_CPU=16000000
 TVM_UPLOAD_RATE=115200
@@ -8,4 +9,4 @@ PLATFORM=arduino
 # avrdude
 TVM_AVRDUDE_FIRMWARE_FLAGS="-V -F -p $TVM_MCU"
 TVM_AVRDUDE_CODE_FLAGS="-V -F -p $TVM_MCU -b $TVM_UPLOAD_RATE -c arduino"
-TVM_ARDUINO_FIRMWARE=tvm-avr-atmega328p-16000000.hex
+TVM_ARDUINO_FIRMWARE=tvm-avr-atmega328p-16000000-arduinouno.hex
