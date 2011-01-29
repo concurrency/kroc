@@ -14,6 +14,7 @@ F_CPU=16000000
 #MCU=atmega328p
 UPLOAD_PORT=/dev/ttyUSB0
 UPLOAD_RATE=57600
+FIRMWARE_NAME=firmware.hex
 
 AC_ARG_WITH([target-board],
             AC_HELP_STRING([--with-target-board=...],
@@ -70,12 +71,18 @@ AC_ARG_WITH([upload-rate],
             AC_HELP_STRING([--with-upload-rate=...],
                            [serial rate to upload at]),
             [UPLOAD_RATE=$withval])
+AC_ARG_WITH([firmware-name],
+	    AC_HELP_STRING([--with-firmware-name=...],
+			   [name of the generated firmware file]),
+            [FIRMWARE_NAME=$withval])
+
 
 AC_SUBST(BYTECODE_ADDR)
 AC_SUBST(F_CPU)
 AC_SUBST(MCU)
 AC_SUBST(UPLOAD_PORT)
 AC_SUBST(UPLOAD_RATE)
+AC_SUBST(FIRMWARE_NAME)
 
 CFLAGS="-g -Wall -Os -mmcu=$MCU"
 

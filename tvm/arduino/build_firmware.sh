@@ -24,11 +24,11 @@ do
 			 --with-bytecode-addr=$TVM_BYTECODE_ADDR \
 			 --with-mcu=$TVM_GCC_MCU \
 			 --with-fcpu=$TVM_F_CPU \
-			 --with-fw-name=$TVM_ARDUINO_FIRMWARE \
+			 --with-firmware-name=$TVM_ARDUINO_FIRMWARE \
 			 "$@"
 	make
 	make firmware.hex
 	cd ../../
 	mkdir -p output
-	cp build/target/$TVM_ARDUINO_FIRMWARE output/
+	cp $tdir/$TVM_ARDUINO_FIRMWARE output/
 done
