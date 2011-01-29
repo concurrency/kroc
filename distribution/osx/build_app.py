@@ -124,7 +124,7 @@ copy_file('install-tvm-ppc/share/tvm/firmware/tvm-posix.tbc', POSIX_TVMPPC_FW_DI
 #copydir "install/share/kroc" "$outputDir/$rezDir/share/kroc"
 
 # Arduino firmware
-copy_files('build/kroc-tvm-avr-*-*-wrapper/tvm-avr-*-*.hex', ARDUINO_TVM_FW_DIR)
+copy_files('build/arduino_firmware/output/*.hex', ARDUINO_TVM_FW_DIR)
 
 # Arduino config files
 for conf in glob.iglob('../../tvm/arduino/occam/conf/*.conf.in'):
