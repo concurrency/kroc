@@ -3,7 +3,6 @@ SDL=SDL-1.2.14
 PLAYER=player-2.1.2
 STAGE=stage-2.1.1
 # FIXME: Arduino package could perhaps be replaced with a avr-gcc package?
-ARDUINO=arduino-0018
 
 #FIXME: Possibly do SDL_sound
 #http://icculus.org/SDL_sound/
@@ -58,16 +57,6 @@ fi
 #  cd ../..
 #fi
 
-if ! [ -d $BUILD/$ARDUINO ] ; then
-  mkdir -p build
-  cd build
-  curl -O \
-    http://arduino.googlecode.com/files/$ARDUINO.zip \
-    || exit 1
-  unzip $ARDUINO.zip
-  cd $ARDUINO
-fi
-
 cd $BUILD
 cd ../../../
 
@@ -104,37 +93,4 @@ make install
 #make
 #make install
 
-cd $BUILD
-mkdir kroc-tvm-avr
-cd kroc-tvm-avr
-
-../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr
-make
-make install
-cd $BUILD/kroc-tvm-avr/modules/inmoslibs/libsrc
-make
-make install
-
-
-OLD_PATH=$PATH
-PATH=$PATH:$BUILD/$ARDUINO/hardware/tools/avr/bin
-cd $BUILD
-cd ../../../tvm/arduino
-unset ACLOCAL
-autoreconf -v -f -i
-cd $BUILD
-# This is a lot like what arduino/build.sh does except we do it outside
-# the tree here.
-MCUS="atmega328p atmega1280"
-FCPUS="16000000 8000000"
-for mcu in $MCUS; do
-  for fcpu in $FCPUS; do
-    mkdir -p kroc-tvm-avr-$mcu-$fcpu-wrapper
-    cd kroc-tvm-avr-$mcu-$fcpu-wrapper
-    ../../../../tvm/arduino/configure --host=avr --prefix=$INSTALL --libdir=${INSTALL}/lib/avr --with-mcu=$mcu --with-fcpu=$fcpu
-    make
-    make firmware.hex
-    cd ..
-  done
-done
 PATH=$OLD_PATH

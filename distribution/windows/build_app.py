@@ -119,7 +119,7 @@ mkdirs(ARDUINO_TVM_FW_DIR)
 mkdirs(ARDUINO_TVM_CONF_DIR)
 
 # Arduino firmware
-copy_files('build/kroc-tvm-avr-*-*-wrapper/tvm-avr-*-*.hex', ARDUINO_TVM_FW_DIR)
+copy_files('build/arduino_firmware/output/*.hex', ARDUINO_TVM_FW_DIR)
 
 # Arduino config files
 for conf in glob.iglob('../../tvm/arduino/occam/conf/*.conf.in'):
