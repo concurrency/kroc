@@ -1,8 +1,17 @@
+#!/bin/bash
 # Arduino package could perhaps be replaced with a avr-gcc package?
 # FIXME: 0017 is out, perhaps upgrade
-LIBUSB=libusb-0.1.12
-ARDUINO=arduino-0016
-AVRDUDE=avrdude-5.10
+
+platform=`uname -s`
+windows=`expr "$platform" : 'MINGW' | grep -v 0`
+
+if [ $windows ] ; then
+	ARDUINO=arduino-0018
+	ARDUINO_ZIP=$ARDUINO.zip
+else
+	ARDUINO=arduino-0016
+	ARDUINO_ZIP=$ARDUINO-mac.zip
+fi
 
 
 INSTALL=$PWD/install
@@ -12,57 +21,26 @@ if ! [ -d $BUILD/$ARDUINO ] ; then
   mkdir -p build
   cd build
   curl -O \
-    http://arduino.googlecode.com/files/$ARDUINO-mac.zip \
+    http://arduino.googlecode.com/files/$ARDUINO_ZIP \
     || exit 1
-  unzip $ARDUINO-mac.zip
+  unzip $ARDUINO_ZIP
   #cd $ARDUINO
 fi
 
-if ! [ -d $BUILD/$LIBUSB ] ; then
-  mkdir -p build
-  cd build
-  curl -L -O \
-    http://prdownloads.sourceforge.net/libusb/$LIBUSB.tar.gz \
-    || exit 1
-  tar -xvzf $LIBUSB.tar.gz
-  cd $LIBUSB
-  # FIXME: For some reason shared libs do not get passed -arch i386
-  ./configure --prefix=$INSTALL --enable-shared=no\
-   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
-  make
-  make install
-fi
-
-# http://download.savannah.gnu.org/releases-noredirect/avrdude/$AVRDUDE.tar.gz \
-if ! [ -d $BUILD/$AVRDUDE ] ; then
-  mkdir -p build
-  cd build
-  curl -L -O \
-  http://download.savannah.gnu.org/releases/avrdude/$AVRDUDE.tar.gz \
-    || exit 1
-  tar -xvzf $AVRDUDE.tar.gz
-  cd $AVRDUDE
-  ./configure --prefix=$INSTALL \
-   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
-  make
-  make install
-fi
-
 cd $BUILD
-mkdir kroc-tvm-avr
+mkdir -p kroc-tvm-avr
 cd kroc-tvm-avr
 
-../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr \
-   CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
-   OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
+if [ $windows ] ; then
+  ../../../../configure --target=avr --with-toolchain=tvm --prefix=$INSTALL-avr
+else
+  ../../../../configure --target=avr --with-toolchain=tvm \
+     --prefix=$INSTALL-avr \
+     CFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+     CXXFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+     LDFLAGS="-arch i386 -mmacosx-version-min=10.4" \
+     OBJCFLAGS="-arch i386 -mmacosx-version-min=10.4"
+fi
 make
 make install
 cd $BUILD/kroc-tvm-avr/modules/inmoslibs/libsrc
