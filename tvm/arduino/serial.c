@@ -12,6 +12,9 @@ static int serial_write(char c, FILE *f) {
 }
 
 void serial_stdout_init (long speed) {
+	/* Single speed USART and single processor comms mode */
+	UCSR0A = 0;
+
 	/* Set baud rate */
 	uint16_t factor = (F_CPU / 16 + speed / 2) / speed - 1;
 	UBRR0H = factor >> 8;
