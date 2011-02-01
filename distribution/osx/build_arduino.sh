@@ -56,6 +56,7 @@ autoreconf -v -f -i
 cd $BUILD
 mkdir -p arduino_firmware
 cd arduino_firmware
+rm -rf build
 ../../../../tvm/arduino/build_firmware.sh
 cd $BUILD
 cd ..
