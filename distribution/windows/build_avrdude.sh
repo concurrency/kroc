@@ -1,7 +1,7 @@
 #!/bin/bash
 
 platform=`uname -s`
-windows=`expr match "$platform" 'MINGW' | grep -v 0`
+windows=`expr "$platform" : 'MINGW' | grep -v 0`
 
 ROOT=$PWD
 BUILD=$PWD/build
