@@ -171,7 +171,12 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 			return getProp("TVM_BYTECODE_ADDR");
 		}
-		
+
+		public String getProgrammer()
+		{
+			return getProp("PROGRAMMER");
+		}
+	
 		public String getConfigFileName() {
 			return configFile;
 		}
@@ -327,7 +332,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-U", "flash:w:" + OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "firmware"), props.getFirmware())) + ":i",
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
-				"-c", "arduino", 
+				"-c", props.getProgrammer(), 
 				"-p", props.getMCU(), 
 				"-b", props.getUploadRate() };
 
@@ -453,7 +458,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
 				"-D",
-				"-c", "arduino", 
+				"-c", props.getProgrammer(), 
 				"-p", props.getMCU(), 
 				"-b", props.getUploadRate(), 
 				"-U", "flash:w:" + ihexFile + ":i"};
