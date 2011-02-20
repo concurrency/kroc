@@ -35,6 +35,7 @@ fi
 
 if test $OCCBUILD_TOOLCHAIN = tvm; then
   OCCAM_CONFIG_SUBDIRS(tools/plinker)
+  OCCAM_CONFIG_SUBDIRS(tools/tenctool)
   OCCAM_CONFIG_SUBDIRS(tools/skroc)
   OCCAM_CONFIG_SUBDIRS(tools/slinker)
   OCCAM_CONFIG_SUBDIRS(tools/tinyswig)
