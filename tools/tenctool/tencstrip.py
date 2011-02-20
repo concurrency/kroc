@@ -2,6 +2,8 @@
 
 import sys
 
+if not '@pkgpythondir@'.startswith('@pkgpy'): sys.path.append('@pkgpythondir@')
+
 import tenclib
 
 def usage():
