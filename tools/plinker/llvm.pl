@@ -63,14 +63,15 @@ my @optimiser	= (
 	'-ipconstprop',
 	'-dse',
 	'-globalopt',
-	'-inline',
+	#'-inline',
 	'-tailcallelim',
-	'-loop-deletion', '-loopsimplify',
 	'-break-crit-edges',
+	'-loop-deletion', '-loopsimplify',
 	'-jump-threading',
 	'-libcall-aa',
 	'-simplify-libcalls',
-	'-inline', '-simplifycfg',
+	#'-inline', 
+	'-simplifycfg',
 	'-tailcallfix'
 );
 
