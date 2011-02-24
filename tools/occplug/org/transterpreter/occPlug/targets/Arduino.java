@@ -446,6 +446,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		final File curDir = new File(targetSupport.getActiveDirectory());
 		final String [] ihexCommand = {
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("binary-to-ihex"))),
+				"-s",
 				props.getBytecodeAddr(),
 				tbcFile,
 				ihexFile
@@ -480,18 +481,27 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 			runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX(pythonPath));
 		}
+
+		String sep = ":";
+		if(host instanceof Windows)
+		{
+			sep = ";";
+		}
+      		runEnv.add("PATH=" + OccPlugUtil.pathifyXXX("bin") + sep +      System.getenv("PATH"));
+
 		OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
-		
+	
+		String[]  env = runEnv.toArray(new String[0]);
 		Command[] commands = new Command[] {
-			new CommandExternal(ihexCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
-			new CommandExternal(runCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new CommandExternal(ihexCommand, env, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new CommandExternal(runCommand, env, curDir, new TargetExecWorkerHelper("run", output, null, true)),
 			new CommandRunnable(new Runnable() { 
 				public void run() { 
 					output.writeRegular("Any output from the connected device will appear below\n");
 					output.writeRegular("(hit stop to disconnect)\n");
 					output.writeRegular("------------------------------------------------------\n");
 				} }),
-			new CommandExternal(readArduinoCommand, (String[]) runEnv.toArray(new String[0]), curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
+			new CommandExternal(readArduinoCommand, env, curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
 		};
 		
 		ExecWorker worker = new ExecWorker(commands, finalisers);
