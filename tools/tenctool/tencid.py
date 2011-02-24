@@ -13,12 +13,21 @@ def identity(data):
  
 if __name__ == '__main__':
     if len(sys.argv) < 3:
-        print "Usage: %s <tenc filename> <output filename or - (minus)>" % sys.argv[0]
+        print "Usage: %s " \
+            "<tenc filename or - (minus)> <output filename or - (minus)>" % sys.argv[0]
         sys.exit(1)
 
-    data   = open(sys.argv[1], 'rb').read()
+    # Read
+    if sys.argv[1] == '-':
+        data = sys.stdin.read()
+    else:
+        data   = open(sys.argv[1], 'rb').read()
+
+    # Process
     data   = identity(data)
-    if sys.argv == '-':
+
+    # Write
+    if sys.argv[2] == '-':
         sys.stdout.write(data)
     else:
         fp = open(sys.argv[2], 'wb')

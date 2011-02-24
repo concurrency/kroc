@@ -13,8 +13,14 @@ def dump(data):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print "Usage: %s <filename>" % sys.argv[0]
+        print "Usage: %s <filename or - (minus)>" % sys.argv[0]
         sys.exit(1)
 
-    data   = open(sys.argv[1], 'rb').read()
+    # Read
+    if sys.argv[1] == '-':
+        data = sys.stdin.read()
+    else:
+        data   = open(sys.argv[1], 'rb').read()
+
+    # Process
     print dump(data)
