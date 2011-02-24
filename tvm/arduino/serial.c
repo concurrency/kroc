@@ -33,7 +33,7 @@ void serial_stdout_init (long speed) {
 /* FIXME: We really don't want these IFDEF statements.
    Further, this should be made to work on the Arduino as well.
 */
-#if defined(atmega1280)
+#if defined(atmega1280) || defined(atmega2560)
 char rc0(void) {
 			while ( !(UCSR0A & (1 << RXC0)) )
 				;

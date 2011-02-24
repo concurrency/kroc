@@ -94,6 +94,10 @@ for bin in LIPO_BINARIES:
 copy_tree('build/python/lib/python%d.%d/site-packages/serial/' %
         (sys.version_info[0], sys.version_info[1]),
         os.path.join(PYTHON_DIR, 'serial'))
+copy_files('install/lib/python%d.%d/site-packages/tenctool/tenclib.*' %
+        (sys.version_info[0], sys.version_info[1]),
+        os.path.join(PYTHON_DIR))
+copy_files('install/bin/tenc*', BIN_DIR)
 
 # Sparkle
 copy_tree(
@@ -104,7 +108,6 @@ copy_tree(
 # FIXME: These should go elsewhere
 for lib in LIBRARIES:
     copy_files(os.path.join('install/lib/', lib), BIN_DIR)
-
 
 # tvm posix includes, libs and firmware
 mkdirs(POSIX_TVM_INC_DIR)

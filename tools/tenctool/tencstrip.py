@@ -8,7 +8,7 @@ import tenclib
 
 def usage():
     print "Usage: %s [-d] [-t] [-s] [-f] " \
-            "<tenc filename> <output filename or - (minus)>" % sys.argv[0]
+            "<tenc filename or - (minus)> <output filename or - (minus)>" % sys.argv[0]
     print "  default stripping is -d and -s"
     print "    -d: debug info"
     print "    -t: TLP info"
@@ -53,11 +53,17 @@ if __name__ == '__main__':
     if len(args) > 2:
         usage()
 
-    data   = open(args[0], 'rb').read()
+    # Read
+    if args[0] == '-':
+        data = sys.stdin.read()
+    else:
+        data   = open(args[0], 'rb').read()
 
+    # Process
     data = strip(data, debug, symbol, tlp, ffi)
 
-    if sys.argv == '-':
+    # Write
+    if args[1] == '-':
         sys.stdout.write(data)
     else:
         fp = open(args[1], 'wb')

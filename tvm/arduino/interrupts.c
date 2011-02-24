@@ -42,7 +42,7 @@ enum {
 };
 /*}}}*/
 /*{{{ ATmega1280 enumeration */
-#elif defined(atmega1280)
+#elif defined(atmega1280) || defined(atmega2560)
 enum {
 	vintr_INT0 = 0,
 	vintr_INT1,
@@ -168,7 +168,7 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 	}
 MAP_SIMPLE_INTERRUPT(INT0_vect, vintr_INT0)
 MAP_SIMPLE_INTERRUPT(INT1_vect, vintr_INT1)
-#if defined(atmega1280)
+#if defined(atmega1280) || defined(atmega2560)
 MAP_SIMPLE_INTERRUPT(INT2_vect, vintr_INT2)
 MAP_SIMPLE_INTERRUPT(INT3_vect, vintr_INT3)
 MAP_SIMPLE_INTERRUPT(INT4_vect, vintr_INT4)
@@ -202,7 +202,7 @@ ISR(USART_UDRE_vect) {
 MAP_SIMPLE_INTERRUPT(USART_TX_vect, vintr_USART_TX)
 /*}}}*/
 /*{{{ ATmega1280 serial interrupts */
-#elif defined(atmega1280)
+#elif defined(atmega1280) || defined(atmega2560)
 #define SERIAL_INTERRUPT(vect_RX, vintr_RX, \
 												 vect_TX, vintr_TX, \
 												 vect_UDRE, vintr_UDRE, \
