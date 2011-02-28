@@ -44,6 +44,7 @@ class TEncParsingException(Exception):
 class TEncBadHeader(TEncParsingException): pass
 class TEncBadElementType(TEncParsingException): pass
 class TEncUnimplementedType(TEncParsingException): pass
+class TEncInternalParsingException(TEncParsingException): pass
 
 def bytes_to_int(bytes):
     i = 0
@@ -189,7 +190,7 @@ class TEncParser(object):
         if data[0:4] == 'tenc':
             self.word_size = 2
         elif data[0:4] == 'TEnc':
-            self.word_size == 4
+            self.word_size = 4
         else:
             raise TEncBadHeader(pos, self.data, [0, 4])
         if self.word_size == 2:
@@ -201,6 +202,8 @@ class TEncParser(object):
         return pos, data[pos:]
 
     def parse_element(self, pos, data):
+        if len(data) < 3:
+            raise TEncInternalParsingException(pos, self.data, [pos, pos + 4])
         type = data[3]
         if type == 'B':
             return self.parse_byte_string_element(pos, data)
@@ -220,6 +223,7 @@ class TEncParser(object):
 
     def get_padding(self, pos, data):
         padding = pos % self.word_size
+        if padding: padding = self.word_size - padding
         return self.get_data(pos, data, padding)
 
     def get_tag(self, pos, data):
