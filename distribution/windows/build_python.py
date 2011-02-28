@@ -101,6 +101,17 @@ read_arduino = Target(
   other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog='read-arduino'))],
 )
 
+targets = [('tencstrip', 'install/bin/tencstrip'), 
+           ('tencid', 'install/bin/tencid'),
+           ('tencdump', 'install/bin/tencdump')]
+target_descriptions = []
+for target, script_file in targets:
+    target_descriptions.append(Target(
+      description=target,
+      script=script_file,
+      other_resources=[(RT_MANIFEST, 1, manifest_template % dict(prog=target))],
+    ))
+    
 
 
 # Make it appear like we wrote py2exe on the commandline
@@ -112,10 +123,13 @@ opts = {
     }
 }
 
+sys.path.append('install/lib/site-packages/tenctool')
+
+
 setup(
 	options=opts,
 	console=[
-		occbuild, avr_occbuild, binary_to_ihex, read_arduino
-],
+		occbuild, avr_occbuild, binary_to_ihex, read_arduino,
+] + target_descriptions,
 data_files=data_files
 )
