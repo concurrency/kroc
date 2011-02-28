@@ -115,7 +115,4 @@ def header(str):
 config = ConfigParser.SafeConfigParser()
 config.read('build.conf')
 
-# DO THE PARSE
-parser = OptionParser()
-(options, args) = parser.parse_args()
 

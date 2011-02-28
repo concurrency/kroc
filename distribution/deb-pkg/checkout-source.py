@@ -1,12 +1,17 @@
-#!/usr/bin/python 
-
 from util import *
+
+# DO THE PARSE
+parser = OptionParser()
+parser.add_option('-p', '--path', dest='path',
+									help='Path to checkout.')
+
+(options, args) = parser.parse_args()
 
 def checkout(path):
 	header("RUNNING CHECKOUT")
 	base_url = config.get('SVN', 'base')
 	checkout_url = "%s/%s" % (base_url, path)
-	print checkout_url
+	header(checkout_url)
 	remove_and_mkdir(config.get('BUILD', 'build'))
 	mkdir(config.get('BUILD', 'svn'))
 
