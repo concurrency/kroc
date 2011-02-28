@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from util import *
 
 # DO THE PARSE
