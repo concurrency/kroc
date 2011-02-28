@@ -3,6 +3,8 @@
 import sys
 import os
 import os.path
+import stat
+import errno
 import subprocess
 import tarfile
 import zipfile
@@ -215,6 +217,13 @@ extract(other_urls.file_list(), paths['tmp'])
 extract(python_files, os.path.join(paths['tmp'], 'python'))
 
 print 'moving tools'
+def handleRemoveReadonly(func, path, exc):
+  excvalue = exc[1]
+  if func in (os.rmdir, os.remove) and excvalue.errno == errno.EACCES:
+      os.chmod(path, stat.S_IRWXU| stat.S_IRWXG| stat.S_IRWXO) # 0777
+      func(path)
+  else:
+      raise
 tools = [(other_urls['curl'], 'curl'), 
          (other_urls['ant'], 'ant'),
          (other_urls['unzip'], 'unzip'),
@@ -222,7 +231,7 @@ tools = [(other_urls['curl'], 'curl'),
 for tool_src, tool_dir in tools:
     tool_path = os.path.abspath(os.path.join(paths['msys'], tool_dir))
     if os.path.exists(tool_path):
-        shutil.rmtree(tool_path)
+        shutil.rmtree(tool_path, ignore_errors=False, onerror=handleRemoveReadonly)
     if tool_dir == 'ant':
         # morons:
         dirname = filename2dirname(tool_src, add_ext='-bin.tar.bz2')
