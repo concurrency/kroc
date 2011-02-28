@@ -21,6 +21,6 @@ pkgpython_PYTHON = tenclib.py
 all-local: $(generated)
 
 %: %.py
-	sed -e 's|@pkgpythondir[@]|$(pkgpythondir)|g' $< > $@
+	sed -e 's|@pkgpythondir[@]|$(subst \,/,$(pkgpythondir))|g' $< > $@
 
 $(generated): Makefile
