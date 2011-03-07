@@ -1,0 +1,32 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "plcBasic.module"
+#INCLUDE "plcSequencers.module"
+#INCLUDE "plcCounters.module"
+#INCLUDE "plcTiming.module"
+
+-- Test case 22
+-- Tests plc.BCU and plc.SEQ4
+-- Implements a simple 4 LED animation
+-- runs when button on pin 2 is pressed.
+-- The sequencer has pattern of size 13, but the counter has a max count of 15
+-- to fully test the sequencer code.
+
+PROC main ()
+  CHAN LEVEL a, b, c, d, top, x, y:
+  CHAN INT index:
+  INITIAL [13]BYTE pattern IS [#03, #06, #0C, #06, #03, #06, #0C, #06, #03, #06, #0C, #06, #03]:
+  SEQ
+    PAR
+      plc.LD (2, x!)
+      plc.CLK (1, 1, x?, y!)
+      plc.CYCNT (15, LOW, y?, top!, index!)
+      
+      plc.SEQ4 (pattern, index?, a!, b!, c!, d!)
+
+      plc.OUT (13, top?)
+
+      plc.OUT (9, a?)
+      plc.OUT (10, b?)
+      plc.OUT (11, c?)
+      plc.OUT (12, d?)
+:  

@@ -1,0 +1,186 @@
+--      Copyright (C) 2011   Stephen Pretty
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+-- module: plcLatches
+-- by: Steve Pretty 
+-- on: 18FEB11
+
+-- "plc" aims to implement programmable logic controller blocks similar
+-- in functionality to those described in IEC 61131. Functionality
+-- is often simplified (e.g. reset and enable functions not implemented at
+-- present). More complex versions of the functional blocks may be developed in  future?
+-- NOTE - all digital functionality standardizes on use of the plumbing
+-- defined LEVEL type. Receipt of HIGH signifies a logical rising edge
+-- LOW signifies a logical falling edge. The plumbing message SIGNAL is not used as
+-- part of the API (but is used internally).
+
+
+-- LATCHES AND FLIP-FLOPS
+
+--{{{ PROC plc.SR
+--* Implements a Set / Reset gate
+--
+-- @param S - a HIGH on this channels sets  output Q to HIGH
+-- @param R - a HIGH on this channels sets  output Q to LOW
+-- @param Q - output channel
+
+PROC plc.SR (CHAN LEVEL S?, R?, Q!)
+  VAL INT IDLE IS 0:
+  VAL INT ACTIVE IS 1:
+  INT state:
+  LEVEL x:
+  SEQ
+    state := IDLE
+    WHILE TRUE
+      ALT
+        S ? x
+          IF
+            (state = IDLE) AND (x = HIGH)
+              SEQ
+                Q ! HIGH
+                state := ACTIVE
+            TRUE
+              SKIP
+        R ? x
+          IF
+            (state = ACTIVE) AND (x = HIGH)
+              SEQ
+                Q ! LOW
+                state := IDLE
+            TRUE
+              SKIP      
+:
+--}}}
+
+--{{{ PROC plc.FF
+--* Implements an asynchronous Flip Flop gate (a.k.a. toggle).
+-- It can flip on either a rising edge (when it will behave like
+-- a standard plumbing toggle function) or a falling edge. The falling
+-- edge is more suitable for implementing divide by two logic.
+--
+-- @param edge - HIGH indicates transition on rising edge, LOW on falling edge.
+-- @param D - a HIGH - LOW cycle on this channels toggles output
+-- @param Q - output channel
+
+PROC plc.FF (VAL LEVEL edge, CHAN LEVEL D?, Q!)
+  LEVEL x, output:
+  SEQ
+    output := LOW
+    WHILE TRUE
+      SEQ
+        D ? x
+        IF
+          x = edge
+            SEQ
+              output := NOT output
+              Q ! output
+          TRUE
+            SKIP
+:
+--}}}
+
+--{{{ PROC plc.D
+--* Current state of input is transfered to output on specified clock edge.
+
+-- @param edge - HIGH indicates transfer on rising edge, LOW on falling edge.
+-- @param D - a HIGH - LOW cycle on this channels toggles output
+-- @param CLK - When the specified transition occurs, input is transfered to output.
+-- @param Q - output channel
+
+PROC plc.D (VAL LEVEL edge, CHAN LEVEL D?, CLK?, Q!)
+  LEVEL x, input:
+  SEQ
+    input := LOW
+    WHILE TRUE
+      ALT
+        D ? input
+          SKIP
+          
+        CLK ? x
+          IF
+            x = edge
+              Q ! input
+            TRUE
+              SKIP
+:
+--}}}
+
+--{{{ PROC plc.JK
+--* Implements a JK synchromous flip flop. On the specified clock edge, action depends
+-- on the last signals received on J and K.
+-- J = LOW, K = LOW --> Output unchanged
+-- J = LOW, K = HIGH --> Output goes LOW
+-- J = HIGH, K = LOW --> Output goes HIGH
+-- J = HIGH, K = HIGH --> Output toggles
+--
+-- @param edge - HIGH indicates transfer on rising edge, LOW on falling edge.
+-- @param J - input signal (see above)
+-- @param K - input signal (see above0
+-- @param CLK - When the specified transition occurs, input is transfered to output.
+-- @param Q - output channel - only state changes are sent.
+
+PROC plc.JK (VAL LEVEL edge, CHAN LEVEL J?, K?, CLK?, Q!)
+  INITIAL LEVEL inJ IS LOW:
+  INITIAL LEVEL inK IS LOW:
+  INITIAL LEVEL output IS LOW:
+  LEVEL x:
+  
+  SEQ
+    Q ! LOW  -- establish an initial output value
+    WHILE TRUE
+      ALT
+        J ? inJ
+          SKIP
+        K ? inK
+          SKIP
+          
+        CLK ? x
+          IF
+            x = edge
+              IF
+                (inJ = LOW) AND (inK = HIGH)
+                  SEQ
+                    IF
+                      output = HIGH
+                        SEQ
+                          output := LOW
+                          Q ! LOW
+                      TRUE
+                        SKIP
+
+                (inJ = HIGH) AND (inK = LOW)
+                  SEQ
+                    IF
+                      output = LOW
+                        SEQ
+                          output := HIGH
+                          Q ! HIGH
+                      TRUE
+                        SKIP
+                        
+                (inJ = HIGH) AND (inK = HIGH)
+                  SEQ
+                    output := NOT output
+                    Q ! output
+                    
+                TRUE
+                  SKIP
+
+            TRUE
+              SKIP
+:
+--}}}
+

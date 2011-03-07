@@ -1,0 +1,162 @@
+--      Copyright (C) 2011   Stephen Pretty
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+-- module: plcSequencers
+-- by: Steve Pretty 
+-- on: 23FEB11
+
+-- "plcing" aims to implement programmable logic controller blocks similar
+-- in functionality to those described in IEC 61131. Functionality
+-- is often simplified (e.g. reset and enable functions not implemented at
+-- present). More complex versions of the functional blocks may be developed in  future?
+-- NOTE - all digital functionality standardizes on use of the plumbing
+-- defined LEVEL type. Receipt of HIGH signifies a logical rising edge
+-- LOW signifies a logical falling edge. The plumbing message SIGNAL is not used as
+-- part of the API (but is used internally).
+
+-- SEQUENCER FUNCTIONAL BLOCKS
+
+--{{{ PROC plc.SEQ4
+--* Implements a 4 output sequencer or decoder function.
+-- Four output levels are set depending on a pattern array indexed by the input CHAN
+--
+-- @param pattern - a byte array - the byte at a given index determines outputs for a given in value)
+-- @param input - INT CHAN - the value received here indexes pattern. If in value larger than size of pattern, all LOW is output.
+-- @param out0 - a LOW or HIGH is output based on bit 0 of pattern indexed by in.
+-- @param out1 - as out0, but controlled by bit 1 of pattern
+-- @param out2 - as out0, but controlled by bit 2 of pattern
+-- @param out3 - as out0, but controlled by bit 3 of pattern
+
+
+PROC plc.SEQ4 (VAL []BYTE pattern, CHAN INT input?, CHAN LEVEL out0!, out1!, out2!, out3! )
+  INITIAL INT max IS SIZE pattern:
+  INT index:
+  BYTE patout:
+  SEQ
+    WHILE TRUE
+      SEQ
+        input ? index
+        IF
+          index >= max
+            PAR
+              out0 ! LOW
+              out1 ! LOW
+              out2 ! LOW
+              out3 ! LOW
+          TRUE
+            SEQ
+              patout := pattern[index]
+              PAR
+                IF
+                  (patout /\ #01) = 0
+                    out0 ! LOW
+                  TRUE
+                    out0 ! HIGH
+                IF
+                  (patout /\ #02) = 0
+                    out1 ! LOW
+                  TRUE
+                    out1 ! HIGH
+                IF
+                  (patout /\ #04) = 0
+                    out2 ! LOW
+                  TRUE
+                    out2 ! HIGH
+                IF
+                  (patout /\ #08) = 0
+                    out3 ! LOW
+                  TRUE
+                    out3 ! HIGH
+:
+--}}}
+
+--{{{ PROC plc.SEQ8
+--* Implements a 8 output sequencer or decoder function.
+-- Four output levels are set depending on a pattern array indexed by the input CHAN
+--
+-- @param pattern - a byte array - the byte at a given index determines outputs for a given in value)
+-- @param input - INT CHAN - the value received here indexes pattern. If in value larger than size of pattern, all LOW is output.
+-- @param out0 - a LOW or HIGH is output based on bit 0 of pattern indexed by in.
+-- @param out1 - as out0, but controlled by bit 1 of pattern
+-- @param out2 - as out0, but controlled by bit 2 of pattern
+-- @param out3 - as out0, but controlled by bit 3 of pattern
+-- @param out4 - as out0, but controlled by bit 4 of pattern
+-- @param out5 - as out0, but controlled by bit 5 of pattern
+-- @param out6 - as out0, but controlled by bit 6 of pattern
+-- @param out7 - as out0, but controlled by bit 7 of pattern
+
+
+PROC plc.SEQ8 (VAL []BYTE pattern, CHAN INT input?, CHAN LEVEL out0!, out1!, out2!, out3!, out4!, out5!, out6!, out7!)
+  INITIAL INT max IS SIZE pattern:
+  INT index:
+  BYTE patout:
+  SEQ
+    WHILE TRUE
+      SEQ
+        input ? index
+        IF
+          index >= max
+            PAR
+              out0 ! LOW
+              out1 ! LOW
+              out2 ! LOW
+              out3 ! LOW
+          TRUE
+            SEQ
+              patout := pattern[index]
+              PAR
+                IF
+                  (patout /\ #01) = 0
+                    out0 ! LOW
+                  TRUE
+                    out0 ! HIGH
+                IF
+                  (patout /\ #02) = 0
+                    out1 ! LOW
+                  TRUE
+                    out1 ! HIGH
+                IF
+                  (patout /\ #04) = 0
+                    out2 ! LOW
+                  TRUE
+                    out2 ! HIGH
+                IF
+                  (patout /\ #08) = 0
+                    out3 ! LOW
+                  TRUE
+                    out3 ! HIGH
+                IF
+                  (patout /\ #10) = 0
+                    out4 ! LOW
+                  TRUE
+                    out4 ! HIGH
+                IF
+                  (patout /\ #20) = 0
+                    out5 ! LOW
+                  TRUE
+                    out5 ! HIGH
+                IF
+                  (patout /\ #40) = 0
+                    out6 ! LOW
+                  TRUE
+                    out6 ! HIGH
+                IF
+                  (patout /\ #80) = 0
+                    out7 ! LOW
+                  TRUE
+                    out7 ! HIGH                    
+:
+--}}}

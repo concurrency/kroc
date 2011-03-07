@@ -1,0 +1,412 @@
+--      Copyright (C) 2011   Stephen Pretty
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+-- module: plcLogic
+-- by: Steve Pretty 
+-- on: 18FEB11
+
+-- "plcing" aims to implement programmable logic controller blocks similar
+-- in functionality to those described in IEC 61131. Functionality
+-- is often simplified (e.g. reset and enable functions not implemented at
+-- present). More complex versions of the functional blocks may be developed in  future?
+-- NOTE - all digital functionality standardizes on use of the plumbing
+-- defined LEVEL type. Receipt of HIGH signifies a logical rising edge
+-- LOW signifies a logical falling edge. The plumbing message SIGNAL is not used as
+-- part of the API (but is used internally).
+
+
+-- LOGIC FUNCTIONAL BLOCKS
+
+--{{{ PROC plc.OR
+--* Two input logical OR
+-- 
+-- @param a, b - gate inputs
+-- @param out - a \/ b
+
+PROC plc.OR (CHAN LEVEL a?, b?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+        out ! (x \/ y)
+:
+--}}}
+
+--{{{ PROC plc.OR3
+--* Three input logical OR
+-- 
+-- @param a, b, c - gate inputs
+-- @param out - a \/ b \/ c
+
+PROC plc.OR3 (CHAN LEVEL a?, b?, c?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+          c ? z
+            SKIP
+        out ! (x \/ (y \/ z))
+:
+--}}}
+
+--{{{ PROC plc.OR4
+--* Four input logical OR
+-- 
+-- @param a, b, c, d - gate inputs
+-- @param out - a \/ b \/ c \/ d
+
+PROC plc.OR4 (CHAN LEVEL a?, b?, c?, d?, out!)
+  INITIAL LEVEL w IS LOW:
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? w
+            SKIP
+          b ? x
+            SKIP
+          c ? y
+            SKIP
+          d ? z
+            SKIP
+        out ! (w \/(x \/ (y \/ z)))
+:
+--}}}
+
+--{{{ PROC plc.AND
+--* Two input logical AND
+-- 
+-- @param a, b - gate inputs
+-- @param out - a /\ b
+
+PROC plc.AND (CHAN LEVEL a?, b?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+        out ! (x /\ y)
+:
+--}}}
+
+--{{{ PROC plc.AND3
+--* Three input logical AND
+-- 
+-- @param a, b, c - gate inputs
+-- @param out - a /\ b /\ c
+
+PROC plc.AND3 (CHAN LEVEL a?, b?, c?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+          c ? z
+            SKIP
+        out ! (x /\ (y /\ z))
+:
+--}}}
+
+--{{{ PROC plc.AND4
+--* Four input logical AND
+-- 
+-- @param a, b, c, d - gate inputs
+-- @param out - a /\ b /\ c /\ d
+
+PROC plc.AND4 (CHAN LEVEL a?, b?, c?, d?, out!)
+  INITIAL LEVEL w IS LOW:
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? w
+            SKIP
+          b ? x
+            SKIP
+          c ? y
+            SKIP
+          d ? z
+            SKIP
+        out ! (w /\ (x /\ (y /\ z)))
+:
+--}}}
+
+--{{{ PROC plc.NOR
+--* Two input logical NOR
+-- 
+-- @param a, b - gate inputs
+-- @param out -  ~(a \/ b)
+
+PROC plc.NOR (CHAN LEVEL a?, b?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output for inverting gate
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+        out !  (NOT (x \/ y))
+:
+--}}}
+
+--{{{ PROC plc.NOR3
+--* Three input logical NOR
+-- 
+-- @param a, b, c - gate inputs
+-- @param out -  ~(a \/ b \/ c)
+
+PROC plc.NOR3 (CHAN LEVEL a?, b?, c?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output for inverting gate
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+          c ? z
+            SKIP
+        out !  (NOT (x \/ (y \/ z)))
+:
+--}}}
+
+--{{{ PROC plc.NOR4
+--* Four input logical NOR
+-- 
+-- @param a, b, c, d - gate inputs
+-- @param out -  ~(a \/ b \/ c \/ d)
+
+PROC plc.NOR4 (CHAN LEVEL a?, b?, c?, d?, out!)
+  INITIAL LEVEL w IS LOW:
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output for inverting gate
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? w
+            SKIP
+          b ? x
+            SKIP
+          c ? y
+            SKIP
+          d ? z
+            SKIP
+        out !  (NOT ( w \/ (x \/ (y \/ z))))
+:
+--}}}
+
+--{{{ PROC plc.NAND
+--* Two input logical NAND
+-- 
+-- @param a, b - gate inputs
+-- @param out -  ~(a /\ b)
+
+PROC plc.NAND (CHAN LEVEL a?, b?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output for inverting gate
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+        out ! (NOT(x /\ y))
+:
+--}}}
+
+--{{{ PROC plc.NAND3
+--* Three input logical NAND
+-- 
+-- @param a, b, c - gate inputs
+-- @param out -  ~(a /\ b /\ c)
+
+PROC plc.NAND3 (CHAN LEVEL a?, b?, c?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output for inverting gate
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+          c ? z
+            SKIP
+        out !  (NOT (x /\ (y /\ z)))
+:
+--}}}
+
+--{{{ PROC plc.NAND4
+--* Four input logical NAND
+-- 
+-- @param a, b, c, d - gate inputs
+-- @param out -  ~(a /\ b /\ c /\ d)
+
+PROC plc.NAND4 (CHAN LEVEL a?, b?, c?, d?, out!)
+  INITIAL LEVEL w IS LOW:
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  INITIAL LEVEL z IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output for inverting gate
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? w
+            SKIP
+          b ? x
+            SKIP
+          c ? y
+            SKIP
+          d ? z
+            SKIP
+        out !  (NOT ( w /\ (x /\ (y /\ z))))
+:
+--}}}
+
+--{{{ PROC plc.XOR
+--* Two input logical XOR
+-- 
+-- @param a, b - gate inputs
+-- @param out -  a XOR b = (a /\ ~b) \/ (~a /\ b)
+
+PROC plc.XOR (CHAN LEVEL a?, b?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  SEQ
+    out ! LOW -- establish initial output
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+        out ! (((NOT x) /\ y) \/ (x /\ (NOT y)))
+:
+--}}}
+
+--{{{ PROC plc.EQ
+--* Two input logical EQ
+-- 
+-- @param a, b - gate inputs
+-- @param out -  a EQ b = (~a /\ ~b) \/ (a /\ b)
+
+PROC plc.EQ (CHAN LEVEL a?, b?, out!)
+  INITIAL LEVEL x IS LOW:
+  INITIAL LEVEL y IS LOW:
+  SEQ
+    out ! HIGH  -- establish initial output 
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            SKIP
+          b ? y
+            SKIP
+        out ! (( x /\ y) \/ ((NOT x) /\ (NOT y)))
+:
+--}}}
+
+--{{{ PROC plc.MUX
+--* Two input Multiplexer. When input SEL receives High, inputs on B are 
+-- relayed to out, and inputs on A are black holed. Vice versa when sel receives low.
+-- The block initialises assuming a LOW on sel
+-- 
+-- @param a, b - gate inputs
+-- @param sel - LOW selects inputs from a, HIGH selects input from b
+-- @param out -  selected output
+
+PROC plc.MUX (CHAN LEVEL a?, b?, sel?, out!)
+  INITIAL LEVEL selx IS LOW:
+  LEVEL x, y:
+  SEQ
+    out ! LOW  -- establish initial output 
+    WHILE TRUE
+      SEQ
+        ALT
+          a ? x
+            IF
+              selx = LOW
+                out ! x
+              TRUE
+                SKIP
+          b ? y
+            SEQ
+              IF
+                selx = HIGH
+                  out ! y
+                TRUE
+                  SKIP
+          sel ? selx
+            SKIP
+:
+--}}}
+
+
