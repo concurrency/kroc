@@ -13,7 +13,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+#IF NOT (DEFINED (PLCTIMING.MODULE))
+#DEFINE PLCTIMING.MODULE
 -- module: plcTiming
 -- by: Steve Pretty 
 -- on: 20FEB11
@@ -375,4 +376,4 @@ PROC plc.CLK (VAL INT PTH, PTL, CHAN LEVEL EN?, out!)
 :
 --}}}
 
-
+#ENDIF

@@ -13,7 +13,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+#IF NOT (DEFINED (PLCSEQUENCERS.MODULE))
+#DEFINE PLCSEQUENCERS.MODULE
 -- module: plcSequencers
 -- by: Steve Pretty 
 -- on: 23FEB11
@@ -160,3 +161,5 @@ PROC plc.SEQ8 (VAL []BYTE pattern, CHAN INT input?, CHAN LEVEL out0!, out1!, out
                     out7 ! HIGH                    
 :
 --}}}
+
+#ENDIF

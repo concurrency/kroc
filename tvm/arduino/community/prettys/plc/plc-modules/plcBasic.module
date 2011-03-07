@@ -14,7 +14,8 @@
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
+#IF NOT (DEFINED (PLCBASIC.MODULE))
+#DEFINE PLCBASIC.MODULE
 -- module: plcBasic
 -- by: Steve Pretty 
 -- on: 18FEB11
@@ -215,3 +216,4 @@ PROC plc.BH (CHAN LEVEL in?)
 :
 --}}}
 
+#ENDIF

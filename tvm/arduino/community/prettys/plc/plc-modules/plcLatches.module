@@ -13,7 +13,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+#IF NOT (DEFINED (PLCLATCHES.MODULE))
+#DEFINE PLCLATCHES.MODULE
 -- module: plcLatches
 -- by: Steve Pretty 
 -- on: 18FEB11
@@ -184,3 +185,4 @@ PROC plc.JK (VAL LEVEL edge, CHAN LEVEL J?, K?, CLK?, Q!)
 :
 --}}}
 
+#ENDIF
