@@ -13,7 +13,8 @@
 --      You should have received a copy of the GNU General Public License
 --      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
+#IF NOT (DEFINED (PLCLOGIC.MODULE))
+#DEFINE PLCLOGIC.MODULE
 -- module: plcLogic
 -- by: Steve Pretty 
 -- on: 18FEB11
@@ -410,3 +411,4 @@ PROC plc.MUX (CHAN LEVEL a?, b?, sel?, out!)
 --}}}
 
 
+#ENDIF
