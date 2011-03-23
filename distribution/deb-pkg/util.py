@@ -65,7 +65,7 @@ def remove_and_mkdir(dir):
 	mkdir(dir)
 
 def copy_dir(src, dst):
-	# print "DIRECTORY COPY [%s] TO [%s]" % (src, dst)
+	print "DIRECTORY COPY [%s] TO [%s]" % (src, dst)
 	cmd(build_command(["rsync", "-vaz", 
 										 "--exclude=*svn*",
 										 "--exclude=.svn",
@@ -90,6 +90,26 @@ def copy (src, dest):
 
 def mkdir(dir):
 	cmd(build_command(["mkdir", "-p", dir]))
+
+def subst_and_copy(file, source_dir, dest_dir):
+	print "DOING SUBST ON [ %s/%s ]" % (source_dir, file)
+
+	with open("%s/%s" % (source_dir, file), 'r') as input:
+		dest_file = re.search("(.*).in", file).group(1)
+		print "DESTINATION FILE: %s/%s" % (dest_dir, dest_file)
+	
+		with open("%s/%s" % (dest_dir, dest_file), 'w') as output:
+			for line in input:
+				pat = re.compile('@(.*?),(.*?)@')
+				res = re.search(pat, line)
+				if res:
+					section = res.group(1)
+					tag     = res.group(2)
+					print "Replacing [%s %s] in\n %s" % (section, tag, line)
+					line = re.sub(pat, config.get(section, tag), line)
+
+				# After replacements, write the line
+				output.write(line)
 
 # MEAT AND POTATOES
 def repeat_print(count, str):
