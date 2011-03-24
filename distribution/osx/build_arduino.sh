@@ -22,9 +22,9 @@ BUILD=$PWD/build
 if ! [ -d $BUILD/$ARDUINO ] ; then
   mkdir -p build
   cd build
-  #curl -O \
-  #  http://arduino.googlecode.com/files/$ARDUINO_ZIP \
-  #  || exit 1
+  curl -O \
+    http://arduino.googlecode.com/files/$ARDUINO_ZIP \
+    || exit 1
   if [ $IS_DMG ]; then
     mnt_point=`hdiutil attach -nobrowse -noautoopen $ARDUINO_ZIP | tail -n 1 \
     | cut -f 3`

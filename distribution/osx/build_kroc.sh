@@ -10,6 +10,7 @@ INSTALL=$PWD/install
 BUILD=$PWD/build
 
 #PATH=$PATH:$PWD/install/bin
+OLD_PATH=$PATH
 PATH=/bin:/usr/bin:/usr/X11/bin:$PWD/install/bin
 #export PATH
 
@@ -106,6 +107,8 @@ cd kroc-tvm-posix
 make
 make install
 
+PATH=$OLD_PATH
+
 darwin_major=`uname -r | awk -F. '{ print $1 }'`
 cd $BUILD
 mkdir kroc-tvm-posix-ppc
@@ -114,12 +117,10 @@ CFLAGS="-isysroot /Developer/SDKs/MacOSX10.4u.sdk \
   -I/usr/lib/gcc/powerpc-apple-darwin$darwin_major/4.2.1/include/ \
   -mmacosx-version-min=10.4" \
   CC=powerpc-apple-darwin$darwin_major-gcc-4.2.1 \
+  TARGET_CC=powerpc-apple-darwin$darwin_major-gcc-4.2.1 \
   ../../../../configure --host=powerpc-apple-darwin$darwin_major \
+  --target=powerpc-apple-darwin$darwin_major \
   --build=powerpc --with-toolchain=tvm \
   --prefix=$INSTALL-tvm-ppc
-# FIXME: Both of these fail at the moment, though they get far enough to be
-# useful, which incidentally is up to, but not including, the useful library.
 make
 make install
-
-PATH=$OLD_PATH

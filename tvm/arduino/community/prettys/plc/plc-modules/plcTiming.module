@@ -1,0 +1,379 @@
+--      Copyright (C) 2011   Stephen Pretty
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#IF NOT (DEFINED (PLCTIMING.MODULE))
+#DEFINE PLCTIMING.MODULE
+-- module: plcTiming
+-- by: Steve Pretty 
+-- on: 20FEB11
+
+-- "plc" aims to implement programmable logic controller blocks similar
+-- in functionality to those described in IEC 61131. Functionality
+-- is often simplified (e.g. reset and enable functions not implemented at
+-- present). More complex versions of the functional blocks may be developed in  future?
+-- NOTE - all digital functionality standardizes on use of the plumbing
+-- defined LEVEL type. Receipt of HIGH signifies a logical rising edge
+-- LOW signifies a logical falling edge. The plumbing message SIGNAL is not used as
+-- part of the API (but is used internally).
+
+
+-- TIMING FUNCTIONAL BLOCKS
+
+-- CONFIGURATION  (User may change the value of time.base to suit their requirements)
+
+VAL INT time.base IS 100:   -- Basic unit of time used by timer functions in milliseconds
+
+-- PROC timimng.helper
+-- This is not part of the plc API and should not be invoked by the end user.
+-- This is a primitive timing process. It receives SIGNAL from a plc process
+-- and responds with SIGNAL time.base milliseconds later
+
+PROC timing.helper (CHAN SIGNAL in?, out!)
+  WHILE TRUE
+    SEQ
+      in ? SIGNAL
+      delay (time.base)
+      out ! SIGNAL
+:      
+
+--{{{ PROC plc.TP
+--* Implements a Pulse Timer
+-- When in goes HIGH, out is set high for a period PT
+-- The TP timer is retriggerable - if a further HIGH is received during the pulse, 
+-- the pulse is extended for a further TP
+
+-- @param PT specifies the preset delay time in units of time.base
+-- @param in a HIGH received in this channel starts the output pulse
+-- @param 0ut a HIGH is sent at the start of a pulse and an LOW at the end.
+
+PROC plc.TP (VAL INT PT, CHAN LEVEL in?, out!)
+  VAL INT IDLE IS 0:
+  VAL INT ACTIVE IS 1:
+  INT count, state:
+  LEVEL x:
+  CHAN SIGNAL helper.in, helper.out:
+  PAR
+    timing.helper(helper.in?, helper.out!)
+    SEQ
+      count := 0
+      state := IDLE
+      WHILE TRUE
+        ALT
+          in ? x
+            IF
+              x = HIGH
+                SEQ
+                  count := 0
+                  IF
+                    state = IDLE
+                      SEQ
+                        out ! HIGH
+                        state := ACTIVE
+                        helper.in ! SIGNAL
+                    TRUE
+                      SKIP
+              TRUE  -- Ignore LOW messages on CHAN in
+                SKIP
+ 
+          helper.out ? SIGNAL
+            IF
+              state = ACTIVE
+                SEQ
+                  count := count + 1
+                  IF
+                    count >= PT
+                      SEQ
+                        state := IDLE
+                        out ! LOW                        
+                    TRUE
+                      helper.in ! SIGNAL
+              TRUE
+                SKIP
+
+:
+--}}}
+
+--{{{ PROC plc.TPX
+--* Implements a Pulse Timer with extended interface to more fully implement
+-- the functionality of a PLC TP functional block.
+-- When in goes HIGH, out is set high for a period PT
+-- The TP timer is retriggerable - if a further HIGH is received during the pulse, 
+-- the pulse is extended for a further TP.
+-- The value of TP must be received, and can be changed as required -
+-- a new value becoming effective on the next pulse.
+-- plc.TPX transmits the value of the counter during the pulse.
+
+-- @param PT specifies the preset delay time in units of time.base
+-- @param in a HIGH received in this channel starts the output pulse
+-- @param 0ut a HIGH is sent at the start of a pulse and an LOW at the end.
+-- @Param ET transmits the elapsed time every time.base period during a pulse.
+
+PROC plc.TPX (CHAN INT PT?, CHAN LEVEL in?, out!, CHAN INT ET!)
+  VAL INT IDLE IS 0:
+  VAL INT ACTIVE IS 1:
+  INT count, state:
+  INITIAL INT loadedPT IS 0:
+  LEVEL x:
+  CHAN SIGNAL helper.in, helper.out:
+  PAR
+    timing.helper(helper.in?, helper.out!)
+    SEQ
+      count := 0
+      state := IDLE
+      WHILE TRUE
+        ALT
+          in ? x
+            IF
+              x = HIGH
+                SEQ
+                  count := 0
+                  IF
+                    (state = IDLE) AND (loadedPT <> 0)
+                      SEQ
+                        out ! HIGH
+                        state := ACTIVE
+                        helper.in ! SIGNAL
+                    TRUE
+                      SKIP
+              TRUE  -- Ignore LOW messages on CHAN in
+                SKIP
+                
+          PT ? loadedPT
+            SKIP
+            
+          helper.out ? SIGNAL
+            IF
+              state = ACTIVE
+                SEQ
+                  count := count + 1
+                  ET ! count
+                  IF
+                    count >= loadedPT
+                      SEQ
+                        state := IDLE
+                        out ! LOW                        
+                    TRUE
+                      helper.in ! SIGNAL
+              TRUE
+                SKIP
+:
+--}}}
+
+--{{{ PROC plc.TON
+--* Implements a Turn on timer
+-- When in goes HIGH, out stays low for period PT before going high
+-- The TP timer is cancelled if in goes low. If out is high, it goes low
+-- as soon as in goes low.
+
+-- @param PT specifies the preset delay time in units of time.base
+-- @param in a HIGH received in this channel starts the timing process
+-- @param 0ut a HIGH is sent at the end of the timing period.
+
+PROC plc.TON (VAL INT PT, CHAN LEVEL in?, out!)
+  VAL INT IDLE IS 0:
+  VAL INT ACTIVE IS 1:
+  VAL INT ON IS 2:
+  INT count, state:
+  LEVEL x:
+  CHAN SIGNAL helper.in, helper.out:
+  PAR
+    timing.helper(helper.in?, helper.out!)
+    SEQ
+      count := 0
+      out ! LOW  -- force LOW state at start up
+      state := IDLE
+      WHILE TRUE
+        ALT
+          in ? x
+            IF
+              x = HIGH
+                SEQ
+                  IF
+                    state = IDLE
+                      SEQ
+                        count := 0
+                        state := ACTIVE
+                        helper.in ! SIGNAL
+                    state = ACTIVE
+                      SKIP                      
+                    state = ON
+                      SKIP                  
+              x = LOW
+                IF
+                  state = IDLE
+                    SKIP
+                  state = ACTIVE
+                    state := IDLE
+                  state = ON
+                    SEQ
+                      out ! LOW
+                      state := IDLE
+ 
+          helper.out ? SIGNAL
+            IF
+              state = ACTIVE
+                SEQ
+                  count := count + 1
+                  IF
+                    count >= PT
+                      SEQ
+                        state := ON
+                        out ! HIGH                        
+                    TRUE
+                      helper.in ! SIGNAL
+              TRUE
+                SKIP
+
+:
+--}}}
+
+--{{{ PROC plc.TOF
+--* Implements a Turn Off timer
+-- When in goes HIGH, output goes high. When in goes low, out stays
+-- high for a period TP.
+
+-- @param PT specifies the preset delay time in units of time.base
+-- @param in a HIGH received sets out HIGH. LOW starts timing period.
+-- @param 0ut a HIGH is sent at the end of the timing period.
+
+PROC plc.TOF (VAL INT PT, CHAN LEVEL in?, out!)
+  VAL INT IDLE IS 0:
+  VAL INT ACTIVE IS 1:
+  VAL INT ON IS 2:
+  INT count, state:
+  LEVEL x:
+  CHAN SIGNAL helper.in, helper.out:
+  PAR
+    timing.helper(helper.in?, helper.out!)
+    SEQ
+      count := 0
+      out ! LOW  -- force LOW state at start up
+      state := IDLE
+      WHILE TRUE
+        ALT
+          in ? x
+            IF
+              x = HIGH
+                SEQ
+                  IF
+                    state = IDLE
+                      SEQ
+                        state := ON
+                        out ! HIGH
+                    state = ACTIVE
+                      state := ON                      
+                    state = ON
+                      SKIP                  
+              x = LOW
+                IF
+                  state = IDLE
+                    SKIP
+                  state = ACTIVE
+                    SKIP
+                  state = ON
+                    SEQ
+                      count := 0
+                      state := ACTIVE
+                      helper.in ! SIGNAL
+ 
+          helper.out ? SIGNAL
+            IF
+              state = ACTIVE
+                SEQ
+                  count := count + 1
+                  IF
+                    count >= PT
+                      SEQ
+                        state := IDLE
+                        out ! LOW                        
+                    TRUE
+                      helper.in ! SIGNAL
+              TRUE
+                SKIP
+
+:
+--}}}
+
+--{{{ PROC plc.CLK
+--* Implements a Clock pulse generator
+-- Pulses are generated when a High is received on EN and stop when EN
+-- receives LOW. PTH is the period the clock pulse is high, PTL is the period
+-- the clock should be low. Periods are in time.base units.
+-- The block is designed to deliver whole pulses.
+-- Uses TP
+
+-- @param PTH specifies the HIGH pulse width in units of time.base
+-- @param PTL specifies the LOW pulse width.
+-- @param EN a HIGH received in this channel starts the clock pulses.
+-- @param 0ut - the clock pulses.
+
+PROC plc.CLK (VAL INT PTH, PTL, CHAN LEVEL EN?, out!)
+  VAL INT IDLE IS 0:
+  VAL INT ACTIVE IS 1:
+  INITIAL BOOL ENstate IS FALSE:
+  INITIAL INT state IS IDLE:
+  CHAN LEVEL th.in, th.out, tl.in, tl.out:
+  LEVEL x, y , z:
+  PAR
+    plc.TP(PTH, th.in?, th.out!)
+    plc.TP(PTL, tl.in?, tl.out!)
+    SEQ
+      WHILE TRUE
+        ALT
+          EN ? x
+            IF
+              x = HIGH
+                SEQ
+                  IF
+                    state = IDLE
+                      SEQ
+                        state := ACTIVE                    
+                        th.in ! HIGH
+                        out ! HIGH
+                        ENstate := TRUE
+                    state = ACTIVE
+                      ENstate := TRUE                                      
+              x = LOW
+                IF
+                  state = IDLE
+                    SKIP
+                  state = ACTIVE
+                    ENstate := FALSE
+ 
+          th.out ? y
+            IF
+              y = LOW
+                SEQ
+                  out ! LOW
+                  tl.in! HIGH
+              TRUE
+                SKIP
+
+          tl.out ? z
+            IF
+              z = LOW
+                IF
+                  ENstate = TRUE
+                    SEQ
+                      out ! HIGH
+                      th.in ! HIGH
+                  TRUE
+                    state := IDLE
+              TRUE
+                SKIP
+:
+--}}}
+
+#ENDIF

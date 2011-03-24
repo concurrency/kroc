@@ -1,0 +1,16 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "plcBasic.module"
+
+-- Test case 4
+-- Tests plc.LD, plc.IR2, plc.NOT and plc.OUT
+
+PROC main ()
+  CHAN LEVEL a, x, y, z:
+  SEQ 
+    PAR  
+      plc.LD (2, a!)
+      plc.IR2 (a?, x!, y!)
+      plc.OUT (13, x?)
+      plc.NOT (y?, z!)
+      plc.OUT (12, z?)
+:

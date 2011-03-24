@@ -154,8 +154,8 @@ copy_tree('install-avr/share/tvm/avr-vtinclude', ARDUINO_TVM_LIB_DIR)
 copy_tree('install-avr/share/tvm/avr-vtlib', ARDUINO_TVM_LIB_DIR)
 
 # Avrdude
-copy_file('install/bin/avrdude', BIN_DIR)
-copy_file('install/etc/avrdude.conf', BIN_DIR)
+copy_file('install-avrdude/bin/avrdude', BIN_DIR)
+copy_file('install-avrdude/etc/avrdude.conf', BIN_DIR)
 
 # JEdit
 mkdirs(JEDIT_DIR)

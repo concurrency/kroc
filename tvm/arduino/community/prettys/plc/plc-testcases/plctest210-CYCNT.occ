@@ -1,0 +1,30 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "plcBasic.module"
+#INCLUDE "plcCounters.module"
+
+
+-- Test case 21
+-- Tests plc.BCU
+
+PROC report(CHAN INT in?)
+  INT value:
+  WHILE TRUE
+    SEQ
+      in ? value
+      serial.write.int(TX0, value)
+      serial.write.newline(TX0)
+:
+      
+
+PROC main ()
+  CHAN LEVEL  x, y:
+  CHAN INT ctu.out:
+  SEQ
+    PAR
+      plc.LD (4, x!)
+      
+      plc.CYCNT (10, HIGH, x?, y!, ctu.out!)
+      plc.OUT (13, y?)
+
+      report (ctu.out?)
+:  

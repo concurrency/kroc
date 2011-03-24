@@ -1,0 +1,16 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "plcBasic.module"
+#INCLUDE "plcLatches.module"
+
+-- Test case 17
+-- Tests plcing.LD, FF and OUT
+-- Uses FF as a simple toggle
+
+PROC main ()
+  CHAN LEVEL x, z:
+  SEQ
+    PAR
+      plc.LD (2, x!)
+      plc.FF (HIGH, x?, z!)
+      plc.OUT (13, z?)               
+:  
