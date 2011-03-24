@@ -24,5 +24,17 @@ def copy_arduino_build():
 	# What was going into LIB should actually go into SHARE. 	
 	#copy_dir(config.get('SOURCE_INCLUDE'), config.get('DEST_INCLUDE'))	
 
+def copy_arduino_modules():
+	header("COPYING OCCAM-PI ARDUINO MODULES")
+	copy_dir(config.get('BUILD','include'), config.get('DESTDIR', 'include'))
+
+def copy_firmwares():
+	mkdir(config.get('DESTDIR', 'firmware'))
+	copy_files('.*hex', 
+							'%s/output' % config.get('BUILD', 'arduino'), 	
+							config.get('DESTDIR', 'firmware'))
+
 copy_arduino_config()
 copy_arduino_build()
+copy_arduino_modules()
+copy_firmwares()

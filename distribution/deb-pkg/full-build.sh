@@ -5,4 +5,5 @@
 
 ./configure-tvm-avr.py
 ./build-tvm-avr.py
+./install-tvm-avr.py
 ./build-firmwares-tvm-avr.py

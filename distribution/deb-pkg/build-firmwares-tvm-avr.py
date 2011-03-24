@@ -50,12 +50,5 @@ def build_firmwares():
 				
 				mkdir('output')
 				copy('%s/%s' % (tbuild, bc['TVM_ARDUINO_FIRMWARE']), 'output')
-	
-def copy_firmwares():
-	mkdir(config.get('BUILD', 'firmware'))
-	copy_files('.*hex', 
-							'%s/output' % config.get('BUILD', 'arduino'), 	
-							config.get('BUILD', 'firmware'))
 
 build_firmwares()
-copy_firmwares()

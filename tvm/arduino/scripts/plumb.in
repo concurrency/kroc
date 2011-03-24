@@ -94,8 +94,8 @@ echo "Compiling..."
 # I think ISEARCH, being set in the .conf, should do
 # the work of finding the platform-specific libraries...
 avr-occbuild \
-  --search @DESTDIR,share@/tvm/avr-vtinclude \
-  --search @DESTDIR,share@/tvm/avr-vtlib \
+  --search @DESTDIR,share@/avr-vtinclude \
+  --search @DESTDIR,share@/avr-vtlib \
   --search @DESTDIR,include@ \
   --search @DESTDIR,include@/arch/common \
   --search @DESTDIR,include@/arch/$TVM_MCU \
