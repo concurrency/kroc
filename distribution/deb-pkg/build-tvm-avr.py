@@ -16,14 +16,14 @@ def confget(file):
 def build():
 	header("RUNNING MAKE")
 	# Create a destdir for the build
-	remove_and_mkdir(config.get('BUILD', 'destdir'))
+	remove_and_mkdir(config.get('DESTDIR', 'destdir'))
 
 	# 'make' in the object directory
 	with pushd():
 		cd(config.get('BUILD', 'obj'))
 		cmd("make")
 		cmd(["make", 
-				 "DESTDIR=%s" % config.get('BUILD', 'destdir'), 	
+				 "DESTDIR=%s" % config.get('DESTDIR', 'destdir'), 	
 					"install"])
 
 build()

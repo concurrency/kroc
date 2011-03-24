@@ -16,7 +16,7 @@ def configure():
 	with pushd():
 		cd(config.get('BUILD', 'obj'))
 
-		cmd(["../configure", 
+		cmd(["../configure",
 					"--prefix=%s" % config.get('INSTALL', 'final'),
 					"--with-toolchain=%s" % config.get('AVR', 'toolchain'),
 					"--target=%s" % config.get('AVR', 'target'),
@@ -32,6 +32,6 @@ def confget(file):
 				d[r.group(1)] = r.group(2)
 	return d
 
-autoreconf()
+#autoreconf()
 configure()
 
