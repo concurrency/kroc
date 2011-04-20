@@ -89,7 +89,13 @@ int main () {
 
 	serial_stdout_init (57600);
 
-	printf_P (PSTR ("TVM Sleep edition\n"));
+#define SLEEP
+#ifdef SLEEP
+	printf_P (PSTR ("TVM sleep edition\n"));
+#else
+	printf_P (PSTR ("TVM NON sleep edition\n"));
+#endif
+
 #ifdef DEBUG
 	printf_P (PSTR ("Arduino-TVM starting...\n"));
 #endif
@@ -139,7 +145,6 @@ int main () {
 			}
 			case ECTX_SLEEP: {
 				WORD next = context.tnext;
-#define SLEEP
 #ifdef SLEEP
 				WORD now = time_millis ();
 #else
@@ -181,7 +186,7 @@ int main () {
 #ifdef SLEEP
 				else
 				{
-					SMCR = 0x07;
+					SMCR = 0x05;
 					asm ("sleep;");
 					SMCR = 0x00;
 				}
