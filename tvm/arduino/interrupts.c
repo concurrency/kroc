@@ -162,6 +162,17 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 	return ret;
 }
 
+static int clear_interrupt (vinterrupt *intr, ECTX ectx) {
+
+	cli ();
+
+	intr->pending = MIN_INT;
+
+	sei ();
+
+	return SFFI_OK;
+}
+
 #define MAP_SIMPLE_INTERRUPT(vector, interrupt) \
 	ISR(vector) { \
 		handle_interrupt (&interrupts[interrupt]); \
@@ -181,7 +192,7 @@ MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
 MAP_SIMPLE_INTERRUPT(PCINT1_vect, vintr_PCINT1)
 MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
 MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
-MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
+//MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
 MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
 MAP_SIMPLE_INTERRUPT(TWI_vect, vintr_TWI)
 
@@ -259,4 +270,14 @@ int ffi_wait_for_interrupt (ECTX ectx, WORD args[]) {
 	}
 
 	return wait_interrupt (&interrupts[interrupt], ectx, time_ptr);
+}
+
+int ffi_clear_interrupt (ECTX ectx, WORD args[]) {
+	WORD interrupt = args[0];
+
+	if (interrupt < 0 || interrupt >= NUM_INTERRUPTS) {
+		return ectx->set_error_flag (ectx, EFLAG_FFI);
+	}
+
+	return clear_interrupt (&interrupts[interrupt], ectx);
 }

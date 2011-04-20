@@ -78,6 +78,9 @@ void terminate (const prog_char *message, const int *status) {
 int main () {
 	int i;
 
+	DDRB  |= _BV(DDB4);
+	PORTB |= _BV(PORTB4);
+
 	time_init ();
 	init_interrupts ();
 
@@ -86,6 +89,7 @@ int main () {
 
 	serial_stdout_init (57600);
 
+	printf_P (PSTR ("TVM Sleep edition\n"));
 #ifdef DEBUG
 	printf_P (PSTR ("Arduino-TVM starting...\n"));
 #endif
@@ -114,6 +118,7 @@ int main () {
 	dump_machine_state ();
 #endif
 
+	PORTB &= ~_BV(PORTB4);
 	while (1) {
 #ifdef DEBUG
 		printf_P (PSTR ("Before tvm_run:"));
@@ -134,9 +139,33 @@ int main () {
 			}
 			case ECTX_SLEEP: {
 				WORD next = context.tnext;
+#define SLEEP
+#ifdef SLEEP
+				WORD now = time_millis ();
+#else
 				WORD now;
+#endif
 				do {
-					/* FIXME: sleep, rather than busywaiting */
+					// Idle:      0001 - 0x01
+					// powerdown: 0101 - 0x05
+					// powersave: 0111 - 0x07
+					// standby:   1101 - 0x0C
+					// estandby:  1111 - 0x0F
+					
+#ifdef SLEEP 
+					if (next - now > 16)
+					{
+						//PORTB |= _BV(PORTB4);
+						SMCR = 0x07;
+						/* Start timer 2 */
+						TCNT2 = 0x00;
+						TIMSK2 |= _BV (TOIE2);
+						TCCR2B |= _BV(CS22) | _BV(CS21) | _BV(CS20);
+						asm ("sleep;");
+						SMCR = 0x00;
+						//PORTB &= ~(_BV(PORTB4));
+					}
+#endif
 					now = time_millis ();
 				} while (TIME_AFTER (next, now));
 				break;
@@ -149,6 +178,14 @@ int main () {
 				if (!waiting_on_interrupts ()) {
 					terminate(PSTR ("deadlock"), NULL);
 				}
+#ifdef SLEEP
+				else
+				{
+					SMCR = 0x07;
+					asm ("sleep;");
+					SMCR = 0x00;
+				}
+#endif
 				break;
 			}
 			case ECTX_SHUTDOWN: {

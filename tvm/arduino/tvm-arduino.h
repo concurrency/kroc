@@ -27,6 +27,7 @@ extern void init_interrupts (void);
 extern void clear_pending_interrupts (void);
 extern int waiting_on_interrupts (void);
 extern int ffi_wait_for_interrupt (ECTX ectx, WORD args[]);
+extern int ffi_clear_interrupt (ECTX ectx, WORD args[]);
 /*}}}*/
 /*{{{  serial.c */
 extern void serial_stdout_init(long speed);

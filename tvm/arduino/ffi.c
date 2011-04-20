@@ -16,6 +16,7 @@ static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
 /* FIXME: Get rid of IFDEF. We do not want these in the code. */
 SFFI_FUNCTION sffi_table[] = {
 	ffi_wait_for_interrupt,
+	ffi_clear_interrupt,
 	#if defined(atmega1280)
 	ffi_read_buffer_blocking
 	#endif

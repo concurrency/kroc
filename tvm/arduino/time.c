@@ -28,14 +28,17 @@
 /* the prescaler is set so that timer0 ticks every 64 clock cycles, and the
    the overflow handler is called every 256 ticks. */
 #define MICROSECONDS_PER_TIMER0_OVERFLOW (clockCyclesToMicroseconds(64 * 256))
+#define MICROSECONDS_PER_TIMER2_OVERFLOW (clockCyclesToMicroseconds(1024 * 256))
 
 /* the whole number of milliseconds per timer0 overflow */
 #define MILLIS_INC (MICROSECONDS_PER_TIMER0_OVERFLOW / 1000)
+#define MILLIS2_INC (MICROSECONDS_PER_TIMER2_OVERFLOW / 1000)
 
 /* the fractional number of milliseconds per timer0 overflow. we shift right
    by three to fit these numbers into a byte. (for the clock speeds we care
    about - 8 and 16 MHz - this doesn't lose precision.) */
 #define FRACT_INC ((MICROSECONDS_PER_TIMER0_OVERFLOW % 1000) >> 3)
+#define FRACT2_INC ((MICROSECONDS_PER_TIMER2_OVERFLOW % 1000) >> 3)
 #define FRACT_MAX (1000 >> 3)
 
 volatile unsigned long timer0_overflow_count = 0;
@@ -49,8 +52,10 @@ SIGNAL(TIMER0_OVF_vect)
 	unsigned long m = timer0_millis;
 	unsigned char f = timer0_fract;
 
-	m += MILLIS_INC;
-	f += FRACT_INC;
+	//m += MILLIS_INC;
+	//f += FRACT_INC;
+	m += 1;
+	f += 3;
 	if (f >= FRACT_MAX) {
 		f -= FRACT_MAX;
 		m += 1;
@@ -99,5 +104,45 @@ void time_init ()
 	TCCR0B |= 3 << CS00;
 
 	/* enable timer 0 overflow interrupt */
+	TIMSK0 |= _BV (TOIE0);
+}
+
+SIGNAL(TIMER2_OVF_vect)
+{
+	/* Stop the timer */
+	TCNT2 = 0x00;
+	//TCCR2B &= ~(_BV(CS22) | _BV(CS21) | _BV(CS20));
+	TCCR2B = 0;
+
+	//printf_P (PSTR ("MILLIS2_INC X%dX%dX%dX\n"), 69, MILLIS2_INC, MILLIS_INC);
+
+	unsigned long m = timer0_millis;
+	unsigned char f = timer0_fract;
+
+	//m += MILLIS2_INC;
+	// FIXME: We seem to loose 1ms every TIMER2 overflow, figure out where
+	// we loose it...
+	m += 16 + 1;
+	//f += FRACT2_INC;
+	f += 48;
+	if (f >= FRACT_MAX) {
+		f -= FRACT_MAX;
+		m += 1;
+	}
+
+	timer0_fract = f;
+	timer0_millis = m;
+	timer0_overflow_count += 16;
+
+}
+
+void inline sleep_timer_start()
+{
+	/* Reset the timer register */
+	TCNT2 = 0x00;
+
+	/* Start the timer */
+	TCCR2B |= _BV(CS22) & _BV(CS21) & _BV(CS20);
+
 	TIMSK0 |= _BV (TOIE0);
 }
