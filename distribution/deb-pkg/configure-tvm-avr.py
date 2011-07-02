@@ -32,6 +32,6 @@ def confget(file):
 				d[r.group(1)] = r.group(2)
 	return d
 
-#autoreconf()
+autoreconf()
 configure()
 
