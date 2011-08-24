@@ -1,8 +1,11 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
+
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../../m4
 
+CC=llvm-gcc
+dragonegg_diable_version_check=1
 CFLAGS=-I$(top_srcdir) @CFLAGS@
 
 lib_LIBRARIES = libtvm.a

@@ -5,6 +5,8 @@ ACLOCAL_AMFLAGS = -I ../../m4
 OCCBUILD = @OCCBUILD@
 
 CC=llvm-gcc
+AM_CFLAGS = ${AM_CFLAG} -lpthread
+# add pthhread library
 dragonegg_diable_version_check=1
 
 bin_PROGRAMS = tvm
