@@ -8,18 +8,15 @@
 #include "tvm_posix.h"
 #include <tvm_tbc.h>
 
-#include <pthread.h>
-
-
+#define numCore 42
 /*{{{  Global State */
 char			*prog_name 	= NULL;
 int			tvm_argc	= 0;
 char			**tvm_argv	= NULL;
-int                     numCore         = 4;
 /*}}}*/
 
 /*{{{  Static State  */
-static ECTX         ea[numCore+1]; /* firmware plus number of cores */
+static ECTX         ea[ numCore + 1 ]; /* firmware plus number of cores */
 
 static bytecode_t	*fw_bc, *us_bc;
 /*}}}*/
@@ -356,10 +353,24 @@ static int run_user (void)
 
 	return ECTX_ERROR;
 }
+
 static void *run_multicore(void *tv)
 {
     int t = ((int) tv)+1;
-    int ret = tvm_run(ea[t]);
+    int ret;
+
+    printf("SPAWNING: %d\n", t);
+    printf("SPAWN HOOK 1(mem): [%x]\n", &ea[1]->spawn_hook);
+    printf("SPAWN HOOK 1: [%x]\n", ea[1]->spawn_hook);
+    printf("SPAWN HOOK t: [%x]\n", ea[t]->spawn_hook);
+    printf("SPAWN HOOK t(mem): [%x]\n", &ea[t]->spawn_hook);
+
+
+    ea[t]->wptr = NOT_PROCESS_P;
+
+    printf("RUNNING %d\n", t);
+    ret = tvm_run(ea[t]);
+    printf("DONE RUNNING %d\n", t);
 
     switch (ret) {
         case ECTX_PREEMPT:
@@ -436,10 +447,7 @@ int main (int argc, char *argv[])
     char *fn;
     int f_ret, u_ret;
     int t;
-    int rc;
-    int first_run = 1;
     
-    pthread_t threads[numCore];
 
     prog_name	= argv[0]; 
     tvm_argc	= argc;
@@ -454,19 +462,54 @@ int main (int argc, char *argv[])
 
     init_vm ();
     
-    if(1==1){ /*multiple cores */
-        for(t=0; t<numCore;t++){
-            if (install_user_ctx (fn, t+1) < 0) {
-                error_out_no_errno ("failed to load user bytecode");
-                return 1;
-            }
+    for(t = 1 ; t <= numCore; t++){
+        if (install_user_ctx (fn, t) < 0) {
+            error_out_no_errno ("failed to load user bytecode");
+            return 1;
         }
-    }else{
-        if (install_user_ctx (fn, 1) < 0) {
-                error_out_no_errno ("failed to load user bytecode");
-                return 1;
-        }
+        /* set thread id */ 
+        ea[t]->thread_id=t;
+    
+        /* mangle to point to original context */
+        /* ECTX_SHARE(wptr, t, 1) */
+        
+        // ECTX_SHARE_PTR(fptr, t, 1);
+        ECTX_SHARE_PTR(bptr, t, 1);
+        ECTX_SHARE_PTR(tptr, t, 1);
+        // ECTX_SHARE_WORD(tnext, t, 1);
+        // ECTX_SHARE_WORD(eflags, t, 1);
+        // ECTX_SHARE_WORD(sflags, t, 1);
+        ECTX_SHARE_PTR(priv, t, 1);
+        ECTX_SHARE_PTR(spawn_hook, t, 1);
     }
+
+    ea[1]->spawn_hook = run_multicore; 
+    ea[1]->fptr = 13;
+
+    ea[3]->fptr = ea[1]->fptr;
+
+    printf("FPTR 1 mem: [%x]\n", &ea[1]->fptr);
+    printf("FPTR 1: [%x]\n", ea[1]->fptr);
+    printf("FPTR 3: [%x]\n", ea[3]->fptr);
+    printf("FPTR 3 mem: [%x]\n", &ea[3]->fptr);
+
+    ea[1]->fptr = 0xbeef;
+
+    printf("FPTR 1 mem: [%x]\n", &ea[1]->fptr);
+    printf("FPTR 1: [%x]\n", ea[1]->fptr);
+    printf("FPTR 3: [%x]\n", ea[3]->fptr);
+    printf("FPTR 3 mem: [%x]\n", &ea[3]->fptr);
+
+    printf("SPAWN HOOK 1 mem: [%x]\n", &ea[1]->spawn_hook);
+    printf("SPAWN HOOK 1: [%x]\n", ea[1]->spawn_hook);
+    printf("SPAWN HOOK 3: [%x]\n", ea[3]->spawn_hook);
+    printf("SPAWN HOOK 3 mem: [%x]\n", &ea[3]->spawn_hook);
+    printf("SPAWN HOOK 3 pv: [%x]\n", *ea[3]->spawn_hook);
+    printf("SPAWN HOOK 5: [%x]\n", ea[5]->spawn_hook);
+    printf("SPAWN HOOK 5 mem: [%x]\n", &ea[5]->spawn_hook);
+    printf("SPAWN HOOK 7: [%x]\n", ea[7]->spawn_hook);
+    printf("SPAWN HOOK 7 mem: [%x]\n", &ea[7]->spawn_hook);
+
     if (install_firmware_ctx () < 0) {
             error_out_no_errno ("failed to install firmware");
             return 1;
@@ -476,14 +519,15 @@ int main (int argc, char *argv[])
     scr_channel = NOT_PROCESS_P;
     err_channel = NOT_PROCESS_P;
 
+      int meh=2;
     for (;;) {
         f_ret = run_firmware ();
-        u_ret = ECTX_SLEEP;
+        printf("CALLING run_user");
+        u_ret = run_user();
 
-
-        if(1==1) {   /* multiple core */
-          if (first_run) {
-          first_run = 0;
+        /*      
+        if (first_run) {
+            first_run = 0;
             for(t=0; t<numCore;t++){
                 rc = pthread_create(&threads[t], NULL, run_multicore, (void *)t);
                 if (rc){
@@ -491,23 +535,20 @@ int main (int argc, char *argv[])
                     // exit(-1);
                     u_ret= ECTX_ERROR;
                 }
+        }
+        */
+        
+        
+        if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
+            (u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
+            if(ea[0]->fptr == NOT_PROCESS_P && ea[1]->fptr == NOT_PROCESS_P){
+                tvm_sleep (1);
             }
-            
-            }
-        } else {  /* single core machine */
-            u_ret = run_user();
-            if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
-                (u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
-                if(ea[0]->fptr == NOT_PROCESS_P && ea[1]->fptr == NOT_PROCESS_P){
-                    tvm_sleep (1);
-                }
-            } else if (f_ret == ECTX_ERROR || u_ret == ECTX_ERROR) {
-                break;
-            } else if (u_ret == ECTX_SHUTDOWN) {
-                /* Run firmware to clear buffers */
-                run_firmware ();
-                break;
-            }
+        } else if (f_ret == ECTX_ERROR || u_ret == ECTX_ERROR) {
+            break;
+        } else if (u_ret == ECTX_SHUTDOWN) {
+            run_firmware ();
+            break;
         }
     }
     
@@ -515,14 +556,11 @@ int main (int argc, char *argv[])
         ectx_error_found(1);
         return 1;
     }
-    if(1==1) {  /* multiple cores */
-        for(t=0;t<numCore;t++){
-            free_ectx(ea[t+1]);
-        }
-    }else {
-        free_ectx (ea[1]);
+
+    for(t=0;t<=numCore;t++){
+        free_ectx(ea[t]);
     }
-    free_ectx (ea[0]);
+
     free_bytecode (fw_bc);
     free_bytecode (us_bc);
 

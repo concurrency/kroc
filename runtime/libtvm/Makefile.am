@@ -5,6 +5,7 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I ../../m4
 
 CC=llvm-gcc
+AM_FLAGS = ${AM_FLAGS} -lpthread
 dragonegg_diable_version_check=1
 CFLAGS=-I$(top_srcdir) @CFLAGS@
 

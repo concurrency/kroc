@@ -127,3 +127,7 @@ extern ECTX allocate_ectx (bytecode_t *bc, const char *tlp, WORD *argv);
 extern void free_ectx (ECTX vm);
 /*}}}*/
 
+#define ECTX_SHARE_PTR(reg, n, m) do { ea[n]->reg = ea[m]->reg; } while (0)
+
+#define ECTX_SHARE_WORD(reg, n, m) do { *(ea[n]->reg) = &(ea[m]->reg); } while (0)
+

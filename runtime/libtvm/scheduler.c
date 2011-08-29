@@ -21,11 +21,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tvm.h"
 #include "interpreter.h"
 #include "scheduler.h"
+#include "pthread.h"
+#include "stdio.h"
+
+#define NUMCORE 42
+
+static pthread_t threads[NUMCORE];
+
+int thread_count=1;
 
 static void add_to_queue(ECTX ectx, WORDPTR ws)
 {
 
 	WORKSPACE_SET(ws, WS_LINK, (WORD)NOT_PROCESS_P);
+
+        
 	
 	if(FPTR == (WORDPTR)NOT_PROCESS_P)
 	{
@@ -42,6 +52,21 @@ static void add_to_queue(ECTX ectx, WORDPTR ws)
 		WORKSPACE_SET(BPTR, WS_LINK, (WORD)ws);
 		BPTR = ws;
 	}
+
+        /* create new thread  */
+        printf("Creating thread %d\n", thread_count);
+
+        int res = pthread_create(&threads[thread_count], NULL, ectx->spawn_hook, (void *)thread_count);
+          
+        if (res) {
+            printf("THREAD CREATE FAILED [%d]\n", res);
+            
+        }
+
+        printf("Created thread %d\n", thread_count);
+
+        thread_count++;
+
 }
 
 static int add_to_queue_external(ECTX ectx, ECTX src_ctx, WORDPTR ws)

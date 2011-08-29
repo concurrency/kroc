@@ -580,16 +580,16 @@ int tvm_run (ECTX ectx)
  */
 int tvm_run_count (ECTX ectx, UWORD count)
 {
-	int ret;
+    int ret;
 
-	if ((ret = run_pre_init (ectx))) {
-		return ret;
-	}
+    if ((ret = run_pre_init (ectx))) {
+        return ret;
+    }
 
-	if ((ret = tvm_dispatch (ectx, count << 1))) {
-		return ret;
-	}
-	
-	return ECTX_TIME_SLICE;
+    if ((ret = tvm_dispatch (ectx, count << 1))) {
+        return ret;
+    }
+    
+    return ECTX_TIME_SLICE;
 }
 

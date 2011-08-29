@@ -253,8 +253,12 @@ struct _tvm_ectx_t {
 	#endif
 	WORD		(*get_time)
 				(ECTX ectx);
-	int		(*run_hook)
-				(ECTX ectx);
+	void *		(*spawn_hook)
+				(void* v);
+        int             (*run_hook)
+                                (ECTX ectx);
+
+        int             thread_id;
 
 	/* Top-level process */
 	char		tlp_fmt[TVM_ECTX_TLP_ARGS];
