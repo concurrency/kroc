@@ -447,7 +447,11 @@ int main (int argc, char *argv[])
     char *fn;
     int f_ret, u_ret;
     int t;
-    
+		int offset;
+		char *base3;
+		char *base1;
+    int *a;
+		int *b;
 
     prog_name	= argv[0]; 
     tvm_argc	= argc;
@@ -486,19 +490,30 @@ int main (int argc, char *argv[])
     ea[1]->spawn_hook = run_multicore; 
     ea[1]->fptr = 13;
 
-    ea[3]->fptr = ea[1]->fptr;
+    // ea[3]->fptr = ea[1]->fptr;
+		
 
-    printf("FPTR 1 mem: [%x]\n", &ea[1]->fptr);
-    printf("FPTR 1: [%x]\n", ea[1]->fptr);
-    printf("FPTR 3: [%x]\n", ea[3]->fptr);
-    printf("FPTR 3 mem: [%x]\n", &ea[3]->fptr);
+		base1 = (char *) ea[1];
+		base3 = (char *) ea[3];
+		offset = offsetof(tvm_ectx_t, fptr);
+		// do the swap
+		a = (int *)(base1 + offset);
+		b = (int *)(base3 + offset);
+		memcpy(&ea[3]->fptr, a, sizeof a);
 
+		//&ea[3]->fptr = a;
+
+		printf("FPTR 1 mem: [%x]\n", &ea[1]->fptr);
+		printf("FPTR 1: [%x]\n", ea[1]->fptr);
+		printf("FPTR 3 mem: [%x]\n", &ea[3]->fptr);	
+		printf("FPTR 3: [%x]\n", ea[3]->fptr);
     ea[1]->fptr = 0xbeef;
 
-    printf("FPTR 1 mem: [%x]\n", &ea[1]->fptr);
-    printf("FPTR 1: [%x]\n", ea[1]->fptr);
-    printf("FPTR 3: [%x]\n", ea[3]->fptr);
-    printf("FPTR 3 mem: [%x]\n", &ea[3]->fptr);
+
+		printf("FPTR 1 mem: [%x]\n", &ea[1]->fptr);
+		printf("FPTR 1: [%x]\n", ea[1]->fptr);
+		printf("FPTR 3 mem: [%x]\n", &ea[3]->fptr);	
+		printf("FPTR 3: [%x]\n", ea[3]->fptr);
 
     printf("SPAWN HOOK 1 mem: [%x]\n", &ea[1]->spawn_hook);
     printf("SPAWN HOOK 1: [%x]\n", ea[1]->spawn_hook);
@@ -519,7 +534,7 @@ int main (int argc, char *argv[])
     scr_channel = NOT_PROCESS_P;
     err_channel = NOT_PROCESS_P;
 
-      int meh=2;
+		int meh=2;
     for (;;) {
         f_ret = run_firmware ();
         printf("CALLING run_user");
