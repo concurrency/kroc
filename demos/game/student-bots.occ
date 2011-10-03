@@ -570,7 +570,7 @@ PROC bot.js219 (VAL []BYTE name, VAL INT ilocn, SHARED CT.GAMECTRL! to.game)
                   TRUE
                     SKIP
               --}}}
-              --ZR{ drop.object
+              --{{{ drop.object
               MOBILE []BYTE msg, oname:
               drop.object; msg; oname
                 [256]BYTE str:
@@ -693,6 +693,7 @@ PROC bot.js219 (VAL []BYTE name, VAL INT ilocn, SHARED CT.GAMECTRL! to.game)
                 d, seed := random (6, seed)
                 t := t PLUS (3000000 + (d TIMES 500000))
               --}}}
+      --}}}
 :
 --}}}
 

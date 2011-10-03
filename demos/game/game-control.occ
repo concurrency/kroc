@@ -43,7 +43,7 @@ PROC game.control (CT.GAMECTRL? in, SHARED CT.GAMECTRL! selflink, CHAN BYTE err!
   MOBILE []BOOL rlinks.ok:
 
   INT nnames:
-  MOBILE []MOBILE []BYTE names:
+  MOBILE []GSTR names:
   MOBILE []BOOL names.ok:
   SEQ
     nrooms := ##MAX.ROOMS
@@ -54,10 +54,12 @@ PROC game.control (CT.GAMECTRL? in, SHARED CT.GAMECTRL! selflink, CHAN BYTE err!
       rlinks.ok[i] := FALSE
 
     nnames := ##MAX.USERS
-    names := MOBILE [nnames]MOBILE []BYTE
+    names := MOBILE [nnames]GSTR
     names.ok := MOBILE [nnames]BOOL
     SEQ i = 0 FOR nnames
-      names.ok[i] := FALSE
+      SEQ
+        names.ok[i] := FALSE
+        names[i][slen] := 0
 
     out.string ("the new occam adventure, version ", 0, err!)
     out.string (##VERSION, 0, err!)
@@ -164,10 +166,11 @@ PROC game.control (CT.GAMECTRL? in, SHARED CT.GAMECTRL! selflink, CHAN BYTE err!
           [128]BYTE f.buf:
           INT f.len:
           BOOL ok:
-          MOBILE []MOBILE []BYTE lines:
+          MOBILE []GSTR lines:
           SEQ
             f.len := 0
             buffer.set.string (f.buf, f.len, ##BASEPATH)
+            buffer.set.string (f.buf, f.len, "/")
             buffer.set.string (f.buf, f.len, rname)
             buffer.set.string (f.buf, f.len, ".desc")
 
@@ -177,7 +180,7 @@ PROC game.control (CT.GAMECTRL? in, SHARED CT.GAMECTRL! selflink, CHAN BYTE err!
                 SKIP
               TRUE
                 SEQ i = 0 FOR SIZE lines
-                  in[out] ! string; lines[i]
+                  in[out] ! string; [lines[i][str] FOR lines[i][slen]]
             in[out] ! end.of.list
           --}}}
         MOBILE []BYTE msg:
@@ -193,12 +196,14 @@ PROC game.control (CT.GAMECTRL? in, SHARED CT.GAMECTRL! selflink, CHAN BYTE err!
           --{{{  attempt to register a name
           IF
             IF i = 0 FOR nnames
-              (names.ok[i]) AND (names[i] = name)
+              (names.ok[i]) AND ([names[i][str] FOR names[i][slen]] = name)
                 in[out] ! name.in.use
             IF i = 0 FOR nnames
               NOT names.ok[i]
+                INITIAL INT nlen IS SIZE name:
                 SEQ
-                  names[i] := name
+                  [names[i][str] FOR nlen] := [name FOR nlen]
+                  names[i][slen] := nlen
                   names.ok[i] := TRUE
                   in[out] ! ok
             TRUE
@@ -209,7 +214,7 @@ PROC game.control (CT.GAMECTRL? in, SHARED CT.GAMECTRL! selflink, CHAN BYTE err!
           --{{{  attempt to unregister a name (always succeeds..)
           IF
             IF i = 0 FOR nnames
-              (names.ok[i]) AND (names[i] = name)
+              (names.ok[i]) AND ([names[i][str] FOR names[i][slen]] = name)
                 SEQ
                   names.ok[i] := FALSE
                   in[out] ! ok
@@ -235,6 +240,9 @@ PROC process.script (VAL []BYTE fname, SHARED CT.GAMECTRL! game.cli, SHARED CT.L
       file.open (fname, O.RDONLY, fd)
       IF
         fd < 0
+          --CLAIM game.cli!
+          --  SEQ
+          --    game.cli[in] ! debug; "failed to open script file"
           SKIP
         TRUE
           [1024]BYTE f.buf:

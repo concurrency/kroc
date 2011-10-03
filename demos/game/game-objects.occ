@@ -41,13 +41,14 @@ PROC triv.object (VAL []BYTE name, VAL INT ilocn, SHARED CT.GAMECTRL! to.game)
     health := 0       -- health given
     ok := TRUE
 
-    MOBILE []MOBILE []BYTE odesclines:
+    MOBILE []GSTR odesclines:
     [256]BYTE fname:
     INT flen:
     INT sline:
     SEQ
       flen := 0
       buffer.set.string (fname, flen, ##BASEPATH)
+      buffer.set.string (fname, flen, "/")
       buffer.set.string (fname, flen, name)
       buffer.set.string (fname, flen, ".odesc")
 
@@ -58,21 +59,21 @@ PROC triv.object (VAL []BYTE name, VAL INT ilocn, SHARED CT.GAMECTRL! to.game)
       IF
         got.desc
           SEQ i = 0 FOR SIZE odesclines
-            INITIAL MOBILE []BYTE thisline IS odesclines[i]:
+            INITIAL GSTR thisline IS odesclines[i]:
             SEQ
               IF
-                (SIZE thisline) > 3
+                thisline[slen] > 3
                   BOOL v.ok:
                   SEQ
                     IF
-                      [thisline FOR 3] = "+d "
-                        damage, v.ok := parse.int ([thisline FROM 3])
-                      [thisline FOR 3] = "+h "
-                        health, v.ok := parse.int ([thisline FROM 3])
+                      [thisline[str] FOR 3] = "+d "
+                        damage, v.ok := parse.int ([thisline[str] FROM 3 FOR (thisline[slen] - 3)])
+                      [thisline[str] FOR 3] = "+h "
+                        health, v.ok := parse.int ([thisline[str] FROM 3 FOR (thisline[slen] - 3)])
                       sline < 0
                         SEQ
                           sline := i
-                          desc := thisline
+                          desc := [thisline[str] FOR thisline[slen]]
                       TRUE
                         SKIP
                     -- if we failed to parse anything, tuff..

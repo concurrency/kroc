@@ -375,12 +375,12 @@ PROC string.owb (CHAN MOBILE []BYTE in?, out!)
   --}}}
   --{{{  PROC msgbuf (CHAN MOBILE []BYTE in?, out!)
   PROC msgbuf (CHAN MOBILE []BYTE in?, out!)
-    [10]CHAN MOBILE []BYTE c:
+    [20]CHAN MOBILE []BYTE c:
     PAR
       mb.buf (in?, c[0]!)
-      PAR i = 0 FOR 9
+      PAR i = 0 FOR 19
         mb.buf (c[i]?, c[i+1]!)
-      mb.buf (c[9]?, out!)
+      mb.buf (c[19]?, out!)
   :
   --}}}
 
@@ -388,7 +388,7 @@ PROC string.owb (CHAN MOBILE []BYTE in?, out!)
   CHAN MOBILE []BYTE resp, local, local2:
   PAR
     SEQ
-      SETPRI (1)
+      SETPRI (28)
       msgbuf (in?, local!)
     --{{{  over-writing buffer
     INITIAL BOOL holding IS FALSE:
@@ -444,8 +444,8 @@ PROC mstr.plex ([]CHAN MOBILE []BYTE in?, CHAN MOBILE []BYTE out!, VAL INT kill.
             out ! str
 :
 --}}}
---{{{  PROC async.drop.object (SHARED CT.ROOMLINK! to.room, MOBILE []BYTE name, CT.OBJECT! objlink)
-PROC async.drop.object (SHARED CT.ROOMLINK! to.room, MOBILE []BYTE name, CT.OBJECT! objlink)
+--{{{  PROC async.drop.object (SHARED CT.ROOMLINK! to.room, VAL []BYTE name, CT.OBJECT! objlink)
+PROC async.drop.object (SHARED CT.ROOMLINK! to.room, VAL []BYTE name, CT.OBJECT! objlink)
   SEQ
     CLAIM to.room
       to.room[in] ! new.object; name; objlink
@@ -510,7 +510,7 @@ PROC if.split (CHAN S.CLIENT.IN in?, out.info!, out.ctrl!, out.local!)
 PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CHAN S.CLIENT.IN ctrl.in?, CHAN S.CLIENT.OUT ctrl.out!, CHAN S.CLIENT.IN local.out!)
   INT nobjects, nholding:
   MOBILE []CT.OBJECT! objects:
-  MOBILE []MOBILE []BYTE onames:
+  MOBILE []GSTR onames:
   MOBILE []BOOL objects.ok:
   [256]BYTE t.buf:
   INT t.len:
@@ -521,7 +521,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
     nobjects := 24
     nholding := 0
     objects := MOBILE [nobjects]CT.OBJECT!
-    onames := MOBILE [nobjects]MOBILE []BYTE
+    onames := MOBILE [nobjects]GSTR
     objects.ok := MOBILE [nobjects]BOOL
     SEQ i = 0 FOR nobjects
       objects.ok[i] := FALSE
@@ -548,10 +548,12 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               IF
                 IF i = 0 FOR nobjects
                   NOT objects.ok[i]
+                    INITIAL INT tnlen IS SIZE tname:
                     SEQ
                       objects[i] := tmp.obj
                       objects.ok[i] := TRUE
-                      onames[i] := tname
+                      [onames[i][str] FOR tnlen] := [tname FOR tnlen]
+                      onames[i][slen] := tnlen
                       nholding := nholding + 1
                 TRUE
                   SEQ
@@ -562,7 +564,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               --{{{  have object ?
               IF
                 IF i = 0 FOR nobjects
-                  objects.ok[i] AND (onames[i] = tname)
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = tname)
                     ctrl.out ! yes
                 TRUE
                   ctrl.out ! no
@@ -628,7 +630,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
                   IF
                     objects.ok[i]
                       SEQ
-                        FORK async.drop.object (d.link, onames[i], objects[i])
+                        FORK async.drop.object (d.link, [onames[i][str] FOR onames[i][slen]], objects[i])
                         objects.ok[i] := FALSE
                     TRUE
                       SKIP
@@ -649,11 +651,11 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
                         wielded = i
                           SEQ
                             t.len := 0
-                            buffer.set.string (t.buf, t.len, onames[i])
+                            buffer.set.string (t.buf, t.len, [onames[i][str] FOR onames[i][slen]])
                             buffer.set.string (t.buf, t.len, " (wielding)")
                             out ! string; [t.buf FOR t.len]
                         TRUE
-                          out ! string; CLONE onames[i]
+                          out ! string; [onames[i][str] FOR onames[i][slen]]
                     TRUE
                       SKIP
                 out ! end.of.list
@@ -706,7 +708,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               SEQ
                 IF
                   IF i = 0 FOR nobjects
-                    objects.ok[i] AND (onames[i] = oname)
+                    objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
                       oidx := i
                   TRUE
                     oidx := -1
@@ -753,7 +755,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
                     objects.ok[i]
                       SEQ
                         objects.ok[i] := FALSE
-                        out ! get.object; onames[i]; objects[i]
+                        out ! get.object; [onames[i][str] FOR onames[i][slen]]; objects[i]
                     TRUE
                       SKIP
                 --}}}
@@ -788,14 +790,14 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
                             TRUE
                               damage := damage - (((damage * health) / 2) / 100)
 
-                    out ! wielding; CLONE onames[wielded]; damage
+                    out ! wielding; [onames[wielded][str] FOR onames[wielded][slen]]; damage
               --}}}
             MOBILE []BYTE oname:
             have.object; oname
               --{{{  test to see if we have an object
               IF
                 IF i = 0 FOR nobjects
-                  objects.ok[i] AND (onames[i] = oname)
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
                     out ! yes
                 TRUE
                   out ! no
@@ -805,7 +807,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               --{{{  examine object
               IF
                 IF j = 0 FOR nobjects
-                  objects.ok[j] AND (onames[j] = oname)
+                  objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
                     SEQ
                       objects[j][in] ! examine
                       objects[j][out] ? CASE name; oname
@@ -818,7 +820,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               --{{{  use object
               IF
                 IF j = 0 FOR nobjects
-                  objects.ok[j] AND (onames[j] = oname)
+                  objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
                     out ! string; "cannot use that"
                 TRUE
                   out ! no
@@ -828,7 +830,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               --{{{  eat object
               IF
                 IF i = 0 FOR nobjects
-                  objects.ok[i] AND (onames[i] = oname)
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
                     INT goodness:
                     SEQ
                       objects[i][in] ! get.health
@@ -870,7 +872,7 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               --{{{  drop object
               IF
                 IF i = 0 FOR nobjects
-                  objects.ok[i] AND (onames[i] = oname)
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
                     SEQ
                       objects.ok[i] := FALSE
                       out ! get.object; oname; objects[i]
@@ -890,14 +892,16 @@ PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CH
               IF
                 IF i = 0 FOR nobjects
                   NOT objects.ok[i]
+                    INITIAL INT tnlen IS SIZE tname:
                     SEQ
                       objects[i] := tmp.obj
                       objects.ok[i] := TRUE
-                      onames[i] := tname
+                      [onames[i][str] FOR tnlen] := [tname FOR tnlen]
+                      onames[i][slen] := tnlen
                       nholding := nholding + 1
                       t.len := 0
                       buffer.set.string (t.buf, t.len, "picked up ")
-                      buffer.set.string (t.buf, t.len, onames[i])
+                      buffer.set.string (t.buf, t.len, [onames[i][str] FOR onames[i][slen]])
                       local.out ! genmsg; [t.buf FOR t.len]
                 TRUE
                   STOP
