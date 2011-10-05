@@ -25,8 +25,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef TVM_USE_FPU
 #include <math.h>
-#include <fenv.h>
 #include <assert.h>
+
+#ifdef HAVE_FENV_H
+#include <fenv.h>
+#else
+#warning Using standard GNU x86 symbols and constants for fegetround/fesetround
+#define FE_TONEAREST	0
+#define FE_TOWARDZERO 	0xc00
+extern int fegetround (void);
+extern int fesetround (int);
+#endif
+
 
 #ifdef TVM_OS_SOLARIS
 /* defines all the floating point versions of sqrt and friends. */

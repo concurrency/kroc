@@ -15,7 +15,7 @@ AC_C_INLINE
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h stdio.h string.h])
-AC_CHECK_HEADERS([sys/types.h math.h inttypes.h])
+AC_CHECK_HEADERS([sys/types.h math.h inttypes.h fenv.h])
 
 #########################
 #  Configuration Options
