@@ -8,8 +8,6 @@
 readonly SCRIPT_DIR="$(dirname "$0")"
 readonly SCRIPT_DIR_ABS="$(cd "${SCRIPT_DIR}" ; pwd -P)"
 
-export NACL_SDK_ROOT=/Users/cgr/src/nacl/native_client_sdk_0_5_1052
-
 readonly BASE_SCRIPT="${NACL_SDK_ROOT}/third_party/scons-2.0.1/script/scons"
 
 export PYTHONPATH="${NACL_SDK_ROOT}/third_party/scons-2.0.1/engine"

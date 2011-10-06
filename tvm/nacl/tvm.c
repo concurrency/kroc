@@ -19,6 +19,8 @@ static PP_Module module_id = 0;
 static struct PPB_Messaging* messaging_interface = NULL;
 static struct PPB_Var* var_interface = NULL;
 
+#include "tvm_nacl.h"
+
 /**
  * Returns a mutable C string contained in the @a var or NULL if @a var is not
  * string.  This makes a copy of the string in the @a var and adds a NULL

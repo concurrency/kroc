@@ -5,10 +5,25 @@
 # found in the LICENSE file.
 
 import make_nacl_env
+import nacl_utils
 import os
 
 nacl_env = make_nacl_env.NaClEnvironment()
 
-sources = ['tvm.c']
+append_arch_flags = nacl_env.AppendArchFlags
+def AppendArchFlags(env, arch_spec):
+	x_append_arch_flags = append_arch_flags.clone(env)
+	x_append_arch_flags(arch_spec)
 
+	arch, subarch = nacl_utils.GetArchFromSpec(arch_spec)
+	libtvm = 'libtvm_' + arch + '_' + subarch
+
+	env.Append(CPPPATH=[libtvm])
+	env.Append(LINKFLAGS=[os.path.join(libtvm, 'libtvm.a')])
+nacl_env.AddMethod(AppendArchFlags)
+
+sources = ['tvm.c']
+#link = ['../../runtime/libtvm/libtvm_x86_32.a']
+
+nacl_env.Append(CPPPATH=['../../runtime/libtvm'])
 nacl_env.AllNaClModules(sources, 'tvm')
