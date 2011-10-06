@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export CC="/Users/cgr/src/nacl/native_client_sdk_0_5_1052/toolchain/mac_x86/bin/nacl-gcc"
+export CC="$NACL_SDK_ROOT/toolchain/mac_x86/bin/nacl-gcc"
 export LIBS="-lppruntime -limc -lplatform -lpthread -lgio -lsrpc -lstdc++ -lm -u PPP_GetInterface -u PPP_ShutdownModule -u PPP_InitializeModule"
 
 make distclean
