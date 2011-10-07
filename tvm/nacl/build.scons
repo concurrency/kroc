@@ -8,7 +8,7 @@ import make_nacl_env
 import nacl_utils
 import os
 
-nacl_env = make_nacl_env.NaClEnvironment()
+nacl_env = make_nacl_env.NaClEnvironment(use_c_plus_plus_libs=True)
 
 append_arch_flags = nacl_env.AppendArchFlags
 def AppendArchFlags(env, arch_spec):
@@ -22,7 +22,7 @@ def AppendArchFlags(env, arch_spec):
 	env.Append(LINKFLAGS=[os.path.join(libtvm, 'libtvm.a')])
 nacl_env.AddMethod(AppendArchFlags)
 
-sources = ['tvm.c']
+sources = ['tvm.cc']
 #link = ['../../runtime/libtvm/libtvm_x86_32.a']
 
 nacl_env.Append(CPPPATH=['../../runtime/libtvm'])
