@@ -26,6 +26,8 @@
 #include "ppapi/cpp/module.h"
 #include "ppapi/cpp/var.h"
 
+#include "tvm_nacl.h"
+
 /// The Instance class.  One of these exists for each instance of your NaCl
 /// module on the web page.  The browser will ask the Module object to create
 /// a new Instance for each occurence of the <embed> tag that has these
@@ -36,11 +38,20 @@
 /// receiving messages from the borwser, and use PostMessage() to send messages
 /// back to the browser.  Note that this interface is entirely asynchronous.
 class TVMInstance : public pp::Instance {
+	private:
+		tvm_instance_t *tvm;
 	public:
 		/// The constructor creates the plugin-side instance.
 		/// @param[in] instance the handle to the browser-side plugin instance.
-		explicit TVMInstance(PP_Instance instance) : pp::Instance(instance) {}
-		virtual ~TVMInstance() {}
+		explicit TVMInstance(PP_Instance instance) : pp::Instance(instance)
+		{
+			tvm = alloc_tvm_instance();
+		}
+		virtual ~TVMInstance()
+		{
+			free_tvm_instance(tvm);
+			tvm = NULL;
+		}
 
 		/// Handler for messages coming in from the browser via postMessage().  The
 		/// @a var_message can contain anything: a JSON string; a string that encodes

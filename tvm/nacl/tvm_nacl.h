@@ -7,6 +7,13 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
+/*}}}*/
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*{{{  tvm_ectx_priv_t - ectx private data */
 #define TVM_ECTX_PRIVATE_DATA 	tvm_ectx_priv_t
@@ -53,3 +60,8 @@ struct _tvm_instance_t {
 tvm_instance_t *alloc_tvm_instance(void);
 void free_tvm_instance(tvm_instance_t *tvm);
 /*}}}*/
+
+
+#ifdef __cplusplus
+}
+#endif
