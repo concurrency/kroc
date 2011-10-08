@@ -30,11 +30,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 #ifdef HAVE_FENV_H
 #include <fenv.h>
 #else
-#warning Using standard GNU x86 symbols and constants for fegetround/fesetround
+#warning No fegetround/fesetround available some floating point instructions will be wrong
 #define FE_TONEAREST	0
 #define FE_TOWARDZERO 	0xc00
-extern int fegetround (void);
-extern int fesetround (int);
+static inline int _not_fesetround(x) {
+	return 1;
+}
+#define fegetround() (0)
+#define fesetround(x) _not_fesetround(x)
 #endif
 
 
