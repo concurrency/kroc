@@ -125,7 +125,7 @@ if (!$output || !@files) {
 
 if (!$machine) {
 	my ($os, undef, $ver, undef, $arch) = uname ();
-	if ($arch =~ /^i.86/ || ($os eq 'Darwin' && $ver =~ /^10\./)) {
+	if ($arch =~ /^i.86/ || ($os eq 'Darwin' && $ver =~ /^1\d\./)) {
 		$machine = 'x86';
 	} else {
 		$machine = $arch;
