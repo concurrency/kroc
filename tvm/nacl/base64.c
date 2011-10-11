@@ -7,7 +7,7 @@ int tvm_base64_decode (const char *src, uint8_t *dst)
 {
 	uint8_t buffer = 0;
 	int length = 0;
-	int state = 0;
+	int byte = 0;
 	int i;
 
 	for (i = 0; src[i] != '\0'; ++i) {
@@ -28,32 +28,32 @@ int tvm_base64_decode (const char *src, uint8_t *dst)
 			continue;
 		}
 
-		switch (state) {
+		switch (byte) {
 			case 0:
-				buffer = bits << 2;
-				state = 1;
+				buffer = (bits << 2);
+				byte = 1;
 				break;
 			case 1:
-				buffer |= (bits & 0xc) >> 4;
+				buffer |= (bits >> 4);
 				dst[length++] = buffer;
 				buffer = bits << 4;
-				state = 2;
+				byte = 2;
 				break;
 			case 2:
 				buffer |= ((bits >> 2) & 0xf);
 				dst[length++] = buffer;
 				buffer = bits << 6;
-				state = 3;
+				byte = 3;
 				break;
 			case 3:
 				buffer |= bits;
 				dst[length++] = buffer;
-				state = 0;
+				byte = 0;
 				break;
 		}
 	}
 
-	if (state > 0) {
+	if (byte > 0) {
 		dst[length++] = buffer;
 	}
 

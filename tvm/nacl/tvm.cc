@@ -72,7 +72,19 @@ class TVMInstance : public pp::Instance {
 			}
 
 			std::string message = var_message.AsString();
-			tvm = alloc_tvm_instance();
+			if (message.find("bytecode") == 0) {
+				uint8_t *data = (uint8_t *) malloc(message.size());
+				size_t data_len = 0;
+
+				data_len = tvm_base64_decode(message.c_str() + 9, data);
+				fprintf (stderr, "message length = %d, data length = %d\n",
+					message.size(), data_len);
+
+				if (tvm) {
+					free_tvm_instance(tvm);
+				}
+				tvm = alloc_tvm_instance();
+			}
 		}
 };
 

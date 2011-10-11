@@ -52,6 +52,10 @@
         statusField.innerHTML = statusText;
       }
     }
+
+    function loadBytecode(code) {
+      tvm.postMessage('bytecode:' + code);
+    }
   </script>
 </head>
 <body onload="pageDidLoad()">
@@ -90,5 +94,9 @@
 
 <h2>Status</h2>
 <div id="status_field">NO-STATUS</div>
+<h2>Testing</h2>
+<div>
+ <button onclick="loadBytecode('SGVsbG8gd29ybGQhCg==')">Load Bytecode</button>
+</div>
 </body>
 </html>
