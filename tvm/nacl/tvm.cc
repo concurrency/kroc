@@ -45,12 +45,14 @@ class TVMInstance : public pp::Instance {
 		/// @param[in] instance the handle to the browser-side plugin instance.
 		explicit TVMInstance(PP_Instance instance) : pp::Instance(instance)
 		{
-			tvm = alloc_tvm_instance();
+			tvm = NULL;
 		}
 		virtual ~TVMInstance()
 		{
-			free_tvm_instance(tvm);
-			tvm = NULL;
+			if(tvm) {
+				free_tvm_instance(tvm);
+				tvm = NULL;
+			}
 		}
 
 		/// Handler for messages coming in from the browser via postMessage().  The
@@ -65,7 +67,12 @@ class TVMInstance : public pp::Instance {
 		/// with the parameter.
 		/// @param[in] var_message The message posted by the browser.
 		virtual void HandleMessage(const pp::Var& var_message) {
-			// TODO(sdk_user): 1. Make this function handle the incoming message.
+			if (!var_message.is_string()) {
+				return;
+			}
+
+			std::string message = var_message.AsString();
+			tvm = alloc_tvm_instance();
 		}
 };
 

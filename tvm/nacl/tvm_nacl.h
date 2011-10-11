@@ -1,12 +1,16 @@
 
 /*{{{  Includes */
+#include <unistd.h>
+
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
-#include <time.h>
-#include <unistd.h>
+
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
+#include <time.h>
+#include <sys/nacl_syscalls.h>
 /*}}}*/
 
 
@@ -54,6 +58,10 @@ struct _tvm_instance_t {
 	WORD 		err_channel;
 	WORD 		tlp_argv[3];
 };
+/*}}}*/
+
+/*{{{  base64.c */
+int tvm_base64_decode (const char *src, uint8_t *dst);
 /*}}}*/
 
 /*{{{  instance.c */
