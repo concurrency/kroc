@@ -111,7 +111,7 @@ ECTX tvm_allocate_ectx (tvm_instance_t *tvm, bytecode_t *bc, const char *tlp, WO
 
 	tvm_ectx_init (&(tvm->tvm), vm);
 	add_system_functions (vm);
-	//install_sffi (vm);
+	tvm_install_sffi (vm);
 
 	vm->ffi_table 		= bc->ffi_table;
 	vm->ffi_table_length 	= bc->ffi_table_length;

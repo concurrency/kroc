@@ -1,5 +1,8 @@
 
 /*{{{  Includes */
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 
 #include <errno.h>
@@ -13,6 +16,9 @@
 #include <sys/nacl_syscalls.h>
 /*}}}*/
 
+#ifndef VERSION
+#define VERSION "1.0.0"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,6 +79,10 @@ int tvm_base64_decode (const char *src, uint8_t *dst);
 tvm_instance_t *tvm_alloc_instance(void);
 void tvm_free_instance(tvm_instance_t *tvm);
 int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len);
+/*}}}*/
+
+/*{{{  sffi.c */
+void tvm_install_sffi (ECTX ectx);
 /*}}}*/
 
 /*{{{  tbc.c */
