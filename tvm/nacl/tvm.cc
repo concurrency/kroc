@@ -82,11 +82,8 @@ class TVMInstance : public pp::Instance {
 				size_t data_len = 0;
 				int ret;
 
-				data_len = tvm_base64_decode(message.c_str() + 9, data);
-				fprintf (stderr, "message length = %d, data length = %d\n",
-					message.size(), data_len);
-
 				ReleaseAndClean();
+				data_len = tvm_base64_decode(message.c_str() + 9, data);
 				tvm = tvm_alloc_instance();
 				ret = tvm_load_bytecode(tvm, data, data_len);
 				free (data);

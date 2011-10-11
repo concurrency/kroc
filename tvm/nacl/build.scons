@@ -23,7 +23,7 @@ def AppendArchFlags(env, arch_spec):
 	env.Append(LIBS=['tvm'])
 nacl_env.AddMethod(AppendArchFlags)
 
-sources = ['tvm.cc', 'instance.c', 'base64.c', 'tbc.c']
+sources = ['tvm.cc', 'instance.c', 'base64.c', 'tbc.c', 'vm.c']
 #link = ['../../runtime/libtvm/libtvm_x86_32.a']
 
 nacl_env.Append(CPPPATH=['../../runtime/libtvm'])

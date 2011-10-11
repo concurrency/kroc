@@ -24,7 +24,11 @@ extern "C" {
 
 typedef struct _bytecode_t bytecode_t;
 typedef struct _tvm_instance_t tvm_instance_t;
-typedef void *tvm_ectx_priv_t;
+typedef struct _tvm_ectx_priv_t {
+	bytecode_t      *bytecode;
+	void            *memory;
+	int             memory_length;
+} tvm_ectx_priv_t;
 /*}}}*/
 
 #include <tvm.h>
@@ -46,6 +50,7 @@ struct _bytecode_t {
 /*{{{  tvm_instance_t - TVM instance data structure */
 struct _tvm_instance_t {
 	tvm_t		tvm;
+	char		*last_error;
 
 	ECTX		firmware, user;
 	bytecode_t	*fw_bc, *us_bc;
@@ -73,6 +78,11 @@ int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len);
 /*{{{  tbc.c */
 void tvm_free_bytecode (bytecode_t *bc);
 bytecode_t *tvm_alloc_bytecode (uint8_t *tbc, size_t tbc_len);
+/*}}}*/
+
+/*{{{  vm.c */
+ECTX tvm_allocate_ectx (tvm_instance_t *tvm, bytecode_t *bc, const char *tlp, WORD *argv);
+void tvm_free_ectx (ECTX vm);
 /*}}}*/
 
 #ifdef __cplusplus
