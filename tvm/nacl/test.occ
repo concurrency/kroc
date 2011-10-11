@@ -1,0 +1,7 @@
+PROC main(CHAN BYTE kyb?, scr!, err!)
+  INT x:
+  SEQ
+    x := 0
+    SEQ i = 0 FOR 42
+      x := x + 1
+:

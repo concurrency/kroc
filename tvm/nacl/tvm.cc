@@ -40,6 +40,14 @@
 class TVMInstance : public pp::Instance {
 	private:
 		tvm_instance_t *tvm;
+
+		void ReleaseAndClean()
+		{
+			if(tvm) {
+				tvm_free_instance(tvm);
+				tvm = NULL;
+			}
+		}
 	public:
 		/// The constructor creates the plugin-side instance.
 		/// @param[in] instance the handle to the browser-side plugin instance.
@@ -49,10 +57,7 @@ class TVMInstance : public pp::Instance {
 		}
 		virtual ~TVMInstance()
 		{
-			if(tvm) {
-				free_tvm_instance(tvm);
-				tvm = NULL;
-			}
+			ReleaseAndClean();
 		}
 
 		/// Handler for messages coming in from the browser via postMessage().  The
@@ -75,15 +80,22 @@ class TVMInstance : public pp::Instance {
 			if (message.find("bytecode") == 0) {
 				uint8_t *data = (uint8_t *) malloc(message.size());
 				size_t data_len = 0;
+				int ret;
 
 				data_len = tvm_base64_decode(message.c_str() + 9, data);
 				fprintf (stderr, "message length = %d, data length = %d\n",
 					message.size(), data_len);
 
-				if (tvm) {
-					free_tvm_instance(tvm);
+				ReleaseAndClean();
+				tvm = tvm_alloc_instance();
+				ret = tvm_load_bytecode(tvm, data, data_len);
+				free (data);
+
+				if (ret == 0) {
+					PostMessage(pp::Var("bytecode loaded"));
+				} else {
+					PostMessage(pp::Var("invalid bytecode"));
 				}
-				tvm = alloc_tvm_instance();
 			}
 		}
 };

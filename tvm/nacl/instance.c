@@ -96,7 +96,7 @@ static int error_out_no_errno (const char *fmt, ...)
 	return -1;
 }
 
-tvm_instance_t *alloc_tvm_instance(void)
+tvm_instance_t *tvm_alloc_instance(void)
 {
 	tvm_instance_t *tvm = malloc(sizeof(tvm_instance_t));
 
@@ -104,16 +104,37 @@ tvm_instance_t *alloc_tvm_instance(void)
 
 	tvm_init(&(tvm->tvm));
 
+	tvm->fw_bc = NULL;
+	tvm->us_bc = NULL;
+
 	tvm->kyb_channel = NOT_PROCESS_P;
 	tvm->scr_channel = NOT_PROCESS_P;
 	tvm->err_channel = NOT_PROCESS_P;
 
-	return NULL;
+	return tvm;
 }
 
-void free_tvm_instance(tvm_instance_t *tvm)
+void tvm_free_instance(tvm_instance_t *tvm)
 {
 	// FIXME: release contexts
+	if (tvm->fw_bc)
+		tvm_free_bytecode(tvm->fw_bc);
+	if (tvm->us_bc)
+		tvm_free_bytecode(tvm->us_bc);
 
 	free(tvm);
+}
+
+int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len)
+{
+	if (tvm->us_bc)
+		tvm_free_bytecode(tvm->us_bc);
+
+	tvm->us_bc = tvm_alloc_bytecode(tbc, tbc_len);
+
+	if (tvm->us_bc) {
+		return 0;
+	} else {
+		return -1;
+	}
 }

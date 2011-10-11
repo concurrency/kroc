@@ -3,6 +3,7 @@
 <head>
   <title>Tvm!</title>
 
+  <script src="jquery.min.js"></script>
   <script type="text/javascript">
     TvmModule = null;  // Global application object.
     statusText = 'NO-STATUS';
@@ -56,6 +57,12 @@
     function loadBytecode(code) {
       tvm.postMessage('bytecode:' + code);
     }
+
+    function fetchBytecode(url) {
+      $.getJSON(url, function (data) {
+	loadBytecode(data);
+      });
+    }
   </script>
 </head>
 <body onload="pageDidLoad()">
@@ -96,7 +103,7 @@
 <div id="status_field">NO-STATUS</div>
 <h2>Testing</h2>
 <div>
- <button onclick="loadBytecode('SGVsbG8gd29ybGQhCg==')">Load Bytecode</button>
+ <button onclick="fetchBytecode('test.json')">Load Bytecode</button>
 </div>
 </body>
 </html>
