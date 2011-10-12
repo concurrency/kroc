@@ -114,17 +114,22 @@ tvm_instance_t *tvm_alloc_instance(void)
 
 	tvm_init(&(tvm->tvm));
 
-	tvm->stop = 0;
-	tvm->last_error = NULL;
-	tvm->fw_bc = NULL;
-	tvm->us_bc = NULL;
+	tvm->stop		= 0;
+	tvm->last_error 	= NULL;
+	tvm->fw_bc		= NULL;
+	tvm->us_bc		= NULL;
 
-	tvm->user = NULL;
-	tvm->firmware = NULL;
+	tvm->user		= NULL;
+	tvm->firmware		= NULL;
 
-	tvm->kyb_channel = NOT_PROCESS_P;
-	tvm->scr_channel = NOT_PROCESS_P;
-	tvm->err_channel = NOT_PROCESS_P;
+	tvm->kyb_channel 	= NOT_PROCESS_P;
+	tvm->scr_channel 	= NOT_PROCESS_P;
+	tvm->err_channel 	= NOT_PROCESS_P;
+
+	tvm->handle		= NULL;
+	tvm->read_char		= NULL;
+	tvm->write_screen	= NULL;
+	tvm->write_error	= NULL;
 
 	return tvm;
 }
@@ -314,7 +319,7 @@ static inline int run_firmware (ECTX firmware)
 	}
 
 	/* Being here means something unexpected happened... */
-	fprintf (stderr, "Firmware failed; state = %c\n", firmware->state);
+	error_out_no_errno (firmware->priv.instance, "firmware failed; state = %c\n", firmware->state);
 	
 	return ECTX_ERROR;
 }
@@ -347,9 +352,11 @@ int tvm_run_instance(tvm_instance_t *tvm)
 	ECTX user = tvm->user;
 	int f_ret, u_ret;
 	
-	while (!tvm->stop) {
+	do {
 		f_ret = run_firmware (firmware);
 		u_ret = run_user (user);
+
+		fprintf (stderr, "f_ret = %c, u_ret = %c\n", f_ret, u_ret);
 
 		if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
 			(u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
@@ -363,7 +370,7 @@ int tvm_run_instance(tvm_instance_t *tvm)
 			run_firmware (firmware);
 			break;
 		}
-	}
+	} while (!tvm->stop);
 	
 	if ((!tvm->stop) && (u_ret == ECTX_ERROR)) {
 		tbc_t *tbc = user->priv.bytecode->tbc;

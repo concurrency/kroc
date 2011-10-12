@@ -86,11 +86,29 @@ class TVMInstance : public pp::Instance {
 			}
 		}
 
+		static int ReadChar(tvm_instance_t *tvm)
+		{
+			return -1;
+		}
+
+		static void WriteScreen(tvm_instance_t *tvm, const char *buffer, int length)
+		{
+		}
+		
+		static void WriteError(tvm_instance_t *tvm, const char byte)
+		{
+		}
+
 		static void *TVMThread(void *param)
 		{
 			TVMInstance *instance = static_cast<TVMInstance *>(param);
 			tvm_instance_t *tvm = instance->tvm;
 			
+			tvm->handle		= (void *) instance;
+			tvm->read_char		= &ReadChar;
+			tvm->write_screen	= &WriteScreen;
+			tvm->write_error	= &WriteError;
+
 			fprintf (stderr, "running\n");
 			instance->ExternalPostMessage("state:running");
 

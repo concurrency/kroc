@@ -14,6 +14,7 @@ static int _read_char (ECTX ectx, WORD args[])
 	}
 	#endif
 
+	fprintf (stderr, "read_char\n");
 	write_word (ch, -1);
 	
 	return SFFI_OK;
@@ -25,8 +26,10 @@ static int write_screen (ECTX ectx, WORD args[])
 	char *buffer	= (char *) wordptr_real_address ((WORDPTR) args[0]);
 	WORD length	= args[1];
 
+	fprintf (stderr, "write_screen: ");
 	if (length > 0) {
 		fwrite (buffer, length, 1, stdout);
+		ectx->priv.instance->write_screen(ectx->priv.instance, buffer, length);
 	}
 	fflush (stdout);
 	
@@ -36,8 +39,10 @@ static int write_screen (ECTX ectx, WORD args[])
 /* PROC write.error (VAL BYTE ch) */
 static int write_error (ECTX ectx, WORD args[])
 {
+	fprintf (stderr, "write_error: ");
 	fputc (args[0], stderr);
 	fflush (stderr);
+	ectx->priv.instance->write_error(ectx->priv.instance, args[0]);
 	return SFFI_OK;
 }
 

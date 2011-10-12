@@ -158,6 +158,7 @@ ECTX tvm_allocate_ectx (tvm_instance_t *tvm, bytecode_t *bc, const char *tlp, WO
 	vm->priv.bytecode	= bc;
 	vm->priv.memory		= mem;
 	vm->priv.memory_length	= mem_len;
+	vm->priv.instance	= tvm;
 
 	return vm;
 }

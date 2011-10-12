@@ -34,6 +34,7 @@ typedef struct _tvm_ectx_priv_t {
 	bytecode_t      *bytecode;
 	void            *memory;
 	int             memory_length;
+	tvm_instance_t	*instance;
 } tvm_ectx_priv_t;
 /*}}}*/
 
@@ -69,6 +70,11 @@ struct _tvm_instance_t {
 	WORD		scr_channel;
 	WORD 		err_channel;
 	WORD 		tlp_argv[3];
+
+	void		*handle;
+	int		(*read_char)(tvm_instance_t *);
+	void		(*write_screen)(tvm_instance_t *, const char *, int);
+	void		(*write_error)(tvm_instance_t *, char);
 };
 /*}}}*/
 
