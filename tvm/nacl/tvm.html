@@ -63,6 +63,10 @@
 	loadBytecode(data);
       });
     }
+
+    function startTVM() {
+    	tvm.postMessage('start');
+    }
   </script>
 </head>
 <body onload="pageDidLoad()">
@@ -104,6 +108,8 @@
 <h2>Testing</h2>
 <div>
  <button onclick="fetchBytecode('test.json')">Load Bytecode</button>
+ <br/>
+ <button onclick="startTVM()">Start</button>
 </div>
 </body>
 </html>

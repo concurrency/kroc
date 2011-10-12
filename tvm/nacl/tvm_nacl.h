@@ -84,6 +84,7 @@ const uint8_t *tvm_nacl_firmware(size_t *length);
 tvm_instance_t *tvm_alloc_instance(void);
 void tvm_free_instance(tvm_instance_t *tvm);
 int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len);
+int tvm_run_instance(tvm_instance_t *tvm);
 /*}}}*/
 
 /*{{{  sffi.c */

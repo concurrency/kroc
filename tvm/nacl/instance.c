@@ -341,7 +341,8 @@ static inline int run_user (ECTX user)
 	return ECTX_ERROR;
 }
 
-int tvm_run_instance(tvm_instance_t *tvm) {
+int tvm_run_instance(tvm_instance_t *tvm)
+{
 	ECTX firmware = tvm->firmware;
 	ECTX user = tvm->user;
 	int f_ret, u_ret;
