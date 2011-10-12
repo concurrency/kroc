@@ -31,16 +31,25 @@
 
 #include "tvm_nacl.h"
 
+#define STATE_STOPPED 0
+#define STATE_RUNNING 1
+#define STATE_FINISHED 2
+
 class MessageBuffer;
 class MessageBuffer {
 	public:
 		MessageBuffer *next; 
-		pp::Var *message;
+		std::string *message;
 		
-		explicit MessageBuffer(const pp::Var &source)
+		explicit MessageBuffer(const std::string source)
 		{
 			next = NULL;
-			message = new pp::Var(source);
+			message = new std::string(source);
+		}
+		explicit MessageBuffer(const char *source)
+		{
+			next = NULL;
+			message = new std::string(source);
 		}
 		virtual ~MessageBuffer()
 		{
@@ -61,12 +70,12 @@ class TVMInstance : public pp::Instance {
 	private:
 		pp::Core *core;
 		tvm_instance_t *tvm;
-		volatile bool running;
+		volatile int state;
 		pthread_t tvm_thread;
 		mutable pthread_mutex_t tvm_mutex;
 		mutable pthread_mutex_t msg_mutex;
-		MessageBuffer *msg_queue_head;
-		MessageBuffer *msg_queue_tail;
+		volatile MessageBuffer *msg_queue_head;
+		volatile MessageBuffer *msg_queue_tail;
 		pp::CompletionCallbackFactory<TVMInstance> cc_factory;
 
 		void ReleaseAndClean()
@@ -83,18 +92,21 @@ class TVMInstance : public pp::Instance {
 			tvm_instance_t *tvm = instance->tvm;
 			
 			fprintf (stderr, "running\n");
-			instance->ExternalPostMessage(pp::Var("state:running"));
+			instance->ExternalPostMessage("state:running");
 
 			int ret = tvm_run_instance(tvm);
 			if (ret != 0) {
 				std::string msg = std::string("error:");
 				msg.append(tvm->last_error);
-				instance->ExternalPostMessage(pp::Var(msg));
-				// FIXME: tidy up?
+				instance->ExternalPostMessage(msg);
 			}
 
-			instance->ExternalPostMessage(pp::Var("state:stopped"));
+			instance->ExternalPostMessage("state:stopped");
 			fprintf (stderr, "stopped (%d)\n", ret);
+
+			pthread_mutex_lock(&(instance->tvm_mutex));
+			instance->state = STATE_FINISHED;
+			pthread_mutex_unlock(&(instance->tvm_mutex));
 
 			return NULL;
 		}
@@ -107,7 +119,7 @@ class TVMInstance : public pp::Instance {
 
 				pthread_mutex_lock(&msg_mutex);
 				if (msg_queue_head != NULL) {
-					MessageBuffer *buffer = msg_queue_head;
+					MessageBuffer *buffer = (MessageBuffer *) msg_queue_head;
 					if ((msg_queue_head = buffer->next) == NULL) {
 						msg_queue_tail = NULL;
 					} else {
@@ -118,12 +130,16 @@ class TVMInstance : public pp::Instance {
 				}
 				pthread_mutex_unlock(&msg_mutex);
 			} while (pending);
+			
+			if (state == STATE_RUNNING) {
+				pp::CompletionCallback cc 
+					= cc_factory.NewCallback(&TVMInstance::DispatchMessages);
+				core->CallOnMainThread(10, cc, 0);
+			}
 		}
 
-		void ExternalPostMessage(const pp::Var &message)
-		{
-			MessageBuffer *buffer = new MessageBuffer(message);
-			
+		void ExternalPostMessage(MessageBuffer *buffer)
+		{	
 			pthread_mutex_lock(&msg_mutex);
 			msg_queue_tail = buffer;
 			if (msg_queue_head == NULL) {
@@ -132,39 +148,47 @@ class TVMInstance : public pp::Instance {
 				msg_queue_head->next = buffer;
 			}
 			pthread_mutex_unlock(&msg_mutex);
-
-			//pp::CompletionCallback cc = cc_factory.NewCallback(&TVMInstance::DispatchMessages);
-			//core->CallOnMainThread(0, cc, 0);
+		}
+		void ExternalPostMessage(const std::string message)
+		{
+			ExternalPostMessage(new MessageBuffer(message));
+		}
+		void ExternalPostMessage(const char *message)
+		{
+			ExternalPostMessage(new MessageBuffer(message));
 		}
 
 		void StartTVM()
 		{
 			pthread_mutex_lock(&tvm_mutex);
 			pthread_create(&tvm_thread, NULL, TVMThread, this);
-			running = true;
+			state = STATE_RUNNING;
 			pthread_mutex_unlock(&tvm_mutex);
+
+			DispatchMessages(0);
 		}
 
 		void StopTVM()
 		{
 			pthread_mutex_lock(&tvm_mutex);
-			if (running) {
+			if (state != STATE_STOPPED) {
 				tvm->stop = 1;
 				pthread_join(tvm_thread, NULL);
-				running = false;
+				state = STATE_STOPPED; 
 			}
 			pthread_mutex_unlock(&tvm_mutex);
 		}
 	public:
 		/// The constructor creates the plugin-side instance.
 		/// @param[in] instance the handle to the browser-side plugin instance.
-		explicit TVMInstance(PP_Instance instance, pp::Core *core_) : pp::Instance(instance)
+		explicit TVMInstance(PP_Instance instance, pp::Core *core_) : 
+			pp::Instance(instance), cc_factory(this)
 		{
 			core = core_;
 			pthread_mutex_init(&tvm_mutex, NULL);
 			pthread_mutex_init(&msg_mutex, NULL);
 			tvm = NULL;
-			running = false;
+			state = STATE_STOPPED;
 		}
 		virtual ~TVMInstance()
 		{
@@ -189,7 +213,7 @@ class TVMInstance : public pp::Instance {
 
 			std::string message = var_message.AsString();
 			if (message.find("bytecode:") == 0) {
-				if (running) {
+				if (state == STATE_RUNNING) {
 					PostMessage(pp::Var("error:already running"));
 					return;
 				}
@@ -212,13 +236,13 @@ class TVMInstance : public pp::Instance {
 					PostMessage(pp::Var("error:invalid bytecode"));
 				}
 			} else if (message.find("start") == 0) {
-				if (tvm) {
+				if (tvm && (state == STATE_STOPPED)) {
 					StartTVM();
 				} else {
 					PostMessage(pp::Var("error:no bytecode specified"));
 				}
 			} else if (message.find("stop") == 0) {
-				if (running) {
+				if (state != STATE_STOPPED) {
 					StopTVM();
 				} else {
 					PostMessage(pp::Var("error:not running"));
