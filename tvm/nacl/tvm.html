@@ -67,6 +67,9 @@
     function startTVM() {
     	tvm.postMessage('start');
     }
+    function stopTVM() {
+    	tvm.postMessage('stop');
+    }
   </script>
 </head>
 <body onload="pageDidLoad()">
@@ -110,6 +113,8 @@
  <button onclick="fetchBytecode('test.json')">Load Bytecode</button>
  <br/>
  <button onclick="startTVM()">Start</button>
+ <br/>
+ <button onclick="stopTVM()">Stop</button>
 </div>
 </body>
 </html>

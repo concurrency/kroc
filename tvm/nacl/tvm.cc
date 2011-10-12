@@ -101,7 +101,7 @@ class TVMInstance : public pp::Instance {
 				instance->ExternalPostMessage(msg);
 			}
 
-			instance->ExternalPostMessage("state:stopped");
+			instance->ExternalPostMessage("state:finished");
 			fprintf (stderr, "stopped (%d)\n", ret);
 
 			pthread_mutex_lock(&(instance->tvm_mutex));
@@ -174,7 +174,9 @@ class TVMInstance : public pp::Instance {
 			if (state != STATE_STOPPED) {
 				tvm->stop = 1;
 				pthread_join(tvm_thread, NULL);
-				state = STATE_STOPPED; 
+				state = STATE_STOPPED;
+				ExternalPostMessage("state:stopped");
+				DispatchMessages(0);
 			}
 			pthread_mutex_unlock(&tvm_mutex);
 		}
@@ -213,8 +215,8 @@ class TVMInstance : public pp::Instance {
 
 			std::string message = var_message.AsString();
 			if (message.find("bytecode:") == 0) {
-				if (state == STATE_RUNNING) {
-					PostMessage(pp::Var("error:already running"));
+				if (state != STATE_STOPPED) {
+					PostMessage(pp::Var("error:can only load bytecode when stopped"));
 					return;
 				}
 				
@@ -236,10 +238,12 @@ class TVMInstance : public pp::Instance {
 					PostMessage(pp::Var("error:invalid bytecode"));
 				}
 			} else if (message.find("start") == 0) {
-				if (tvm && (state == STATE_STOPPED)) {
-					StartTVM();
-				} else {
+				if (!tvm) {
 					PostMessage(pp::Var("error:no bytecode specified"));
+				} else if (state != STATE_STOPPED) {
+					PostMessage(pp::Var("error:already running"));
+				} else {
+					StartTVM();
 				}
 			} else if (message.find("stop") == 0) {
 				if (state != STATE_STOPPED) {
