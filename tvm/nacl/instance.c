@@ -114,6 +114,7 @@ tvm_instance_t *tvm_alloc_instance(void)
 
 	tvm_init(&(tvm->tvm));
 
+	tvm->stop = 0;
 	tvm->last_error = NULL;
 	tvm->fw_bc = NULL;
 	tvm->us_bc = NULL;
@@ -296,6 +297,112 @@ int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len)
 		return -3;
 	}
 
+	tvm->stop = 0;
+
 	return 0;
 }
+
+static inline int run_firmware (ECTX firmware)
+{
+	int ret = tvm_run (firmware);
+
+	if (ret == ECTX_SLEEP) {
+		return ret; /* OK - timer sleep */
+	} else if (ret == ECTX_EMPTY) {
+		/* FIXME: check deadlock */
+		return ret;
+	}
+
+	/* Being here means something unexpected happened... */
+	fprintf (stderr, "Firmware failed; state = %c\n", firmware->state);
 	
+	return ECTX_ERROR;
+}
+
+static inline int run_user (ECTX user)
+{
+	int ret = tvm_run_count (user, 10000);
+
+	switch (ret) {
+		case ECTX_PREEMPT:
+		case ECTX_SHUTDOWN:
+		case ECTX_SLEEP:
+		case ECTX_TIME_SLICE:
+			return ret; /* OK */
+		case ECTX_EMPTY:
+			if (tvm_ectx_waiting_on (user, user->priv.memory, user->priv.memory_length)) {
+				return ret; /* OK - waiting for firmware */
+			}
+			break;
+		default:
+			break;
+	}
+
+	return ECTX_ERROR;
+}
+
+int tvm_run_instance(tvm_instance_t *tvm) {
+	ECTX firmware = tvm->firmware;
+	ECTX user = tvm->user;
+	int f_ret, u_ret;
+	
+	while (!tvm->stop) {
+		f_ret = run_firmware (firmware);
+		u_ret = run_user (user);
+
+		if ((f_ret == ECTX_EMPTY || f_ret == ECTX_SLEEP) &&
+			(u_ret == ECTX_EMPTY || u_ret == ECTX_SLEEP)) {
+			if (firmware->fptr == NOT_PROCESS_P && user->fptr == NOT_PROCESS_P) {
+				tvm_sleep (tvm);
+			}
+		} else if (f_ret == ECTX_ERROR || u_ret == ECTX_ERROR) {
+			break;
+		} else if (u_ret == ECTX_SHUTDOWN) {
+			/* Run firmware to clear buffers */
+			run_firmware (firmware);
+			break;
+		}
+	}
+	
+	if ((!tvm->stop) && (u_ret == ECTX_ERROR)) {
+		tbc_t *tbc = user->priv.bytecode->tbc;
+
+		if (tbc->debug) {
+			tbc_dbg_t	*dbg = tbc->debug;
+			tbc_lnd_t	*ln;
+			tenc_str_t 	*file;
+			int offset = user->iptr - tbc->bytecode;
+			int i = 0;
+
+			while (i < dbg->n_lnd) {
+				if (dbg->lnd[i].offset > offset) {
+					break;
+				}
+				i++;
+			}
+			ln = &(dbg->lnd[i - 1]);
+
+			file = dbg->files;
+			for (i = 0; i < ln->file; ++i) {
+				file = file->next;
+			}
+
+			error_out_no_errno(
+				tvm, 
+				"Program failed at %s:%d, state = %c, eflags = %08x",
+				file->str, ln->line,
+				user->state, user->eflags
+			);
+		} else {
+			error_out_no_errno(
+				tvm, 
+				"Program failed, state = %c, eflags = %08x",
+				user->state, user->eflags
+			);
+		}
+
+		return 1;
+	} else {
+		return 0;
+	}
+}

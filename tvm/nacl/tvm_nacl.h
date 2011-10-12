@@ -56,6 +56,7 @@ struct _bytecode_t {
 /*{{{  tvm_instance_t - TVM instance data structure */
 struct _tvm_instance_t {
 	tvm_t		tvm;
+	volatile int	stop;
 	char		*last_error;
 
 	ECTX		firmware, user;
