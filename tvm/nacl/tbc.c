@@ -46,7 +46,7 @@ void tvm_free_bytecode (bytecode_t *bc)
 	free (bc);
 }
 
-bytecode_t *tvm_alloc_bytecode (uint8_t *tbc, size_t tbc_len)
+bytecode_t *tvm_alloc_bytecode (const uint8_t *tbc, size_t tbc_len)
 {
 	bytecode_t *bc	= (bytecode_t *) malloc (sizeof (bytecode_t));
 

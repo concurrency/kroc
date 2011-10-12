@@ -75,6 +75,10 @@ struct _tvm_instance_t {
 int tvm_base64_decode (const char *src, uint8_t *dst);
 /*}}}*/
 
+/*{{{  firmware.c */
+const uint8_t *tvm_nacl_firmware(size_t *length);
+/*}}}*/
+
 /*{{{  instance.c */
 tvm_instance_t *tvm_alloc_instance(void);
 void tvm_free_instance(tvm_instance_t *tvm);
@@ -87,7 +91,7 @@ void tvm_install_sffi (ECTX ectx);
 
 /*{{{  tbc.c */
 void tvm_free_bytecode (bytecode_t *bc);
-bytecode_t *tvm_alloc_bytecode (uint8_t *tbc, size_t tbc_len);
+bytecode_t *tvm_alloc_bytecode (const uint8_t *tbc, size_t tbc_len);
 /*}}}*/
 
 /*{{{  vm.c */

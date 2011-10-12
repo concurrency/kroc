@@ -128,20 +128,58 @@ tvm_instance_t *tvm_alloc_instance(void)
 	return tvm;
 }
 
+static void remove_firmware_and_ectx(tvm_instance_t *tvm)
+{
+	if (tvm->fw_bc) {
+		tvm_free_bytecode(tvm->fw_bc);
+		tvm->fw_bc = NULL;
+	}
+	if (tvm->firmware) {
+		tvm_free_ectx(tvm->firmware);
+		tvm->firmware = NULL;
+	}
+	if (tvm->us_bc) {
+		tvm_free_bytecode(tvm->us_bc);
+		tvm->us_bc = NULL;
+	}
+	if (tvm->user) {
+		tvm_free_ectx(tvm->user);
+		tvm->user = NULL;
+	}
+}
+
 void tvm_free_instance(tvm_instance_t *tvm)
 {
-	if (tvm->user)
-		tvm_free_ectx(tvm->user);
-	if (tvm->firmware)
-		tvm_free_ectx(tvm->firmware);
-	if (tvm->fw_bc)
-		tvm_free_bytecode(tvm->fw_bc);
-	if (tvm->us_bc)
-		tvm_free_bytecode(tvm->us_bc);
+	remove_firmware_and_ectx(tvm);
+	
 	if (tvm->last_error)
 		free(tvm->last_error);
 
 	free(tvm);
+}
+
+static int install_firmware_ctx (tvm_instance_t *tvm)
+{
+	const uint8_t *tbc;
+	bytecode_t *fw_bc;
+	size_t tbc_len;
+
+	tbc = tvm_nacl_firmware(&tbc_len);
+
+	if ((fw_bc = tvm_alloc_bytecode(tbc, tbc_len)) == NULL) {
+		error_out_no_errno (tvm, "failed to load/decode firmware image");
+		return -1;
+	}
+
+	if ((tvm->firmware = tvm_allocate_ectx (tvm, fw_bc, "!??", tvm->tlp_argv)) == NULL) {
+		error_out_no_errno (tvm, "unable to allocate firmware execution context");
+		tvm_free_bytecode (fw_bc);
+		return -1;
+	}
+
+	tvm->fw_bc = fw_bc;
+
+	return 0;
 }
 
 static int install_user_ctx (tvm_instance_t *tvm, bytecode_t *us_bc)
@@ -227,22 +265,20 @@ static int install_user_ctx (tvm_instance_t *tvm, bytecode_t *us_bc)
 	
 	if (argv != NULL)
 		free (argv);
-	if (tvm->user == NULL)
+	if (tvm->user == NULL) {
+		error_out_no_errno (tvm, "unable to allocate user execution context");
 		return -1;
+	}
 
 	return 0;
 }
+
 
 int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len)
 {
 	bytecode_t *us_bc;
 
-	if (tvm->us_bc) {
-		tvm_free_bytecode(tvm->us_bc);
-		tvm_free_ectx(tvm->user);
-		tvm->us_bc = NULL;
-		tvm->user = NULL;
-	}
+	remove_firmware_and_ectx(tvm);
 
 	if ((us_bc = tvm_alloc_bytecode(tbc, tbc_len)) == NULL) {
 		return -1;
@@ -251,9 +287,14 @@ int tvm_load_bytecode(tvm_instance_t *tvm, uint8_t *tbc, size_t tbc_len)
 	if (install_user_ctx (tvm, us_bc) < 0) {
 		tvm_free_bytecode(us_bc);
 		return -2;
+	} else {
+		tvm->us_bc = us_bc;
 	}
 
-	tvm->us_bc = us_bc;
+	if (install_firmware_ctx (tvm) < 0) {
+		remove_firmware_and_ectx(tvm);
+		return -3;
+	}
 
 	return 0;
 }
