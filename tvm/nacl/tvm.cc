@@ -90,12 +90,44 @@ class TVMInstance : public pp::Instance {
 			return -1;
 		}
 
-		static void WriteScreen(tvm_instance_t *tvm, const char *buffer, int length)
+		static void WriteScreen(tvm_instance_t *tvm, const char *data, int length)
 		{
+			TVMInstance *instance = static_cast<TVMInstance *>(tvm->handle);
+			
+			if (length > 0) {
+				unsigned int len = 32 + (length * 4);
+				unsigned int pos = 0;
+				char *buf = new char[len];
+				int i;
+
+				pos += snprintf (buf + pos, len - pos, "stdout:[");
+				for (i = 0; i < length; ++i) {
+					if (i > 0) {
+						buf[pos++] = ',';
+					}
+					pos += snprintf(buf + pos, len - pos, "%d", data[i]);
+				}
+				buf[pos++] = ']';
+				buf[pos++] = '\0';
+			
+				instance->ExternalPostMessage(buf);
+				delete buf;
+
+				fwrite (data, length, 1, stdout);
+			}
+			fflush (stdout);
 		}
 		
 		static void WriteError(tvm_instance_t *tvm, const char byte)
 		{
+			TVMInstance *instance = static_cast<TVMInstance *>(tvm->handle);
+			char buffer[32];
+			
+			snprintf (buffer, sizeof(buffer), "stderr:[%d]", byte);
+			instance->ExternalPostMessage(buffer);
+
+			fputc (byte, stderr);
+			fflush (stderr);
 		}
 
 		static void *TVMThread(void *param)
@@ -158,12 +190,12 @@ class TVMInstance : public pp::Instance {
 		void ExternalPostMessage(MessageBuffer *buffer)
 		{	
 			pthread_mutex_lock(&msg_mutex);
-			msg_queue_tail = buffer;
 			if (msg_queue_head == NULL) {
 				msg_queue_head = buffer;
 			} else {
-				msg_queue_head->next = buffer;
+				msg_queue_tail->next = buffer;
 			}
+			msg_queue_tail = buffer;
 			pthread_mutex_unlock(&msg_mutex);
 		}
 		void ExternalPostMessage(const std::string message)
