@@ -35,7 +35,6 @@
 #define STATE_RUNNING 1
 #define STATE_FINISHED 2
 
-class MessageBuffer;
 class MessageBuffer {
 	public:
 		MessageBuffer *next; 
@@ -212,6 +211,7 @@ class TVMInstance : public pp::Instance {
 		}
 		virtual ~TVMInstance()
 		{
+			StopTVM();
 			ReleaseAndClean();
 		}
 
