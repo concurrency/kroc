@@ -27,19 +27,40 @@
         }
       })();
     --></script>
-    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <script type="text/javascript" src="vt100.js"></script>
     <script type="text/javascript" src="tvm_term.js"></script>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="tvm.js"></script>
   </head>
+  
   <!-- Load terminal from a timer as Konqueror sometimes fails to
        correctly deal with the enclosing frameset (if any), if we do not
        do this
    -->
   <body onload="setTimeout('new TVMTerminal()', 100)">
-    <noscript>JavaScript must be enabled for VT100 terminal</noscript>
+    <noscript>JavaScript must be enabled for TVM</noscript>
+
     <div>
-      This is some random other content, rah!
+      <button onclick="fetchBytecode('test.json')">Load Bytecode</button>
+      <br/>
+      <button onclick="startTVM()">Start</button>
+      <br/>
+      <button onclick="stopTVM()">Stop</button>
     </div>
+    
+    <div id="listener">
+      <script type="text/javascript">
+         document.getElementById('listener')
+            .addEventListener('load', moduleDidLoad, true);
+      </script>
+
+      <embed name="nacl_module"
+       id="tvm"
+       width=0 height=0
+       src="tvm.nmf"
+       type="application/x-nacl" />
+    </div>
+    
     <div id="vt100" style="border: 1px solid black; width:640px; height:480px;">
       &nbsp;
     </div>
