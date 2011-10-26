@@ -37,7 +37,7 @@
        correctly deal with the enclosing frameset (if any), if we do not
        do this
    -->
-  <body onload="setTimeout('new TVMTerminal()', 100)">
+  <body onload="initTerminal()">
     <noscript>JavaScript must be enabled for TVM</noscript>
 
     <div>
@@ -57,7 +57,7 @@
       <embed name="nacl_module"
        id="tvm"
        width=0 height=0
-       src="tvm.nmf"
+       src="tvm.nmf?v=2"
        type="application/x-nacl" />
     </div>
     

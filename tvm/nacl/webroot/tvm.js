@@ -1,12 +1,15 @@
-TvmModule = null;  // Global application object.
+TVMModule = null;  // Global application object.
+TVMVT100 = null;
+Terminal = null;
 statusText = 'NO-STATUS';
 
 // When the NaCl module has loaded, hook up an event listener to handle
 // messages coming from it via PPB_Messaging.PostMessage() (in C) or
 // pp::Instance.PostMessage() (in C++), and indicate success.
 function moduleDidLoad() {
-	TvmModule = document.getElementById('tvm');
-	TvmModule.addEventListener('message', handleMessage, false);
+	TVMModule = document.getElementById('tvm');
+	TVMModule.addEventListener('message', handleMessage, false);
+	TVMVT100 = document.getElementById('vt100');
 	updateStatus('SUCCESS');
 }
 
@@ -15,14 +18,21 @@ function moduleDidLoad() {
 // (in C) or pp::Instance.PostMessage() (in C++).  This implementation
 // simply displays the content of the message in an alert panel.
 function handleMessage(message_event) {
-	alert(message_event.data);
+	msg = $.parseJSON("[" + message_event.data + "]");
+	if ((msg[0] == "stdout") || (msg[0] == "stderr")) {
+		for (i = 1; i < msg.length; ++i) {
+			Terminal.vt100(String.fromCharCode(msg[i]));
+		}
+	} else if (msg[0] == "error") {
+		alert(msg[1]);
+	}
 }
 
 // If the page loads before the Native Client module loads, then set the
 // status message indicating that the module is still loading.  Otherwise,
 // do not change the status message.
 function pageDidLoad() {
-	if (TvmModule == null) {
+	if (TVMModule == null) {
 		updateStatus('LOADING...');
 	} else {
 		// It's possible that the Native Client module onload event fired
@@ -62,4 +72,8 @@ function startTVM() {
 }
 function stopTVM() {
 	tvm.postMessage('stop');
+}
+
+function initTerminal() {
+	setTimeout('Terminal = new TVMTerminal();', 100);
 }

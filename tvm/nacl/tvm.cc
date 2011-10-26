@@ -100,14 +100,13 @@ class TVMInstance : public pp::Instance {
 				char *buf = new char[len];
 				int i;
 
-				pos += snprintf (buf + pos, len - pos, "stdout:[");
+				pos += snprintf (buf + pos, len - pos, "\"stdout\",");
 				for (i = 0; i < length; ++i) {
 					if (i > 0) {
 						buf[pos++] = ',';
 					}
 					pos += snprintf(buf + pos, len - pos, "%d", data[i]);
 				}
-				buf[pos++] = ']';
 				buf[pos++] = '\0';
 			
 				instance->ExternalPostMessage(buf);
@@ -123,7 +122,7 @@ class TVMInstance : public pp::Instance {
 			TVMInstance *instance = static_cast<TVMInstance *>(tvm->handle);
 			char buffer[32];
 			
-			snprintf (buffer, sizeof(buffer), "stderr:[%d]", byte);
+			snprintf (buffer, sizeof(buffer), "\"stderr\",%d", byte);
 			instance->ExternalPostMessage(buffer);
 
 			fputc (byte, stderr);
@@ -141,16 +140,16 @@ class TVMInstance : public pp::Instance {
 			tvm->write_error	= &WriteError;
 
 			fprintf (stderr, "running\n");
-			instance->ExternalPostMessage("state:running");
+			instance->ExternalPostMessage("\"state\",\"running\"");
 
 			int ret = tvm_run_instance(tvm);
 			if (ret != 0) {
-				std::string msg = std::string("error:");
+				std::string msg = std::string("\"error\",");
 				msg.append(tvm->last_error);
 				instance->ExternalPostMessage(msg);
 			}
 
-			instance->ExternalPostMessage("state:finished");
+			instance->ExternalPostMessage("\"state\",\"finished\"");
 			fprintf (stderr, "stopped (%d)\n", ret);
 
 			pthread_mutex_lock(&(instance->tvm_mutex));
@@ -224,7 +223,7 @@ class TVMInstance : public pp::Instance {
 				tvm->stop = 1;
 				pthread_join(tvm_thread, NULL);
 				state = STATE_STOPPED;
-				ExternalPostMessage("state:stopped");
+				ExternalPostMessage("\"state\",\"stopped\"");
 				DispatchMessages(0);
 			}
 			pthread_mutex_unlock(&tvm_mutex);
@@ -266,7 +265,7 @@ class TVMInstance : public pp::Instance {
 			std::string message = var_message.AsString();
 			if (message.find("bytecode:") == 0) {
 				if (state != STATE_STOPPED) {
-					PostMessage(pp::Var("error:can only load bytecode when stopped"));
+					PostMessage(pp::Var("\"error\",\"can only load bytecode when stopped\""));
 					return;
 				}
 				
@@ -282,16 +281,16 @@ class TVMInstance : public pp::Instance {
 				free (data);
 
 				if (ret == 0) {
-					PostMessage(pp::Var("state:bytecode loaded"));
+					PostMessage(pp::Var("\"state\",\"bytecode loaded\""));
 				} else {
 					ReleaseAndClean();
-					PostMessage(pp::Var("error:invalid bytecode"));
+					PostMessage(pp::Var("\"error\",\"invalid bytecode\""));
 				}
 			} else if (message.find("start") == 0) {
 				if (!tvm) {
-					PostMessage(pp::Var("error:no bytecode specified"));
+					PostMessage(pp::Var("\"error\",\"no bytecode specified\""));
 				} else if (state != STATE_STOPPED) {
-					PostMessage(pp::Var("error:already running"));
+					PostMessage(pp::Var("\"error\",\"already running\""));
 				} else {
 					StartTVM();
 				}
@@ -299,7 +298,7 @@ class TVMInstance : public pp::Instance {
 				if (state != STATE_STOPPED) {
 					StopTVM();
 				} else {
-					PostMessage(pp::Var("error:not running"));
+					PostMessage(pp::Var("\"error\",\"not running\""));
 				}
 			}
 		}
