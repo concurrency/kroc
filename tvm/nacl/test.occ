@@ -1,13 +1,9 @@
 PROC main(CHAN BYTE kyb?, scr!, err!)
-  INT x:
+  BYTE b:
   SEQ
-    x := 0
-    SEQ i = 0 FOR 42
-      x := x + 1
-    err ! '4'
-    err ! '2'
-    err ! #FF
-    scr ! '4'
-    scr ! '2'
-    scr ! #FF
+    SEQ i = 0 FOR 10
+      SEQ
+        kyb ? b
+        scr ! b
+        scr ! #FF
 :

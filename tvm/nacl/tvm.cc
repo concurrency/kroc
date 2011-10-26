@@ -76,18 +76,117 @@ class TVMInstance : public pp::Instance {
 		volatile MessageBuffer *msg_queue_head;
 		volatile MessageBuffer *msg_queue_tail;
 		pp::CompletionCallbackFactory<TVMInstance> cc_factory;
+		
+		volatile uint8_t *kyb_buffer;
+		volatile int kyb_buf_size;
+		volatile int kyb_buf_start;
+		volatile int kyb_buf_end;
+		mutable pthread_mutex_t kyb_mutex;
 
 		void ReleaseAndClean()
 		{
-			if(tvm) {
+			if (tvm) {
 				tvm_free_instance(tvm);
 				tvm = NULL;
 			}
+			if (kyb_buffer) {
+				free ((void *) kyb_buffer);
+			}
+			kyb_buffer	= NULL;
+			kyb_buf_start	= 0;
+			kyb_buf_end	= 0;
+			kyb_buf_size	= 0;
 		}
 
 		static int ReadChar(tvm_instance_t *tvm)
 		{
-			return -1;
+			TVMInstance *instance = static_cast<TVMInstance *>(tvm->handle);
+
+			/* Do a quick test without locking, even if this gives an
+			 * undefined results repeated polling should clean things up
+			 */
+			if (instance->kyb_buf_start == instance->kyb_buf_end) {
+				return -1;
+			}
+
+			/* Looks like there is something there; take lock and retest */
+			int result = -1;
+			
+			pthread_mutex_lock(&(instance->kyb_mutex));
+			/*
+			fprintf (stderr, "%p %d %d %d\n",
+				instance->kyb_buffer,
+				instance->kyb_buf_start, instance->kyb_buf_end,
+				instance->kyb_buf_size);
+			*/
+
+			if (instance->kyb_buf_start != instance->kyb_buf_end) {
+				result = instance->kyb_buffer[instance->kyb_buf_start];
+				instance->kyb_buf_start = (instance->kyb_buf_start + 1)
+								% instance->kyb_buf_size;
+				if (instance->kyb_buf_start == instance->kyb_buf_end) {
+					instance->kyb_buf_start = instance->kyb_buf_end = 0;
+				}
+			}
+			
+			pthread_mutex_unlock(&(instance->kyb_mutex));
+			
+			return result;
+		}
+
+		void QueueChar(uint8_t b)
+		{
+			bool enlarge = false;
+
+			pthread_mutex_lock(&kyb_mutex);
+			/*
+			fprintf (stderr, "%p %d %d %d\n",
+				kyb_buffer,
+				kyb_buf_start, kyb_buf_end,
+				kyb_buf_size);
+			*/
+
+			if (kyb_buf_start < kyb_buf_end) {
+				enlarge = ((kyb_buf_end - kyb_buf_start) >= kyb_buf_size);
+			} else if (kyb_buf_start > kyb_buf_end) {
+				enlarge = ((kyb_buf_end + (kyb_buf_size - kyb_buf_start)))
+						>= kyb_buf_size;
+			} else if (!kyb_buffer) {
+				enlarge = true;
+			} else {
+				/* do nothing */
+			}
+				
+			if (enlarge) {
+				int n_buf_size = (kyb_buf_size * 2) + 128;
+				uint8_t *n_buffer = (uint8_t *) malloc(n_buf_size);
+				
+				if (kyb_buf_start < kyb_buf_end) {
+					memcpy(n_buffer, 
+						((uint8_t *)kyb_buffer) + kyb_buf_start,
+						kyb_buf_end - kyb_buf_start);
+					kyb_buf_end = kyb_buf_end - kyb_buf_start;
+					kyb_buf_start = 0;
+				} else if (kyb_buf_start > kyb_buf_end) {
+					int p0 = (kyb_buf_size - kyb_buf_start);
+					memcpy(n_buffer +  0, 
+						((uint8_t *)kyb_buffer) + kyb_buf_start, p0);
+					memcpy(n_buffer + p0,
+						((uint8_t *)kyb_buffer), kyb_buf_end);
+					kyb_buf_end = p0 + kyb_buf_end;
+					kyb_buf_start = 0;
+				}
+
+				if (kyb_buffer)
+					free((void *)kyb_buffer);
+				kyb_buffer = n_buffer;
+				kyb_buf_size = n_buf_size;
+			}
+
+			kyb_buffer[kyb_buf_end] = b;
+			kyb_buf_end = (kyb_buf_end + 1) % kyb_buf_size;
+			
+			pthread_mutex_unlock(&kyb_mutex);
 		}
 
 		static void WriteScreen(tvm_instance_t *tvm, const char *data, int length)
@@ -237,13 +336,30 @@ class TVMInstance : public pp::Instance {
 			core = core_;
 			pthread_mutex_init(&tvm_mutex, NULL);
 			pthread_mutex_init(&msg_mutex, NULL);
+			pthread_mutex_init(&kyb_mutex, NULL);
 			tvm = NULL;
 			state = STATE_STOPPED;
+			kyb_buffer = NULL;
+			kyb_buf_size = 0;
+			kyb_buf_start = 0;
+			kyb_buf_end = 0;
 		}
 		virtual ~TVMInstance()
 		{
 			StopTVM();
 			ReleaseAndClean();
+		}
+
+		static inline uint8_t dehex(char c) {
+			if ((c >= '0') && (c <= '9')) {
+				return (c - '0');
+			} else if ((c >= 'A') && (c <= 'F')) {
+				return 10 + (c - 'A');
+			} else if ((c >= 'a') && (c <= 'f')) {
+				return 10 + (c - 'a');
+			} else {
+				return 0;
+			}
 		}
 
 		/// Handler for messages coming in from the browser via postMessage().  The
@@ -263,7 +379,27 @@ class TVMInstance : public pp::Instance {
 			}
 
 			std::string message = var_message.AsString();
-			if (message.find("bytecode:") == 0) {
+			if (message.find("stdin:") == 0) {
+				if (state != STATE_RUNNING) {
+					return;
+				}
+
+				const char *c_str = message.c_str();
+				uint8_t buf = 0;
+				int s = 0;
+				int i;
+				for (i = 6; c_str[i] != '\0'; ++i) {
+					buf <<= 4;
+					buf |= dehex(c_str[i]);
+					if (s) {
+						//fprintf(stderr, "%02x\n", buf);
+						QueueChar(buf);
+						buf = s = 0;
+					} else {
+						s++;
+					}
+				}
+			} else if (message.find("bytecode:") == 0) {
 				if (state != STATE_STOPPED) {
 					PostMessage(pp::Var("\"error\",\"can only load bytecode when stopped\""));
 					return;
@@ -316,6 +452,8 @@ class TVMModule : public pp::Module {
 		/// @param[in] instance The browser-side instance.
 		/// @return the plugin-side instance.
 		virtual pp::Instance* CreateInstance(PP_Instance instance) {
+			fprintf (stderr, "new TVMInstance built at %s %s\n",
+				__DATE__, __TIME__);
 			return new TVMInstance(instance, core());
 		}
 };

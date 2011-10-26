@@ -65,8 +65,7 @@ TVMTerminal.prototype.keysPressed = function(ch) {
            hex.charAt(        c        & 0xF );
     }
   }
-  this.vt100(ch);
-  //alert(s);
+  tvm.postMessage("stdin:" + s);
 };
 
 TVMTerminal.prototype.resized = function(w, h) {

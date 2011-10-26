@@ -43,9 +43,9 @@
     <div>
       <button onclick="fetchBytecode('test.json')">Load Bytecode</button>
       <br/>
-      <button onclick="startTVM()">Start</button>
+      <button onclick="startTVM()">Start</button>&nbsp;<button onclick="stopTVM()">Stop</button>
       <br/>
-      <button onclick="stopTVM()">Stop</button>
+      <div id="state">State: unknown</div>
     </div>
     
     <div id="listener">
@@ -57,7 +57,7 @@
       <embed name="nacl_module"
        id="tvm"
        width=0 height=0
-       src="tvm.nmf?v=2"
+       src="tvm.nmf?v=6"
        type="application/x-nacl" />
     </div>
     

@@ -23,6 +23,9 @@ function handleMessage(message_event) {
 		for (i = 1; i < msg.length; ++i) {
 			Terminal.vt100(String.fromCharCode(msg[i]));
 		}
+	} else if (msg[0] == "state") {
+		elem = document.getElementById('state');
+		elem.innerHTML = "State: " + msg[1];
 	} else if (msg[0] == "error") {
 		alert(msg[1]);
 	}
