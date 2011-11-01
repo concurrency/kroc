@@ -50,7 +50,7 @@
 --{{{  first modification
 --
 -- Tap into the internal channels, using delta processes to duplicate lanes
--- out to a printstreams multiplexor -- so that we can see what's happening
+-- out to a print.streams multiplexor -- so that we can see what's happening
 -- at each stage in the pipeline:
 --
 --    ________________________________________________________________

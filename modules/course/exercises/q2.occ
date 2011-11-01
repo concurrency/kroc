@@ -101,8 +101,7 @@ PROC print.stream (VAL INT delay, CHAN INT in?, CHAN BYTE out!)
 :
 
 
---* The main process.  This has been extended to let some parameters
---  be entered interactively.
+--* The main process.
 --
 -- @param keyboard The standard input channel (stdin, in Unix-speak)
 -- @param screen The standard output channel (stdout, in Unix-speak)
