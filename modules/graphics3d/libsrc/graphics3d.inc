@@ -94,6 +94,13 @@ DATA TYPE G3D.POINT2.3S
     INT r:
 :
 
+--* Height-field point in 2D space.
+DATA TYPE G3D.POINT2.3R
+  RECORD
+    INT x, y:
+    REAL32 z:
+:
+
 --}}}
 --{{{  polygon types
 --* General polygon in 2D space, orignal Z multiplied up.

@@ -1377,6 +1377,91 @@ PROC points.3d.to.2d3 (CHAN MOBILE []G3D.POINT3 in?, CHAN MOBILE []G3D.POINT2.3 
             out ! p2d
 :
 --}}}
+--{{{  PROC points.3d.to.2d3.2d (CHAN MOBILE [][]G3D.POINT3 in?, CHAN MOBILE [][]G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
+--* Projects 3D points into 2D, preserves Z information.
+-- Maps a set of 3D points down into a set of 2D points, preserving the Z
+-- depth information for later operations.
+--
+-- @param in 3D points in.
+-- @param out 2D3 points out.
+-- @param ctrl Control channel.
+-- @param width,height Display dimensions.
+--
+PROC points.3d.to.2d3.2d (CHAN MOBILE [][]G3D.POINT3 in?, CHAN MOBILE [][]G3D.POINT2.3 out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
+  REAL32 px.scale, py.scale, x.scalef, y.scalef, x.scale, y.scale, z.depth:
+  REAL32 x.shift, y.shift, z.shift:
+  INT x2.shift, y2.shift:
+
+  PROC reset () --{{{
+    SEQ
+      px.scale := 490.0
+      py.scale := 420.0
+      x.scalef := 1.0
+      y.scalef := 1.0
+      x.scale := px.scale * x.scalef
+      y.scale := py.scale * y.scalef
+      z.depth := 12.0
+      x.shift := 0.0
+      y.shift := 0.0
+      z.shift := 0.0
+      x2.shift := width / 2
+      y2.shift := height / 2
+  :
+  --}}}
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          [2]REAL32 scale:
+          set.scaling; scale
+            SEQ
+              x.scalef := scale[0]
+              y.scalef := scale[1]
+              x.scale := px.scale * x.scalef
+              y.scale := py.scale * y.scalef
+          set.zdepth; z.depth
+            SKIP
+          [2]INT shft:
+          set.2dshift; shft
+            SEQ
+              x2.shift := shft[0]
+              y2.shift := shft[1]
+          [3]REAL32 shft:
+          set.3dshift; shft
+            SEQ
+              x.shift := shft[0]
+              y.shift := shft[1]
+              z.shift := shft[2]
+        MOBILE [][]G3D.POINT3 p3d:
+        in ? p3d
+          MOBILE [][]G3D.POINT2.3 p2d:
+          INT wd, ht:
+          SEQ
+            ht := SIZE p3d
+            wd := SIZE p3d[0]
+            p2d := MOBILE [ht][wd]G3D.POINT2.3
+
+            #PRAGMA DEFINED p2d
+
+            SEQ i = 0 FOR ht
+              SEQ j = 0 FOR wd
+                INITIAL REAL32 ez IS p3d[i][j][z] + z.shift:
+                SEQ
+                  p2d[i][j][z] := (INT ROUND (ez * CONST.ZBSCALE)) + CONST.ZBADD
+                  ez := ez + z.depth
+                  p2d[i][j][x] := (INT ROUND (((p3d[i][j][x] + x.shift) / ez) * x.scale)) + x2.shift
+                  p2d[i][j][y] := (INT ROUND (((p3d[i][j][y] + y.shift) / ez) * y.scale)) + y2.shift
+
+            out ! p2d
+:
+--}}}
 --{{{  PROC points.3ds.to.2d3s (CHAN MOBILE []G3D.POINT3S in?, CHAN MOBILE []G3D.POINT2.3S out!, CHAN G3D.PRJ.CONTROL ctrl?, VAL INT width, height)
 --* Projects 3D points into 2D, preserves Z information.
 -- Maps a set of 3D points down into a set of 2D points, preserving the Z
@@ -2261,6 +2346,102 @@ PROC squarify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out
                       polys[0][z][3] := pnts[3][z]
                 --}}}
                 out ! polys
+:
+--}}}
+--{{{  PROC heightfieldify.points (CHAN MOBILE [][]G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+--* Generates sets of square polygons from a grid of points in 3D space.
+-- Expects to receive the whole grid at a time.  Characteristics are controllable
+-- through the control channel.
+--
+-- @param in Points in (3D).
+-- @param out Polygons out.
+-- @param ctrl Control channel.
+--
+PROC heightfieldify.points (CHAN MOBILE [][]G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
+  INT polyid, colour:
+  SEQ
+    colour := #00800080
+    polyid := 0
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          --{{{  reset: reset
+          reset
+            SKIP
+          --}}}
+          --{{{  set.trimap: triangular polygon generation control (not relevant)
+          BOOL any:
+          set.trimap; any
+            SKIP
+          --}}}
+          --{{{  set.backfaces: backface generation control (not relevant)
+          BOOL any:
+          set.backfaces; any
+            SKIP
+          --}}}
+          --{{{  set.face.colour: set a specific face colour
+          INT fn, col:
+          set.face.colour; fn; col
+            colour := col
+          --}}}
+          --{{{  set.face.colours: set face colours
+          MOBILE []INT cols:
+          set.face.colours; cols
+            IF
+              (SIZE cols) >= 1
+                colour := cols[0]
+              TRUE
+                SKIP
+          --}}}
+          --{{{  set.poly.id: set polygon ID
+          set.polyid; polyid
+            polyid := polyid /\ #FF
+          --}}}
+
+        MOBILE [][]G3D.POINT2.3 pnts:
+        in ? pnts
+          --{{{  make polygons and output
+          INT wd, ht, npoly:
+          INT norm:
+          MOBILE []G3D.POLY polys:
+          SEQ
+            ht := (SIZE pnts) - 1
+            wd := (SIZE pnts[0]) - 1
+
+            npoly := wd * ht
+            polys := MOBILE [npoly]G3D.POLY
+
+            INITIAL INT ply IS 0:
+            SEQ j = 0 FOR ht
+              SEQ i = 0 FOR wd
+                SEQ
+                  polys[ply][npoints] := 4
+                  polys[ply][pixel] := colour
+                  polys[ply][polyid] := polyid
+
+                  polys[ply][x][0] := pnts[j][i][x]
+                  polys[ply][y][0] := pnts[j][i][y]
+                  polys[ply][z][0] := pnts[j][i][z]
+
+                  polys[ply][x][1] := pnts[j][i+1][x]
+                  polys[ply][y][1] := pnts[j][i+1][y]
+                  polys[ply][z][1] := pnts[j][i+1][z]
+
+                  polys[ply][x][2] := pnts[j+1][i+1][x]
+                  polys[ply][y][2] := pnts[j+1][i+1][y]
+                  polys[ply][z][2] := pnts[j+1][i+1][z]
+
+                  polys[ply][x][3] := pnts[j+1][i][x]
+                  polys[ply][y][3] := pnts[j+1][i][y]
+                  polys[ply][z][3] := pnts[j+1][i][z]
+
+                  polys[ply][norm] := ((polys[ply][y][3] MINUS polys[ply][y][0]) TIMES (polys[ply][x][1] MINUS polys[ply][x][0])) MINUS
+                                      ((polys[ply][y][1] MINUS polys[ply][y][0]) TIMES (polys[ply][x][3] MINUS polys[ply][x][0]))
+
+            out ! polys
+          --}}}
 :
 --}}}
 
