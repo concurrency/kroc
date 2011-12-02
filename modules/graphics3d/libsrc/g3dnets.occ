@@ -667,7 +667,16 @@ PROC zdepth.flatpoly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGIN
     new.link ! rlink
 :
 --}}}
---{{{  
+--{{{  PROC heightfield.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, G3D.HEIGHTFIELD.CONTROL? hf.ctl, VAL [][]REAL32 imap, G3D.SCENE.TRANS? sct)
+--* Implements a height field.
+--
+-- @param rlink.in Render link.
+-- @param width Width of raster.
+-- @param height Height of raster.
+-- @param hf.ctl Channel-end on which height-field updates are received.
+-- @param imap Initial height-field map (determines size).
+-- @param sct Scene transform control.
+--
 PROC heightfield.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, G3D.HEIGHTFIELD.CONTROL? hf.ctl, VAL [][]REAL32 imap, G3D.SCENE.TRANS? sct)
   CHAN INT trigger:
   CHAN MOBILE [][]G3D.POINT3 gp1, gp2:
@@ -689,12 +698,21 @@ PROC heightfield.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, G3
     render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
 
     SEQ
-      gen.ctl ! set.trans; [0.0, 1.0, 0.0]
+      gen.ctl ! set.trans; [0.0, 0.0, 0.0]
       prj.ctl1 ! set.3dshift; [0.0, 0.0, 0.0]
       rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
 :
 --}}}
---{{{  
+--{{{  PROC heightfield.network.spawn (VAL INT width, height, RESULT G3D.HEIGHTFIELD.CONTROL! hf.link, VAL [][]REAL32 imap, CHAN G3D.RENDER.ENGINE! new.link!, RESULT G3D.SCENE.TRANS! sti)
+--* Spawns a new 'heightfield.network'.
+--
+-- @param width Raster width.
+-- @param height Raster height.
+-- @param hf.link Returned link for heightfield updates.
+-- @param imap Initial heightfield map.
+-- @param new.link Channel to communicate new object link.
+-- @param sti Returned scene-transform client channel-end.
+--
 PROC heightfield.network.spawn (VAL INT width, height, RESULT G3D.HEIGHTFIELD.CONTROL! hf.link, VAL [][]REAL32 imap, CHAN G3D.RENDER.ENGINE! new.link!, RESULT G3D.SCENE.TRANS! sti)
   G3D.RENDER.ENGINE! rlink:
   G3D.RENDER.ENGINE? rsvr:

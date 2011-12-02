@@ -2799,7 +2799,7 @@ PROC squarify.points (CHAN MOBILE []G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out
 PROC heightfieldify.points (CHAN MOBILE [][]G3D.POINT2.3 in?, CHAN MOBILE []G3D.POLY out!, CHAN G3D.PGN.CONTROL ctrl?)
   INT polyid, colour:
   SEQ
-    colour := #00800080
+    colour := #0080F0F0
     polyid := 0
 
     INITIAL BOOL running IS TRUE:

@@ -864,6 +864,7 @@ PROC heightfieldpoint.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT2.3R 
                 TRUE
                   SEQ
                     opnts[adj[i][y]][adj[i][x]][y] := adj[i][z]
+                    cpnts[adj[i][y]][adj[i][x]][y] := adj[i][z]
             --}}}
           INT any:
           trigger ? any
