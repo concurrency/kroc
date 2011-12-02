@@ -30,9 +30,29 @@
 -- @private
 --
 PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+
+  PROC id.dump (CHAN INT in?, SHARED CHAN BYTE out!) --{{{
+    WHILE TRUE
+      INT i:
+      SEQ
+        in ? i
+        CLAIM out!
+          SEQ
+            out.string ("poly.id click: ", 0, out!)
+            out.int (i, 0, out!)
+            out.string ("*n", 0, out!)
+  :
+  --}}}
   
   VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
   VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+
+  VAL [][]REAL32 hf.init.map IS [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]:
   SEQ
 
     CHAN RASTER rc1, rc2, rc3, rc4:
@@ -41,6 +61,7 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
     CHAN RASTER.EVENT events, events.in:
     CHAN G3D.SCENE.TRANS! sclink:
     CHAN INT poly.id:
+    G3D.HEIGHTFIELD.CONTROL! hf.ctl:
     PAR
       raster.timed.buffer (rc1?, rc2!, 20, tmr.ctl?)
       raster.display ("Height-field test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
@@ -52,9 +73,15 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       G3D.SCENE.TRANS! sc.ctl:
       SEQ
         g3d.scene.spawn (sc.ctl)
-        sc.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
+        sc.ctl[link] ! set.pre.3dshift; [0.0, 0.0, 0.0]
 
         g3d.scene.camera (events.in?, sclink?, sc.ctl!)
+
+      G3D.SCENE.TRANS! sc.tmp:
+      SEQ
+        CLAIM rre!
+          heightfield.network.spawn (SCR.WIDTH, SCR.HEIGHT, hf.ctl, hf.init.map, rre!, sc.tmp)
+        sclink ! sc.tmp
 :
 --}}}
 
