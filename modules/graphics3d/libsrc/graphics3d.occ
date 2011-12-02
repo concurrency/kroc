@@ -217,6 +217,152 @@ PROC points3d.rotate (CHAN MOBILE []G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL c
           --}}}
 :
 --}}}
+--{{{  PROC points3d.rotate.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
+--* Point rotator.
+-- Rotates an arbitrary set of points around the origin, such that it passes
+-- through the same sequence of moves repeatedly (e.g. for a spinning cube).  Can
+-- also be used for static rotation when set with a zero increment.
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel.
+--
+PROC points3d.rotate.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
+  REAL32 angle, diff:
+  INT mode:
+
+  PROC reset ()
+    SEQ
+      angle := 0.0
+      diff := 0.0
+      mode := G3D.ROTATE.MODE.DEMO
+  :
+
+  SEQ
+
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl ? CASE
+          reset
+            reset ()
+          REAL32 inc:
+          add.increment; inc
+            SEQ
+              diff := diff + inc
+          set.increment; diff
+            SKIP
+          set.mode; mode
+            SKIP
+          set.angle; angle
+            SKIP
+        MOBILE [][]G3D.POINT3 blk:
+        in ? blk
+          --{{{  do rotations
+          IF
+            ((diff = 0.0) AND (angle = 0.0)) OR (mode = G3D.ROTATE.MODE.NONE)
+              out ! blk
+            TRUE
+              REAL32 sin.val, cos.val:
+              MOBILE [][]G3D.POINT3 nblk:
+              INT wd, ht:
+              SEQ
+                angle := angle + diff
+
+                sin.val := SIN (angle)
+                cos.val := COS (angle)
+
+                ht := SIZE blk
+                wd := SIZE blk[0]
+                nblk := MOBILE [ht][wd]G3D.POINT3
+
+                #PRAGMA DEFINED nblk
+
+                IF
+                  (mode /\ G3D.ROTATE.MODE.DEMO) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          nblk[j][i][x] := (blk[j][i][x] * cos.val) + (blk[j][i][y] * sin.val)
+                          nblk[j][i][y] := (blk[j][i][y] * cos.val) - (blk[j][i][x] * sin.val)
+                          nblk[j][i][z] := (blk[j][i][z] * cos.val) - (nblk[j][i][x] * sin.val)
+                          nblk[j][i][x] := (nblk[j][i][x] * cos.val) + (blk[j][i][z] * sin.val)
+                          tmp := (nblk[j][i][y] * cos.val) + (nblk[j][i][z] * sin.val)
+                          nblk[j][i][z] := (nblk[j][i][z] * cos.val) - (nblk[j][i][y] * sin.val)
+                          nblk[j][i][y] := tmp
+                  TRUE
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        SEQ
+                          nblk[j][i][x] := blk[j][i][x]
+                          nblk[j][i][y] := blk[j][i][y]
+                          nblk[j][i][z] := blk[j][i][z]
+
+                IF
+                  (mode /\ G3D.ROTATE.MODE.X) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          tmp := nblk[j][i][y]
+                          nblk[j][i][y] := (nblk[j][i][y] * cos.val) + (nblk[j][i][z] * sin.val)
+                          nblk[j][i][z] := (nblk[j][i][z] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NX) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          tmp := nblk[j][i][y]
+                          nblk[j][i][y] := (nblk[j][i][y] * cos.val) - (nblk[j][i][z] * sin.val)
+                          nblk[j][i][z] := (nblk[j][i][z] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                IF
+                  (mode /\ G3D.ROTATE.MODE.Y) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          tmp := nblk[j][i][x]
+                          nblk[j][i][x] := (nblk[j][i][x] * cos.val) + (nblk[j][i][z] * sin.val)
+                          nblk[j][i][z] := (nblk[j][i][z] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NY) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          tmp := nblk[j][i][x]
+                          nblk[j][i][x] := (nblk[j][i][x] * cos.val) - (nblk[j][i][z] * sin.val)
+                          nblk[j][i][z] := (nblk[j][i][z] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                IF
+                  (mode /\ G3D.ROTATE.MODE.Z) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          tmp := nblk[j][i][x]
+                          nblk[j][i][x] := (nblk[j][i][x] * cos.val) + (nblk[j][i][y] * sin.val)
+                          nblk[j][i][y] := (nblk[j][i][y] * cos.val) - (tmp * sin.val)
+                  (mode /\ G3D.ROTATE.MODE.NZ) <> 0
+                    SEQ j = 0 FOR ht
+                      SEQ i = 0 FOR wd
+                        REAL32 tmp:
+                        SEQ
+                          tmp := nblk[j][i][x]
+                          nblk[j][i][x] := (nblk[j][i][x] * cos.val) - (nblk[j][i][y] * sin.val)
+                          nblk[j][i][y] := (nblk[j][i][y] * cos.val) + (tmp * sin.val)
+                  TRUE
+                    SKIP
+                 
+                out ! nblk
+          --}}}
+:
+--}}}
 --{{{  PROC points3ds.rotate (CHAN MOBILE []G3D.POINT3S in?, out!, CHAN G3D.ROT.CONTROL ctrl?)
 --* Point rotator.
 -- Rotates an arbitrary set of points around the origin, such that it passes
@@ -693,6 +839,274 @@ PROC points3d.transrotate.int (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRA
 
 :
 --}}}
+--{{{  PROC points3d.transrotate.int.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, VAL BOOL use.prj, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
+--* Performs translation and rotation on 3D points (used in camera/scene handling).
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel-bundle end.
+-- @param use.prj Whether anything is connected on the projector channels.
+-- @param prj.in Projection control in.
+-- @param prj.out Projection control out.
+--
+-- @private
+PROC points3d.transrotate.int.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, VAL BOOL use.prj, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
+  INITIAL BOOL have.next IS FALSE:
+  G3D.SCENE.TRANS! next:
+  [3]REAL32 angles, diffs:
+  [3]REAL32 pretrans, posttrans:
+  [2]REAL32 xyscale:
+  INT order:
+  BOOL no.pretrans, no.posttrans, no.diffs:
+
+  PROC reset () --{{{
+    SEQ
+      angles := [0.0, 0.0, 0.0]
+      diffs := [0.0, 0.0, 0.0]
+      order := G3D.SCENE.RO.NONE
+      pretrans := [0.0, 0.0, 0.0]
+      posttrans := [0.0, 0.0, 0.0]
+      no.pretrans := TRUE
+      no.posttrans := TRUE
+      no.diffs := TRUE
+      xyscale := [1.0, 1.0]
+  :
+  --}}}
+
+  SEQ
+    reset ()
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        ctrl[link] ?? CASE
+          reset
+            --{{{  reset and pass along
+            SEQ
+              reset ()
+              IF
+                have.next
+                  next[link] ! reset
+                TRUE
+                  SKIP
+            --}}}
+          set.pre.3dshift; pretrans
+            --{{{  set 3D shift and pass along
+            SEQ
+              IF
+                have.next
+                  next[link] ! set.pre.3dshift; pretrans
+                TRUE
+                  SKIP
+              IF
+                IF i = 0 FOR 3
+                  pretrans[i] <> 0.0
+                    no.pretrans := FALSE
+                TRUE
+                  no.pretrans := TRUE
+            --}}}
+          set.rot.angles; angles
+            --{{{  set rotation angles and pass along
+            IF
+              have.next
+                next[link] ! set.rot.angles; angles
+              TRUE
+                SKIP
+            --}}}
+          set.rot.diffs; diffs
+            --{{{  set rotation differences and pass along
+            SEQ
+              IF
+                have.next
+                  next[link] ! set.rot.diffs; diffs
+                TRUE
+                  SKIP
+              IF
+                IF i = 0 FOR 3
+                  diffs[i] <> 0.0
+                    no.diffs := FALSE
+                TRUE
+                  no.diffs := TRUE
+            --}}}
+          set.rot.order; order
+            --{{{  set rotation order and pass along
+            IF
+              have.next
+                next[link] ! set.rot.order; order
+              TRUE
+                SKIP
+            --}}}
+          set.post.3dshift; posttrans
+            --{{{  set 3D shift and pass along
+            SEQ
+              IF
+                have.next
+                  next[link] ! set.post.3dshift; posttrans
+                TRUE
+                  SKIP
+              IF
+                IF i = 0 FOR 3
+                  pretrans[i] <> 0.0
+                    no.posttrans := FALSE
+                TRUE
+                  no.posttrans := TRUE
+            --}}}
+          set.xyscale; xyscale
+            --{{{  set Z depth (via projector) and pass along
+            SEQ
+              IF
+                use.prj
+                  prj.out ! set.scaling; xyscale
+                TRUE
+                  SKIP
+              IF
+                have.next
+                  next[link] ! set.xyscale; xyscale
+                TRUE
+                  SKIP
+            --}}}
+
+          G3D.SCENE.TRANS! link:
+          INT num:
+          set.next; num; link
+            --{{{  set next link or pass along
+            IF
+              NOT have.next
+                SEQ
+                  next := link
+                  have.next := TRUE
+
+                  -- forward working state
+                  next[link] ! set.pre.3dshift; pretrans
+                  next[link] ! set.rot.order; order
+                  next[link] ! set.rot.angles; angles
+                  next[link] ! set.rot.diffs; diffs
+                  next[link] ! set.post.3dshift; posttrans
+                  next[link] ! set.xyscale; xyscale
+
+              num = 0
+                SEQ
+                  -- forward state into new object first
+                  link[link] ! set.pre.3dshift; pretrans
+                  link[link] ! set.rot.order; order
+                  link[link] ! set.rot.angles; angles
+                  link[link] ! set.rot.diffs; diffs
+                  link[link] ! set.post.3dshift; posttrans
+                  link[link] ! set.xyscale; xyscale
+
+                  -- insert in effect
+                  link[link] ! set.next; 0; next
+                  next := link
+              TRUE
+                next[link] ! set.next; num - 1; link
+            --}}}
+
+        MOBILE [][]G3D.POINT3 blk:
+        in ? blk
+          --{{{  translate/rotate
+          INITIAL INT ht IS SIZE blk:
+          INITIAL INT wd IS SIZE blk[0]:
+          SEQ
+            IF
+              no.pretrans
+                SKIP
+              TRUE
+                --{{{  do pre-transformations on blk
+                SEQ j = 0 FOR ht
+                  SEQ i = 0 FOR wd
+                    SEQ
+                      blk[j][i][x] := blk[j][i][x] + pretrans[0]
+                      blk[j][i][y] := blk[j][i][y] + pretrans[1]
+                      blk[j][i][z] := blk[j][i][z] + pretrans[2]
+                --}}}
+            IF
+              order = G3D.SCENE.RO.NONE
+                SKIP
+              TRUE
+                --{{{  do rotations
+                [3]REAL32 sin.vals, cos.vals:
+                SEQ
+                  SEQ i = 0 FOR 3
+                    SEQ
+                      sin.vals[i] := SIN (angles[i])
+                      cos.vals[i] := COS (angles[i])
+
+                  SEQ m = 0 FOR 3
+                    VAL INT ord IS (order >> (m << 2)) /\ #0F:
+                    CASE ord
+                      G3D.SCENE.RO.X
+                        SEQ j = 0 FOR ht
+                          SEQ i = 0 FOR wd
+                            REAL32 tmp:
+                            SEQ
+                              tmp := blk[j][i][y]
+                              blk[j][i][y] := (blk[j][i][y] * cos.vals[0]) + (blk[j][i][z] * sin.vals[0])
+                              blk[j][i][z] := (blk[j][i][z] * cos.vals[0]) - (tmp * sin.vals[0])
+                      G3D.SCENE.RO.Y
+                        SEQ j = 0 FOR ht
+                          SEQ i = 0 FOR wd
+                            REAL32 tmp:
+                            SEQ
+                              tmp := blk[j][i][x]
+                              blk[j][i][x] := (blk[j][i][x] * cos.vals[1]) + (blk[j][i][z] * sin.vals[1])
+                              blk[j][i][z] := (blk[j][i][z] * cos.vals[1]) - (tmp * sin.vals[1])
+                      G3D.SCENE.RO.Z
+                        SEQ j = 0 FOR ht
+                          SEQ i = 0 FOR wd
+                            REAL32 tmp:
+                            SEQ
+                              tmp := blk[j][i][x]
+                              blk[j][i][x] := (blk[j][i][x] * cos.vals[2]) + (blk[j][i][y] * sin.vals[2])
+                              blk[j][i][y] := (blk[j][i][y] * cos.vals[2]) - (tmp * sin.vals[2])
+                      ELSE
+                        SKIP
+                --}}}
+            IF
+              no.diffs
+                SKIP
+              TRUE
+                --{{{  add differences to angles
+                SEQ i = 0 FOR 3
+                  angles[i] := angles[i] + diffs[i]
+                --}}}
+            IF
+              no.posttrans
+                SKIP
+              TRUE
+                --{{{  do post-transformations on blk
+                SEQ j = 0 FOR ht
+                  SEQ i = 0 FOR wd
+                    SEQ
+                      blk[j][i][x] := blk[j][i][x] + posttrans[0]
+                      blk[j][i][y] := blk[j][i][y] + posttrans[1]
+                      blk[j][i][z] := blk[j][i][z] + posttrans[2]
+                --}}}
+
+            out ! blk
+
+          --}}}
+
+        use.prj & prj.in ? CASE
+          --{{{  projector control
+          reset
+            SEQ
+              xyscale := [1.0, 1.0]
+              prj.out ! reset
+          set.scaling; xyscale
+            prj.out ! set.scaling; xyscale
+          REAL32 zdepth:
+          set.zdepth; zdepth
+            prj.out ! set.zdepth; zdepth
+          [2]INT shft:
+          set.2dshift; shft
+            prj.out ! set.2dshift; shft
+          [3]REAL32 shft:
+          set.3dshift; shft
+            prj.out ! set.3dshift; shft
+          --}}}
+
+:
+--}}}
 --{{{  PROC points3d.transrotate (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl)
 --* Performs translation and rotation on 3D points (used in camera/scene handling).
 --
@@ -703,6 +1117,18 @@ PROC points3d.transrotate.int (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRA
 PROC points3d.transrotate (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl)
   CHAN G3D.PRJ.CONTROL c1, c2:
   points3d.transrotate.int (in?, out!, ctrl?, FALSE, c1?, c2!)
+:
+--}}}
+--{{{  PROC points3d.transrotate.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl)
+--* Performs translation and rotation on 3D points (used in camera/scene handling).
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel-bundle end.
+--
+PROC points3d.transrotate.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl)
+  CHAN G3D.PRJ.CONTROL c1, c2:
+  points3d.transrotate.int.2d (in?, out!, ctrl?, FALSE, c1?, c2!)
 :
 --}}}
 --{{{  PROC points3d.transrotate.prj (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
@@ -716,6 +1142,19 @@ PROC points3d.transrotate (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? 
 --
 PROC points3d.transrotate.prj (CHAN MOBILE []G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
   points3d.transrotate.int (in?, out!, ctrl?, TRUE, prj.in?, prj.out!)
+:
+--}}}
+--{{{  PROC points3d.transrotate.prj.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
+--* Performs translation and rotation on 3D points (used in camera/scene handling).
+--
+-- @param in 3D points in.
+-- @param out 3D points out.
+-- @param ctrl Control channel-bundle end.
+-- @param prj.in Projector control in.
+-- @param prj.out Projector control out.
+--
+PROC points3d.transrotate.prj.2d (CHAN MOBILE [][]G3D.POINT3 in?, out!, G3D.SCENE.TRANS? ctrl, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
+  points3d.transrotate.int.2d (in?, out!, ctrl?, TRUE, prj.in?, prj.out!)
 :
 --}}}
 --{{{  PROC points3ds.transrotate.int (CHAN MOBILE []G3D.POINT3S in?, out!, G3D.SCENE.TRANS? ctrl, VAL BOOL use.prj, CHAN G3D.PRJ.CONTROL prj.in?, prj.out!)
@@ -2439,6 +2878,8 @@ PROC heightfieldify.points (CHAN MOBILE [][]G3D.POINT2.3 in?, CHAN MOBILE []G3D.
 
                   polys[ply][norm] := ((polys[ply][y][3] MINUS polys[ply][y][0]) TIMES (polys[ply][x][1] MINUS polys[ply][x][0])) MINUS
                                       ((polys[ply][y][1] MINUS polys[ply][y][0]) TIMES (polys[ply][x][3] MINUS polys[ply][x][0]))
+
+                  ply := ply + 1
 
             out ! polys
           --}}}

@@ -226,6 +226,12 @@ PROTOCOL G3D.TMR.CONTROL
     set.fps; INT              --* Set frames-per-second absolutely.
 :
 
+--* Specific height-field control.
+CHAN TYPE G3D.HEIGHTFIELD.CONTROL
+  MOBILE RECORD
+    CHAN MOBILE []G3D.POINT2.3R adjust?:
+:
+
 --}}}
 --{{{  combined channel-types for component control
 CHAN TYPE G3D.GEN.LINK

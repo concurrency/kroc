@@ -667,5 +667,46 @@ PROC zdepth.flatpoly.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGIN
     new.link ! rlink
 :
 --}}}
+--{{{  
+PROC heightfield.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, G3D.HEIGHTFIELD.CONTROL? hf.ctl, VAL [][]REAL32 imap, G3D.SCENE.TRANS? sct)
+  CHAN INT trigger:
+  CHAN MOBILE [][]G3D.POINT3 gp1, gp2:
+  CHAN MOBILE [][]G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN MOBILE []G3D.POLY.SCAN ps1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl1, prj.ctl2:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.PSC.CONTROL psc.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  PAR
+    heightfieldpoint.generator (trigger?, hf.ctl[adjust]?, imap, gp1!, gen.ctl?)
+    points3d.transrotate.prj.2d (gp1?, gp2!, sct?, prj.ctl1?, prj.ctl2!)
+    points.3d.to.2d3.2d (gp2?, gc1!, prj.ctl2?, width, height)
+    heightfieldify.points (gc1?, pc1!, pgn.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+    render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
+
+    SEQ
+      gen.ctl ! set.trans; [0.0, 1.0, 0.0]
+      prj.ctl1 ! set.3dshift; [0.0, 0.0, 0.0]
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NORM
+:
+--}}}
+--{{{  
+PROC heightfield.network.spawn (VAL INT width, height, RESULT G3D.HEIGHTFIELD.CONTROL! hf.link, VAL [][]REAL32 imap, CHAN G3D.RENDER.ENGINE! new.link!, RESULT G3D.SCENE.TRANS! sti)
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  G3D.HEIGHTFIELD.CONTROL? hf.svr:
+  G3D.SCENE.TRANS? sct:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    hf.link, hf.svr := MOBILE G3D.HEIGHTFIELD.CONTROL
+    sti, sct := MOBILE G3D.SCENE.TRANS
+    FORK heightfield.network (rsvr?, width, height, hf.svr?, imap, sct?)
+    new.link ! rlink
+:
+--}}}
 
 
