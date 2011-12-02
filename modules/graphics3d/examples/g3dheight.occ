@@ -47,12 +47,16 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
   VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
   VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
 
-  VAL [][]REAL32 hf.init.map IS [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]:
+  VAL [][]REAL32 hf.init.map IS [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]:
   SEQ
 
     CHAN RASTER rc1, rc2, rc3, rc4:
@@ -74,6 +78,9 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
       SEQ
         g3d.scene.spawn (sc.ctl)
         sc.ctl[link] ! set.pre.3dshift; [0.0, 0.0, 0.0]
+        sc.ctl[link] ! set.post.3dshift; [0.0, 1.0, -5.0]
+        sc.ctl[link] ! set.xyscale; [4.0, 4.0]
+        sc.ctl[link] ! set.rot.angles; [0.5, 1.0, 0.0]
 
         g3d.scene.camera (events.in?, sclink?, sc.ctl!)
 
@@ -82,6 +89,30 @@ PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
         CLAIM rre!
           heightfield.network.spawn (SCR.WIDTH, SCR.HEIGHT, hf.ctl, hf.init.map, rre!, sc.tmp)
         sclink ! sc.tmp
+
+        -- then do some pretty modifications to the field
+        TIMER tim:
+        INT t:
+        SEQ
+          tim ? t
+
+          INITIAL REAL32 v IS 0.0:
+          WHILE TRUE
+            MOBILE []G3D.POINT2.3R upd:
+            SEQ
+              t := t PLUS 40000
+              tim ? AFTER t
+
+              upd := MOBILE [20]G3D.POINT2.3R
+              SEQ n = 0 FOR 10
+                INITIAL REAL32 rv IS v + (0.3 * (REAL32 TRUNC n)):
+                SEQ
+                  upd[n] := [5, n, (0.5 * (SIN (rv)))]
+                  upd[n+10] := [n, 5, (0.5 * (SIN (rv)))]
+
+              v := v + 0.1
+
+              hf.ctl[adjust] ! upd
 :
 --}}}
 
