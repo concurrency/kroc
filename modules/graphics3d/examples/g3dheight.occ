@@ -1,0 +1,60 @@
+--
+--	g3dheight.occ -- height-field test program
+--	Copyright (C) 2011 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+
+
+--{{{  PROC main (...)
+--* Top-level process.
+--
+-- @param kyb Keyboard.
+-- @param scr Screen.
+-- @private
+--
+PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+  
+  VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
+  VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+  SEQ
+
+    CHAN RASTER rc1, rc2, rc3, rc4:
+    SHARED! CHAN G3D.RENDER.ENGINE! rre:
+    CHAN G3D.TMR.CONTROL tmr.ctl:
+    CHAN RASTER.EVENT events, events.in:
+    CHAN G3D.SCENE.TRANS! sclink:
+    CHAN INT poly.id:
+    PAR
+      raster.timed.buffer (rc1?, rc2!, 20, tmr.ctl?)
+      raster.display ("Height-field test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
+      raster.chain (rc3?, rc4!, rre?, FALSE)
+      raster.polyidclick (rc4?, rc1!, events?, events.in!, poly.id!, 250000)
+
+      id.dump (poly.id?, scr!)
+
+      G3D.SCENE.TRANS! sc.ctl:
+      SEQ
+        g3d.scene.spawn (sc.ctl)
+        sc.ctl[link] ! set.pre.3dshift; [0.0, 3.5, 0.0]
+
+        g3d.scene.camera (events.in?, sclink?, sc.ctl!)
+:
+--}}}
+
