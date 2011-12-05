@@ -7,8 +7,10 @@
  * with something reasonable
  */
 #include <time.h>
-/* Lets use semaphores */
-#include <semaphore.h>
+
+/* Compile with
+  gcc -o te thread-exploration.c -lpthread
+*/
 
 /* http://www.yolinux.com/TUTORIALS/LinuxTutorialPosixThreads.html */
 
@@ -18,7 +20,10 @@
  */
 void *print_message ( void *ptr);
 
-sem_t mutex;
+/* A global lock for sync: 
+   This could be in a struct. 
+*/
+pthread_mutex_t GLOBAL_LOCK;
 
 /* We'll pass a packet of information
  * in to our threads for testing purposes
@@ -28,9 +33,6 @@ typedef struct {
   int uid;
   int delay;
   char *msg;
-  /* And, lets make sure we don't clobber each-other */
-  /* http://www.csc.villanova.edu/~mdamian/threads/posixsem.html */
-  sem_t sem;
 } Packet;
 
 int main () {
@@ -67,17 +69,12 @@ int main () {
   p2->uid = 2;
   p3->uid = 3;
 
-  /* Init the semaphore too */
-  /* We init pshared to zero because we're not worried about
-   * sharing with forked processes. We set value to 0 because
-   * we only want one thread in the critical section at a time. */
-  sem_init (&mutex, 0, 1);
-
-  /*
-  p1->sem = semaphore;
-  p2->sem = semaphore;
-  p3->sem = semaphore;
+	/* Initialize the lock. Could do this to an array of locks
+	   or similar... but we do need to init each one.
+		 This could be in a struct (eg. in the virtual processor
+		 or runqueue.
   */
+	 pthread_mutex_init(&GLOBAL_LOCK, NULL);
 
   /* When should everyone report? */
   printf ("Thread %d reporting in at %d seconds\n", 1, p1->delay);
@@ -108,11 +105,15 @@ void *print_message (void *ptr) {
   pkt = (Packet*)ptr;
   /* We all sleep without interrupting criticality. */
   printf ("Waiting for critical region in Thread %d\n", pkt->uid);
-  sem_wait (&mutex);
+	/* Here we wait on the lock. */
+	pthread_mutex_lock(&GLOBAL_LOCK);
+	/* Then we sleep, simulating work being done. */
   sleep (pkt->delay);
 
   /* Only one of us prints at a time. */
   printf ("%s at time %d\n", pkt->msg, pkt->delay);
-  sem_post (&mutex);
+	/* Now we release the lock. Someone else can enter the critical section. */
+	pthread_mutex_unlock(&GLOBAL_LOCK);
+	/* It is nice to exit threads and report no errors. */
   pthread_exit(0);
 }
