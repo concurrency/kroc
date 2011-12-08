@@ -2886,6 +2886,7 @@ PROC heightfieldify.points (CHAN MOBILE [][]G3D.POINT2.3 in?, CHAN MOBILE []G3D.
 :
 --}}}
 
+
 --{{{  PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN out!, CHAN G3D.PSC.CONTROL ctrl?, SHARED CHAN BYTE debug!, VAL INT width, height)
 --* Converts polygons to scan-line data.
 -- @private
@@ -2900,7 +2901,7 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
       zcolour := FALSE
   :
   --}}}
-  PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, z1, x2, y2, z2) --{{{
+  PROC do.fix (G3D.POLY.SCAN scan, VAL INT x1, y1, z1, x2, y2, z2, VAL REAL32 A, B, C, D) --{{{
     INITIAL INT x1 IS x1:
     INITIAL INT y1 IS y1:
     INITIAL INT x2 IS x2:
@@ -2997,13 +2998,22 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                         scan[start][y] = (MOSTNEG INT)
                           SEQ
                             scan[start][y] := shx
-                            scan[z.start][y] := z
+                            IF
+                              C <> 0.0
+                                scan[z.start][y] := INT ROUND ((((-(A * (REAL32 ROUND shx))) - (B * (REAL32 ROUND y))) - D) / C)
+                              TRUE
+                                scan[z.start][y] := z
                         TRUE
                           SEQ
                             scan[end][y] := shx
-                            scan[z.end][y] := z
+                            IF
+                              C <> 0.0
+                                scan[z.end][y] := INT ROUND ((((-(A * (REAL32 ROUND shx))) - (B * (REAL32 ROUND y))) - D) / C)
+                              TRUE
+                                scan[z.start][y] := z
                   TRUE
-                    SKIP
+                    SKIP                
+
                 x := x + step
                 z := z + z.step
   :
@@ -3044,7 +3054,23 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
                   ply[npoints] < 3
                     SKIP
                   TRUE
+                    REAL32 A, B, C, D:
+                    VAL REAL32 x1 IS (REAL32 ROUND ply[x][0]):
+                    VAL REAL32 y1 IS (REAL32 ROUND ply[y][0]):
+                    VAL REAL32 z1 IS (REAL32 ROUND ply[z][0]):
+                    VAL REAL32 x2 IS (REAL32 ROUND ply[x][1]):
+                    VAL REAL32 y2 IS (REAL32 ROUND ply[y][1]):
+                    VAL REAL32 z2 IS (REAL32 ROUND ply[z][1]):
+                    VAL REAL32 x3 IS (REAL32 ROUND ply[x][2]):
+                    VAL REAL32 y3 IS (REAL32 ROUND ply[y][2]):
+                    VAL REAL32 z3 IS (REAL32 ROUND ply[z][2]):
                     SEQ
+                      -- Work out coefficeients for plane equations (Hearn, Baker p308)
+                      A := ((y1 * (z2 - z3)) + (y2 * (z3 - z1))) + (y3 * (z1 - z2)) 
+                      B := ((z1 * (x2 - x3)) + (z2 * (x3 - x1))) + (z3 * (x1 - x2))
+                      C := ((x1 * (y2 - y3)) + (x2 * (y3 - y1))) + (x3 * (y1 - y2))
+                      D := (((-x1) * ((y2 * z3) - (y3 * z2))) - (x2 * ((y3 * z1) - (y1 * z3)))) - (x3 * ((y1 * z2) - (y2 * z1)))
+
                       IF
                         zcolour
                           --{{{  colour based on z-depth and (real) y-size
@@ -3112,10 +3138,10 @@ PROC poly.scanlines.int (CHAN MOBILE []G3D.POLY in?, CHAN MOBILE []G3D.POLY.SCAN
 
                       SEQ j = 0 FOR ply[npoints] - 1
                         SEQ
-                          do.fix (tsc, ply[x][j], ply[y][j], ply[z][j], ply[x][j+1], ply[y][j+1], ply[z][j+1])
+                          do.fix (tsc, ply[x][j], ply[y][j], ply[z][j], ply[x][j+1], ply[y][j+1], ply[z][j+1], A, B, C, D)
                       VAL INT j IS ply[npoints] - 1:
                       SEQ
-                        do.fix (tsc, ply[x][j], ply[y][j], ply[z][j], ply[x][0], ply[y][0], ply[z][0])
+                        do.fix (tsc, ply[x][j], ply[y][j], ply[z][j], ply[x][0], ply[y][0], ply[z][0], A, B, C, D)
 
                 IF
                   tsc[scan.s] < 0
