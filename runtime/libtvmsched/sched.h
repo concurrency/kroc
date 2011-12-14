@@ -1,7 +1,8 @@
 /*
 header for currently external workstealling wait-free scheduler
-
 */
+
+#include <pthread.h>
 
 /*{{{ */
 struct process{
@@ -32,7 +33,8 @@ struct logical_processor {
 		struct batch *activeQ;
 		int dispatch_count;
 		struct process *current_process;
-		struct logical_processor *partner; /*processor this processor steals from */
+		struct logical_processor *partner; /* processor this processor steals from */
+		pthread_mutex_t *run_queue_lock; 	 /* lock on run queue */
 
 };
 typedef struct logical_processor *logical_processor_t;
@@ -40,7 +42,7 @@ typedef struct logical_processor *logical_processor_t;
 
 
 
-/* declare functions from lowlevelsched.c
+/* declare functions for finegrained interactoins
    now in schedlib.c */
 /*{{{ */
 void setStolen(batch_t b);

@@ -1,6 +1,7 @@
 /*
 library of functions for simple scheduling
 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sched.h>
@@ -14,21 +15,30 @@ int local_dequeue(logical_processor_t p)
 {
 //	printf("local_dequeue");
 	int usable_batch_found = 0;
-	while(!usable_batch_found)
+	while(1)
 	{
-		/* move batch*/	
-		p->activeQ = p->head;	
-		/* remove from run queue */
-		p->head = p->head->next;
+		/**************LOCK***********/
+		pthread_mutex_lock(p->run_queue_lock);
+
+		if(p->head !=NULL)
+		{
+			/* move batch*/	
+			p->activeQ = p->head;	
+			/* remove from run queue */
+			p->head = p->head->next;
+		}
+		else
+			return 0; /* no more batches left */
+
+		pthread_mutex_unlock(p->run_queue_lock);
+		/************UNLOCK***********/
 
 		if(inWindow(p->activeQ)) 
 		{ /* batch was in window */
 
 			if(!isStolen(p->activeQ))
 			{
-				/* we found a good batch
-				set flag to exit loop */
-				usable_batch_found = 1;
+				/* we found a good batch*/
 
 				remove_from_window(p->activeQ);
 				extend_window(p->activeQ->next);
@@ -44,9 +54,7 @@ int local_dequeue(logical_processor_t p)
 		}
 		else
 		{
-			/* we found a good batch
-			set flag to exit loop */
-			usable_batch_found = 1;
+			/* we found a good batch */
 			return 1;
 		}
 	}
@@ -63,9 +71,12 @@ int remote_dequeue(logical_processor_t p)
 	int batch_found = 0;
 	// declare processor pointer
 	logical_processor_t victum;
-	while(!processor_found)
+	while(1)
 	{
 		victum = selectprocessor(p, loop_count);
+
+		/**************LOCK***********/
+		pthread_mutex_lock(victum->run_queue_lock);
 
 		while((p->activeQ = dequeue_window_batch(victum))!=0 && !batch_found)
 		{
@@ -74,20 +85,23 @@ int remote_dequeue(logical_processor_t p)
 			if(!isStolen(p->activeQ))
 			{
 				batch_found = 1;
-				processor_found = 1;
 			}
-		
 		}
-		/* arbitrary counter to ensure hault of loop */
-		if(loop_count++ == 4)
-			processor_found = 1;
 
-	}
-	/* batch was stolen */
-	if( batch_found == processor_found)
-	{
-		setStolen(p->activeQ);
-		return 1;
+	   /* batch was stolen */
+		if(batch_found)
+		{
+			setStolen(p->activeQ);
+			return 1;
+		}
+
+		pthread_mutex_unlock(victum->run_queue_lock);
+		/************UNLOCK***********/
+
+		/* arbitrary counter to ensure hault of loop */
+		/* 4 or number of virtual processors */
+		if(loop_count++ == 4)
+			return 0;
 	}
 	return 0;
 }
@@ -117,7 +131,9 @@ void execute(logical_processor_t p)
 
 void queue_batch(logical_processor_t p)
 {
-	/*	printf("q_batch\n"); */
+	/**************LOCK***********/
+	pthread_mutex_lock(victum->run_queue_lock);
+
 	/* add batch to end of the queue */	
 	p->tail->next = p->activeQ;
 	p->tail = p->activeQ;
@@ -125,8 +141,10 @@ void queue_batch(logical_processor_t p)
 	p->tail->next = NULL;
 	p->activeQ=NULL;
 
-	/* may have to add code her to windowify batch */
+	pthread_mutex_unlock(victum->run_queue_lock);
+	/************UNLOCK***********/
 
+	/* may have to add code her to windowify batch */
 }
 
 
@@ -151,36 +169,6 @@ void schedule(logical_processor_t p)
 }
 
 
-
-/* main method to test code */
-void main()
-{
-	/* create some processes/batches/a logical processor*/
-	process_t p1 = malloc(sizeof(struct process)); 
-	process_t p2 = malloc(sizeof(struct process)); 
-	process_t p3 = malloc(sizeof(struct process)); 
-	batch_t b1 = malloc(sizeof(struct batch)); 
-	batch_t b2 = malloc(sizeof(struct batch)); 
-	logical_processor_t lp1 = malloc(sizeof(struct logical_processor)); 
-	
-	p1->id = 5;
-	p2->id = 6;
-	p3->id = 7;
-	p3->next = NULL;
-	p1->next = p2;
-	p2->next = NULL;
-	b1->next = b2;
-	b2->next = NULL;
-	b1->head = p1;
-	b2->head = p3;
-	lp1->tail = b2;
-	lp1->head = b1;
-
-	schedule(lp1);
-
-}
-
-
 /**************************************
  * some helper scheduling functions,  *
  * most low level interaction is here *
@@ -193,7 +181,6 @@ int inWindow(batch_t b)
 {
 	return b->window;
 }
-
 
 /*
  * returns 1 if batch has beenstolen
@@ -231,7 +218,7 @@ batch_t dequeue_window_batch(logical_processor_t p)
 	batch_t b = p->head;		
 	
 	/* as long as batch is not in window or already stolen, get new batch */
-	while(!b->window || b->stolen)
+	while(b->next != NULL && (!b->window || b->stolen))
 	{
 		b = b->next;
 		if(b == p->tail && (!b->window || b->stolen))
@@ -248,8 +235,10 @@ void extend_window(batch_t b)
 {	
 	/* if the next batch is already in the window 
 	   set b to the next next one */
-	while(b->window == 1)
+	while(b->next != NULL && b->window == 1)
+	{
 		b = b->next;
+	}
 	b->window = 1;
 }
 
@@ -270,5 +259,92 @@ void setStolen(batch_t b)
 }
 
 
+/*****************************************
+** 
+** TTTTTTT   EEEE    SSS   TTTTTTT 
+**    T      E      S         T
+**    T      EEEE    SSS      T
+**    T      E          S     T
+**    T      EEEE    SSS      T
+**
+******************************************/
 
+/* code to set up a virtual processor 
+   with everything it needs to test */
+
+void setup_proc(logical_processor_t p)
+{
+	// create some processes/batches/a logical processor
+	process_t p1 = malloc(sizeof(struct process)); 
+	process_t p2 = malloc(sizeof(struct process)); 
+	process_t p3 = malloc(sizeof(struct process)); 
+	batch_t b1 = malloc(sizeof(struct batch)); 
+	batch_t b2 = malloc(sizeof(struct batch)); 
+	
+	p1->id = 5;
+	p2->id = 6;
+	p3->id = 7;
+	p3->next = NULL;
+	p1->next = p2;
+	p2->next = NULL;
+	b1->next = b2;
+	b2->next = NULL;
+	b2->stolen = 0;
+	b2->window = 0;
+	b1->head = p1;
+	b2->head = p3;
+	b1->stolen = 0;
+	b1->window = 1;
+	p->tail = b2;
+	p->head = b1;
+
+}
+
+int main () 
+{
+
+  /* Thread pointers */
+  pthread_t t1, t2, t3, t4;
+
+  /* Create 4 Virtual Processors */
+	logical_processor_t p1 = malloc(sizeof(struct logical_processor)); 
+	logical_processor_t p2 = malloc(sizeof(struct logical_processor)); 
+	logical_processor_t p3 = malloc(sizeof(struct logical_processor)); 
+	logical_processor_t p4 = malloc(sizeof(struct logical_processor)); 
+
+
+  /* Return values from threads */
+  int ret1, ret2, ret3, ret4;
+	
+	/* initalize a bunch of processes and batces */
+	setup_proc(p1);
+	setup_proc(p2);
+	setup_proc(p3);
+	setup_proc(p4);
+	/* Initialize the lock. Could do this to an array of locks
+	   or similar... but we do need to init each one.
+		 This could be in a struct (eg. in the virtual processor
+		 or runqueue.
+  */
+	 pthread_mutex_init(p1->run_queue_lock, NULL);
+	 pthread_mutex_init(p2->run_queue_lock, NULL);
+	 pthread_mutex_init(p3->run_queue_lock, NULL);
+	 pthread_mutex_init(p4->run_queue_lock, NULL);
+
+ /* begin the scheduler, one thread per processor */ 
+  ret3 = pthread_create ( &t1, NULL, schedule, (void*) p1);
+  ret3 = pthread_create ( &t2, NULL, schedule, (void*) p2);
+  ret3 = pthread_create ( &t3, NULL, schedule, (void*) p3);
+  ret3 = pthread_create ( &t4, NULL, schedule, (void*) p4);
+  
+  /* Wait for all of the threads to finish */
+  pthread_join (t1, NULL);
+  pthread_join (t2, NULL);
+  pthread_join (t3, NULL);
+  pthread_join (t4, NULL);
+
+  printf ("Threads done.\n");
+  
+  return 0;
+}
 
