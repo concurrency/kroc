@@ -1,0 +1,654 @@
+--
+--	lexer.occ -- simple lexer for the useful module
+--	Copyright (C) 2011 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+--** @module useful
+
+--{{{  includes
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+
+#INCLUDE "useful.inc"
+
+--}}}
+
+--{{{  PROC stream.bytes.to.lines (CHAN P.LEX.BYTESTREAM in?, CHAN P.LEX.LINESTREAM out!)
+--* Turns a stream of bytes (or arbitrary blocks of bytes) into a stream of lines.
+--
+-- @param in Byte stream in.
+-- @param out Line stream out.
+--
+PROC stream.bytes.to.lines (CHAN P.LEX.BYTESTREAM in?, CHAN P.LEX.LINESTREAM out!)
+  MOBILE []BYTE holding:
+  SEQ
+    holding := ""
+
+    INITIAL INT lineno IS 1:
+    INITIAL BOOL loop IS TRUE:
+    WHILE loop
+      in ? CASE
+        --{{{  bytes; MOBILE []BYTE -- incoming block of bytes
+        MOBILE []BYTE str:
+        bytes; str
+          IF
+            (SIZE str) = 0
+              SKIP  -- nothing here
+            IF i = 0 FOR SIZE str
+              str[i] = '*n'
+                INITIAL INT nl.at IS i:
+                WHILE nl.at >= 0
+                  SEQ
+                    -- newline somewhere in string
+                    INITIAL INT nsize IS (SIZE holding) + nl.at:
+                    IF
+                      nsize = 0
+                        SKIP            -- blank line
+                      TRUE
+                        MOBILE []BYTE ns:
+                        SEQ
+                          ns := MOBILE [nsize]BYTE
+                          --{{{  copy in chunks
+                          IF
+                            (SIZE holding) > 0
+                              SEQ
+                                [ns FOR SIZE holding] := holding
+                            TRUE
+                              SKIP
+                          IF
+                            nl.at > 0
+                              [ns FROM SIZE holding] := [str FOR nl.at]
+                            TRUE
+                              SKIP
+                          --}}}
+                          holding := ""
+                          out ! line; lineno; ns
+
+                    lineno := lineno + 1
+
+                    --{{{  maybe shuffle up in 'str'
+                    INITIAL INT left IS ((SIZE str) - (nl.at + 1)):
+                    MOBILE []BYTE nstr:
+                    SEQ
+                      nstr := MOBILE [left]BYTE         -- might be zero
+                      IF
+                        left > 0
+                          [nstr FOR left] := [str FROM (nl.at + 1)]
+                        TRUE
+                          SKIP
+                      str := nstr
+
+                    --}}}
+                    --{{{  look for next newline
+                    IF
+                      (SIZE str) = 0
+                        nl.at := -1
+                      IF j = 0 FOR SIZE str
+                        str[j] = '*n'
+                          nl.at := j
+                      TRUE
+                        SEQ
+                          -- no newlines in what's left
+                          holding := str
+                          nl.at := -1
+
+                    --}}}
+            TRUE
+              SEQ
+                -- no newline here, add to holding
+                IF
+                  (SIZE holding) = 0
+                    holding := str
+                  TRUE
+                    MOBILE []BYTE nh:
+                    SEQ
+                      nh := MOBILE [(SIZE holding) + (SIZE str)]BYTE
+                      [nh FOR SIZE holding] := holding
+                      [nh FROM SIZE holding] := str
+                      holding := nh
+        --}}}
+        --{{{  end.of.file -- end of file
+        end.of.file
+          SEQ
+            IF
+              (SIZE holding) > 0
+                out ! line; lineno; holding
+              TRUE
+                SKIP
+            loop := FALSE
+        --}}}
+
+    out ! end.of.file
+:
+--}}}
+--{{{  PROC stream.trim.lines (CHAN P.LEX.LINESTREAM in?, out!)
+--* Trims trailing whitespace and any leading carriage-returns from lines.
+--
+-- @param in Lines in.
+-- @param out Lines out.
+--
+PROC stream.trim.lines (CHAN P.LEX.LINESTREAM in?, out!)
+  SEQ
+    INITIAL BOOL loop IS TRUE:
+    WHILE loop
+      in ? CASE
+        MOBILE []BYTE str:
+        INT lineno:
+        line; lineno; str
+          INT start, end:
+          SEQ
+            IF
+              IF s = 0 FOR SIZE str
+                str[s] <> '*c'
+                  start := s
+              TRUE
+                start := SIZE str         -- nothing useful here
+            IF
+              IF e = (SIZE str) - 1 FOR (SIZE str) STEP -1
+                (str[e] <> ' ') AND (str[e] <> '*t') AND (str[e] <> '*c')
+                  end := e + 1
+              TRUE
+                end := 0                  -- nothing useful here
+
+            IF
+              end <= start
+                SKIP                      -- trimmed to nothingness
+              TRUE
+                MOBILE []BYTE nstr:
+                SEQ
+                  nstr := MOBILE [end - start]BYTE
+                  [nstr FOR end - start] := [str FROM start FOR end - start]
+                  out ! line; lineno; nstr
+        end.of.file
+          loop := FALSE
+    out ! end.of.file
+:
+--}}}
+--{{{  PROC stream.continue.lines (VAL BYTE cont, CHAN P.LEX.LINESTREAM in?, out!)
+--* Joins lines together based on a continuation character.
+-- Discards any leading whitespace on the joined line.
+--
+-- @param cont Specifies the line-continuation character, use #00 if none.
+-- @param in Lines in.
+-- @param out Lines out.
+--
+PROC stream.continue.lines (VAL BYTE cont, CHAN P.LEX.LINESTREAM in?, out!)
+  SEQ
+    INITIAL BOOL loop IS TRUE:
+    WHILE loop
+      in ? CASE
+        MOBILE []BYTE str:
+        INT lineno:
+        line; lineno; str
+          IF
+            cont = #00
+              --{{{  not actually doing anything useful
+              out ! line; lineno; str
+              --}}}
+            str[(SIZE str) - 1] = cont
+              INITIAL INT last.lineno IS lineno:
+              INITIAL BOOL iloop IS TRUE:
+              WHILE iloop
+                INITIAL INT nlen IS (SIZE str) - 1:
+                SEQ
+                  --{{{  remove continuation character
+                  MOBILE []BYTE next.str:
+                  SEQ
+                    next.str := MOBILE [nlen]BYTE
+                    [next.str FOR nlen] := [str FOR nlen]
+                    str := next.str
+
+                  --}}}
+                  --{{{  join the next line onto 'str', unless EOF
+                  in ? CASE
+                    MOBILE []BYTE next.line:
+                    INT next.lineno:
+                    line; next.lineno; next.line
+                      IF
+                        next.lineno > (last.lineno + 1)
+                          SEQ
+                            -- had a blank line since the last continuation
+                            out ! line; lineno; str
+                            lineno := next.lineno
+                            str := next.line
+                        TRUE
+                          MOBILE []BYTE next.str:
+                          INT nextlen, nextleft, nextstart:
+                          SEQ
+                            IF
+                              IF i = 0 FOR SIZE next.line
+                                (next.line[i] <> ' ') AND (next.line[i] <> '*t') AND (next.line[i] <> '*c')
+                                  nextleft, nextstart := (SIZE next.line) - i, i
+                              TRUE
+                                nextleft, nextstart := SIZE next.line, 0
+                            nextlen := (SIZE str) + nextleft
+
+                            -- join together to make new line
+                            next.str := MOBILE [nextlen]BYTE
+                            [next.str FOR SIZE str] := [str FOR SIZE str]
+                            IF
+                              nextleft > 0
+                                [next.str FROM SIZE str] := [next.line FROM nextstart FOR nextleft]
+                              TRUE
+                                SKIP
+                            str := next.str
+                            last.lineno := next.lineno
+                  --}}}
+                  --{{{  see if we should continue into the next line as well, else output and stop
+                  IF
+                    str[(SIZE str) - 1] = cont
+                      SKIP                        -- yes, we should!
+                    TRUE
+                      SEQ
+                        -- everything we can joined in 'str', output it and stop
+                        out ! line; lineno; str
+                        iloop := FALSE
+                  --}}}
+            TRUE
+              --{{{  no continuation character, just send on
+              out ! line; lineno; str
+              --}}}
+        end.of.file
+          loop := FALSE
+    out ! end.of.file
+:
+--}}}
+--{{{  PROC stream.remove.eol.comments (VAL BYTE cchar, CHAN P.LEX.LINESTREAM in?, out!)
+--* Removes comments from lines.
+--
+-- @param cchar Comment character, assumed to continue to end-of-line.
+-- @param in Lines in.
+-- @param out Lines out.
+--
+PROC stream.remove.eol.comments (VAL BYTE cchar, CHAN P.LEX.LINESTREAM in?, out!)
+  SEQ
+    INITIAL BOOL loop IS TRUE:
+    WHILE loop
+      in ? CASE
+        INT lineno:
+        MOBILE []BYTE line:
+        line; lineno; line
+          INT end:
+          SEQ
+            end := SIZE line
+
+            INITIAL BOOL in.string IS FALSE:
+            INITIAL INT i IS 0:
+            WHILE i < (SIZE line)
+              SEQ
+                IF
+                  line[i] = '*"'
+                    in.string := NOT in.string
+                  (NOT in.string) AND (line[i] = cchar)
+                    SEQ
+                      end := i
+                      i := SIZE line
+                  TRUE
+                    SKIP
+                i := i + 1
+
+            IF
+              end = 0
+                SKIP                            -- entire line is a comment
+              end < (SIZE line)
+                MOBILE []BYTE nline:
+                SEQ
+                  nline := MOBILE [end]BYTE
+                  [nline FOR end] := [line FOR end]
+                  out ! line; lineno; nline
+              TRUE
+                out ! line; lineno; line
+        end.of.file
+          loop := FALSE
+
+    out ! end.of.file
+:
+--}}}
+
+--{{{  PROC stream.file.reader (VAL []BYTE fname, CHAN P.LEX.BYTESTREAM out!)
+--* Reads from the specified file.  If there's something wrong (file not found, etc.), just
+-- sends EOF.
+--
+-- @param fname Filename.
+-- @param out Blocks of bytes output.
+--
+PROC stream.file.reader (VAL []BYTE fname, CHAN P.LEX.BYTESTREAM out!)
+  INT fd:
+  SEQ
+    file.open (fname, O.RDONLY, fd)
+    IF
+      fd < 0
+        out ! end.of.file
+      TRUE
+        INT result:
+        [128]BYTE buffer:
+        SEQ
+          INITIAL BOOL rloop IS TRUE:
+          WHILE rloop
+            SEQ
+              file.read (fd, buffer, result)
+              IF
+                result = 0
+                  -- EOF
+                  rloop := FALSE
+                result < 0
+                  -- error
+                  rloop := FALSE
+                TRUE
+                  out ! bytes; [buffer FOR result]
+          out ! end.of.file
+          file.close (fd, result)
+:
+--}}}
+--{{{  PROC stream.lines.to.tokens (VAL BOOL track.indent, CHAN P.LEX.LINESTREAM in?, CHAN P.LEX.TOKENSTREAM out!)
+--* Turns lines of input into tokens.
+-- If [@text track.indent] is [@text TRUE] then this tracks indentation (with [@text indent]
+-- and [@text outdent] tokens).
+--
+-- @param track.indent Whether or not to track indent.
+-- @param in Lines in.
+-- @param out Tokens out.
+--
+PROC stream.lines.to.tokens (VAL BOOL track.indent, CHAN P.LEX.LINESTREAM in?, CHAN P.LEX.TOKENSTREAM out!)
+  [128]INT ilevels:
+  INITIAL INT ilvl IS 0:
+  SEQ
+    ilevels[ilvl] := 0
+
+    INITIAL BOOL loop IS TRUE:
+    WHILE loop
+      in ? CASE
+        INT lineno:
+        MOBILE []BYTE line:
+        line; lineno; line
+          INITIAL INT start IS 0:
+          SEQ
+            IF
+              track.indent
+                --{{{  track leading whitespace and generate indent/outdent tokens as needed.
+                INITIAL INT lead.indent IS 0:
+                SEQ
+                  INITIAL BOOL loop IS TRUE:
+                  WHILE loop AND (start < (SIZE line))
+                    IF
+                      line[start] = ' '
+                        start, lead.indent := start + 1, lead.indent + 1
+                      line[start] = '*t'
+                        start, lead.indent := start + 1, (((lead.indent + 1) >> 3) + 1) << 3
+                      TRUE
+                        loop := FALSE
+                  IF
+                    lead.indent > ilevels[ilvl]
+                      SEQ
+                        -- indenting to new level
+                        ilvl := ilvl + 1
+                        ilevels[ilvl] := lead.indent
+                        out ! indent; lineno; ilvl
+                    lead.indent < ilevels[ilvl]
+                      WHILE lead.indent < ilevels[ilvl]
+                        SEQ
+                          -- outdenting to previous level
+                          ilvl := ilvl - 1
+                          out ! outdent; lineno; ilvl
+                    TRUE
+                      SKIP    -- same level of indentation
+                --}}}
+              TRUE
+                --{{{  not tracking indent, just ignore leading whitespace
+                INITIAL BOOL loop IS TRUE:
+                WHILE loop AND (start < (SIZE line))
+                  IF
+                    line[start] = ' '
+                      start := start + 1
+                    line[start] = '*t'
+                      start := start + 1
+                    TRUE
+                      loop := FALSE
+                --}}}
+
+            WHILE start < (SIZE line)
+              INT n.start:
+              SEQ
+                --{{{  skip any whitespace before the next token
+                INITIAL BOOL iloop IS TRUE:
+                WHILE iloop AND (start < (SIZE line))
+                  IF
+                    (line[start] = ' ') OR (line[start] = '*t')
+                      start := start + 1
+                    TRUE
+                      iloop := FALSE
+
+                n.start := start + 1
+
+                --}}}
+                IF
+                  start >= (SIZE line)
+                    SKIP
+                  ((line[start] >= 'a') AND (line[start] <= 'z')) OR ((line[start] >= 'A') AND (line[start] <= 'Z'))
+                    --{{{  assume word
+                    INITIAL INT end IS start:
+                    SEQ
+                      INITIAL BOOL iloop IS TRUE:
+                      WHILE iloop AND (end < (SIZE line))
+                        IF
+                          ((line[end] >= 'a') AND (line[end] <= 'z')) OR ((line[end] >= 'A') AND (line[end] <= 'Z'))
+                            end := end + 1
+                          line[end] = '_'
+                            end := end + 1
+                          (line[end] >= '0') AND (line[end] <= '9')
+                            end := end + 1
+                          TRUE
+                            iloop := FALSE
+
+                      -- assert: end > start
+                      MOBILE []BYTE word:
+                      INITIAL INT wlen IS end - start:
+                      SEQ
+                        word := MOBILE [wlen]BYTE
+                        [word FOR wlen] := [line FROM start FOR wlen]
+
+                        out ! word; lineno; word
+
+                      n.start := end
+                    --}}}
+                  (line[start] >= '0') AND (line[start] <= '9')
+                    --{{{  assume number
+                    INITIAL INT val IS 0:
+                    SEQ
+                      INITIAL BOOL iloop IS TRUE:
+                      WHILE iloop
+                        IF
+                          start = (SIZE line)
+                            iloop := FALSE
+                          (line[start] >= '0') AND (line[start] <= '9')
+                            SEQ
+                              val := (val * 10) + (INT (line[start] - '0'))
+                              start := start + 1
+                          TRUE
+                            iloop := FALSE
+
+                      n.start := start
+                      out ! integer; lineno; val
+                    --}}}
+                  line[start] = '-'
+                    --{{{  possibly a number
+                    IF
+                      (start + 1) >= (SIZE line)
+                        out ! symbol; lineno; '-'       -- just a symbol
+                      (line[start + 1] >= '0') AND (line[start + 1] <= '9')
+                        --{{{  assume number
+                        INITIAL INT val IS 0:
+                        SEQ
+                          start := start + 1
+                          INITIAL BOOL iloop IS TRUE:
+                          WHILE iloop
+                            IF
+                              start = (SIZE line)
+                                iloop := FALSE
+                              (line[start] >= '0') AND (line[start] <= '9')
+                                SEQ
+                                  val := (val * 10) + (INT (line[start] - '0'))
+                                  start := start + 1
+                              TRUE
+                                iloop := FALSE
+
+                          n.start := start
+                          out ! integer; lineno; -val
+                        --}}}
+                      TRUE
+                        out ! symbol; lineno; '-'       -- just a symbol
+
+                    --}}}
+                  line[start] = '*"'
+                    --{{{  assume string
+                    INT end, slen:
+                    SEQ
+                      start := start + 1
+                      end := start
+
+                      INITIAL BOOL iloop IS TRUE:
+                      WHILE iloop AND (end < (SIZE line))
+                        IF
+                          line[end] = '*"'
+                            iloop, n.start := FALSE, end + 1
+                          TRUE
+                            end, n.start := end + 1, n.start + 1
+                      
+                      slen := end - start
+                      MOBILE []BYTE str:
+                      SEQ
+                        str := MOBILE [slen]BYTE        -- might be zero
+                        IF
+                          slen > 0
+                            [str FOR slen] := [line FROM start FOR slen]
+                          TRUE
+                            SKIP
+                        out ! string; lineno; str
+
+                    --}}}
+                  TRUE
+                    --{{{  something else, assume symbol
+                    SEQ
+                      out ! symbol; lineno; line[start]
+                      n.start := start + 1
+                    --}}}
+                start := n.start
+
+        end.of.file
+          loop := FALSE
+    out ! end.of.file
+:
+--}}}
+
+--{{{  PROC stream.bytes.dump (CHAN P.LEX.BYTESTREAM in?, CHAN BYTE out!)
+--* Dumps a P.LEX.BYTESTREAM channel (debugging).
+--
+-- @param in Bytes in.
+-- @param out Screen output.
+--
+PROC stream.bytes.dump (CHAN P.LEX.BYTESTREAM in?, CHAN BYTE out!)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    in ? CASE
+      MOBILE []BYTE data:
+      bytes; data
+        out.string (data, 0, out!)
+      end.of.file
+        loop := FALSE
+:
+--}}}
+--{{{  PROC stream.lines.dump (CHAN P.LEX.LINESTREAM in?, CHAN BYTE out!)
+--* Dumps a P.LEX.LINESTREAM channel (debugging).
+--
+-- @param in Lines in.
+-- @param out Screen output.
+--
+PROC stream.lines.dump (CHAN P.LEX.LINESTREAM in?, CHAN BYTE out!)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    in ? CASE
+      INT lineno:
+      MOBILE []BYTE line:
+      line; lineno; line
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": ", 0, out!)
+          out.string (line, 0, out!)
+          out.string ("*n", 0, out!)
+      end.of.file
+        loop := FALSE
+:
+--}}}
+--{{{  PROC stream.tokens.dump (CHAN P.LEX.TOKENSTREAM in?, CHAN BYTE out!)
+--* Dumps a P.LEX.TOKENSTREAM channel (debugging).
+--
+-- @param in Tokens in.
+-- @param out Screen output.
+--
+PROC stream.tokens.dump (CHAN P.LEX.TOKENSTREAM in?, CHAN BYTE out!)
+  INITIAL BOOL loop IS TRUE:
+  WHILE loop
+    in ? CASE
+      INT lineno:
+      MOBILE []BYTE word:
+      word; lineno; word
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": word [", 0, out!)
+          out.string (word, 0, out!)
+          out.string ("]*n", 0, out!)
+      INT lineno:
+      MOBILE []BYTE str:
+      string; lineno; str
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": string [", 0, out!)
+          out.string (str, 0, out!)
+          out.string ("]*n", 0, out!)
+      INT lineno:
+      BYTE symb:
+      symbol; lineno; symb
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": symbol *'", 0, out!)
+          out ! symb
+          out.string ("*'*n", 0, out!)
+      INT lineno, val:
+      integer; lineno; val
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": number (", 0, out!)
+          out.int (val, 0, out!)
+          out.string (")*n", 0, out!)
+      INT lineno, ind:
+      indent; lineno; ind
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": indent to ", 0, out!)
+          out.int (ind, 0, out!)
+          out.string ("*n", 0, out!)
+      INT lineno, ind:
+      outdent; lineno; ind
+        SEQ
+          out.int (lineno, 3, out!)
+          out.string (": outdent to ", 0, out!)
+          out.int (ind, 0, out!)
+          out.string ("*n", 0, out!)
+      end.of.file
+        loop := FALSE
+:
+--}}}
+

@@ -6,10 +6,12 @@ ACLOCAL_AMFLAGS = -I ../../../m4
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
-	test-format.occ
+	test-format.occ \
+	test-lexer.occ
 
 examples = \
-	test-format
+	test-format \
+	test-lexer
 
 TESTS_ENVIRONMENT = $(OCCBUILD) --run
 TESTS = $(examples)
@@ -26,3 +28,4 @@ SUFFIXES = .occ
 
 .occ:
 	$(OCCBUILD) --program $<
+
