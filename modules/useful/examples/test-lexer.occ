@@ -63,5 +63,21 @@ PROC main (CHAN BYTE scr!)
         stream.lines.to.tokens (TRUE, ll4?, tk1!)
         stream.tokens.dump (tk1?, scr!)
     --}}}
+    --{{{  tokeniser plain
+    SEQ
+      out.string ("-------[tokeniser network plain]-------------------------------------------*n", 0, scr!)
+      CHAN P.LEX.TOKENSTREAM tk1:
+      PAR
+        stream.file.tokeniser ("test-lexer.txt", tk1!, FALSE, #00, #00)
+        stream.tokens.dump (tk1?, scr!)
+    --}}}
+    --{{{  tokeniser full
+    SEQ
+      out.string ("-------[tokeniser network full]--------------------------------------------*n", 0, scr!)
+      CHAN P.LEX.TOKENSTREAM tk1:
+      PAR
+        stream.file.tokeniser ("test-lexer.txt", tk1!, TRUE, '\', '#')
+        stream.tokens.dump (tk1?, scr!)
+    --}}}
 :
 

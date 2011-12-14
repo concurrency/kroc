@@ -317,6 +317,26 @@ PROC stream.remove.eol.comments (VAL BYTE cchar, CHAN P.LEX.LINESTREAM in?, out!
     out ! end.of.file
 :
 --}}}
+--{{{  PROC stream.lines.id (CHAN P.LEX.LINESTREAM in?, out!)
+--* ID process for line-stream.
+--
+-- @param in Lines in.
+-- @param out Lines out.
+--
+PROC stream.lines.id (CHAN P.LEX.LINESTREAM in?, out!)
+  SEQ
+    INITIAL BOOL loop IS TRUE:
+    WHILE loop
+      in ? CASE
+        INT lineno:
+        MOBILE []BYTE line:
+        line; lineno; line
+          out ! line; lineno; line
+        end.of.file
+          loop := FALSE
+    out ! end.of.file
+:
+--}}}
 
 --{{{  PROC stream.file.reader (VAL []BYTE fname, CHAN P.LEX.BYTESTREAM out!)
 --* Reads from the specified file.  If there's something wrong (file not found, etc.), just
@@ -550,6 +570,35 @@ PROC stream.lines.to.tokens (VAL BOOL track.indent, CHAN P.LEX.LINESTREAM in?, C
         end.of.file
           loop := FALSE
     out ! end.of.file
+:
+--}}}
+--{{{  PROC stream.file.tokeniser (VAL []BYTE fname, CHAN P.LEX.TOKENSTREAM out!, VAL BOOL track.indent, VAL BYTE cont, cchar)
+--* Tokenises an input file.
+--
+-- @param fname Filename to read from.
+-- @param out Tokens out (finishes with [@text end.of.file]).
+-- @param track.indent Whether or not to track indentation (and generate indent/outdent tokens).
+-- @param cont Line continuation character (zero if none).
+-- @param cchar Commend character (zero if none).
+--
+PROC stream.file.tokeniser (VAL []BYTE fname, CHAN P.LEX.TOKENSTREAM out!, VAL BOOL track.indent, VAL BYTE cont, cchar)
+  CHAN P.LEX.BYTESTREAM bs:
+  CHAN P.LEX.LINESTREAM ls1, ls2, ls3, ls4:
+  PAR
+    stream.file.reader (fname, bs!)
+    stream.bytes.to.lines (bs?, ls1!)
+    IF
+      cont <> #00
+        stream.continue.lines (cont, ls1?, ls2!)
+      TRUE
+        stream.lines.id (ls1?, ls2!)
+    IF
+      cchar <> #00
+        stream.remove.eol.comments (cchar, ls2?, ls3!)
+      TRUE
+        stream.lines.id (ls2?, ls3!)
+    stream.trim.lines (ls3?, ls4!)
+    stream.lines.to.tokens (track.indent, ls4?, out!)
 :
 --}}}
 
