@@ -6,5 +6,5 @@ DEFS = @DEFS@ @KROC_CCSP_CFLAGS@ -Wall
 
 noinst_LIBRARIES = librts.a
 
-librts_a_SOURCES = occam_entry.c rtsmain.c tty.c userproc.c
+librts_a_SOURCES = occam_entry.c tty.c userproc.c rtsmain.c
 

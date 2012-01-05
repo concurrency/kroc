@@ -772,15 +772,18 @@ if [ "$intree" = "" ]; then
 	# Pull paths from env in preference of hardcoded path
 	occ21=${OCC21:-"$kroc_archbindir/occ21"}
 	octran=${OCTRAN:-"$kroc_archbindir/tranx86"}
+	rtsmain=${RTSMAIN:-"$kroc_archlibdir/rtsmain.o"}
 else
 	occ21="$intree/tools/occ21/occ21"
 	octran="$intree/tools/tranx86/tranx86"
+	rtsmain="$intree/runtime/libkrocif/rts/rtsmain.o"
 fi
 
+
 if [ $dtraces -eq 1 ]; then
-	ocrts="-lkrocif -lccsptrace"
+	ocrts="$rtsmain -lkrocif -lccsptrace"
 else
-	ocrts="-lkrocif -lccsp"
+	ocrts="$rtsmain -lkrocif -lccsp"
 fi
 
 
