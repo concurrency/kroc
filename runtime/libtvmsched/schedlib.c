@@ -310,7 +310,7 @@ void setStolen(batch_t b)
 /* code to set up a virtual processor 
    with everything it needs to test */
 
-void setup_proc(logical_processor_t p)
+void setup_proc(logical_processor_t p, int label)
 {
 	// create some processes/batches/a logical processor
 	process_t p1 = malloc(sizeof(struct process)); 
@@ -319,9 +319,9 @@ void setup_proc(logical_processor_t p)
 	batch_t b1 = malloc(sizeof(struct batch)); 
 	batch_t b2 = malloc(sizeof(struct batch)); 
 	
-	p1->id = 5;
-	p2->id = 6;
-	p3->id = 7;
+	p1->id = label;
+	p2->id = label + 1;
+	p3->id = label + 2;
 	p3->next = NULL;
 	p1->next = p2;
 	p2->next = NULL;
@@ -356,10 +356,10 @@ int main ()
   int ret1, ret2, ret3, ret4;
 	
 	/* initalize a bunch of processes and batces */
-	setup_proc(p1);
-	setup_proc(p2);
-	setup_proc(p3);
-	setup_proc(p4);
+	setup_proc(p1, 0);
+	setup_proc(p2, 3);
+	setup_proc(p3, 6);
+	setup_proc(p4, 9);
 
 	/* link processors for stealing */
 	p1->partner = p2;
