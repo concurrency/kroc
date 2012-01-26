@@ -4,7 +4,7 @@ library of functions for simple scheduling
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sched.h>
+#include <wf-sched.h>
 
 
 /* 
@@ -13,7 +13,7 @@ library of functions for simple scheduling
  */ 
 int local_dequeue(logical_processor_t p)
 {
-//	printf("local_dequeue");
+	printf("local_dequeue called\n");
 	int usable_batch_found = 0;
 	while(1)
 	{
@@ -26,23 +26,36 @@ int local_dequeue(logical_processor_t p)
 			p->activeQ = p->head;	
 			/* remove from run queue */
 			p->head = p->head->next;
+			printf("LD: HEAD->NEXT\n");
 		}
 		else
+		{
+			/* make sure you unlock before you leave*/
+			pthread_mutex_unlock(p->run_queue_lock);
+			printf("local_dequeue: batch NOT found\n");
 			return 0; /* no more batches left */
+		}
 
+		printf("LD: UNLOCK MUTEX\n");
 		pthread_mutex_unlock(p->run_queue_lock);
 		/************UNLOCK***********/
+		printf("LD: ACHIEVEMENT UNLOCKED\n");
 
 		if(inWindow(p->activeQ)) 
 		{ /* batch was in window */
-
+			
+			printf("LD: IN WINDOW\n");
 			if(!isStolen(p->activeQ))
 			{
+				printf("LD: REMOVING, NOT STOLEN\n");
 				/* we found a good batch*/
-
+				
 				remove_from_window(p->activeQ);
+				printf("LD: REMOVED FROM WINDOW\n");
 				extend_window(p->activeQ->next);
+				printf("LD: WINDOW EXTENDED\n");
 
+				printf("local_dequeue: batch found\n");
 				return 1;
 
 			}
@@ -50,13 +63,16 @@ int local_dequeue(logical_processor_t p)
 			{	
 				/* garbage collect */
 				/* p->laundry_queue = p->activeQ; */
+				printf("LD: DO LAUNDRY\n");
 			}
 		}
 		else
 		{
 			/* we found a good batch */
+			printf("local_dequeue: batch found\n");
 			return 1;
 		}
+		printf("LD: BOTTOM\n");
 	}
 }
 
@@ -66,8 +82,9 @@ int local_dequeue(logical_processor_t p)
  */ 
 int remote_dequeue(logical_processor_t p)
 {
+	printf("remote_dequeue called\n");
 	int loop_count =0;
-	int processor_found = 0;
+	int process_found = 0;
 	int batch_found = 0;
 	// declare processor pointer
 	logical_processor_t victum;
@@ -77,38 +94,34 @@ int remote_dequeue(logical_processor_t p)
 
 		/**************LOCK***********/
 		pthread_mutex_lock(victum->run_queue_lock);
-
-		while((p->activeQ = dequeue_window_batch(victum))!=0 && !batch_found)
-		{
-			//p->activeQ = dequeue_window_batch(victum);
-			
-			if(!isStolen(p->activeQ))
-			{
-				batch_found = 1;
-			}
-		}
-
-	   /* batch was stolen */
-		if(batch_found)
-		{
+		p->activeQ = dequeue_window_batch(victum);
+		if(p->activeQ != NULL)
+		{	
 			setStolen(p->activeQ);
-			return 1;
+			process_found = 1;
 		}
 
 		pthread_mutex_unlock(victum->run_queue_lock);
 		/************UNLOCK***********/
-
+		if(process_found)
+		{
+			printf("remote_dequeue: batch found\n");
+			return 1;
+		}	
 		/* arbitrary counter to ensure hault of loop */
-		/* 4 or number of virtual processors */
-		if(loop_count++ == 4)
+		/* 0,1,2,3, number of virtual processors */
+		if(++loop_count == 3)
+		{
+			printf("remote_dequeue: batch NOT found\n");
 			return 0;
+		}
 	}
+	printf("remote_dequeue: batch NOT found\n");
 	return 0;
 }
 
 void set_current_process(logical_processor_t p)
 {
-//	printf("set_current_p\n");
 	p->current_process = p->activeQ->head;
 }
 
@@ -120,10 +133,9 @@ void set_dispatch_count(logical_processor_t p, int count)
 void execute(logical_processor_t p)
 {
 	/*  temp, to show other code is working */
-//	printf("executing process %d\n", p->current_process->id);
+	printf("executing process %d\n", p->current_process->id);
 	/* remove current process from queue */
 	p->activeQ->head=p->activeQ->head->next;
-
 
 	/* decriment dispatch count */
 	p->dispatch_count--;
@@ -131,8 +143,9 @@ void execute(logical_processor_t p)
 
 void queue_batch(logical_processor_t p)
 {
+	printf("queue_batch called\n");
 	/**************LOCK***********/
-	pthread_mutex_lock(victum->run_queue_lock);
+	pthread_mutex_lock(p->run_queue_lock);
 
 	/* add batch to end of the queue */	
 	p->tail->next = p->activeQ;
@@ -141,7 +154,7 @@ void queue_batch(logical_processor_t p)
 	p->tail->next = NULL;
 	p->activeQ=NULL;
 
-	pthread_mutex_unlock(victum->run_queue_lock);
+	pthread_mutex_unlock(p->run_queue_lock);
 	/************UNLOCK***********/
 
 	/* may have to add code her to windowify batch */
@@ -149,22 +162,41 @@ void queue_batch(logical_processor_t p)
 
 
 
-void schedule(logical_processor_t p)
+//void schedule(logical_processor_t p)
+void * schedule(void * arg)
 {
+	int retval;
+	logical_processor_t p = (logical_processor_t) arg;
+	
+	printf("in schedule\n");
+//	printf("\n\n%d\n\n", p->current_process->id);
 	while(1) //while true
 	{
-		if(p->head!=NULL)
-			local_dequeue(p); // local dequeue
-		else 
+		if(p->head!=NULL) {
+			printf("LOCAL\n");
+			retval = local_dequeue(p); // local dequeue
+			printf("LOCAL LD RETVAL %d\n", retval);
+		} 
+		else { 
+			printf("REMOTE\n");
 			remote_dequeue(p);
-		set_dispatch_count(p, 1);
+		}
+
+		printf("SET DISPATCH COUNT.\n");
+		set_dispatch_count(p, 3);
+		
 		while(p->dispatch_count > 0 && p->activeQ->head != NULL)
 		{
+			printf("SET_CURRENT_P\n");
 			set_current_process(p);
+			printf("EXECUTE_P\n");
 			execute(p);
 		}
-		if(p->dispatch_count == 0 && p->activeQ->head != NULL)
+		
+		if(p->dispatch_count == 0 && p->activeQ->head != NULL) {
+			printf("Q_BATCH\n");
 			queue_batch(p); //all batches are locally enqueued
+		}
 	}		
 }
 
@@ -211,18 +243,20 @@ logical_processor_t selectprocessor(logical_processor_t p, int newPartner)
 }
 
 /*
- * returns a pointer to the stolen batch or 0 if no batch could be stolen
+ * returns a pointer to the stolen batch or NULL if no batch could be stolen
  */
 batch_t dequeue_window_batch(logical_processor_t p)
 {
 	batch_t b = p->head;		
 	
 	/* as long as batch is not in window or already stolen, get new batch */
+	/* this code might break if there is only 
+		one batch in the queue and it can be stolen */
 	while(b->next != NULL && (!b->window || b->stolen))
 	{
 		b = b->next;
 		if(b == p->tail && (!b->window || b->stolen))
-			return 0; //nothing stealable found
+			return NULL; //nothing stealable found
 	}
 	return b;
 }
@@ -235,11 +269,15 @@ void extend_window(batch_t b)
 {	
 	/* if the next batch is already in the window 
 	   set b to the next next one */
-	while(b->next != NULL && b->window == 1)
-	{
-		b = b->next;
+	if (b == NULL) {
+		printf("EW: BATCH NULL!\n");
+	} else {
+		while(b->next != NULL && b->window == 1)
+		{
+			b = b->next;
+		}
+		b->window = 1;
 	}
-	b->window = 1;
 }
 
 /*
@@ -305,7 +343,8 @@ int main ()
 
   /* Thread pointers */
   pthread_t t1, t2, t3, t4;
-
+  int err;
+  
   /* Create 4 Virtual Processors */
 	logical_processor_t p1 = malloc(sizeof(struct logical_processor)); 
 	logical_processor_t p2 = malloc(sizeof(struct logical_processor)); 
@@ -321,30 +360,60 @@ int main ()
 	setup_proc(p2);
 	setup_proc(p3);
 	setup_proc(p4);
+
+	/* link processors for stealing */
+	p1->partner = p2;
+	p2->partner = p3;
+	p3->partner = p4;
+	p4->partner = p1;
+
+
 	/* Initialize the lock. Could do this to an array of locks
 	   or similar... but we do need to init each one.
 		 This could be in a struct (eg. in the virtual processor
 		 or runqueue.
   */
+	 /* this code segfaults 
+	   
 	 pthread_mutex_init(p1->run_queue_lock, NULL);
 	 pthread_mutex_init(p2->run_queue_lock, NULL);
 	 pthread_mutex_init(p3->run_queue_lock, NULL);
 	 pthread_mutex_init(p4->run_queue_lock, NULL);
 
- /* begin the scheduler, one thread per processor */ 
-  ret3 = pthread_create ( &t1, NULL, schedule, (void*) p1);
-  ret3 = pthread_create ( &t2, NULL, schedule, (void*) p2);
-  ret3 = pthread_create ( &t3, NULL, schedule, (void*) p3);
-  ret3 = pthread_create ( &t4, NULL, schedule, (void*) p4);
-  
-  /* Wait for all of the threads to finish */
-  pthread_join (t1, NULL);
-  pthread_join (t2, NULL);
-  pthread_join (t3, NULL);
-  pthread_join (t4, NULL);
+	  so try i this way
+	 */
 
-  printf ("Threads done.\n");
+	 pthread_mutex_t m1 = PTHREAD_MUTEX_INITIALIZER;	
+	 p1->run_queue_lock = &m1;
+	 pthread_mutex_t m2 = PTHREAD_MUTEX_INITIALIZER;	
+	 p2->run_queue_lock = &m2;
+	 pthread_mutex_t m3 = PTHREAD_MUTEX_INITIALIZER;	
+	 p3->run_queue_lock = &m3;
+	 pthread_mutex_t m4 = PTHREAD_MUTEX_INITIALIZER;	
+	 p4->run_queue_lock = &m4;
+
+
+ /* begin the scheduler, one thread per processor */
+ /*
+  ret1 = pthread_create (&t1, NULL, (void *) &schedule, (void *) &p1);
+  ret2 = pthread_create (&t2, NULL, (void *) &schedule, (void *) &p2);
+  ret3 = pthread_create (&t3, NULL, (void *) &schedule, (void *) &p3);
+  ret4 = pthread_create ( &t4, NULL, (void *) &schedule, (void *) &p4);
+*/
   
+  ret1 = pthread_create (&t1, NULL, schedule, p1);
+
+  printf ("pthread_create called.\n");
+
+  /* Wait for all of the threads to finish */
+  printf("JOINING\n");
+  err = pthread_join (t1, NULL);
+  printf("DONE JOINING\n");
+  printf("ERROR \d\n", err);
+//  pthread_join (t2, NULL);
+ // pthread_join (t3, NULL);
+ // pthread_join (t4, NULL);
+    
   return 0;
 }
 
