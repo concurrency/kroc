@@ -42,10 +42,6 @@ int local_dequeue(logical_processor_t p)
 			return 0; /* no more batches left */
 		}
 
-//		printf("LD %d: UNLOCK MUTEX\n",p->id);
-		pthread_mutex_unlock(p->run_queue_lock);
-		/************UNLOCK***********/
-//		printf("LD %d: ACHIEVEMENT UNLOCKED\n",p->id);
 
 		if(inWindow(p->activeQ)) 
 		{ /* batch was in window */
@@ -62,20 +58,39 @@ int local_dequeue(logical_processor_t p)
 //				printf("LD %d: WINDOW EXTENDED\n",p->id);
 
 //				printf("LD %d: batch found\n",p->id);
+
+
+//			printf("LD %d: UNLOCK MUTEX\n",p->id);
+				pthread_mutex_unlock(p->run_queue_lock);
+				/************UNLOCK***********/
+//			printf("LD %d: ACHIEVEMENT UNLOCKED\n",p->id);
 				return 1;
 
 			}
 			else /*batch was already stolen */
 			{	
 				/* garbage collect */
+				
 				/* p->laundry_queue = p->activeQ; */
 //				printf("LD %d: DO LAUNDRY\n",p->id);
+
+//			printf("LD %d: UNLOCK MUTEX\n",p->id);
+				pthread_mutex_unlock(p->run_queue_lock);
+				/************UNLOCK***********/
+//			printf("LD %d: ACHIEVEMENT UNLOCKED\n",p->id);
+				return 0;
 			}
 		}
 		else
 		{
 			/* we found a good batch */
 //			printf("LD %d: batch found\n",p->id);
+
+
+//		printf("LD %d: UNLOCK MUTEX\n",p->id);
+			pthread_mutex_unlock(p->run_queue_lock);
+			/************UNLOCK***********/
+//		printf("LD %d: ACHIEVEMENT UNLOCKED\n",p->id);
 			return 1;
 		}
 	}
@@ -92,13 +107,14 @@ int remote_dequeue(logical_processor_t p)
 	int process_found = 0;
 	int batch_found = 0;
 
-	// declare processor pointer
+	/* declare processor pointer */
 	logical_processor_t victum;
 	victum = selectprocessor(p);
 //	printf("RD %d: victum selected\n", p->id);
 
 	/**************LOCK***********/
 	pthread_mutex_lock(victum->run_queue_lock);
+
 //	printf("RD %d: victum queue locked\n", p->id);
 	p->activeQ = dequeue_window_batch(victum);
 //	printf("RD %d: batch dequeued\n", p->id);
@@ -174,16 +190,19 @@ void queue_batch(logical_processor_t p)
 void schedule(logical_processor_t p)
 {
 //	printf("SCHED %d: in schedule, partner: %d\n", p->id, p->partner);
-	if(p->head!=NULL) 
+
+	/* if run queue is empty or local dequeue fails run remote dequeue */
+	if(p->head!=NULL)
 	{
-		local_dequeue(p); // local dequeue
-		/* ensure every one knows you have work */
-		global_procs[p->id]=1; //shouldn't be needed
+		if(!local_dequeue(p)) 
+			global_procs[p->id]=remote_dequeue(p);
+		else
+			global_procs[p->id]=1;
 	}
-	else  
+	else
 		global_procs[p->id]=remote_dequeue(p);
-	
-	/* only try to execute stuff if you have batches to execute */
+
+	/* only try to execute if you have sucessfully dequeued*/
 	if(global_procs[p->id]!=0)
 	{
 //		printf("SCHED %d: SET DISPATCH COUNT.\n", p->id);
@@ -276,14 +295,17 @@ batch_t dequeue_window_batch(logical_processor_t p)
 	if(b!=NULL)/* assume a batch exists to steal*/
 	{
 //		printf("RD: DQW V=%d: head not null\n", p->id);
-
-		/* if first batch can be stolen */
-		if(b->next == NULL && (b->window && !b->stolen))
+		if(b->next == NULL) /* only one batch */
 		{
+			if(b->window && !b->stolen) /*can be stolen*/
+			{
 //			printf("RD: DQW V=%d: dequeueing victum head\n", p->id);
-			return b;
+				return b;
+			}
+			else
+				return NULL; /*nothing stealable found*/
 		}
-		else if(b->next == NULL)
+		else 
 		{
 		/* as long as batch is not in window or already stolen, 
 		   get new batch */
@@ -293,7 +315,7 @@ batch_t dequeue_window_batch(logical_processor_t p)
 				if(b == p->tail && (!b->window || b->stolen))
 				{
 //					printf("RD: DQW V=%d: no stealable batch found\n",p->id);
-					return NULL; //nothing stealable found
+					return NULL; /*nothing stealable found*/
 				}
 			}
 		
@@ -303,7 +325,7 @@ batch_t dequeue_window_batch(logical_processor_t p)
 	}
 	
 //	printf("RD: DQW V=%d: no stealable batch found\n", p->id);
-	return NULL; //nothing stealable found
+	return NULL; /*nothing stealable found*/
 }
 
 
