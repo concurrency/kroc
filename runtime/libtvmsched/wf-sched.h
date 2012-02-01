@@ -4,6 +4,10 @@ header for currently external workstealling wait-free scheduler
 
 #include <pthread.h>
 
+/* declare constant for number of virtual processors*/
+#define NUMBER_OF_PROCS 4
+
+
 /*{{{ */
 struct process{
 		struct process *next;
@@ -33,9 +37,10 @@ struct logical_processor {
 		struct batch *activeQ;
 		int dispatch_count;
 		struct process *current_process;
-		struct logical_processor *partner; /* processor this processor steals from */
+		int partner; /* id of processor this processor steals from */
 		pthread_mutex_t *run_queue_lock; 	 /* lock on run queue */
 
+		int id; /* identity in global list */
 };
 typedef struct logical_processor *logical_processor_t;
 /*}}}*/
@@ -49,7 +54,9 @@ void setStolen(batch_t b);
 void remove_from_window(batch_t b);
 void extend_window(batch_t b);
 batch_t dequeue_window_batch(logical_processor_t p);
-logical_processor_t selectprocessor(logical_processor_t p, int newPartner);
+logical_processor_t selectprocessor(logical_processor_t p);
 int isStolen(batch_t b);
 int inWindow(batch_t b);
 /*}}}*/
+
+
