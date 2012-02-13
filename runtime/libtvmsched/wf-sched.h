@@ -6,6 +6,8 @@ header for currently external workstealling wait-free scheduler
 
 /* declare constant for number of virtual processors*/
 #define NUMBER_OF_PROCS 4
+#define DISPATCH_COUNT 10
+
 
 
 /*{{{ */
@@ -57,6 +59,14 @@ batch_t dequeue_window_batch(logical_processor_t p);
 logical_processor_t selectprocessor(logical_processor_t p);
 int isStolen(batch_t b);
 int inWindow(batch_t b);
+
+void * test_run(void * arg);
 /*}}}*/
 
+/* global list of processor states */
+/* contains a 0 if processor currently has no work */
+extern int global_procs[NUMBER_OF_PROCS];
+
+/* global list of pointers to processors*/
+extern logical_processor_t global_proc_pointer[NUMBER_OF_PROCS];
 

@@ -8,10 +8,12 @@ library of functions for simple scheduling
 
 /* global list of processor states */
 /* contains a 0 if processor currently has no work */
-int global_procs[NUMBER_OF_PROCS];
+//int* global_procs = malloc(NUMBER_OF_PROCS,sizeof(int));
 
 /* global list of pointers to processors*/
-logical_processor_t global_proc_pointer[NUMBER_OF_PROCS];
+//logical_processor_t* global_proc_pointer 
+//	= (logical_processor_t *)malloc(NUMBER_OF_PROCS,sizeof(logical_processor_t));
+
 
 /* 
  * 
@@ -206,7 +208,7 @@ void schedule(logical_processor_t p)
 	if(global_procs[p->id]!=0)
 	{
 //		printf("SCHED %d: SET DISPATCH COUNT.\n", p->id);
-		set_dispatch_count(p, 3);
+		set_dispatch_count(p, DISPATCH_COUNT);
 		
 		while(p->dispatch_count > 0 && p->activeQ->head != NULL)
 		{
@@ -223,36 +225,6 @@ void schedule(logical_processor_t p)
 	}
 }
 
-void * test_run(void * arg)
-{
-	int i=0;
-	int flag=1;
-	logical_processor_t p = (logical_processor_t) arg;
-
-	while(1) //while true
-	{
-		
-//		printf("Global Array: ");
-//		for(i=0;i<NUMBER_OF_PROCS;i++)
-//			printf("%d,",global_procs[i]);
-//		printf("\n");
-
-		schedule(p);
-
-		/* check to see if all processors are done executing */
-		flag=1;
-		for(i=0;i<NUMBER_OF_PROCS;i++)
-			if(global_procs[i]!=0)
-			{
-				flag=0;
-				break;
-			}
-		if(flag)//|| ++meh==20)//|| global_procs[0]==0)
-		{
-			return;
-		}
-	}
-}
 
 /**************************************
  * some helper scheduling functions,  *
@@ -363,146 +335,33 @@ void setStolen(batch_t b)
 }
 
 
-/*****************************************
-** 
-** TTTTTTT   EEEE    SSS   TTTTTTT 
-**    T      E      S         T
-**    T      EEEE    SSS      T
-**    T      E          S     T
-**    T      EEEE    SSS      T
-**
-******************************************/
-
-/* temporary code to set up globabl processor list */
-void init_global_proc(){
+void * test_run(void * arg)
+{
 	int i=0;
-	for(i=0;i<NUMBER_OF_PROCS;i++)
-		global_procs[i]=1;
+	int flag=1;
+	logical_processor_t p = (logical_processor_t) arg;
+
+	while(1) //while true
+	{
+		
+//		printf("Global Array: ");
+//		for(i=0;i<NUMBER_OF_PROCS;i++)
+//			printf("%d,",global_procs[i]);
+//		printf("\n");
+
+		schedule(p);
+
+		/* check to see if all processors are done executing */
+		flag=1;
+		for(i=0;i<NUMBER_OF_PROCS;i++)
+			if(global_procs[i]!=0)
+			{
+				flag=0;
+				break;
+			}
+		if(flag)//|| ++meh==20)//|| global_procs[0]==0)
+		{
+			return;
+		}
+	}
 }
-
-/* code to set up a virtual processor 
-   with everything it needs to test */
-
-void setup_proc(logical_processor_t p, int label)
-{
-	// create some processes/batches/a logical processor
-	process_t p1 = malloc(sizeof(struct process)); 
-	process_t p2 = malloc(sizeof(struct process)); 
-	process_t p3 = malloc(sizeof(struct process)); 
-	batch_t b1 = malloc(sizeof(struct batch)); 
-	batch_t b2 = malloc(sizeof(struct batch)); 
-	
-	p1->id = label;
-	p2->id = label + 1;
-	p3->id = label + 2;
-	p3->next = NULL;
-	p1->next = p2;
-	p2->next = NULL;
-	b1->next = b2;
-	b2->next = NULL;
-	b2->stolen = 0;
-	b2->window = 0;
-	b1->head = p1;
-	b2->head = p3;
-	b1->stolen = 0;
-	b1->window = 1;
-	p->tail = b2;
-	p->head = b1;
-
-}
-
-int main () 
-{
-
-  /* Thread pointers */
-  pthread_t t1, t2, t3, t4;
-  int err;
-  
-  /* Create 4 Virtual Processors */
-	logical_processor_t p1 = malloc(sizeof(struct logical_processor)); 
-	logical_processor_t p2 = malloc(sizeof(struct logical_processor)); 
-	logical_processor_t p3 = malloc(sizeof(struct logical_processor)); 
-	logical_processor_t p4 = malloc(sizeof(struct logical_processor)); 
-
-	/* Return values from threads */
-	int ret1, ret2, ret3, ret4;
-	
-	/* initalize a bunch of processes and batces */
-	setup_proc(p1, 0);
-	setup_proc(p2, 10);
-	setup_proc(p3, 20);
-	setup_proc(p4, 30);
-
-	/* link processors for stealing */
-	p1->partner = 1;
-	p2->partner = 2;
-	p3->partner = 3;
-	p4->partner = 0;
-
-	/* set up processor ids */
-	p1->id = 0;
-	p2->id = 1;
-	p3->id = 2;
-	p4->id = 3;
-
-	/* set up global processor*/
-	global_proc_pointer[0]=p1;
-	global_proc_pointer[1]=p2;
-	global_proc_pointer[2]=p3;
-	global_proc_pointer[3]=p4;
-
-	/* set up list of processors, 
-	assumes all processors start with work */
-	init_global_proc();
-
-	/* Initialize the lock. Could do this to an array of locks
-	   or similar... but we do need to init each one.
-		 This could be in a struct (eg. in the virtual processor
-		 or runqueue.
-  */
-	 /* this code segfaults 
-	   
-	 pthread_mutex_init(p1->run_queue_lock, NULL);
-	 pthread_mutex_init(p2->run_queue_lock, NULL);
-	 pthread_mutex_init(p3->run_queue_lock, NULL);
-	 pthread_mutex_init(p4->run_queue_lock, NULL);
-
-	  so i try this way
-	 */
-
-	 pthread_mutex_t m1 = PTHREAD_MUTEX_INITIALIZER;	
-	 p1->run_queue_lock = &m1;
-	 pthread_mutex_t m2 = PTHREAD_MUTEX_INITIALIZER;	
-	 p2->run_queue_lock = &m2;
-	 pthread_mutex_t m3 = PTHREAD_MUTEX_INITIALIZER;	
-	 p3->run_queue_lock = &m3;
-	 pthread_mutex_t m4 = PTHREAD_MUTEX_INITIALIZER;	
-	 p4->run_queue_lock = &m4;
-
-
- /* begin the scheduler, one thread per processor */
- /*
-  ret1 = pthread_create (&t1, NULL, (void *) &schedule, (void *) &p1);
-  ret2 = pthread_create (&t2, NULL, (void *) &schedule, (void *) &p2);
-  ret3 = pthread_create (&t3, NULL, (void *) &schedule, (void *) &p3);
-  ret4 = pthread_create ( &t4, NULL, (void *) &schedule, (void *) &p4);
-*/
-  
-  ret1 = pthread_create (&t1, NULL, test_run, p1);
-  ret2 = pthread_create (&t2, NULL, test_run, p2);
-  ret3 = pthread_create (&t3, NULL, test_run, p3);
-  ret4 = pthread_create (&t4, NULL, test_run, p4);
-
-  printf ("pthread_create called.\n");
-
-  /* Wait for all of the threads to finish */
-  printf("JOINING\n");
-  err = pthread_join (t1, NULL);
- pthread_join (t2, NULL);
- pthread_join (t3, NULL);
- pthread_join (t4, NULL);
- printf("DONE JOINING\n");
-    
-  return 0;
-}
-
