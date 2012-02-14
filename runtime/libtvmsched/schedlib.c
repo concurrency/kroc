@@ -6,15 +6,6 @@ library of functions for simple scheduling
 #include <stdlib.h>
 #include <wf-sched.h>
 
-/* global list of processor states */
-/* contains a 0 if processor currently has no work */
-//int* global_procs = malloc(NUMBER_OF_PROCS,sizeof(int));
-
-/* global list of pointers to processors*/
-//logical_processor_t* global_proc_pointer 
-//	= (logical_processor_t *)malloc(NUMBER_OF_PROCS,sizeof(logical_processor_t));
-
-
 /* 
  * 
  * returns 1 if a batch was dequeued, 0 if not
@@ -160,7 +151,7 @@ void execute(logical_processor_t p)
 {
 	/*  temp, to show other code is working */
 	printf("EXECUTE %d: executing process %d  \n", 
-			p->id, p->current_process->id);
+			(p->id+1), p->current_process->id);
 	/* remove current process from queue */
 	p->activeQ->head=p->activeQ->head->next;
 

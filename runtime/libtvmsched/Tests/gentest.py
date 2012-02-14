@@ -99,6 +99,9 @@ filelist.append(" */\n\n")
 
 filelist.append("#include <stdio.h>\n#include <stdlib.h>\n#include <wf-sched.h>\n")
 
+filelist.append("int global_procs[NUMBER_OF_PROCS];\n")
+filelist.append("logical_processor_t global_proc_pointer[NUMBER_OF_PROCS];\n\n")
+
 filelist.append("void main()\n{\n")
 #populate the test
 
@@ -168,7 +171,7 @@ for proc in dist:
 			filelist.append("\tprocess_t p%d%d%d = malloc(sizeof(struct process));\n" % (pcount, bcount, (i+1)))
 			filelist.append("\tp%d%d%d->id = %d%d%d;\n" % (pcount, bcount,(i+1), pcount, bcount, (i+1)))
 	
-		# assign next pointers
+		# assign next pointers (process)
 		filelist.append("\n")
 		for i in (range(0,batch-1)):
 			filelist.append("\tp%d%d%d->next = p%d%d%d;\n" % (pcount, bcount,(i+1), pcount, bcount, (i+2)))
@@ -178,6 +181,7 @@ for proc in dist:
 		  filelist.append("\tp%d%d%d->next = NULL;\n" % (pcount, bcount, 1))
 			
 		bcount+=1
+	# END FOR batch in proc
 
 	# set the first winS batches of every 
 	# processor to be in the window
@@ -188,12 +192,23 @@ for proc in dist:
 		filelist.append("\tb%d%d->window = 1;\n" % (pcount, batchC))
 		batchC+=1
 		windowC-=1
+
+	# assign next pointers (batches)
+	# len(proc) = number of batches on proc
+	# len(proc) = number of batches on proc
+	filelist.append("\n")
+	for i in (range(0,len(proc)-1)):
+		filelist.append("\tb%d%d->next = b%d%d;\n" % (pcount, (i+1), pcount, (i+2)))
+	if len(proc)>1:	
+		filelist.append("\tb%d%d->next = NULL;\n" % (pcount, (i+2)))
+	else:
+		filelist.append("\tb%d%d->next = NULL;\n" % (pcount, 1))
 		
-		
+
 	# assign head and tail for each processor  
 	filelist.append("\tpr%d->head = b%d%d;\n" % (pcount, pcount, 1))
 	if len(dist[pcount-1]) > 1:
-	 filelist.append("\tpr%d->tail = b%d%d;\n" % (pcount, pcount, (len(dist[pcount-1])-1)))
+		filelist.append("\tpr%d->tail = b%d%d;\n" % (pcount, pcount, (len(dist[pcount-1]))))
 	else:
 		filelist.append("\tpr%d->tail = b%d%d;\n" % (pcount, pcount, 1))
 

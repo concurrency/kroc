@@ -1,4 +1,4 @@
 all:
-	 gcc -I. -o test1.out schedlib.o SchedTest_4_50_5_3.c -lpthread
+	 gcc -I. -o test1.out schedlib.o SchedTest_4_40_4_4.c -lpthread
 
 
