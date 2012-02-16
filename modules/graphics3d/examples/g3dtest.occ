@@ -1,0 +1,112 @@
+--
+--	g3dtest.occ -- simple test for graphics3d primitives
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+
+
+--{{{  PROC keyboard.controller (CHAN BYTE kyb?, scr!, CHAN G3D.TMR.CONTROL tmr.ctl!)
+--* Keyboard controller process.
+PROC keyboard.controller (CHAN BYTE kyb?, SHARED CHAN BYTE scr!, CHAN G3D.TMR.CONTROL tmr.ctl!)
+  SEQ
+    CLAIM scr!
+      SEQ
+        out.string ("graphics3d:*n", 0, scr!)
+        out.string ("    +     go faster*n", 0, scr!)
+        out.string ("    -     go slower*n", 0, scr!)
+        out.string (" <space>  pause/unpause*n", 0, scr!)
+        out.string ("    r     reset*n", 0, scr!)
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      BYTE ch:
+      SEQ
+        kyb ? ch
+        CASE ch
+          '+'
+            tmr.ctl ! faster
+          '-'
+            tmr.ctl ! slower
+          ' '
+            SEQ
+              tmr.ctl ! pause
+              kyb ? ch
+              tmr.ctl ! pause
+          'r'
+            tmr.ctl ! reset
+          ELSE
+            SKIP
+:
+--}}}
+--{{{  PROC main (...)
+--* Top-level process.
+-- @param kyb Keyboard channel
+-- @param scr Screen channel
+-- @private
+PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+  VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
+  VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+  SEQ
+
+    CHAN RASTER rc1, rc2, rc3:
+    SHARED! CHAN G3D.RENDER.ENGINE! rre:
+    CHAN G3D.TMR.CONTROL tmr.ctl:
+    PAR
+      raster.timed.buffer (rc1?, rc2!, 40, tmr.ctl?)
+      raster.display.simple ("Graphics test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!)
+      raster.chain (rc3?, rc1!, rre?, FALSE)
+
+      keyboard.controller (kyb?, scr!, tmr.ctl!)
+
+      CLAIM rre!
+        SEQ
+          screen.cube.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          glenz.cog.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 10, 2.0, 3.0, (PI / 36.0) * 5.0, (PI / 36.0) * 2.0)
+
+      CLAIM rre!
+        SEQ
+          normal.network2.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+          zdepth.flatpoly.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!, 11, 2.0)
+
+      TIMER tim:
+      INT t:
+      SEQ
+        tim ? t
+        tim ? AFTER (t PLUS 5000000)
+        CLAIM rre!
+          SEQ
+            normal.network.spawn (SCR.WIDTH, SCR.HEIGHT, rre!)
+
+      TIMER tim:
+      INT t:
+      SEQ
+        tim ? t
+
+        SEQ i = 0 FOR 50
+          SEQ
+            CLAIM rre!
+              butterfly.network.spawn (SCR.WIDTH, SCR.HEIGHT, TRUE, rre!)
+
+            t := t PLUS 30000
+            tim ? AFTER t
+:
+--}}}
+

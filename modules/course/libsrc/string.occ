@@ -1,0 +1,303 @@
+--
+--	string functions
+--	Copyright (C) 1985  P.H.Welch
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module course
+
+#INCLUDE "consts.inc"
+#USE "utils.tce"
+
+--{{{  PROC make.string ([]BYTE a,  VAL INT length)
+--* Converts a [@code BYTE] array into a string.
+-- This is needed for strings that have been input using a counted-array
+-- protocol (where we know the length, but the string characters have been
+-- left-justified and the elements of the array after the string need setting
+-- to [@ref NULL]).
+-- @param a Array to convert
+-- @param length Length of string in [@code a]
+PROC make.string ([]BYTE a,  VAL INT length)
+  --{{{  
+  IF
+    (SIZE a) > length
+      SEQ i = length FOR (SIZE a) - length
+        a[i] := NULL
+    TRUE
+      SKIP
+  --}}}
+:
+--}}}
+--{{{  PROC copy.string (VAL []BYTE a, []BYTE b)
+--* Copy a string.
+-- This copies the string from [@code a] into [@code b].  If [@code a] is
+-- shorter than [@code b], the string gets padded with [@ref NULL]s.  If
+-- [@code b] is shorter than [@code a], the string gets truncated.
+-- @param a Source string
+-- @param b Destination string
+PROC copy.string (VAL []BYTE a, []BYTE b)
+  --{{{  
+  INT min:
+  SEQ
+    --{{{  min := minimum (SIZE a, SIZE b)
+    IF
+      (SIZE a) > (SIZE b)
+        min := SIZE b
+      TRUE
+        min := SIZE a
+    --}}}
+    --{{{  copy a to b
+    [b FROM 0 FOR min] := [a FROM 0 FOR min]
+    --}}}
+    --{{{  pad with NULLs
+    SEQ i = min FOR (SIZE b) - min
+      b[i] := NULL
+    --}}}
+  --}}}
+:
+--}}}
+--{{{  BOOL FUNCTION equal.string (VAL []BYTE a, b)
+--* Compare two strings for equality.
+-- @param a One string
+-- @param b Other string
+-- @return Whether the two strings are equal
+BOOL FUNCTION equal.string (VAL []BYTE a, b)
+  --{{{  
+  BOOL result:
+  VALOF
+    --{{{  
+    INT length.a, length.b:
+    SEQ
+      --{{{  set length.a
+      SEQ
+        length.a := SIZE a
+        IF
+          IF i = 1 FOR SIZE a
+            a[length.a - i] <> NULL
+              length.a := length.a - (i - 1)
+          TRUE
+            length.a := 0
+      --}}}
+      --{{{  set length.b
+      SEQ
+        length.b := SIZE b
+        IF
+          IF i = 1 FOR SIZE b
+            b[length.b - i] <> NULL
+              length.b := length.b - (i - 1)
+          TRUE
+            length.b := 0
+      --}}}
+      --{{{  compare
+      IF
+        length.a <> length.b
+          result := FALSE
+        IF i = 0 FOR length.a
+          a[i] <> b[i]
+            result := FALSE
+        TRUE
+          result := TRUE
+      --}}}
+    --}}}
+    RESULT result
+  --}}}
+:
+--}}}
+--{{{  INT FUNCTION compare.string (VAL []BYTE a, b)
+--* Compares two strings for lexicographic ordering.
+-- @param a Left string
+-- @param b Right string
+-- @return [@ref string.less] if [@code a] < [@code b];
+--   [@ref string.same] if [@code a] = [@code b];
+--   [@ref string.more] otherwise
+INT FUNCTION compare.string (VAL []BYTE a, b)
+  --{{{  
+  INT result:
+  VALOF
+    --{{{  
+    INT length.a, length.b, min:
+    SEQ
+      --{{{  initialise
+      SEQ
+        --{{{  set length.a
+        SEQ
+          length.a := SIZE a
+          IF
+            IF i = 1 FOR SIZE a
+              a[length.a - i] <> NULL
+                length.a := length.a - (i - 1)
+            TRUE
+              length.a := 0
+        --}}}
+        --{{{  set length.b
+        SEQ
+          length.b := SIZE b
+          IF
+            IF i = 1 FOR SIZE b
+              b[length.b - i] <> NULL
+                length.b := length.b - (i - 1)
+            TRUE
+              length.b := 0
+        --}}}
+        IF
+          length.a < length.b
+            min := length.a
+          TRUE
+            min := length.b
+      --}}}
+      --{{{  compare
+      IF
+        IF i = 0 FOR min
+          a[i] <> b[i]
+            --{{{  different
+            IF
+              a[i] < b[i]
+                result := string.less
+              TRUE
+                result := string.more
+            --}}}
+        length.a < length.b
+          result := string.less
+        length.a > length.b
+          result := string.more
+        TRUE
+          result := string.same
+      --}}}
+    --}}}
+    RESULT result
+  --}}}
+:
+--}}}
+--{{{  BOOL FUNCTION starts.with.string
+--* Check if one string is a prefix of another.
+-- @param needle Possible prefix
+-- @param haystack String to test
+-- @return [@code TRUE] if [@code needle] is prefix of [@code haystack],
+--   [@code FALSE] otherwise
+BOOL FUNCTION starts.with.string (VAL []BYTE needle, haystack)
+  BOOL result:
+  VALOF
+    VAL INT nsize IS SIZE needle:
+    IF
+      nsize > (SIZE haystack)
+        result := FALSE
+      IF i = 0 FOR nsize
+        needle[i] <> haystack[i]
+          result := FALSE
+      TRUE
+        result := TRUE
+    RESULT result
+:
+--}}}
+--{{{  BOOL FUNCTION ends.with.string
+--* Check if one string is a suffix of another.
+-- @param needle Possible suffix
+-- @param haystack String to test
+-- @return [@code TRUE] if [@code needle] is suffix of [@code haystack],
+--   [@code FALSE] otherwise
+BOOL FUNCTION ends.with.string (VAL []BYTE needle, haystack)
+  BOOL result:
+  VALOF
+    VAL INT nsize IS SIZE needle:
+    IF
+      nsize > (SIZE haystack)
+        result := FALSE
+      IF i = 0 FOR nsize
+        needle[i] <> haystack[((SIZE haystack) - (SIZE needle)) + i]
+          result := FALSE
+      TRUE
+        result := TRUE
+    RESULT result
+:
+--}}}
+--{{{  BOOL FUNCTION byte.in.string
+--* Check if a string contains the given byte.
+-- @param needle Byte to search for
+-- @param haystack String to search
+-- @return [@code TRUE] if [@code needle] is in [@code haystack],
+--   [@code FALSE] otherwise
+BOOL FUNCTION byte.in.string (VAL BYTE needle, VAL []BYTE haystack)
+  BOOL b:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE haystack
+        haystack[i] = needle
+          b := TRUE
+      TRUE
+        b := FALSE
+    RESULT b
+:
+--}}}
+--{{{  BOOL, INT FUNCTION string.to.int
+--* Convert a string containing a decimal integer to an [@code INT].
+-- @param s String to convert
+-- @return [@code TRUE] if the conversion succeeded, [@code FALSE] otherwise
+-- @return The decimal number represented by the string, or [@code 0] if
+--   the string could not be converted
+BOOL, INT FUNCTION string.to.int (VAL []BYTE s)
+  BOOL b:
+  INT i:
+  VALOF
+    SEQ
+      i := 0
+      IF
+        IF i = 0 FOR SIZE s
+          NOT byte.in.string (s[i], "0123456789+-")
+            b := FALSE
+        NOT check.num.chars (s, SIZE s)
+          b := FALSE
+        TRUE
+          b, i := convert.num.chars (s)
+    RESULT b, i
+:
+--}}}
+--{{{  PROC write.string (VAL []BYTE a,  VAL INT field,  CHAN BYTE out!)
+--* Write a [@ref NULL]-padded string to a channel.
+-- This is similar to [@ref out.string], but correctly right-justifies the
+-- string when trailing [@ref NULL]s are present.
+-- @param a String to write
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC write.string (VAL []BYTE a,  VAL INT field,  CHAN BYTE out!)
+  --{{{  
+  INT length.a:
+  SEQ
+    --{{{  set length.a
+    length.a := SIZE a
+    IF
+      IF i = 1 FOR SIZE a
+        a[length.a - i] <> NULL
+          length.a := length.a - (i - 1)
+      TRUE
+        length.a := 0
+    --}}}
+    --{{{  leading spaces
+    IF
+      field > length.a
+        SEQ i = 0 FOR field - length.a
+          out ! ' '
+      TRUE
+        SKIP
+    --}}}
+    --{{{  output a
+    SEQ i = 0 FOR length.a
+      out ! a[i]
+    --}}}
+  --}}}
+:
+--}}}
+

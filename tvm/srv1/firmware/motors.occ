@@ -1,0 +1,110 @@
+#INCLUDE "defBF537.inc"
+#INCLUDE "bfin_config.inc"
+#INCLUDE "srv1.inc"
+
+PROC init.pwm ()
+  PLACED [PORTF.LEN]INT16 port.f PORTF.ADDR:
+  #PRAGMA DEFINED port.f
+  PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
+  #PRAGMA DEFINED port.h.io
+  PLACED [1]INT16 timer2.config TIMER2.CONFIG.ADDR:
+  PLACED [1]INT16 timer3.config TIMER3.CONFIG.ADDR:
+  PLACED [TIMER2.LEN.32]INT timer2 TIMER2.ADDR:
+  PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
+  PLACED [TIMER.LEN]INT16 timer TIMER.ADDR:
+  SEQ
+    safe.set.register.16 (port.f[PORTF.FER], #00C0, 0)
+    timer2.config[0] := (PULSE.HI \/ PWM.OUT) \/ PERIOD.CNT
+    timer3.config[0] := (PULSE.HI \/ PWM.OUT) \/ PERIOD.CNT
+    timer2[TIMER2.PERIOD.32] := PERIPHERAL.CLOCK / 1000
+    timer3[TIMER3.PERIOD.32] := PERIPHERAL.CLOCK / 1000
+    timer2[TIMER2.WIDTH.32] := PERIPHERAL.CLOCK / 100000
+    timer3[TIMER3.WIDTH.32] := PERIPHERAL.CLOCK / 100000
+    timer[TIMER.ENABLE] := TIMEN2 \/ TIMEN3
+    safe.set.register.16 (port.h.io[PORTHIO.DIR], #0030, 0)
+    port.h.io[PORTHIO.SET] := #0030
+:
+
+PROC deinit.pwm ()
+  PLACED [TIMER.LEN]INT16 timer TIMER.ADDR:
+  SEQ
+    timer[TIMER.DISABLE] := TIMEN2 \/ TIMEN3
+:
+
+PROC set.pwm (VAL INT left, right)
+  PLACED [TIMER2.LEN.32]INT timer2 TIMER2.ADDR:
+  PLACED [TIMER3.LEN.32]INT timer3 TIMER3.ADDR:
+  PLACED [PORTHIO.LEN]INT16 port.h.io PORTHIO.ADDR:
+  INITIAL INT left    IS left:
+  INITIAL INT right   IS right:
+  INITIAL INT h.clear IS 0:
+  INITIAL INT h.set   IS 0:
+  SEQ
+    IF
+      left < 0
+        -- clear left direction bit
+        h.clear, left := h.clear \/ #0020, -left
+      TRUE
+        -- turn on left direction bit
+        h.set := h.set \/ #0020
+    IF
+      right < 0
+        -- clear right direction bit
+        h.clear, right := h.clear \/ #0010, -right
+      TRUE
+        -- turn on right direction bit
+        h.set := h.set \/ #0010
+
+    IF
+      left > 100
+        left := 100
+      left < 1
+        left := 1
+      TRUE
+        SKIP
+    IF
+      right > 100
+        right := 100
+      right < 1
+        right := 1
+      TRUE
+        SKIP
+
+    port.h.io[PORTHIO.CLEAR]  := INT16 h.clear
+    port.h.io[PORTHIO.SET]    := INT16 h.set
+    timer2[TIMER2.WIDTH.32]   := ((PERIPHERAL.CLOCK / 1000) * left) / 100
+    timer3[TIMER3.WIDTH.32]   := ((PERIPHERAL.CLOCK / 1000) * right) / 100
+:
+
+PROC motors (MOTOR? svr)
+  INITIAL INT l.speed IS 0:
+  INITIAL INT r.speed IS 0:
+  SEQ
+    init.pwm()
+
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      SEQ
+        INT x,y:
+        svr[req] ? CASE
+          disconnected
+            done, l.speed, r.speed := TRUE, 0, 0
+          left; x
+            l.speed := x
+          right; x
+            r.speed := x
+          all; x; y
+            l.speed, r.speed := x, y
+          delta; x; y
+            l.speed, r.speed := (l.speed + x), (r.speed + y)
+          turn; x
+            l.speed, r.speed := (l.speed - x), (r.speed + x)
+          back.turn; x
+            l.speed, r.speed := -(l.speed - x), -(r.speed + x)
+          stop
+            l.speed, r.speed := 0, 0
+        set.pwm(l.speed, r.speed)
+
+    deinit.pwm()
+:
+

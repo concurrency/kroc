@@ -1,0 +1,425 @@
+
+--** Names and Marks.
+
+--{{{  the problem
+--
+-- A data file consists of alternating names and associated marks.  Process
+-- this data so that the marks associated with each same name are accumulated
+-- together.  A results file should be produced tabulating each name with its
+-- total mark.
+--
+-- For example, if the data file held:
+--
+--{{{  nn_small.txt
+-- 
+--   Alison 944
+--   Fred 720
+--   George 628
+--   Peter 331
+--   Humphrey 349
+--   Ethel 564
+--   Sue 715
+--   Sally 900
+--   Harry 79
+--   Samantha 569
+--   Mandy 547
+--   Mandy 551
+--   Mandy 976
+--   Sonya 577
+--   Hubert 969
+--   Mandy 127
+-- 
+--}}}
+--
+-- The results file should be something like:
+--
+--{{{  small_results.txt
+-- 
+--              Name            Mark
+--              ----            ----
+-- 
+--             Sally             900
+--             Harry              79
+--          Samantha             569
+--             Mandy            2201
+--             Sonya             577
+--            Hubert             969
+--            Alison             944
+--              Fred             720
+--            George             628
+--             Peter             331
+--          Humphrey             349
+--             Ethel             564
+--               Sue             715
+-- 
+--}}}
+--
+-- A nice touch would be to tabulate the results sorted by name:
+--
+--{{{  small_results_sorted.txt
+-- 
+--              Name            Mark
+--              ----            ----
+-- 
+--            Alison             944
+--             Ethel             564
+--              Fred             720
+--            George             628
+--             Harry              79
+--            Hubert             969
+--          Humphrey             349
+--             Mandy            2201
+--             Peter             331
+--             Sally             900
+--          Samantha             569
+--             Sonya             577
+--               Sue             715
+-- 
+--}}}
+--
+-- but this is not compulsory for this exercise.  Correctly formatted files
+-- for this exercise are "nn_small.txt" and "nn_data.txt" in this directory.
+--
+--}}}
+
+--{{{  running the program
+--
+-- The starter processes given below expect input from the standard keyboard
+-- channel.  On Unix systems, this can be done through redirection of standard
+-- input to the source file:
+--
+--   ./q6 < nn_small.txt
+--
+-- There is no user-interaction is this system.  Its output can be saved by
+-- redirection of (Unix) standard output:
+--
+--   ./q6 < nn_small.txt > small_results.txt
+--
+-- Those using the Transterpreter will need to do a little more -- remove
+-- the "q6" PROC at the bottom of the file, so that "q6.tvm" becomes the
+-- top-level process.  There are two process instances in here that read
+-- and write BYTEs from and to files.  Change the strings passed as parameters
+-- to specify different input and output files.
+--
+--}}}
+
+--{{{  the solution
+--
+--{{{  network diagram
+--    _______________________________________________________
+--   |                                                       |
+--   |    _________________                 ___________      |
+--   |   |                 |       a       |           |     |  keyboard
+--   |   |                 |-------<-------| read.data |------------<-----
+--   |   |                 |               |___________|     |
+--   |   |                 |                                 |   error
+--   |   |  collate.marks  |                                 |
+--   |   |                 |                ___________      |
+--   |   |                 |       b       |           |     |   screen
+--   |   |                 |------->-------|  display  |-----|------>-----
+--   |   |_________________|               |___________|     |
+--   |                                                    q6 |
+--   |_______________________________________________________|
+--
+-- The 'a' and 'b' channels carry the 'NAME.NUMBER' protocol, defined below. 
+-- The 'read.data' process reads raw data nytes from the file (delivered to
+-- keyboard' by redirection of UNIX standard input), parses it and outputs
+-- structured (i.e. 'NAME.NUMBER') messages.  The display process inputs such
+-- messages and formats them for tabuating on the screen (which may be
+-- redirected to an output file).
+--
+-- The 'read.data' and 'display' processes are given below, together with a
+-- simple network connecting them directly together.  So, this starter system
+-- can be compiled and run.  Your task is to implement the 'collate.marks'
+-- process that does the main work and bind it into the network shown above.
+--
+-- Hint: implement 'collate.marks' as a pipeline of cells, each of which takes
+-- responsibility for an individual name.  Recall the `sort pump'.]
+-- 
+--}}}
+--
+--{{{  useful routines
+--
+-- Crude string-handling routines for making, copying, comparing and printing
+-- strings' are part of the (#INCLUDEd) course module.  Their source file is
+-- string.occ" in the "modules/course/libsrc" directory.
+--
+-- For these routines, a `string' is the first segment of an array of bytes,
+-- excluding an optional sequence of ASCII nulls that pad out unused space.
+-- This is a simple attempt at managing variable length strings (up to a
+-- maximium size).  For classical occam, this is good enough.  For occam-pi,
+-- mobiles give us dynamically sized and allocated arrays (as in Java) and
+-- would be much better for representing strings.  Another time.
+--
+-- The routines most useful for this exercise are:
+--
+--   PROC make.string ([]BYTE a,  VAL INT length)
+--   PROC copy.string (VAL []BYTE a, []BYTE b)
+--   BOOL FUNCTION equal.string (VAL []BYTE a, b)
+--   INT FUNCTION compare.string (VAL []BYTE a, b)
+--   PROC write.string (VAL []BYTE a, VAL INT field, CHAN BYTE out!)
+--
+-- where 'compare.string' returns VAL INTs 'string.less', 'string.same' or
+-- string.more', which are defined VALs in the course module.  Of course,
+-- we don't need to know their actual values.
+--
+-- Check out the (HTML) documentation for the "course" library module.
+--
+--}}}
+--
+--}}}
+
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+
+
+--*{ max The following maxima are needed for classical occam (data and
+--   process) arrays.  [@em Note: in occam-pi, data and process arrays can
+--   be allocated dynamically (i.e. they can grow), so these maxima
+--   are not needed.  This is left for a later exercise.]
+
+VAL INT max.diff.names IS 20:     --* maximum number of different names
+VAL INT max.name.length IS 16:    --* maximum name length
+--*}
+
+
+--* Structured data stream: zero or more [@code string] messages,
+--  followed by a single [@code poison] as the final message.
+--{{{
+PROTOCOL NAME.NUMBER
+  CASE
+    --* Data pair
+    -- @item - Name
+    -- @item - Mark
+    string; INT::[]BYTE; INT
+    --* Sent, and only sent, as the last message
+    poison
+:
+--}}}
+
+
+--* This process inputs a text data file on channel [@ref in] and outputs
+--  processed information on channel [@ref out] using the [@ref NAME.NUMBER]
+--  protocol.  To run this program, direct the text file to (Unix) standard
+--  input - e.g. "[@text ./a6 < nn_data.txt]".
+--
+--  This process assumes that data is correctly formatted as an alternating
+--  sequence of names with associated (integer) marks.
+--
+--  Incorrectly formatted input data will result in premature 'poison' being
+--  output (after the last correct <name> <mark> pair).
+--
+--  Following input of a correctly formatted text file, this outputs 'poison'
+--  as its last action.
+--
+--  It uses routines "file.in.token" and "file.in.int" from the course module,
+--  documented in the usual place.
+--
+-- @param in Source text file
+-- @param out Processed [@ref NAME.NUMBER] data
+--
+PROC read.data (CHAN BYTE in?, CHAN NAME.NUMBER out!)
+  --{{{  state variables
+  [max.name.length] BYTE name:
+  INT name.length:
+  INITIAL BOOL ok IS TRUE:
+  --}}}
+  SEQ
+    file.in.token (name, name.length, max.name.length, in?)
+    WHILE (name.length > 0) AND ok
+      INT mark:
+      SEQ
+        file.in.int (mark, max.name.length, ok, in?)
+        IF
+          ok
+            SEQ
+              out ! string; name.length::name; mark
+              file.in.token (name, name.length, max.name.length, in?)
+          NOT ok
+            SKIP
+    out ! poison
+:
+
+
+--* This process first prints suitable "Name" and "Mark" table headings.
+--  Then, it processes its incoming name-mark pairs ([@ref NAME.NUMBER])
+--  tabulating them under the headings in plain (ASCII) text.
+--  It terminates when [@code poison] is received.
+--  
+-- @param in Processed [@ref NAME.NUMBER] data
+-- @param out Plain (ASCII) text
+--
+PROC display (CHAN NAME.NUMBER in?, CHAN BYTE out!)
+  SEQ
+    --{{{  table headings
+    SEQ
+      out.string ("*c*n", 0, out!)
+      out.string ("Name", max.name.length, out!)
+      out.string ("Mark", max.name.length, out!)
+      out.string ("*c*n", 0, out!)
+      out.string ("----", max.name.length, out!)
+      out.string ("----", max.name.length, out!)
+      out.string ("*c*n*n", 0, out!)
+    --}}}
+    --{{{  main cycle
+    INITIAL BOOL ok IS TRUE:
+    WHILE ok
+      in? CASE
+        --{{{  string; name; number
+        --{{{  variables
+        [max.name.length] BYTE name:
+        INT name.length:
+        INT mark:
+        --}}}
+        string; name.length::name; mark
+          SEQ
+            make.string (name, name.length)
+            write.string (name, max.name.length, out!)
+            --{{{  COMMENT this is equivalent to the above two lines
+            --out.string ([name FROM 0 FOR name.length], max.name.length, out!)
+            --}}}
+            out.int (mark, max.name.length, out!)
+            out.string ("*c*n", 0, out!)
+        --}}}
+        --{{{  poison
+        poison
+          SEQ
+            out.string ("*c*n", 0, out!)
+            ok := FALSE
+        --}}}
+    --}}}
+:
+
+--* Dump a file down a channel, one byte at a time.
+--
+--  Sends END.OF.FILE (from "consts.inc", 255) at end of file.
+--  If no readable file with the given file name exists,
+--  just send one END.OF.FILE.
+--
+-- @param file.name The path-name to a readable file
+-- @param out The output channel
+--
+PROC from.file (VAL []BYTE file.name, CHAN BYTE out!)
+  INT fd:
+  SEQ
+    file.open (file.name, O.RDONLY, fd)
+    IF
+      fd < 0
+        out ! END.OF.FILE
+      TRUE
+        INT r:
+        SEQ
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            [2048]BYTE f.buf:
+            INT f.len:
+            SEQ
+              file.read (fd, f.buf, f.len)
+              IF
+                f.len <= 0
+                  running := FALSE
+                TRUE
+                  SEQ i = 0 FOR f.len
+                    out ! f.buf[i]
+          file.close (fd, r)
+          out ! END.OF.FILE
+:
+
+--* Write to a file, from a channel.
+--
+--  If no writeable file with the given file
+--  name exists,
+--  refuse any channel input (e.g. STOP).
+--
+-- @param file.name The path-name to a
+-- writeable file
+-- @param in The input channel
+--
+PROC to.file (VAL []BYTE file.name, CHAN BYTE in?)
+  INT fd:
+  SEQ
+    file.open3 (file.name, (O.WRONLY \/ O.TRUNC) \/ O.CREAT, S.I644, fd)
+    IF
+      fd < 0
+        STOP
+      TRUE
+        INT r:
+        [1024]BYTE f.buf:
+        INT f.len:
+        SEQ
+          f.len := 0
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            INITIAL BOOL flush IS FALSE:
+            BYTE ch:
+            SEQ
+              in ? ch
+              IF
+                ch = END.OF.FILE
+                  running, flush := FALSE, TRUE
+                TRUE
+                  SEQ
+                    f.buf[f.len] := ch
+                    f.len := f.len + 1
+                    IF
+                      f.len = (SIZE f.buf)
+                        flush := TRUE
+                      TRUE
+                        SKIP
+
+              IF
+                flush AND (f.len > 0)
+                  SEQ
+                    file.write (fd, [f.buf FOR f.len], r)
+                    IF
+                      r < f.len
+                        STOP
+                      TRUE
+                        f.len, flush := 0, FALSE
+                TRUE
+                  SKIP
+          file.close (fd, r)
+:
+
+
+--* The main process (Transterpreter version).
+--
+--  Run this program by specifying the relevant file-names in the PROC
+--  below, e.g. "nn_data.txt" and "my_results.txt".
+--
+--  Transterpreter users: delete the "q6" PROC below, so that this
+--  one becomes the top-level process.
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
+--
+PROC q6.tvm (CHAN BYTE keyboard?, screen!, error!)
+  CHAN NAME.NUMBER a:
+  CHAN BYTE in, out:
+  PAR
+    from.file ("nn_data.txt", in!)
+    read.data (in?, a!)
+    SEQ
+      display (a?, out!)
+      out ! END.OF.FILE
+    to.file ("my_results.txt", out?)
+:
+
+
+--* The main process (KRoC version).
+--
+--  Run this program by redirecting standard input and output to/from
+--  text files - e.g. "[@text ./q6 < nn_data.txt > my_results.txt]".
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
+--
+PROC q6 (CHAN BYTE keyboard?, screen!, error!)
+  CHAN NAME.NUMBER a:
+  PAR
+    read.data (keyboard?, a!)
+    display (a?, screen!)
+:

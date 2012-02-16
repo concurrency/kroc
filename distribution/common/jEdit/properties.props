@@ -1,0 +1,15 @@
+#jEdit properties
+#Sat Jul 10 15:51:03 EDT 2010
+buffer.indentSize=2
+encodingDetectors=BOM XML-PI
+buffer.noTabs=true
+hypersearch-results.dock-position=floating
+view.status.show-caret-virtual=true
+view.gutter.lineNumbers=true
+sortRecent=true
+buffer.lineSeparator=\n
+view.toolbar=new-file open-file save close-buffer - undo redo - cut copy paste - find find-next - buffer-options global-options
+buffer.tabSize=2
+recentFiles=20
+icon-theme=tango
+buffer.folding=explicit

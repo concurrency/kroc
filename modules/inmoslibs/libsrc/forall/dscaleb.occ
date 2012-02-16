@@ -1,0 +1,142 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libraries, no vector space
+#COMMENT "T8 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DSCALEB "DSCALEB%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  T8 and TA are the same; merged 20-June-90 SRH
+REAL64 FUNCTION DSCALEB (VAL REAL64 Y, VAL INT n)
+
+  -- Stop and undefined version: Beta-2 (27feb87)
+  
+  #INCLUDE "endian.inc" -- 4-Sep-07
+
+  REAL64 X :
+  VALOF
+    -- no sensible fpu specific version
+    -- optimised 27-jul-87 PWT
+    --{{{  IEEE Double length constants
+    VAL Bias       IS 1023 :
+    --}}}
+    INT m, temp :
+    VAL INT maxexp IS  1022:
+    VAL INT minexp IS -1022:
+    VAL REAL64 Two.to.the.maxexp RETYPES #7FD0000000000000(INT64) :
+    VAL REAL64 Two.to.the.minexp RETYPES #0010000000000000(INT64) :
+    SEQ
+      X := Y
+      m := n
+      WHILE m <> 0
+        IF
+          m > maxexp
+            SEQ
+              X := X * Two.to.the.maxexp
+              m := m - maxexp
+          m < minexp
+            SEQ
+              X := X * Two.to.the.minexp
+              m := m - minexp
+          TRUE
+            [2]INT Z.int :
+            PLACE Z.int IN WORKSPACE :
+            SEQ
+              Z.int [lo] := 0
+              temp, Z.int [hi] := SHIFTRIGHT ((m + Bias), 0, DRealShift + 1)
+              REAL64 Z RETYPES Z.int :
+              X := X * Z
+              m := 0
+    RESULT X
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.2 27/02/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DSCALEB "DSCALEB%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  T2
+REAL64 FUNCTION DSCALEB (VAL REAL64 Y, VAL INT n)
+
+  --{{{  history
+  -- Beta-2, 27/02/1987
+  -- V1.1, 21/02/1989
+  -- V1.2, 27/02/1992, SRH; textual cleanup
+  --}}}
+
+  REAL64 X :
+  VALOF
+    -- optimised 27-jul-87 PWT
+    --{{{  IEEE Double length constants
+    VAL Bias        IS      1023 :
+    --}}}
+    INT m, temp :
+    VAL INT maxexp IS  1022:
+    VAL INT minexp IS -1022:
+    VAL REAL64 Two.to.the.maxexp RETYPES #7FD0000000000000(INT64) :
+    VAL REAL64 Two.to.the.minexp RETYPES #0010000000000000(INT64) :
+    SEQ
+      X := Y
+      m := n
+      WHILE m <> 0
+        IF
+          m > maxexp
+            SEQ
+              X := X * Two.to.the.maxexp
+              m := m - maxexp
+          m < minexp
+            SEQ
+              X := X * Two.to.the.minexp
+              m := m - minexp
+          TRUE
+            [4]INT Z.int :
+            PLACE Z.int IN WORKSPACE :
+            SEQ
+              Z.int [0] := 0
+              Z.int [1] := 0
+              Z.int [2] := 0
+              temp, Z.int [3] := SHIFTRIGHT (m + (INT Bias), 0, DRealShift + 1)
+              REAL64 Z RETYPES Z.int :
+              X := X * Z
+              m := 0
+    RESULT X
+:
+--}}}
+
+#ENDIF

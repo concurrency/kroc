@@ -1,0 +1,209 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module maths
+
+#OPTION "V"  -- no vector space
+#COMMENT "Floating point maths library, V1.3 04/03/91"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#INCLUDE "mathhdr.inc"
+#PRAGMA TRANSLATE exp  "exp%O"
+
+--{{{  history
+-- V1.0 1-Jul-88
+-- V1.1 11-Oct-88
+-- Added OPTION "V"; V1.2 27-Mar-90 SRH
+-- Moved the reduced exponential routine to outside the hyperbolics in
+-- order to save code space and improve maintenance; also added some more
+-- comments; V1.3 4-Mar-91 SRH
+--}}}
+
+--{{{  hyperbolic function constants
+VAL REAL32 XMax   RETYPES #42B2CCCD(INT32) : -- 89.400001525878906250, a little below ln(XMAX) + LnV
+VAL REAL32 XBig   RETYPES #41051EB8(INT32) : -- 8.319999694824218750
+VAL REAL32 VBy2M1 RETYPES #37680897(INT32) : -- 0.00001383027756673982366919517517089843750
+VAL REAL32 LnV    RETYPES #3F317300(INT32) : -- 0.69316101074218750
+--}}}
+--{{{  REDUCED EXPONENTIAL - exp
+--* Single-precision exponential without input guards, for hyperbolic
+-- functions.
+-- @private
+REAL32 FUNCTION exp (VAL REAL32 X)
+
+  REAL32 RWork :
+  VALOF
+    --{{{  definitions
+    VAL REAL32 InvLn2 RETYPES #3FB8AA3B(INT32) : -- 1.442695021629333496093750
+    --}}}
+    REAL32 XWork :
+    INT N :
+    SEQ
+      N := INT ROUND (X * InvLn2)
+      XWork := REAL32 ROUND ((REAL64 X) - ((REAL64 ROUND N) * DLn2))
+      --{{{  coefficients
+      VAL A0 IS 4.1602886268E-3(REAL32) :
+      VAL A1 IS 2.4999999950E-1(REAL32) :
+      VAL B0 IS 0.5(REAL32) :
+      VAL B1 IS 4.9987178778E-2(REAL32) :
+      --}}}
+      VAL Z   IS XWork * XWork :
+      VAL GPZ IS XWork * ((Z * A0) + A1) :
+      RWork := SCALEB (B0 + (GPZ / ((B0 + (Z * B1)) - GPZ)), N + 1)
+    RESULT RWork
+:
+--}}}
+--{{{  SINH   (floating point)
+--* Single-precision hyperbolic sine.
+--
+-- @param X Hyperbolic angle
+-- @return Hyperbolic sine of X
+REAL32 FUNCTION SINH (VAL REAL32 X)
+
+  REAL32 Result :
+  VALOF
+    IF
+      NOTFINITE (X)
+        Result := X -- transmit Infs and NaNs
+      VAL REAL32 XWork IS ABS (X) :
+      IF
+        XWork > XMax
+          --{{{  + or - Inf
+          IF
+            X < Zero
+              Result := MINUSX(RInf)
+            TRUE
+              Result := RInf
+          --}}}
+        XWork > XBig
+          --{{{  modify argument and use exponential
+          VAL EX IS exp(XWork - LnV) :
+          IF
+            X < Zero
+              Result := - (EX + (EX * VBy2M1))
+            TRUE
+              Result := EX + (EX * VBy2M1)
+          --}}}
+        XWork >= One
+          --{{{  use exponential and modify result
+          VAL EX IS exp(XWork) :
+          IF
+            X < Zero
+              Result := - DIVBY2(EX - (One/EX))
+            TRUE
+              Result := DIVBY2(EX - (One/EX))
+          --}}}
+        TRUE
+          --{{{  use rational approximation
+          VAL P1 IS -1.90333399E-1(REAL32) :
+          VAL P0 IS -7.13793159(REAL32) :
+          VAL Q0 IS -4.28277109E+1(REAL32) :
+          VAL REAL32 G IS X * X :
+          Result := X + (X * (G * (((P1 * G) + P0) / (G + Q0))))
+          --}}}
+    RESULT Result
+:
+--}}}
+--{{{  COSH   (floating point)
+--* Single-precision hyperbolic cosine.
+--
+-- @param X Hyperbolic angle
+-- @return Hyperbolic cosine of X
+REAL32 FUNCTION COSH (VAL REAL32 X)
+
+  REAL32 Result :
+  VALOF
+    IF
+      NOTFINITE (X)
+        --{{{  NaNs and Infs
+        IF
+          ISNAN (X)
+            Result := X
+          TRUE
+            Result := RInf
+        --}}}
+      VAL XWork IS ABS(X) :
+      IF
+        XWork > XMax
+          Result := RInf
+        XWork > XBig
+          VAL EX IS exp(XWork - LnV) :
+          Result := EX + (EX * VBy2M1)
+        TRUE
+          VAL EX IS exp(XWork) :
+          Result := DIVBY2(EX + (One/EX))
+    RESULT Result
+:
+--}}}
+--{{{  TANH   (floating point)
+--* Single-precision hyperbolic tangent.
+--
+-- @param X Hyperbolic angle
+-- @return Hyperbolic tangent of X
+REAL32 FUNCTION TANH (VAL REAL32 X)
+
+  REAL32 RWork :
+  VALOF
+    IF
+      NOTFINITE (X)
+        --{{{  Infs and NaNs
+        INT order :
+        SEQ
+          order := IEEECOMPARE (X, Zero)
+          CASE order
+            less.than
+              RWork := - One
+            greater.than
+              RWork :=  One
+            is.nan
+              RWork := X -- transmit NaN
+        --}}}
+      --{{{  definitions
+      VAL REAL32 XMax   RETYPES #41051592(INT32) : -- 8.31776618957519531250
+      VAL REAL32 Ln3By2 RETYPES #3F0C9F54(INT32) : -- 0.54930615425109863281250
+      VAL REAL32 XWork  IS ABS(X) :
+      --}}}
+      IF
+        XWork > XMax
+          --{{{  +/- 1
+          IF
+            X > Zero
+              RWork := One
+            TRUE
+              RWork := -One
+          --}}}
+        XWork > Ln3By2
+          --{{{  use exponential
+          IF
+            X > Zero
+              RWork := One - (Two/(One + exp (MULBY2 (XWork))))
+            TRUE
+              RWork := (Two/(One + exp (MULBY2 (XWork)))) - One
+          --}}}
+        TRUE
+          --{{{  rational approximation
+          VAL P1 IS -3.831010665E-3(REAL32) :
+          VAL P0 IS -8.237728127E-1(REAL32) :
+          VAL Q0 IS  2.471319654(REAL32) :
+          VAL REAL32 G IS XWork * XWork :
+          RWork := X + (((((P1 * G) + P0) * G) / (G + Q0)) * X)
+          --}}}
+    RESULT RWork
+:
+--}}}
+

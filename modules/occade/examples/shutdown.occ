@@ -1,0 +1,122 @@
+--
+--	Shutdown servers
+--	Copyright (C) 2007  University of Kent
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module shutdown
+
+#INCLUDE "shutdown.inc"
+
+--{{{ PROC shutdown.server (SHUTDOWN.CTL? ctl.svr)
+--* The server process forked off by [@ref start.shutdown.server].
+-- @private
+PROC shutdown.server (SHUTDOWN.CTL? ctl.svr)
+  VAL INT MAX.CLIENTS IS 1000:
+  INITIAL MOBILE []SHUTDOWN? svrs IS MOBILE [MAX.CLIENTS]SHUTDOWN?:
+  INITIAL INT num.svrs IS 0:
+
+  INITIAL BOOL kill.sent IS FALSE:
+  PROC assassin (SHUTDOWN? svr)
+    PAR
+      svr[kill] ! TRUE
+      BOOL b:
+      svr[disconnect] ? b
+  :
+  PROC do.kill ()
+    IF
+      kill.sent
+        SKIP
+      TRUE
+        SEQ
+          SEQ i = 0 FOR num.svrs
+            FORK assassin (svrs[i])
+          num.svrs := 0
+          kill.sent := TRUE
+  :
+
+  INITIAL BOOL quit.received IS FALSE:
+  WHILE NOT (quit.received AND kill.sent)
+    PRI ALT
+      ctl.svr[req] ? CASE
+        connect
+          --{{{ connect new client
+          SHUTDOWN! cli:
+          SEQ
+            cli, svrs[num.svrs] := MOBILE SHUTDOWN
+            IF
+              kill.sent
+                --{{{ already killed; kill this client and forget about it
+                FORK assassin (svrs[num.svrs])
+                --}}}
+              TRUE
+                num.svrs := num.svrs + 1
+            ctl.svr[resp] ! connect; cli
+          --}}}
+        kill
+          do.kill ()
+        quit
+          quit.received := TRUE
+      PRI ALT i = 0 FOR num.svrs
+        BOOL b:
+        svrs[i][disconnect] ? b
+          --{{{ disconnect this client
+          SEQ
+            num.svrs := num.svrs - 1
+            IF
+              i <> num.svrs
+                svrs[i] := svrs[num.svrs]
+              TRUE
+                SKIP
+          --}}}
+:
+--}}}
+
+--{{{ PROC start.shutdown.server (RESULT SHARED SHUTDOWN.CTL! cli)
+--* Start a new shutdown server.
+PROC start.shutdown.server (RESULT SHARED SHUTDOWN.CTL! cli)
+  SHUTDOWN.CTL? svr:
+  SEQ
+    svr, cli := MOBILE SHUTDOWN.CTL
+    FORK shutdown.server (svr)
+:
+--}}}
+
+--{{{ PROC shutdown.connect (SHARED SHUTDOWN.CTL! shutdown, SHUTDOWN! cli)
+--* Connect to a shutdown server.
+PROC shutdown.connect (SHARED SHUTDOWN.CTL! shutdown, RESULT SHUTDOWN! cli)
+  CLAIM shutdown
+    SEQ
+      shutdown[req] ! connect
+      shutdown[resp] ? CASE connect; cli
+:
+--}}}
+
+--{{{ PROC shutdown.finish (SHUTDOWN! cli)
+--* Disconnect from a shutdown server.
+PROC shutdown.finish (SHUTDOWN! cli)
+  SEQ
+    cli[disconnect] ! TRUE
+    --{{{ eat a kill notification if we've been sent one
+    PRI ALT
+      BOOL b:
+      cli[kill] ? b
+        SKIP
+      SKIP
+        SKIP
+    --}}}
+:
+--}}}

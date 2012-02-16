@@ -1,0 +1,10 @@
+
+CHAN TYPE THING
+  MOBILE RECORD
+    CHAN INT c!:
+:
+
+PROC sq.bracket (THING? svr)
+  svr[c[ ! 42
+:
+

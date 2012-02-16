@@ -1,0 +1,947 @@
+--
+--	game-client.occ -- general client routines
+--	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "config.inc"
+#INCLUDE "types.inc"
+#USE "game-utils"
+#USE "game-room"
+#USE "game-objects"
+#USE "game-bots"
+
+
+--{{{  PROC handle.cmd (...)
+PROC handle.cmd (CHAN P.CLIENT.OUT cli.in?, CHAN S.CLIENT.IN cli.out!,
+                  CHAN P.CLIENT.OUT to.game!, CHAN P.CLIENT.IN from.game?,
+                  CHAN P.CLIENT.OUT to.if!, CHAN P.CLIENT.IN from.if?,
+                  SHARED CT.GAMECTRL! gamelink, SHARED CT.LINCLINK! linclink, VAL BOOL console)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    SEQ
+      ALT
+        cli.in ? CASE
+          help
+            --{{{  help
+            SEQ
+              cli.out ! genmsg; "the new occam adventure (TTY)"
+              cli.out ! genmsg; ""
+              cli.out ! genmsg; "   say <message>             say something"
+              cli.out ! genmsg; "X  examine <thing>           examine something"
+              cli.out ! genmsg; "G  get <thing>               pick something up"
+              cli.out ! genmsg; "U  use <thing>               use something"
+              cli.out ! genmsg; "D  drop <thing>              drop something"
+              cli.out ! genmsg; "L  look                      look around"
+              cli.out ! genmsg; "I  inv                       inventory"
+              cli.out ! genmsg; "   north|east|south|west     move"
+              cli.out ! genmsg; "   stat                      show status"
+              cli.out ! genmsg; "W  wield <thing>             wield something"
+              cli.out ! genmsg; "Y  unwield                   put back"
+              cli.out ! genmsg; "A  attack <who>              attack someone"
+              IF
+                console
+                  SEQ
+                    cli.out ! genmsg; "   link <r> <nesw> <t>       link <t> to <r>:<nesw>"
+                    cli.out ! genmsg; "   sproom <name> <locn>      spawn room"
+                    cli.out ! genmsg; "   spobj <name> <locn>       spawn object"
+                    cli.out ! genmsg; "   spdoor <name> <locn> <t>  spawn door to <t>"
+                    cli.out ! genmsg; "   halt                      stop game"
+                    cli.out ! genmsg; "   spbot <type> <name> <locn>"
+                    cli.out ! genmsg; "         <tlocn> <tsrc> <tname>  spawn bot"
+                    cli.out ! genmsg; "   spdobj <name> <tname> <locn>  spawn dispenser"
+                TRUE
+                  SEQ
+                    cli.out ! genmsg; "   logout                    leave the game"
+            --}}}
+          halt
+            --{{{  halt
+            STOP
+            --}}}
+          look
+            --{{{  look
+            SEQ
+              to.game ! look
+              gen.strings.read (from.game?, cli.out!)
+              to.game ! others
+              gen.strings.read.format (from.game?, cli.out!, "+other people: ", "+you are alone")
+              to.game ! objects
+              gen.strings.read.format (from.game?, cli.out!, "+objects: ", "")
+              to.game ! lookexits
+              gen.strings.read.exits (from.game?, cli.out!, "+there is an exit to the ", "+there are exits to the ", "+no exits, you are trapped!")
+            --}}}
+          north
+            --{{{  north
+            to.game ! north
+            --}}}
+          east
+            --{{{  east
+            to.game ! east
+            --}}}
+          south
+            --{{{  south
+            to.game ! south
+            --}}}
+          west
+            --{{{  west
+            to.game ! west
+            --}}}
+          inv
+            --{{{  inventory
+            SEQ
+              to.if ! inv
+              gen.strings.read.format (from.if?, cli.out!, "carrying: ", "not carrying anything")
+            --}}}
+          status
+            --{{{  status request
+            SEQ
+              to.if ! status
+              gen.strings.read (from.if?, cli.out!)
+            --}}}
+          MOBILE []BYTE obj:
+          wield; obj
+            --{{{  wield object
+            SEQ
+              to.if ! wield; obj
+              gen.strings.read (from.if?, cli.out!)
+            --}}}
+          unwield
+            --{{{  unwield object
+            SEQ
+              to.if ! unwield
+              gen.strings.read (from.if?, cli.out!)
+            --}}}
+          MOBILE []BYTE who:
+          attack; who
+            --{{{  attack someone
+            SEQ
+              to.if ! check.wielded
+              from.if ? CASE
+                no
+                  cli.out ! genmsg; "not with my bare hands!"
+                MOBILE []BYTE wobj:
+                INT wdamage:
+                wielding; wobj; wdamage
+                  SEQ
+                    to.game ! do.attack; who; wobj; wdamage
+            --}}}
+          logout
+            --{{{  logout
+            MOBILE []BYTE uname:
+            CT.CLIENT! us:
+            SEQ
+              -- send logout to local, will return held objects
+              to.if ! logout
+              INITIAL BOOL looping IS TRUE:
+              WHILE looping
+                from.if ? CASE
+                  MOBILE []BYTE oname:
+                  CT.OBJECT! obj:
+                  get.object; oname; obj
+                    to.game ! roomdrop; oname; obj
+                  no
+                    looping := FALSE
+              -- then disconnect from the room
+              to.game ! logout
+              from.game ? CASE returned.client; uname; us
+
+              -- disconnect from game
+              CLAIM gamelink
+                SEQ
+                  gamelink[in] ! unregister.name; uname
+                  gamelink[out] ? CASE ok
+
+              -- shutdown local processing -- inject "logout"
+              us[s.in] ! do.logout
+            --}}}
+          MOBILE []BYTE str:
+          say; str
+            --{{{  say something
+            to.game ! say; str
+            --}}}
+          MOBILE []BYTE obj:
+          get; obj
+            --{{{  get object
+            SEQ
+              to.game ! get; obj
+              from.game ? CASE
+                CT.OBJECT! cto:
+                MOBILE []BYTE ctn:
+                get.object; ctn; cto
+                  to.if ! roomdrop; ctn; cto
+                no
+                  cli.out ! genmsg; "cannot pick that up!"
+            --}}}
+          MOBILE []BYTE obj:
+          use; obj
+            --{{{  use object
+            SEQ
+              -- do we have this object ?
+              to.if ! have.object; CLONE obj
+              from.if ? CASE
+                no
+                  SEQ
+                    to.game ! use; obj
+                    from.game ? CASE
+                      MOBILE []BYTE str:
+                      string; str
+                        cli.out ! genmsg; str
+                      yes
+                        SKIP
+                      no
+                        cli.out ! genmsg; "cannot use that"
+                yes
+                  SEQ
+                    to.if ! use; obj
+                    from.if ? CASE
+                      MOBILE []BYTE str:
+                      string; str
+                        cli.out ! genmsg; str
+                      yes
+                        SKIP
+                      no
+                        cli.out ! genmsg; "cannot use that"
+            --}}}
+          MOBILE []BYTE obj:
+          eat; obj
+            --{{{  eat object
+            SEQ
+              -- do we have this object ?
+              to.if ! have.object; CLONE obj
+              from.if ? CASE
+                no
+                  cli.out ! genmsg; "off the floor ?"
+                yes
+                  SEQ
+                    to.if ! eat; obj
+                    from.if ? CASE
+                      MOBILE []BYTE str:
+                      string; str
+                        cli.out ! genmsg; str
+                      yes
+                        SKIP
+                      no
+                        cli.out ! genmsg; "cannot eat that"
+                  
+            --}}}
+          MOBILE []BYTE obj:
+          drop; obj
+            --{{{  drop object
+            SEQ
+              to.if ! drop; obj
+              from.if ? CASE
+                MOBILE []BYTE oname:
+                CT.OBJECT! obj:
+                get.object; oname; obj
+                  to.game ! roomdrop; oname; obj
+                no
+                  SKIP
+            --}}}
+          MOBILE []BYTE obj:
+          examine; obj
+            --{{{  examine object
+            SEQ
+              -- holding this object ?
+              to.if ! have.object; CLONE obj
+              from.if ? CASE
+                no
+                  SEQ
+                    to.game ! examine; obj
+                    from.game ? CASE
+                      MOBILE []BYTE msg:
+                      string; msg
+                        cli.out ! genmsg; msg
+                      no
+                        SKIP
+                yes
+                  SEQ
+                    to.if ! examine; obj
+                    from.if ? CASE
+                      MOBILE []BYTE msg:
+                      string; msg
+                        cli.out ! genmsg; msg
+                      no
+                        SKIP
+            --}}}
+          MOBILE []BYTE name:
+          INT locn:
+          sproom; name; locn
+            --{{{  spawn room
+            CT.ROOMACK! ack.cli:
+            CT.ROOMACK? ack.svr:
+            SHARED CT.ROOMLINK! t.roomlink:
+            INT t.roomno:
+            SEQ
+              ack.cli, ack.svr := MOBILE CT.ROOMACK
+              FORK room (name, locn, gamelink, ack.cli)
+
+              -- wait for room
+              ack.svr[link] ? t.roomno; t.roomlink
+              CLAIM gamelink
+                gamelink[in] ! attach.room; t.roomno; t.roomlink
+            --}}}
+          MOBILE []BYTE name:
+          INT locn, target:
+          spdoor; name; locn; target
+            --{{{  spawn door
+            SEQ
+              FORK door.object (name, locn, target, gamelink)
+            --}}}
+          MOBILE []BYTE name:
+          INT locn:
+          spobj; name; locn
+            --{{{  spawn object
+            SEQ
+              FORK triv.object (name, locn, gamelink)
+            --}}}
+          MOBILE []BYTE type, name, tname:
+          INT locn, tlocn, tsrc:
+          spbot; type; name; locn; tlocn; tsrc; tname
+            --{{{  spawn bot
+            spawn.bot (type, name, locn, tlocn, tsrc, tname, gamelink)
+            --}}}
+          INT locn:
+          splinc; locn
+            --{{{  spawn linc terminal
+            FORK linc.terminal (locn, gamelink, linclink)
+            --}}}
+          MOBILE []BYTE name, tname:
+          INT locn:
+          spdobj; name; tname; locn
+            --{{{  spawn dispenser object
+            FORK dispenser.object (name, tname, locn, gamelink)
+            --}}}
+          INT locn, exit, target:
+          link; locn; exit; target
+            --{{{  link room
+            MOBILE []BYTE msg:
+            SEQ
+              CLAIM gamelink
+                SEQ
+                  gamelink[in] ! link.room; locn; exit; target
+                  gamelink[out] ? CASE
+                    error; msg
+                      SKIP
+                    ok
+                      msg := ""
+              IF
+                NOT (msg = "")
+                  cli.out ! genmsg; msg
+                TRUE
+                  SKIP
+            --}}}
+          MOBILE []BYTE str:
+          bad.input; str
+            --{{{  bad input
+            [128]BYTE tbuf:
+            INT tlen:
+            SEQ
+              tlen := 0
+              buffer.set.string (tbuf, tlen, "don*'t understand: ")
+              buffer.set.string (tbuf, tlen, str)
+              cli.out ! genmsg; [tbuf FOR tlen]
+            --}}}
+          do.logout
+            --{{{  shutdown process
+            SEQ
+              running := FALSE
+              cli.out ! do.logout
+            --}}}
+:
+--}}}
+--{{{  PROC string.owb (CHAN MOBILE []BYTE in?, out!)
+PROC string.owb (CHAN MOBILE []BYTE in?, out!)
+  --{{{  PROC mb.buf (CHAN MOBILE []BYTE in?, out!)
+  PROC mb.buf (CHAN MOBILE []BYTE in?, out!)
+    MOBILE []BYTE str:
+    WHILE TRUE
+      SEQ
+        in ? str
+        out ! str
+  :
+  --}}}
+  --{{{  PROC msgbuf (CHAN MOBILE []BYTE in?, out!)
+  PROC msgbuf (CHAN MOBILE []BYTE in?, out!)
+    [20]CHAN MOBILE []BYTE c:
+    PAR
+      mb.buf (in?, c[0]!)
+      PAR i = 0 FOR 19
+        mb.buf (c[i]?, c[i+1]!)
+      mb.buf (c[19]?, out!)
+  :
+  --}}}
+
+  CHAN BOOL req:
+  CHAN MOBILE []BYTE resp, local, local2:
+  PAR
+    SEQ
+      SETPRI (28)
+      msgbuf (in?, local!)
+    --{{{  over-writing buffer
+    INITIAL BOOL holding IS FALSE:
+    MOBILE []BYTE str:
+    WHILE TRUE
+      PRI ALT
+        BOOL any:
+        holding & req ? any
+          SEQ
+            resp ! str
+            holding := FALSE
+        local ? str
+          holding := TRUE
+    --}}}
+    --{{{  auto-prompter
+    WHILE TRUE
+      MOBILE []BYTE str:
+      SEQ
+        req ! TRUE
+        resp ? str
+        local2 ! str
+    --}}}
+    SEQ
+      SETPRI (1)
+      msgbuf (local2?, out!)
+:
+--}}}
+--{{{  PROC if.local.logic.buf (CHAN S.CLIENT.IN in?, CHAN MOBILE []BYTE out!)
+PROC if.local.logic.buf (CHAN S.CLIENT.IN in?, CHAN MOBILE []BYTE out!)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    in ? CASE
+      INT room:
+      self.enter.room; room
+        out ! "look"
+      do.logout
+        out ! ##DIEMESSAGE
+:
+--}}}
+--{{{  PROC mstr.plex ([]CHAN MOBILE []BYTE in?, CHAN MOBILE []BYTE out!, VAL INT kill.idx)
+PROC mstr.plex ([]CHAN MOBILE []BYTE in?, CHAN MOBILE []BYTE out!, VAL INT kill.idx)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    ALT i = 0 FOR SIZE in?
+      MOBILE []BYTE str:
+      in[i] ? str
+        IF
+          (i = kill.idx) AND (str = ##DIEMESSAGE)
+            SEQ
+              out ! str
+              running := FALSE
+          TRUE
+            out ! str
+:
+--}}}
+--{{{  PROC async.drop.object (SHARED CT.ROOMLINK! to.room, VAL []BYTE name, CT.OBJECT! objlink)
+PROC async.drop.object (SHARED CT.ROOMLINK! to.room, VAL []BYTE name, CT.OBJECT! objlink)
+  SEQ
+    CLAIM to.room
+      to.room[in] ! new.object; name; objlink
+:
+--}}}
+
+--{{{  PROC if.split (CHAN S.CLIENT.IN in?, out.info!, out.ctrl!, out.local!)
+PROC if.split (CHAN S.CLIENT.IN in?, out.info!, out.ctrl!, out.local!)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    in ? CASE
+      get.name
+        out.ctrl ! get.name
+      MOBILE []BYTE msg:
+      genmsg; msg
+        out.info ! genmsg; msg
+      CT.OBJECT! tmp.obj:
+      MOBILE []BYTE tname:
+      object; tname; tmp.obj
+        out.ctrl ! object; tname; tmp.obj
+      MOBILE []BYTE oname:
+      have.object; oname
+        out.ctrl ! have.object; oname
+      MOBILE []BYTE who, oname:
+      INT damage:
+      take.damage; who; oname; damage
+        out.ctrl ! take.damage; who; oname; damage
+      MOBILE []BYTE pname:
+      enter.room; pname
+        out.info ! enter.room; pname
+      MOBILE []BYTE pname:
+      INT nesw:
+      leaving.room; pname; nesw
+        out.info ! leaving.room; pname; nesw
+      INT room:
+      self.enter.room; room
+        out.local ! self.enter.room; room
+      MOBILE []BYTE pname, oname:
+      drop.object; pname; oname
+        out.info ! drop.object; pname; oname
+      MOBILE []BYTE pname, msg:
+      say.room; pname; msg
+        out.info ! say.room; pname; msg
+      MOBILE []BYTE pname, msg:
+      action.room; pname; msg
+        out.info ! action.room; pname; msg
+      SHARED CT.ROOMLINK! d.room:
+      dropall; d.room
+        out.ctrl ! dropall; d.room
+      resurrect
+        out.ctrl ! resurrect
+      do.logout
+        SEQ
+          PAR
+            out.local ! do.logout
+            out.ctrl ! do.logout
+            out.info ! do.logout
+          running := FALSE
+:
+--}}}
+--{{{  PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CHAN S.CLIENT.IN ctrl.in?, CHAN S.CLIENT.OUT ctrl.out!, CHAN S.CLIENT.IN local.out!)
+PROC local.if (VAL []BYTE name, CHAN P.CLIENT.OUT in?, CHAN P.CLIENT.IN out!, CHAN S.CLIENT.IN ctrl.in?, CHAN S.CLIENT.OUT ctrl.out!, CHAN S.CLIENT.IN local.out!)
+  INT nobjects, nholding:
+  MOBILE []CT.OBJECT! objects:
+  MOBILE []GSTR onames:
+  MOBILE []BOOL objects.ok:
+  [256]BYTE t.buf:
+  INT t.len:
+  INT health, level, vital:
+  INT wielded:
+  SEQ
+    --{{{  initialise
+    nobjects := 24
+    nholding := 0
+    objects := MOBILE [nobjects]CT.OBJECT!
+    onames := MOBILE [nobjects]GSTR
+    objects.ok := MOBILE [nobjects]BOOL
+    SEQ i = 0 FOR nobjects
+      objects.ok[i] := FALSE
+    IF
+      name = ##OPER.NAME
+        level, health, vital := 3, 101, 101
+      TRUE
+        level, health, vital := 0, 100, 75
+    wielded := -1
+    --}}}
+    --{{{  local command processing
+    [128]BYTE t.buf:
+    INT t.len:
+    SEQ
+      t.len := 0
+      INITIAL BOOL running IS TRUE:
+      WHILE running
+        ALT
+          ctrl.in ? CASE              -- message from the game
+            CT.OBJECT! tmp.obj:
+            MOBILE []BYTE tname:
+            object; tname; tmp.obj
+              --{{{  incoming object
+              IF
+                IF i = 0 FOR nobjects
+                  NOT objects.ok[i]
+                    INITIAL INT tnlen IS SIZE tname:
+                    SEQ
+                      objects[i] := tmp.obj
+                      objects.ok[i] := TRUE
+                      [onames[i][str] FOR tnlen] := [tname FOR tnlen]
+                      onames[i][slen] := tnlen
+                      nholding := nholding + 1
+                TRUE
+                  SEQ
+                    ctrl.out ! reject.object; tname; tmp.obj
+              --}}}
+            MOBILE []BYTE tname:
+            have.object; tname
+              --{{{  have object ?
+              IF
+                IF i = 0 FOR nobjects
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = tname)
+                    ctrl.out ! yes
+                TRUE
+                  ctrl.out ! no
+              --}}}
+            get.name
+              --{{{  get name
+              ctrl.out ! name; name
+              --}}}
+            MOBILE []BYTE who, oname:
+            INT damage:
+            take.damage; who; oname; damage
+              --{{{  take.damage
+              SEQ
+                IF
+                  (damage = 0) OR (health = 101)
+                    SEQ
+                      t.len := 0
+                      buffer.set.string (t.buf, t.len, who)
+                      buffer.set.string (t.buf, t.len, " tries to attack using a ")
+                      buffer.set.string (t.buf, t.len, oname)
+                      local.out ! genmsg; [t.buf FOR t.len]
+                  TRUE
+                    SEQ
+                      -- we take the damage
+                      health := health - damage
+                      IF
+                        health < 0
+                          health := 0       -- dead
+                        TRUE
+                          SKIP
+
+                      t.len := 0
+                      buffer.set.string (t.buf, t.len, who)
+                      buffer.set.string (t.buf, t.len, " attacks using a ")
+                      buffer.set.string (t.buf, t.len, oname)
+                      buffer.set.string (t.buf, t.len, "  (health -")
+                      buffer.set.number (t.buf, t.len, damage)
+                      buffer.set.string (t.buf, t.len, " / ")
+                      buffer.set.number (t.buf, t.len, health)
+                      buffer.set.string (t.buf, t.len, ")")
+
+                      local.out ! genmsg; [t.buf FOR t.len]
+                IF
+                  health = 0
+                    ctrl.out ! dead
+                  TRUE
+                    ctrl.out ! yes          -- must output something ;)
+              --}}}
+              --{{{  resurrect -- bring client back to life
+            resurrect
+              SEQ
+                local.out ! genmsg; "resurrecting you!"
+                health := 100
+                vital := 50
+                level := 0
+              --}}}
+              --{{{  dropall -- drop all objects
+            SHARED CT.ROOMLINK! d.link:
+            dropall; d.link
+              SEQ
+                wielded := -1
+                SEQ i = 0 FOR nobjects
+                  IF
+                    objects.ok[i]
+                      SEQ
+                        FORK async.drop.object (d.link, [onames[i][str] FOR onames[i][slen]], objects[i])
+                        objects.ok[i] := FALSE
+                    TRUE
+                      SKIP
+                nholding := 0
+              --}}}
+            do.logout
+              SEQ
+                running := FALSE
+                local.out ! do.logout
+          in ? CASE                 -- message from local stuff
+            inv
+              --{{{  examine inventory
+              SEQ
+                SEQ i = 0 FOR nobjects
+                  IF
+                    objects.ok[i]
+                      IF
+                        wielded = i
+                          SEQ
+                            t.len := 0
+                            buffer.set.string (t.buf, t.len, [onames[i][str] FOR onames[i][slen]])
+                            buffer.set.string (t.buf, t.len, " (wielding)")
+                            out ! string; [t.buf FOR t.len]
+                        TRUE
+                          out ! string; [onames[i][str] FOR onames[i][slen]]
+                    TRUE
+                      SKIP
+                out ! end.of.list
+              --}}}
+            status
+              --{{{  status request
+              SEQ
+                t.len := 0
+                buffer.set.string (t.buf, t.len, "name:     ")
+                buffer.set.string (t.buf, t.len, name)
+                buffer.set.string (t.buf, t.len, "  (")
+                CASE level
+                  0
+                    buffer.set.string (t.buf, t.len, "peasant")
+                  1
+                    buffer.set.string (t.buf, t.len, "apprentice")
+                  2
+                    buffer.set.string (t.buf, t.len, "sorcerer")
+                  3
+                    buffer.set.string (t.buf, t.len, "mage")
+                  ELSE
+                    buffer.set.string (t.buf, t.len, "video nasty")
+                buffer.set.string (t.buf, t.len, ")")
+                out ! string; [t.buf FOR t.len]
+
+                t.len := 0
+                buffer.set.string (t.buf, t.len, "health:   ")
+                IF
+                  health = 101
+                    buffer.set.string (t.buf, t.len, "(invincible)")
+                  TRUE
+                    buffer.set.number (t.buf, t.len, health)
+                out ! string; [t.buf FOR t.len]
+
+                t.len := 0
+                buffer.set.string (t.buf, t.len, "vitality: ")
+                IF
+                  vital = 101
+                    buffer.set.string (t.buf, t.len, "(invincible)")
+                  TRUE
+                    buffer.set.number (t.buf, t.len, vital)
+                out ! string; [t.buf FOR t.len]
+
+                out ! end.of.list
+              --}}}
+            MOBILE []BYTE oname:
+            wield; oname
+              --{{{  wield object
+              INT oidx:
+              SEQ
+                IF
+                  IF i = 0 FOR nobjects
+                    objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
+                      oidx := i
+                  TRUE
+                    oidx := -1
+
+                IF
+                  oidx < 0
+                    SEQ
+                      t.len := 0
+                      buffer.set.string (t.buf, t.len, "not carrying ")
+                      buffer.set.string (t.buf, t.len, oname)
+                      out ! string; [t.buf FOR t.len]
+                      out ! end.of.list
+                  wielded <> oidx
+                    SEQ
+                      wielded := oidx
+                      t.len := 0
+                      buffer.set.string (t.buf, t.len, "now wielding a ")
+                      buffer.set.string (t.buf, t.len, oname)
+                      out ! string; [t.buf FOR t.len]
+                      out ! end.of.list
+                  TRUE
+                    SEQ
+                      out ! string; "already wielding that!"
+                      out ! end.of.list
+              --}}}
+            unwield
+              --{{{  unwield action
+              IF
+                wielded < 0
+                  SEQ
+                    out ! string; "not holding anything!"
+                    out ! end.of.list
+                TRUE
+                  SEQ
+                    wielded := -1
+                    out ! end.of.list
+              --}}}
+            logout
+              --{{{  attempt to log out
+              SEQ
+                --{{{  drop any held objects
+                SEQ i = 0 FOR nobjects
+                  IF
+                    objects.ok[i]
+                      SEQ
+                        objects.ok[i] := FALSE
+                        out ! get.object; [onames[i][str] FOR onames[i][slen]]; objects[i]
+                    TRUE
+                      SKIP
+                --}}}
+                out ! no
+              --}}}
+            check.wielded
+              --{{{  check to see if we're wielding something, and if so, how damaging
+              IF
+                wielded < 0
+                  out ! no
+                NOT objects.ok[wielded]
+                  SEQ
+                    wielded := -1
+                    out ! no
+                TRUE
+                  INT damage:
+                  SEQ
+                    objects[wielded][in] ! get.damage
+                    objects[wielded][out] ? CASE damage; damage
+                    -- adjust damage using local health, etc.
+                    IF
+                      damage < 0
+                        damage := 0
+                      damage = 0
+                        SKIP
+                      TRUE
+                        SEQ
+                          -- health factor
+                          IF
+                            health = 101
+                              SKIP
+                            TRUE
+                              damage := damage - (((damage * health) / 2) / 100)
+
+                    out ! wielding; [onames[wielded][str] FOR onames[wielded][slen]]; damage
+              --}}}
+            MOBILE []BYTE oname:
+            have.object; oname
+              --{{{  test to see if we have an object
+              IF
+                IF i = 0 FOR nobjects
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
+                    out ! yes
+                TRUE
+                  out ! no
+              --}}}
+            MOBILE []BYTE oname:
+            examine; oname
+              --{{{  examine object
+              IF
+                IF j = 0 FOR nobjects
+                  objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
+                    SEQ
+                      objects[j][in] ! examine
+                      objects[j][out] ? CASE name; oname
+                      out ! string; oname
+                TRUE
+                  out ! no
+              --}}}
+            MOBILE []BYTE oname:
+            use; oname
+              --{{{  use object
+              IF
+                IF j = 0 FOR nobjects
+                  objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
+                    out ! string; "cannot use that"
+                TRUE
+                  out ! no
+              --}}}
+            MOBILE []BYTE oname:
+            eat; oname
+              --{{{  eat object
+              IF
+                IF i = 0 FOR nobjects
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
+                    INT goodness:
+                    SEQ
+                      objects[i][in] ! get.health
+                      objects[i][out] ? CASE health; goodness
+
+                      IF
+                        goodness = 0
+                          out ! no
+                        goodness < 0
+                          out ! string; "that doesn*'t look very tasty"
+                        TRUE
+                          SEQ
+                            IF
+                              health = 101
+                                SKIP            -- invincible
+                              TRUE
+                                SEQ
+                                  health := health + goodness
+                                  IF
+                                    health > 100
+                                      health := 100
+                                    TRUE
+                                      SKIP
+                            -- destroy object
+                            objects.ok[i] := FALSE
+                            objects[i][in] ! die
+
+                            out ! string; "yum yum!"
+                            IF
+                              wielded = i
+                                wielded := -1
+                              TRUE
+                                SKIP
+                TRUE
+                  out ! no
+              --}}}
+            MOBILE []BYTE oname:
+            drop; oname
+              --{{{  drop object
+              IF
+                IF i = 0 FOR nobjects
+                  objects.ok[i] AND ([onames[i][str] FOR onames[i][slen]] = oname)
+                    SEQ
+                      objects.ok[i] := FALSE
+                      out ! get.object; oname; objects[i]
+                      IF
+                        i = wielded
+                          wielded := -1
+                        TRUE
+                          SKIP
+                TRUE
+                  SEQ
+                    out ! no
+              --}}}
+            MOBILE []BYTE tname:
+            CT.OBJECT! tmp.obj:
+            roomdrop; tname; tmp.obj
+              --{{{  incoming object
+              IF
+                IF i = 0 FOR nobjects
+                  NOT objects.ok[i]
+                    INITIAL INT tnlen IS SIZE tname:
+                    SEQ
+                      objects[i] := tmp.obj
+                      objects.ok[i] := TRUE
+                      [onames[i][str] FOR tnlen] := [tname FOR tnlen]
+                      onames[i][slen] := tnlen
+                      nholding := nholding + 1
+                      t.len := 0
+                      buffer.set.string (t.buf, t.len, "picked up ")
+                      buffer.set.string (t.buf, t.len, [onames[i][str] FOR onames[i][slen]])
+                      local.out ! genmsg; [t.buf FOR t.len]
+                TRUE
+                  STOP
+              --}}}
+    --}}}
+:
+--}}}
+--{{{  PROC sclient.in.plex ([]CHAN S.CLIENT.IN in?, CHAN S.CLIENT.IN out!)
+PROC sclient.in.plex ([]CHAN S.CLIENT.IN in?, CHAN S.CLIENT.IN out!)
+  INITIAL INT termcount IS SIZE in?:
+  MOBILE []BYTE str:
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    PRI ALT i = 0 FOR SIZE in
+      in[i] ? CASE
+        genmsg; str
+          out ! genmsg; str
+        enter.room; str
+          out ! enter.room; str
+        INT nesw:
+        leaving.room; str; nesw
+          out ! leaving.room; str; nesw
+        MOBILE []BYTE oname:
+        drop.object; str; oname
+          out ! drop.object; str; oname
+        MOBILE []BYTE pname:
+        say.room; pname; str
+          out ! say.room; pname; str
+        MOBILE []BYTE pname:
+        action.room; pname; str
+          out ! action.room; pname; str
+        do.logout
+          IF
+            termcount = 1
+              SEQ
+                out ! do.logout
+                running := FALSE
+            TRUE
+              termcount := termcount - 1
+:
+--}}}
+
+

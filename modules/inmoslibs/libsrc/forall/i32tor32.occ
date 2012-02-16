@@ -1,0 +1,188 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.3 10/01/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE INT32TOREAL32 "INT32TOREAL32%CHK"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL32 FUNCTION INT32TOREAL32 (VAL INT Mode, VAL INT32 N)
+
+  --{{{  history
+  -- V1.1, 21-Feb-89
+  -- V1.2, 24-Feb-89
+  -- Changed type of N from INT to INT32; V1.3, 10-Jan-90 SRH
+  --}}}
+
+  REAL32 X:
+  VALOF
+    INT X RETYPES X :
+    VAL INT N RETYPES N :
+    --{{{  comment and vars
+    --Convert integer to real rounding to nearest or zero.
+    --  X    : Destination real
+    --  Mode : round to Nearest or Truncate
+    --  N    : source integer
+    INT Guard, Places, Xexp, Xfrac, Xint, Xsign :
+    --}}}
+    --{{{  code
+    SEQ
+      IF
+        N = 0
+          X := 0
+        TRUE
+          --{{{  
+          SEQ
+            IF
+              N < 0
+                SEQ
+                  Xsign := SignBit
+                  Xint := 0 MINUS N  --bug fix MD 6-8-86, used to be -N
+              TRUE
+                SEQ
+                  Xsign := 0
+                  Xint := N
+            Places,  Xint,  Guard := NORMALISE ( Xint,  0)
+            Xexp := (RealXcess - 1) + (BitsPerWord - Places)
+            Xexp,  Xfrac := SHIFTRIGHT ( Xexp,  Xint << 1,  RealShift + 1)
+            IF
+              --{{{  Places > RealShift
+              Places > RealShift            --exact answer
+                SKIP
+              --}}}
+              --{{{  TRUE
+              TRUE                          --must round
+                SEQ
+                  Xint := Xint /\ RealExp   --get bottom bits
+                  IF
+                    (Mode = Truncate) OR ((Xint /\ RealRBit) = 0)
+                      SKIP
+                    ((Xint /\ RealXcess) \/ (Xfrac /\ 1)) = 0--round down
+                      SKIP
+                    TRUE                    --round up/even
+                      Xfrac := Xfrac + 1    --never overflows
+              --}}}
+            X := Xsign \/ Xfrac
+          --}}}
+    --}}}
+    RESULT X
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE INT32TOREAL32 "INT32TOREAL32%CHK"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+REAL32 FUNCTION INT32TOREAL32 (VAL INT Mode, VAL INT32 N)
+
+  --  Function version (10 Jun 87)
+
+  -- Convert double length integer to real, round to zero or nearest.
+  --  Mode      : Truncate or Nearest (rounding mode)
+  --  N         : source integer
+
+  REAL32 X :
+  VALOF
+    [2]INT X RETYPES X :
+    VAL [2]INT N RETYPES N :
+    INT Carry, Places, Xexp :
+    [2] INT Xfrac :
+    PLACE Xfrac IN WORKSPACE :
+    [2] INT Xint :
+    PLACE Xint IN WORKSPACE :
+    INT Xsign :
+    SEQ
+      IF
+        --{{{  Zero
+        (N[1] \/ N[0]) = 0
+          SEQ
+            X[1] := 0
+            X[0] := 0
+        --}}}
+        --{{{  Not zero
+        TRUE
+          SEQ
+            --{{{  Get absolute value and sign of N
+            IF
+              N[1] < 0
+                SEQ
+                  Xsign := SignBit
+                  Carry,  Xint[0] := LONGDIFF ( 0,  N[0],  0)
+                  Carry,  Xint[1] := LONGDIFF ( 0,  N[1],  Carry)
+              TRUE
+                SEQ
+                  Xsign := 0
+                  Xint := N
+            --}}}
+            --{{{  Float
+            Places,  Xint[1],  Xint[0] := NORMALISE ( Xint[1],  Xint[0])
+            Xexp := ((RealXcess - 1) + (2 * BitsPerWord)) - Places
+            Xexp,  Xfrac[1] := SHIFTRIGHT ( Xexp,  Xint[1]<<1,  RealShift + 1)
+            Xexp,  Xfrac[0] := SHIFTRIGHT ( Xint[1],  Xint[0],  RealShift)
+            --}}}
+            --{{{  Round if not exact answer
+            IF
+              Places > (BitsPerWord + RealShift) --exact answer
+                SKIP
+              TRUE                                   --must round
+                SEQ
+                  Xint[0] := Xint[0] /\ RealExp     --get bottom bits
+                  IF
+                    --round to zero
+                    (Mode = Truncate) OR ((Xint[0] /\ RealRBit) = 0)
+                      SKIP  --round bit clear
+                    ((Xint[0] /\ RealXcess) \/ (Xfrac[0] /\ 1)) = 0--round down
+                      SKIP
+                    TRUE                    --round up/even
+                      SEQ
+                        Carry,  Xfrac[0] := LONGSUM ( Xfrac[0],  1,  0)
+                        Carry,  Xfrac[1] := LONGSUM ( Xfrac[1],  0,  Carry)
+            --}}}
+            X[1] := Xsign \/ Xfrac[1]
+            X[0] := Xfrac[0]
+        --}}}
+    RESULT X
+:
+--}}}
+
+#ENDIF

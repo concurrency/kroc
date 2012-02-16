@@ -1,0 +1,38 @@
+
+-- cift9.occ -- CIF test 9, occam bits
+
+#INCLUDE "cif.module"
+
+CHAN TYPE LINK
+  MOBILE RECORD
+    CHAN INT in?:
+    CHAN INT out!:
+:
+
+#PRAGMA EXTERNAL "PROC CIF.my.process (LINK! link.cli) = 1024"
+
+
+PROC link.server (LINK? svr)
+  INITIAL INT x IS 0:
+  SEQ i = 0 FOR 5
+    INT v:
+    SEQ
+      svr[in] ? v
+      x := x + v
+      svr[out] ! x
+:
+
+
+PROC cift9 (CHAN BYTE kyb?, scr!, err!)
+  LINK! cli:
+  LINK? svr:
+  SEQ
+    cli, svr := MOBILE LINK
+
+    PAR
+      CIF.my.process (cli)
+      --{{{  server process
+      link.server (svr)
+      --}}}
+:
+

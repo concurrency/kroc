@@ -1,0 +1,55 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DIEEECOMPARE "DIEEECOMPARE%O"
+
+--{{{  T2 and TA code is the same
+INT FUNCTION DIEEECOMPARE (VAL REAL64 X, Y)
+
+  -- Function version (10 Jun 87)
+  -- modified to use unchecked comparisons 17-sep-87
+
+  INT result :
+  VALOF
+    VAL LT IS -1 :
+    VAL EQ IS  0 :
+    VAL GT IS  1 :
+    VAL UN IS  2 :
+    IF
+      DORDERED (X,Y)
+        IF
+          REAL64GT (Y, X) -- X < Y
+            result := LT
+          REAL64EQ (Y, X) -- X = Y
+            result := EQ
+          TRUE
+            result := GT
+      TRUE
+        result := UN
+    RESULT result
+:
+--}}}

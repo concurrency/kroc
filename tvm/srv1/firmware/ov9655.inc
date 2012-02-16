@@ -1,0 +1,490 @@
+-- OV9655 camera definitions
+
+--{{{  Registers Addreses
+VAL BYTE OV9655.GAIN              IS #00:
+VAL BYTE OV9655.BLUE              IS #01:
+VAL BYTE OV9655.RED               IS #02:
+VAL BYTE OV9655.VREF              IS #03:
+VAL BYTE OV9655.COM1              IS #04:
+VAL BYTE OV9655.VER               IS #0B:
+VAL BYTE OV9655.COM5              IS #0E:
+VAL BYTE OV9655.COM6              IS #0F:
+VAL BYTE OV9655.CLKRC             IS #11:
+VAL BYTE OV9655.COM7              IS #12:
+VAL BYTE OV9655.COM8              IS #13:
+VAL BYTE OV9655.COM9              IS #14:
+VAL BYTE OV9655.REG16             IS #16:
+VAL BYTE OV9655.HSTART            IS #17:
+VAL BYTE OV9655.HSTOP             IS #18:
+VAL BYTE OV9655.VSTRT             IS #19:
+VAL BYTE OV9655.VSTOP             IS #1A:
+VAL BYTE OV9655.MVFP              IS #1E:
+VAL BYTE OV9655.AEW               IS #24:
+VAL BYTE OV9655.AEB               IS #25:
+VAL BYTE OV9655.VPT               IS #26:
+VAL BYTE OV9655.BBIAS             IS #27:
+VAL BYTE OV9655.GbBIAS            IS #28:
+VAL BYTE OV9655.PREGAIN           IS #29:
+VAL BYTE OV9655.EXHCH             IS #2A:
+VAL BYTE OV9655.EXHCL             IS #2B:
+VAL BYTE OV9655.RBIAS             IS #2C:
+VAL BYTE OV9655.HREF              IS #32:
+VAL BYTE OV9655.CHLF              IS #33:
+VAL BYTE OV9655.AREF1             IS #34:
+VAL BYTE OV9655.AREF2             IS #35:
+VAL BYTE OV9655.AREF3             IS #36:
+VAL BYTE OV9655.ADC2              IS #38:
+VAL BYTE OV9655.AREF4             IS #39:
+VAL BYTE OV9655.TSLB              IS #3A:
+VAL BYTE OV9655.COM11             IS #3B:
+VAL BYTE OV9655.COM13             IS #3D:
+VAL BYTE OV9655.COM14             IS #3E:
+VAL BYTE OV9655.EDGE              IS #3F:
+VAL BYTE OV9655.COM15             IS #40:
+VAL BYTE OV9655.COM16             IS #41:
+VAL BYTE OV9655.COM17             IS #42:
+VAL BYTE OV9655.REG43             IS #43:
+VAL BYTE OV9655.REG44             IS #44:
+VAL BYTE OV9655.REG45             IS #45:
+VAL BYTE OV9655.REG46             IS #46:
+VAL BYTE OV9655.REG47             IS #47:
+VAL BYTE OV9655.REG48             IS #48:
+VAL BYTE OV9655.REG4A             IS #4A:
+VAL BYTE OV9655.REG4B             IS #4B:
+VAL BYTE OV9655.REG4C             IS #4C:
+VAL BYTE OV9655.REG4D             IS #4D:
+VAL BYTE OV9655.REG4E             IS #4E:
+VAL BYTE OV9655.MTX1              IS #4F:
+VAL BYTE OV9655.MTX2              IS #50:
+VAL BYTE OV9655.MTX3              IS #51:
+VAL BYTE OV9655.MTX4              IS #52:
+VAL BYTE OV9655.MTX5              IS #53:
+VAL BYTE OV9655.MTX6              IS #54:
+VAL BYTE OV9655.REG58             IS #58:
+VAL BYTE OV9655.MTXS              IS #58:
+VAL BYTE OV9655.AWBOP1            IS #59:
+VAL BYTE OV9655.AWBOP2            IS #5A:
+VAL BYTE OV9655.AWBOP3            IS #5B:
+VAL BYTE OV9655.AWBOP4            IS #5C:
+VAL BYTE OV9655.AWBOP5            IS #5D:
+VAL BYTE OV9655.AWBOP6            IS #5E:
+VAL BYTE OV9655.BLMT              IS #5F:
+VAL BYTE OV9655.RLMT              IS #60:
+VAL BYTE OV9655.GLMT              IS #61:
+VAL BYTE OV9655.LCC1              IS #62:
+VAL BYTE OV9655.LCC2              IS #63:
+VAL BYTE OV9655.LCC3              IS #64:
+VAL BYTE OV9655.LCC4              IS #65:
+VAL BYTE OV9655.LCC5              IS #66:
+VAL BYTE OV9655.REG69             IS #69:
+VAL BYTE OV9655.DBLV              IS #6B:
+VAL BYTE OV9655.REG6C             IS #6C:
+VAL BYTE OV9655.REG6D             IS #6D:
+VAL BYTE OV9655.REG6E             IS #6E:
+VAL BYTE OV9655.REG6F             IS #6F:
+VAL BYTE OV9655.DNSTH             IS #70:
+VAL BYTE OV9655.REG71             IS #71:
+VAL BYTE OV9655.POIDX             IS #72:
+VAL BYTE OV9655.PCKDV             IS #73:
+VAL BYTE OV9655.XINDX             IS #74:
+VAL BYTE OV9655.YINDX             IS #75:
+VAL BYTE OV9655.REG76             IS #76:
+VAL BYTE OV9655.REG77             IS #77:
+VAL BYTE OV9655.SLOP              IS #7A:
+VAL BYTE OV9655.GAM1              IS #7B:
+VAL BYTE OV9655.GAM2              IS #7C:
+VAL BYTE OV9655.GAM3              IS #7D:
+VAL BYTE OV9655.GAM4              IS #7E:
+VAL BYTE OV9655.GAM5              IS #7F:
+VAL BYTE OV9655.GAM6              IS #80:
+VAL BYTE OV9655.GAM7              IS #81:
+VAL BYTE OV9655.GAM8              IS #82:
+VAL BYTE OV9655.GAM9              IS #83:
+VAL BYTE OV9655.GAM10             IS #84:
+VAL BYTE OV9655.GAM11             IS #85:
+VAL BYTE OV9655.GAM12             IS #86:
+VAL BYTE OV9655.GAM13             IS #87:
+VAL BYTE OV9655.GAM14             IS #88:
+VAL BYTE OV9655.GAM15             IS #89:
+VAL BYTE OV9655.REG8A             IS #8A:
+VAL BYTE OV9655.COM19             IS #8C:
+VAL BYTE OV9655.REG90             IS #90:
+VAL BYTE OV9655.REG91             IS #91:
+VAL BYTE OV9655.LCC6              IS #9D:
+VAL BYTE OV9655.LCC7              IS #9E:
+VAL BYTE OV9655.REG9F             IS #9F:
+VAL BYTE OV9655.REGA0             IS #A0:
+VAL BYTE OV9655.AECH              IS #A1:
+VAL BYTE OV9655.COM21             IS #A4:
+VAL BYTE OV9655.REGA5             IS #A5:
+VAL BYTE OV9655.GREEN             IS #A6:
+VAL BYTE OV9655.REFA8             IS #A8:
+VAL BYTE OV9655.REFA9             IS #A9:
+VAL BYTE OV9655.REGAA             IS #AA:
+VAL BYTE OV9655.REGAB             IS #AB:
+VAL BYTE OV9655.BLC1              IS #AC:
+VAL BYTE OV9655.BLC2              IS #AD:
+VAL BYTE OV9655.BLC3              IS #AE:
+VAL BYTE OV9655.BLC4              IS #AF:
+VAL BYTE OV9655.BLC7              IS #B2:
+VAL BYTE OV9655.BLC8              IS #B3:
+VAL BYTE OV9655.CTRLB4            IS #B4:
+VAL BYTE OV9655.REGB5             IS #B5:
+VAL BYTE OV9655.REGB6             IS #B6:
+VAL BYTE OV9655.REGBB             IS #BB:
+VAL BYTE OV9655.ADBOFF            IS #BC:
+VAL BYTE OV9655.ADROFF            IS #BD:
+VAL BYTE OV9655.ADGbOFF           IS #BE:
+VAL BYTE OV9655.ADGrOFF           IS #BF:
+VAL BYTE OV9655.REGC0             IS #C0:
+VAL BYTE OV9655.REGC1             IS #C1:
+VAL BYTE OV9655.REGC2             IS #C2:
+VAL BYTE OV9655.REGC3             IS #C3:
+VAL BYTE OV9655.REGC6             IS #C6:
+VAL BYTE OV9655.COM24             IS #C7:
+VAL BYTE OV9655.REGC9             IS #C9:
+VAL BYTE OV9655.REGCA             IS #CA:
+VAL BYTE OV9655.REGCB             IS #CB:
+VAL BYTE OV9655.REGCC             IS #CC:
+VAL BYTE OV9655.REGCD             IS #CD:
+--}}}
+
+--{{{  Register Defaults
+VAL BYTE OV9655.VREF.DEFAULT      IS #12:
+VAL BYTE OV9655.COM1.DEFAULT      IS #00:
+VAL BYTE OV9655.COM5.DEFAULT      IS #01:
+VAL BYTE OV9655.COM6.DEFAULT      IS #46:
+VAL BYTE OV9655.CLKRC.DEFAULT     IS #00:
+VAL BYTE OV9655.COM7.DEFAULT      IS #02:
+VAL BYTE OV9655.COM8.DEFAULT      IS #8F:
+VAL BYTE OV9655.COM9.DEFAULT      IS #4A:
+VAL BYTE OV9655.REG16.DEFAULT     IS #04:
+VAL BYTE OV9655.HSTART.DEFAULT    IS #1A:
+VAL BYTE OV9655.HSTOP.DEFAULT     IS #BA:
+VAL BYTE OV9655.VSTRT.DEFAULT     IS #01:
+VAL BYTE OV9655.VSTOP.DEFAULT     IS #B1:
+VAL BYTE OV9655.MVFP.DEFAULT      IS #00:
+VAL BYTE OV9655.AEW.DEFAULT       IS #78:
+VAL BYTE OV9655.AEB.DEFAULT       IS #68:
+VAL BYTE OV9655.VPT.DEFAULT       IS #D4:
+VAL BYTE OV9655.BBIAS.DEFAULT     IS #80:
+VAL BYTE OV9655.GbBIAS.DEFAULT    IS #80:
+VAL BYTE OV9655.PREGAIN.DEFAULT   IS #00:
+VAL BYTE OV9655.EXHCH.DEFAULT     IS #00:
+VAL BYTE OV9655.EXHCL.DEFAULT     IS #00:
+VAL BYTE OV9655.RBIAS.DEFAULT     IS #80:
+VAL BYTE OV9655.HREF.DEFAULT      IS #A4:
+VAL BYTE OV9655.CHLF.DEFAULT      IS #00:
+VAL BYTE OV9655.AREF1.DEFAULT     IS #3F:
+VAL BYTE OV9655.AREF2.DEFAULT     IS #00:
+VAL BYTE OV9655.AREF3.DEFAULT     IS #F9:
+VAL BYTE OV9655.ADC2.DEFAULT      IS #12:
+VAL BYTE OV9655.AREF4.DEFAULT     IS #50:
+VAL BYTE OV9655.TSLB.DEFAULT      IS #8C:
+VAL BYTE OV9655.COM11.DEFAULT     IS #04:
+VAL BYTE OV9655.COM13.DEFAULT     IS #99:
+VAL BYTE OV9655.COM14.DEFAULT     IS #00:
+VAL BYTE OV9655.EDGE.DEFAULT      IS #02:
+VAL BYTE OV9655.COM15.DEFAULT     IS #C0:
+VAL BYTE OV9655.COM16.DEFAULT     IS #40:
+VAL BYTE OV9655.COM17.DEFAULT     IS #08:
+VAL BYTE OV9655.MTX1.DEFAULT      IS #40:
+VAL BYTE OV9655.MTX2.DEFAULT      IS #34:
+VAL BYTE OV9655.MTX3.DEFAULT      IS #03:
+VAL BYTE OV9655.MTX4.DEFAULT      IS #17:
+VAL BYTE OV9655.MTX5.DEFAULT      IS #29:
+VAL BYTE OV9655.MTX6.DEFAULT      IS #40:
+VAL BYTE OV9655.MTXS.DEFAULT      IS #1E:
+VAL BYTE OV9655.AWBOP1.DEFAULT    IS #91:
+VAL BYTE OV9655.AWBOP2.DEFAULT    IS #94:
+VAL BYTE OV9655.AWBOP3.DEFAULT    IS #AA:
+VAL BYTE OV9655.AWBOP4.DEFAULT    IS #71:
+VAL BYTE OV9655.AWBOP5.DEFAULT    IS #8D:
+VAL BYTE OV9655.AWBOP6.DEFAULT    IS #0F:
+VAL BYTE OV9655.BLMT.DEFAULT      IS #F0:
+VAL BYTE OV9655.RLMT.DEFAULT      IS #F0:
+VAL BYTE OV9655.GLMT.DEFAULT      IS #F0:
+VAL BYTE OV9655.LCC1.DEFAULT      IS #00:
+VAL BYTE OV9655.LCC2.DEFAULT      IS #00:
+VAL BYTE OV9655.LCC3.DEFAULT      IS #10:
+VAL BYTE OV9655.LCC4.DEFAULT      IS #80:
+VAL BYTE OV9655.LCC5.DEFAULT      IS #00:
+VAL BYTE OV9655.DBLV.DEFAULT      IS #0A:
+VAL BYTE OV9655.DNSTH.DEFAULT     IS #02:
+VAL BYTE OV9655.POIDX.DEFAULT     IS #00:
+VAL BYTE OV9655.PCKDV.DEFAULT     IS #01:
+VAL BYTE OV9655.XINDX.DEFAULT     IS #3A:
+VAL BYTE OV9655.YINDX.DEFAULT     IS #35:
+VAL BYTE OV9655.SLOP.DEFAULT      IS #24:
+VAL BYTE OV9655.GAM1.DEFAULT      IS #04:
+VAL BYTE OV9655.GAM2.DEFAULT      IS #07:
+VAL BYTE OV9655.GAM3.DEFAULT      IS #10:
+VAL BYTE OV9655.GAM4.DEFAULT      IS #28:
+VAL BYTE OV9655.GAM5.DEFAULT      IS #36:
+VAL BYTE OV9655.GAM6.DEFAULT      IS #44:
+VAL BYTE OV9655.GAM7.DEFAULT      IS #52:
+VAL BYTE OV9655.GAM8.DEFAULT      IS #60:
+VAL BYTE OV9655.GAM9.DEFAULT      IS #6C:
+VAL BYTE OV9655.GAM10.DEFAULT     IS #78:
+VAL BYTE OV9655.GAM11.DEFAULT     IS #8C:
+VAL BYTE OV9655.GAM12.DEFAULT     IS #9E:
+VAL BYTE OV9655.GAM13.DEFAULT     IS #BB:
+VAL BYTE OV9655.GAM14.DEFAULT     IS #D2:
+VAL BYTE OV9655.GAM15.DEFAULT     IS #E5:
+VAL BYTE OV9655.COM19.DEFAULT     IS #0C:
+VAL BYTE OV9655.LCC6.DEFAULT      IS #00:
+VAL BYTE OV9655.LCC7.DEFAULT      IS #00:
+VAL BYTE OV9655.AECH.DEFAULT      IS #40:
+VAL BYTE OV9655.COM21.DEFAULT     IS #78:
+VAL BYTE OV9655.GREEN.DEFAULT     IS #86:
+VAL BYTE OV9655.REFA8.DEFAULT     IS #01:
+VAL BYTE OV9655.REFA9.DEFAULT     IS #00:
+VAL BYTE OV9655.BLC1.DEFAULT      IS #84:
+VAL BYTE OV9655.BLC2.DEFAULT      IS #84:
+VAL BYTE OV9655.BLC3.DEFAULT      IS #84:
+VAL BYTE OV9655.BLC4.DEFAULT      IS #84:
+VAL BYTE OV9655.BLC7.DEFAULT      IS #01:
+VAL BYTE OV9655.BLC8.DEFAULT      IS #0F:
+VAL BYTE OV9655.CTRLB4.DEFAULT    IS #00:
+VAL BYTE OV9655.ADBOFF.DEFAULT    IS #40:
+VAL BYTE OV9655.ADROFF.DEFAULT    IS #40:
+VAL BYTE OV9655.ADGbOFF.DEFAULT   IS #40:
+VAL BYTE OV9655.ADGrOFF.DEFAULT   IS #40:
+VAL BYTE OV9655.COM24.DEFAULT     IS #80:
+--}}}
+
+--{{{  Configurations
+VAL [][2]BYTE OV9655.QQVGA IS [[ OV9655.COM7   , OV9655.COM7.DEFAULT  ],
+                               [ OV9655.CLKRC  , #01                  ],
+                               [ OV9655.AREF3  , #34                  ],
+                               [ OV9655.REG69  , #02                  ],
+                               [ OV9655.COM19  , #00                  ],
+                               [ OV9655.COM14  , #0E                  ],
+                               [ OV9655.COM16  , #01                  ],
+                               [ OV9655.POIDX  , #33                  ],
+                               [ OV9655.PCKDV  , #03                  ],
+                               [ OV9655.XINDX  , #10                  ],
+                               [ OV9655.YINDX  , #10                  ],
+                               [ OV9655.REG76  , #01                  ],
+                               [ OV9655.COM24  , #83                  ],
+                               [ OV9655.VREF   , #1B                  ],
+                               [ OV9655.HSTART , #1E                  ],
+                               [ OV9655.HSTOP  , #00                  ],
+                               [ OV9655.VSTRT  , OV9655.VSTRT.DEFAULT ],
+                               [ OV9655.VSTOP  , #81                  ],
+                               [ OV9655.HREF   , OV9655.HREF.DEFAULT  ],
+                               [ OV9655.REGC0  , #E2                  ]]:
+
+VAL [][2]BYTE OV9655.QVGA  IS [[ OV9655.COM7   , OV9655.COM7.DEFAULT  ],
+                               [ OV9655.CLKRC  , #01                  ],
+                               [ OV9655.AREF3  , #34                  ],
+                               [ OV9655.REG69  , #02                  ],
+                               [ OV9655.COM19  , #00                  ],
+                               [ OV9655.COM14  , #0E                  ],
+                               [ OV9655.COM16  , #01                  ],
+                               [ OV9655.POIDX  , #22                  ],
+                               [ OV9655.PCKDV  , #02                  ],
+                               [ OV9655.XINDX  , #10                  ],
+                               [ OV9655.YINDX  , #10                  ],
+                               [ OV9655.REG76  , #01                  ],
+                               [ OV9655.COM24  , #82                  ],
+                               [ OV9655.VREF   , #1B                  ],
+                               [ OV9655.HSTART , #1E                  ],
+                               [ OV9655.HSTOP  , #00                  ],
+                               [ OV9655.VSTRT  , OV9655.VSTRT.DEFAULT ],
+                               [ OV9655.VSTOP  , #81                  ],
+                               [ OV9655.HREF   , OV9655.HREF.DEFAULT  ],
+                               [ OV9655.REGC0  , #E2                  ]]:
+
+VAL [][2]BYTE OV9655.SETUP IS [[ OV9655.COM7   , #80                  ],
+                               [ OV9655.GAIN   , #00                  ],
+                               [ OV9655.BLUE   , #80                  ],
+                               [ OV9655.RED    , #80                  ],
+                               [ OV9655.VREF   , #1B                  ],
+                               [ OV9655.COM1   , #03                  ],
+                               [ OV9655.VER    , #57                  ],
+                               [ OV9655.COM5   , #61                  ],
+                               [ OV9655.COM6   , #40                  ],
+                               [ OV9655.CLKRC  , #01                  ],
+                               [ OV9655.COM7   , OV9655.COM7.DEFAULT  ],
+                               [ OV9655.COM8   , #C7                  ],
+                               [ OV9655.COM9   , #3A                  ],
+                               [ OV9655.REG16  , #24                  ],
+                               [ OV9655.HSTART , #1D                  ],
+                               [ OV9655.HSTOP  , #BD                  ],
+                               [ OV9655.VSTRT  , OV9655.VSTRT.DEFAULT ],
+                               [ OV9655.VSTOP  , #81                  ],
+                               [ OV9655.MVFP   , #04                  ],
+                               [ OV9655.AEW    , #3C                  ],
+                               [ OV9655.AEB    , #36                  ],
+                               [ OV9655.VPT    , #72                  ],
+                               [ OV9655.BBIAS  , #08                  ],
+                               [ OV9655.GbBIAS , #08                  ],
+                               [ OV9655.PREGAIN, #15                  ],
+                               [ OV9655.EXHCH  , OV9655.EXHCH.DEFAULT ],
+                               [ OV9655.EXHCL  , OV9655.EXHCL.DEFAULT ],
+                               [ OV9655.RBIAS  , #08                  ],
+                               [ OV9655.HREF   , #FF                  ],
+                               [ OV9655.CHLF   , OV9655.CHLF.DEFAULT  ],
+                               [ OV9655.AREF1  , #3D                  ],
+                               [ OV9655.AREF2  , OV9655.AREF2.DEFAULT ],
+                               [ OV9655.AREF3  , #F8                  ],
+                               [ OV9655.ADC2   , #72                  ],
+                               [ OV9655.AREF4  , #57                  ],
+                               [ OV9655.TSLB   , OV9655.TSLB.DEFAULT  ],
+                               [ OV9655.COM11  , OV9655.COM11.DEFAULT ],
+                               [ OV9655.COM13  , OV9655.COM13.DEFAULT ],
+                               [ OV9655.COM14  , #0C                  ],
+                               [ OV9655.EDGE   , #82                  ],
+                               [ OV9655.COM15  , OV9655.COM15.DEFAULT ],
+                               [ OV9655.COM16  , #00                  ],
+                               [ OV9655.COM17  , #00                  ],
+                               [ OV9655.REG43  , #0A                  ],
+                               [ OV9655.REG44  , #F0                  ],
+                               [ OV9655.REG45  , #46                  ],
+                               [ OV9655.REG46  , #62                  ],
+                               [ OV9655.REG47  , #2A                  ],
+                               [ OV9655.REG48  , #3C                  ],
+                               [ OV9655.REG4A  , #FC                  ],
+                               [ OV9655.REG4B  , #FC                  ],
+                               [ OV9655.REG4C  , #7F                  ],
+                               [ OV9655.REG4D  , #7F                  ],
+                               [ OV9655.REG4E  , #7F                  ],
+                               [ OV9655.MTX4   , #28                  ],
+                               [ OV9655.MTX5   , #88                  ],
+                               [ OV9655.MTX6   , #B0                  ],
+                               [ OV9655.MTX1   , #98                  ],
+                               [ OV9655.MTX2   , #98                  ],
+                               [ OV9655.MTX3   , #00                  ],
+                               [ OV9655.MTXS   , #1A                  ],
+                               [ OV9655.REG58  , #1A                  ],
+                               [ OV9655.AWBOP1 , #85                  ],
+                               [ OV9655.AWBOP2 , #A9                  ],
+                               [ OV9655.AWBOP3 , #64                  ],
+                               [ OV9655.AWBOP4 , #84                  ],
+                               [ OV9655.AWBOP5 , #53                  ],
+                               [ OV9655.AWBOP6 , #0E                  ],
+                               [ OV9655.BLMT   , OV9655.BLMT.DEFAULT  ],
+                               [ OV9655.RLMT   , OV9655.RLMT.DEFAULT  ],
+                               [ OV9655.GLMT   , OV9655.GLMT.DEFAULT  ],
+                               [ OV9655.LCC1   , OV9655.LCC1.DEFAULT  ],
+                               [ OV9655.LCC2   , OV9655.LCC2.DEFAULT  ],
+                               [ OV9655.LCC3   , #02                  ],
+                               [ OV9655.LCC4   , #16                  ],
+                               [ OV9655.LCC5   , #01                  ],
+                               [ OV9655.REG69  , #02                  ],
+                               [ OV9655.DBLV   , #5A                  ],
+                               [ OV9655.REG6C  , #04                  ],
+                               [ OV9655.REG6D  , #55                  ],
+                               [ OV9655.REG6E  , #00                  ],
+                               [ OV9655.REG6F  , #9D                  ],
+                               [ OV9655.DNSTH  , #21                  ],
+                               [ OV9655.REG71  , #78                  ],
+                               [ OV9655.POIDX  , OV9655.POIDX.DEFAULT ],
+                               [ OV9655.PCKDV  , OV9655.PCKDV.DEFAULT ],
+                               [ OV9655.XINDX  , OV9655.XINDX.DEFAULT ],
+                               [ OV9655.YINDX  , OV9655.YINDX.DEFAULT ],
+                               [ OV9655.REG76  , #01                  ],
+                               [ OV9655.REG77  , #02                  ],
+                               [ OV9655.SLOP   , #12                  ],
+                               [ OV9655.GAM1   , #08                  ],
+                               [ OV9655.GAM2   , #15                  ],
+                               [ OV9655.GAM3   , #24                  ],
+                               [ OV9655.GAM4   , #45                  ],
+                               [ OV9655.GAM5   , #55                  ],
+                               [ OV9655.GAM6   , #6A                  ],
+                               [ OV9655.GAM7   , #78                  ],
+                               [ OV9655.GAM8   , #87                  ],
+                               [ OV9655.GAM9   , #96                  ],
+                               [ OV9655.GAM10  , #A3                  ],
+                               [ OV9655.GAM11  , #B4                  ],
+                               [ OV9655.GAM12  , #C3                  ],
+                               [ OV9655.GAM13  , #D6                  ],
+                               [ OV9655.GAM14  , #E6                  ],
+                               [ OV9655.GAM15  , #F2                  ],
+                               [ OV9655.REG8A  , #03                  ],
+                               [ OV9655.COM19  , #0D                  ],
+                               [ OV9655.REG90  , #7D                  ],
+                               [ OV9655.REG91  , #7B                  ],
+                               [ OV9655.LCC6   , #03                  ],
+                               [ OV9655.LCC7   , #04                  ],
+                               [ OV9655.REG9F  , #7A                  ],
+                               [ OV9655.REGA0  , #79                  ],
+                               [ OV9655.AECH   , OV9655.AECH.DEFAULT  ],
+                               [ OV9655.COM21  , #50                  ],
+                               [ OV9655.REGA5  , #68                  ],
+                               [ OV9655.GREEN  , #4A                  ],
+                               [ OV9655.REFA8  , #C1                  ],
+                               [ OV9655.REFA9  , #EF                  ],
+                               [ OV9655.REGAA  , #92                  ],
+                               [ OV9655.REGAB  , #04                  ],
+                               [ OV9655.BLC1   , #80                  ],
+                               [ OV9655.BLC2   , #80                  ],
+                               [ OV9655.BLC3   , #80                  ],
+                               [ OV9655.BLC4   , #80                  ],
+                               [ OV9655.BLC7   , #F2                  ],
+                               [ OV9655.BLC8   , #20                  ],
+                               [ OV9655.CTRLB4 , #20                  ],
+                               [ OV9655.REGB5  , #00                  ],
+                               [ OV9655.REGB6  , #AF                  ],
+                               [ OV9655.REGBB  , #AE                  ],
+                               [ OV9655.ADBOFF , #7F                  ],
+                               [ OV9655.ADROFF , #7F                  ],
+                               [ OV9655.ADGbOFF, #7F                  ],
+                               [ OV9655.ADGrOFF, #7F                  ],
+                               [ OV9655.REGC0  , #E2                  ],
+                               [ OV9655.REGC1  , #C0                  ],
+                               [ OV9655.REGC2  , #01                  ],
+                               [ OV9655.REGC3  , #4E                  ],
+                               [ OV9655.REGC6  , #05                  ],
+                               [ OV9655.COM24  , OV9655.COM24.DEFAULT ],
+                               [ OV9655.REGC9  , #E0                  ],
+                               [ OV9655.REGCA  , #E8                  ],
+                               [ OV9655.REGCB  , #F0                  ],
+                               [ OV9655.REGCC  , #D8                  ],
+                               [ OV9655.REGCD  , #93                  ]]:
+
+VAL [][2]BYTE OV9655.SXGA  IS [[ OV9655.COM7   , OV9655.COM7.DEFAULT  ],
+                               [ OV9655.CLKRC  , #01                  ],
+                               [ OV9655.AREF3  , #F8                  ],
+                               [ OV9655.REG69  , #02                  ],
+                               [ OV9655.COM19  , #0D                  ],
+                               [ OV9655.COM14  , #0C                  ],
+                               [ OV9655.COM16  , #00                  ],
+                               [ OV9655.POIDX  , OV9655.POIDX.DEFAULT ],
+                               [ OV9655.PCKDV  , OV9655.PCKDV.DEFAULT ],
+                               [ OV9655.XINDX  , OV9655.XINDX.DEFAULT ],
+                               [ OV9655.YINDX  , OV9655.YINDX.DEFAULT ],
+                               [ OV9655.REG76  , #01                  ],
+                               [ OV9655.COM24  , OV9655.COM24.DEFAULT ],
+                               [ OV9655.VREF   , #1B                  ],
+                               [ OV9655.HSTART , #1D                  ],
+                               [ OV9655.HSTOP  , #BD                  ],
+                               [ OV9655.VSTRT  , OV9655.VSTRT.DEFAULT ],
+                               [ OV9655.VSTOP  , #81                  ],
+                               [ OV9655.HREF   , #FF                  ],
+                               [ OV9655.REGC0  , #E2                  ]]:
+
+VAL [][2]BYTE OV9655.VGA   IS [[ OV9655.COM7   , OV9655.COM7.DEFAULT  ],
+                               [ OV9655.CLKRC  , #01                  ],
+                               [ OV9655.AREF3  , #34                  ],
+                               [ OV9655.REG69  , #02                  ],
+                               [ OV9655.COM19  , #00                  ],
+                               [ OV9655.COM14  , #0E                  ],
+                               [ OV9655.COM16  , #01                  ],
+                               [ OV9655.POIDX  , #51                  ],
+                               [ OV9655.PCKDV  , OV9655.PCKDV.DEFAULT ],
+                               [ OV9655.XINDX  , #10                  ],
+                               [ OV9655.YINDX  , #10                  ],
+                               [ OV9655.REG76  , #01                  ],
+                               [ OV9655.COM24  , #81                  ],
+                               [ OV9655.VREF   , #1B                  ],
+                               [ OV9655.HSTART , #1D                  ],
+                               [ OV9655.HSTOP  , #BD                  ],
+                               [ OV9655.VSTRT  , OV9655.VSTRT.DEFAULT ],
+                               [ OV9655.VSTOP  , #81                  ],
+                               [ OV9655.HREF   , #BF                  ],
+                               [ OV9655.REGC0  , #E2                  ]]:
+
+--}}}
+

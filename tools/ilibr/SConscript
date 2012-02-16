@@ -1,0 +1,62 @@
+import os
+# Import the global localironment
+Import('env')
+
+# Clone the environment so we don"t make it 
+# all dirty. ("Dirty, dirty.")
+local = env.Clone()
+
+
+
+# Create a local configuration context; we will
+# close it before the end of this script.
+conf = local.Configure(config_h = 'config.h', help = False)
+
+conf.Define('TARGET_OS_IS_UNIX', 
+        1, 'Set if compiling ilibr & tcofflib under a UNIX.')
+conf.Define('COMPILER_IS_GCC', 
+        1, 'Set if compiling ilibr & tcofflib with GCC.')
+
+# tcofflib wants "stdlib.h"
+conf.CheckCHeader('stdlib.h')
+
+# Finish the configuration section.
+local = conf.Finish()
+
+# Append the appropriate CCFLAGS for compiling 
+# mkoccdeps; in particular, make known that we have
+# a "config.h" file.
+local.Append(CPPDEFINES = 'HAVE_CONFIG_H')
+
+
+
+tcofflib_srcs = Split('''
+    alloc1.c alloc2.c disassem.c
+    hexdump.c popen.c command1.c
+    command2.c command3.c command4.c
+    command5.c command6.c command7.c
+    error.c tcoff_io.c lff_io.c 
+    heap.c
+    strutil3.c strutil4.c strutil5.c
+    strutil6.c strutil7.c com.c
+    lff.h tcoff.h tcofflib.h toolkit.h
+    ''')
+tcofflib_srcs = [os.path.join('tcofflib', f) for f in tcofflib_srcs]
+
+
+
+tcofflib = local.Library('tcofflib/tcoff', 
+        tcofflib_srcs,
+        CPPPATH = '.')
+
+ilibr = local.Program(
+        'ilibr',
+        ['arg.c', 'ilibr.c'],
+        LIBS     = [tcofflib],
+        LIBPATH  = 'tcofflib',
+        CPPPATH  = 'tcofflib')
+
+
+
+env['ILIBR'] = ilibr
+env.AppendENVPath('SKROCPATH', os.path.dirname(ilibr[0].abspath))

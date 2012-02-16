@@ -1,0 +1,10 @@
+
+Known Bugs / Errata
+===================
+
+  *	compiler sometimes generates spurious/excessive undefined variable warnings
+  *	nested mobiles may not always work correctly (not completely fixed -- syptoms will
+	usually be unexplained segfaults;  compile with -di to help track these down)
+  *	MOBILE.CHANs do not work well as components of other PROTOCOLs
+
+

@@ -1,0 +1,14 @@
+#INCLUDE "wiring.module"
+
+PROC main ()
+  SEQ
+    PLACED [1]BYTE ddrb DDRB:
+    ddrb[0] := #FF
+    WHILE TRUE
+      PLACED [1]BYTE portb PORTB:
+      SEQ
+        portb[0] := #FF
+        delay (100)
+        portb[0] := 0
+        delay (100)
+:

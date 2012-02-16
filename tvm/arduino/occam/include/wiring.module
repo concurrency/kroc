@@ -1,0 +1,244 @@
+--
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+--** Occam bindings written to resemble the C-like wiring API
+--
+-- @module wiring
+
+#IF NOT (DEFINED (WIRING.MODULE))
+#DEFINE WIRING.MODULE
+
+#INCLUDE "avr.module"
+#INCLUDE "boardmap.module"
+#INCLUDE "digital.module"
+#INCLUDE "printing.module"
+
+--{{{ Constants
+-- LEVEL, INPUT and OUTPUT are defined in digital.module. Here for reference.
+--DATA TYPE LEVEL IS INT:
+--VAL LEVEL LOW IS #0:
+--VAL LEVEL HIGH IS #1:
+
+--VAL INT INPUT IS #0:
+--VAL INT OUTPUT IS #1:
+
+-- VCC, INTERNAL, and AREF are defined in adc.module. Here for reference.
+--VAL INT VCC IS #0:
+--VAL INT INTERNAL IS #1:
+--VAL INT AREF IS #2:
+-- These are the comperable variables used in wiring. Here for compatability.
+VAL INT DEFAULT IS VCC:
+VAL INT EXTERNAL IS AREF:
+
+
+-- I don't think these are used anywhere...
+--VAL INT SERIAL  IS #0:
+--VAL INT DISPLAY IS #1:
+--
+--VAL INT LSBFIRST IS 0:
+--VAL INT MSBFIRST IS 1:
+--
+--VAL INT CHANGE IS 1:
+--VAL INT FALLING IS 2:
+--VAL INT RISING IS 3:
+--}}}
+
+
+PROC pinMode (VAL INT board.pin, mode)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  --INT r.ddr, r.port, r.pin, bit:
+  INT r.ddr, dummy1, dummy2, bit:
+  SEQ
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    r.ddr, dummy1, dummy2, bit := chip.to.gpio (avr.pin)
+    pin.mode(r.ddr, bit, mode)
+:
+
+PROC digitalWrite (VAL INT board.pin, level)
+  INITIAL INT avr.pin IS board.to.chip(board.pin):
+  --INT r.ddr, r.port, r.pin, bit:
+  INT dummy1, r.port, dummy2, bit:
+  SEQ
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    dummy1, r.port, dummy2, bit := chip.to.gpio (avr.pin)
+    pin.write(r.port, bit, level)
+:
+
+PROC digitalRead (VAL INT board.pin, RESULT INT level)
+  VAL INT avr.pin IS board.to.chip(board.pin):
+  --INT r.ddr, r.port, r.pin, bit:
+  INT dummy1, dummy2, r.pin, bit:
+  SEQ
+    --r.ddr, r.port, r.pin, bit := chip.to.gpio (avr.pin)
+    dummy1, dummy2, r.pin, bit := chip.to.gpio (avr.pin)
+    pin.read(r.pin, bit, level)
+:
+
+-- Bah. No good. If I had shared channels, I could make this work, where
+--  analogReference and analogRead both talked to a PROTOCOL function, and
+--  shared information that way. I don't think it'd fly.
+--  It would also requre a CHAN to be declaired on the same level as constants.
+
+--PROC analogReference (VAL INT type)
+--  IF
+--    (((type <> DEFAULT) AND (type <> INTERNAL)) AND (type <> EXTERNAL))
+--      die ("Analog processes do not support this type.")
+--    TRUE
+--      ADC.HELP ! set ; type
+----  IF
+----    type = DEFAULT
+----      ADC.REF := DEFAULT
+----    type = INTERNAL
+----      ADC.REF := INTERNAL
+----    type = EXTERNAL
+----      ADC.REF := EXTERNAL
+----    TRUE
+----      die ("Analog processes do not support this type.")
+--:
+
+PROC analogRead (VAL INT analog.pin, adc.ref, RESULT INT val)
+  VAL INT avr.pin IS board.analog.to.chip(analog.pin):
+  INT val:
+  adc.base (avr.pin, adc.ref, val)
+:
+
+PROC analogWrite (VAL INT board.pin, VAL BYTE value) -- This is PWM, fyi
+  INITIAL INT avr.pin IS board.analog.to.chip(board.pin):
+  SEQ
+    pwm8.setup (avr.pin, 64)
+    pwm8.set.compare (avr.pin, value)
+:
+
+PROC Serial.begin (VAL INT32 speed)
+  serial.start (TX0, speed)
+:
+
+PROC Serial.end ()
+  --Stub function. We've never wanted to turn off serial, so this can get
+  -- expanded when we figure out if we'll ever want to do it though plumbing.
+  SKIP
+:
+
+INT FUNCTION Serial.available () IS (-1):
+  --Another stub function that we've yet to impliment in plumbing.
+  -- Might be worth looking into though? ::shrugs::
+
+PROC Serial.read (RESULT BYTE b)
+  serial.byte.in (RX0, b)
+:
+
+PROC Serial.flush ()
+  --More stubs that seem like they might be useful. I'm pretty sure Plumbing
+  -- takes care of this for us though...
+  SKIP
+:
+
+----So, this is my attempt to get what the arduino.cc crew does for their
+---- serial.print (val, format), but I'm not sure it's possible in occam.
+--PROC Serial.print (VAL INT val, VAL []BYTE format)
+--  IF
+--    format = ([]BYTE "BYTE")
+--      serial.write.byte (TX0, (BYTE val))
+--    format = ([]BYTE "BIN")
+--      --We don't have support for printing binary strings atm
+--      SKIP
+--    format = ([]BYTE "OCT")
+--      --Why would you even want this?
+--      SKIP
+--    format = ([]BYTE "DEC")
+--      --Not sure if we can do this yet... I guess it would be real32s...
+--      SKIP
+--    format = ([]BYTE "HEX")
+--      serial.write.int (TX0, val)
+--    format = ([]BYTE "0"))
+--      --Same as DEC.
+--      SKIP
+--    format = ([]BYTE "1")
+--      --1 level of precision.
+--      SKIP
+--    format = ([]BYTE "2")
+--      --2 levels of precision.
+--      SKIP
+--    format = ([]BYTE "3")
+--      --I think you get the idea.
+--      SKIP
+--    format = ([]BYTE "4")
+--      SKIP
+--    format = ([]BYTE "5")
+--      SKIP
+--    format = ([]BYTE "6")
+--      SKIP
+--:
+--
+--PROC Serial.println (VAL INT val, VAL []BYTE format)
+--  SEQ
+--    Serial.print (val, format) --Note that this is the method above...
+--    serial.write.newline (TX0) -- Whereas this is a printing.module PROC.
+--:
+
+PROC Serial.printByte (VAL BYTE val)
+  serial.write.byte (TX0, val)
+:
+
+PROC Serial.printHex (VAL INT val)
+  serial.write.int (TX0, val)
+:
+
+-- Because Method Overloading isn't a thing in Occam, I've decided this is
+--  going to be exclusivly strings.
+PROC Serial.write (VAL []BYTE string)
+  serial.write.string (TX0, string)
+:
+
+--
+----And we can't include Serial1:3 equivalents because R/TX1:3 are only
+---- defined for the ATmega1280
+--
+--PROC Serial1.begin (VAL INT speed)
+--  serial.start (TX1, speed)
+--:
+--
+--PROC Serial1.end ()
+--
+--  SKIP
+--:
+--
+--INT FUNCTION Serial1.available () IS (-1):
+--
+--BYTE FUNCTION Serial1.read ()
+--  BYTE b:
+--  VALOF
+--    serial.byte.in (RX1, b)
+--    RESULT b
+--:
+--
+--PROC Serial1.flush ()
+--  SKIP
+--:
+--PROC Serial1.printByte (VAL BYTE val)
+--  serial.write.byte (TX1, val)
+--:
+--
+--PROC Serial1.printHex (VAL BYTE val)
+--  serial.write.int (TX1, val)
+--:
+--
+--PROC Serial1.write (VAL []BYTE string)
+--  serial.write.string (TX1, string)
+--:
+--
+#ENDIF

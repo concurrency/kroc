@@ -1,0 +1,169 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.3 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE FLOATING.UNPACK "FLOATING.UNPACK%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  TA, T8, T9000
+INT, REAL32 FUNCTION FLOATING.UNPACK (VAL REAL32 Y)
+
+  --{{{  history
+  -- V1.1, 21-Feb-89
+  -- Merged TA and T8 code, thus introducing missing CAUSEERRORs to
+  -- checked TA code; V1.2, 17-Apr-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}
+
+  INT    n :
+  REAL32 X :
+  VALOF
+    #INCLUDE "nan32.inc"
+    --{{{  VALS
+    VAL Bias          IS       127 :
+    --}}}
+    INT X RETYPES X:
+    VAL INT Y RETYPES Y:
+    INT exp, frac:
+    SEQ
+      exp, frac := SHIFTLEFT (0,  Y << 1, RealShift)
+      IF
+        exp = RealExp  -- inf or NaN
+          SEQ
+            CAUSEERROR()
+            n := RealExp - Bias
+            IF
+              frac = 0 -- inf
+                X := INT undefined.NaN
+              TRUE            -- NaN
+                X := Y
+        (Y << 1)= 0    -- 0
+          SEQ
+            CAUSEERROR()
+            n := RealExp - Bias
+            X := INT undefined.NaN
+        TRUE
+          SEQ
+            IF
+              exp = 0
+                INT places:
+                SEQ
+                  places, frac, exp := NORMALISE (frac, 0)
+                  n := - (Bias + places)
+                  frac := frac << 1
+              TRUE
+                n := exp - Bias
+            exp, X := SHIFTRIGHT (Bias, frac, RealShift + 1)
+    RESULT n, X
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.3 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}  
+
+#PRAGMA TRANSLATE FLOATING.UNPACK "FLOATING.UNPACK%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+INT, REAL32 FUNCTION FLOATING.UNPACK (VAL REAL32 Y)
+
+  --{{{  history
+  -- Function version (19 Aug 87)
+  -- V1.1, 21-Feb-89
+  -- Introduced missing CAUSEERRORs in checked version; V1.2, 17-Apr-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}  
+
+  INT    n :
+  REAL32 X :
+  VALOF
+    #INCLUDE "nan16.inc"
+    --{{{  VALS FOR 16 bit machine
+    VAL Bias          IS       127 :
+    --}}}  
+    [2]INT X RETYPES X:
+    VAL [2]INT Y RETYPES Y:
+    INT exp, dump:
+    [2]INT frac :
+    PLACE frac IN WORKSPACE :
+    SEQ
+      exp, dump := SHIFTLEFT (0, Y[1]<<1, RealShift)
+      frac[1], frac[0] := SHIFTLEFT (Y[1],  Y[0], RealShift)
+      IF
+        exp = RealExp  -- inf or NaN
+          --{{{  
+          SEQ
+            CAUSEERROR()
+            --n := RealExp - Bias
+            --IF
+              --(frac[1] \/ frac[0]) = 0 -- inf
+                --X := undefined.NaN
+              --TRUE            -- NaN
+                --X := Y
+          --}}}  
+        ((Y[1] << 1) \/ Y[0]) = 0    -- 0
+          --{{{  
+          SEQ
+            CAUSEERROR()
+            --n := RealExp - Bias
+            --X := undefined.NaN
+          --}}}  
+        TRUE
+          SEQ
+            IF
+              exp = 0
+                --{{{  normalise
+                INT places:
+                SEQ
+                  places, frac[1], frac[0] := NORMALISE (frac[1], frac[0])
+                  n := (1-Bias) - places
+                  frac[1], frac[0] := SHIFTRIGHT (frac[1], frac[0], RealShift)
+                --}}}  
+              TRUE
+                SEQ
+                  n := exp - Bias
+                  frac[1], frac[0] := SHIFTRIGHT (frac[1], frac[0], RealShift)
+            X[0] := frac[0]
+            X[1] := frac[1] \/ (Bias << 7)
+    RESULT n, X
+:
+--}}}  
+
+#ENDIF

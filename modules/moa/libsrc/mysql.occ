@@ -1,0 +1,392 @@
+#INCLUDE "cif.module"
+#INCLUDE "moa.inc"
+
+#PRAGMA EXTERNAL "PROC CIF.MySQL.connector (CHAN INT command?, CHAN MOBILE []BYTE args?, CHAN INT argi?, status!, CHAN MOBILE []BYTE data!) = 16374"
+#PRAGMA EXTERNAL "PROC C.library.init(RESULT INT error) = 0"
+#PRAGMA EXTERNAL "PROC C.library.end() = 0"
+
+VAL INT mysql.init          IS  0:
+VAL INT mysql.connect       IS  1:
+VAL INT mysql.query         IS  2:
+VAL INT mysql.store.result  IS  3:
+VAL INT mysql.num.rows      IS  4:
+VAL INT mysql.field.count   IS  5:
+VAL INT mysql.fetch.row     IS  6:
+VAL INT mysql.null.values   IS  7:
+VAL INT mysql.free.result   IS  8:
+VAL INT mysql.close         IS  9:
+VAL INT mysql.cleanup       IS 10:
+VAL INT mysql.quit          IS 11:
+VAL INT mysql.fetch.field   IS 12:
+VAL INT mysql.affected.rows IS 13:
+
+VAL INT cmd.success IS 0:
+VAL INT cmd.failure IS 1:
+
+VAL INT query.basic   IS 0:
+VAL INT query.row     IS 1:
+VAL INT query.all     IS 2:
+
+--utility process to be used by MySQL.interior
+PROC fetch.rows(CHAN MYSQL.RESULT out, CHAN INT command, status, CHAN MOBILE [] BYTE data, VAL INT fields, VAL BOOL remaining)
+  MOBILE []MOBILE []BYTE row:
+  INITIAL INT cmd.status IS cmd.success:
+  INITIAL BOOL continue IS TRUE:
+  WHILE (cmd.status = cmd.success) AND continue
+    SEQ
+      command ! mysql.fetch.row
+      status ? cmd.status
+      IF
+        cmd.status = cmd.success
+          SEQ
+            row := MOBILE [fields]MOBILE []BYTE
+            SEQ i = 0 FOR fields
+              --the compiler can't figure out that the MOBILE is defined
+              #PRAGMA DEFINED row
+              data ? row[i]
+            out ! data.row; row 
+        cmd.status = cmd.failure
+          out ! end.of.data
+      continue := remaining
+:
+
+--utility process to be used by MySQL.interior
+PROC connect(CHAN MYSQL.RESULT out, CHAN INT command, status, argi, CHAN MOBILE []BYTE data, args, VAL []BYTE host, user, passwd, db, VAL INT port, VAL []BYTE socket, RESULT BOOL mysql.handle)
+  INT errno, cmd.status:
+  MOBILE []BYTE error:
+  SEQ
+    command ! mysql.connect
+    args ! host
+    args ! user
+    args ! passwd
+    args ! db
+    argi ! port 
+    args ! socket
+    status ? cmd.status 
+    IF
+      cmd.status = cmd.success
+        SEQ 
+          mysql.handle := TRUE
+          out ! connected 
+      cmd.status = cmd.failure
+        SEQ
+          status ? errno
+          data ? error
+          out ! mysql.error; errno; error
+          mysql.handle := FALSE
+:
+
+--the main process of the API
+PROC MySQL.interior(CHAN MYSQL.CONTROL in, CHAN MYSQL.RESULT out, CHAN INT query.type.chan, VAL []BYTE host, user, passwd, db, VAL INT port, VAL []BYTE socket) 
+  CHAN INT command, status, argi:
+  CHAN MOBILE []BYTE args, data:
+  INT cmd.status, errno: 
+  INITIAL INT fields IS 0:
+  INITIAL INT rows IS 0:
+  MOBILE []BYTE error:
+  INITIAL BOOL quit IS FALSE:
+  --this flag indicates whether we have a pointer to a C MYSQL_RES struct:
+  INITIAL BOOL data.present IS FALSE:
+  --this flag indicates whether we have a pointer to a C MYSQL struct:
+  INITIAL BOOL mysql.handle IS FALSE:
+  --this flag is currently only used by the affected.rows code
+  --to avoid having to return a value of -1:
+  INITIAL BOOL query.succeeded IS FALSE:
+  PAR
+    CIF.MySQL.connector(command?, args?, argi?, status!, data!)
+    SEQ
+      command ! mysql.init
+      status ? cmd.status
+      IF 
+        cmd.status = cmd.failure
+          SEQ
+            out ! initialisation.error
+            out ! quit
+        cmd.status = cmd.success
+          SEQ
+            connect(out, command, status, argi, data, args, host, user, passwd, db, port, socket, mysql.handle)
+            --main loop
+            WHILE NOT quit
+              in ? CASE
+                reconnect
+                  SEQ
+                    query.succeeded := FALSE
+                    IF
+                      data.present
+                        SEQ
+                          data.present := FALSE
+                          command ! mysql.free.result
+                      NOT data.present 
+                        SKIP
+                    IF 
+                      mysql.handle
+                        SEQ
+                          mysql.handle := FALSE
+                          command ! mysql.close
+                      NOT mysql.handle
+                        SKIP
+                    command ! mysql.cleanup
+                    connect(out, command, status, argi, data, args, host, user, passwd, db, port, socket, mysql.handle)
+                INT query.type:
+                MOBILE []BYTE sql.string:
+                query; sql.string
+                  SEQ
+                    query.type.chan ? query.type
+                    query.succeeded := FALSE
+                    IF
+                      mysql.handle
+                        SEQ
+                          IF
+                            data.present
+                              SEQ
+                                data.present := FALSE
+                                command ! mysql.free.result
+                            NOT data.present
+                              SKIP
+                          command ! mysql.query
+                          args ! sql.string
+                          status ? cmd.status
+                          IF
+                            cmd.status = cmd.success
+                              SEQ
+                                command ! mysql.store.result
+                                status ? cmd.status 
+                                IF
+                                  cmd.status = cmd.success
+                                    --the query did return data
+                                    SEQ
+                                      command ! mysql.num.rows
+                                      status ? rows
+                                      command ! mysql.field.count
+                                      status ? fields
+                                      data.present := TRUE
+                                      query.succeeded := TRUE
+                                      out ! data.ready; rows
+                                      IF
+                                        query.type = query.basic
+                                          SKIP
+                                        query.type = query.row
+                                          fetch.rows(out, command, status, data, fields, FALSE)
+                                        query.type = query.all
+                                          fetch.rows(out, command, status, data, fields, TRUE)
+                                  cmd.status = cmd.failure
+                                    --check if there's an error or just no data
+                                    SEQ
+                                      status ? errno
+                                      data ? error
+                                      command ! mysql.field.count
+                                      status ? fields
+                                      IF
+                                        fields = 0
+                                        --no error
+                                          SEQ
+                                            query.succeeded := TRUE
+                                            out ! data.ready; 0 
+                                            IF
+                                              query.type = query.basic
+                                                SKIP
+                                              (query.type = query.row) OR (query.type = query.all)
+                                                out ! end.of.data
+                                        fields > 0
+                                        --error
+                                          out ! mysql.error; errno; error
+                            cmd.status = cmd.failure
+                              SEQ
+                                status ? errno
+                                data ? error
+                                out ! mysql.error; errno; error
+                      NOT mysql.handle
+                        out ! not.connected.error
+                next.row
+                  IF
+                    data.present
+                      fetch.rows(out, command, status, data, fields, FALSE)
+                    NOT data.present
+                      out ! no.data.error
+                remaining.rows
+                  IF
+                    data.present
+                      fetch.rows(out, command, status, data, fields, TRUE)
+                    NOT data.present
+                      out ! no.data.error
+                MOBILE []BYTE null.array:
+                MOBILE []BOOL null.values:
+                null.values
+                  IF
+                    data.present
+                      SEQ
+                        command ! mysql.null.values
+                        data ? null.array
+                        IF
+                          (SIZE null.array) > 0
+                            SEQ
+                              null.values := MOBILE [SIZE null.array]BOOL
+                              SEQ i = 0 FOR SIZE null.array
+                                --the compiler can't figure out 
+                                --that the MOBILE is defined
+                                #PRAGMA DEFINED null.values
+                                null.values[i] := BOOL null.array[i]
+                              out ! data.null.values; null.values
+                          (SIZE null.array) = 0
+                            out ! no.data.error
+                    NOT data.present
+                      out ! no.data.error
+                BYTE field.info.type:
+                MOBILE []MOBILE []BYTE field.names:
+                MOBILE []MYSQL.FIELD.INFO field.info.data:
+                MYSQL.FIELD.INFO field:
+                MOBILE []BYTE field.str.name, field.str.org.name, field.str.table, field.str.org.table, field.str.db:
+                INT tmp:
+                field.info; field.info.type
+                  IF
+                    data.present
+                      SEQ
+                        IF
+                          NOT (field.info.type = field.info)
+                            field.names := MOBILE [fields]MOBILE []BYTE
+                          field.info.type = field.info
+                            field.info.data := MOBILE [fields]MYSQL.FIELD.INFO
+                        SEQ i = 0 FOR fields
+                          SEQ
+                            command ! mysql.fetch.field
+                            argi ! i
+                            data ? field.str.name
+                            data ? field.str.org.name
+                            data ? field.str.table
+                            data ? field.str.org.table
+                            data ? field.str.db
+                            status ? field[length]
+                            status ? field[max.length]
+                            status ? field[decimals]
+                            status ? field[charsetnr]
+                            status ? tmp
+                            field[type] := MYSQL.TYPE tmp
+                            status ? tmp
+                            field[not.null] := BOOL tmp
+                            status ? tmp
+                            field[pri.key] := BOOL tmp
+                            status ? tmp
+                            field[unique.key] := BOOL tmp
+                            status ? tmp
+                            field[multiple.key] := BOOL tmp
+                            status ? tmp
+                            field[unsigned] := BOOL tmp
+                            status ? tmp
+                            field[zerofill] := BOOL tmp
+                            status ? tmp
+                            field[binary] := BOOL tmp
+                            status ? tmp
+                            field[auto.increment] := BOOL tmp
+                            status ? tmp
+                            field[binary.charset] := BOOL tmp
+                            --the compiler can't figure out 
+                            --that the MOBILEs are defined
+                            #PRAGMA DEFINED field.names
+                            #PRAGMA DEFINED field.info.data
+                            #PRAGMA DEFINED field
+                            IF
+                              field.info.type = field.org.name
+                                field.names[i] := field.str.org.name
+                              field.info.type = field.table
+                                field.names[i] := field.str.table
+                              field.info.type = field.org.table
+                                field.names[i] := field.str.org.table
+                              field.info.type = field.db
+                                field.names[i] := field.str.db
+                              field.info.type = field.info
+                                field.info.data[i] := field
+                              TRUE
+                                --assume field.name by default
+                                field.names[i] := field.str.name
+                        IF
+                          NOT (field.info.type = field.info)
+                            out ! data.field.names; field.names
+                          field.info.type = field.info
+                            out ! data.field.info; field.info.data
+                    NOT data.present
+                      out ! no.data.error
+                INT affected.rows: 
+                affected.rows
+                  IF
+                    query.succeeded
+                      SEQ
+                        command ! mysql.affected.rows
+                        status ? affected.rows
+                        out ! data.affected.rows; affected.rows
+                    NOT query.succeeded
+                      out ! no.data.error
+                quit
+                  SEQ
+                    IF
+                      data.present
+                        command ! mysql.free.result
+                      NOT data.present
+                        SKIP
+                    IF
+                      mysql.handle
+                        command ! mysql.close
+                      NOT mysql.handle
+                        SKIP
+                    command ! mysql.cleanup
+                    command ! mysql.quit
+                    quit := TRUE
+                    out ! quit
+:
+
+--we want the three types of queries to be handled by the same code
+--therefore this wrapper translates query.row and query.all to basic 
+--queries plus an indication of the type of query
+--likewise, field.names is just a shorthand for field.info; field.name
+--all other messages are just passed on
+PROC MySQL(CHAN MYSQL.CONTROL in, CHAN MYSQL.RESULT out, VAL []BYTE host, user, passwd, db, VAL INT port, VAL []BYTE socket) 
+  CHAN MYSQL.CONTROL control:
+  CHAN INT query.type:
+  MOBILE []BYTE sql.string:
+  INITIAL BOOL quit IS FALSE:
+  PAR
+    MySQL.interior(control, out, query.type, host, user, passwd, db, port, socket)
+    WHILE NOT quit
+      in ? CASE
+        query; sql.string
+          SEQ
+            control ! query; sql.string
+            query.type ! query.basic
+        query.row; sql.string
+          SEQ
+            control ! query; sql.string
+            query.type ! query.row
+        query.all; sql.string
+          SEQ
+            control ! query; sql.string
+            query.type ! query.all
+        next.row
+          control ! next.row
+        null.values
+          control ! null.values
+        remaining.rows
+          control ! remaining.rows
+        reconnect
+          control ! reconnect
+        affected.rows
+          control ! affected.rows
+        field.names
+          control ! field.info; field.name
+        BYTE field.info.type:
+        field.info; field.info.type
+          control ! field.info; field.info.type  
+        quit
+          PAR
+            control ! quit
+            quit := TRUE
+:
+
+PROC MySQL.init(RESULT BOOL error)
+  INT errorcode:
+  SEQ
+    C.library.init(errorcode)
+    error := errorcode > 0
+:
+
+PROC MySQL.end()
+  C.library.end()
+:

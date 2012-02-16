@@ -1,0 +1,123 @@
+#INCLUDE "srv1.inc"
+#INCLUDE "delay.inc"
+#INCLUDE "out.occ"
+
+VAL INT width IS 320:
+VAL INT height IS 256:
+
+DATA TYPE UYVY
+  PACKED RECORD
+    BYTE u:
+    BYTE y.0:
+    BYTE v:
+    BYTE y.1:
+:
+
+DATA TYPE LEFT.RIGHT
+  PACKED RECORD
+    INT left:
+    INT right:
+:
+
+DATA TYPE PICK IS INT:
+
+VAL PICK PICK.NONE  IS 0:
+VAL PICK PICK.LEFT  IS 1:
+VAL PICK PICK.RIGHT IS 2:
+
+INT FUNCTION sum.luma (VAL INT scan.x, scan.width, VAL []BYTE frame)
+  INT sum:
+  VALOF
+    VAL []UYVY image RETYPES frame:
+    -- Set the start position at 1/16 offset of both width and height.
+    VAL INT start.pos IS (((SIZE image) >> 4) + (scan.width >> 4)) + (scan.x >> 2):
+    SEQ
+      sum := 0
+      -- Step 1/8's across the height of the image.
+      SEQ y = start.pos FOR 8 STEP ((SIZE image) >> 3)
+        -- Step 1/8's across the scanned width of the image.
+        SEQ pos = y FOR 8 STEP (scan.width >> 4)
+          VAL pixel IS image[pos]:
+          sum := sum + (INT pixel[y.0])
+    RESULT sum
+:
+
+PROC get.image (CAMERA! camera, CHAN MOBILE []BYTE frames!)
+  MOBILE []BYTE frame:
+  SEQ
+    -- Start camera
+    camera[req] ! set.stream.mode; width; height
+    camera[rsp] ? CASE ok
+    
+    -- Let it adjust to light level then freeze settings
+    --camera[req] ! set.auto.adjust; TRUE
+    --camera[rsp] ? CASE ok
+    --delay.s (3)
+    --camera[req] ! set.auto.adjust; FALSE
+    --camera[rsp] ? CASE ok
+
+    -- Sample frames
+    WHILE TRUE
+      SEQ
+        camera[req] ! get.frame
+        camera[rsp] ? CASE frame; frame
+        frames ! frame
+:
+
+PROC sum.luma.halves (CHAN MOBILE []BYTE frames?, CHAN LEFT.RIGHT luma!)
+  MOBILE []BYTE frame:
+  WHILE TRUE
+    LEFT.RIGHT summed.luma:
+    SEQ
+      frames ? frame
+      summed.luma[left]  := sum.luma (0, width / 2, frame)
+      summed.luma[right] := sum.luma (width / 2, width / 2, frame)
+      luma ! summed.luma
+:
+
+PROC drive (CHAN LEFT.RIGHT luma?, MOTOR! motors)
+  WHILE TRUE
+    LEFT.RIGHT summed.luma:
+    INT diff, p.diff:
+    SEQ
+      luma ? summed.luma
+      diff := summed.luma[left] - summed.luma[right]
+      IF
+        diff < 0
+          p.diff := -diff
+        TRUE
+          p.diff := diff
+      IF
+        p.diff < 512
+          SEQ
+            IF
+              ((summed.luma[left] + summed.luma[right]) >> 7) < 96
+                motors[req] ! all; -100; -100
+              TRUE
+                motors[req] ! all; 40; 40
+            delay.ms (200)
+            luma ? summed.luma
+        TRUE
+          SEQ
+            IF
+              diff < 0
+                motors[req] ! turn; 40
+              TRUE
+                motors[req] ! back.turn; 40
+
+            delay.ms (p.diff)
+            motors[req] ! stop
+
+            SEQ i = 0 FOR 4
+              luma ? summed.luma
+:
+
+PROC dark.half (CAMERA! camera, CONSOLE! console, LASER! lasers, MOTOR! motors, SYSTEM! system)
+  CHAN MOBILE []BYTE frames:
+  CHAN LEFT.RIGHT luma:
+  PAR
+    get.image (camera, frames!)
+    sum.luma.halves (frames?, luma!)
+    drive (luma?, motors)
+:
+

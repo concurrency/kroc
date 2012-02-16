@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@/kroc
+
+Name: CCSP
+Description: Lightweight concurrency runtime library
+Version: @VERSION@
+URL: http://projects.cs.kent.ac.uk/projects/kroc/
+Libs: -L${libdir} -lccsp
+Libs.private: @LIBS@
+Cflags: -I${includedir}

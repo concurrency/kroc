@@ -1,0 +1,67 @@
+.\" KRoC course library manual page.  Last updated 30/12/2005 Fred Barnes  <frmb@kent.ac.uk>
+.TH LIBCOURSE-UTILS "3" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+id, succ, plus, delta, prefix, tail
+\- KRoC course library basic cycles
+.SH SYNOPSIS
+.B #USE \fB"course.lib\fB"\fR
+.br
+.B kroc -lcourse
+.PP
+.BI "PROC id (CHAN INT " in "?, " out "!)"
+.br
+.BI "PROC succ (CHAN INT " in "?, " out "!)"
+.br
+.BI "PROC plus (CHAN INT " in.1 "?, " in.2 "?, " out "!)"
+.br
+.BI "PROC delta (CHAN INT " in "?, " out.1 "?, " out.2 "!)"
+.br
+.BI "PROC prefix (VAL INT " n ", CHAN INT " in "?, " out "!)"
+.br
+.BI "PROC tail (CHAN INT " in "?, " out "!)"
+.SH DESCRIPTION
+.PP
+These PROCs provide basic cyclic processes (non-terminating).
+.PP
+\fBid\fR provides a simple (single) buffer process, copying input from \fIin\fR to \fIout\fR.
+.PP
+\fBsucc\fR implements a successor process.  Data from \fIin\fR is (single) buffered, incremented, and output to \fIout\fR.
+.PP
+\fBplus\fR inputs values from its \fIin.1\fR and \fIin.2\fR channels, in parallel, then outputs the sum on \fIout\fR.
+.PP
+\fBdelta\fR inputs a value on its \fIin\fR channel, then outputs it in parallel to \fIout.1\fR and \fIout.2\fR.
+.PP
+\fBprefix\fR initially outputs \fIn\fR on the \fIout\fR channel, then becomes the \fBid\fR process (forever copying input to output).
+.PP
+\fBtail\fR initially inputs and discards a value from its \fIin\fR channel, then becomes the \fBid\fR process.
+
+.SH NOTES
+The processes that perform arithmetic are sensitive to overflow.
+
+.SH AUTHOR
+This manual page is maintained by Fred Barnes <frmb@kent.ac.uk>.  The documentation
+itself was largely extracted from the library sources.
+.SH "SEE ALSO"
+kroc(1)
+
+.SH "REPORTING BUGS"
+Please report bugs to <ofa-bugs@kent.ac.uk>
+
+.SH COPYRIGHT
+Copyright \(co 1984 P.H.Welch
+.PP
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+.PP
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+.PP
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+.PP
+

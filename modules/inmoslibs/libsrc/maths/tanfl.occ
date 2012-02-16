@@ -1,0 +1,88 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module maths
+
+#IF NOT DEFINED(OCCBUILD.KROC)
+
+#OPTION "V"  -- no vector space
+#COMMENT "Floating point maths library, V1.1 27/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#INCLUDE "mathhdr.inc"
+
+--* Single-precision tangent.
+--
+-- @param X Angle in radians
+-- @return Tangent of X
+REAL32 FUNCTION TAN (VAL REAL32 X)
+
+  --{{{  history
+  -- V1.0 1-Jul-88
+  -- Added OPTION "V"; V1.1 27-Mar-90 SRH
+  --}}}
+
+  REAL32 RWork :
+  VALOF
+    IF
+      NOTFINITE (X)
+        --{{{  NaN or Inf
+        IF
+          ISNAN (X)
+            RWork := X    -- transmit NaN
+          TRUE
+            RWork := undefined.NaN
+        --}}}
+      ABS(X) > TMax
+        RWork := inexact.NaN
+      TRUE
+        BOOL Even :
+        REAL32 XWork :
+        SEQ
+          --{{{  reduce argument
+          VAL REAL32 TwoOverPi  RETYPES #3F22F983(INT32) :
+          INT32 N :
+          SEQ
+            N := INT32 ROUND (X * TwoOverPi)
+            XWork := REAL32 ROUND ((REAL64 X) - ((REAL64 ROUND N) * DPiBy2))
+            Even := ((N /\ one) = 0(INT32))
+          --}}}
+          REAL32 XNum, XDen :
+          SEQ
+            --{{{  approximation in primary range
+            VAL P1 IS -9.58017723E-2(REAL32) :
+            VAL Q2 IS  9.71685835E-3(REAL32) :
+            VAL Q1 IS -4.29135777E-1(REAL32) :
+            VAL REAL32 G IS XWork * XWork :
+            SEQ
+              XNum := ((P1*G) * XWork) + XWork
+              XDen := (((Q2 * G) + Q1) * G) + One
+            --}}}
+            --{{{  construct result
+            IF
+              Even
+                RWork := REAL32OP (XNum, Div, XDen)
+              XNum = Zero
+                RWork := unstable.NaN
+              TRUE
+                RWork := - REAL32OP (XDen, Div, XNum)
+            --}}}
+    RESULT RWork
+:
+
+#ENDIF

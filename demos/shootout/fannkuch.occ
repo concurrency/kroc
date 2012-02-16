@@ -1,0 +1,89 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Adam Sampson <ats@offog.org>
+
+#INCLUDE "course.module"
+
+VAL INT N IS 10:
+
+PROC main (CHAN BYTE out!)
+  INITIAL [N]INT perm IS [i = 0 FOR N | 0]:
+  INITIAL [N]INT perm1 IS [i = 0 FOR N | i]:
+  INITIAL [N]INT count IS [i = 0 FOR N | 0]:
+  INITIAL INT m IS N - 1:
+  INITIAL INT r IS N:
+  INITIAL INT max.flips.count IS 0:
+  INITIAL INT did.pr IS 0:
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    SEQ
+      IF
+        did.pr < 30
+          SEQ
+            SEQ i = 0 FOR N
+              out.int (perm1[i] + 1, 1, out!)
+            out ! '*n'
+            did.pr := did.pr + 1
+        TRUE
+          SKIP
+      WHILE r <> 1
+        SEQ
+          count[r - 1] := r
+          r := r - 1
+      IF
+        (perm1[0] <> 0) AND (perm1[m] <> m)
+          INITIAL INT i IS perm1[0]:
+          INITIAL INT flips IS 0:
+          SEQ
+            SEQ ii = 0 FOR N
+              perm[ii] := perm1[ii]
+            WHILE i <> 0
+              INT t, j, k:
+              SEQ
+                t := perm[i]
+                perm[i] := i
+                i := t
+                j := 1
+                k := i - 1
+                WHILE j < k
+                  SEQ
+                    t := perm[k]
+                    perm[k] := perm[j]
+                    perm[j] := t
+                    j := j + 1
+                    k := k - 1
+                flips := flips + 1
+            IF
+              flips > max.flips.count
+                max.flips.count := flips
+              TRUE
+                SKIP
+        TRUE
+          SKIP
+      INITIAL BOOL irunning IS TRUE:
+      WHILE running AND irunning
+        IF
+          r = N
+            SEQ
+              out.string ("Pfannkuchen(", 0, out!)
+              out.int (N, 0, out!)
+              out.string (") = ", 0, out!)
+              out.int (max.flips.count, 0, out!)
+              out ! '*n'
+              running := FALSE
+          TRUE
+            INT temp, i:
+            SEQ
+              temp := perm1[0]
+              i := 0
+              SEQ i = 0 FOR r
+                perm1[i] := perm1[i + 1]
+              perm1[r] := temp
+              count[r] := count[r] - 1
+              IF
+                count[r] > 0
+                  irunning := FALSE
+                TRUE
+                  r := r + 1
+:

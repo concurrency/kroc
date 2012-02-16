@@ -1,0 +1,27 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Adam Sampson <ats@offog.org>
+
+#INCLUDE "course.module"
+
+VAL INT N IS 10000000:
+
+VAL INT IM IS 139968:
+VAL INT IA IS 3877:
+VAL INT IC IS 29573:
+
+PROC main (CHAN BYTE out!)
+  INITIAL INT last IS 42:
+  PROC gen.random (VAL REAL64 max, REAL64 out)
+    SEQ
+      last := ((last TIMES IA) PLUS IC) \ IM
+      out := max * ((REAL64 ROUND last) / (REAL64 ROUND IM))
+  :
+  REAL64 v:
+  SEQ
+    SEQ i = 0 FOR N
+      gen.random (100.0, v)
+    out.real64 (v, 9, 9, out!)
+    out ! '*n'
+:

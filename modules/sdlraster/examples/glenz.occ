@@ -1,0 +1,562 @@
+--
+--  glenz.occ -- Glenz vectors in occam-pi
+--  Copyright (C) 2008 Fred Barnes  <frmb@kent.ac.uk>
+--
+--  General serial technique based on code [glenz.cpp] by Marcus Lindblom
+--
+--  Hacked around a bit to make it similar to motion blur glenz vectors from
+--  the DX-project demo
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "maths.module"
+
+
+DATA TYPE POINT.3D
+  RECORD
+    REAL32 x, y, z:
+:
+
+DATA TYPE POINT.2D
+  RECORD
+    INT x, y:
+:
+
+DATA TYPE POLY.2D
+  RECORD
+    [3]INT x.vals:
+    [3]INT y.vals:
+:
+
+PROTOCOL POLY.SCANS IS MOBILE []INT; MOBILE []INT:
+
+
+--{{{  PROC cubepoints.generator (CHAN MOBILE []POINT.3D out!)
+--* Cube point generator.
+-- Generates a constant stream of points that represent a cube in 3D space.
+-- Initial scaling is done before translation.
+-- @param out Points generated
+-- @param itrans Initial translation for cube (none is [0.0, 0.0, 0.0])
+-- @param iscale Initial scaling for cube (none is [1.0, 1.0, 1.0])
+PROC cubepoints.generator (CHAN MOBILE []POINT.3D out!, VAL POINT.3D itrans, iscale)
+  [8]POINT.3D pnts:
+  SEQ
+    --{{{  initialise
+    pnts[0] := [1.0, 1.0, 1.0] (POINT.3D)
+    pnts[1] := [1.0, -1.0, 1.0] (POINT.3D)
+    pnts[2] := [-1.0, -1.0, 1.0] (POINT.3D)
+    pnts[3] := [-1.0, 1.0, 1.0] (POINT.3D)
+    pnts[4] := [1.0, 1.0, -1.0] (POINT.3D)
+    pnts[5] := [1.0, -1.0, -1.0] (POINT.3D)
+    pnts[6] := [-1.0, -1.0, -1.0] (POINT.3D)
+    pnts[7] := [-1.0, 1.0, -1.0] (POINT.3D)
+
+    SEQ i = 0 FOR 8
+      SEQ
+        pnts[i][x] := (pnts[i][x] * iscale[x]) + itrans[x]
+        pnts[i][y] := (pnts[i][y] * iscale[y]) + itrans[y]
+        pnts[i][z] := (pnts[i][z] * iscale[z]) + itrans[z]
+
+    --}}}
+
+    WHILE TRUE
+      MOBILE []POINT.3D mpoints:
+      SEQ
+        mpoints := MOBILE [8]POINT.3D
+        [mpoints FOR 8] := [pnts FOR 8]
+        out ! mpoints
+:
+--}}}
+--{{{  PROC points3d.rotate (CHAN MOBILE []POINT.3D in?, out!)
+--* Point rotator.
+-- Rotates an arbitrary set of points around the origin, such that it passes
+-- through the same sequence of moves repeatedly (e.g. for a spinning cube)
+-- @param in 3D points in
+-- @param out 3D points out
+-- @param increment difference to angle at each step
+PROC points3d.rotate (CHAN MOBILE []POINT.3D in?, out!, VAL REAL32 increment)
+  INITIAL REAL32 angle IS 0.0:
+  SEQ
+
+    WHILE TRUE
+      MOBILE []POINT.3D blk, nblk:
+      REAL32 sin.val, cos.val:
+      SEQ
+        angle := angle + increment
+
+        sin.val := SIN (angle)
+        cos.val := COS (angle)
+
+        in ? blk
+        nblk := MOBILE [SIZE blk]POINT.3D
+
+        SEQ i = 0 FOR SIZE blk
+          REAL32 tmp:
+          SEQ
+            nblk[i][x] := (blk[i][x] * cos.val) + (blk[i][y] * sin.val)
+            nblk[i][y] := (blk[i][y] * cos.val) - (blk[i][x] * sin.val)
+            nblk[i][z] := (blk[i][z] * cos.val) - (nblk[i][x] * sin.val)
+            nblk[i][x] := (nblk[i][x] * cos.val) + (blk[i][z] * sin.val)
+            tmp := (nblk[i][y] * cos.val) + (nblk[i][z] * sin.val)
+            nblk[i][z] := (nblk[i][z] * cos.val) - (nblk[i][y] * sin.val)
+            nblk[i][y] := tmp
+         
+        out ! nblk
+:
+--}}}
+--{{{  PROC points3d.pulse (CHAN MOBILE []POINT.3D in?, out!)
+--* Point pulser.
+-- Pulses points by scaling (about the origin).
+-- @param in 3D points in
+-- @param out 3D points out
+PROC points3d.pulse (CHAN MOBILE []POINT.3D in?, out!)
+  INITIAL REAL32 angle IS 0.0:
+  SEQ
+
+    WHILE TRUE
+      MOBILE []POINT.3D pnts:
+      REAL32 sin.val:
+      SEQ
+        angle := angle + 0.1
+        sin.val := (SIN (angle) / 4.0) + 1.0
+
+        in ? pnts
+        SEQ i = 0 FOR SIZE pnts
+          SEQ
+            pnts[i][x] := pnts[i][x] * sin.val
+            pnts[i][y] := pnts[i][y] * sin.val
+            pnts[i][z] := pnts[i][z] * sin.val
+        out ! pnts
+:
+--}}}
+--{{{  PROC points.3d.to.2d (CHAN MOBILE []POINT.3D in?, CHAN MOBILE []POINT.2D out!, VAL REAL32 z.depth, x.scale, y.scale, VAL INT vp.width, vp.height)
+--* Projects 3D points into 2D.
+-- Maps a set of 3D points down into a set of 2D points.
+-- @param in 3D points in
+-- @param out 2D points out
+-- @param z.depth Z-depth
+-- @param x.scale X scale factor
+-- @param y.scale Y scale factor
+-- @param vp.xoffs X offset (for point origin)
+-- @param vp.yoffs Y offset (for point origin)
+PROC points.3d.to.2d (CHAN MOBILE []POINT.3D in?, CHAN MOBILE []POINT.2D out!, VAL REAL32 z.depth, x.scale, y.scale, VAL INT vp.xoffs, vp.yoffs)
+  INITIAL REAL32 x.scale IS x.scale:
+  INITIAL REAL32 y.scale IS y.scale:
+  INITIAL REAL32 z.depth IS z.depth:
+  SEQ
+
+    WHILE TRUE
+      MOBILE []POINT.3D p3d:
+      MOBILE []POINT.2D p2d:
+      SEQ
+        in ? p3d
+        p2d := MOBILE [SIZE p3d]POINT.2D
+
+        SEQ i = 0 FOR SIZE p3d
+          SEQ
+            p2d[i][x] := (INT ROUND ((p3d[i][x] / (p3d[i][z] + z.depth)) * x.scale)) + vp.xoffs
+            p2d[i][y] := (INT ROUND ((p3d[i][y] / (p3d[i][z] + z.depth)) * y.scale)) + vp.yoffs
+
+        out ! p2d
+:
+--}}}
+--{{{  PROC cubify.points (CHAN MOBILE []POINT.2D in?, CHAN MOBILE []POLY.2D out!)
+--* Generates cube polygons from cube points.
+-- Expects to receive 8 points at a time, and from these generates a set of 12
+-- polygons that represent a cube (2 polygons per face)
+-- @param in 2D points in
+-- @param out 2D polygons out
+PROC cubify.points (CHAN MOBILE []POINT.2D in?, CHAN MOBILE []POLY.2D out!)
+  VAL [][]INT cubemap IS [[4,0,1],[4,5,1],
+                          [0,3,2],[0,1,2],
+                          [3,7,6],[3,2,6],
+                          [7,4,5],[7,6,5],
+                          [5,1,2],[5,6,2],
+                          [7,3,0],[7,4,0]]:
+  SEQ
+
+    WHILE TRUE
+      MOBILE []POINT.2D pnts:
+      MOBILE []POLY.2D polys:
+      SEQ
+        in ? pnts
+
+        IF
+          (SIZE pnts) <> 8
+            SKIP
+          TRUE
+            SEQ
+              polys := MOBILE [12]POLY.2D
+              SEQ i = 0 FOR 12
+                SEQ p = 0 FOR 3
+                  SEQ
+                    polys[i][x.vals][p] := pnts[cubemap[i][p]][x]
+                    polys[i][y.vals][p] := pnts[cubemap[i][p]][y]
+              out ! polys
+:
+--}}}
+--{{{  PROC poly.scanlines (CHAN MOBILE []POLY.2D in?, CHAN POLY.SCANS out!, VAL INT vp.width, vp.height)
+--* Generates scan-line data for polygons.
+-- Expects to receive sets of polygons on its input, which it then transforms
+-- into multiple polygon output scans (until we can support mobile arrays of
+-- complex mobile types anyway).
+-- @param in Polygons input
+-- @param out Scan-line data output
+-- @param vp.width Viewport width
+-- @param vp.height Viewport height
+PROC poly.scanlines (CHAN MOBILE []POLY.2D in?, CHAN POLY.SCANS out!, VAL INT vp.width, vp.height)
+  PROC do.fix ([]INT start, end, VAL INT x1, y1, x2, y2) --{{{
+    INITIAL INT x1 IS x1:
+    INITIAL INT y1 IS y1:
+    INITIAL INT x2 IS x2:
+    INITIAL INT y2 IS y2:
+    SEQ
+      IF
+        y2 < y1
+          SEQ
+            -- swap points around
+            y2, y1 := y1, y2
+            x2, x1 := x1, x2
+        TRUE
+          SKIP
+      IF
+        y1 = y2
+          SEQ
+            -- flat polygon
+            start[y1] := x1
+            end[y1] := x2
+        TRUE
+          INT x, y, step:
+          SEQ
+            -- complex polygon
+            x := x1 << 16
+            step := ((x2 - x1) << 16) / (y2 - y1)
+            x := x + step
+            y1 := y1 + 1
+
+            SEQ y = y1 FOR ((y2 - y1) + 1)
+              SEQ
+                IF
+                  (y >= 0) AND (y < vp.height)
+                    IF
+                      start[y] = (-1)
+                        start[y] := (x >> 16)
+                      (x >> 16) < vp.width
+                        end[y] := (x >> 16)
+                      TRUE
+                        end[y] := vp.width - 1
+                  TRUE
+                    SKIP
+                x := x + step
+  :
+  --}}}
+
+  SEQ
+
+    WHILE TRUE
+      MOBILE []POLY.2D polys:
+      SEQ
+        in ? polys
+
+        SEQ i = 0 FOR SIZE polys
+          MOBILE []INT start:
+          MOBILE []INT end:
+          SEQ
+            start := MOBILE [vp.height]INT
+            end := MOBILE [vp.height]INT
+
+            SEQ j = 0 FOR vp.height
+              SEQ
+                start[j] := -1
+                end[j] := -1
+
+            do.fix (start, end, polys[i][x.vals][0], polys[i][y.vals][0], polys[i][x.vals][1], polys[i][y.vals][1])
+            do.fix (start, end, polys[i][x.vals][1], polys[i][y.vals][1], polys[i][x.vals][2], polys[i][y.vals][2])
+            do.fix (start, end, polys[i][x.vals][2], polys[i][y.vals][2], polys[i][x.vals][0], polys[i][y.vals][0])
+
+            out ! start; end
+:
+--}}}
+--{{{  PROC glenz.poly.render (RASTER r, VAL []INT start, end, VAL INT vp.height, pixel)
+--* Renders polygon scan-line data onto a raster with glenz effect.
+-- This renders polygon scan-line data onto a raster, blending in the
+-- specified pixel.
+-- @param r Raster to draw on
+-- @param start Start scan-lines
+-- @param end End scan-lines
+-- @param vp.height Viewport height
+-- @param pixel Pixel value to use (ARGB)
+PROC glenz.poly.render (RASTER r, VAL []INT start, end, VAL INT vp.height, pixel)
+  INT height:
+  SEQ
+
+    IF
+      (SIZE start) <> (SIZE end)
+        STOP
+      (SIZE start) < vp.height
+        height := SIZE start
+      TRUE
+        height := vp.height
+
+    SEQ i = 0 FOR height
+      IF
+        start[i] <> (-1)
+          INITIAL INT stx IS start[i]:
+          INITIAL INT edx IS end[i]:
+          IF
+            edx = (-1)
+              r[i][stx] := pixel
+            stx = edx
+              r[i][stx] := pixel
+            TRUE
+              VAL [4]BYTE pixel RETYPES pixel:
+              SEQ
+                IF
+                  stx > edx
+                    stx, edx := edx, stx
+                  TRUE
+                    SKIP
+
+                SEQ x = (stx + 1) FOR (edx - stx)
+                  [4]BYTE pval RETYPES r[i][x]:
+                  SEQ pv = 0 FOR 4
+                    IF
+                      pixel[pv] = #00               -- leave this component alone
+                        SKIP
+                      TRUE
+                        INITIAL INT iv IS ((INT pval[pv]) + (INT pixel[pv])) >> 1:
+                        IF
+                          iv > 245
+                            pval[pv] := #FF
+                          TRUE
+                            pval[pv] := BYTE (iv + 10)     -- tendancy to get brighter
+        TRUE
+          SKIP
+
+:
+--}}}
+--{{{ PROC glenz.cube (CHAN RASTER in?, out!, CHAN POLY.SCANS data?, VAL INT vp.height, VAL []INT colourmap) 
+--* Does glenz cube effect.
+-- Generates a glenz-cube type effect, using groups of 12 polygons (in
+-- scan-line form) recieved on the 'data' channel.  Maps these onto
+-- rasters passed between the input and output channels.
+-- @param in Rasters in
+-- @param out Rasters out
+-- @param data Polygon scan-line data in
+-- @param vp.height Viewport height
+-- @param colourmap Set of 12 pixel values to use
+PROC glenz.cube (CHAN RASTER in?, out!, CHAN POLY.SCANS data?, VAL INT vp.height, VAL []INT colourmap)
+  SEQ
+
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        in ? r
+
+        SEQ i = 0 FOR 12
+          MOBILE []INT start, end:
+          SEQ
+            data ? start; end
+            glenz.poly.render (r, start, end, vp.height, colourmap[i])
+
+        out ! r
+:
+--}}}
+--{{{  PROC glenz.cube.network (...)
+--* Does a glenz-cube effect.
+-- Sets up a network of processes that generate and render cubes glenz-style
+-- (in blue).
+-- @param r.in Rasters in
+-- @param r.out Rasters out
+-- @param xoffs X offset for cube
+-- @param yoffs Y offset for cube
+-- @param vp.width Viewport width
+-- @param vp.height Viewport height
+-- @param pshift Bit-shift (positive or negative) for pixel values
+-- @param vp.mod Viewport projection ([x-scale, y-scale, z-depth])
+-- @param ctrans Originating cube translation (in 3D)
+-- @param cscale Originating cube scaling (in 3D)
+-- @param adelta Change in cuboid angle during rotate (0.03 typical)
+PROC glenz.cube.network (CHAN RASTER r.in?, r.out!, VAL INT xoffs, yoffs, vp.width, vp.height, pshift, VAL [3]REAL32 vp.mod, VAL POINT.3D ctrans, cscale, VAL REAL32 adelta)
+  CHAN MOBILE []POINT.3D cp1, cp2:
+  CHAN MOBILE []POINT.2D dp1:
+  CHAN MOBILE []POLY.2D pp1:
+  CHAN POLY.SCANS ps1:
+  INITIAL [12]INT pixelset IS [#00000080,#00000090,#00000020,#00000030,#00000050,#00000060,
+                               #00000080,#00000090,#000000B0,#000000C0,#00000020,#00000030]:
+
+  SEQ
+    IF
+      pshift = 0
+        SKIP
+      pshift < 0
+        SEQ i = 0 FOR SIZE pixelset
+          pixelset[i] := pixelset[i] >> (-pshift)
+      TRUE
+        SEQ i = 0 FOR SIZE pixelset
+          pixelset[i] := pixelset[i] << pshift
+
+    PAR
+      cubepoints.generator (cp1!, ctrans, cscale)
+      points3d.rotate (cp1?, cp2!, adelta)
+      points.3d.to.2d (cp2?, dp1!, vp.mod[2], vp.mod[0], vp.mod[1], xoffs, yoffs)
+      cubify.points (dp1?, pp1!)
+      poly.scanlines (pp1?, ps1!, vp.width, vp.height)
+      glenz.cube (r.in?, r.out!, ps1?, vp.height, pixelset)
+:
+--}}}
+--{{{  PROC glenz.cube.network.pulse (...)
+--* Does a pulsating glenz-cube effect.
+-- Sets up a network of processes that generate and render cubes glenz-style
+-- (in blue).
+-- @param r.in Rasters in
+-- @param r.out Rasters out
+-- @param xoffs X offset for cube
+-- @param yoffs Y offset for cube
+-- @param vp.width Viewport width
+-- @param vp.height Viewport height
+-- @param pshift Bit-shift (positive or negative) for pixel values
+-- @param vp.mod Viewport projection ([x-scale, y-scale, z-depth])
+-- @param ctrans Originating cube translation (in 3D)
+-- @param cscale Originating cube scaling (in 3D)
+-- @param adelta Change in cuboid angle during rotate (0.03 typical)
+PROC glenz.cube.network.pulse (CHAN RASTER r.in?, r.out!, VAL INT xoffs, yoffs, vp.width, vp.height, pshift, VAL [3]REAL32 vp.mod, VAL POINT.3D ctrans, cscale, VAL REAL32 adelta)
+  CHAN MOBILE []POINT.3D cp1, cp2, cp3:
+  CHAN MOBILE []POINT.2D dp1:
+  CHAN MOBILE []POLY.2D pp1:
+  CHAN POLY.SCANS ps1:
+  INITIAL [12]INT pixelset IS [#00000080,#00000090,#00000020,#00000030,#00000050,#00000060,
+                               #00000080,#00000090,#000000B0,#000000C0,#00000020,#00000030]:
+
+  SEQ
+    IF
+      pshift = 0
+        SKIP
+      pshift < 0
+        SEQ i = 0 FOR SIZE pixelset
+          pixelset[i] := pixelset[i] >> (-pshift)
+      TRUE
+        SEQ i = 0 FOR SIZE pixelset
+          pixelset[i] := pixelset[i] << pshift
+
+    PAR
+      cubepoints.generator (cp1!, ctrans, cscale)
+      points3d.pulse (cp1?, cp2!)
+      points3d.rotate (cp2?, cp3!, adelta)
+      points.3d.to.2d (cp3?, dp1!, vp.mod[2], vp.mod[0], vp.mod[1], xoffs, yoffs)
+      cubify.points (dp1?, pp1!)
+      poly.scanlines (pp1?, ps1!, vp.width, vp.height)
+      glenz.cube (r.in?, r.out!, ps1?, vp.height, pixelset)
+:
+--}}}
+--{{{  PROC raster.buffer (CHAN RASTER in?, out!)
+--* Simple raster buffer.
+-- Basic raster buffer process.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.buffer (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      out ! r
+:
+--}}}
+--{{{  PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps)
+--* Timed raster buffer.
+-- Basic raster buffer process, but limits speed through at specified number
+-- of frames-per-second.
+-- @param in Rasters in
+-- @param out Rasters out
+-- @param fps Frames per second
+PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+
+    VAL INT to IS (1000000 / fps):
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        in ? r
+        out ! r
+        t := t PLUS to
+        tim ? AFTER t
+:
+--}}}
+--{{{  PROC raster.fader (CHAN RASTER in?, out!)
+--* Fades rasters.
+-- Raster buffer that reduces the colour level of each of the components.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.fader (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      SEQ y = 0 FOR SIZE r
+        SEQ x = 0 FOR SIZE r[0]
+          [4]BYTE val RETYPES r[y][x]:
+          SEQ i = 0 FOR 4
+            IF
+              val[i] > #30
+                val [i] := val[i] - #18
+              TRUE
+                val[i] := #00
+      out ! r
+:
+--}}}
+--{{{  PROC raster.clearer (CHAN RASTER in?, out!)
+--* Clears rasters.
+-- Raster buffer that clears rasters as they go through.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.clearer (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      raster.clear (r, #00000000)
+      out ! r
+:
+--}}}
+--{{{  PROC main (CHAN BYTE scr!)
+--* Top-level process.
+-- Top-level process, draws various glenz-style vectors
+-- @param kyb Keyboard channel
+-- @param scr Screen channel
+PROC main (CHAN BYTE kyb?, scr!)
+  VAL INT SCR.WIDTH IS 640:
+  VAL INT SCR.HEIGHT IS 400:
+
+  VAL [3]REAL32 vp.mod IS [560.0, 490.0, 11.0]:
+  BOOL use.fader:
+  SEQ
+
+    ask.bool ("Use raster fader (for motion blur)? ", use.fader, kyb?, scr!)
+
+    CHAN RASTER rc1, rc2, rc3, rc4, rc5, rc6, rc7, rc8, rc9, rc10, rc11, rc12:
+    CHAN INT control:
+    PAR
+      raster.timed.buffer (rc3?, rc1!, 40)
+      raster.display.simple ("glenz vectors", SCR.WIDTH, SCR.HEIGHT, 2, rc1?, rc2!)
+      IF
+        use.fader
+          raster.fader (rc2?, rc4!)
+        TRUE
+          raster.clearer (rc2?, rc4!)
+      glenz.cube.network (rc4?, rc5!, 190, 200, SCR.WIDTH, SCR.HEIGHT, 0, vp.mod, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0], 0.03)
+      glenz.cube.network (rc5?, rc6!, 190, 200, SCR.WIDTH, SCR.HEIGHT, 0, vp.mod, [1.4, 1.4, 1.25], [0.8, 0.8, 0.5], 0.03)
+      glenz.cube.network (rc6?, rc7!, 190, 200, SCR.WIDTH, SCR.HEIGHT, 0, vp.mod, [-1.4, -1.25, -1.4], [0.8, 0.5, 0.8], 0.03)
+      glenz.cube.network.pulse (rc7?, rc8!, 310, 200, SCR.WIDTH, SCR.HEIGHT, 8, vp.mod, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0], -0.04)
+      glenz.cube.network (rc8?, rc9!, 430, 200, SCR.WIDTH, SCR.HEIGHT, 16, vp.mod, [0.0, 0.0, 0.0], [1.0, 1.0, 1.0], 0.035)
+      glenz.cube.network (rc9?, rc10!, 430, 200, SCR.WIDTH, SCR.HEIGHT, 16, vp.mod, [2.0, 0.0, 0.0], [1.0, 0.2, 0.2], 0.035)
+      glenz.cube.network (rc10?, rc11!, 430, 200, SCR.WIDTH, SCR.HEIGHT, 16, vp.mod, [0.0, -2.0, 0.0], [0.2, 1.0, 0.2], 0.035)
+      glenz.cube.network (rc11?, rc12!, 430, 200, SCR.WIDTH, SCR.HEIGHT, 16, vp.mod, [0.0, 0.0, -2.0], [0.2, 0.2, 1.0], 0.035)
+      glenz.cube.network (rc12?, rc3!, 430, 200, SCR.WIDTH, SCR.HEIGHT, 16, vp.mod, [0.0, 0.0, -3.4], [0.5, 0.5, 0.4], 0.035)
+:
+--}}}
+
+

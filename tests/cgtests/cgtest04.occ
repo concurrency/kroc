@@ -1,0 +1,1104 @@
+-- version control marker $Id: cgtest04.occ,v 1.4 1995/10/10 12:56:37 djb1 Exp $
+
+PROC cgtest4 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  -- Testing WHILE loops and replicated SEQs
+  -- IF and replicated IF
+
+  --{{{  WHILE loops
+  --{{{  W0
+  PROC W0 ()
+    INT c:
+    SEQ
+      c := 0
+      WHILE FALSE
+        c := c + 1
+      check(c, 0, "W0")
+      c := 0
+      WHILE c <> 0
+        c := c + 1
+      check(c, 0, "W1")
+  :
+  --}}} 
+  --{{{  W1
+  PROC W1 ()
+    INT c:
+    SEQ
+      c := 0
+      WHILE c <> 10
+        c := c + 1
+      check(c, 10, "W2")
+      c := 0
+      WHILE c < 10
+        c := c + 1
+      check(c, 10, "W3")
+      c := 0
+      WHILE c <= 9
+        c := c+1
+      check(c, 10, "W4")
+  :
+  --}}} 
+  --{{{  W2
+  PROC W2 ()
+    INT c:
+    SEQ
+      c := 10
+      WHILE c > 0
+        c := c - 1
+      check(c, 0, "W5")
+      c := 10
+      WHILE c >= 1
+        c := c - 1
+      check(c, 0, "W6")
+  :
+  --}}} 
+  --{{{  W3
+  PROC W3 ()
+    BOOL condition :
+    INT c:
+    SEQ
+      --{{{  
+      condition := TRUE
+      c := 0
+      WHILE condition
+        SEQ
+          c := c + 1
+          condition := FALSE
+      check(c, 1, "W7")
+      --}}} 
+      --{{{  
+      condition := FALSE
+      c := 0
+      WHILE NOT condition
+        SEQ
+          c := c + 1
+          condition := TRUE
+      check(c, 1, "W8")
+      --}}} 
+      --{{{  
+      condition := FALSE
+      c := 0
+      WHILE (c < 10) OR condition
+        c := c + 1
+      check(c, 10, "W9")
+      --}}} 
+      --{{{  
+      condition := TRUE
+      c := 0
+      WHILE (c < 10) AND condition
+        c := c + 1
+      check(c, 10, "W10")
+      --}}} 
+      --{{{  
+      condition := TRUE
+      c := 0
+      WHILE (c < 10) AND condition
+        SEQ
+          c := c + 1
+          IF
+            c = 5
+              condition := FALSE
+            TRUE
+              SKIP
+      check(c, 5, "W11")
+      --}}} 
+      --{{{  
+      condition := FALSE
+      c := 0
+      WHILE (c < 10) AND (NOT condition)
+        SEQ
+          c := c + 1
+          condition := TRUE
+      check(c, 1, "W12")
+      --}}} 
+  :
+  --}}} 
+  --{{{  W4
+  PROC W4 ()
+    INT c, d, e, f:
+    SEQ
+      --{{{  first half
+      c:=0
+      f:=0
+      WHILE c < 10
+        SEQ
+          c := c + 1
+          d := 0
+          WHILE d < 10
+            SEQ
+              d := d + 1
+              e := 0
+              WHILE e < 10
+                SEQ
+                  e := e + 1
+                  f := f + 1
+      check(c, 10, "W13")
+      check(d, 10, "W14")
+      check(e, 10, "W15")
+      check(f, 1000, "W16")
+      --}}} 
+      --{{{  second half
+      BOOL e:
+      SEQ
+        --{{{  
+        c := 0
+        e := TRUE
+        WHILE c < 10
+          SEQ
+            c := c + 1
+            d := 0
+            WHILE d < 10
+              SEQ
+                d := d + 1
+                WHILE e
+                  SEQ
+                    c := 20
+                    e := FALSE
+        check(INT e, INT FALSE, "W17")
+        --}}} 
+      check(e, 10, "W18")
+      check(c, 20, "W19")
+      check(d, 10, "W20")
+      --}}} 
+  :
+  --}}} 
+  --}}} 
+  --{{{  Replicated SEQ
+  --{{{  RS0
+  PROC RS0 ()
+    INT X:
+    SEQ
+      SEQ i = 0 FOR 10
+        X := i
+      check (X , 9, "RS0")
+      SEQ i = 31 FOR 6
+        X := i
+      check (X, 36, "RS1")
+      SEQ i = -4 FOR 3
+        X := i
+      check (X, -2, "RS2")
+      X := -6
+      SEQ i = -99 FOR 3
+        X := X + 2
+      check (X, 0, "RS3")
+  :
+  --}}} 
+  --{{{  RS1
+  PROC RS1 ()
+    INT Y:
+    SEQ
+      Y := 0
+      SEQ i = 0 FOR 4
+        INT X:
+        SEQ
+          X := 0
+          SEQ j = 0 FOR 4
+            X := j + i
+          check(i + 3, X, "RS4")
+          Y := Y + X
+      check (18, Y, "RS5")
+  :
+  --}}} 
+  --{{{  RS2
+  PROC RS2 ()
+    PROC RS2a (INT X, VAL INT flag)
+      IF
+        flag < 4
+          X := X + 1
+        TRUE
+          SKIP
+    :
+    INT P:
+    SEQ
+      P := 0
+      SEQ i = 2 FOR 6
+        RS2a (P, i)
+      SEQ i = 4 FOR 6
+        RS2a (P, (i - 2))
+      check (P, 4, "RS6")
+  :
+  --}}} 
+  --{{{  RS3
+  PROC RS3 ()
+    PROC RS3a (INT X, VAL INT flag)
+      IF
+        flag < 4
+          X := X + 1
+        TRUE
+          SKIP
+    :
+    INT P:
+    SEQ
+      P := 0
+      SEQ J = 2 FOR 3
+        SEQ
+          SEQ i = 2 FOR 6
+            RS3a (P, i)
+          SEQ i = 4 FOR 6
+            RS3a (P, (i - 2))
+      check (P, 12, "RS6")
+  :
+  --}}} 
+  --{{{  RS4
+  PROC RS4 ()
+    INT X:
+    SEQ
+      --{{{  
+      X := 0
+      SEQ i = 0 FOR 0
+        X := 1
+      check (X, 0, "RS7")
+      --}}} 
+      --{{{  
+      X := 0
+      SEQ i = 300 FOR 0
+        X := 1
+      check (X, 0, "RS8")
+      --}}} 
+      --{{{  
+      X := 0
+      SEQ i = -1 FOR 0
+        X := 1
+      check (X, 0, "RS9")
+      --}}} 
+      --{{{  
+      X := 0
+      SEQ i = 10 FOR 10
+        X := 1
+      check (X, 1, "RS10")
+      --}}} 
+      --{{{  
+      X := 0
+      SEQ i = 0 FOR 1
+        X := 5
+      check (X, 5, "RS11")
+      --}}} 
+      --{{{  
+      SEQ i = -9999 FOR 1
+        X := i
+      check (X, -9999, "RS12")
+      --}}} 
+      --{{{  
+      X := 0
+      SEQ i = -1 FOR X
+        X := 1
+      check (X, 0, "RS13")
+      --}}} 
+      --{{{  
+      X := 0
+      SEQ i = 0 FOR X
+        X := 1
+      check (X, 0, "RS14")
+      --}}} 
+      --{{{  
+      X := 1
+      SEQ i = X FOR (X - 1)
+        X := 0
+      check (X, 1, "RS15")
+      --}}} 
+  :
+  --}}} 
+  --{{{  RS5
+  PROC RS5 ()
+    INT X, Y:
+    SEQ      -- use variables for index limits to test range checks ok
+      --{{{  
+      Y := 0
+      X := -1
+      SEQ i = 0 FOR Y
+        X := i
+      check (X , -1, "RS16")
+      --}}} 
+      --{{{  
+      Y := 4
+      X := -1
+      SEQ i = 0 FOR Y
+        X := X + 1
+      check (X , 3, "RS17")
+      --}}} 
+      --{{{  
+      Y := 32
+      X := -1
+      SEQ i = 0 FOR (((Y / 8) >> (- X)) + (Y / 4))
+        X := X + 1
+      check (X , 9, "RS18")
+      --}}} 
+      --{{{  
+      Y := 2
+      X := -15
+      SEQ i = (X - 1) FOR Y
+        X := i
+      check (X , -15, "RS19")
+      --}}} 
+      --{{{  
+      Y := 2
+      X := -15
+      SEQ i = (X - 2) FOR 0
+        X := i
+      check (X , -15, "RS20")
+      --}}} 
+      --{{{  
+      Y := 2
+      X := -15
+      SEQ i = (X - 1) FOR (1 - X)
+        X := i
+      check (X , -1, "RS21")
+      --}}} 
+      --{{{  
+      Y := 2
+      X := -15
+      VAL count IS 0:
+      SEQ i = (X * 5) FOR count
+        X := i
+      check (X , -15, "RS22")
+      --}}} 
+      --{{{  
+      VAL begin IS 2:
+      VAL count IS 5:
+      SEQ
+        X := -1
+        SEQ i = begin FOR count
+          X := i
+      check (X , 6, "RS23")
+      --}}} 
+  :
+  --}}} 
+  --{{{  RS6.7
+  PROC RS6.7()
+    PROC local (VAL INT start, len, expected, VAL []BYTE str)
+      PROC increment(INT x)
+        x := x + 1
+      :
+      INT count :
+      SEQ
+        count := 0
+        SEQ i = start FOR len
+          increment (count)
+        check(count, expected, str)
+    :
+    SEQ
+      local(0, 0, 0, "RS6")
+      VAL n IS 10 :
+      local((MOSTPOS INT) - n, n, n, "RS7")
+  :
+  --}}}
+  --}}} 
+  --{{{  IF
+  --{{{  I1
+  PROC I1 ()
+    INT X:
+    SEQ
+      X := 67
+      IF
+        IF
+          IF
+            IF
+              IF
+                IF
+                  X = 67
+                    check( X, 67, "I1")
+                  TRUE
+                    check( X, 42, "I2")
+  :
+  --}}} 
+  --{{{  I2
+  PROC I2 ()
+    INT X:
+    SEQ
+      X := 0
+      IF
+        IF
+          X = 0
+            BYTE X:
+            SEQ
+              X := '1'
+              check(INT X, INT '1', "I3")
+          TRUE
+            check (X, 99, "I4")
+      check( X, 0, "I5")
+  :
+  --}}} 
+  --{{{  I3
+  PROC I3 ()
+    INT X:
+    BYTE Y:
+    BOOL Z:
+    SEQ
+      X := 0
+      Y := '1'
+      Z := TRUE
+      --{{{  
+      IF
+        X = 0
+          check (X, 0, "I6")
+        Y = '1'
+          check (INT Y, 99, "I7")
+        Z
+          check (INT Z, 99, "I8")
+        TRUE
+          SKIP
+      --}}} 
+      --{{{  
+      IF
+        X = (INT Y)
+          check( X, 99, "I9")
+        IF
+          Y = '1'
+            check(INT Y,INT '1', "I10")
+          Z
+            check(INT Z, 99, "I11")
+          TRUE
+            SKIP
+      --}}} 
+      --{{{  
+      IF
+        X = (INT Y)
+          check( X, 99, "I12")
+        IF
+          (INT Y) = X
+            check(INT Y, 99, "I13")
+          IF
+            Z
+              [99]BOOL SILLY:
+              check(INT Z, INT TRUE, "I14")
+            TRUE
+              SKIP
+      --}}} 
+  :
+  --}}} 
+  --{{{  I4
+  PROC I4 ()
+    INT X, Y:
+    SEQ
+      --{{{  
+      X := -1
+      Y := -1
+      IF
+        X = ((Y * (X/Y)) + (X\Y))
+          check( X, X, "I15")
+        TRUE
+          check( X, -X, "I16")
+      --}}} 
+      --{{{  
+      X := 1
+      Y := -1
+      IF
+        X = ((Y * (X/Y)) + (X\Y))
+          check (X, X, "I17")
+        TRUE
+          check( X, -X, "I18")
+      --}}} 
+      --{{{  
+      X := -1
+      Y := 1
+      IF
+        X = ((Y * (X/Y)) + (X\Y))
+          check( X, X, "I19")
+        TRUE
+          check( X, -X, "I20")
+      --}}} 
+      --{{{  
+      X := 3
+      Y := 3
+      IF
+        X = ((Y * (X/Y)) + (X\Y))
+          check( X, X, "I21")
+        TRUE
+          check( X, -X, "I22")
+      --}}} 
+  :
+  --}}} 
+  --{{{  I5
+  PROC I5 ()
+    INT X:
+    BOOL Y, Z:
+    SEQ
+      X := 0
+      IF
+        FALSE
+          check( X, 99, "I23")
+        X = X
+          check( X, X, "I24")
+        TRUE
+          SKIP
+  :
+  --}}} 
+  --}}} 
+  --{{{  replicated IF
+  --{{{  IU0
+  PROC IU0 ()
+    INT A, B:
+    [50]INT X:
+    SEQ
+      A := 0
+      SEQ I = 0 FOR 30
+        X[I] := 22
+      IF
+        IF I = 0 FOR 30
+          X[I] = I
+            A := I
+        TRUE
+          SKIP
+      check( A, 22, "IU0")
+  :
+  --}}} 
+  --{{{  IU1
+  PROC IU1 ()
+    INT A, B:
+    [50]BYTE X:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := BYTE 0
+      X[0] := 'a'
+      IF
+        IF I = 0 FOR 30
+          X[I] = 'a'
+            A := I
+        TRUE
+          SKIP
+      check (A, 0, "IU1")
+  :
+  --}}} 
+  --{{{  IU2
+  PROC IU2 ()
+    [50]INT X:
+    INT A, B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := 0
+      X[29] := -1
+      IF I = 0 FOR 30
+        X[I] = (-1)
+          A := I
+      check (A, 29, "IU2")
+  :
+  --}}} 
+  --{{{  IU3
+  PROC IU3 ()
+    [50]INT X:
+    INT A, B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 50
+        X[I] := 0
+      X[13] := -3
+      IF
+        IF I = 0 FOR 50
+          X[I] = (-3)
+            A := I
+        TRUE
+          SKIP
+      check (A, 13, "IU3")
+  :
+  --}}} 
+  --{{{  IU4
+  PROC IU4 ()
+    [50]INT X :
+    INT A,B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := 0
+      X[29] := -1
+      IF
+        IF I = 0 FOR 30
+          IF
+            A = 99
+              SEQ
+                A := INT FALSE
+                check (A, -12, "IU4")
+            X[I] = (-1)
+              SEQ
+                A := INT TRUE
+                check (X[I], -1, "IU5")
+        TRUE
+          SKIP
+      check (A, INT TRUE, "IU6")
+  :
+  --}}} 
+  --{{{  IU5
+  PROC IU5 ()
+    [100]BOOL X:
+    INT A, B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := FALSE
+      X[29] := TRUE
+      IF
+        IF I = 0 FOR 30
+          X[I]
+            SEQ
+              A := INT TRUE
+              check (INT X[I], A, "IU7")
+        A = 99
+          SEQ
+            A := INT FALSE
+            check (A, -12, "IU8")
+        TRUE
+          SKIP
+      check (A, INT TRUE, "IU9")
+  :
+  --}}} 
+  --{{{  IU6
+  PROC IU6 ()
+    [50]BYTE X:
+    INT  A:
+    BOOL B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := ' '
+      X[29] := '**'
+      IF I = 0 FOR 30
+        IF
+          A = 4
+            SEQ
+              check (A, 4, "IU10")
+              B := TRUE
+          X[I] = '**'
+            SEQ
+              B := FALSE
+              check (A, -12, "IU11")
+          TRUE
+            SKIP
+      check (INT B, INT TRUE, "IU12")
+  :
+  --}}} 
+  --{{{  IU7
+  PROC IU7 ()
+    [30]INT X:
+    INT A,B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := 0
+      X[29] := -1
+      IF
+        IF I = 0 FOR 30
+          IF
+            A = 999
+              check (A, 33, "IU13")
+            X[I] = (-1)
+              SEQ
+                check (A, 4, "IU14")
+                A := INT FALSE
+        TRUE
+          SKIP
+      check (A, INT FALSE, "IU15")
+  :
+  --}}} 
+  --{{{  IU8
+  PROC IU8 ()
+    [30]BYTE X:
+    INT A:
+    BOOL B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := 'a'
+      X[29] := 'b'
+      IF
+        A = 0
+          check (A, 33, "IU16")
+        IF I = 0 FOR 30
+          X[I] = 'c'
+            SEQ
+              B := FALSE
+              check (A, 5, "IU17")
+        A = 5
+          SEQ
+            B := FALSE
+            check( A, 4, "IU18")
+        TRUE
+          SKIP
+      check( A, 4, "IU19")
+  :
+  --}}} 
+  --{{{  IU9
+  PROC IU9 ()
+    [50]INT X:
+    INT A, B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := 0
+      X[29] := -1
+      IF
+        A = 0
+          check (A, 33, "IU20")
+        IF I = 0 FOR 30
+          X[I] = 999
+            SEQ
+              A := 0
+              check (A, 33, "IU21")
+        A = 4
+          SEQ
+            check (A, 4, "IU22")
+            A := 42
+        TRUE
+          SKIP
+      check( A, 42, "IU23")
+  :
+  --}}} 
+  --{{{  IU10
+  PROC IU10 ()
+    [50]INT X:
+    BYTE A, B:
+    SEQ
+      A := BYTE 4
+      B := BYTE TRUE
+      SEQ I = 0 FOR 30
+        X[I] := 0
+      X[29] := -1
+      IF
+        A = (BYTE 0)
+          check (INT A, 33, "IU24")
+        IF I = 0 FOR 30
+          X[I] = (-1)
+            SEQ
+              check (INT A, 4, "IU25")
+              B := BYTE FALSE
+        A = (BYTE 33)
+          SEQ
+            check (INT A, 4, "IU26")
+            A := BYTE 42
+        TRUE
+          SKIP
+      check (INT B, INT FALSE, "IU27")
+  :
+  --}}} 
+  --{{{  IU11     (IU28 - 31)
+  PROC IU11 ()
+    [50]INT X:
+    INT A, B:
+    SEQ
+      A := 4
+      SEQ I = 0 FOR 30
+        X[I] := 0
+      X[29] := -1
+      IF
+        A = 4
+          SEQ
+            check (A, 4, "IU28")
+            A := 22
+        IF I = 0 FOR 30
+          X[I] = (-1)
+            SEQ
+              check (A, 41, "IU29")
+              A := INT FALSE
+        A = 4
+          SEQ
+            check (A, 4, "IU30")
+            A := 42
+        TRUE
+          SKIP
+      check (A, 22, "IU31")
+  :
+  --}}} 
+  --{{{  IU50     (IU50) nested replicated IF problems
+  PROC IU50 ()
+    VAL m IS 10 :
+    VAL n IS 15 :
+    [n] [m] INT a, b :
+    INT done :
+    SEQ
+      SEQ x = 0 FOR n
+        SEQ y = 0 FOR m
+          a [x] [y] := 0
+      b := a
+      IF
+        IF x = 0 FOR n
+          IF y = 0 FOR m
+            a [x] [y] <> b [x] [y]
+              done := 1
+        TRUE
+          done := 0
+      check (done, 0, "IU50")
+  :
+  --}}} 
+  --{{{  IU51
+  PROC IU51()
+    PROC local(VAL INT x, VAL []INT array)
+      IF
+        IF i = 0 FOR SIZE array
+          x = array[i]
+            check(0, 1, "IU51")
+        TRUE
+          check(0, 0, "IU51")
+    :
+    local(0, [1])
+  :
+  --}}}
+  --}}} 
+  INT key :
+  SEQ
+    init ("CG test 4", "Testing WHILE, repl SEQ, IF and repl IF")
+
+    title ("Testing WHILE and replicated SEQ, IF and replicated IF")
+    --{{{  test WHILE
+    title ("Testing WHILE loops")
+    W0 ()
+    W1 ()
+    W2 ()
+    W3 ()
+    W4 ()
+    --}}} 
+    --{{{  test REP SEQ
+    title ("Testing replicated SEQs")
+    RS0 ()
+    RS1 ()
+    RS2 ()
+    RS3 ()
+    RS4 ()
+    RS5 ()
+    RS6.7 ()
+    --}}} 
+    --{{{  IF
+    title("Testing IF")
+    I1 ()
+    I2 ()
+    I3 ()
+    I4 ()
+    I5 ()
+    --}}} 
+    --{{{  replicated IFs
+    title ("Testing replicated IF")
+    IU0 ()
+    IU1 ()
+    IU2 ()
+    IU3 ()
+    IU4 ()
+    IU5 ()
+    IU6 ()
+    IU7 ()
+    IU8 ()
+    IU9 ()
+    IU10 ()
+    IU11 ()
+    IU50 ()
+    IU51 ()
+    --{{{  IF inside repl IF  (IU60)
+    PROC local.IF.inside.repl()
+      PROC p(VAL [4]INT a)
+        BOOL found :
+        SEQ
+          found := TRUE
+          IF
+            IF i = 0 FOR SIZE a
+              IF
+                a[i] = 99
+                  SKIP
+            TRUE
+              found := FALSE
+          check.BOOL(found, FALSE, "IU60")
+      :
+      p([1,2,3,4])
+    :
+    local.IF.inside.repl()
+    --}}}
+    --}}} 
+    --{{{  bug TS/1975
+    PROC bug.TS.1975()
+      -- Check for various edge conditions in valid replicators
+      INT count :
+      --{{{  PROC increment
+      PROC increment(VAL INT i)
+        INT dummy :
+        SEQ
+          dummy := i
+          count := count + 1
+      :
+      --}}}
+      PROC local(VAL INT mostneg, minus.five, zero, one, two, mostpos)
+        SEQ
+          --{{{  constant start, constant length
+          count := 0
+          SEQ i = (MOSTNEG INT) FOR 2
+            increment(i)
+          check(count, 2, "B1975aa")
+          
+          count := 0
+          SEQ i = -5 FOR 2
+            increment(i)
+          check(count, 2, "B1975ab")
+          
+          count := 0
+          SEQ i = 0 FOR 2
+            increment(i)
+          check(count, 2, "B1975ac")
+          
+          count := 0
+          SEQ i = 1 FOR 2
+            increment(i)
+          check(count, 2, "B1975ad")
+          
+          count := 0
+          SEQ i = 2 FOR 2
+            increment(i)
+          check(count, 2, "B1975ae")
+          
+          count := 0
+          SEQ i = (MOSTPOS INT) - (2-1) FOR 2
+            increment(i)
+          check(count, 2, "B1975af")
+          
+          count := 0
+          SEQ i = MOSTPOS INT FOR 1
+            increment(i)
+          check(count, 1, "B1975ag")
+          --}}}
+          --{{{  constant start, variable length
+          count := 0
+          SEQ i = (MOSTNEG INT) FOR two
+            increment(i)
+          check(count, two, "B1975ba")
+          
+          count := 0
+          SEQ i = -5 FOR two
+            increment(i)
+          check(count, two, "B1975bb")
+          
+          count := 0
+          SEQ i = 0 FOR two
+            increment(i)
+          check(count, two, "B1975bc")
+          
+          count := 0
+          SEQ i = 1 FOR two
+            increment(i)
+          check(count, two, "B1975bd")
+          
+          count := 0
+          SEQ i = 2 FOR two
+            increment(i)
+          check(count, two, "B1975be")
+          
+          count := 0
+          SEQ i = (MOSTPOS INT) - 1 FOR two
+            increment(i)
+          check(count, two, "B1975bf")
+          
+          count := 0
+          SEQ i = MOSTPOS INT FOR one
+            increment(i)
+          check(count, one, "B1975bg")
+          --}}}
+          --{{{  variable start, constant length
+          count := 0
+          SEQ i = mostneg FOR 2
+            increment(i)
+          check(count, 2, "B1975ca")
+          
+          count := 0
+          SEQ i = minus.five FOR 2
+            increment(i)
+          check(count, 2, "B1975cb")
+          
+          count := 0
+          SEQ i = zero FOR 2
+            increment(i)
+          check(count, 2, "B1975cc")
+          
+          count := 0
+          SEQ i = one FOR 2
+            increment(i)
+          check(count, 2, "B1975cd")
+          
+          count := 0
+          SEQ i = two FOR 2
+            increment(i)
+          check(count, 2, "B1975ce")
+          
+          count := 0
+          SEQ i = mostpos - (two-1) FOR 2
+            increment(i)
+          check(count, 2, "B1975cf")
+          
+          count := 0
+          SEQ i = mostpos FOR 1
+            increment(i)
+          check(count, 1, "B1975cg")
+          --}}}
+          --{{{  variable start, variable length
+          count := 0
+          SEQ i = mostneg FOR two
+            increment(i)
+          check(count, two, "B1975da")
+          
+          count := 0
+          SEQ i = minus.five FOR two
+            increment(i)
+          check(count, two, "B1975db")
+          
+          count := 0
+          SEQ i = zero FOR two
+            increment(i)
+          check(count, two, "B1975dc")
+          
+          count := 0
+          SEQ i = one FOR two
+            increment(i)
+          check(count, two, "B1975dd")
+          
+          count := 0
+          SEQ i = two FOR two
+            increment(i)
+          check(count, two, "B1975de")
+          
+          count := 0
+          SEQ i = mostpos - (two-1) FOR two
+            increment(i)
+          check(count, two, "B1975df")
+          
+          count := 0
+          SEQ i = mostpos FOR one
+            increment(i)
+          check(count, one, "B1975dg")
+          --}}}
+      :
+      local(MOSTNEG INT, -5, 0, 1, 2, MOSTPOS INT)
+    :
+    bug.TS.1975()
+    --}}}
+    --{{{  bug INSdi01228
+    PROC bug.INSdi01228()
+      [10]INT a :
+      SEQ
+        SEQ i = 0 FOR SIZE a
+          a[i] := i
+        --{{{  Basic test
+        PROC p ([10]INT a, VAL INT x, y, z)
+          INT xx, yy :
+          SEQ
+            xx := 88
+            SEQ i = [a FROM x+y FOR x-y][z] FOR 1
+              SEQ
+                xx := i
+                check(xx, 7, "di01228a")
+                check(i,  7, "di01228b")
+                PROC local()
+                  INT zz :
+                  SEQ
+                    check(i,  7, "di01228c")
+                    yy := i
+                    zz := i
+                    check(xx, 7, "di01228d")
+                    check(yy, 7, "di01228e")
+                    check(zz, 7, "di01228f")
+                :
+                local()
+            check(xx,     7, "di01228g")
+            check(yy,     7, "di01228h")
+        :
+        p(a, 4, 1, 2)
+        --}}}
+    :
+    bug.INSdi01228()
+    --}}}
+    finish ()
+:

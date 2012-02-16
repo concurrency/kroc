@@ -1,0 +1,120 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostsp
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC hostsp version 1996"
+#INCLUDE "hostio.inc"
+--{{{  sp.getenv
+--* Return the contents of an environment variable from whatever host
+-- is being used.
+--
+-- The largest size the returned contents of an environment variable
+-- can be is limited by the functionality of the server, not by this
+-- routine.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param name a string containing the name of the desired environment
+--   variable.  name should not have more than sp.max.getenvname.size
+--   characters in it.
+-- @param length if result is spr.ok, the number of bytes in value,
+--   starting at value[ 0 ]; (SIZE value) if result is
+--   spr.buffer.overflow; zero otherwise.
+-- @param value the contents of the environment variable, if result is
+--   spr.ok; truncated environment variable if result is
+--   spr.buffer.overflow; undefined otherwise.
+-- @param result spr.ok if the environment string successfully
+--   returned; some other value otherwise, indicating the sort of
+--   problem: spr.bad.name          the specified name is a null string
+--   spr.bad.packet.size   (SIZE name) > sp.max.getenvname.size
+--   spr.buffer.overflow   environment string too large for value; it
+--   is truncated to fit >=spr.operation.failed  could not read
+--   environment string - see hostio.inc or iserver documentation for
+--   further details
+PROC sp.getenv (CHAN OF SP fs, ts, VAL []BYTE name,
+                INT length, []BYTE value, BYTE result)
+  IF
+    (SIZE name) > sp.max.getenvname.size
+      SEQ
+        result := spr.bad.packet.size
+        length := 0
+    (SIZE name) = 0
+      SEQ
+        result := spr.bad.name
+        length := 0
+    TRUE
+      [sp.max.packet.data.size]BYTE buffer :
+      INT16 temp.INT16 :
+      SEQ
+        --{{{  pack up the data into the buffer (3 bytes plus data)
+        buffer [0] := sp.getenv.tag
+        
+        temp.INT16 := INT16 (SIZE name)
+        VAL [2]BYTE b.temp RETYPES temp.INT16 :
+        [buffer FROM 1 FOR 2] := b.temp
+        
+        [buffer FROM 3 FOR SIZE name] := name
+        --}}}pack up the data into the buffer (3 bytes plus data)
+        --{{{  send and receive the buffer
+        INT len :
+        SEQ
+          -- Size of buffer is (SIZE name) + 3.
+          -- Add 1, then mask off bottom bit, to ensure it is even
+          len := ((SIZE name) + 4) /\ ((-1) << 1)
+          IF
+            len < sp.min.packet.data.size
+              temp.INT16 := INT16 sp.min.packet.data.size
+            TRUE
+              temp.INT16 := INT16 len
+        
+        ts ! temp.INT16 :: buffer
+        fs ? temp.INT16 :: buffer
+        --}}}send and receive the buffer
+        --{{{  unpack the data                (1, or 3 bytes plus data)
+        result := buffer [0]
+        IF
+          result = spr.ok
+            SEQ
+              [2]BYTE b.temp RETYPES temp.INT16 :
+              b.temp := [buffer FROM 1 FOR 2]
+              length := INT temp.INT16
+        
+              IF
+                length > (SIZE value)
+                  SEQ
+                    length := SIZE value
+                    result := spr.buffer.overflow
+                TRUE
+                  SKIP
+              [value FROM 0 FOR length] := [buffer FROM 3 FOR length]
+          TRUE
+            length := 0
+        --}}}unpack the data                  (1, or 3 bytes plus data)
+:
+--}}}sp.getenv
+--{{{  so.getenv
+PROC so.getenv (CHAN OF SP fs, ts, VAL []BYTE name,
+                INT length, []BYTE value, BYTE result)
+
+  sp.getenv (fs, ts, name, length, value, result)
+:
+--}}}so.getenv

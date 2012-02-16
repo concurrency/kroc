@@ -1,0 +1,1575 @@
+-- version control marker $Id: cgtest27.occ,v 1.4 1995/10/10 12:58:36 djb1 Exp $
+
+PROC cgtest27 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  --{{{  space allocation
+  --{{{  space for single variable
+  --{{{  S0   word
+  PROC S0 ()
+    INT16 X:
+    SEQ
+      X := 42 (INT16)
+      INT16 Y:
+      Y := -1 (INT16)
+      check.INT16( X, 42(INT16), "S0")
+  :
+  --}}}
+  --{{{  S1   byte
+  PROC S1 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      BYTE Y:
+      Y := 'z'
+      check.INT16 (X, 42(INT16), "S1")
+  :
+  --}}}
+  --{{{  S2   bool
+  PROC S2 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      BOOL Y:
+      Y := TRUE
+      check.INT16( X, 42(INT16), "S2")
+  :
+  --}}}
+  --{{{  S3   extra
+  PROC S3 ()
+    BYTE X:
+    SEQ
+      X := 'd'
+      BOOL Y:
+      Y := TRUE
+      INT16 Z:
+      Z := -1(INT16)
+      check.INT16(INT16 X, INT16 'd', "S3")
+  :
+  --}}}
+  --}}}
+  --{{{  space for arrays
+  --{{{  S4  INT16  var and array
+  PROC S4 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      INT16 Y:
+      Y := -1(INT16)
+      [2]INT16 Y:
+      SEQ i = 0 FOR 2
+        Y[i] := -1(INT16)
+      check.INT16( X, 42(INT16), "S4")
+  :
+  --}}}
+  --{{{  S5  byte var and array
+  PROC S5 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      BYTE Y:
+      Y := 'q'
+      [2]BYTE Y:
+      SEQ
+        Y[0] := 'p'
+        Y[1] := 'r'
+      check.INT16( X, 42(INT16), "S5")
+  :
+  --}}}
+  --{{{  S6  bool var and array
+  PROC S6 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      BOOL Y:
+      Y := TRUE
+      [2]BOOL Y:
+      SEQ
+        Y[0] := FALSE
+        Y[1] := TRUE
+      check.INT16( X, 42(INT16), "S6")
+  :
+  --}}}
+  --{{{  S7  bool var and INT16 array
+  PROC S7 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      BOOL Y:
+      Y := TRUE
+      [2]INT16 Y:
+      SEQ
+        Y[0] := -2(INT16)
+        Y[1] := 6(INT16)
+      check.INT16( X, 42(INT16), "S7")
+  :
+  --}}}
+  --{{{  S8  INT16  var and bool array
+  PROC S8 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      INT16 Y:
+      Y := -1(INT16)
+      [2]BOOL Y:
+      SEQ
+        Y[0] := TRUE
+        Y[1] := FALSE
+      check.INT16( X, 42(INT16), "S8")
+  :
+  --}}}
+  --{{{  S9  byte with INT16 var and array
+  PROC S9 ()
+    BYTE X:
+    SEQ
+      X := 't'
+      INT16 Y:
+      Y := -1(INT16)
+      [2]INT16 Y:
+      SEQ i = 0 FOR 2
+        Y[i] := -1(INT16)
+      check.INT16(INT16 X, INT16 't', "S9")
+  :
+  --}}}
+  --{{{  S10 byte with bool var and array
+  PROC S10 ()
+    BYTE X:
+    SEQ
+      X := ']'
+      BOOL Y:
+      Y := TRUE
+      [2]BOOL Y:
+      SEQ
+        Y[0] := FALSE
+        Y[1] := TRUE
+      check.INT16(INT16 X, INT16 ']', "S10")
+  :
+  --}}}
+  --}}}
+  --{{{  WHILE loops
+  --{{{  S11
+  PROC S11 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      INT16 Y:
+      WHILE Y <> 0(INT16)
+        INT16 Z:
+        SEQ
+          Y := 0(INT16)
+      check.INT16( X, 42(INT16), "S11")
+  :
+  --}}}
+  --{{{  S12
+  PROC S12 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      INT16 Y:
+      WHILE Y <> 0(INT16)
+        BYTE Z:
+        SEQ
+          Y := 0(INT16)
+      check.INT16( X, 42(INT16), "S12")
+  :
+  --}}}
+  --}}}
+  --{{{  IF statements
+  --{{{  S13
+  PROC S13 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      IF
+        X = 42(INT16)
+          INT16 Y:
+          BYTE b:
+          SEQ
+            Y := 0(INT16)
+            b := 'u'
+        TRUE
+          SKIP
+      check.INT16( X, 42(INT16), "S13")
+  :
+  --}}}
+  --{{{  S14
+  PROC S14 ()
+    BYTE X:
+    SEQ
+      X := '4'
+      IF
+        X = '4'
+          [3]BYTE Z:
+          [3]INT16 Y:
+          SEQ
+            Z[1] := '1'
+            Y[2] := -1(INT16)
+        X = '4'
+          INT16 Z:
+          BYTE Y:
+          SEQ
+            Z := 2(INT16)
+            Y := '2'
+        TRUE
+          SKIP
+      check.INT16(INT16 X, INT16 '4', "S14")
+  :
+  --}}}
+  --{{{  S15
+  PROC S15 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      IF
+        --{{{
+        X = 42(INT16)
+          IF
+            X = 42(INT16)
+              INT16 Y:
+              [7]BYTE Z:
+              SEQ
+                Y := 0(INT16)
+                Z[0] := 'a'
+                Z[6] := 'z'
+            TRUE
+              SKIP
+        --}}}
+        --{{{
+        X = 42(INT16)
+          IF
+            X = 42(INT16)
+              BYTE Y:
+              [7]INT16 Z:
+              SEQ
+                Y := 'q'
+                Z[0] := -1(INT16)
+                Z[6] := 9(INT16)
+            TRUE
+              SKIP
+        --}}}
+        TRUE
+          SKIP
+      check.INT16(X, 42(INT16), "S15")
+  :
+  --}}}
+  --{{{  S16
+  PROC S16 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      IF
+        TRUE
+          INT16 channel, count :
+          channel := count
+        TRUE
+          PAR
+            SKIP
+        TRUE
+          BOOL up:
+          SKIP
+        TRUE
+          BYTE channel:
+          SKIP
+      check.INT16 (X, 42(INT16), "S16")
+  :
+  --}}}
+  --}}}
+  --{{{  SEQ replicated
+  --{{{  S17
+  PROC S17 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      [4]BYTE V:
+      SEQ i = 0 FOR 4
+        [3]INT16 VB:
+        SEQ j = 0 FOR 3
+          SEQ
+            V[i] := 'a'
+            VB[j] := 0(INT16)
+      check.INT16(X, 42(INT16), "S17")
+  :
+  --}}}
+  --}}}
+  --{{{  IF  replicated
+  --{{{  S18
+  PROC S18 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      [5]BOOL V:
+      SEQ
+        V[4] := TRUE
+        IF i = 0 FOR 5
+          IF j = 0 FOR 3
+            IF
+              V[i]
+                [3]BYTE VB :
+                VB[j] := 'e'
+      check.INT16 (X, 42(INT16), "S18")
+  :
+  --}}}
+  --}}}
+  --{{{  PAR replicated
+  --{{{  S19
+  PROC S19 ()
+    INT16 X:
+    SEQ
+      X := 42(INT16)
+      [4]INT16 V:
+      [3]CHAN OF INT16 c:
+      PAR
+        PAR i = 0 FOR 3
+          c[i] ! INT16  (i + 5)
+        X := X
+        PAR i = 0 FOR 3
+          c[i] ? V[i]
+      check.INT16(X, 42(INT16), "S19")
+  :
+  --}}}
+  --}}}
+  --}}}
+  --{{{  E2  fully evaluated expressions   (tests E11  to E60)
+  PROC E2 ()
+    INT16 zero, one, two, three, z:
+    BOOL q:
+    SEQ
+      zero  := 0 (INT16)
+      one   := 1 (INT16)
+      two   := 2 (INT16)
+      three := 3 (INT16)
+      --{{{  E11 to E20
+      z := one + 2(INT16)                  -- id op const
+      check.INT16( z, 3(INT16), "E11")
+      z := one /\ 2(INT16)
+      check.INT16( z, 0(INT16), "E12")
+      z := one \/ 2(INT16)
+      check.INT16( z, 3(INT16), "E13")
+      z := one >< 3(INT16)
+      check.INT16( z, 2(INT16), "E14")
+      z := one * 2(INT16)
+      check.INT16( z, 2(INT16), "E15")
+      z := one / 2(INT16)
+      check.INT16( z, 0(INT16), "E16")
+      z := one \ 2(INT16)
+      check.INT16( z, 1(INT16), "E17")
+      q := one = 2(INT16)
+      check.INT16( INT16 q, INT16 FALSE, "E18")
+      q := one <> 2 (INT16)
+      check.INT16( INT16 q, INT16 TRUE, "E19")
+      q := one >= 2 (INT16)
+      check.INT16( INT16 q, INT16 FALSE, "E20")
+      --}}}
+      --{{{  E21 to E30
+      q := one <= 2(INT16)
+      check.INT16(INT16 q, INT16 TRUE, "E21")
+      q := one > 2 (INT16)
+      check.INT16(INT16 q, INT16 FALSE, "E22")
+      q := one < 2 (INT16)
+      check.INT16(INT16 q, INT16 TRUE, "E23")
+      z := one + (two * one)          -- id op (id * id)
+      check.INT16( z, 3(INT16), "E24")
+      z := one /\ (two * one)
+      check.INT16( z, 0(INT16), "E25")
+      z := one \/ (two * one)
+      check.INT16( z, 3(INT16), "E26")
+      z := one >< (three * one)
+      check.INT16( z, 2(INT16), "E27")
+      z := three * (two * one)
+      check.INT16( z, 6(INT16), "E28")
+      z := three / (three * one)
+      check.INT16( z, 1(INT16), "E29")
+      z := two \ (three * one)
+      check.INT16( z, 2(INT16), "E30")
+      --}}}
+      --{{{  E31 to E40
+      q := one = (three * one)
+      check.INT16(INT16 q, INT16 FALSE, "E31")
+      q := one <> (three * one)
+      check.INT16(INT16 q, INT16 TRUE, "E32")
+      q := three >= (three * one)
+      check.INT16(INT16 q, INT16 TRUE, "E33")
+      q := one <= (three * one)
+      check.INT16(INT16 q, INT16 TRUE, "E34")
+      q := one > (three * one)
+      check.INT16(INT16 q, INT16 FALSE, "E35")
+      q := one < (three * one)
+      check.INT16(INT16 q, INT16 TRUE, "E36")
+      z := (two * one) + one          -- (id * id) op id
+      check.INT16( z, 3(INT16), "E37")
+      z := (two * one) /\ one
+      check.INT16( z, 0(INT16), "E38")
+      z := (two * one) \/ one
+      check.INT16( z, 3(INT16), "E39")
+      z := (three * one) * two
+      check.INT16( z, 6(INT16), "E40")
+      --}}}
+      --{{{  E41 to E50
+      z := (three * one) / two
+      check.INT16( z, 1(INT16), "E41")
+      z := (three * one) \ two
+      check.INT16( z, 1(INT16), "E42")
+      q := (three * one) = two
+      check.INT16(INT16 q, INT16 FALSE, "E43")
+      q := (three * one) <> two
+      check.INT16(INT16 q, INT16 TRUE, "E44")
+      q := (three * one) >= two
+      check.INT16(INT16 q, INT16 TRUE, "E45")
+      q := (three * one) <= two
+      check.INT16(INT16 q, INT16 FALSE, "E46")
+      q := (three * one) > two
+      check.INT16(INT16 q, INT16 TRUE, "E47")
+      q := (three * one) < two
+      check.INT16(INT16 q, INT16 FALSE, "E48")
+      z := (two * one) + (one * one)         -- (id * id) op (id * id)
+      check.INT16( z, 3(INT16), "E49")
+      z := (two * one) /\ (one * one)
+      check.INT16( z, 0(INT16), "E50")
+      --}}}
+      --{{{  E51 to E60
+      z := (two * one) \/ (one * one)
+      check.INT16( z, 3(INT16), "E51")
+      z := (three * one) * (two * one)
+      check.INT16( z, 6(INT16), "E52")
+      z := (three * one) / (two * one)
+      check.INT16( z, 1(INT16), "E53")
+      z := (three * one) \ (two * one)
+      check.INT16( z, 1(INT16), "E54")
+      q := (three * one) = (two * one)
+      check.INT16(INT16 q, INT16 FALSE, "E55")
+      q := (three * one) <> (two * one)
+      check.INT16(INT16 q, INT16 TRUE, "E56")
+      q := (three * one) >= (two * one)
+      check.INT16(INT16 q, INT16 TRUE, "E57")
+      q := (three * one) <= (two * one)
+      check.INT16(INT16 q, INT16 FALSE, "E58")
+      q := (three * one) > (two * one)
+      check.INT16(INT16 q, INT16 TRUE, "E59")
+      q := (three * one) < (two * one)
+      check.INT16(INT16 q, INT16 FALSE, "E60")
+      --}}}
+  :
+  --}}}
+  --{{{  E3  boolean sets                  (tests E61  to E100)
+  PROC E3 ()
+    INT16 zero, one, two, three, z :
+    BOOL true.id, false.id, q:
+    SEQ
+      zero    := 0(INT16)
+      one     := 1(INT16)
+      two     := 2(INT16)
+      three   := 3(INT16)
+      true.id  := TRUE
+      false.id := FALSE
+  
+      --{{{  E61 to E70
+      --{{{  E61
+      IF
+        TRUE                           -- const
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E61")
+      --}}}
+      --{{{  E62
+      IF
+        FALSE
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E62")
+      --}}}
+      --{{{  E63
+      IF
+        true.id                           -- id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E63")
+      --}}}
+      --{{{  E64
+      IF
+        false.id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E64")
+      --}}}
+      --{{{  E65
+      IF                                 -- id op const
+        one = 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E65")
+      --}}}
+      --{{{  E66
+      IF
+        one <> 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E66")
+      --}}}
+      --{{{  E67
+      IF
+        one >= 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E67")
+      --}}}
+      --{{{  E68
+      IF
+        one <= 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E68")
+      --}}}
+      --{{{  E69
+      IF
+        one > 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E69")
+      --}}}
+      --{{{  E70
+      IF
+        one < 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E70")
+      --}}}
+      --}}}
+      --{{{  E71 to E80
+      --{{{  E71
+      IF                                 -- id op id
+        one = one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E71")
+      --}}}
+      --{{{  E72
+      IF
+        one <> one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E72")
+      --}}}
+      --{{{  E73
+      IF
+        one >= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E73")
+      --}}}
+      --{{{  E74
+      IF
+        one <= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E74")
+      --}}}
+      --{{{  E75
+      IF
+        one > one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E75")
+      --}}}
+      --{{{  E76
+      IF
+        one < one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E76")
+      --}}}
+      --{{{  E77
+      IF                                 -- id op (id op)
+        one = (three * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E77")
+      --}}}
+      --{{{  E78
+      IF
+        three = (three * one)
+          q:= TRUE
+        TRUE
+          q:= FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E78")
+      --}}}
+      --{{{  E79
+      IF
+        one <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E79")
+      --}}}
+      --{{{  E80
+      IF
+        two <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E80")
+      --}}}
+      --}}}
+      --{{{  E81 to E90
+      --{{{  E81
+      IF
+        one >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E81")
+      --}}}
+      --{{{  E82
+      IF
+        three >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E82")
+      --}}}
+      --{{{  E83
+      IF
+        one <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E83")
+      --}}}
+      --{{{  E84
+      IF
+        three <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E84")
+      --}}}
+      --{{{  E85
+      IF
+        one > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E85")
+      --}}}
+      --{{{  E86
+      IF
+        three > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E86")
+      --}}}
+      --{{{  E87
+      IF
+        one < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E87")
+      --}}}
+      --{{{  E88
+      IF
+        three < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E88")
+      --}}}
+      --{{{  E89
+      IF                                 -- (id * id) op (id * id)
+        (one * one) = (three * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E89")
+      --}}}
+      --{{{  E90
+      IF
+        (three  * one) = (three * one)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E90")
+      --}}}
+      --}}}
+      --{{{  E91 to E100
+      --{{{  E91
+      IF
+        (one  * one)<> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E91")
+      --}}}
+      --{{{  E92
+      IF
+        (two * one) <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E92")
+      --}}}
+      --{{{  E93
+      IF
+        (one * one) >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E93")
+      --}}}
+      --{{{  E94
+      IF
+        (three * one) >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E94")
+      --}}}
+      --{{{  E95
+      IF
+        (one * one) <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E95")
+      --}}}
+      --{{{  E96
+      IF
+        (three * one) <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E96")
+      --}}}
+      --{{{  E97
+      IF
+        (one * one) > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E97")
+      --}}}
+      --{{{  E98
+      IF
+        (three * one) > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E98")
+      --}}}
+      --{{{  E99
+      IF
+        (one * one) < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E99")
+      --}}}
+      --{{{  E100
+      IF
+        (three * one) < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E100")
+      --}}}
+      --}}}
+  :
+  --}}}
+  --{{{  E33 more boolean sets
+  PROC E33 (VAL INT16 zero, one, two, three)
+    BOOL true.id, false.id, q:
+    SEQ
+      true.id  := TRUE
+      false.id := FALSE
+  
+      --{{{  E61 to E70
+      --{{{  E61
+      IF
+        TRUE                           -- const
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E61")
+      --}}}
+      --{{{  E62
+      IF
+        FALSE
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E62")
+      --}}}
+      --{{{  E63
+      IF
+        true.id                           -- id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E63")
+      --}}}
+      --{{{  E64
+      IF
+        false.id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E64")
+      --}}}
+      --{{{  E65
+      IF                                 -- id op const
+        one = 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E65")
+      --}}}
+      --{{{  E66
+      IF
+        one <> 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E66")
+      --}}}
+      --{{{  E67
+      IF
+        one >= 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E67")
+      --}}}
+      --{{{  E671
+      IF
+        1(INT16) <= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E671")
+      --}}}
+      --{{{  E68
+      IF
+        one <= 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E68")
+      --}}}
+      --{{{  E681
+      IF
+        1(INT16) >= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E681")
+      --}}}
+      --{{{  E69
+      IF
+        one > 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E69")
+      --}}}
+      --{{{  E691
+      IF
+        1(INT16) < one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E691")
+      --}}}
+      --{{{  E70
+      IF
+        one < 1(INT16)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E70")
+      --}}}
+      --{{{  E701
+      IF
+        1(INT16) > one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E701")
+      --}}}
+      --}}}
+      --{{{  E71 to E80
+      --{{{  E71
+      IF                                 -- id op id
+        one = one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E71")
+      --}}}
+      --{{{  E72
+      IF
+        one <> one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E72")
+      --}}}
+      --{{{  E73
+      IF
+        one >= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E73")
+      --}}}
+      --{{{  E74
+      IF
+        one <= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E74")
+      --}}}
+      --{{{  E75
+      IF
+        one > one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E75")
+      --}}}
+      --{{{  E76
+      IF
+        one < one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E76")
+      --}}}
+      --{{{  E77
+      IF                                 -- id op (id op)
+        one = (three * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E77")
+      --}}}
+      --{{{  E78
+      IF
+        three = (three * one)
+          q:= TRUE
+        TRUE
+          q:= FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E78")
+      --}}}
+      --{{{  E79
+      IF
+        one <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E79")
+      --}}}
+      --{{{  E80
+      IF
+        two <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E80")
+      --}}}
+      --}}}
+      --{{{  E81 to E90
+      --{{{  E81
+      IF
+        one >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E81")
+      --}}}
+      --{{{  E82
+      IF
+        three >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E82")
+      --}}}
+      --{{{  E83
+      IF
+        one <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E83")
+      --}}}
+      --{{{  E84
+      IF
+        three <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E84")
+      --}}}
+      --{{{  E85
+      IF
+        one > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E85")
+      --}}}
+      --{{{  E86
+      IF
+        three > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E86")
+      --}}}
+      --{{{  E87
+      IF
+        one < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E87")
+      --}}}
+      --{{{  E88
+      IF
+        three < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E88")
+      --}}}
+      --{{{  E89
+      IF                                 -- (id * id) op (id * id)
+        (one * one) = (three * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E89")
+      --}}}
+      --{{{  E90
+      IF
+        (three  * one) = (three * one)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E90")
+      --}}}
+      --}}}
+      --{{{  E91 to E100
+      --{{{  E91
+      IF
+        (one  * one)<> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E91")
+      --}}}
+      --{{{  E92
+      IF
+        (two * one) <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E92")
+      --}}}
+      --{{{  E93
+      IF
+        (one * one) >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E93")
+      --}}}
+      --{{{  E94
+      IF
+        (three * one) >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E94")
+      --}}}
+      --{{{  E95
+      IF
+        (one * one) <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E95")
+      --}}}
+      --{{{  E96
+      IF
+        (three * one) <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E96")
+      --}}}
+      --{{{  E97
+      IF
+        (one * one) > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E97")
+      --}}}
+      --{{{  E98
+      IF
+        (three * one) > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E98")
+      --}}}
+      --{{{  E99
+      IF
+        (one * one) < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E99")
+      --}}}
+      --{{{  E100
+      IF
+        (three * one) < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E100")
+      --}}}
+      --}}}
+  :
+  --}}}
+  --{{{  E7  complex expressions           (tests X1   to X9)
+  PROC E7 ()
+    INT16 a, b, c, d, x :
+    SEQ
+      a := 2 (INT16)
+      b := 4 (INT16)
+      c := 5 (INT16)
+      d := 6 (INT16)
+      --{{{  X1
+      x := (a-2 (INT16))+b
+      check.INT16 (x, b,"X1")
+      --}}}
+      --{{{  X2
+      x := (a*b) - (d-1(INT16))
+      check.INT16 (x, 3(INT16), "X2")
+      --}}}
+      --{{{  X3
+      x := (a /\ b) \/ (d + (b - (a+a)))
+      check.INT16 (x, 6(INT16), "X3")
+      --}}}
+      --{{{  X4
+      x := a+((a+((a+((a+((a+((a+((a+((d-c)+b))+b))+b))+b))+b))+b))+b)
+      check.INT16 (x, 43(INT16), "X4")
+      --}}}
+      --{{{  X5
+      x := d-(b-(b-(b-(b-(b-(b-(b-(b+c))))))))
+      check.INT16 (x, 11(INT16), "X5")
+      --}}}
+      --{{{  X6
+      x := (((d*c)/(a+b))*(a+b)) + ((d*c)\(a+b))
+      check.INT16 (x, 30(INT16), "X6")
+      --}}}
+      --{{{  X7
+      x := (d << 4) >> (INT ((b << (INT a)) >> 2))
+      check.INT16 (x, 6(INT16), "X7")
+      --}}}
+      --{{{  X8
+      x := c >< ((a >< b) >< d)
+      check.INT16 (x, 5(INT16), "X8")
+      --}}}
+      --{{{  X9
+      a := INT16 TRUE
+      b := INT16 FALSE
+      c := INT16 TRUE
+      d := INT16 FALSE
+      x := (a /\ c) /\ (INT16 TRUE)
+      check.INT16 (x, INT16 TRUE, "X9")
+      --}}}
+  :
+  --}}}
+  --{{{  E77  complex expressions           (tests X1   to X9)
+  PROC E77 (INT16 a, b, c, d, x)
+    SEQ
+      --{{{  X1
+      x := (a-2 (INT16))+b
+      check.INT16 (x, b,"X11")
+      --}}}
+      --{{{  X2
+      x := (a*b) - (d-1(INT16))
+      check.INT16 (x, 3(INT16), "X22")
+      --}}}
+      --{{{  X3
+      x := (a /\ b) \/ (d + (b - (a+a)))
+      check.INT16 (x, 6(INT16), "X33")
+      --}}}
+      --{{{  X4
+      x := a+((a+((a+((a+((a+((a+((a+((d-c)+b))+b))+b))+b))+b))+b))+b)
+      check.INT16 (x, 43(INT16), "X44")
+      --}}}
+      --{{{  X5
+      x := d-(b-(b-(b-(b-(b-(b-(b-(b+c))))))))
+      check.INT16 (x, 11(INT16), "X55")
+      --}}}
+      --{{{  X6
+      x := (((d*c)/(a+b))*(a+b)) + ((d*c)\(a+b))
+      check.INT16 (x, 30(INT16), "X66")
+      --}}}
+      --{{{  X7
+      x := (d << 4) >> (INT ((b << (INT a)) >> 2))
+      check.INT16 (x, 6(INT16), "X77")
+      --}}}
+      --{{{  X8
+      x := c >< ((a >< b) >< d)
+      check.INT16 (x, 5(INT16), "X88")
+      --}}}
+      --{{{  X9
+      a := INT16 TRUE
+      b := INT16 FALSE
+      c := INT16 TRUE
+      d := INT16 FALSE
+      x := (a /\ c) /\ (INT16 TRUE)
+      check.INT16 (x, INT16 TRUE, "X9")
+      --}}}
+  :
+  --}}}
+  --{{{  E10 data conversions              (tests D000 to D999)
+  PROC E10 ()
+    BYTE byte.0, byte.1 :
+    BOOL bool.t, bool.f :
+    INT16  int.0,  int.1  :
+    SEQ
+      --{{{  initialise the vars
+      byte.0 := '*#00'
+      byte.1 := '*#01'
+      int.0  := 0 (INT16)
+      int.1  := 1 (INT16)
+      bool.f := FALSE
+      bool.t := TRUE
+      --}}}
+      --{{{  BYTE of BOOL of INT16          (tests D000 to D009)
+      check.INT16 (INT16 (BYTE (BOOL (INT16 byte.0))), 0(INT16), "D000")
+      check.INT16 (INT16 (BYTE (BOOL (INT16 bool.f))), 0(INT16), "D001")
+      check.INT16 (INT16 (BYTE (BOOL (INT16 byte.1))), 1(INT16), "D002")
+      check.INT16 (INT16 (BYTE (BOOL (INT16 bool.t))), 1(INT16), "D003")
+      --}}}
+      --{{{  BOOL of BYTE of INT16          (tests D010 to D019)
+      check.INT16 (INT16 (BOOL (BYTE (INT16 byte.0))), 0(INT16), "D010")
+      check.INT16 (INT16 (BOOL (BYTE (INT16 bool.f))), 0(INT16), "D011")
+      check.INT16 (INT16 (BOOL (BYTE (INT16 byte.1))), 1(INT16), "D012")
+      check.INT16 (INT16 (BOOL (BYTE (INT16 bool.t))), 1(INT16), "D013")
+      --}}}
+      --{{{  INT16  of BYTE of INT16          (tests D020 to D029)
+      check.INT16 (INT16 (BYTE (INT16 byte.0)), 0(INT16), "D020")
+      check.INT16 (INT16 (BYTE (INT16 bool.f)), 0(INT16), "D021")
+      check.INT16 (INT16 (BYTE (INT16 byte.1)), 1(INT16), "D022")
+      check.INT16 (INT16 (BYTE (INT16 bool.t)), 1(INT16), "D023")
+      --}}}
+      --{{{  INT16  of BOOL of INT16          (tests D030 to D039)
+      check.INT16 (INT16 (BOOL (INT16 byte.0)), 0(INT16), "D030")
+      check.INT16 (INT16 (BOOL (INT16 bool.f)), 0(INT16), "D031")
+      check.INT16 (INT16 (BOOL (INT16 byte.1)), 1(INT16), "D032")
+      check.INT16 (INT16 (BOOL (INT16 bool.t)), 1(INT16), "D033")
+      --}}}
+      --{{{  INT16  of BOOL of BYTE         (tests D040 to D049)
+      check.INT16 (INT16 (BOOL (BYTE int.0 )), 0(INT16), "D040")
+      check.INT16 (INT16 (BOOL (BYTE bool.f)), 0(INT16), "D041")
+      check.INT16 (INT16 (BOOL (BYTE int.1 )), 1(INT16), "D042")
+      check.INT16 (INT16 (BOOL (BYTE bool.t)), 1(INT16), "D043")
+      --}}}
+      --{{{  BYTE of BOOL of BYTE         (tests D050 to D059)
+      check.INT16 (INT16 (BYTE (BOOL (BYTE int.0 ))), 0(INT16), "D050")
+      check.INT16 (INT16 (BYTE (BOOL (BYTE bool.f))), 0(INT16), "D051")
+      check.INT16 (INT16 (BYTE (BOOL (BYTE int.1 ))), 1(INT16), "D052")
+      check.INT16 (INT16 (BYTE (BOOL (BYTE bool.t))), 1(INT16), "D053")
+      --}}}
+      --{{{  BYTE of INT16  of BYTE         (tests D060 to D069)
+      check.INT16 (INT16 (BYTE (INT16  (BYTE int.0 ))), 0(INT16), "D060")
+      check.INT16 (INT16 (BYTE (INT16  (BYTE bool.f))), 0(INT16), "D061")
+      check.INT16 (INT16 (BYTE (INT16  (BYTE int.1 ))), 1(INT16), "D062")
+      check.INT16 (INT16 (BYTE (INT16  (BYTE bool.t))), 1(INT16), "D063")
+      --}}}
+      --{{{  BOOL of INT16  of BYTE         (tests D070 to D079)
+      check.INT16 (INT16 (BOOL (INT16  (BYTE int.0 ))), 0(INT16), "D070")
+      check.INT16 (INT16 (BOOL (INT16  (BYTE bool.f))), 0(INT16), "D071")
+      check.INT16 (INT16 (BOOL (INT16  (BYTE int.1 ))), 1(INT16), "D072")
+      check.INT16 (INT16 (BOOL (INT16  (BYTE bool.t))), 1(INT16), "D073")
+      --}}}
+      --{{{  BOOL of INT16  of BOOL         (tests D080 to D089)
+      check.INT16 (INT16 (BOOL (INT16  (BOOL int.0 ))), 0(INT16), "D080")
+      check.INT16 (INT16 (BOOL (INT16  (BOOL byte.0))), 0(INT16), "D081")
+      check.INT16 (INT16 (BOOL (INT16  (BOOL int.1 ))), 1(INT16), "D082")
+      check.INT16 (INT16 (BOOL (INT16  (BOOL byte.1))), 1(INT16), "D083")
+      --}}}
+      --{{{  BOOL of BYTE of BOOL         (tests D090 to D099)
+      check.INT16 (INT16 (BOOL (BYTE (BOOL int.0 ))), 0(INT16), "D090")
+      check.INT16 (INT16 (BOOL (BYTE (BOOL byte.0))), 0(INT16), "D091")
+      check.INT16 (INT16 (BOOL (BYTE (BOOL int.1 ))), 1(INT16), "D092")
+      check.INT16 (INT16 (BOOL (BYTE (BOOL byte.1))), 1(INT16), "D093")
+      --}}}
+      --{{{  BYTE of INT16  of BOOL         (tests D100 to D109)
+      check.INT16 (INT16 (BYTE (INT16  (BOOL int.0 ))), 0(INT16), "D100")
+      check.INT16 (INT16 (BYTE (INT16  (BOOL byte.0))), 0(INT16), "D101")
+      check.INT16 (INT16 (BYTE (INT16  (BOOL int.1 ))), 1(INT16), "D102")
+      check.INT16 (INT16 (BYTE (INT16  (BOOL byte.1))), 1(INT16), "D103")
+      --}}}
+      --{{{  INT16  of BYTE of BOOL         (tests D110 to D119)
+      check.INT16 (INT16 (BYTE (BOOL int.0 )), 0(INT16), "D110")
+      check.INT16 (INT16 (BYTE (BOOL byte.0)), 0(INT16), "D111")
+      check.INT16 (INT16 (BYTE (BOOL int.1 )), 1(INT16), "D112")
+      check.INT16 (INT16 (BYTE (BOOL byte.1)), 1(INT16), "D113")
+      --}}}
+  :
+  --}}}
+  --{{{  E4  negate bitnot and not         (tests E101 to E106, N1 to N10)
+  PROC E4 ()
+    INT16 zero, one, two, three, z :
+    BOOL true.id, false.id, q:
+    SEQ
+      zero    := 0 (INT16)
+      one     := 1 (INT16)
+      two     := 2 (INT16)
+      three   := 3 (INT16)
+      true.id  := TRUE
+      false.id := FALSE
+      --{{{  E101, E102  (negate)
+      z := - (two * one)
+      check.INT16(z, -2(INT16), "E101")
+      z := - two
+      check.INT16(z, -2(INT16), "E102")
+      --}}}
+      --{{{  E103 - E106 (NOT)
+      q := NOT FALSE
+      check.INT16(INT16 q, INT16 TRUE, "E103")
+      q := NOT (true.id AND true.id)
+      check.INT16(INT16 q, INT16 FALSE, "E104")
+      IF
+        NOT (true.id AND true.id)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E105")
+      IF
+        NOT true.id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check.INT16(INT16 q, INT16 FALSE, "E106")
+      --}}}
+      --{{{  N1 - N10  (Bitnot (~))
+      z := ~ 0(INT16)
+      check.INT16 (z, -1(INT16), "N1")
+      z := ~ zero
+      check.INT16 (z, -1(INT16), "N2")
+      z := ~z
+      check.INT16 (z, 0(INT16), "N3")
+      z := ~ 1 (INT16)
+      check.INT16 (z, -2(INT16), "N4")
+      z := ~ one
+      check.INT16 (z, -2(INT16), "N5")
+      z := ~ (~ one)
+      check.INT16 (z, 1(INT16), "N6")
+      z := MOSTPOS INT16
+      z := ~ z
+      check.INT16 (z, MOSTNEG INT16, "N7")
+      --}}}
+  :
+  --}}}
+  --{{{  E8  PLUS MINUS TIMES and AFTER    (tests P00  to P99)
+  PROC E8 ()
+    INT16 x, y, z :
+    SEQ
+      --{{{  PLUS   (test P00 - 09)
+      x := MOSTPOS INT16
+      y := x PLUS 1 (INT16)
+      check.INT16 (y, MOSTNEG INT16, "P00")
+      check.INT16 ((MOSTPOS INT16) PLUS 1(INT16), MOSTNEG INT16, "P01")
+      x := (MOSTNEG INT16) >> 1
+      check.INT16 (x PLUS x, MOSTNEG INT16, "P02")
+      check.INT16 (((MOSTNEG INT16) >> 1) PLUS ((MOSTNEG INT16) >> 1), MOSTNEG INT16, "P03")
+      --}}}
+      --{{{  MINUS  (test P10 - 19)
+      x := MOSTNEG INT16
+      y := x MINUS 1(INT16)
+      check.INT16 (y, MOSTPOS INT16, "P10")
+      check.INT16 ((MOSTNEG INT16) MINUS 1(INT16), MOSTPOS INT16, "P11")
+      --}}}
+      --{{{  TIMES  (test P20 - 29)
+      x := (MOSTNEG INT16) >> 1
+      IF
+        x >= 0(INT16)
+          check.INT16 (x, x, "P20")    -- just check.INT16ing that gives the right answer
+        TRUE
+          check.INT16 (x, 0(INT16), "P20")
+      y := x TIMES 2 (INT16)
+      check.INT16 (y, MOSTNEG INT16, "P21")
+      check.INT16 (((MOSTNEG INT16) >> 1) TIMES 2(INT16), MOSTNEG INT16, "P22")
+      --}}}
+      --{{{  AFTER  (test P30 - 39)
+      x := MOSTPOS INT16
+      y := MOSTNEG INT16
+      check.INT16 (INT16 (x > y), INT16 TRUE, "P30")
+      check.INT16 (INT16 (x AFTER y), INT16 FALSE, "P31")
+      check.INT16 (INT16 ((MOSTPOS INT16) AFTER (MOSTNEG INT16)), INT16 FALSE, "P32")
+      --}}}
+  :
+  --}}}
+  --{{{  E9  constant folding              (tests C000 to C999)
+  PROC E9 ()
+    SEQ
+      --{{{  test identities               (tests C000 to C019)
+      INT16 n :
+      SEQ
+        n := 5(INT16)
+        check.INT16 (n + 0(INT16), n, "C000")
+        check.INT16 (0(INT16) + n, n, "C001")
+        check.INT16 (n * 1(INT16), n, "C002")
+        check.INT16 (1(INT16) * n, n, "C003")
+        check.INT16 (n - 0(INT16), n, "C004")
+        check.INT16 (0(INT16) - n,-n, "C005")
+        check.INT16 (n / 1(INT16), n, "C006")
+        check.INT16 (1(INT16) / n, 0(INT16), "C007")
+        check.INT16 (n PLUS  0(INT16), n, "C008")
+        check.INT16 (0(INT16) PLUS  n, n, "C009")
+        check.INT16 (n TIMES 1(INT16), n, "C010")
+        check.INT16 (1(INT16) TIMES n, n, "C011")
+        check.INT16 (n MINUS 0(INT16), n, "C012")
+        check.INT16 (0(INT16) MINUS n,-n, "C013")    -- (almost true!)
+        check.INT16 (n \ 1(INT16), 0(INT16), "C014")
+        check.INT16 (1(INT16) \ n, 1(INT16), "C015")
+      --}}}
+      --{{{  test comparisons of identities(tests C020 to C039)
+      INT16 n :
+      SEQ
+        n := 5(INT16)
+        check.BOOL ( (n + 0(INT16)) = n,       TRUE, "C020")
+        check.BOOL ( (0(INT16) + n) = n,       TRUE, "C021")
+        check.BOOL ( (n * 1(INT16)) = n,       TRUE, "C022")
+        check.BOOL ( (1(INT16) * n) = n,       TRUE, "C023")
+        check.BOOL ( (n - 0(INT16)) = n,       TRUE, "C024")
+        check.BOOL ( (0(INT16) - n) =(-n),     TRUE, "C025")
+        check.BOOL ( (n / 1(INT16)) = n,       TRUE, "C026")
+        check.BOOL ( (1(INT16) / n) = 0(INT16),       TRUE, "C027")
+        check.BOOL ( (n PLUS  0(INT16)) = n,   TRUE, "C028")
+        check.BOOL ( (0(INT16) PLUS  n) = n,   TRUE, "C029")
+        check.BOOL ( (n TIMES 1(INT16)) = n,   TRUE, "C030")
+        check.BOOL ( (1(INT16) TIMES n) = n,   TRUE, "C031")
+        check.BOOL ( (n MINUS 0(INT16)) = n,   TRUE, "C032")
+        check.BOOL ( (0(INT16) MINUS n) =(-n), TRUE, "C033")   -- (almost true!)
+        check.BOOL ( (n \ 1(INT16)) = 0(INT16),       TRUE, "C034")
+        check.BOOL ( (1(INT16) \ n) = 1(INT16),       TRUE, "C035")
+        check.BOOL ( (n PLUS 1(INT16)) AFTER n,TRUE, "C036")
+        check.BOOL ( n AFTER n,        FALSE, "C037")
+      --}}}
+  :
+  --}}}
+  INT16 key :
+  [5]INT16 values:
+  SEQ
+    init ("CG test 27", "tests for INT16 type")
+
+    --{{{  space tests
+    --{{{  output message
+    title("Testing space allocation")
+    --}}}
+    --check.INT16 (0, 1, "test")
+    S0  ()
+    S1  ()
+    S2  ()
+    S3  ()
+    S4  ()
+    S5  ()
+    S6  ()
+    S7  ()
+    S8  ()
+    S9  ()
+    S10 ()
+    S11 ()
+    S12 ()
+    S13 ()
+    S14 ()
+    S15 ()
+    S16 ()
+    S17 ()
+    S18 ()
+    S19 ()
+    --}}}
+    --{{{  expression tests
+    --{{{  output message
+    title("Testing expressions")
+    --}}}
+    E2 ()
+    E3 ()
+    E4 ()
+    E7 ()
+    E8 ()
+    E9 ()
+    E10 ()
+    --{{{  E33
+    values[0] := 0 (INT16)
+    values[1] := 1 (INT16)
+    values[2] := 2 (INT16)
+    values[3] := 3 (INT16)
+    E33(values[0], values[1], values[2], values[3])
+    INT16 zero IS values[0]:
+    INT16 one  IS values[1]:
+    INT16 two  IS values[2]:
+    INT16 three IS values[3]:
+    SEQ
+      E33(zero, one, two, three)
+    --}}}
+    --{{{  E77
+    values[0] := 2 (INT16)
+    values[1] := 4 (INT16)
+    values[2] := 5 (INT16)
+    values[3] := 6 (INT16)
+    E77(values[0], values[1], values[2], values[3], values[4] )
+    values[0] := 2 (INT16)
+    values[1] := 4 (INT16)
+    values[2] := 5 (INT16)
+    values[3] := 6 (INT16)
+    INT16 a IS values[0]:
+    INT16 b  IS values[1]:
+    INT16 c  IS values[2]:
+    INT16 d IS values[3]:
+    INT16 x IS values[4]:
+    SEQ
+      E77(a, b, c, d, x)
+    --}}}
+    --}}}
+    PROC tabs ()
+      INT16	x : -- there's a tab there
+      SEQ
+        x := 1 (INT16)
+        check.INT16 (x, 1(INT16), "TAB1")
+	check.INT16 (x, 1(INT16), "TAB2") -- This line indented by a TAB
+    :
+    tabs()
+    finish ()
+:
+

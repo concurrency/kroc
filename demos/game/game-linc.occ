@@ -1,0 +1,193 @@
+--
+--	game-linc.occ -- LINC terminal system for the adventure game
+--	Copyright (C) 2006 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+
+#INCLUDE "config.inc"
+#INCLUDE "types.inc"
+#USE "game-utils"
+
+#INCLUDE "course.module"
+
+
+--{{{  PROC linc.client (VAL INT origin, SHARED CT.PLINC! to.linc, SHARED CT.GAMECTRL! to.game, MOBILE []BYTE cname, CT.CLIENT! client)
+--
+--  linc client process
+--
+PROC linc.client (VAL INT origin, SHARED CT.PLINC! to.linc, SHARED CT.GAMECTRL! to.game, MOBILE []BYTE cname, CT.CLIENT! client)
+  SEQ
+    --{{{  intro message
+    client[s.in] ! genmsg; "+:"
+    client[s.in] ! genmsg; "+:  LL     IIIIII NN  NN  CCCCC"
+    client[s.in] ! genmsg; "+:  LL       II   NNN NN CC    "
+    client[s.in] ! genmsg; "+:  LL       II   NN NNN CC    "
+    client[s.in] ! genmsg; "+:  LL       II   NN  NN CC    "
+    client[s.in] ! genmsg; "+:  LLLLLL IIIIII NN  NN  CCCCC"
+    client[s.in] ! genmsg; "+:"
+    --}}}
+    --{{{  pause for a moment
+    TIMER tim:
+    INT t:
+    SEQ
+      tim ? t
+      tim ? AFTER (t PLUS 1000000)
+    --}}}
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        --{{{  linc menu
+        client[s.in] ! genmsg; ":  LINC menu version 0.1"
+        client[s.in] ! genmsg; ":    0 - disconnect from LINC"
+        client[s.in] ! genmsg; ":    1 - to be completed.."
+        --}}}
+        --{{{  client response
+        MOBILE []BYTE tmp.mb:
+        client[out] ? CASE
+          say; tmp.mb
+            IF
+              tmp.mb = "0"
+                running := FALSE
+              TRUE
+                client[s.in] ! genmsg; ":  unknown command!"
+          examine; tmp.mb
+            SKIP
+          get; tmp.mb
+            SKIP
+          use; tmp.mb
+            SKIP
+          drop; tmp.mb
+            SKIP
+          eat; tmp.mb
+            SKIP
+          north
+            SKIP
+          south
+            SKIP
+          east
+            SKIP
+          west
+            SKIP
+          look
+            SEQ
+              -- this needs a slightly odd sequence of stuff
+              client[in] ! end.of.list
+              client[out] ? CASE others
+              client[in] ! end.of.list
+              client[out] ? CASE objects
+              client[in] ! end.of.list
+              client[out] ? CASE lookexits
+              client[in] ! exits; 0; [FALSE,FALSE,FALSE,FALSE]
+          inv
+            SKIP
+          status
+            SKIP
+          wield; tmp.mb
+            SKIP
+          unwield
+            SKIP
+          attack; tmp.mb
+            SKIP
+          logout
+            SKIP
+          help
+            SKIP
+          halt
+            SKIP
+          do.logout
+            SKIP
+          bad.input; tmp.mb
+            SKIP
+
+        --}}}
+    --{{{  exit message
+    client[s.in] ! genmsg; "+:  leaving LINC, be vigilant"
+    --}}}
+    --{{{  return to room
+    BOOL ok:
+    SHARED CT.ROOMLINK! to.room:
+    SEQ
+      CHAN SHARED CT.ROOMLINK! rc:
+      PAR
+        util.getroom (2, origin, to.game, rc!, ok)
+        rc ? to.room
+      IF
+        NOT ok
+          STOP
+        TRUE
+          SKIP
+      CLAIM to.room
+        to.room[in] ! new.client; cname; client
+    --}}}
+:
+--}}}
+--{{{  PROC linc.system (CT.LINCLINK? linc, SHARED CT.GAMECTRL! to.game)
+--
+--  this provides the LINC terminal system [as per BASS ;)]
+--
+PROC linc.system (CT.LINCLINK? linc, SHARED CT.GAMECTRL! to.game)
+  CT.PLINC? pl.svr:
+  SHARED CT.PLINC! pl.cli:
+  SEQ
+    pl.svr, pl.cli := MOBILE CT.PLINC
+    WHILE TRUE
+      SEQ
+        linc[in] ? CASE
+          --{{{  new.client -- incoming client
+          MOBILE []BYTE cname:
+          CT.CLIENT! tmpcli:
+          INT tmporigin:
+          new.client; cname; tmpcli; tmporigin
+            SEQ
+              tmpcli[s.in] ! genmsg; "connecting to LINC ..."
+
+              TIMER tim:
+              INT t:
+              SEQ
+                tim ? t
+                tim ? AFTER (t PLUS 500000)
+
+              tmpcli[s.in] ! have.object; "schriebmann-port"
+              tmpcli[s.out] ? CASE
+                yes
+                  FORK linc.client (tmporigin, pl.cli, to.game, cname, tmpcli)
+                no
+                  SEQ
+                    tmpcli[s.in] ! genmsg; "you need a schriebmann port to use LINC!"
+                    --{{{  return to room
+                    BOOL ok:
+                    SHARED CT.ROOMLINK! to.room:
+                    SEQ
+                      CHAN SHARED CT.ROOMLINK! rc:
+                      PAR
+                        util.getroom (2, tmporigin, to.game, rc!, ok)
+                        rc ? to.room
+                      IF
+                        NOT ok
+                          STOP
+                        TRUE
+                          SKIP
+                      CLAIM to.room
+                        to.room[in] ! new.client; cname; tmpcli
+                    --}}}
+
+          --}}}
+
+:
+--}}}
+
+

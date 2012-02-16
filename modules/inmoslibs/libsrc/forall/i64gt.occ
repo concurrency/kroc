@@ -1,0 +1,92 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT64GT "INT64GT%CHK"
+
+--{{{  INT64GT -- TA & T8
+BOOL FUNCTION INT64GT (VAL INT64 A, VAL INT64 B)
+
+  -- Integer Arithmetic (9oct86) DES
+  -- Converted to functions (26jan87) PWT
+
+  BOOL Greater :
+  VALOF
+    VAL SignBit IS #80000000 :
+    VAL [2]INT A RETYPES A :
+    VAL [2]INT B RETYPES B :
+    IF
+      A [1] = B [1]
+        Greater := (A [0] >< SignBit) > (B [0] >< SignBit)
+      TRUE
+        Greater := A [1] > B [1]
+    RESULT Greater
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.2 16/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT64GT "INT64GT%CHK"
+
+--{{{  INT64GT -- T2
+BOOL FUNCTION INT64GT (VAL INT64 U, V)
+
+  --{{{  history
+  -- Function version (10 Jun 87)
+  -- V1.1, 21-Feb-89
+  -- Corrected version, TS/0101; V1.2, 16-Mar-90 SRH
+  --}}}
+
+  VAL [4]INT U RETYPES U :
+  VAL [4]INT V RETYPES V :
+  BOOL result :
+  VALOF
+    IF
+      U[3] = V[3]
+        --{{{  
+        INT X, borrow :
+        SEQ
+          borrow,  X := LONGDIFF ( V[0],  U[0],  0)
+          borrow,  X := LONGDIFF ( V[1],  U[1],  borrow)
+          borrow,  X := LONGDIFF ( V[2],  U[2],  borrow)
+          result := (borrow = 1)
+        --}}}
+      TRUE
+        result := U[3] > V[3]
+    RESULT result
+:
+--}}}
+
+#ENDIF

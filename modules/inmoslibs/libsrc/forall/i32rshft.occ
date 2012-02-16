@@ -1,0 +1,46 @@
+--
+--      Inmos Libraries
+--      Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--      This library is free software; you can redistribute it and/or
+--      modify it under the terms of the GNU Lesser General Public
+--      License as published by the Free Software Foundation; either
+--      version 2 of the License, or (at your option) any later version.
+--
+--      This library is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--      Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU Lesser General Public
+--      License along with this library; if not, write to the Free Software
+--      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT32RSHIFT "INT32RSHIFT%CHK"
+
+--{{{  INT32RSHIFT -- T2
+INT32 FUNCTION INT32RSHIFT (VAL INT32 A, VAL INT B)
+
+  --  Function version (10 Jun 87)
+
+  INT32 Result :
+  VALOF
+    [2]INT Result RETYPES Result :
+    VAL [2]INT A RETYPES A :
+    Result [1],  Result [0] := SHIFTRIGHT ( A [1],  A [0],  B)
+    RESULT Result
+:
+--}}}
+
+#ENDIF

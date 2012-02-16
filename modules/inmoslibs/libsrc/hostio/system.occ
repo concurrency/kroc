@@ -1,0 +1,78 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--      Modifications Copyright (C) 2004  Fred Barnes
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC simplified version 1995"
+
+#INCLUDE "hostio.inc"
+#USE "conv"
+
+--{{{  OC.system
+VAL unix.max.systemcommand.size IS (sp.max.systemcommand.size/4) + 1:
+#PRAGMA EXTERNAL "PROC C.system (INT result, INT32 status, VAL [unix.max.systemcommand.size]INT block) = 0"
+-- #PRAGMA EXTERNAL "PROC bytes.to.chars (VAL []BYTE from, []INT to) = 4"
+PROC OC.system (INT result, INT32 status, VAL []BYTE block)
+  [unix.max.systemcommand.size]INT unixsyscmdname:
+  SEQ
+    bytes.to.chars (block, unixsyscmdname)
+    C.system (result, status, unixsyscmdname)
+:
+--}}}  
+--{{{  sp.system
+--* Execute a command on the host system.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param command the command to be executed, which may be null
+-- @param status if command is not null and result is spr.ok then this
+--   is the return value of the command, which is host dependent
+-- @param result equal to spr.ok if a host command processor exists;
+--   otherwise: spr.bad.packet.size   command too large, (SIZE command)
+--   > sp.max.systemcommand.size >=spr.operation.failed  the operation
+--   failed - see hostio.inc or iserver documentation for further
+--   details
+PROC sp.system (CHAN OF SP fs, ts, VAL []BYTE command,
+                INT32 status, BYTE result)
+  IF
+    (SIZE command) > sp.max.systemcommand.size
+      result := spr.bad.packet.size
+    TRUE
+      --{{{  Call Unix
+      INT res:
+      SEQ
+        OC.system (res, status, command)
+        IF
+          res = 0
+            result := spr.ok
+          TRUE
+            result := spr.operation.failed
+      --}}}  
+:
+--}}}  sp.system
+--{{{  so.system
+PROC so.system (CHAN OF SP fs, ts, VAL []BYTE command,
+                INT32 status, BYTE result)
+
+  sp.system (fs, ts, command, status, result)
+:
+--}}}  so.system

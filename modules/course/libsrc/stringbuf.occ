@@ -1,0 +1,192 @@
+--
+--	stringbuf.occ -- string buffer routines
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#USE "float_io"
+
+--** @module course
+
+--{{{  PROC buffer.set.string ([]BYTE buf, INT len, VAL []BYTE to.add)
+--* Adds a string to a string buffer.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param to.add String to add.
+--
+PROC buffer.set.string ([]BYTE buf, INT len, VAL []BYTE to.add)
+  INITIAL INT left IS (SIZE buf) - (len + (SIZE to.add)):
+  IF
+    left < 0
+      SEQ
+        [buf FROM len FOR ((SIZE to.add) + left)] := [to.add FOR ((SIZE to.add) + left)]
+        len := (SIZE buf)
+    TRUE
+      SEQ
+        [buf FROM len FOR (SIZE to.add)] := to.add
+        len := len + (SIZE to.add)
+:
+--}}}
+--{{{  PROC buffer.set.int ([]BYTE buf, INT len, VAL INT n)
+--* Adds an integer to a string buffer.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param n Value of integer.
+--
+PROC buffer.set.int ([]BYTE buf, INT len, VAL INT n)
+
+  INT FUNCTION e10 (VAL INT n)
+    INT r:
+    VALOF
+      IF
+        n = 0
+          r := 1
+        TRUE
+          SEQ
+            r := 1
+            SEQ i = 0 FOR n
+              r := (r * 10)
+      RESULT r
+  :
+
+  INT i, d:
+  INITIAL INT left IS (SIZE buf) - len:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          i := -n
+          IF
+            left > 0
+              SEQ
+                buf[len] := '-'
+                len, left := len + 1, left - 1
+            TRUE
+              SKIP
+      TRUE
+        i := n
+    d := 0
+    INITIAL INT e IS i:
+    WHILE e > 0
+      d, e := (d + 1), (e / 10)
+    IF
+      (d = 0) AND (left > 0)
+        SEQ
+          buf[len] := '0'
+          len, left := len + 1, left - 1
+      d = 0
+        SKIP
+      TRUE
+        SEQ j = (d-1) FOR d STEP -1
+          IF
+            left > 0
+              SEQ
+                buf[len] := '0' + (BYTE ((i / e10(j)) \ 10))
+                len, left := len + 1, left - 1
+            TRUE
+              SKIP
+
+
+
+:
+--}}}
+--{{{  PROC buffer.set.hex ([]BYTE buf, INT len, VAL INT n)
+--* Adds an integer to a string buffer in hexadecimal format.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param n Value of integer.
+--
+PROC buffer.set.hex ([]BYTE buf, INT len, VAL INT n)
+  INITIAL INT left IS (SIZE buf) - len:
+  [8]BYTE chars:
+  INT n.chars:
+  SEQ
+    #PRAGMA DEFINED chars
+    n.chars := 0
+
+    IF
+      n = 0
+        chars[0], n.chars := '0', 1
+      TRUE
+        INITIAL INT v IS n:
+        WHILE v <> 0
+          INITIAL BYTE bits IS BYTE (v /\ #0F):
+          INITIAL INT s IS n.chars:
+          IF
+            bits > #09
+              chars[s], n.chars, v := ('A' PLUS (bits MINUS #0A)), s + 1, v >> 4
+            TRUE
+              chars[s], n.chars, v := ('0' PLUS bits), s + 1, v >> 4
+
+    IF
+      left >= n.chars
+        SEQ
+          VAL INT offset IS (len + n.chars) - 1:
+          SEQ i = (n.chars - 1) FOR n.chars STEP -1
+            buf[offset - i] := chars[i]
+          len := len + n.chars
+      TRUE
+        SEQ
+          VAL INT offset IS (len + left) - 1:
+          SEQ i = (left - 1) FOR left STEP -1
+            buf[offset - i] := chars[i]
+          len := len + left
+:
+--}}}
+--{{{  PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)
+--* Adds a BYTE-sized integer to a string buffer in binary format.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param n Value of byte.
+--
+PROC buffer.set.bin8 ([]BYTE buf, INT len, VAL BYTE n)
+  INITIAL INT left IS (SIZE buf) - len:
+  SEQ i = 7 FOR 8 STEP -1
+    VAL BYTE b IS (1 << i):
+    IF
+      left > 0
+        SEQ
+          IF
+            (n /\ b) = b
+              buf[len] := '1'
+            TRUE
+              buf[len] := '0'
+          left, len := left - 1, len + 1
+      TRUE
+        SKIP
+:
+--}}}
+--{{{  PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
+--* Adds a REAL32 value to a string buffer.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param ip integer portion alignment.
+-- @param dp decimal portion alignment.
+-- @param n Value to put in buffer.
+--
+PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
+  [32]BYTE v.buf:
+  INT v.len:
+  SEQ
+    course.REAL32TOSTRING (v.len, v.buf, n, ip, dp)
+    buffer.set.string (buf, len, [v.buf FOR v.len])
+:
+--}}}

@@ -1,0 +1,190 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.3, 8/02/91"
+#COMMENT "(c) Copyright INMOS Limited 1989, 1990, 1991"
+#INCLUDE "hostio.inc"
+--{{{  history
+-- V1.0 10-Mar-89
+-- Introduced a fairer implementation and made it an error if from.user and
+-- to.user are of unequal sizes; V1.1 22-Jun-90 SRH
+-- Improved the efficiency of the implementation.  For further information
+-- see "Carefully scheduled selection with ALT" by G Jones, in occam user
+-- group newsletter, no. 10 January 1989, pp17 - 23; V1.2 4-Feb-91 SRH
+-- Improved the efficiency even more by replacing the one REM of V1.2 by
+-- an IF, with thanks to R. Peel for the suggestion; V1.3 8-Feb-91 SRH
+--}}}  
+--{{{  sp.multiplexor
+--* Multiplex any number of pairs of SP protocol channels onto a single
+-- pair of SP protocol channels.
+--
+-- It is an error if the number of channels in from.user is not equal
+-- to that in to.user. It is permissible for from.user ( and hence
+-- to.user ) to be null arrays. No more than sp.max.packet.data.size
+-- bytes can be buffered as they passes through this routine. Primary
+-- input to this routine must be on the guard input channels from.user[
+-- i ] or stopper. Input on from.user[ i ] is stored, output on ts,
+-- then a reply is expected on fs; this reply is stored and then output
+-- on to.user[ i ], and all this must finish before any new input can
+-- be received on any of the from.user channels or stopper. To attempt
+-- some degree of fairness, there is a heirarchy of priorities from
+-- from.user with index i for SIZE from.user, using modulo SIZE
+-- from.user on the indexes, with i starting from 0 and incrementing by
+-- one after each input accepted.
+--
+-- @param fs input to this routine
+-- @param ts output from this routine
+-- @param from.user input to this routine
+-- @param to.user output from this routine
+-- @param stopper input to this routine: TRUE or FALSE received on this
+--   channel will cause the routine to terminate; this channel has the
+--   highest priority amongst the channels
+PROC sp.multiplexor (CHAN OF SP fs, ts,
+                     []CHAN OF SP from.user, to.user,
+                     CHAN OF BOOL stopper)
+  --{{{  diagram
+  -- Think of it like this:
+  --
+  --                                    -------------
+  -- from.user[0]/to.user[0] <--------->|           |
+  -- from.user[1]/to.user[1] <--------->|           |
+  -- from.user[2]/to.user[2] <--------->|           |
+  --                             .      |    mux    |<-----------------> fs/ts
+  --                             .      |           |
+  --                             .      |           |
+  -- from.user[i]/to.user[i] <--------->|           |
+  --                                    -------------
+  --                                          ^
+  --                                          |
+  --                                          |
+  --                                       stopper
+  --
+  -- Due to the fact that a reply is expected on the fs channel once something
+  -- has been sent on the ts channel, this routine is primarily intended to go
+  -- inbetween some processes and the iserver, where the processes are the
+  -- originators of data governing the immediate ensuing action of this routine.
+  -- The channels fs and ts need not connect directly to the server, but could
+  -- go to another SP protocol process, eg a buffer or another multiplexor.
+  --}}}  
+
+  IF
+    ( SIZE from.user ) <> ( SIZE to.user )
+      STOP
+    ( SIZE from.user ) = 0
+      BOOL stop :
+      stopper ? stop
+    TRUE
+      --{{{  multiplex
+      --{{{  V1.1 code
+      --
+      --[sp.max.packet.data.size]BYTE buffer :
+      --INT first : -- the index of the highest priority guard
+      --INT16 len :
+      --BOOL running :
+      --SEQ
+      --  first := 0
+      --  running := TRUE
+      --  WHILE running
+      --    SEQ
+      --      PRI ALT
+      --        stopper ? running
+      --          running := FALSE
+      --        PRI ALT i = first FOR (SIZE from.user)
+      --          VAL index IS ( i REM (SIZE from.user) ) :
+      --          from.user [ index ]   ? len :: buffer
+      --            SEQ
+      --              ts                ! len :: buffer
+      --              fs                ? len :: buffer
+      --              to.user [ index ] ! len :: buffer
+      --      first := ( first + 1 ) REM (SIZE from.user)
+      --
+      --}}}  
+      --{{{  V1.2 code
+      --[sp.max.packet.data.size]BYTE buffer :
+      --INT split : -- the index of the highest priority guard
+      --INT16 len :
+      --BOOL running :
+      --SEQ
+      --  split := 0
+      --  running := TRUE
+      --  WHILE running
+      --    SEQ  -- use PRI ALTs so that we know at source code level the priorities
+      --      PRI ALT
+      --        stopper ? running
+      --          running := FALSE
+      --        PRI ALT index = split FOR ( (SIZE from.user) - split )
+      --          from.user [ index ]   ? len :: buffer
+      --            SEQ
+      --              ts                ! len :: buffer
+      --              fs                ? len :: buffer
+      --              to.user [ index ] ! len :: buffer
+      --        PRI ALT index = 0 FOR split
+      --          from.user [ index ]   ? len :: buffer
+      --            SEQ
+      --              ts                ! len :: buffer
+      --              fs                ? len :: buffer
+      --              to.user [ index ] ! len :: buffer
+      --      split := ( split + 1 ) REM (SIZE from.user)
+      --}}}  
+      --{{{  V1.3 code
+      [sp.max.packet.data.size]BYTE buffer :
+      INT split : -- the index of the highest priority guard
+      VAL INT modulus IS (SIZE from.user) :
+      VAL INT modulus.minus.1 IS (modulus - 1) :
+      INT16 len :
+      BOOL running :
+      SEQ
+        split := 0
+        running := TRUE
+        WHILE running
+          SEQ  -- use PRI ALTs so that we know at source code level the priorities
+            PRI ALT
+              stopper ? running
+                running := FALSE
+              PRI ALT index = split FOR ( (SIZE from.user) - split )
+                from.user [ index ]   ? len :: buffer
+                  SEQ
+                    ts                ! len :: buffer
+                    fs                ? len :: buffer
+                    to.user [ index ] ! len :: buffer
+              PRI ALT index = 0 FOR split
+                from.user [ index ]   ? len :: buffer
+                  SEQ
+                    ts                ! len :: buffer
+                    fs                ? len :: buffer
+                    to.user [ index ] ! len :: buffer
+            IF
+              split = modulus.minus.1
+                split := 0
+              TRUE
+                split := split + 1
+      --}}}  
+      --}}}  
+:
+--}}}  sp.multiplexor
+--{{{  so.multiplexor
+PROC so.multiplexor (CHAN OF SP fs, ts,
+                     []CHAN OF SP from.user, to.user,
+                     CHAN OF BOOL stopper)
+
+  sp.multiplexor (fs, ts, from.user, to.user, stopper)
+:
+--}}}  so.multiplexor

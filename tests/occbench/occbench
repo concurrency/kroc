@@ -1,0 +1,281 @@
+#!/usr/bin/env python
+#
+#	Harness for Performance Regression Testing in occam-pi
+#	Copyright (C) 2009  Carl Ritson <cgr@kent.ac.uk>
+#
+#	Parts modified from occbuild:
+#	Copyright (C) 2007  University of Kent
+#	Copyright (C) 2008, 2009  Adam Sampan <ats@offog.org>
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+import sys, os, getopt, re, time, platform, shlex
+
+VERSION = "$Rev: 6107 $"[6:-2]
+CONTACT = "kroc-bugs@kent.ac.uk"
+
+name_re = re.compile(r"^--\s*OCCBENCH\s+NAME\s*:\s*(.*)\s*$", re.MULTILINE)
+type_re = re.compile(r"^--\s*OCCBENCH\s+TYPE\s*:\s*(.*)\s*$", re.MULTILINE)
+prog_re = re.compile(r"(.*)\.occ$", re.IGNORECASE)
+source_re = re.compile(r"\.occ$", re.IGNORECASE)
+
+occbuild = [ "occbuild" ]
+startup_runs = 1
+test_runs = 3
+
+def warn(*s):
+	print >>sys.stderr, "occbench: " + "".join(map(str, s))
+
+def die(*s):
+	warn(*s)
+	sys.exit(1)
+
+def split_options(opts):
+	"""Split an argument we've been given into a list of arguments to pass
+	to another program."""
+	return shlex.split(opts)
+
+def run_command(cmd):
+	"""Run a program with arguments and return the exit code.
+	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
+	is available."""
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+
+def capture(cmd):
+	"""Run a command, checking that it succeeded, and return its output."""
+	
+	(pr, pw) = os.pipe()
+	pid = os.fork()
+	if pid == 0:
+		os.close(pr)
+		os.dup2(pw, 1)
+		os.execvp(cmd[0], cmd)
+		os._exit(1)
+
+	os.close(pw)
+	data = ""
+	while 1:
+		s = os.read(pr, 4096)
+		if s == "":
+			break
+		data += s
+	os.close(pr)
+
+	(pid, status) = os.waitpid(pid, 0)
+	if status != 0:
+		die("Command failed: ", " ".join(cmd))
+
+	return data
+
+def time_command(cmd):
+	"""Execution a command and return the wall clock time elapsed."""
+	t1 = time.time()
+	rc = run_command(cmd)
+	t2 = time.time()
+	if rc != 0:
+		die("Command failed: ", " ".join(cmd))
+	else:
+		return (t2 - t1)
+
+def parse_file(path, exe_path):
+	f = open(path)
+	if not f:
+		warn("unable to open " + path)
+		return
+
+	data = f.read()
+	f.close()
+
+	test_name = name_re.search(data)
+	test_type = type_re.search(data)
+	test_path = prog_re.search(path)
+	if test_name and test_type:
+		(_, test_prog) = os.path.split(test_path.group(1))
+		test = { 
+			'path'		: os.path.join(exe_path, test_prog),
+			'source'	: path,
+			'name'		: test_name.group(1),
+			'type'		: test_type.group(1)
+		}
+		return test
+
+def parse_dir(path, exe_path):
+	if not os.path.exists(path):
+		die("No directory " + path)
+	files = os.listdir(path)
+	tests = {}
+	for fn in files:
+		if source_re.search(fn):
+			fpath = os.path.join(path, fn)
+			data = parse_file(fpath, exe_path)
+			if data:
+				tests[fpath] = data
+	return tests
+
+def cpu_count():
+	try:
+		import multiprocessing
+		return multiprocessing.cpu_count()
+	except ImportError:
+		if os.name == 'mac':
+			data = capture('sysctl', 'hw.ncpu')
+			match = re.search(r":\s*(\d+)")
+			if match:
+				cpus = match.group(1)
+		elif os.name == 'nt':
+			cpus = os.environ['NUMBER_OF_PROCESSORS']
+		else:
+			cpus = os.sysconf('SC_NPROCESSORS_ONLN')
+
+		if cpus:
+			return cpus
+		else:
+			return 1
+
+def set_cpus(cpus):
+	os.environ['CCSP_RUNTIME_THREADS'] = "%d" % (cpus)
+
+def write_logs(logs, message):
+	for log in logs:
+		log.write(message)
+		log.write("\n")
+
+def run_test(test, params, logs):
+	name, path, type = test['name'], test['path'], test['type']
+
+	if type == 'scaling':
+		cpu_range = range(1, params['max_cpus'] + 1)
+	else:
+		cpu_range = [ 1 ]
+
+	write_logs(logs, "# " + name)
+
+	for cpus in cpu_range:
+		set_cpus(cpus)
+		
+		start = time.time()
+		sum = 0.0
+		for i in range(startup_runs + test_runs):
+			elapsed = time_command(occbuild + [ "--run", path ])
+			if i >= startup_runs:
+				sum += elapsed
+
+		avg = sum / test_runs
+		result = "%-20s  %-6s  %10.0f  %-16s  %-8s  % 2d  %.6f" % (
+			params['host'], params['version'], start, 
+			name, type, cpus, avg
+		)
+		write_logs(logs, result)
+
+def usage(f):
+	print >>f, """occbench, version """ + VERSION + """
+Run occam-pi benchmark tests 
+Usage:
+
+  occbench [OPTIONS] DIRECTORY [DIRECTORY ...]
+    Run tests contained in DIRECTORY
+
+Options:
+  --append FILE          Append test log to FILE
+  --bin-dir PATH         Binary directory from which to execute tests
+  --occbuild PATH        Set path for occbuild to PATH
+  --occbuild-opts OPTS   Additional options for occbuild
+  --output FILE          Output test log to FILE
+  --quiet                Do not log to STDOUT
+  --tag	VERSION          Set the version being tested (appears in output)
+
+Report bugs to <""" + CONTACT + """>."""
+
+def main(args):
+	global occbuild
+	
+	append_logs	= []
+	logs		= [ sys.stdout ]
+	output_logs	= []
+	params		= {
+		'host'		: platform.node(),
+		'max_cpus' 	: cpu_count(), 
+		'version'	: 'unknown' 
+	}
+	tests		= {}
+
+	# Parse the command line
+	long_opts = [ 
+		"append=", "bin-dir=",
+		"occbuild=", "occbuild-opts=", "output=", 
+		"quiet", "tag="
+	]
+	
+	try:
+		opts, args = getopt.getopt(args, "", long_opts)
+	except getopt.GetoptError:
+		usage(sys.stderr)
+		sys.exit(1)
+	
+	bin_dirs = []
+
+	for (o, a) in opts:
+		if o == "--append":
+			append_logs.append(a)
+		elif o == "--bin-dir":
+			bin_dirs.append(a)
+		elif o == "--occbuild":
+			occbuild = split_options(a)
+		elif o == "--occbuild-opts":
+			occbuild += split_options(a)
+		elif o == "--output":
+			output_logs.append(a)
+		elif o == "--quiet":
+			logs = []
+		elif o == "--tag":
+			params['version'] = a
+	
+	if args == []:
+		die("No test directories specified")
+	elif bin_dirs == []:
+		bin_dirs = args
+	
+	# Find and parse all the tests
+	for (src, bin) in zip(args, bin_dirs):
+		tests.update(parse_dir(os.path.normpath(src), os.path.normpath(bin)))
+	
+	# Open all the log files appropriately
+	for fn in append_logs:
+		f = open(fn, 'a')
+		if f:
+			logs.append(f)
+		else:
+			die("Unable to open append log " + fn)
+	for fn in output_logs:
+		f = open(fn, 'w')
+		if f:
+			logs.append(f)
+		else:
+			die("Unable to open output log " + fn)
+	
+	# Run tests
+	order = tests.keys()
+	order.sort()
+	for key in order:
+		run_test(tests[key], params, logs)
+
+if __name__ == "__main__":
+	main(sys.argv[1:])
+

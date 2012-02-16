@@ -1,0 +1,326 @@
+--
+--	g3dutil.occ -- various utility PROCs for graphics3d
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.inc"
+
+--** @module graphics3d
+
+--{{{  PROC g3d.point3.delta (CHAN MOBILE []G3D.POINT3 in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT3] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point3.delta (CHAN MOBILE []G3D.POINT3 in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT3 p:
+    SEQ
+      in ? p
+      SEQ
+        out.0 ! CLONE p
+        out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.point3s.delta (CHAN MOBILE []G3D.POINT3S in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT3S] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point3s.delta (CHAN MOBILE []G3D.POINT3S in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT3S p:
+    SEQ
+      in ? p
+      SEQ
+        out.0 ! CLONE p
+        out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.point2.3.delta (CHAN MOBILE []G3D.POINT2.3 in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT2.3] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point2.3.delta (CHAN MOBILE []G3D.POINT2.3 in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT2.3 p:
+    SEQ
+      in ? p
+      out.0 ! CLONE p
+      out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.point2.3s.delta (CHAN MOBILE []G3D.POINT2.3S in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT2.3S] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point2.3s.delta (CHAN MOBILE []G3D.POINT2.3S in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT2.3S p:
+    SEQ
+      in ? p
+      out.0 ! CLONE p
+      out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.point2.delta (CHAN MOBILE []G3D.POINT2 in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POINT2] type.
+--
+-- @param in Points in.
+-- @param out.0 Points out.
+-- @param out.1 Points out.
+--
+PROC g3d.point2.delta (CHAN MOBILE []G3D.POINT2 in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POINT2 p:
+    SEQ
+      in ? p
+      out.0 ! CLONE p
+      out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.poly.delta (CHAN MOBILE []G3D.POLY in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POLY] type.
+--
+-- @param in Polygons in.
+-- @param out.0 Polygons out.
+-- @param out.1 Polygons out.
+--
+PROC g3d.poly.delta (CHAN MOBILE []G3D.POLY in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POLY p:
+    SEQ
+      in ? p
+      out.0 ! CLONE p
+      out.1 ! p
+:
+--}}}
+--{{{  PROC g3d.poly.scan.delta (CHAN MOBILE []G3D.POLY.SCAN in?, out.0!, out.1!)
+--* Delta for mobile arrays of the [@ref G3D.POLY.SCAN] type.
+--
+-- @param in Polygon scans in.
+-- @param out.0 Polygon scans out.
+-- @param out.1 Polygon scans out.
+--
+PROC g3d.poly.scan.delta (CHAN MOBILE []G3D.POLY.SCAN in?, out.0!, out.1!)
+  WHILE TRUE
+    MOBILE []G3D.POLY.SCAN p:
+    SEQ
+      in ? p
+      out.0 ! CLONE p
+      out.1 ! p
+:
+--}}}
+
+--{{{  PROC g3d.gen.control.delta (CHAN G3D.GEN.CONTROL in?, out.0!, out.1!)
+--* Delta for [@ref G3D.GEN.CONTROL] protocol.
+--
+-- @param in Commands in.
+-- @param out.0 Commands out.
+-- @param out.1 Commands out.
+--
+PROC g3d.gen.control.delta (CHAN G3D.GEN.CONTROL in?, out.0!, out.1!)
+  WHILE TRUE
+    in ? CASE
+      reset
+        SEQ
+          out.0 ! reset
+          out.1 ! reset
+      [3]REAL32 v:
+      add.scale; v
+        SEQ
+          out.0 ! add.scale; v
+          out.1 ! add.scale; v
+      [3]REAL32 v:
+      set.scale; v
+        SEQ
+          out.0 ! set.scale; v
+          out.1 ! set.scale; v
+      [3]REAL32 v:
+      add.trans; v
+        SEQ
+          out.0 ! add.trans; v
+          out.1 ! add.trans; v
+      [3]REAL32 v:
+      set.trans; v
+        SEQ
+          out.0 ! set.trans; v
+          out.1 ! set.trans; v
+:
+--}}}
+--{{{  PROC g3d.rot.control.delta (CHAN G3D.ROT.CONTROL in?, out.0!, out.1!)
+--* Delta for [@ref G3D.ROT.CONTROL] protocol.
+--
+-- @param in Commands in.
+-- @param out.0 Commands out.
+-- @param out.1 Commands out.
+--
+PROC g3d.rot.control.delta (CHAN G3D.ROT.CONTROL in?, out.0!, out.1!)
+  WHILE TRUE
+    in ? CASE
+      reset
+        SEQ
+          out.0 ! reset
+          out.1 ! reset
+      REAL32 v:
+      add.increment; v
+        SEQ
+          out.0 ! add.increment; v
+          out.1 ! add.increment; v
+      REAL32 v:
+      set.increment; v
+        SEQ
+          out.0 ! set.increment; v
+          out.1 ! set.increment; v
+      REAL32 a:
+      set.angle; a
+        SEQ
+          out.0 ! set.angle; a
+          out.1 ! set.angle; a
+      INT m:
+      set.mode; m
+        SEQ
+          out.0 ! set.mode; m
+          out.1 ! set.mode; m
+:
+--}}}
+--{{{  PROC g3d.prj.control.delta (CHAN G3D.PRJ.CONTROL in?, out.0!, out.1!)
+--* Delta for [@ref G3D.PRJ.CONTROL] protocol.
+--
+-- @param in Commands in.
+-- @param out.0 Commands out.
+-- @param out.1 Commands out.
+--
+PROC g3d.prj.control.delta (CHAN G3D.PRJ.CONTROL in?, out.0!, out.1!)
+  WHILE TRUE
+    in ? CASE
+      reset
+        SEQ
+          out.0 ! reset
+          out.1 ! reset
+      [2]REAL32 s:
+      set.scaling; s
+        SEQ
+          out.0 ! set.scaling; s
+          out.1 ! set.scaling; s
+      REAL32 v:
+      set.zdepth; v
+        SEQ
+          out.0 ! set.zdepth; v
+          out.1 ! set.zdepth; v
+      [2]INT p:
+      set.2dshift; p
+        SEQ
+          out.0 ! set.2dshift; p
+          out.1 ! set.2dshift; p
+      [3]REAL32 p:
+      set.3dshift; p
+        SEQ
+          out.0 ! set.3dshift; p
+          out.1 ! set.3dshift; p
+:
+--}}}
+--{{{  PROC g3d.pgn.control.delta (CHAN G3D.PGN.CONTROL in?, out.0!, out.1!)
+--* Delta for [@ref G3D.PGN.CONTROL] protocol.
+--
+-- @param in Commands in.
+-- @param out.0 Commands out.
+-- @param out.1 Commands out.
+--
+PROC g3d.pgn.control.delta (CHAN G3D.PGN.CONTROL in?, out.0!, out.1!)
+  WHILE TRUE
+    in ? CASE
+      reset
+        SEQ
+          out.0 ! reset
+          out.1 ! reset
+      BOOL t:
+      set.trimap; t
+        SEQ
+          out.0 ! set.trimap; t
+          out.1 ! set.trimap; t
+      BOOL t:
+      set.backfaces; t
+        SEQ
+          out.0 ! set.backfaces; t
+          out.1 ! set.backfaces; t
+      INT f, c:
+      set.face.colour; f; c
+        SEQ
+          out.0 ! set.face.colour; f; c
+          out.1 ! set.face.colour; f; c
+      MOBILE []INT fc:
+      set.face.colours; fc
+        SEQ
+          out.0 ! set.face.colours; CLONE fc
+          out.1 ! set.face.colours; fc
+:
+--}}}
+--{{{  PROC g3d.psc.control.delta (CHAN G3D.PSC.CONTROL in?, out.0!, out.1!)
+--* Delta for [@ref G3D.PSC.CONTROL] protocol.
+--
+-- @param in Commands in.
+-- @param out.0 Commands out.
+-- @param out.1 Commands out.
+--
+PROC g3d.psc.control.delta (CHAN G3D.PSC.CONTROL in?, out.0!, out.1!)
+  WHILE TRUE
+    in ? CASE
+      reset
+        SEQ
+          out.0 ! reset
+          out.1 ! reset
+:
+--}}}
+--{{{  PROC g3d.rdr.control.delta (CHAN G3D.RDR.CONTROL in?, out.0!, out.1!)
+--* Delta for [@ref G3D.RDR.CONTROL] protocol.
+--
+-- @param in Commands in.
+-- @param out.0 Commands out.
+-- @param out.1 Commands out.
+--
+PROC g3d.rdr.control.delta (CHAN G3D.RDR.CONTROL in?, out.0!, out.1!)
+  WHILE TRUE
+    in ? CASE
+      reset
+        SEQ
+          out.0 ! reset
+          out.1 ! reset
+      INT m:
+      set.mode; m
+        SEQ
+          out.0 ! set.mode; m
+          out.1 ! set.mode; m
+      INT p:
+      set.pixel; p
+        SEQ
+          out.0 ! set.pixel; p
+          out.1 ! set.pixel; p
+:
+--}}}
+

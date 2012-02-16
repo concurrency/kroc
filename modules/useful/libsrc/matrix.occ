@@ -1,0 +1,120 @@
+--
+--	Matrix utilities
+--	Copyright (C) 2008 Adam Sampson <ats@offog.org>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module useful
+
+#INCLUDE "maths.module"
+#INCLUDE "useful.inc"
+
+--{{{  PROC matrix.multiply
+--* Compute the ordinary product of two matrices.
+-- The number of columns in [@code a] must be the same as the number of rows in
+-- [@code b]. [@code result] must have the same number of rows as [@code a] and
+-- the same number of columns as [@code b].
+-- @param a First matrix
+-- @param b Second matrix
+-- @param result Product
+PROC matrix.multiply (VAL [][]REAL32 a, b, [][]REAL32 result)
+  SEQ
+    ASSERT ((SIZE a) = (SIZE b[0]))
+    ASSERT ((SIZE a[0]) = (SIZE result[0]))
+    ASSERT ((SIZE b) = (SIZE result))
+    SEQ i = 0 FOR SIZE result[0]
+      SEQ j = 0 FOR SIZE result
+        INITIAL REAL32 sum IS 0.0:
+        SEQ
+          SEQ r = 0 FOR SIZE b
+            sum := sum + (a[r][i] * b[j][r])
+          result[j][i] := sum
+:
+--}}}
+--{{{  PROC matrix.add
+--* Add two matrices.
+-- [@code a], [@code b] and [@code result] must all be the same size.
+-- @param a First matrix
+-- @param b Second matrix
+-- @param result Product
+PROC matrix.add (VAL [][]REAL32 a, b, [][]REAL32 result)
+  SEQ
+    ASSERT ((SIZE a) = (SIZE b))
+    ASSERT ((SIZE a[0]) = (SIZE b[0]))
+    ASSERT ((SIZE result) = (SIZE a))
+    ASSERT ((SIZE result[0]) = (SIZE a[0]))
+    SEQ i = 0 FOR SIZE result
+      SEQ j = 0 FOR SIZE result[0]
+        result[i][j] := a[i][j] + b[i][j]
+:
+--}}}
+
+--{{{  matrix-vector operators
+--* Multiply a [@ref VECTOR2] by a transformation matrix.
+VECTOR2 FUNCTION "**" (VAL VECTOR2 v, VAL [2][2]REAL32 m)
+  VECTOR2 r:
+  VALOF
+    VAL [2][1]REAL32 v.r RETYPES v:
+    [2][1]REAL32 r.r RETYPES r:
+    matrix.multiply (v.r, m, r.r)
+    RESULT r
+:
+
+--* Multiply a [@ref VECTOR3] by a transformation matrix.
+VECTOR3 FUNCTION "**" (VAL VECTOR3 v, VAL [3][3]REAL32 m)
+  VECTOR3 r:
+  VALOF
+    VAL [3][1]REAL32 v.r RETYPES v:
+    [3][1]REAL32 r.r RETYPES r:
+    matrix.multiply (v.r, m, r.r)
+    RESULT r
+:
+--}}}
+--{{{  FUNCTION rotate2
+--* Generate a transformation matrix that rotates a 2D point around the origin.
+-- @param theta Angle (in radians)
+-- @return Transformation matrix
+[2][2]REAL32 FUNCTION rotate2 (VAL REAL32 theta) IS
+  [[COS (theta), -SIN (theta)],
+   [SIN (theta), COS (theta)]]:
+--}}}
+--{{{  FUNCTION rotate3.x
+--* Generate a transformation matrix that rotates a 3D point around the X axis.
+-- @param theta Angle (in radians)
+-- @return Transformation matrix
+[3][3]REAL32 FUNCTION rotate3.x (VAL REAL32 theta) IS
+  [[1.0, 0.0, 0.0],
+   [0.0, COS (theta), SIN (theta)],
+   [0.0, -SIN (theta), COS (theta)]]:
+--}}}
+--{{{  FUNCTION rotate3.y
+--* Generate a transformation matrix that rotates a 3D point around the Y axis.
+-- @param theta Angle (in radians)
+-- @return Transformation matrix
+[3][3]REAL32 FUNCTION rotate3.y (VAL REAL32 theta) IS
+  [[COS (theta), 0.0, -SIN (theta)],
+   [0.0, 1.0, 0.0],
+   [SIN (theta), 0.0, COS (theta)]]:
+--}}}
+--{{{  FUNCTION rotate3.z
+--* Generate a transformation matrix that rotates a 3D point around the Z axis.
+-- @param theta Angle (in radians)
+-- @return Transformation matrix
+[3][3]REAL32 FUNCTION rotate3.z (VAL REAL32 theta) IS
+  [[COS (theta), SIN (theta), 0.0],
+   [-SIN (theta), COS (theta), 0.0],
+   [0.0, 0.0, 1.0]]:
+--}}}

@@ -1,0 +1,31 @@
+-- TEST program 2 for MoA
+-- The program will verify that MoA loss of database connection correctly.
+
+#INCLUDE "moa.module"
+#INCLUDE "course.module"
+
+PROC the.test(CHAN MYSQL.CONTROL control ,CHAN MYSQL.RESULT result, CHAN BYTE in, CHAN BYTE out)
+  BYTE dummybyte:
+  SEQ
+    --CONNECTION
+    result ? CASE 
+      connected
+        SEQ
+          out.string("connected, now break the connection to the database and press anykey*n",0,out)
+    in ? dummybyte
+    control ! query ; "select 1"
+    result ? CASE
+      INT errnum:
+      MOBILE []BYTE errdesc:
+      mysql.error ; errnum ; errdesc
+        SEQ
+          out.string(errdesc, 0,out)
+          out ! FLUSH
+:
+PROC main(CHAN BYTE kyb,scr,err)
+  CHAN MYSQL.CONTROL control:
+  CHAN MYSQL.RESULT result:
+  PAR
+    the.test(control,result,kyb,scr)
+    MySQL(control,result,"bach-1","root","latte","test",0,"")
+:

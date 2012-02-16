@@ -1,0 +1,23 @@
+#INCLUDE "plumbing.module"
+
+VAL []INT PIN IS [9, 10]:
+VAL []INT ADC IS [A2, A3]:
+PROC main ()
+  PAR i = 0 FOR (SIZE PIN)
+    PAR
+      CHAN SERVO srv:
+      CHAN SIGNAL ping:
+      CHAN INT reading:
+      PAR
+        tick (100, ping!)
+        adc (ADC[i], VCC, ping?, reading!)
+        servo(PIN[i], srv?)
+        SEQ
+          srv ! div ; 1023
+          srv ! start
+          INT value:
+          WHILE TRUE
+            SEQ
+              reading ? value
+              srv ! pos ; value
+:

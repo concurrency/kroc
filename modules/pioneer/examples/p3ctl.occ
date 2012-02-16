@@ -1,0 +1,93 @@
+#INCLUDE "course.module"
+#INCLUDE "pioneer.module"
+
+PROC p3 (CHAN BYTE kyb?, scr!, err!)
+  CHAN BOOL ok.and.ready:
+  CT.POSITION? position.svr:
+  CT.POSITION! position.cli:
+  CT.GRIPPER? gripper.svr:
+  CT.GRIPPER! gripper.cli:
+  CT.SONAR? sonar.svr:
+  CT.SONAR! sonar.cli:
+  CT.DRIVE? drive.svr:
+  CT.DRIVE! drive.cli:
+  SEQ
+    position.svr, position.cli := MOBILE CT.POSITION
+    gripper.svr, gripper.cli := MOBILE CT.GRIPPER
+    sonar.svr, sonar.cli := MOBILE CT.SONAR
+    drive.svr, drive.cli := MOBILE CT.DRIVE
+    PAR
+      p3dx ("/dev/ttyS0", ok.and.ready!, drive.svr, gripper.svr, position.svr, sonar.svr)
+      SEQ
+        BOOL ready:
+        SEQ
+          out.string ("init...", 0, scr!)
+          scr ! FLUSH
+          ok.and.ready ? ready
+          IF
+            ready
+              out.string ("ready*n", 0, scr!)
+            TRUE
+              SEQ
+                out.string ("failed*n", 0, scr!)
+                STOP
+        SEQ
+          out.string ("enable motors: ", 0, scr!)
+          scr ! FLUSH
+          drive.cli[req] ! enable.motors
+          drive.cli[rsp] ? CASE ok
+          out.string ("done*n", 0, scr!)
+
+          gripper.cli[req] ! set.pressure; 100
+          WHILE TRUE
+            BYTE b:
+            SEQ
+              kyb ? b
+              scr ! b
+              scr ! FLUSH
+              IF
+                b = 'w'
+                  drive.cli[req] ! translate; 200
+                b = 's'
+                  drive.cli[req] ! translate; -200
+                b = 'd'
+                  drive.cli[req] ! adjust.heading; -15
+                b = 'a'
+                  drive.cli[req] ! adjust.heading; 15
+                b = ' '
+                  drive.cli[req] ! stop; FALSE; FALSE
+                b = 'o'
+                  gripper.cli[req] ! open.paddles
+                b = 'p'
+                  gripper.cli[req] ! close.paddles
+                b = 'i'
+                  gripper.cli[req] ! raise.lift
+                b = 'k'
+                  gripper.cli[req] ! lower.lift
+                b = '1'
+                  drive.cli[req] ! set.velocity; 100
+                b = '2'
+                  drive.cli[req] ! set.velocity; 200
+                b = '3'
+                  drive.cli[req] ! set.velocity; 300
+                b = '4'
+                  drive.cli[req] ! set.velocity; 400
+                b = '5'
+                  drive.cli[req] ! set.velocity; 500
+                b = '6'
+                  drive.cli[req] ! set.velocity; 600
+                b = '7'
+                  drive.cli[req] ! set.velocity; 700
+                b = '8'
+                  drive.cli[req] ! set.velocity; 800
+                b = '9'
+                  drive.cli[req] ! set.velocity; 900
+                b = 'z'
+                  drive.cli[req] ! set.angular.velocity; 100
+                b = 'c'
+                  drive.cli[req] ! set.angular.velocity; -100
+                TRUE
+                  SKIP
+              scr ! '**'
+              scr ! '*n'
+:

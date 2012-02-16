@@ -1,0 +1,11 @@
+
+-- cift7.occ -- CIF test 7, occam bits
+
+#INCLUDE "cif.module"
+
+#PRAGMA EXTERNAL "PROC CIF.my.process (CHAN BYTE out!) = 4096"
+
+PROC cift7 (CHAN BYTE kyb?, scr!, err!)
+  CIF.my.process (err!)
+:
+

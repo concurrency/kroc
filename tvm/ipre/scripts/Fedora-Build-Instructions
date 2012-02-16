@@ -1,0 +1,51 @@
+These are some instructions for setting up the ARM-elf-toolchain, Kroc and
+OpenOCD on the Fedora 12 platform. Though I never actually managed to get all
+three programs working together on a single machine, this document details
+the closest I came.
+
+
+
+	GET RPMFUSION
+su -c 'rpm -Uvh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-stable.noarch.rpm'
+
+	VIRTUAL BOX GUEST ADDITION REQUIREMENTS
+gcc kernel-devel kernel-headers system-config-displa
+
+
+	ARM TOOLCHAIN REQS
+gmp-devel mpfr-devel libmpc-devel texinfo wget make
+
+	  INSTALLATION INSTRUCTIONS
+Grab the reqs from yum
+Run the superscript
+
+
+	KROCK REQs
+bash gcc binutils gawk make automake autoconf pkgconfig glibc-devel SDL-devel SDL_sound mesa-libGL-devel mysql-devel libpng-devel libXmu-devel libXi-devel player-devel libtool-ltdl-devel perl python libxslt subversion
+
+	  INSTALLATION INSTRUCTIONS
+Grab the reqs from yum
+Grab the source
+	svn co https://projects.cs.kent.ac.uk/projects/kroc/svn/kroc/trunk
+autoreconf -vfi
+./configure --prefix=/usr/local/kroc --with-toolchain=tvm
+make
+sudo make install
+
+
+	OPENOCD REQS
+git libusb libusb1 libusb-devel libusb1-devel libftdi libftdi-devel texinfo libtool
+
+	  INSTALLATION INSTRUCTIONS
+Grab the reqs from yum
+Grab the source
+	git clone git://openocd.git.sourceforge.net/gitroot/openocd/openocd
+./bootstrap
+./configure --enable-ft2232_libftdi --enable-usbprog --enable-maintainer-mode
+make
+sudo make install
+
+
+
+	COLLECTED REQS
+sudo yum install wget git libusb libusb1 libusb-devel libusb1-devel libftdi libftdi-devel texinfo bash gcc binutils gawk make automake autoconf pkgconfig glibc-devel SDL-devel SDL_sound mesa-libGL-devel mysql-devel libpng-devel libXmu-devel libXi-devel player-devel libtool-ltdl-devel perl python libxslt subversion gmp-devel mpfr-devel libmpc-devel texinfo

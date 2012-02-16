@@ -1,0 +1,21 @@
+Import('env')
+local = env.Clone()
+
+examples = Split('''
+    bar
+    casting
+    commstime
+    demo
+    double_echo
+    echoing
+    hello_raw_world
+    hello_seq_world
+    hello_world
+    sort_inside
+    sort_pump
+    test_utils
+    ''')
+
+for e in examples:
+    p = local.OccamProgram(e)
+    local.OccLibDepend(p, ['forall', 'course'])

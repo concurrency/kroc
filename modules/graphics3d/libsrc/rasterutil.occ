@@ -1,0 +1,136 @@
+--
+--	raster-util.occ -- graphics3d raster utility procs.
+--	Copyright (C) 2008-2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+--** @module graphics3d
+
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.inc"
+
+--{{{  PROC raster.buffer (CHAN RASTER in?, out!)
+--* Simple raster buffer.
+-- Basic raster buffer process.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.buffer (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      out ! r
+:
+--}}}
+--{{{  PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps, CHAN G3D.TMR.CONTROL ctrl?)
+--* Timed raster buffer.
+-- Basic raster buffer process, but limits speed through at specified number
+-- of frames-per-second.
+-- @param in Rasters in
+-- @param out Rasters out
+-- @param fps Frames per second
+-- @param ctrl Control channel
+PROC raster.timed.buffer (CHAN RASTER in?, out!, VAL INT fps, CHAN G3D.TMR.CONTROL ctrl?)
+  TIMER tim:
+  INT t:
+  VAL INT default.fps IS fps:
+  INITIAL INT fps IS default.fps:
+  SEQ
+    tim ? t
+
+    INITIAL INT to IS (1000000 / fps):
+    INITIAL BOOL running IS TRUE:
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        in ? r
+        t := t PLUS to
+
+        INITIAL BOOL waiting IS TRUE:
+        WHILE waiting
+          PRI ALT
+            tim ? AFTER t
+              waiting := FALSE
+            ctrl ? CASE
+              reset
+                SEQ
+                  fps := default.fps
+                  to := 1000000 / fps
+              pause
+                SEQ
+                  ctrl ? CASE pause
+                  tim ? t
+                  t := t MINUS to
+              faster
+                SEQ
+                  IF
+                    fps < 60
+                      fps := fps + 1
+                    TRUE
+                      SKIP
+                  to := 1000000 / fps
+              slower
+                SEQ
+                  IF
+                    fps > 1
+                      fps := fps - 1
+                    TRUE
+                      SKIP
+                  to := 1000000 / fps
+              set.fps; fps
+                to := 1000000 / fps
+
+        out ! r
+:
+--}}}
+--{{{  PROC raster.fader (CHAN RASTER in?, out!)
+--* Fades rasters.
+-- Raster buffer that reduces the colour level of each of the components.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.fader (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      SEQ y = 0 FOR SIZE r
+        SEQ x = 0 FOR SIZE r[0]
+          [4]BYTE val RETYPES r[y][x]:
+          SEQ i = 0 FOR 4
+            IF
+              val[i] > #30
+                val [i] := val[i] - #18
+              TRUE
+                val[i] := #00
+      out ! r
+:
+--}}}
+--{{{  PROC raster.clearer (CHAN RASTER in?, out!)
+--* Clears rasters.
+-- Raster buffer that clears rasters as they go through.
+-- @param in Rasters in
+-- @param out Rasters out
+PROC raster.clearer (CHAN RASTER in?, out!)
+  WHILE TRUE
+    RASTER r:
+    SEQ
+      in ? r
+      raster.clear (r, #00000000)
+      out ! r
+:
+--}}}
+
+

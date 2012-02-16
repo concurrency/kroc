@@ -1,0 +1,8 @@
+Package: @STEM@-@OCCPLUG_PACKAGE_NAME@
+Version: @VERSION@
+Section: base
+Priority: optional
+Architecture: @BUILD_ARCHITECTURE@
+Depends: jedit
+Maintainer: matt@concurrency.cc
+Description: A JEdit plugin for occam-pi programming. 

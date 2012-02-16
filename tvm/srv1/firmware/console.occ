@@ -1,0 +1,94 @@
+#INCLUDE "srv1.inc"
+
+PROC console.input (CHAN BYTE in?, out!, BOOL killed, CHAN BOOL shutdown?)
+  INITIAL BOOL done IS FALSE:
+  WHILE NOT done
+    PRI ALT
+      shutdown ? done
+        SKIP
+      BYTE b:
+      in ? b
+        IF
+          b = '!'
+            BYTE c:
+            SEQ
+              in ? c
+              IF
+                c = '*n'
+                  SEQ
+                    killed := TRUE
+                    firmware.kill.user ()
+                TRUE
+                  SEQ
+                    out ! b
+                    out ! c
+          TRUE
+            out ! b
+:
+
+PROC console.output (CHAN BYTE in?, CHAN P.CONSOLE.REQ cmd.req?, CHAN P.CONSOLE.RSP cmd.rsp!)
+  CHAN INT::[]BYTE uart0.bulk:
+  PLACE uart0.bulk AT #0:
+
+  CHAN BYTE uart0.out:
+  PLACE uart0.out AT #0:
+
+  INITIAL BOOL done IS FALSE:
+  WHILE NOT done
+    PRI ALT
+      cmd.req ? CASE
+        disconnected
+          done := TRUE
+
+        MOBILE []BYTE data:
+        BOOL synchronous:
+        INT size:
+        bulk.out; synchronous; size; data
+          IF
+            (DEFINED data) AND (size > 0)
+              SEQ
+                IF
+                  (size > 4) AND ((SIZE data) >= size)
+                    VAL []BYTE data IS [ data FOR size ]:
+                    uart0.bulk ! size::data
+                  TRUE
+                    SEQ
+                      IF
+                        ((SIZE data) < size)
+                          size := SIZE data
+                        TRUE
+                          SKIP
+                      SEQ i = 0 FOR size
+                        uart0.out ! data[i]
+                IF
+                  synchronous
+                    cmd.rsp ! bulk.complete; size; data
+                  TRUE
+                    SKIP
+            synchronous
+              cmd.rsp ! error; ERROR.INV.PARAM
+            TRUE
+              SKIP
+              
+      BYTE b:
+      in ? b
+        IF
+          b <> 0
+            uart0.out ! b
+          TRUE
+            CHAN OF ANY c? RETYPES in:
+            SEQ
+              test.disconnected (c, done)
+              IF
+                done
+                  SKIP
+                TRUE
+                  uart0.out ! b
+:
+
+PROC console (CONSOLE? console, CHAN BYTE in?, CHAN BOOL shutdown?, BOOL killed)
+  PAR
+    console.input (in?, console[in]!, killed, shutdown?)
+    console.output (console[out]?, console[cmd.req]?, console[cmd.rsp]!)
+:
+

@@ -1,0 +1,25 @@
+if ( $?PATH ) then
+	setenv PATH "@KROC_ARCHBINDIR@:$PATH"
+else
+	setenv PATH "@KROC_ARCHBINDIR@"
+endif
+if ( $?MANPATH ) then
+	setenv MANPATH ":@KROC_MANDIR@:$MANPATH"
+else
+	setenv MANPATH ":@KROC_MANDIR@"
+endif
+if ( $?@ENV_LIBRARY_PATH@ ) then
+	setenv @ENV_LIBRARY_PATH@ "@KROC_ARCHLIBDIR@:$@ENV_LIBRARY_PATH@"
+else
+	setenv @ENV_LIBRARY_PATH@ "@KROC_ARCHLIBDIR@"
+endif
+if ( $?PKG_CONFIG_PATH ) then
+	setenv PKG_CONFIG_PATH "@KROC_ARCHLIBDIR@/pkgconfig:$PKG_CONFIG_PATH"
+else
+	setenv PKG_CONFIG_PATH "@KROC_ARCHLIBDIR@/pkgconfig"
+endif
+if ( $?ACLOCAL ) then
+	setenv ACLOCAL "$ACLOCAL -I @ACLOCALDIR@"
+else
+	setenv ACLOCAL "aclocal -I @ACLOCALDIR@"
+endif

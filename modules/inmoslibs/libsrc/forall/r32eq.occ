@@ -1,0 +1,151 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT (DEFINED(COMPILER.TOCK)))
+
+#IF DEFINED(TARGET.HAS.FPU)
+
+--{{{  #options and #comments
+#IF (FILESTACK = 0)
+#OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
+#COMMENT "T8 compiler library, V1.3 15/06/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
+--}}}
+
+#PRAGMA TRANSLATE REAL32EQ "REAL32EQ%O"
+
+--{{{  
+BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- V1.1, 1-Aug-89
+  -- Port to new compiler ( oc ); V1.2, 12-Feb-90 SRH
+  -- Bug fix: floating point unit's error flag was not being left
+  -- in its default state, so added FPUCLRERR; V1.3, 15-Jun-90 SRH
+  --}}}
+
+  BOOL result:
+  VALOF
+    ASM
+      LD ADDRESSOF X
+      FPLDNLSN
+      LD ADDRESSOF Y
+      FPLDNLSN
+      FPEQ
+      ST result
+    RESULT result
+:
+--}}}
+
+#ELSE -- !TARGET.HAS.FPU
+
+--{{{  #options and #comments
+#IF (FILESTACK = 0)
+#OPTION "W V"  -- full ASMs, no vector space
+#COMMENT "TA compiler library, V1.4 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
+--}}}
+
+#PRAGMA TRANSLATE REAL32EQ "REAL32EQ%O"
+
+--{{{  
+BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87) --- DES
+  -- New version -- faster -- for T4 (11may87) DES
+  -- V1.1, 21-Feb-89
+  -- V1.2, 24-Feb-89
+  -- Port to new compiler (oc); V1.3, 7-Apr-90 SRH
+  -- V1.4, 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL equal.if.ordered :
+  VALOF
+    --{{{  ASM
+    ASM
+      LDAB  Y, X
+      DIFF
+      CJ :equal
+      LDAB  Y, X
+      OR
+      MINT
+      NOT
+      AND     -- now is equal to 0 <=> both zeroes - i.e. at most sign bits set
+      :equal
+      EQC 0
+      ST equal.if.ordered
+    --}}}
+    RESULT (equal.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF -- !TARGET.HAS.FPU
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#IF (FILESTACK = 0)
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.2 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32EQ "REAL32EQ%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL32EQ (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+  -- V1.1 21-Feb-89
+  -- V1.2 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL equal.if.ordered :
+  VALOF
+    #USE "ranalyse"
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL high IS 1 :
+    VAL low  IS 0 :
+    INT MagX, MagY :
+    SEQ
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+      --Either the same or both +/- 0
+      equal.if.ordered := ((X [high] = Y [high]) AND (X [low] = Y [low])) OR
+                          ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) = 0)
+    RESULT (equal.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF

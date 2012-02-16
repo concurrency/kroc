@@ -1,0 +1,125 @@
+#INCLUDE "plumbing.module"
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+
+PROC show (CHAN REAL32 position?, rate?)
+  INITIAL REAL32 pos, rat IS 0.0,0.0:
+  WHILE TRUE
+    SEQ      
+      rate ? rat
+      serialWrite("Rate:")
+      serialWriteDecInt(rat)
+      serialWrite ("*n")
+      
+      position ? pos
+      serialWrite ("Pos:")
+      serialWriteDecInt(pos)
+      serialWrite ("*n")
+:
+PROC to.degrees (CHAN REAL32 input?, CHAN REAL32 output!)
+  REAL32 n:
+  WHILE TRUE
+    SEQ
+      input ? n
+      n := n - 331.0
+      n := n * 1.48
+      -- in milliseconds
+      output ! n
+      
+:
+PROC ping (CHAN SIGNAL request!)
+  SEQ
+    WHILE TRUE
+      SEQ
+        request ! SIGNAL
+        delay(1000)
+:
+
+PROC filter (CHAN REAL32 input?, CHAN REAL32 position!, rate!, drift?)
+  [4]REAL32 filter.arr:
+  INITIAL REAL32 current, current.pos, past.pos, error IS 0.0, 0.0, 0.0, 0.0:
+  
+  INITIAL INT start,end, dt IS 0, 0, 0:
+  SEQ
+    SEQ i=0 FOR 4
+      SEQ  
+        input ? filter.arr[i]
+    SEQ
+      input ? current
+    WHILE TRUE
+      TIMER time:
+      SEQ
+        
+        current := ((current) + ((((filter.arr[0]+ (filter.arr[1] *2)) + ((filter.arr[2] *2) + filter.arr[3])))/6))/2
+        rate ! current
+        
+        drift ? error
+        -- We need to multiply the error by the "-" time 
+        -- and "current" (rate) by the "+" time between sensor readings to make goodness 
+        
+        time ? start
+        dt := start - end
+        
+        current.pos := past.pos + ((error * (-dt)) + (current * dt))
+        past.pos := current.pos
+        position ! current.pos
+        
+        serialWrite ("dt: ")
+        serialWriteDecInt (dt)
+        serialWrite ("*n")
+        
+        time ? end 
+        
+        serialWriteDecInt (end-start)
+        
+        filter.arr [0] := filter.arr [1]
+        filter.arr [1] := filter.arr [2]
+        filter.arr [2] := filter.arr [3]
+        filter.arr [3] := current
+        input ? current
+:
+PROC gyro.drift (CHAN REAL32 drift!)
+  WHILE TRUE  
+    SEQ
+      drift ! 0
+:
+
+PROC main()
+  CHAN REAL32 degree:
+  CHAN REAL32 position, rate, input, drift:
+  CHAN SIGNAL signal:
+  PAR
+    adc(1,signal?, input!)
+    ping(signal!)
+    filter(degree?, position!, rate!, drift?)
+    show(position?, rate?)
+    to.degrees(input?, degree!)
+    gyro.drift(drift!)
+:
+    

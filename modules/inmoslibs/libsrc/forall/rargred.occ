@@ -1,0 +1,611 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32)
+
+--{{{  #OPTION and #COMMENT
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.4 13/05/91"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE ARGUMENT.REDUCE "ARGUMENT.REDUCE%O"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  ARGUMENT.REDUCE  TA
+BOOL, INT32, REAL32 FUNCTION ARGUMENT.REDUCE (VAL REAL32 Y, Z, Z.err)
+
+  --{{{  history
+  -- (17 March 1989)
+  -- Version using QUOTREM; V1.2, 20-3-1989
+  -- V1.3, 7-Apr-90 SRH
+  -- Altered so that main transputer error flag is not set, and
+  -- routine acts pretty much in the way one would expect for an
+  -- IEEE implementation. Bug report TS/1252; V1.4, 13-May-91 SRH
+  --}}}
+
+  #INCLUDE "endian.inc"
+
+  BOOL   b :
+  INT32  N :
+  REAL32 X :
+  VALOF
+    #INCLUDE "nan32.inc"
+    VAL INT Max.Diff IS 20 :
+    INT exp1, exp2, frac:
+    --{{{  IEEE32QUOTREM
+    BOOL, INT32, REAL32 FUNCTION IEEE32QUOTREM (VAL REAL32 X, Y)
+    
+      -- Beta-3 (7may87)
+      -- Modified to produce quotient 17-3-1989 PWT
+      -- Quotient initialised to zero 13-5-91 SRH
+    
+      BOOL   Error :
+      INT32  Quotient :
+      REAL32 Result :
+      VALOF
+        INT Quotient RETYPES Quotient :
+        INT Result RETYPES Result :
+        VAL INT X RETYPES X :
+        VAL INT Y RETYPES Y :
+        VAL RealExpSh  IS        23 :
+        VAL RealInf    IS #7F800000 :
+        --{{{  comment/variables
+        -- compute floating point value :-
+        --   Result : destination for result
+        --   X      : left hand operand
+        --   Y      : right hand operand (will be copied to local).
+        --   For this version compute also the integer quotient
+        INT Xexp, Xfrac, Yexp, Yfrac, Carry, Guard, Places, Ans :
+        VAL INT Sign IS SignBit :
+        --}}}
+        SEQ
+          --{{{  unpack operands
+          --{{{  unpack operands
+          Xexp,  Xfrac := SHIFTLEFT ( 0,  X << 1,  RealShift)
+          Xfrac := Xfrac >> 1                    -- room for leading bit
+          Yexp,  Yfrac := SHIFTLEFT ( 0,  Y << 1,  RealShift)
+          Yfrac := Yfrac >> 1
+          --}}}
+          --{{{  determine special cases
+          Quotient := 0
+          Error    := FALSE                      -- assume no errors
+          Carry    := 0                          -- assume not normal case
+          IF
+            (Xexp <> RealExp) AND (Yexp <> RealExp)
+              --{{{  normal or zeros
+              IF
+                (Xexp <> 0) AND (Yexp <> 0)      -- normal case
+                  --{{{  
+                  SEQ
+                    Carry := 1  -- work to do
+                    Xfrac := Xfrac \/ Sign
+                    Yfrac := Yfrac \/ Sign
+                  --}}}
+                (Yexp \/ Yfrac) = 0              -- Y is zero
+                  --{{{  quotient is undefined
+                  SEQ
+                    Ans := RemZeroNaN.32
+                    Error := TRUE
+                  --}}}
+                (Xexp \/ Xfrac) = 0              -- X is zero
+                  --{{{  quotient is zero
+                  SEQ
+                    Ans := X
+                    Quotient := 0
+                  --}}}
+                TRUE                             -- one or other denormalised
+                  --{{{  
+                  SEQ
+                    Carry := 1                   -- work to do
+                    IF
+                      Xexp <> 0                  -- set leading bit
+                        Xfrac := Xfrac \/ Sign
+                      TRUE                       -- set correct exponent
+                        Xexp := 1
+                    IF
+                      Yexp <> 0
+                        Yfrac := Yfrac \/ Sign
+                      TRUE
+                        Yexp := 1
+                  --}}}
+              --}}}
+            TRUE
+              --{{{  at least one is inf/NaN
+              SEQ
+                -- quotient is undefined, though one could argue that in the case of
+                -- X finite and Y infinite that the quotient must be zero, hence the
+                -- initialisation of Quotient above
+                Error := TRUE
+                IF
+                  (Xexp = RealExp) AND (Yexp = RealExp)
+                    --{{{  both NaN or inf
+                    IF
+                      (Xfrac \/ Yfrac) = 0       -- both inf
+                        Ans := RemInfNaN.32
+                      Yfrac > Xfrac              -- one a NaN so return larger one
+                        Ans := Y
+                      TRUE
+                        Ans := X
+                    --}}}
+                  Xexp = RealExp
+                    --{{{  X infinity/NaN
+                    IF
+                      Xfrac <> 0                 -- X is NaN
+                        Ans := X
+                      TRUE                       -- rem
+                        Ans := RemInfNaN.32
+                    --}}}
+                  Yfrac <> 0
+                    --{{{  Y is NaN
+                    Ans := Y                     -- keep NaN
+                    --}}}
+                  TRUE
+                    --{{{  Y infinity
+                    Ans := X
+                    --}}}
+              --}}}
+          --}}}
+          --}}}
+          --{{{  evaluate
+          IF
+            Carry = 0                            -- answer set up
+              Result := Ans
+            TRUE
+              SEQ
+                --{{{  calculate remainder
+                IF
+                  Yexp = 1                       -- possible denorm RHS
+                    SEQ                          -- normalise rhs
+                      Places,  Yfrac,  Guard := NORMALISE ( Yfrac,  0)
+                      Yexp := Yexp - Places      -- ensure lhs normal too
+                      Places,  Xfrac,  Guard := NORMALISE ( Xfrac,  0)
+                      Xexp := Xexp - Places
+                  TRUE
+                    SKIP
+                Ans := X /\ Sign
+                Places := Xexp - Yexp
+                IF
+                  Places >= 0                    -- general case
+                    SEQ
+                      Carry := BitsPerWord - (Places /\ (BitsPerWord - 1))
+                      Xfrac,  Guard := SHIFTRIGHT ( Xfrac,  0,  Carry)
+                      Guard,  Xfrac := LONGDIV ( Xfrac,  Guard,  Yfrac)
+                      WHILE Places >= BitsPerWord
+                        SEQ
+                          Guard,  Xfrac := LONGDIV ( Xfrac,  0,  Yfrac)
+                          Places := Places - BitsPerWord
+                      IF
+                        Xfrac = 0                -- divides exactly
+                          SEQ
+                            Xexp := 0
+                            Quotient := Guard
+                        TRUE
+                          SEQ                    -- see if over half
+                            Carry,  Xexp := LONGDIFF ( Yfrac >> 1,  Xfrac,  0)
+                            IF
+                              (Carry <> 0) OR ((Xexp = 0) AND ((Guard /\ 1) <> 0))--round up
+                                SEQ -- ### add one to guard here ???
+                                  Ans := Ans >< Sign -- negate answer
+                                  Xfrac := Yfrac MINUS Xfrac
+                                  Quotient := Guard + 1
+                              TRUE                  -- round up
+                                Quotient := Guard
+                            Xexp := Yexp
+                  Places = (-1)                     -- get ans by compare
+                    SEQ
+                      Carry,  Guard := LONGDIFF ( Yfrac,  Xfrac,  0)
+                      IF
+                        Carry = 0                   -- X is answer
+                          Quotient := 0
+                        TRUE                        -- Y - X is answer
+                          SEQ
+                            Quotient := 1
+                            Ans := Ans >< Sign      -- invert sign
+                            Xfrac := Yfrac MINUS (Xfrac >> 1)
+                            Xexp := Yexp
+                  TRUE                              -- always X
+                    Quotient := 0
+                Places,  Xfrac,  Guard := NORMALISE ( Xfrac,  0)
+                Xexp := Xexp - Places
+                IF
+                  Xexp <= 0                         -- gone denorm
+                    SEQ
+                      Xfrac,  Guard := SHIFTRIGHT ( Xfrac,  0,  1 - Xexp)
+                      Xexp := 0
+                  TRUE
+                    SKIP
+                --}}}
+                --{{{  pack result
+                Xexp,  Xfrac := SHIFTRIGHT ( Xexp,  Xfrac << 1,  RealShift + 1)
+                Result := Ans \/ Xfrac
+                --}}}
+                --{{{  adjust sign of quotient
+                IF
+                  ((X >< Y) /\ Sign) <> 0           -- signs differ
+                    Quotient := - Quotient
+                  TRUE
+                    SKIP
+                --}}}
+          --}}}
+        RESULT Error, Quotient, Result
+    :
+    --}}}
+    SEQ
+      --{{{  extract exponents
+      VAL INT Y.int RETYPES Y:
+      exp1, frac := SHIFTLEFT (0, Y.int << 1, RealShift)
+      VAL INT Z.int RETYPES Z:
+      exp2, frac := SHIFTLEFT (0, Z.int << 1, RealShift)
+      --}}}
+      b, N, X := IEEE32QUOTREM (Y, Z)
+      IF
+        (exp1 - exp2) <= Max.Diff
+          SEQ
+            #IF DEFINED(TARGET.HAS.FPU)
+            X := X - ((REAL32 ROUND N) * Z.err)
+            #ELSE
+            X := REAL32OP( X, sub, REAL32OP( (REAL32 ROUND N), mul, Z.err ) )
+            #ENDIF
+            INT32 Nprimed :
+            BOOL bprimed :
+            SEQ
+              -- take another remainder in case the correction has taken us
+              -- out of range :
+              bprimed, Nprimed, X := IEEE32QUOTREM (X, Z)
+              b := NOT (b OR bprimed) -- true unless an error
+              N := N + Nprimed
+        TRUE
+          SEQ
+            b := FALSE
+            -- Y and Z may be normal, but a non-finite Z.err must then be
+            -- invalid so now check for such an occurrence.
+            IF
+              NOTFINITE( Z.err )
+                X := InvalidOperandsNaN.r32
+              TRUE
+                SKIP
+    RESULT b, N, X
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #OPTION and #COMMENT
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.4 13/05/91"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE ARGUMENT.REDUCE "ARGUMENT.REDUCE%O"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  ARGUMENT.REDUCE  T2
+BOOL, INT32, REAL32 FUNCTION ARGUMENT.REDUCE (VAL REAL32 Y, Z, Z.err)
+
+  --{{{  history
+  -- Function version (19 Aug 87)
+  -- Version using QUOTREM; V1.2, 20-3-1989
+  -- V1.3, 7-Apr-90 SRH
+  -- Altered so that main transputer error flag is not set, and
+  -- routine acts pretty much in the way one would expect for an
+  -- IEEE implementation. Bug report TS/1252; V1.4, 13-May-91 SRH
+  --}}}
+
+  BOOL   b :
+  INT32  N :
+  REAL32 X :
+  VALOF
+    #INCLUDE "nan16.inc"
+    --{{{  #USEs
+    #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
+    #USE "ridiv"  --  27-Nov-07
+    --}}}
+    VAL RealExpSh  IS     7 :
+    VAL RealInf    IS #7F80 :
+
+    --{{{  IEEE32QUOTREM
+    BOOL, INT32, REAL32 FUNCTION IEEE32QUOTREM (VAL REAL32 X, Y)
+    
+      -- Function version (10 Jun 87)
+      -- Modified to produce quotient 20-3-1989 PWT
+      -- Quotient initialised to zero 13-5-91 SRH
+    
+      BOOL   Error :
+      INT32  Quotient :
+      REAL32 Result :
+      VALOF
+        --{{{  declarations
+        [2]INT Quotient RETYPES Quotient :
+        [2]INT Result RETYPES Result :
+        VAL [2]INT X RETYPES X :
+        VAL [2]INT Y RETYPES Y :
+        INT Xexp :
+        [2] INT Xfrac :
+        PLACE Xfrac IN WORKSPACE :
+        INT Yexp :
+        [2] INT Yfrac :
+        PLACE Yfrac IN WORKSPACE :
+        INT Carry, Guard, Places :
+        [2] INT Ans :
+        PLACE Ans IN WORKSPACE :
+        VAL INT Sign IS SignBit :
+        --}}}
+        SEQ
+          --{{{  Unpack operands
+          --{{{  Separate mantissa and exponents
+          Xfrac[1],  Xfrac[0] := SHIFTLEFT ( X[1],  X[0],  RealShift)
+          Yfrac[1],  Yfrac[0] := SHIFTLEFT ( Y[1],  Y[0],  RealShift)
+          
+          Xexp := (X[1] >> RealExpSh) /\ RealExp
+          Yexp := (Y[1] >> RealExpSh) /\ RealExp
+          --}}}
+          
+          Quotient[0] := 0
+          Quotient[1] := 0
+          Ans[0]      := 0
+          Carry       := 0                             -- assume not normal case
+          Error       := FALSE                         -- assume no error
+          IF
+            (Xexp <> RealExp) AND (Yexp <> RealExp)
+              --{{{  zeros or real nos
+              IF
+                (Xexp <> 0) AND (Yexp <> 0)
+                  --{{{  both normal numbers
+                  SEQ                                  -- normal case
+                    Carry := 1
+                    Xfrac[1] := Xfrac[1] \/ Sign
+                    Yfrac[1] := Yfrac[1] \/ Sign
+                  --}}}
+                ((Yexp \/ Yfrac[1]) \/ Yfrac[0]) = 0
+                  --{{{  Y is zero
+                  SEQ
+                    Ans := RemZeroNaN.32
+                    Error := TRUE
+                  --}}}
+                ((Xexp \/ Xfrac[1]) \/ Xfrac[0]) = 0
+                  --{{{  X is zero
+                  SEQ
+                    Ans := X
+                    Quotient := [0,0]
+                  --}}}
+                TRUE
+                  --{{{  one or both are denormalised
+                  -- Put in implicit MSB
+                  -- Normalise any denormaliseds and correct their exponents if op is
+                  -- multiply, divide or rem leave unormal for add and sub
+                  SEQ
+                    Carry := 1                         -- work to do
+                    IF
+                      Xexp <> 0                        -- set leading bit
+                        Xfrac[1] := Xfrac[1] \/ Sign
+                      TRUE                             -- set correct exponent
+                        SEQ
+                          Places,  Xfrac[1],  Xfrac[0] := NORMALISE ( Xfrac[1],  Xfrac[0])
+                          Xexp := 1 - Places
+                    IF
+                      Yexp <> 0
+                        Yfrac[1] := Yfrac[1] \/ Sign
+                      TRUE
+                        SEQ
+                          Places,  Yfrac[1],  Yfrac[0] := NORMALISE ( Yfrac[1],  Yfrac[0])
+                          Yexp := 1 - Places
+                  --}}}
+              --}}}
+            TRUE
+              --{{{  one or other inf/NaN
+              SEQ
+                Xfrac[1] := Xfrac[1] /\ (~Sign)        -- clear top bits
+                Yfrac[1] := Yfrac[1] /\ (~Sign)
+                Error := TRUE
+                IF
+                  (Xexp = RealExp) AND (Yexp = RealExp)
+                    --{{{  both inf/NaN
+                    SEQ
+                      Guard, Places := LONGDIFF (Xfrac[0], Yfrac[0], 0)
+                      Guard, Places := LONGDIFF (Xfrac[1], Yfrac[1], Guard)
+                      IF
+                        ((Xfrac [1] \/ Xfrac [0]) \/ (Yfrac [1] \/ Yfrac [0])) = 0
+                          Ans := RemInfNaN.32
+                        Places < 0
+                          Ans := Y
+                        TRUE
+                          Ans := X
+                    --}}}
+                  Xexp = RealExp
+                    --{{{  X is inf/NaN
+                    IF
+                      (Xfrac[1] \/ Xfrac[0]) <> 0
+                        Ans := X
+                      TRUE
+                        Ans := RemInfNaN.32
+                    --}}}
+                  (Yfrac[1] \/ Yfrac[0]) <> 0
+                    --{{{  Y is NaN
+                    SEQ
+                      Ans[1] := Y[1]                   -- keep NaN (may be - if sub)
+                      Ans[0] := Y[0]
+                    --}}}
+                  TRUE
+                    --{{{  Y is inf
+                    SEQ
+                      Ans[1] := X[1]
+                      Ans[0] := X[0]
+                    --}}}
+              --}}}
+          --}}}
+          --{{{  evaluate
+          IF
+            Carry = 0
+              --{{{  Answer is set up
+              SEQ
+                Result[1] := Ans[1]
+                Result[0] := Ans[0]
+              --}}}
+            TRUE
+              --{{{  Do Remainder
+              SEQ
+                --{{{  find remainder
+                SEQ
+                  -- Denorms already normalised
+                  Ans[1] := X[1] /\ Sign               -- set correct sign
+                  Places := Xexp - Yexp
+                  IF
+                    Places >= 0                        -- general case
+                      SEQ
+                        Carry := Places /\ (BitsPerWord - 1)
+                        Guard,  Xexp := SHIFTLEFT ( 0,  Xfrac[1],  Carry)
+                        Xfrac[1],  Xfrac[0] := SHIFTLEFT ( Xfrac[1],  Xfrac[0],  Carry)
+                        Quotient := [0,0]
+                        Quotient[0], Xfrac[1],  Xfrac[0] := RealIDiv (Guard, Xfrac[1],
+                                                                 Xfrac[0],  Yfrac)
+                        Places := Places - Carry
+                        WHILE Places > 0
+                          SEQ
+                            Guard := Xfrac[1]
+                            Xfrac[1] := Xfrac[0]
+                            Xfrac[0] := 0
+                            Carry,  Xexp := LONGDIFF ( Xfrac[1],  Yfrac[1],  0)
+                            Quotient[1] := Quotient[0]
+                            IF
+                              (Guard = 0) AND (Carry <> 0) -- filter out some 0 quotients
+                                Quotient[0] := 0
+                              TRUE
+                                Quotient[0],  Xfrac[1],  Xfrac[0] := RealIDiv (Guard,
+                                                    Xfrac[1], Xfrac[0],  Yfrac)
+                            Places := Places - BitsPerWord
+                        IF
+                          (Xfrac[1] \/ Xfrac[0]) = 0   -- divides exactly
+                            Xexp := 0
+                          TRUE
+                            SEQ
+                              Ans[1],  Ans[0] := SHIFTRIGHT (Yfrac[1],  Yfrac[0],  1)
+                              Carry,  Ans[0] := LONGDIFF ( Ans[0],  Xfrac[0],  0)
+                              Carry,  Ans[1] := LONGDIFF ( Ans[1], Xfrac[1],  Carry)
+                              IF
+                                (Carry <> 0) OR (((Ans[1] \/ Ans[0]) = 0) AND
+                                 ((Guard /\ 1) <> 0))
+                                  SEQ
+                                    Ans[1] := (X[1] >< Sign) /\ Sign--negate ans
+                                    Carry,  Xfrac[0] := LONGDIFF ( Yfrac[0], Xfrac[0],  0)
+                                    Carry,  Xfrac[1] := LONGDIFF ( Yfrac[1], Xfrac[1],  Carry)
+                                    -- add 1 to Quotient
+                                    Carry, Quotient[0] := LONGSUM (Quotient[0], 1, 0)
+                                    Carry, Quotient[1] := LONGSUM (Quotient[1], 0, Carry)
+                                TRUE
+                                  Ans[1] := X[1] /\ Sign -- reset sign
+                              Xexp := Yexp
+                    Places = (-1)                      -- half to nearly one
+                      SEQ
+                        Carry,  Guard := LONGDIFF ( Yfrac[0],  Xfrac[0],  0)
+                        Carry,  Guard := LONGDIFF ( Yfrac[1],  Xfrac[1],  Carry)
+                        IF
+                          Carry = 0                    -- X is answer
+                            Quotient := [0,0]
+                          TRUE                         -- Y-X is answer
+                            SEQ
+                              Quotient := [1,0] -- Quotient = 1
+                              Ans[1] := Ans[1] >< Sign -- invert sign
+                              Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  1)
+                              Carry,  Xfrac[0] := LONGDIFF ( Yfrac[0], Xfrac[0],  0)
+                              Carry,  Xfrac[1] := LONGDIFF ( Yfrac[1], Xfrac[1],  Carry)
+                              Xexp := Yexp
+                    TRUE                               -- less than half
+                      Quotient := [0,0]
+                  Guard := 0
+                  Places,  Xfrac[1],  Xfrac[0] := NORMALISE ( Xfrac[1],  Xfrac[0])
+                  Xexp := Xexp - Places                -- ensure normalised
+                  IF
+                    Xexp <= 0                          -- gone denorm
+                      SEQ
+                        Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  1 - Xexp)
+                        Xexp := 0
+                    TRUE
+                      SKIP
+                --}}}
+                --{{{  pack result
+                Places := Xfrac[0]                     -- save round bits
+                Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1] /\ (~Sign),  Xfrac[0],
+                                                                        RealShift)
+                Carry,  Xexp := SHIFTRIGHT ( Xexp,  0,  RealShift + 1)
+                Xfrac[1] := Xfrac[1] \/ Xexp
+                
+                Result[1] := Ans[1] \/ Xfrac[1]
+                Result[0] := Xfrac[0]
+                --}}}
+                --{{{  adjust sign of quotient
+                IF
+                  ((X[1] >< Y[1]) /\ Sign) <> 0        -- signs differ
+                    SEQ                                -- Quotient := MINUS Quotient
+                      Guard, Quotient[0] := LONGDIFF (0, Quotient[0], 0)
+                      Guard, Quotient[1] := LONGDIFF (0, Quotient[1], Guard)
+                  TRUE
+                    SKIP
+                --}}}
+              --}}}
+          --}}}
+        RESULT Error, Quotient, Result
+    :
+    --}}}
+    VAL [2]INT Y.int RETYPES Y:
+    VAL [2]INT Z.int RETYPES Z:
+    VAL INT Max.Diff IS 20 :
+    INT exp1, exp2, frac:
+    SEQ
+      exp1, frac := SHIFTLEFT (0, Y.int[1] << 1, RealShift)
+      exp2, frac := SHIFTLEFT (0, Z.int[1] << 1, RealShift)
+      b, N, X := IEEE32QUOTREM (Y, Z)
+      IF
+        (exp1 - exp2) <= Max.Diff
+          SEQ
+            X := REAL32OP( X, sub, REAL32OP( (REAL32 ROUND N), mul, Z.err ) )
+            INT32 Nprimed :
+            BOOL bprimed :
+            SEQ
+              -- take another remainder in case the correction has taken us
+              -- out of range :
+              bprimed, Nprimed, X := IEEE32QUOTREM (X, Z)
+              b := NOT (b OR bprimed) -- true unless an error
+              N := N + Nprimed
+        TRUE
+          SEQ
+            b := FALSE
+            -- Y and Z may be normal, but a non-finite Z.err must then be
+            -- invalid so now check for such an occurrence.
+            IF
+              NOTFINITE( Z.err )
+                X := InvalidOperandsNaN.r32
+              TRUE
+                SKIP
+    RESULT b, N, X
+:
+--}}}
+
+#ENDIF

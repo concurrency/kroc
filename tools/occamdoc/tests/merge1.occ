@@ -1,0 +1,7 @@
+--** Multi-file library.
+-- This should be merged with merge2.occ.
+-- @module merge
+
+--* Constant in merge1
+VAL INT foo.1 IS 42:
+

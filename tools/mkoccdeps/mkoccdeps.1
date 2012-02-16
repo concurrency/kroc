@@ -1,0 +1,89 @@
+.\" mkoccdeps command man page, last updated 30/12/2005 by Fred Barnes
+.TH MKOCCDEPS "1" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+mkoccdeps \- generates occam program dependency information
+.SH SYNOPSIS
+.B mkoccdeps
+[\fIoption\fR [\fI...\fR]] \fIfile\fR...
+.SH DESCRIPTION
+.PP
+Calculates dependencies for occam programs.  The programs scans the files given on the
+command-line (as \fIfile\fR...) and produces Makefile compatible dependencies for them.
+.PP
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+print usage summary and options
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+print version and exit
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+verbose operation
+.TP
+\fB\-o\fR, \fB\-\-output\fR  \fIFILE\fR
+output to \fIFILE\fR.  "-" means standard output, that is the default
+.TP
+\fB\-f\fR, \fB\-\-follow\fR
+follow referenced files and generate dependency information for those too
+.TP
+\fB\-F\fR, \fB\-\-follow\-local\fR
+follow referenced files, but only those in the current directory
+.TP
+\fB\-a\fR, \fB\-\-allobjs\fR
+additionally generate an ALLOBJS variable in the output containing all the object
+files that have corresponding source files in the project
+.TP
+\fB\-A\fR, \fB\-\-allotherobjs\fR
+generate an ALLOBJS variable in the output contaning all the object files that
+have corresponding source files, except those whose source file was given on the
+command-line (only makes sense with the \fB\-\-follow\fR option).
+.TP
+\fB\-I\fR, \fB\-\-include\fR  \fIPATH\fR
+search \fIPATH\fR for occam libraries (sources) and includes
+.PP
+.SH EXAMPLE
+.PP
+For a typical project, containing multiple source files and where "main.occ" has the
+top-level process, depdencies suitable for a Makefile can be generated using:
+.PP
+	mkoccdeps -o DEPS -F -A main.occ
+.PP
+This will examine main.occ and any files it references, and so on.  An ALLOBJS variable
+will be output that contains all the object files except "main.o".  This can be used
+in conjunction with a Makefile rule of the form:
+.PP
+	main:    $(ALLOBJS) main.occ
+.br
+	         kroc main.occ $(ALLOBJS) $(LIBS)
+.PP
+.SH DEFICIENCIES
+.PP
+The program is blind to any conditional compilation (using the pre-processor)
+.PP
+.SH AUTHOR
+This manual page is maintained by Fred Barnes <frmb@kent.ac.uk>
+.SH "SEE ALSO"
+kroc(1)
+.SH "REPORTING BUGS"
+Please report bugs to <kroc-bugs@kent.ac.uk>
+.SH COPYRIGHT
+Copyright \(co 2004-2005 Fred Barnes <frmb@kent.ac.uk>
+.PP
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation;
+either version 2 of the License, or (at your option) any
+later version.
+.PP
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+.PP
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+02139, USA.
+

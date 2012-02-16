@@ -1,0 +1,1321 @@
+-- version control marker $Id: cgtest07.occ,v 1.5 1996/11/05 12:16:02 svd Exp $
+
+PROC cgtest7 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  SEQ
+    init ("CG test 7", "Constants, vector access, and slices")
+
+    --{{{  constants & vector access   (C1   to C999)
+    PROC c.and.vector()
+      SEQ
+        --{{{  output message
+        title ("Testing constants and vector access")
+        --}}}
+        VAL D1 IS [10, 4, 69, 42] :
+        VAL D2 IS [BYTE 10, BYTE 4, BYTE 69, BYTE 42]:
+        VAL D3 IS "Hello":
+        VAL D4 IS [10, 10, 1]:
+        VAL D5 IS "+" :
+        VAL flags IS [TRUE, FALSE, TRUE]:
+        VAL D6 IS "finale" :
+        [99]BYTE  V1:
+        [100]INT  V2:
+        SEQ
+          --{{{  C1   - C19
+          --{{{  C1  - C5
+          SEQ
+            check (42, [10, 4, 69, 42][3], "C1")
+            check (42, INT([BYTE 10,BYTE 4,BYTE 69,BYTE 42][3]), "C2")
+            check (INT 'e', INT ("Hello"[1]), "C3")
+            check (INT 'e', INT ("Hello"[[10, 10, 1][2]]), "C4")
+            check (INT 'e', INT ("Hello"[INT[BYTE 10, BYTE 10, BYTE 1][42 \ 10]]),
+                   "C5")
+          --}}}
+          --{{{  C6  - C10
+          PROC CC2 ()
+            INT X:
+            PROC CCC2 ()
+              SEQ
+                check (42, D1[3], "C6")
+                check (42, INT (D2[3]), "C7")
+                check (INT 'H', INT (D3[0]), "C8")
+                check (INT 'e', INT (D3[D4[2]]), "C9")
+                X := 42
+                check (INT 'e', INT (D3[D4[X \ 10]]), "C10")
+            :
+            CCC2 ()
+          :
+          CC2 ()
+          --}}}
+          --{{{  C11 - C12
+          VAL n IS 3:
+          --{{{  PROC CC3a
+          PROC CC3a (VAL []BYTE V1, []INT V2)
+            INT X:
+            SEQ
+              X := n
+              check (INT (V1[(X << n) >> n]), V2[(X << X) >> n], "C11")
+          :
+          --}}}
+          --{{{  PROC CC3b
+          PROC CC3b ([]INT V2, VAL []BYTE V1)
+            INT X:
+            SEQ
+              X := n
+              check (INT (V1[(X << n) >> n]), V2[(X << X) >> n], "C12")
+          :
+          --}}}
+          PROC CC3c ()
+            SEQ
+              V1[3] := BYTE 42
+              V2[3] := 42
+              CC3a(V1, V2)
+              CC3b(V2, V1)
+          :
+          CC3c ()
+          --}}}
+          --{{{  C13 - C14
+          VAL n IS 3:
+          --{{{  PROC CC3a
+          PROC CC3a (VAL []BYTE V1, []INT V2)
+            check (INT (V1[(((INT D2[1]) - 1) << n) >> n]),
+                   V2[(((INT([BYTE 10,BYTE 4,BYTE 69,BYTE 42][1])) - 1) <<
+                   ((INT(D2[1])) - 1)) >> n],
+                   "C13")
+          :
+          --}}}
+          --{{{  PROC CC3b
+          PROC CC3b ([]INT V2, VAL []BYTE V1)
+            INT X:
+            VAL n IS 3:
+            PROC sid ()
+              SEQ
+                X := n
+                check (INT (V1[(X << n) >> n]), V2[(X << X) >> n], "C14")
+            :
+            sid ()
+          :
+          --}}}
+          PROC CC3c ()
+            SEQ
+              V1[3] := BYTE 42
+              V2[3] := 42
+              CC3a (V1, V2)
+              CC3b (V2, V1)
+          :
+          CC3c ()
+          --}}}
+          --{{{  C15 - C16
+          SEQ
+            SEQ i = 0 FOR 10
+              SEQ
+                V1[i] := BYTE i
+                V2[INT V1[INT V1[i]]] := i
+            IF
+              IF i = 0 FOR 10
+                IF
+                  V1[i] <> (BYTE i)
+                    check (0, -1, "C15")
+                  V2[i] <> i
+                    check (0, -1, "C16")
+              TRUE
+                SKIP
+          --}}}
+          --{{{  C17
+          PROC C (VAL []BYTE X, VAL []BYTE Y)
+            check (INT X[0], INT Y[0], "C17")
+          :
+          C ("+", D5)
+          --}}}
+          --{{{  C18
+          BOOL answer:
+          SEQ
+            answer := FALSE
+            IF
+              flags[0]
+                IF
+                  flags[1]
+                    SKIP
+                  TRUE
+                    IF
+                      flags[2]
+                        answer := TRUE
+                      TRUE
+                        SKIP
+              TRUE
+                SKIP
+            check (INT answer, INT TRUE, "C18")
+          --}}}
+          --{{{  C19
+          VAL reverse IS "elanif":
+          [7]CHAN OF BYTE c:
+          [7]BYTE receiver:
+          SEQ
+            PAR
+              PAR i = 0 FOR SIZE reverse
+                c[i] ! reverse[i]
+              PAR i = 0 FOR SIZE reverse
+                c[i] ? receiver[5 - i]
+            SEQ i = 0 FOR SIZE reverse
+              check (INT receiver[i], INT D6[i], "C19")
+          --}}}
+          --}}}
+          --{{{  C20  - C29
+          INT x :
+          SEQ
+            x := (~0) >> 1
+            check (MOSTPOS INT, x, "C20")
+            x := ~x
+            check (MOSTNEG INT, x, "C21")
+          --}}}
+          --{{{  C30  - C39  Constructors containing variables
+          INT a, x , y, z :
+          SEQ
+            a := 1
+            x := 15
+            y := 20
+            z := 666
+            VAL tbl IS [x, y, 100, z ] :
+            SEQ
+              check (x, 15, "C30")
+              check (tbl [0], 15, "C31")
+              check (tbl [1], 20, "C32")
+              check (tbl [a], 20, "C33")
+              check (tbl [2], 100, "C34")
+              check (tbl [3], 666, "C35")
+          --}}}
+          --{{{  C40  - C49  Constructors containing expressions
+          INT a, x , y, z :
+          SEQ
+            a := 1
+            x := 15
+            y := 20
+            z := 666
+            VAL tbl IS [x + 1, y + y, 100, z ] :
+            SEQ
+              check (x, 15, "C30")
+              check (tbl [0], 16, "C41")
+              check (tbl [1], 40, "C42")
+              check (tbl [a], 40, "C43")
+              check (tbl [2], 100, "C44")
+              check (tbl [3], 666, "C45")
+          --}}}
+          --{{{  C100 - C199 Multi dimensional constructors
+          VAL [2] [2] INT ablock IS [[1,1], [2,2]] :
+          VAL [2] [2] INT bblock IS [[1,1], [2,2]] :
+          VAL [2][2][2]INT blocklist2 IS [ablock, bblock] :
+          
+          VAL [3] [2] INT xblock IS [[1,1], [2,2], [3,3]] :
+          VAL [3] [2] INT yblock IS [[1,1], [2,2], [3,3]] :
+          VAL [2][3][2]INT blocklist3 IS [xblock, yblock] :
+          
+          BOOL z :
+          SEQ
+            --{{{  test blocklist2 (C100)
+            IF
+              IF i = 0 FOR 2
+                IF j = 0 FOR 2
+                  IF k = 0 FOR 2
+                    blocklist2 [i] [j] [k] <> (j + 1)
+                      z := FALSE
+              TRUE
+                z := TRUE
+            check (INT z, INT TRUE, "C100")
+            --}}}
+            --{{{  test blocklist3 (C101)
+            IF
+              IF i = 0 FOR 2
+                IF j = 0 FOR 3
+                  IF k = 0 FOR 2
+                    blocklist3 [i] [j] [k] <> (j + 1)
+                      z := FALSE
+              TRUE
+                z := TRUE
+            check (INT z, INT TRUE, "C101")
+            --}}}
+          --}}}
+    :
+    c.and.vector()
+    --}}}
+    --{{{  testing slices              (SL1  to SL5 )
+    PROC slices()
+      SEQ
+        --{{{  output message
+        title ("Testing array slices")
+        --}}}
+        VAL S1 IS "A long sentence containing string":
+        VAL S2 IS "sentence":
+        SEQ
+          --{{{  SL1  - slices of strings
+          [8]BYTE t:
+          BOOL answer:
+          SEQ
+            t := [S1 FROM 7 FOR 8]
+            answer := TRUE
+            SEQ i = 0 FOR 7
+              IF
+                t[i] = S2[i]
+                  SKIP
+                TRUE
+                  answer := FALSE
+            check (INT answer, INT TRUE, "SL1")
+          --}}}
+          --{{{  SL2  - uses constants
+          [SIZE S1]BYTE S3:
+          SEQ
+            [S3 FROM 0 FOR 7] := [S1 FROM 0 FOR 7]
+            [S3 FROM 15 FOR 18] := [S1 FROM 15 FOR 18]
+            [S3 FROM 7 FOR 8] := S2
+            INT test:
+            SEQ
+              test := 0
+              SEQ i = 0 FOR 33
+                IF
+                  S1[i] = S3[i]
+                    SKIP
+                  TRUE
+                    test := test + 1
+              check (test, 0, "SL2")
+          --}}}
+          --{{{  SL2a - uses variables
+          INT zero, seven, eight, fifteen, eighteen :
+          [SIZE S1]BYTE S3:
+          SEQ
+            zero := 0
+            seven := 7
+            eight := 8
+            fifteen := 15
+            eighteen := 18
+            [S3 FROM zero FOR seven] := [S1 FROM zero FOR seven]
+            [S3 FROM fifteen FOR eighteen] := [S1 FROM fifteen FOR eighteen]
+            [S3 FROM seven FOR eight] := S2
+            INT test:
+            SEQ
+              test := 0
+              SEQ i = 0 FOR 33
+                IF
+                  S1[i] = S3[i]
+                    SKIP
+                  TRUE
+                    test := test + 1
+              check (test, 0, "SL2a")
+          --}}}
+          --{{{  SL2b - uses VALs
+          VAL zero IS 0 :
+          VAL seven IS 7 :
+          VAL eight IS 8 :
+          VAL fifteen IS 15 :
+          VAL eighteen IS 18 :
+          [SIZE S1]BYTE S3:
+          SEQ
+            [S3 FROM zero FOR seven] := [S1 FROM zero FOR seven]
+            [S3 FROM fifteen FOR eighteen] := [S1 FROM fifteen FOR eighteen]
+            [S3 FROM seven FOR eight] := S2
+            INT test:
+            SEQ
+              test := 0
+              SEQ i = 0 FOR 33
+                IF
+                  S1[i] = S3[i]
+                    SKIP
+                  TRUE
+                    test := test + 1
+              check (test, 0, "SL2b")
+          --}}}
+          --{{{  SL3
+          VAL nums IS [2,3,4,5,6]:
+          [10]INT store:
+          BOOL yes:
+          SEQ
+            yes := TRUE
+            [store FROM 3 FOR 5] := nums
+            SEQ i = 3 FOR SIZE nums
+              IF
+                store[i] = (i - 1)
+                  SKIP
+                TRUE
+                  yes := FALSE
+            check (INT yes, INT TRUE, "SL3")
+          --}}}
+          --{{{  SL4 check a bug - RETYPES slices problem (can give message Tx4 or 68K)
+          [20] BYTE b :
+          INT n :
+          SEQ
+            [b FROM 0 FOR 8] := "ABCDEFGH"
+            n := 8
+            []INT a RETYPES [b FROM 0 FOR n] :
+            SEQ
+              IF
+                (a[0] /\ #FFFF) = #4241
+                  check (0, 0, "Tx4")    -- all transputers are little-endian
+                (a[0] /\ #FFFF) = #4443
+                  check (0, 0, "68K4")   -- 68K swaps the high and low halves
+                #IF DEFINED(TARGET.BIGENDIAN)
+                (a[0] /\ #FFFF) = #4344
+                  check (0, 0, "BE")     -- (32 bit) big-endian target
+                #ENDIF
+                TRUE
+                  check (0, 1, "SL4")
+          --}}}
+          --{{{  SL5
+          INT p :
+          [10] INT v :
+          VAL cv IS [1,2] :
+          VAL cs IS (SIZE cv) - 1 :
+          SEQ
+            v := [0,0,0,0,0,0,0,0,0,0]
+            p := 2
+            [v FROM p FOR cs] := [cv FROM 1 FOR cs]
+            check (v[2], 2, "SL5")
+          --}}}
+    :
+    slices()
+    --}}}
+    --{{{  more slice tests            (M000 to M999)
+    PROC more.slices()
+      SEQ
+        --{{{  output message
+        title ("Testing more slices")
+        --}}}
+        [10] [20] INT a :  --comment out to check for non-local array
+        INT i, j, k, l :
+        SEQ
+          --{{{  test slicing              (M000 to M099)
+          --{{{  constant slices           (M000 to M009)
+          b IS [a FROM 0 FOR 1] :
+          i := SIZE b
+          check (i, 1, "M000")
+          b IS [a FROM 0 FOR 10] :
+          i := SIZE b
+          check (i, 10, "M001")
+          b IS [a FROM 4 FOR 6] :
+          i := SIZE b
+          check (i, 6, "M002")
+          b IS [a FROM 9 FOR 1] :
+          i := SIZE b
+          check (i, 1, "M003")
+          --}}}
+          --{{{  variable base             (M010 to M019)
+          j := 0
+          b IS [a FROM j FOR 1] :
+          i := SIZE b
+          check (i, 1, "M010")
+          b IS [a FROM j FOR 5] :
+          i := SIZE b
+          check (i, 5, "M011")
+          b IS [a FROM j FOR 10] :
+          i := SIZE b
+          check (i, 10, "M012")
+          --}}}
+          --{{{  variable count            (M020 to M029)
+          j := 1
+          b IS [a FROM 0 FOR j] :
+          i := SIZE b
+          check (i, 1, "M020")
+          b IS [a FROM 5 FOR j] :
+          i := SIZE b
+          check (i, 1, "M021")
+          b IS [a FROM 9 FOR j] :
+          i := SIZE b
+          check (i, 1, "M022")
+          --}}}
+          --{{{  variable both             (M030 to M039)
+          k := 3
+          j := 5
+          b IS [a FROM k FOR j] :
+          i := SIZE b
+          check (i, 5, "M030")
+          --}}}
+          --{{{  expression both           (M040 to M049)
+          k := 3
+          j := 5
+          b IS [a FROM j - k FOR j + k] :
+          i := SIZE b
+          check (i, 8, "M030")
+          --}}}
+          --}}}
+          --{{{  test some bugs            (M200 to M299)
+          --{{{  non-overlapping slices     M200
+          INT x, y, z :
+          [10] INT a :
+          SEQ
+            SEQ i = 0 FOR SIZE a
+              a[i] := i
+            a[5] := 99
+            x := 5
+            y := 5
+            z := 0
+            [a FROM z FOR x] := [a FROM y FOR x]
+            check (a[0], 99, "M200")
+          --}}}
+          --{{{  slices of zero length arrays201
+          PROC q (VAL []BYTE s)
+            SKIP
+          :
+          PROC r (VAL []BYTE t)
+            q ([t FROM 0 FOR 0])
+          :
+          SEQ
+            r ("")
+            check (0, 0, "M201")
+            VAL name IS "" :
+            SEQ
+              r(name)
+              check(0,0,"M202")
+              VAL name.2 IS name :
+              SEQ
+                r(name.2)
+                check(0,0,"M203")
+          --}}}
+          --}}}
+    :
+    more.slices()
+    --}}}
+    --{{{  long constants              (L000 to L999)
+    PROC long.constants()
+      SEQ
+        --{{{  output message
+        title ("Testing long constants")
+        --}}}
+        --{{{  plain INT long constants   (tests L001 - L099)
+        VAL l1 IS #1000 :
+        VAL l2 IS #2000 :
+        VAL l3 IS #5678 :
+        VAL l4 IS #ABCD   :
+        INT x1, x2, x3, x4 :
+        SEQ
+          x1 := l1
+          x2 := l2
+          x3 := l3
+          x4 := l4
+          check  (l1, #1000, "L001")
+          check  (l2, #2000, "L002")
+          check  (l3, #5678, "L003")
+          check  (l4, #ABCD, "L004")
+          check  (x1, #1000, "L011")
+          check  (x2, #2000, "L012")
+          check  (x3, #5678, "L013")
+          check  (x4, #ABCD, "L014")
+          check  (l1 + l1, l2, "L021")
+          check  (x1 + x1, l2, "L021a")
+          check  (l1 + l1, #2000, "L022")
+          check  (x1 + x1, #2000, "L022a")
+          check  (x1 - x1, 0, "L023")
+          check  (x2 - x2, 0, "L024")
+          check  (x3 - x3, 0, "L025")
+          check  (x4 - x4, 0, "L026")
+          check  (x2 - x1, l1, "L027")
+        --}}}
+        --{{{  INT inside procedures      (tests L100 - L299)
+        VAL ext IS #1000 :
+        INT x, y, z :
+        SEQ
+          --{{{  none  (L100 - 109)
+          PROC none (INT x)
+            x := ext
+          :
+          SEQ
+            x := 0
+            check  (x, 0, "L100")
+            none (x)
+            check  (x, #1000, "L101")
+          --}}}
+          --{{{  one   (L110 - 119)
+          PROC one (INT x)
+            VAL n IS #2000 :
+            x := n
+          :
+          SEQ
+            x := 2
+            check  (x, 2, "L110")
+            one (x)
+            check  (x, #2000, "L111")
+            one (y)
+            check  (y, #2000, "L112")
+          --}}}
+          --{{{  one.a (L120 - 129)
+          PROC one.a (INT x)
+            x := #3000
+          :
+          SEQ
+            z := 13
+            check  (z, 13, "L120")
+            one.a (z)
+            check  (z, #3000, "L121")
+          --}}}
+          --{{{  one.b (L130 - 139)
+          PROC one.b (INT x)
+            VAL n IS #2000 :
+            x := ext
+          :
+          SEQ
+            y := 42
+            check  (y, 42, "L130")
+            one.b (y)
+            check  (y, #1000, "L131")
+          --}}}
+          --{{{  two   (L140 - 149)
+          PROC two (INT x, y)
+            VAL n IS #5678 :
+            VAL m IS #8765 :
+            SEQ
+              x := n
+              y := m
+              check  (n, #5678, "L142")
+              check  (m, #8765, "L143")
+              check  (ext, #1000, "L144")
+          :
+          SEQ
+            x := 42
+            y := 13
+            check  (x, 42, "L140")
+            check  (y, 13, "L141")
+            two (x, y)
+            check  (x, #5678, "L145")
+            check  (y, #8765, "L146")
+          --}}}
+          --{{{  two.a (L150 - 159)
+          PROC two.a (INT x, y)
+            SEQ
+              x := #5678
+              y := #8765
+          :
+          SEQ
+            x := 67
+            z := 65
+            check  (x, 67, "L150")
+            check  (z, 65, "L151")
+            two.a (x, z)
+            check  (x, #5678, "L152")
+            check  (z, #8765, "L153")
+          --}}}
+          --{{{  two.b (L160 - 169)
+          PROC two.b (INT x, y)
+            SEQ
+              x := ext
+              y := ext
+          :
+          SEQ
+            x := 0
+            y := x
+            check  (x, 0, "L160")
+            check  (y, 0, "L161")
+            two.b (x, y)
+            check  (x, #1000, "L162")
+            check  (y, #1000, "L163")
+            check  (x, ext, "L164")
+            check  (y, ext, "L165")
+          --}}}
+          --{{{  lots  (L200 - 299)
+          PROC lots (INT x, y, z)
+            --{{{  declarations
+            VAL n1 IS #5678 :
+            VAL n2 IS #9876 :
+            VAL n3 IS #5555 :
+            VAL n4 IS #0 :
+            VAL n5 IS #AAAA :
+            VAL n6 IS #FFFF :
+            VAL nn IS [#5678,#8765,
+                       #FFFF,#0000] :
+            VAL n7 IS #5678 :
+            INT a,b,c,d,e :
+            --}}}
+            SEQ
+              a := n1
+              b := n2
+              c := n3
+              d := n4
+              x := n5
+              e := n6
+              y := nn [1]
+              z := n7
+              --{{{  checking
+              check  (a,  #5678, "L200")
+              check  (n1, #5678, "L201")
+              check  (b,  #9876, "L202")
+              check  (n2, #9876, "L203")
+              check  (c,  #5555, "L204")
+              check  (n3, #5555, "L205")
+              check  (d,      0, "L206")
+              check  (n4,     0, "L207")
+              check  (x,  #AAAA, "L208")
+              check  (n5, #AAAA, "L209")
+              check  (e,  #FFFF, "L210")
+              check  (n6, #FFFF, "L211")
+              check  (y,  #8765, "L212")
+              check  (z,  #5678, "L213")
+              check  (n7, #5678, "L214")
+              check  (nn [1], #8765, "L215")
+              --}}}
+          :
+          SEQ
+            lots (z, y, x)
+            check  (x, #5678, "L230")
+            check  (y, #8765, "L231")
+            check  (z, #AAAA, "L232")
+          --}}}
+        --}}}
+        --{{{  more longer constants
+        INT x0, x1, x2, x3 :
+        SEQ
+          x0 := ~#FFF
+          x1 :=  #FFF
+          check(x0 + x1, -1, "L300")
+          x0 := ~#7FFF
+          x1 :=  #7FFF
+          check(x0 + x1, -1, "L301")
+          x0 := ~#7F7F
+          x1 :=  #7F7F
+          check(x0 + x1, -1, "L302")
+        
+        --}}}
+    :
+    long.constants()
+    --}}}
+    --{{{  bug 269
+    -- bug 269 from buglist
+    PROC bug.269 ()
+      SEQ
+        VAL de.bytes       IS 32 :
+        VAL v.home.buffer  IS  4 :
+        VAL volume         IS  0 :
+        [4][8]INT volume.data :
+        [12][512]BYTE data.buffers :
+        [32]BYTE  d..entry :
+        SEQ
+          SEQ i = 0 FOR de.bytes
+            d..entry[i] := 'a'
+    
+          SEQ j = 0 FOR SIZE volume.data[0]
+            volume.data [0][j] := j
+          SEQ i = 1 FOR (SIZE volume.data) - 1
+            volume.data[i] := volume.data[0]
+    
+          --SEQ i = 0 FOR SIZE data.buffers
+          --  SEQ j = 0 FOR SIZE data.buffers[0]
+          --    data.buffers[i][j] := BYTE ((i + j) /\ #FF)
+    
+          SEQ j = 0 FOR SIZE data.buffers[0]
+            data.buffers[0][j] := BYTE (j /\ #FF)
+          SEQ i = 1 FOR (SIZE data.buffers) - 1
+            SEQ
+              [data.buffers[i] FROM 0   FOR 256 - i] := [data.buffers[0] FROM 256+i FOR 256 - i]
+              [data.buffers[i] FROM 256 FOR 256 - i] := [data.buffers[0] FROM 0  +i FOR 256 - i]
+              SEQ j = 256 - i FOR i
+                data.buffers[i][j] := BYTE ((i + j) /\ #FF)
+              SEQ j = 512 - i FOR i
+                data.buffers[i][j] := BYTE ((i + j) /\ #FF)
+    
+          VAL vdata IS volume.data[volume] :
+          d..entry :=
+            [data.buffers[vdata[v.home.buffer]] FROM 0 FOR de.bytes]
+    
+          check (INT d..entry[ 0],  4, "B269a")
+          check (INT d..entry[31], 35, "B269b")
+        [4][6]INT a :
+        [SIZE a[0]]INT bb :
+        INT x :
+        SEQ
+          x := (SIZE bb) - 1
+          SEQ i = 0 FOR SIZE bb
+            bb [i] := 1
+          SEQ i = 0 FOR SIZE a
+            SEQ j = 0 FOR SIZE a[0]
+              a[i][j] := i + j
+          bb := [a[bb[bb[bb[bb[bb[x]]]]]] FROM 0 FOR x + 1]
+          check (bb[0], 1, "B269c")
+          check (bb[x], 6, "B269d")
+    :
+    bug.269 ()
+    --}}}
+    --{{{  bug 271
+    -- bug 271 from buglist
+    PROC bug.271 ()
+      CHAN OF [5]INT c :
+      PAR
+        c ! [1010, 2020, 3030, 4040, 5050]
+        ALT
+          [5]INT a :
+          c ? a
+            [20]BYTE b :
+            SEQ
+              SEQ i = 0 FOR SIZE a
+                check (a[i], (i+1) * 1010, "B271a")
+              SEQ i = 0 FOR SIZE b
+                b [i] := BYTE i
+              SEQ i = 0 FOR SIZE a
+                SEQ
+                  check (a[i], (i+1) * 1010, "B271b")
+                  a[i] := -1
+              check (INT b[0], 0, "B271c")
+              check (INT b[(SIZE b) - 1], (SIZE b) - 1, "B271d")
+    :
+    bug.271 ()
+    --}}}
+    --{{{  bug 308
+    PROC bug.308()
+      PROC bug.308a([10][][5]INT a)
+        a[3] := a[2]
+      :
+      [10][3][5]INT a :
+      [100][50]BYTE d :
+      INT i, j, k :
+      SEQ
+        SEQ p = 0 FOR SIZE a
+          SEQ q = 0 FOR SIZE a[0]
+            SEQ r = 0 FOR SIZE a[0][0]
+              a [p][q][r] := p + (q + r)
+        bug.308a(a)
+        IF
+          IF q = 0 FOR SIZE a[0]
+            IF r = 0 FOR SIZE a[0][0]
+              IF
+                a[3][q][r] <> a[2][q][r]
+                  check(a[3][q][r], a[2][q][r], "B308a")
+                a[3][q][r] <> (2 + (q + r))
+                  check(a[3][q][r], 2 + (q + r), "B308b")
+          TRUE
+            check (1, 1, "B308c")
+    
+        SEQ p = 0 FOR SIZE d
+          SEQ q = 0 FOR SIZE d[0]
+            d[p][q] := BYTE (p + q)
+    
+        i, j, k := 0, 50, 10
+        [d FROM i FOR k] := [d FROM j FOR k]
+        IF
+          IF q = 0 FOR SIZE d[0]
+            IF
+              IF p = 0 FOR 10
+                d[p+i][q] <> d[p+j][q]
+                  check(INT d[p+i][q], INT d[p+j][q], "B308d")
+              IF p = 10 FOR 90
+                (INT d[p][q]) <> (p + q)
+                  check(INT d[p][q], p + q, "B308e")
+          TRUE
+            check(1, 1, "B308f")
+    :
+    bug.308()
+    --}}}
+    --{{{  bug 510
+    PROC bug.510()
+      INT FUNCTION len(VAL []BYTE b)
+        INT y :
+        VALOF
+          SEQ
+            y := 99
+            y := (y + y) + (y + y) -- use all stack slots
+          RESULT 10
+      :
+      [10]BYTE t :
+      INT x :
+      SEQ
+        SEQ i = 0 FOR SIZE t
+          t[i] := BYTE ((INT '!') + i)
+        IF
+          VAL f IS [t FROM 0 FOR len(t)] :
+          f[0] = '!'
+            x := 99
+          TRUE
+            x := 101
+        check(x, 99, "B510A")
+    :
+    bug.510()
+    --}}}
+    --{{{  bug 526
+    PROC bug.526()
+      PROC r32 (VAL []REAL32 x)
+        check (SIZE x, 1, "B526a")
+      :
+      PROC r64 (VAL []REAL64 x)
+        check (SIZE x, 1, "B526b")
+      :
+      REAL32 d :
+      REAL64 e :
+      SEQ
+        d := 99.9(REAL32)
+        r32([d])
+        e := 99.9(REAL64)
+        r64([e])
+    :
+    bug.526()
+    --}}}
+    --{{{  bug 679
+    PROC bug.679()
+      INT i :
+      SEQ
+        i := 0
+        [2][2]INT a :
+        [1]INT b :
+        INT x :
+        SEQ
+          x := 22
+          SEQ i = 0 FOR 2
+            SEQ j = 0 FOR 2
+              a[i][j] := i + j
+          a[i] := [x, x]
+          check (a[0][0], 22, "B679a")
+          check (a[0][1], 22, "B679b")
+          check (a[1][0],  1, "B679c")
+          check (a[1][1],  2, "B679d")
+          a[(2 * i) + 1] := [x, x]
+          SEQ i = 0 FOR 2
+            SEQ j = 0 FOR 2
+              check (a[i][j], 22, "B679e")
+          b[0] := 101
+          b := [x]
+          check(b[0], 22, "B679f")
+    :
+    bug.679()
+    --}}}
+    --{{{  bug 634
+    PROC bug.634()
+      INT INLINE FUNCTION f(VAL INT x) IS x+2 :
+      PROC q ([]INT mem)
+        x IS [mem FROM 0 FOR f(10)] :
+        SEQ
+          check(SIZE x, 12, "B634a")
+          SEQ i = 0 FOR SIZE x
+            check(x[i], i, "B634b")
+          x[(SIZE x) - 1] := 99
+      :
+      [30]INT buffer :
+      SEQ
+        SEQ i = 0 FOR SIZE buffer
+          buffer[i] := i
+        q (buffer)
+        check(buffer[11], 99, "B634c")
+    :
+    bug.634()
+    --}}}
+    --{{{  bug 599
+    PROC bug.599()
+      [3]INT d :
+      INT i :
+      SEQ
+        SEQ j = 0 FOR SIZE d
+          d[j] := j + 100
+        i := 2
+        VAL dd IS [d[1], d[2], d[0]] [i] :
+        check(dd, 100, "B599a")
+    :
+    bug.599()
+    --}}}
+    --{{{  bug 567
+    PROC bug.567()
+      INT x :
+      SEQ
+        x := 1
+        PAR i = 0 FOR 1
+          [255]INT a :
+          PLACE a IN WORKSPACE :
+          SEQ
+    
+            x := 0
+            WHILE x < (SIZE a) -- The H1 simulator crashes if a is uninitialised
+              SEQ
+                a[x] := x      -- and we don't use a replicator so that we don't
+                x := x + 1     -- change workspace allocation
+            x := 1
+    
+            x := a[x] -- force an access to a
+            x := (MOSTPOS INT) / 2
+        check(x, (MOSTPOS INT) / 2, "B567a")
+    :
+    bug.567()
+    --}}}
+    --{{{  bug 836
+    PROC bug.836()
+      [10]INT array :
+      INT ptr :
+      REAL32 x :
+      SEQ
+        SEQ i = 0 FOR SIZE array
+          array[i] := INT i
+        ptr := 2
+        msize IS array[ptr] :
+        object IS [array FROM ptr+1 FOR msize] :
+        []REAL32 fobject RETYPES object :
+        x := fobject[0]
+    
+        []INT iobject RETYPES x :
+        check(iobject[0], 3, "B836")
+    :
+    bug.836()
+    --}}}
+    --{{{  bug 1263
+    PROC bug.1263()
+      SEQ
+        --{{{  INT64
+        INT64 FUNCTION f (VAL INT64 x) IS x :
+        VAL a IS   99(INT64) :
+        VAL b IS  -99(INT64) :
+        VAL c IS  101(INT64) :
+        VAL d IS -101(INT64) :
+        VAL x IS [[a, b], [f(c), f(d)]] :
+        INT i, j :
+        SEQ
+          i := INT f(1(INT64))
+          j := INT f(0(INT64))
+          check(INT x[i][j], INT c, "B1263a")
+        --}}}
+        --{{{  INT32
+        INT32 FUNCTION f (VAL INT32 x) IS x :
+        VAL a IS   99(INT32) :
+        VAL b IS  -99(INT32) :
+        VAL c IS  101(INT32) :
+        VAL d IS -101(INT32) :
+        VAL x IS [[a, b], [f(c), f(d)]] :
+        INT i, j :
+        SEQ
+          i := INT f(1(INT32))
+          j := INT f(0(INT32))
+          check(INT x[i][j], INT c, "B1263b")
+        --}}}
+        --{{{  INT16
+        INT16 FUNCTION f (VAL INT16 x) IS x :
+        VAL a IS   99(INT16) :
+        VAL b IS  -99(INT16) :
+        VAL c IS  101(INT16) :
+        VAL d IS -101(INT16) :
+        VAL x IS [[a, b], [f(c), f(d)]] :
+        INT i, j :
+        SEQ
+          i := INT f(1(INT16))
+          j := INT f(0(INT16))
+          check(INT x[i][j], INT c, "B1263c")
+        --}}}
+        --{{{  INT
+        INT FUNCTION f (VAL INT x) IS x :
+        VAL a IS   99(INT) :
+        VAL b IS  -99(INT) :
+        VAL c IS  101(INT) :
+        VAL d IS -101(INT) :
+        VAL x IS [[a, b], [f(c), f(d)]] :
+        INT i, j :
+        SEQ
+          i := INT f(1(INT))
+          j := INT f(0(INT))
+          check(INT x[i][j], INT c, "B1263d")
+        --}}}
+    :
+    bug.1263()
+    --}}}
+    --{{{  bug 1324
+    PROC bug.1324 ()
+      VAL       siz IS 10 :
+      VAL small.siz IS  3 :
+      [siz]BYTE a, b :
+      INT la, lb :
+      PROC waste()
+        INT a,b,c,d,e,f,g,h,i,j :
+        SEQ
+          a := #DEAD
+          b,c,d,e,f,g,h,i,j := a,a,a,a,a,a,a,a,a
+      :
+      PROC q ()
+        VAL aa IS [a FROM 0 FOR la] :  -- aa's size temp is evaluated here
+        VAL bb IS [b FROM 0 FOR lb] :  -- bb's size temp is not initialised
+        INT len :
+        [small.siz]BYTE buf0, buf1 :
+        PROC qq ()
+          SEQ
+            len := SIZE bb
+            [buf0 FROM 0 FOR len] := bb  -- bb's size temp is evaluated here
+        :
+        SEQ
+          qq ()
+          SEQ i = 0 FOR small.siz
+            SEQ
+              check(INT buf0[i], i + 20, "B1324a")
+              check(INT bb[i],   i + 20, "B1324b")
+              check(INT aa[i],   i + 20, "B1324c")
+          len := SIZE aa
+          [buf1 FROM 0 FOR len] := aa    -- aa's size temp has already been evaluated
+          SEQ i = 0 FOR small.siz
+            SEQ
+              check(INT buf1[i], i + 20, "B1324d")
+              check(INT bb[i],   i + 20, "B1324e")
+              check(INT aa[i],   i + 20, "B1324f")
+      :
+      SEQ
+        SEQ i = 0 FOR siz
+          a[i],b[i] := BYTE (i+20), BYTE (i+20)
+        la,lb := small.siz,small.siz
+        waste()
+        q ()
+    :
+    bug.1324()
+    --}}}
+    --{{{  mostneg int
+    PROC mostneg.int()
+      PROC local(INT32 x)
+        x := (1073741824(INT32)*(-2(INT32)))
+      :
+      INT32 x :
+      SEQ
+        x := -1(INT32)
+        local(x)
+        check.BOOL(x = (MOSTNEG INT32), TRUE, "NEG001")
+    :
+    mostneg.int()
+    --}}}
+    --{{{  bug 1439
+    PROC bug.1439()
+      INT i, j :
+      [2]BOOL a,b :
+      BOOL bool :
+      SEQ
+        i := 1
+        j := 0
+        bool := TRUE
+        b[0] := FALSE
+        b[1] := TRUE
+        a[1] := BOOL 1
+        #IF DEFINED (COMPILER.TOCK)
+        a[0] := bool AND [b FROM INT a[i] FOR INT a[i]][j]
+        #ELSE
+        a[0] := bool AND (INT ii :
+                          VALOF
+                            ii := i
+                            RESULT [b FROM INT a[i] FOR INT a[ii]] [j]
+                         )
+        #ENDIF
+        check(INT a[0], INT TRUE, "B1439a")
+    :
+    bug.1439()
+    --}}}
+    --{{{  bug 1453
+    PROC bug.1453()
+      BOOL FUNCTION f(VAL []BYTE s1) IS TRUE :
+      VAL str IS "abc" :
+      VAL []INT array IS [2] :
+      PROC parseArgument(VAL BOOL b1, b2, VAL INT i)
+        BOOL bool :
+        SEQ
+          bool := f([str FROM 0 FOR array[i]])
+          check(INT bool, INT TRUE, "B1453a")
+          check(INT f([str FROM 0 FOR array[i]]), INT TRUE, "B1453b")
+    
+          bool := b1 AND f([str FROM 0 FOR array[i]])
+          check(INT bool, INT TRUE, "B1453c")
+          check(INT (b1 AND f([str FROM 0 FOR array[i]])), INT TRUE, "B1453d")
+    
+          bool := b2 OR f([str FROM 0 FOR array[i]])
+          check(INT bool, INT TRUE, "B1453e")
+          check(INT (b2 OR f([str FROM 0 FOR array[i]])), INT TRUE, "B1453f")
+      :
+      parseArgument(TRUE, FALSE, 0)
+    :
+    bug.1453()
+    --}}}
+    --{{{  bug 1522 / bug 1530
+    PROC bug.1522()
+      BOOL        FUNCTION f(VAL []INT set) IS (SIZE set) = 4 :
+      BOOL INLINE FUNCTION g(VAL []INT set) IS (SIZE set) = 4 :
+      INLINE PROC waste()
+        INT a,b,c :  -- This is intended to corrupt any uninitialised
+        SEQ          -- space
+          a,b,c := 101,202,303
+          a,b,c := a,b,c
+      :
+      PROC bug.1522a(VAL []INT set, VAL INT start, end, zero)
+        BOOL b :
+        SEQ
+          waste()
+          b := FALSE
+          b := b OR  f([set FROM start FOR end - zero])
+          check(INT b, INT TRUE, "B1522a")
+          waste()
+          b := b AND f([set FROM start FOR end - zero])
+          check(INT b, INT TRUE, "B1522b")
+          waste()
+          b := FALSE
+          b := b OR  g([set FROM start FOR end - zero]) -- bug TS/1530 too
+          check(INT b, INT TRUE, "B1522c")
+          waste()
+          b := b AND g([set FROM start FOR end - zero]) -- bug TS/1530 too
+          check(INT b, INT TRUE, "B1522d")
+      :
+      bug.1522a([1,2,3,4,5,6], 1, 4, 0)
+    :
+    bug.1522()
+    --}}}
+    --{{{  bug TS.1771
+    PROC bug.TS.1771()
+      [2]INT i :
+      i.fs IS [i FROM 1 FOR 0] :
+      t.dp IS [i.fs FROM 0 FOR 0] :
+      SEQ
+        check(SIZE i.fs, 0, "B1771a")
+        check(SIZE t.dp, 0, "B1771b")
+    :
+    bug.TS.1771()
+    --}}}
+    --{{{  bug TS.1783
+    PROC bug.TS.1783()
+      [2]CHAN OF INT i :
+      i.fs IS [i FROM 1 FOR 0] :
+      t.dp IS [i.fs FROM 0 FOR 0] :
+      SEQ
+        check(SIZE i.fs, 0, "B1783a")
+        check(SIZE t.dp, 0, "B1783b")
+    :
+    bug.TS.1783()
+    --}}}
+    --{{{  bug TS.2093
+    PROC bug.TS.2093()
+      SEQ
+        --{{{  COMMENT simple example
+        --PROC t.simple (VAL INT i, j)
+          --[1][1]INT m :
+          --SEQ
+            --m := [ [ [ 99, 25] FROM 0 FOR 1] ]
+            --check(m[i][j], 99, "B2093a")
+        --:
+        --t.simple (0, 0)
+        --}}}
+        --{{{  COMMENT complex example (INT)
+        --PROC t.INT (VAL INT x0, x1, x2, x3)
+          --VAL DIM IS 4 :
+          --VAL DIM IS 3 :
+          --[4][DIM]INT m :
+          --SEQ
+            --m:=[[[ 0,  1,  2,  3] FROM 0 FOR SIZE m[0]],
+                --[[ 4,  5,  6,  7] FROM 0 FOR SIZE m[0]],
+                --[[ 8,  9, 10, 11] FROM 0 FOR SIZE m[0]],
+                --[[12, 13, 14, 15] FROM 0 FOR SIZE m[0]]]
+            --check(m[x0][x2],  2, "B2093b")
+            --check(m[x1][x1],  5, "B2093c")
+            --check(m[x2][x0],  8, "B2093d")
+            --check(m[x3][x2], 14, "B2093e")
+        --:
+        --t.INT (0, 1, 2, 3)
+        --}}}
+        --{{{  COMMENT complex example (REAL32)
+        --PROC t.REAL32 (VAL INT x0, x1, x2, x3)
+          --VAL DIM IS 4 :
+          --VAL DIM IS 3 :
+          --[4][DIM]REAL32 m :
+          --SEQ
+            --m:=[[[ 0.0(REAL32),  1.0(REAL32),  2.0(REAL32),  3.0(REAL32)] FROM 0 FOR SIZE m[0]],
+                --[[ 4.0(REAL32),  5.0(REAL32),  6.0(REAL32),  7.0(REAL32)] FROM 0 FOR SIZE m[0]],
+                --[[ 8.0(REAL32),  9.0(REAL32), 10.0(REAL32), 11.0(REAL32)] FROM 0 FOR SIZE m[0]],
+                --[[12.0(REAL32), 13.0(REAL32), 14.0(REAL32), 15.0(REAL32)] FROM 0 FOR SIZE m[0]]]
+            --check(INT ROUND m[x0][x2],  2, "B2093f")
+            --check(INT ROUND m[x1][x1],  5, "B2093g")
+            --check(INT ROUND m[x2][x0],  8, "B2093h")
+            --check(INT ROUND m[x3][x2], 14, "B2093i")
+        --:
+        --t.REAL32 (0, 1, 2, 3)
+        --}}}
+    :
+    bug.TS.2093()
+    --}}}
+    --{{{  bug INSdi02268
+    PROC bug.INSdi02268()
+      SEQ
+        --{{{  basic example
+        PROC local (VAL BOOL configuring, INT result, VAL INT index)
+          VAL sizes IS [[  25,  10,    3,  33,  18],
+                        [  50,  10,    2,  12,   8]] [INT configuring] :
+          result := sizes[index]
+        :
+        INT result :
+        SEQ
+          local(TRUE, result, 0)
+          check(result, 50, "di02268a")
+          local(FALSE, result, 0)
+          check(result, 25, "di02268b")
+        
+          local(TRUE, result, 3)
+          check(result, 12, "di02268c")
+          local(FALSE, result, 3)
+          check(result, 33, "di02268d")
+        --}}}
+    
+        --{{{  more convoluted example
+        INT64, INT64 FUNCTION f(VAL INT64 x, y) IS x+y, x-y :
+        [2]INT64 array :
+        INT64 x, y :
+        INT z :
+        SEQ
+          x := id.INT64(1(INT64))
+          y := id.INT64(10(INT64))
+          x, y := f([1(INT64),2(INT64)][INT x], y)
+          check(INT x, 12, "di02268e")
+          check(INT y, -8, "di02268f")
+        
+          SEQ i = 0 FOR SIZE array
+            array[i] := INT64 i
+        
+          x := id.INT64(0(INT64))
+          y := id.INT64(27(INT64))
+          array[[1,0][INT x]], y := f([1(INT64),2(INT64)][INT x], y)
+          check(INT x,   0, "di02268g")
+          check(INT y, -26, "di02268h")
+          check(INT array[0], 0, "di02268i")
+          check(INT array[1], 28, "di02268j")
+        
+          x := id.INT64(0(INT64))
+          y := id.INT64(27(INT64))
+          z := id(1)
+          array[[z,1-z][INT x]], y := f([array[z],array[1-z]][INT x], y)
+          check(INT x,   0, "di02268k")
+          check(INT y,   1, "di02268l")
+          check(INT array[0], 0, "di02268m")
+          check(INT array[1], 55, "di02268n")
+        
+        --}}}
+    :
+    bug.INSdi02268()
+    --}}}
+    --{{{  bug INSdi02610
+    PROC bug.INSdi02610()
+      PROC parse.command.line ([]BYTE line, VAL [2]INT init.points, INT size)
+        [2]INT points :
+        SEQ
+          points := init.points
+          filename IS [line FROM points[0] FOR points[1]] :
+          size := SIZE filename
+      :
+      [100]BYTE line :
+      INT size :
+      SEQ
+        parse.command.line(line, [0,0], size)
+        check(size, 0, "B2610a")
+    :
+    bug.INSdi02610()
+    --}}}
+    --{{{  bug INSdi03483
+    PROC bug.INSdi03483()
+      INT INLINE FUNCTION NUI.trans.bi(VAL INT address.ba)
+        INT mx.bi:
+        VALOF
+          mx.bi := address.ba + 1
+          RESULT mx.bi
+      :
+      INT mx :
+      [100]BYTE memory.b :
+      INT address.ba :
+      BYTE res :
+      INT i :
+      SEQ
+        SEQ j = 0 FOR SIZE memory.b
+          memory.b[j] := BYTE j
+        address.ba := id(10)
+        mx := id(27)
+        i := id(5)
+        VAL mm IS [memory.b FROM NUI.trans.bi(address.ba) FOR mx] :
+        SEQ
+          res := mm[i]
+          check(SIZE mm, 27, "di3483a")
+          check(INT res, 16, "di3483b")
+    :
+    bug.INSdi03483()
+    --}}}
+
+    finish ()
+:

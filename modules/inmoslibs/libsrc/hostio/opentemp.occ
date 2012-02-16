@@ -1,0 +1,114 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 22/05/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "splib.lib"
+
+--* Open a temporary file in spm.new.update mode.
+--
+-- The file will be opened in the current directory. The file name of
+-- the temporary file is chosen as follows: the first name tried is
+-- TEMP00; if there already exists such a file then TEMP01 is tried; if
+-- there already exists such a file then TEMP02 is tried; etc. up to
+-- TEMP99 when, if such a file exists then TEM100 is tried, and so on
+-- up to TEM999, at which point, if such a file exists, TE1000 is
+-- tried, and so on up to TE9999, which is the last name tried, i.e. a
+-- maximum of 10,000 possible temporary files can be created by this
+-- routine.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param type either spt.binary or spt.text
+-- @param filename the name of the file opened
+-- @param streamid if result is spr.ok, the identification number of
+--   the stream associated with the file that was opened; undefined
+--   otherwise
+-- @param result spr.ok if all went well; otherwise takes on a value
+--   indicating what went wrong: spr.bad.type          invalid type
+--   spr.notok             there are already 10,000 such temp files
+--   >=spr.operation.failed  the open failed - refer to hostio.inc or
+--   iserver documentation for further details
+PROC so.open.temp (CHAN OF SP fs, ts, VAL BYTE type,
+                  [so.temp.filename.length]BYTE filename,
+                  INT32 streamid, BYTE result)
+  IF
+    (type <> spt.text) AND (type <> spt.binary)
+      result := spr.bad.type
+    TRUE
+      --{{{  open a temp file
+      --{{{  variables
+      VAL [so.temp.filename.length]BYTE tempname IS "TEMP00" :
+      -- 6 bytes, so should work on anything!
+      
+      INT count :
+      --}}}
+      SEQ
+        --{{{  initialise
+        count    := 0
+        filename := tempname
+        result   := spr.notok
+        --}}}
+        WHILE (result <> spr.ok) AND (count <= 9999)
+          SEQ
+            --{{{  generate filename number
+            -- This replaces the end of the filename with a number (in ASCII)
+            -- i.e. it tries temp00, then temp01, then temp02, up to temp99,
+            -- then tem100, etc, finally up to te9999
+            INT tens :
+            VAL char.zero IS INT '0' :
+            SEQ
+              tens := count / 10
+              filename [(SIZE filename) - 1] := BYTE ((count \ 10) + char.zero)
+              filename [(SIZE filename) - 2] := BYTE ((tens  \ 10) + char.zero)
+              IF
+                tens > 10
+                  INT hundreds :
+                  SEQ
+                    hundreds := tens / 10
+                    filename [(SIZE filename) - 3] := BYTE ((hundreds \ 10) + char.zero)
+                    IF
+                      hundreds > 10  -- we've just checked that count <= 9999
+                        filename [(SIZE filename) - 4] := BYTE ((hundreds / 10) + char.zero)
+                      TRUE
+                        SKIP
+                TRUE
+                  SKIP
+            --}}}generate filename number
+            --{{{  open a NEW file for update
+            SEQ
+              -- First we check that we're not overwriting an existing file!
+              sp.open (fs, ts, filename, type, spm.input, streamid, result)
+              IF
+                result = spr.ok  -- this filename already exists!
+                  SEQ
+                    sp.close (fs, ts, streamid, result)
+                    result := spr.notok
+                TRUE
+                  -- It doesn't already exist, so now open for update
+                  sp.open (fs, ts, filename, type, spm.new.update,
+                           streamid, result)
+                  -- will drop out of loop if result = spr.ok
+            --}}}open a NEW file for update
+            count := count + 1
+      --}}}
+:

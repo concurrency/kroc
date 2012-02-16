@@ -1,0 +1,83 @@
+.TH KROC "1" "May 2006" "occamdoc 4.0" KRoC
+
+.SH NAME
+occamdoc \- occam inline documentation tool
+
+.SH SYNOPSIS
+.B occamdoc
+[\fIOPTION\fR]... [\fIFILE\fR]...
+
+.SH DESCRIPTION
+.PP
+Parses comments in OccamDoc format from occam source files and generates
+XML and HTML output.  For example, to extract documentation from
+\fIfoo.occ\fR and \fIbar.inc\fR, you would issue the command:
+.PP
+	occamdoc foo.occ bar.inc
+.PP
+If successful, this will create a directory \fIdoc\fR containing an XML
+file called \fIdocs.xml\fR (which contains the documentation extracted
+from the source files) and a number of HTML and CSS files, which may be
+browsed starting at \fIindex.html\fR.
+.PP
+occamdoc works by first generating an XML file, then transforming that
+into other formats using XSLT.  The only XSLT file currently supplied
+converts into HTML 4.01 Strict, but it should be relatively
+straightforward to add more output formats, or to use the XML output
+directly in other programs (such as smart text editors).
+.PP
+The OccamDoc comment format is described online at:
+.PP
+	https://www.cs.kent.ac.uk/research/groups/sys/wiki/OccamDoc
+
+.SH OPTIONS
+.TP
+\fB\-d\fR\fIpath\fR
+Write output into the directory \fIpath\fR.  The directory will be
+created if it does not already exist.
+.TP
+\fB\-f\fR\fIformat\fR
+Write output in format \fIformat\fR, which may be \fIxml\fR or
+\fIhtml\fR.  (XML output is always written, so specifying \fIxml\fR here
+just stops occamdoc from doing any XSLT transformations.)
+.TP
+\fB\-\-help\fR
+Show usage summary and exit.
+.TP
+\fB\-p\fR
+Don't ignore declarations tagged \fI@private\fR.  The idea behind
+private declarations is that they're for internal use only, so this
+option should be used if you want to generate documentation for a
+program's maintainer to read, but not if you want to generate
+documentation for a library's users.
+
+.PP
+
+.SH AUTHOR
+See the file AUTHORS in the distribution for the list of contributors to KRoC.  This
+manual page is maintained by Adam Sampson <ats@offog.org>.
+
+.SH "REPORTING BUGS"
+Please report bugs to <kroc-bugs@kent.ac.uk>
+
+.SH COPYRIGHT
+Copyright \(co 2006 University of Kent, Canterbury, UK
+.PP
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation;
+either version 2 of the License, or (at your option) any
+later version.
+.PP
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+.PP
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+Boston, MA 02110-1301, USA.
+.PP
+

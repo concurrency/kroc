@@ -1,0 +1,106 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.0 29/01/90"
+#COMMENT "(c) Copyright INMOS Limited 1990"
+--}}}
+
+#PRAGMA TRANSLATE REAL32EQERR "REAL32EQERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL32EQERR (VAL REAL32 X, Y)
+
+  --{{{  specification
+  -- Purpose:  To determine whether two REAL32s are equal or not.
+  -- In:       X - one of the REAL32s to be compared for equality
+  -- In:       Y - one of the REAL32s to be compared for equality
+  -- Returned: TRUE if X = Y; FALSE otherwise
+  -- Notes:    This routine is written for a 32 bit machine.
+  --           IEEE para. 5.7: "Comparisons shall ignore the sign of zero
+  --           ( so +0 = -0 )."
+  --           c.f. REAL32EQ
+  --}}}
+  --{{{  history
+  -- This unoptimised version was written for the TA libraries; V1.0,
+  -- 29-Jan-90 SRH
+  --}}}
+
+  VAL INT X RETYPES X :
+  VAL INT Y RETYPES Y :
+  INT MagX, MagY :
+  VALOF
+    SEQ
+      VAL INT RealInf IS #7F800000 :
+      IF
+        (( X /\ RealInf ) = RealInf ) OR (( Y /\ RealInf ) = RealInf )
+          CAUSEERROR() -- infinities or NaNs will set error flag
+        TRUE
+          SKIP
+      -- the following Mags are used to check equality of zeroes
+      MagX := X /\ #7FFFFFFF
+      MagY := Y /\ #7FFFFFFF
+    RESULT ( ( X = Y ) OR ( ( MagX PLUS MagY ) = 0 ) )
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL32EQERR "REAL32EQERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL32EQERR (VAL REAL32 X, Y)
+
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+
+  VAL [2]INT X RETYPES X :
+  VAL [2]INT Y RETYPES Y :
+  VAL high IS 1 :
+  VAL low  IS 0 :
+  INT MagX, MagY :
+  VALOF
+    SEQ
+      VAL INT RealInf.high IS #7F80 :
+      IF
+        ((X [high] /\ RealInf.high) = RealInf.high) OR
+            ((Y [high] /\ RealInf.high) = RealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+    --Either the same or both +/- 0
+    RESULT ((X [high] = Y [high]) AND (X [low] = Y [low])) OR
+              ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) = 0)
+:
+--}}}
+
+#ENDIF

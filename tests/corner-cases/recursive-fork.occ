@@ -1,0 +1,19 @@
+#INCLUDE "course.module"
+
+PROC main (SHARED CHAN BYTE scr!)
+  REC PROC foo (VAL INT n, SHARED CHAN BYTE scr!)
+    SEQ
+      CLAIM scr!
+        SEQ
+          out.int (n, 0, scr!)
+          scr ! '*n'
+          scr ! #FF
+      IF
+        n = 10
+          SKIP
+        TRUE
+          FORK foo (n + 1, scr!)
+  :
+  SEQ
+    foo (0, scr!)
+:

@@ -1,0 +1,990 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space (non-optimising oc could have E option too)
+#COMMENT "TA compiler library, V1.4 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DSQRT "DSQRT%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  DSQRT
+REAL64 FUNCTION DSQRT (VAL REAL64 X)
+
+  --{{{  history
+  -- V1.2, 21-Feb-89
+  -- Bug fix TS/0063; V1.3, 15-Mar-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.4, 7-Dec-92 SRH
+  --}}}
+
+  REAL64 Root :
+  VALOF
+    #INCLUDE "nan32.inc"
+    --{{{  definitions
+    VAL Sign            IS #8000000000000000(INT64) :
+    VAL DRealInf        IS #7FF0000000000000(INT64) :
+    VAL Dzero IS 0(INT64) :
+    VAL Done  IS 1(INT64) :
+    VAL INT64 X.i RETYPES X :
+    INT64 Root.i RETYPES Root :
+    VAL PosX IS X.i /\ (~Sign) :
+    --}}}
+    IF
+      --{{{  special cases
+      (PosX > DRealInf)                    -- NaN
+        SEQ
+          CAUSEERROR()
+          Root.i := X.i
+      (PosX = Dzero)                       -- 0
+        Root.i := X.i
+      X.i < Dzero                          -- negative
+        SEQ
+          CAUSEERROR()
+          Root.i := Droot.NaN
+      X.i = DRealInf                       -- Inf
+        SEQ
+          CAUSEERROR()
+          Root.i := X.i
+      --}}}
+      TRUE                                 -- proper case
+        INT64 Y, Xfrac :
+        INT Xexp :
+        SEQ
+          --{{{  deal with denormals and convert to fixed point
+          VAL [2]INT lo.in RETYPES PosX :
+          [2]INT lo.out RETYPES Xfrac :
+          SEQ
+            INT carry :
+            Xexp,  carry := SHIFTLEFT ( 0,  lo.in[1],  DRealShift + 1)
+            lo.out[1],  lo.out[0] := SHIFTLEFT ( lo.in[1],  lo.in[0],  DRealShift + 1)
+          IF
+            Xexp = 0                         --denormal
+              SEQ
+                [2]INT hi.out RETYPES Xfrac :
+                Xexp,  hi.out[1],  hi.out[0] := NORMALISE ( hi.out[1],  hi.out[0])
+                Xexp :=  - Xexp
+            TRUE
+              Xfrac := (Xfrac >> 1) \/ Sign  --set proper value, ie insert implicit bit
+          --}}}
+          --{{{  SUM64
+          INT64 FUNCTION SUM64 (VAL INT64 Left, Right)
+            INT64 Sum :
+            VALOF
+              VAL [2]INT left  RETYPES Left  :
+              VAL [2]INT right RETYPES Right :
+              [2]INT sum RETYPES Sum :
+              INT carry :
+              SEQ
+                carry,  sum[0] := LONGSUM ( left[0],  right[0],  0)
+                carry,  sum[1] := LONGSUM ( left[1],  right[1],  carry)
+              RESULT Sum
+          :
+          --}}}
+          SEQ
+            --{{{  adjust for power of two and make initial approximation
+            --{{{  PROD64
+            INT64 FUNCTION PROD64 (VAL INT64 Left, Right)
+              INT64 Hi.out :
+              VALOF
+                VAL [2]INT left     RETYPES Left :
+                VAL [2]INT right    RETYPES Right :
+                [2]INT hi.out RETYPES Hi.out :
+                INT work1, work3, c0, c1 :
+                SEQ
+                  INT carry, work0 :
+                  SEQ
+                    carry,  work0 := LONGPROD ( left[0],  right[0],  0)
+                    c0,  work1    := LONGPROD ( left[1],  right[0],  carry)
+                  INT carry, work2 :
+                  SEQ
+                    carry,  work2 := LONGPROD ( left[0],  right[1],  work1)
+                    c1,  work3    := LONGPROD ( left[1],  right[1],  carry)
+                  INT carry :
+                  SEQ
+                    carry,  hi.out[0] := LONGSUM ( work3,  c0,  0)
+                    carry,  hi.out[1] := LONGSUM ( c1,  0,  carry)
+                RESULT Hi.out
+            :
+            --}}}
+            IF
+              (Xexp /\ 1) = 1       -- unbiased ( ie original ) exponent is even
+                SEQ
+                  Xfrac := Xfrac >> 1  -- divide fractional part by 2
+                  --{{{  coefficients
+                  VAL R2C2 IS #D413CCCFE7799211(INT64) : -- coefficients for linear approx.
+                  VAL R2K2 IS #4C1E24CC824C9A4E(INT64) :
+                  --}}}
+                  Y := SUM64 (PROD64 ( Xfrac,  R2C2),  R2K2)
+              TRUE
+                SEQ
+                  --{{{  coefficients
+                  VAL R2C1 IS #9300000000000000(INT64) :
+                  VAL R2K1 IS #6CFFFFFFFFFFFFFF(INT64) :
+                  --}}}
+                  Y := SUM64 (PROD64 ( Xfrac,  R2C1),  R2K1)
+            --}}}
+            --{{{  perform Newton-Raphson iterations
+            --{{{  DIV64
+            INT64 FUNCTION DIV64 (VAL INT64 Num.hi, Divisor)
+            
+              INT64 Quot :
+              VALOF
+                PROC PartDivide( INT Q, Num2, NumR1, NumR0, VAL [2]INT Denom)
+                  --{{{  
+                  INT qhat, rem :
+                  SEQ
+                    --{{{  estimate quotient
+                    IF
+                      Denom[1] = Num2
+                        SEQ
+                          qhat := (~0) -- MaxUnsignedInt
+                          rem  := Num2 PLUS NumR1
+                      TRUE
+                        qhat,  rem := LONGDIV ( Num2,  NumR1,  Denom[1])
+                    --}}}
+                    IF
+                      qhat <> 0
+                        --{{{  ensure not too big
+                        INT c, s :
+                        [3]INT W :
+                        PLACE W IN WORKSPACE :
+                        SEQ
+                          --{{{  first check for 2 too big
+                          -- compare qhat*Denom[0] with remainder (carry) and third digit
+                          W[1],  W[0] := LONGPROD ( qhat,  Denom[0],  0)
+                          c,  s := LONGDIFF ( W[0],  NumR0,  0)
+                          c,  s := LONGDIFF ( W[1],  rem,  c)
+                          IF
+                            c = 0
+                              qhat := qhat MINUS 1
+                            TRUE
+                              SKIP
+                          --}}}
+                          --{{{  multiply and subtract
+                          W[2],  W[1] := LONGPROD ( qhat,  Denom[1],  W[1])
+                          c,  NumR0 := LONGDIFF ( NumR0, W[0],  0)
+                          c,  NumR1 := LONGDIFF ( NumR1, W[1],  c)
+                          c,  Num2  := LONGDIFF ( Num2,  W[2],  c)
+                          --}}}
+                          IF
+                            c <> 0
+                              --{{{  too big, add back
+                              SEQ
+                                qhat := qhat MINUS 1
+                                c,  NumR0 := LONGSUM ( NumR0, Denom[0],  0)
+                                c,  NumR1 := LONGSUM ( NumR1, Denom[1],  c)
+                                c,  Num2  := LONGSUM ( Num2,  0,  c)
+                              --}}}
+                            TRUE
+                              SKIP
+                        --}}}
+                      TRUE
+                        SKIP
+                    Q := qhat
+                  --}}}
+                :
+                VAL [2]INT num.hi RETYPES Num.hi :
+                VAL [2]INT divis  RETYPES Divisor :
+                [2]INT quot RETYPES Quot :
+                IF
+                  divis[1] = 0
+                    --{{{  short divisor
+                    INT rem :
+                    SEQ
+                      quot[1],  rem := LONGDIV ( num.hi[0],  0,  divis[0])
+                      quot[0],  rem := LONGDIV ( rem,  0,  divis[0])
+                    --}}}
+                  TRUE
+                    --{{{  long divisor
+                    [2]INT hi  :
+                    PLACE hi IN WORKSPACE :
+                    [2]INT lo  :
+                    PLACE lo IN WORKSPACE :
+                    [2]INT div :
+                    PLACE div IN WORKSPACE :
+                    INT places :
+                    SEQ
+                      places,  div[1],  div[0] := NORMALISE ( divis[1],  divis[0])
+                      hi[1],  hi[0] := SHIFTLEFT ( num.hi[1],  num.hi[0],  places)
+                      lo := [0,0]
+                      PartDivide( quot[1], hi[1], hi[0], lo[1], div)
+                      PartDivide( quot[0], hi[0], lo[1], lo[0], div)
+                    --}}}
+                RESULT Quot
+            :
+            --}}}
+            VAL XF IS Xfrac >> 1 :                     --ensure no div overflow
+            SEQ  -- 3, no more no less, iterations
+              Y := SUM64 (Y >> 1, DIV64 (XF,  Y))
+              Y := SUM64 (Y >> 1, DIV64 (XF,  Y))
+              Y := SUM64 (Y >> 1, DIV64 (XF,  Y))
+            --}}}
+          --{{{  determine correct value -- multiplication
+          [2]INT64 Y2 :
+          PLACE Y2 IN WORKSPACE :
+          VAL INT mask IS #FFFFF800 :
+          VAL INT lsbit IS #800 :
+          SEQ
+            [2]INT Y.i RETYPES Y :
+            Y.i[0] := Y.i[0] /\ mask  -- truncate
+            --{{{  multiply Y2 := Y * Y
+            [2]INT hi.out RETYPES Y2[1] :
+            VAL [2]INT y RETYPES Y :
+            [2]INT lo.out RETYPES Y2[0] :
+            INT work1, work3, c0, c1 :
+            SEQ
+              INT carry :
+              SEQ
+                carry,  lo.out[0] := LONGPROD ( y[0],  y[0],  0)
+                c0,  work1 := LONGPROD ( y[1],  y[0],  carry)
+              INT carry :
+              SEQ
+                carry,  lo.out[1] := LONGPROD ( y[0],  y[1],  work1)
+                c1,  work3 := LONGPROD ( y[1],  y[1],  carry)
+              INT carry :
+              SEQ
+                carry,  hi.out[0] := LONGSUM ( work3,  c0,  0)
+                carry,  hi.out[1] := LONGSUM ( c1,  0,  carry)
+            --}}}
+            --{{{  add Y2 := Y2 + (Y * lsbit) + ( (1/2) * lsbit^2 )
+            [2]INT Y.i RETYPES Y :
+            [4]INT Y.times.lsbit :
+            PLACE Y.times.lsbit IN WORKSPACE :
+            [4]INT Y2.i RETYPES Y2 :
+            SEQ
+              Y.times.lsbit := [0, 0, 0, 0 ]
+              Y.times.lsbit[2], Y.times.lsbit[1] := SHIFTLEFT( 0 , Y.i[1], 11)
+              Y.times.lsbit[1], Y.times.lsbit[0] := SHIFTLEFT( Y.i[1] , Y.i[0], 11)
+              INT carry :
+              VAL INT half.lsbit.squared IS #200000 : -- SRH 15-Mar-90
+              SEQ
+                carry, Y2.i[0] := LONGSUM( Y2.i[0], Y.times.lsbit[0], half.lsbit.squared)
+                carry, Y2.i[1] := LONGSUM( Y2.i[1], Y.times.lsbit[1], carry)
+                carry, Y2.i[2] := LONGSUM( Y2.i[2], Y.times.lsbit[2], carry)
+                carry, Y2.i[3] := LONGSUM( Y2.i[3], Y.times.lsbit[3], carry)
+            --}}}
+            INT overflow :
+            INT64 YplusLsbit :
+            --{{{  UGT64  -- SRH 15-Mar-90
+            BOOL FUNCTION UGT64( VAL INT64 A, B )
+            
+              -- Purpose:  To act as an unsigned greater than ( > ).
+              -- Returned: A > B, where A and B are treated as unsigned integers.
+            
+              BOOL greater.than :
+              VALOF
+                INT64 a, b :
+                VAL INT64 Dzero IS 0( INT64 ) :
+                SEQ
+                  a, b := A, B
+                  --{{{  compare
+                  IF
+                    a >= Dzero
+                      IF
+                        b >= Dzero
+                          greater.than := a > b
+                        TRUE
+                          greater.than := FALSE
+                    TRUE
+                      IF
+                        b >= Dzero
+                          greater.than := TRUE
+                        TRUE  -- both are less than zero as signed numbers
+                          greater.than := a > b
+                  --}}}
+                RESULT greater.than
+            :  -- UGT64
+            --}}}
+            SEQ
+              --{{{  YplusLsbit := Y + lsbit
+              INT carry :
+              [2]INT YplusLsbit.i RETYPES YplusLsbit :
+              [2]INT Y.i RETYPES Y :
+              SEQ
+                carry, YplusLsbit.i[0] := LONGSUM( Y.i[0], lsbit, 0)
+                overflow, YplusLsbit.i[1] := LONGSUM( Y.i[1], carry, 0)
+              --}}}
+              IF
+                overflow = 0
+                  --{{{  select between Y and (Y + lsbit)
+                  IF
+                    Xfrac = Y2[1]
+                      --{{{  equal
+                      IF
+                        Y2[0] = 0 (INT64)
+                          --{{{  equal
+                          [2]INT Y.i RETYPES Y :
+                          [2]INT YplusLsbit.i RETYPES YplusLsbit :
+                          IF
+                            (Y.i[0] /\ lsbit) <> 0  -- odd fraction, so round up
+                              SEQ
+                                Y.i[0] := YplusLsbit.i[0]
+                                Y.i[1] := YplusLsbit.i[1]
+                            TRUE
+                              SKIP
+                          --}}}
+                        TRUE
+                          SKIP
+                      --}}}
+                    -- Xfrac > Y2[1]
+                    UGT64( Xfrac, Y2[1] )  -- SRH 15-Mar-90
+                      Y := YplusLsbit
+                    TRUE
+                      SKIP
+                  --}}}
+                TRUE
+                  SKIP -- Y is the correct representation, as Y + lsbit overflows
+          --}}}
+          --{{{  round
+          INT64 XExp :
+          SEQ
+            XExp := INT64 ((Xexp + DRealXcess) >> 1)
+            --Xfrac := Y /\ DRealExp --get round mask -- SRH 15-Mar-90; was unnecessary
+            --{{{  pack
+            INT64 frac :
+            SEQ
+              frac := Y << 1
+              VAL [2]INT hi.in RETYPES XExp :
+              VAL [2]INT lo.in RETYPES frac :
+              [2]INT lo.out RETYPES Y :
+              SEQ
+                INT carry :
+                carry,  lo.out[0] := SHIFTRIGHT ( lo.in[1],  lo.in[0],  DRealShift + 1)
+                INT carry :
+                carry,  lo.out[1] := SHIFTRIGHT ( hi.in[0],  lo.in[1],  DRealShift + 1)
+            --}}}
+          Root.i := Y -- SRH 15-Mar-90; this replaces the following redundant IF
+          --IF
+            --(Xfrac /\ DRealRBit) = Dzero         --no round bit
+              --Root.i := Y
+            --((Xfrac /\ (INT64 DRealXcess)) \/ (Y /\ Done)) <> Dzero --round up
+              --Root.i := Y + Done
+            --TRUE
+              --Root.i := Y
+          --}}}
+    RESULT Root
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.4 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}  
+
+#PRAGMA TRANSLATE DSQRT "DSQRT%O"
+
+#INCLUDE "realvals.inc"
+
+--{{{  DSQRT
+REAL64 FUNCTION DSQRT (VAL REAL64 X)
+
+  --{{{  history
+  -- V1.2, 21-Feb-89
+  -- Bug fix TS/0063; V1.3, 15-Mar-90 SRH
+  -- Moved position of CAUSEERRORs from ends of branches to the beginning of
+  -- them to allow compiler to do dead code elimination; V1.4, 7-Dec-92 SRH
+  --}}}  
+
+  REAL64 Root :
+  VALOF
+    #INCLUDE "nan16.inc"
+    --{{{  definitions
+    VAL Sign            IS #8000000000000000(INT64) :
+    VAL DRealInf        IS #7FF0000000000000(INT64) :
+    VAL Dzero IS 0(INT64) :
+    VAL Done  IS 1(INT64) :
+    VAL INT64 X.i RETYPES X :
+    INT64 Root.i RETYPES Root :
+    VAL PosX IS X.i /\ (~Sign) :
+    --}}}  
+    IF
+      --{{{  special cases
+      (PosX > DRealInf)                    -- NaN
+        SEQ
+          CAUSEERROR()
+          --Root.i := X.i
+      (PosX = Dzero)                       -- 0
+        Root.i := X.i
+      X.i < Dzero                          -- negative
+        SEQ
+          CAUSEERROR()
+          --Root.i := Droot.NaN
+      X.i = DRealInf                       -- Inf
+        SEQ
+          CAUSEERROR()
+          --Root.i := X.i
+      --}}}  
+      TRUE                                 -- proper case
+        INT64 Y, Xfrac :
+        INT Xexp :
+        SEQ
+          --{{{  deal with denormals and convert to fixed point
+          -- SHIFTLEFT
+          VAL [4]INT l.in RETYPES PosX :
+          [4]INT l.out RETYPES Xfrac :
+          VAL Places IS DRealShift + 1 :
+          INT carry :
+          SEQ
+            Xexp,  carry  := SHIFTLEFT ( 0,  l.in [3],  Places)
+            l.out [3],  carry := SHIFTLEFT ( l.in [3],  l.in [2],  Places)
+            l.out [2],  carry := SHIFTLEFT ( l.in [2],  l.in [1],  Places)
+            l.out [1],  l.out [0] := SHIFTLEFT ( l.in [1],  l.in [0],  Places)
+          IF
+            Xexp = 0                         --denormal
+              SEQ
+                --{{{  NORMALISE
+                VAL BitsPerWord IS 16 :
+                VAL Dzero IS [0,0,0,0] :
+                [4] INT X.work RETYPES Xfrac :
+                places IS Xexp :
+                IF
+                  X.work [3] <> 0
+                    --{{{  
+                    INT carry :
+                    SEQ
+                      places,  X.work[3],  carry := NORMALISE ( X.work[3],  X.work[2])
+                      X.work[2],  carry := SHIFTLEFT ( X.work[2],  X.work[1],  places)
+                      X.work[1],  carry := SHIFTLEFT ( X.work[1],  X.work[0],  places)
+                      X.work[0],  carry := SHIFTLEFT ( X.work[0],  0,  places)
+                    --}}}  
+                  X.work [2] <> 0
+                    --{{{  
+                    INT carry :
+                    SEQ
+                      places,  X.work[3],  carry := NORMALISE ( X.work[2],  X.work[1])
+                      X.work[2],  carry := SHIFTLEFT ( X.work[1],  X.work[0],  places)
+                      X.work[1],  carry := SHIFTLEFT ( X.work[0],  0,  places)
+                      X.work[0] := 0
+                      places := places + BitsPerWord
+                    --}}}  
+                  X.work [1] <> 0
+                    --{{{  
+                    INT carry :
+                    SEQ
+                      places,  X.work[3],  carry := NORMALISE ( X.work[1],  X.work[0])
+                      X.work[2],  carry := SHIFTLEFT ( X.work[0], 0,  places)
+                      X.work[1] := 0
+                      X.work[0] := 0
+                      places := places + (2*BitsPerWord)
+                    --}}}  
+                  TRUE -- Xfrac cannot be zero
+                    --{{{  
+                    INT carry :
+                    SEQ
+                      places,  X.work[3],  carry := NORMALISE ( X.work[0],  0)
+                      [X.work FROM 0 FOR 3] := [Dzero FROM 0 FOR 3]
+                      places := places + (3*BitsPerWord)
+                    --}}}  
+                --}}}  
+                Xexp :=  - Xexp
+            TRUE
+              Xfrac := (Xfrac >> 1) \/ Sign  --set proper value, ie insert implicit bit
+          --}}}  
+          --{{{  SUM64
+          INT64 FUNCTION SUM64 (VAL INT64 Left, Right)
+            INT64 Sum :
+            VALOF
+              --{{{  retypes
+              VAL [4]INT left RETYPES Left :
+              VAL [4]INT right RETYPES Right :
+              [4]INT sum RETYPES Sum :
+              --}}}  
+              INT carry :
+              SEQ
+                carry,  sum[0] := LONGSUM ( left[0],  right[0],  0)
+                carry,  sum[1] := LONGSUM ( left[1],  right[1],  carry)
+                carry,  sum[2] := LONGSUM ( left[2],  right[2],  carry)
+                carry,  sum[3] := LONGSUM ( left[3],  right[3],  carry)
+              RESULT Sum
+          :
+          --}}}  
+          SEQ
+            --{{{  adjust for power of two and make initial approximation
+            --{{{  PROD64
+            INT64 FUNCTION PROD64 (VAL INT64 Left, Right)
+              INT64 Hi.out :
+              VALOF
+                --{{{  retypes
+                VAL [4] INT U RETYPES Left :
+                VAL [4] INT V RETYPES Right :
+                [4] INT hi.out RETYPES Hi.out :
+                --}}}  
+                [8] INT W :
+                PLACE W IN WORKSPACE :
+                [4] INT C :
+                PLACE C IN WORKSPACE :
+                SEQ
+                  INT Carry :
+                  SEQ
+                    Carry,  W [0] := LONGPROD ( U [0],  V[0],  0)
+                    Carry,  W [1] := LONGPROD ( U [1],  V[0],  Carry)
+                    Carry,  W [2] := LONGPROD ( U [2],  V[0],  Carry)
+                    W [4],  W [3] := LONGPROD ( U [3],  V[0],  Carry)
+                  C [0],  W [1] := LONGPROD ( U [0],  V[1],  W [1])
+                  C [1],  W [2] := LONGPROD ( U [1],  V[1],  W [2])
+                  C [2],  W [3] := LONGPROD ( U [2],  V[1],  W [3])
+                  C [3],  W [4] := LONGPROD ( U [3],  V[1],  W [4])
+                  INT Carry :
+                  SEQ
+                    Carry,  W [2] := LONGSUM ( C [0],  W [2],  0)
+                    Carry,  W [3] := LONGSUM ( C [1],  W [3],  Carry)
+                    Carry,  W [4] := LONGSUM ( C [2],  W [4],  Carry)
+                    W [6],  W [5] := LONGSUM ( C [3],  0,  Carry)
+                  C [0],  W [2] := LONGPROD ( U [0],  V[2],  W [2])
+                  C [1],  W [3] := LONGPROD ( U [1],  V[2],  W [3])
+                  C [2],  W [4] := LONGPROD ( U [2],  V[2],  W [4])
+                  C [3],  W [5] := LONGPROD ( U [3],  V[2],  W [5])
+                  INT Carry :
+                  SEQ
+                    Carry,  W [3] := LONGSUM ( C [0],  W [3],  0)
+                    Carry,  W [4] := LONGSUM ( C [1],  W [4],  Carry)
+                    Carry,  W [5] := LONGSUM ( C [2],  W [5],  Carry)
+                    W [7],  W [6] := LONGSUM ( C [3],  0,  Carry)
+                  C [0],  W [3] := LONGPROD ( U [0],  V[3],  W [3])
+                  C [1],  W [4] := LONGPROD ( U [1],  V[3],  W [4])
+                  C [2],  W [5] := LONGPROD ( U [2],  V[3],  W [5])
+                  C [3],  W [6] := LONGPROD ( U [3],  V[3],  W [6])
+                  INT Carry :
+                  SEQ
+                    Carry,  W [4] := LONGSUM ( C [0],  W [4],  0)
+                    Carry,  W [5] := LONGSUM ( C [1],  W [5],  Carry)
+                    Carry,  W [6] := LONGSUM ( C [2],  W [6],  Carry)
+                    Carry,  W [7] := LONGSUM ( C [3],  0,  Carry)
+                  hi.out := [W FROM 4 FOR 4]
+                RESULT Hi.out
+            :
+            --}}}  
+            IF
+              (Xexp /\ 1) = 1          -- unbiased ( ie original ) exponent is even
+                SEQ
+                  Xfrac := Xfrac >> 1  -- divide fractional part by 2
+                  --{{{  coefficients
+                  VAL R2C2 IS #D413CCCFE7799211(INT64) : -- coefficients for linear approx.
+                  VAL R2K2 IS #4C1E24CC824C9A4E(INT64) :
+                  --}}}  
+                  Y := SUM64 (PROD64 ( Xfrac,  R2C2),  R2K2)
+              TRUE
+                SEQ
+                  --{{{  coefficients
+                  VAL R2C1 IS #9300000000000000(INT64) :
+                  VAL R2K1 IS #6CFFFFFFFFFFFFFF(INT64) :
+                  --}}}  
+                  Y := SUM64 (PROD64 ( Xfrac,  R2C1),  R2K1)
+            --}}}  
+            --{{{  perform iterations
+            --{{{  DIV64
+            INT64 FUNCTION DIV64 (VAL INT64 Num.hi, Divisor)
+
+              INT64 Quot :
+              VALOF
+                --{{{  definitions and variables
+                VAL BitsPerWord IS 16 :
+                VAL MaxUnsignedInt IS #FFFF :
+                VAL SignBit IS #8000 :
+                VAL Dzero IS [0,0,0,0] :
+                --{{{  retypes
+                VAL [4] INT div RETYPES Divisor :
+                VAL [4] INT Utop RETYPES Num.hi :
+                [4] INT Q   RETYPES Quot :
+                --}}}  
+                [8] INT U :
+                PLACE U IN WORKSPACE :
+                [4] INT V :
+                PLACE V IN WORKSPACE :
+                INT d :
+                BOOL overflow :
+                --}}}  
+                SEQ
+                  --{{{  normalise
+                  IF
+                    div [3] <> 0
+                      --{{{  
+                      SEQ
+                        d,  V [3],  V [2] := NORMALISE ( div [3],  div [2])
+                        IF
+                          d = 0
+                            --{{{  need not shift
+                            SEQ
+                              [V FROM 0 FOR 2] := [div FROM 0 FOR 2]
+                              [U FROM 0 FOR 4] := Dzero
+                              [U FROM 4 FOR 4] := Utop
+                              overflow := FALSE
+                            --}}}  
+                          TRUE
+                            --{{{  must shift
+                            INT carry, X :
+                            SEQ
+                              V [2],  carry := SHIFTLEFT ( div [2],  div [1],  d)
+                              V [1],  V [0] := SHIFTLEFT ( div [1],  div [0],  d)
+                              X,  carry := SHIFTLEFT ( 0,  Utop [3],  d)
+                              U [7],  carry := SHIFTLEFT ( Utop [3],  Utop [2],  d)
+                              U [6],  carry := SHIFTLEFT ( Utop [2],  Utop [1],  d)
+                              U [5],  carry := SHIFTLEFT ( Utop [1],  Utop [0],  d)
+                              U [4],  carry := SHIFTLEFT ( Utop [0],  0,  d)
+                              [U FROM 0 FOR 4] := Dzero
+                              overflow := (X <> 0)
+                            --}}}  
+                      --}}}  
+                    div [2] <> 0
+                      --{{{  
+                      SEQ
+                        d,  V [3],  V [2] := NORMALISE ( div [2],  div [1])
+                        IF
+                          d = 0
+                            --{{{  need not shift
+                            SEQ
+                              [V FROM 1 FOR 2] := [div FROM 0 FOR 2]
+                              [U FROM 1 FOR 4] := Dzero
+                              [U FROM 5 FOR 3] := [Utop FROM 0 FOR 3]
+                              overflow := (Utop [3] <> 0)
+                            --}}}  
+                          TRUE
+                            --{{{  must shift
+                            INT carry, X :
+                            SEQ
+                              V [2],  V [1] := SHIFTLEFT ( div [1],  div [0],  d)
+                              X,  carry := SHIFTLEFT ( Utop [3],  Utop [2],  d)
+                              U [7],  carry := SHIFTLEFT ( Utop [2],  Utop [1],  d)
+                              U [6],  carry := SHIFTLEFT ( Utop [1],  Utop [0],  d)
+                              U [5],  carry := SHIFTLEFT ( Utop [0],  0,  d)
+                              [U FROM 1 FOR 4] := Dzero
+                              overflow := ((Utop [3] \/ X) <> 0)
+                            --}}}  
+                        V [0] := 0
+                        U [0] := 0
+                        d := d + BitsPerWord
+                      --}}}  
+                    div [1] <> 0
+                      --{{{  
+                      SEQ
+                        d,  V [3],  V[2] := NORMALISE ( div [1],  div [0])
+                        IF
+                          d = 0
+                            --{{{  need not shift
+                            SEQ
+                              [U FROM 2 FOR 4] := Dzero
+                              [U FROM 6 FOR 2] := [Utop FROM 0 FOR 2]
+                              overflow := ((Utop [3] \/ Utop [2]) <> 0)
+                            --}}}  
+                          TRUE
+                            --{{{  must shift
+                            INT carry, X :
+                            SEQ
+                              X,  carry := SHIFTLEFT ( Utop [2],  Utop [1],  d)
+                              U [7],  carry := SHIFTLEFT ( Utop [1],  Utop [0],  d)
+                              U [6],  carry := SHIFTLEFT ( Utop [0],  0,  d)
+                              [U FROM 2 FOR 4] := Dzero
+                              overflow := (((Utop [3] \/ Utop [2]) \/ X) <> 0)
+                            --}}}  
+                        [V FROM 0 FOR 2] := [Dzero FROM 0 FOR 2]
+                        [U FROM 0 FOR 2] := [Dzero FROM 0 FOR 2]
+                        d := d + (2*BitsPerWord)
+                      --}}}  
+                    div [0] <> 0
+                      --{{{  
+                      SEQ
+                        d,  V [3],  V[2] := NORMALISE ( div [0],  0)
+                        IF
+                          d = 0
+                            --{{{  need not shift
+                            SEQ
+                              [U FROM 3 FOR 4] := Dzero
+                              U [7] := Utop [0]
+                              overflow := (((Utop [3] \/ Utop [2]) \/ Utop [1]) <> 0)
+                            --}}}  
+                          TRUE
+                            --{{{  must shift
+                            INT carry, X :
+                            SEQ
+                              X,  carry := SHIFTLEFT ( Utop [1],  Utop [0],  d)
+                              U [7],  carry := SHIFTLEFT ( Utop [0],  0,  d)
+                              [U FROM 3 FOR 4] := Dzero
+                              overflow := (((Utop [3] \/ Utop [2]) \/ (Utop [1] \/ X)) <>0)
+                            --}}}  
+                        [V FROM 0 FOR 2] := [Dzero FROM 0 FOR 2]
+                        [U FROM 0 FOR 3] := [Dzero FROM 0 FOR 3]
+                        d := d + (3*BitsPerWord)
+                      --}}}  
+                    TRUE
+                      overflow := TRUE
+                  --}}}  
+                  --{{{  adjust overflow
+                  VAL top IS U [7] :
+                  VAL mask IS ~SignBit :
+                  overflow := overflow OR ((top < 0) AND ((top /\ mask) > (V [3] /\ mask)))
+                  --}}}  
+                  IF
+                    overflow
+                      VAL M IS MaxUnsignedInt :
+                      Q := [M, M, M, M]
+                    TRUE
+                      SEQ
+                        SEQ i = 0 FOR 4
+                          VAL j IS 7 - i :
+                          INT Qhat :
+                          SEQ
+                            --{{{  calculate Qhat
+                            IF
+                              U [j] = V [3]
+                                Qhat := MaxUnsignedInt
+                              TRUE
+                                INT carry :
+                                Qhat,  carry := LONGDIV ( U [j],  U [j-1],  V [3])
+                            --}}}  
+                            --{{{  multiply and subtract
+                            [5] INT W :
+                            PLACE W IN WORKSPACE :
+                            SEQ
+                              --{{{  W := Qhat * V
+                              W[1],  W[0] := LONGPROD ( Qhat,  V[0],  0)
+                              W[2],  W[1] := LONGPROD ( Qhat,  V[1],  W[1])
+                              W[3],  W[2] := LONGPROD ( Qhat,  V[2],  W[2])
+                              W[4],  W[3] := LONGPROD ( Qhat,  V[3],  W[3])
+                              --}}}  
+                              --{{{  U := U - W
+                              INT X :
+                              SEQ
+                                X,  U[j-4] := LONGDIFF ( U[j-4],  W[0],  0)
+                                X,  U[j-3] := LONGDIFF ( U[j-3],  W[1],  X)
+                                X,  U[j-2] := LONGDIFF ( U[j-2],  W[2],  X)
+                                X,  U[j-1] := LONGDIFF ( U[j-1],  W[3],  X)
+                                X,  U[j]   := LONGDIFF ( U[j],  W[4],  X)
+                              --}}}  
+                            --}}}  
+                            --{{{  add back if negative
+                            WHILE (U[j] /\ SignBit) <> 0        --add back as required
+                              INT X :
+                              SEQ
+                                Qhat := Qhat MINUS 1 -- fix 8-9-87 PWT
+                                X,  U[j-4] := LONGSUM ( U[j-4],  V[0],  0)
+                                X,  U[j-3] := LONGSUM ( U[j-3],  V[1],  X)
+                                X,  U[j-2] := LONGSUM ( U[j-2],  V[2],  X)
+                                X,  U[j-1] := LONGSUM ( U[j-1],  V[3],  X)
+                                X,  U[j]   := LONGSUM ( U[j],  0,  X)
+                            --}}}  
+                            Q [3-i] := Qhat -- set quotient digit
+                RESULT Quot
+            :
+            --}}}  
+            VAL XF IS Xfrac >> 1 :                     --ensure no div overflow
+            SEQ
+              Y := SUM64 (Y >> 1, DIV64 (XF,  Y))
+              Y := SUM64 (Y >> 1, DIV64 (XF,  Y))
+              Y := SUM64 (Y >> 1, DIV64 (XF,  Y))
+            --}}}  
+            --{{{  determine correct value -- multiplication
+            [2]INT64 Y2 :
+            PLACE Y2 IN WORKSPACE :
+            VAL INT mask IS #F800 :
+            VAL INT lsbit IS #800 :
+            VAL INT lsbitShift IS 11 :
+            SEQ
+              [4]INT Y.i RETYPES Y :
+              Y.i[0] := Y.i[0] /\ mask  -- truncate
+              --{{{  multiply Y2 := Y * Y
+              --{{{  retypes
+              VAL [4] INT U RETYPES Y :
+              [4] INT hi.out RETYPES Y2[1] :
+              [4] INT lo.out RETYPES Y2[0] :
+              --}}}  
+              [8] INT W :
+              PLACE W IN WORKSPACE :
+              [4] INT C :
+              PLACE C IN WORKSPACE :
+              SEQ
+                INT Carry :
+                SEQ
+                  Carry,  W [0] := LONGPROD ( U [0],  U[0],  0 )
+                  Carry,  W [1] := LONGPROD ( U [1],  U[0],  Carry)
+                  Carry,  W [2] := LONGPROD ( U [2],  U[0],  Carry)
+                  W [4],  W [3] := LONGPROD ( U [3],  U[0],  Carry)
+                C [0],  W [1] := LONGPROD ( U [0],  U[1],  W [1])
+                C [1],  W [2] := LONGPROD ( U [1],  U[1],  W [2])
+                C [2],  W [3] := LONGPROD ( U [2],  U[1],  W [3])
+                C [3],  W [4] := LONGPROD ( U [3],  U[1],  W [4])
+                INT Carry :
+                SEQ
+                  Carry,  W [2] := LONGSUM ( C [0],  W [2],  0)
+                  Carry,  W [3] := LONGSUM ( C [1],  W [3],  Carry)
+                  Carry,  W [4] := LONGSUM ( C [2],  W [4],  Carry)
+                  W [6],  W [5] := LONGSUM ( C [3],  0,  Carry)
+                C [0],  W [2] := LONGPROD ( U [0],  U[2],  W [2])
+                C [1],  W [3] := LONGPROD ( U [1],  U[2],  W [3])
+                C [2],  W [4] := LONGPROD ( U [2],  U[2],  W [4])
+                C [3],  W [5] := LONGPROD ( U [3],  U[2],  W [5])
+                INT Carry :
+                SEQ
+                  Carry,  W [3] := LONGSUM ( C [0],  W [3],  0)
+                  Carry,  W [4] := LONGSUM ( C [1],  W [4],  Carry)
+                  Carry,  W [5] := LONGSUM ( C [2],  W [5],  Carry)
+                  W [7],  W [6] := LONGSUM ( C [3],  0,  Carry)
+                C [0],  W [3] := LONGPROD ( U [0],  U[3],  W [3])
+                C [1],  W [4] := LONGPROD ( U [1],  U[3],  W [4])
+                C [2],  W [5] := LONGPROD ( U [2],  U[3],  W [5])
+                C [3],  W [6] := LONGPROD ( U [3],  U[3],  W [6])
+                INT Carry :
+                SEQ
+                  Carry,  W [4] := LONGSUM ( C [0],  W [4],  0)
+                  Carry,  W [5] := LONGSUM ( C [1],  W [5],  Carry)
+                  Carry,  W [6] := LONGSUM ( C [2],  W [6],  Carry)
+                  Carry,  W [7] := LONGSUM ( C [3],  0,  Carry)
+                lo.out := [W FROM 0 FOR 4]
+                hi.out := [W FROM 4 FOR 4]
+              --}}}  
+              --{{{  add Y2 := Y2 + (Y * lsbit) + ( (1/2) * lsbit^2 )
+              [4]INT Y.i RETYPES Y :
+              [8]INT Y.times.lsbit :
+              PLACE Y.times.lsbit IN WORKSPACE :
+              [8]INT Y2.i RETYPES Y2 :
+              SEQ
+                Y.times.lsbit := [0, 0, 0, 0, 0, 0, 0, 0 ]
+                Y.times.lsbit[4], Y.times.lsbit[3] := SHIFTLEFT( 0 , Y.i[3], lsbitShift)
+                Y.times.lsbit[3], Y.times.lsbit[2] := SHIFTLEFT( Y.i[3] , Y.i[2], lsbitShift)
+                Y.times.lsbit[2], Y.times.lsbit[1] := SHIFTLEFT( Y.i[2] , Y.i[1], lsbitShift)
+                Y.times.lsbit[1], Y.times.lsbit[0] := SHIFTLEFT( Y.i[1] , Y.i[0], lsbitShift)
+                INT carry :
+                VAL INT half.lsbit.squared IS #20 : -- actually #200000; SRH 15-Mar-90
+                SEQ
+                  carry, Y2.i[0] := LONGSUM( Y2.i[0], Y.times.lsbit[0], 0)
+                  carry, Y2.i[1] := LONGSUM( Y2.i[1], Y.times.lsbit[1], carry + half.lsbit.squared)
+                  carry, Y2.i[2] := LONGSUM( Y2.i[2], Y.times.lsbit[2], carry)
+                  carry, Y2.i[3] := LONGSUM( Y2.i[3], Y.times.lsbit[3], carry)
+                  carry, Y2.i[4] := LONGSUM( Y2.i[4], Y.times.lsbit[4], carry)
+                  carry, Y2.i[5] := LONGSUM( Y2.i[5], Y.times.lsbit[5], carry)
+                  carry, Y2.i[6] := LONGSUM( Y2.i[6], Y.times.lsbit[6], carry)
+                  carry, Y2.i[7] := LONGSUM( Y2.i[7], Y.times.lsbit[7], carry)
+              --}}}  
+              INT overflow :
+              INT64 YplusLsbit :
+              --{{{  UGT64  -- SRH 15-Mar-90
+              BOOL FUNCTION UGT64( VAL INT64 A, B )
+
+                -- Purpose:  To act as an unsigned greater than ( > ).
+                -- Returned: A > B, where A and B are treated as unsigned integers.
+
+                BOOL greater.than :
+                VALOF
+                  INT64 a, b :
+                  VAL INT64 Dzero IS 0( INT64 ) :
+                  SEQ
+                    a, b := A, B
+                    --{{{  compare
+                    IF
+                      a >= Dzero
+                        IF
+                          b >= Dzero
+                            greater.than := a > b
+                          TRUE
+                            greater.than := FALSE
+                      TRUE
+                        IF
+                          b >= Dzero
+                            greater.than := TRUE
+                          TRUE  -- both are less than zero as signed numbers
+                            greater.than := a > b
+                    --}}}  
+                  RESULT greater.than
+              :  -- UGT64
+              --}}}  
+              SEQ
+                --{{{  YplusLsbit := Y + lsbit
+                INT carry :
+                [4]INT YplusLsbit.i RETYPES YplusLsbit :
+                [4]INT Y.i RETYPES Y :
+                SEQ
+                  carry, YplusLsbit.i[0] := LONGSUM( Y.i[0], lsbit, 0)
+                  carry, YplusLsbit.i[1] := LONGSUM( Y.i[1], carry, 0)
+                  carry, YplusLsbit.i[2] := LONGSUM( Y.i[2], carry, 0)
+                  overflow, YplusLsbit.i[3] := LONGSUM( Y.i[3], carry, 0)
+                --}}}  
+                IF
+                  overflow = 0
+                    --{{{  select between Y and (Y + lsbit)
+                    IF
+                      Xfrac = Y2[1]
+                        --{{{  equal
+                        IF
+                          Y2[0] = 0 (INT64)
+                            --{{{  equal
+                            [4]INT Y.i RETYPES Y :
+                            [4]INT YplusLsbit.i RETYPES YplusLsbit :
+                            IF
+                              (Y.i[0] /\ lsbit) <> 0  -- odd fraction, so round up
+                                SEQ
+                                  Y.i[0] := YplusLsbit.i[0]
+                                  Y.i[1] := YplusLsbit.i[1]
+                                  Y.i[2] := YplusLsbit.i[2]
+                                  Y.i[3] := YplusLsbit.i[3]
+                              TRUE
+                                SKIP
+                            --}}}  
+                          TRUE
+                            SKIP
+                        --}}}  
+                      --Xfrac > Y2[1]
+                      UGT64( Xfrac, Y2[1] )  -- SRH 15-Mar-90
+                        Y := YplusLsbit
+                      TRUE
+                        SKIP
+                    --}}}  
+                  TRUE
+                    SKIP -- Y is the correct representation, as Y + lsbit overflows
+            --}}}  
+          --{{{  round
+          Xexp := ((Xexp + DRealXcess) >> 1)
+          --Xfrac := Y /\ DRealExp --get round mask -- SRH 15-Mar-90; was unnecessary
+          --{{{  pack
+          [4] INT l.out RETYPES Root.i :
+          VAL y IS Y << 1 :
+          VAL [4] INT l.in RETYPES y :
+          VAL Dzero IS [0,0,0,0] :
+          VAL Places IS DRealShift + 1 :
+          INT carry :
+          SEQ
+            carry,  l.out [0] := SHIFTRIGHT ( l.in [1],  l.in [0],  Places)
+            carry,  l.out [1] := SHIFTRIGHT ( l.in [2],  l.in [1],  Places)
+            carry,  l.out [2] := SHIFTRIGHT ( l.in [3],  l.in [2],  Places)
+            carry,  l.out [3] := SHIFTRIGHT ( Xexp,  l.in [3],  Places)
+          --}}}  
+          -- SRH 15-Mar-90; the following IF statement was redundant
+          --IF
+            --(Xfrac /\ DRealRBit) = Dzero         --no round bit
+              --SKIP
+            --((Xfrac /\ (INT64 DRealXcess)) \/ (Y /\ Done)) <> Dzero --round up
+              --Root.i := Root.i + Done
+            --TRUE
+              --SKIP
+          --}}}  
+    RESULT Root
+:
+--}}}  
+
+#ENDIF

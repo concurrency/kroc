@@ -1,0 +1,16 @@
+The occam/UNIX Socket Library
+=============================
+
+Files in this directory:
+csock.c
+	The C part of the occam socket library
+
+socklib.inc
+	Include file used by occam programs using the socket library
+
+socklib.occ
+	The occam interface to the socket library
+
+README
+	The file you are reading now
+

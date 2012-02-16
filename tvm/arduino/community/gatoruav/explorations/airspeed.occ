@@ -1,0 +1,69 @@
+#INCLUDE "plumbing.module"
+
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serial.write.string(TX0,"-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serial.write.string(TX0,[BYTE digit])
+        index := index + 1
+    
+:
+
+VAL INT NUM.READINGS.TO.AVERAGE IS 40:
+PROC av (CHAN INT input?, output!)
+  [NUM.READINGS.TO.AVERAGE]INT readings:
+  INT  sum:
+  INITIAL INT ndx IS 0:
+  SEQ
+    -- Preload array
+    SEQ i = 0 FOR (SIZE readings)
+      input ? readings[i]      
+    WHILE TRUE
+      SEQ
+        -- Read in a new value
+        input ? readings[ndx]
+        -- Sum up the current array of readings
+        sum := 0
+        SEQ i = 0 FOR (SIZE readings)
+          sum := sum + readings[i]
+        output ! (sum / (SIZE readings))
+        ndx := (ndx + 1) REM (SIZE readings)
+:        
+PROC display(CHAN INT x?)
+  INT air:  
+  WHILE TRUE
+    SEQ
+      x ? air
+      serialWriteDecInt(air)
+      serial.write.string (TX0, "*n")
+:  
+PROC main()
+  CHAN INT out, val, num:
+  CHAN SIGNAL sig:
+  PAR
+    adc(0, VCC, sig?,out!)
+    tick(1, sig!)
+    display(num?)
+    av (out?, val!)
+    av (val?, num!)
+:

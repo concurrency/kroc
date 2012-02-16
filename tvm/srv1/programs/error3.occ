@@ -1,0 +1,11 @@
+-- Test array range error
+
+PROC main (CHAN BYTE in?, out!)
+  [4]BYTE x:
+  SEQ
+    out ! 'e'
+    out ! '3'
+    out ! '*n'
+    SEQ i = 0 FOR (SIZE x) + 1
+      x[i] := 0
+:

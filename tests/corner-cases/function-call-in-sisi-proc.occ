@@ -1,0 +1,21 @@
+INT INLINE FUNCTION pos2Dto1D (VAL INT x, y, width) IS x + (y * width):
+
+PROC sisi (VAL []BYTE a, VAL INT b, VAL []BYTE c, VAL INT c, CHAN BYTE out!)
+  out ! 'x'
+:
+
+DATA TYPE BLAH
+  RECORD
+    INT a:
+:
+
+PROC main (CHAN BYTE out!)
+  -- Two different variants on the same error -- toggle TRUE to FALSE.
+  #IF TRUE
+  INITIAL INT x IS 42:
+  sisi ("Plant ", x, " will be spawned to loc ", pos2Dto1D (x, x, x), out!)
+  #ELSE
+  INITIAL BLAH x IS [42]:
+  sisi ("Plant ", x[a], " will be spawned to loc ", pos2Dto1D (x[a], x[a], x[a]), out!)
+  #ENDIF
+:

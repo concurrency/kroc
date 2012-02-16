@@ -1,0 +1,196 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.3 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32TOREAL64 "REAL32TOREAL64%CHK"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  REAL32TOREAL64
+REAL64 FUNCTION REAL32TOREAL64 (VAL REAL32 X)
+
+  --{{{  history
+  -- Beta-2 (27feb87)
+  -- V1.2 24/02/89
+  -- Moved position of CAUSEERROR from end of branch to the beginning of
+  -- it to allow compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}
+
+  -- From here is identical to the idebug version of this routine - any change
+  -- in one should be reflected in the other.
+
+  REAL64 Result :
+  VALOF
+    --{{{  constants
+    VAL low  IS 0 :
+    VAL high IS 1 :
+    --}}}
+    [2]INT Result RETYPES Result :
+    VAL INT X RETYPES X :
+    INT Yexp :
+    [2] INT Yfrac :
+    PLACE Yfrac IN WORKSPACE :
+    INT Xfrac, Xexp, Places, Carry :
+    SEQ
+      --{{{  unpack operands
+      Xexp,  Xfrac := SHIFTLEFT ( 0,  X<<1,  RealShift)
+      Xfrac := Xfrac >> 1                 --room for leading bit
+      --{{{  determine special cases
+      IF
+        --{{{  normal or zero
+        (Xexp <> RealExp)
+          IF
+            (Xexp <> 0)  --normal case
+              --{{{  
+              SEQ
+                Yfrac[high] := Xfrac \/ SignBit
+                Yexp := Xexp + (DRealXcess - RealXcess)
+              --}}}
+            (Xexp \/ Xfrac) = 0           --X is zero
+              --{{{  
+              SEQ
+                Yfrac[high] := 0      --signed zero
+                Yexp  := 0
+              --}}}
+            TRUE                          --X is denormalised
+              --{{{  
+              SEQ
+                Places,  Yfrac[high],  Yfrac[low] := NORMALISE ( Xfrac,  0)
+                Yexp := ((DRealXcess - RealXcess) + (1 - Places))
+              --}}}
+        --}}}
+        --{{{  NaN or inf
+        TRUE
+          SEQ
+            CAUSEERROR()
+            Yexp := DRealExp
+            Yfrac[high] := Xfrac
+        --}}}
+      --}}}
+      --}}}
+      --{{{  pack
+      Yfrac[1],  Yfrac[0] := SHIFTRIGHT (Yfrac[1]/\(~SignBit),  0,  DRealShift)
+      Carry,  Yexp := SHIFTRIGHT ( Yexp,  0,  DRealShift+1)
+      Yfrac[1] := Yfrac[1] \/ Yexp
+      --}}}
+      Result [high] := (Yfrac[high] \/ ( X /\ SignBit))
+      Result [low]  := Yfrac[low]
+    RESULT Result
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.2 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}  
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32TOREAL64 "REAL32TOREAL64%CHK"
+--}}}  
+
+#INCLUDE "realvals.inc"
+
+--{{{  REAL32TOREAL64
+REAL64 FUNCTION REAL32TOREAL64 (VAL REAL32 X)
+
+  --{{{  history
+  -- Function version (10 Jun 87)
+  -- V1.1 21/02/92
+  -- Moved position of CAUSEERROR from end of branch to the beginning of
+  -- it to allow compiler to do dead code elimination; V1.2, 7-Dec-92 SRH
+  --}}}  
+
+  REAL64 Result :
+  VALOF
+    [4]INT Result RETYPES Result :
+    VAL [2]INT X RETYPES X :
+    INT Yexp :
+    [4] INT Yfrac :
+    PLACE Yfrac IN WORKSPACE :
+    [2] INT Xfrac :
+    PLACE Xfrac IN WORKSPACE :
+    INT Xexp, Places, Carry :
+    SEQ
+      --{{{  unpack operands
+      Xexp,  Xfrac [1] := SHIFTLEFT ( 0,  X[1] <<1,  RealShift)
+      Xfrac[1],  Xfrac[0] := SHIFTLEFT ( X[1],  X[0],  RealShift)
+      IF
+        --{{{  normal or zero
+        (Xexp <> RealExp)
+          IF
+            (Xexp <> 0)  --normal case
+              --{{{  
+              SEQ
+                Yfrac[3] := Xfrac [1] \/ SignBit
+                Yfrac[2] := Xfrac [0]
+                Yexp := Xexp + (DRealXcess - RealXcess)
+              --}}}  
+            ((Xexp \/ Xfrac [1]) \/ Xfrac [0]) = 0           --X is zero
+              --{{{  
+              SEQ
+                Yfrac[3] := 0      --signed zero
+                Yfrac[2] := 0
+                Yexp  := 0
+              --}}}  
+            TRUE                          --X is denormalised
+              --{{{  
+              SEQ
+                Places,  Yfrac[3],  Yfrac[2] := NORMALISE ( Xfrac[1],  Xfrac[0])
+                Yexp := ((DRealXcess - RealXcess) + (1 - Places))
+              --}}}  
+        --}}}  
+        --{{{  NaN or inf
+        TRUE
+          SEQ
+            CAUSEERROR()
+            --Yexp := DRealExp
+            --Yfrac[3] := Xfrac[1]
+            --Yfrac[2] := Xfrac[0]
+        --}}}  
+      --}}}  
+      --{{{  pack
+      Carry,  Yfrac[1] := SHIFTRIGHT ( Yfrac[2],  0,  DRealShift)
+      Yfrac[3],  Yfrac[2] := SHIFTRIGHT (Yfrac[3]/\(~SignBit),  Yfrac[2],  DRealShift)
+      Carry,  Yexp := SHIFTRIGHT ( Yexp,  0,  DRealShift+1)
+      Yfrac[3] := Yfrac[3] \/ Yexp
+      --}}}  
+      Result [3] := (Yfrac[3] \/ ( X [1] /\ SignBit))
+      Result [2] := Yfrac[2]
+      Result [1] := Yfrac[1]
+      Result [0] := 0
+    RESULT Result
+:
+--}}}  
+
+#ENDIF

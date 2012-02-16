@@ -1,0 +1,170 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.1 08/02/91"
+#COMMENT "(c) Copyright INMOS Limited 1990 1991"
+--}}}
+
+#PRAGMA TRANSLATE REAL32GTERR "REAL32GTERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL32GTERR (VAL REAL32 X, Y)
+
+  --{{{  specification
+  -- Purpose:  To determine whether the first given REAL32 is greater than the
+  --           second given REAL32
+  -- In:       X - the first given REAL32
+  -- In:       Y - the second given REAL32
+  -- Returned: TRUE if X > Y; FALSE otherwise
+  -- Notes:    This routine is set up for a 32 bit machine.
+  --           IEEE para 5.7 "Comparisons shall ignore the sign of zero ( so
+  --           +0 = -0 )."
+  --           c.f REAL32GT
+  --}}}
+  --{{{  history
+  -- This unoptimised version was written for the TA libraries; V1.0,
+  -- 29-Jan-90 SRH
+  -- Corrected behaviour of comparison on two negative numbers - TS/1149;
+  -- V1.1 8-Feb-91 SRH
+  --}}}
+
+  --{{{  cases
+  --   \ Y |  NaN   +inf   -inf   +ve   0.0   -0.0   -ve
+  --  X \  |  
+  --  ---------------------------------------------------
+  --       |
+  --  NaN  |   1      2      3     4     5      6     7
+  --       |
+  --  +inf |   8      9     10    11    12     13    14
+  --       |
+  --  -inf |  15     16     17    18    19     20    21 
+  --       |
+  --   +ve |  22     23     24    25    26     27    28
+  --       |
+  --   0.0 |  29     30     31    32    33     34    35
+  --       |
+  --  -0.0 |  36     37     38    39    40     41    42
+  --       |
+  --   -ve |  43     44     45    46    47     48    49
+  --       |
+  --}}}
+
+  BOOL Xgreater.thanY :
+  VALOF
+    VAL INT RealInf      IS #7F800000 :
+    VAL INT PositiveMask IS #7FFFFFFF :
+    VAL INT X RETYPES X :
+    VAL INT Y RETYPES Y :
+    VAL INT magnitude.of.X IS ( X BITAND PositiveMask ) : -- zero sign bit
+    VAL INT magnitude.of.Y IS ( Y BITAND PositiveMask ) : -- zero sign bit
+    IF
+      (( X BITAND RealInf ) = RealInf ) OR (( Y BITAND RealInf ) = RealInf )
+        CAUSEERROR()
+      ( X >< Y ) < 0 -- cases 27, 28, 34, 35, 39, 40, 46, 47
+        --{{{  opposite signs
+        IF
+          Y < 0
+            IF
+              magnitude.of.Y <> 0 -- cases 28, 35
+                Xgreater.thanY := TRUE
+              TRUE -- cases 27, 34
+                Xgreater.thanY := ( magnitude.of.X <> 0 )
+          TRUE -- cases 39, 40, 46, 47
+            Xgreater.thanY := FALSE
+        --}}}
+      X >= 0 -- cases 25, 26, 32, 33
+        Xgreater.thanY := ( magnitude.of.X > magnitude.of.Y )
+      TRUE -- cases 41, 42, 48, 49
+        Xgreater.thanY := ( magnitude.of.Y > magnitude.of.X )
+    RESULT Xgreater.thanY
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL32GTERR "REAL32GTERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL32GTERR (VAL REAL32 X, Y)
+
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+
+  BOOL bool :
+  VALOF
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL low IS 0 :
+    VAL high IS 1 :
+    INT MagX :
+    INT MagY :
+    SEQ
+      VAL INT RealInf.high IS #7F80 :
+      IF
+        ((X [high] /\ RealInf.high) = RealInf.high) OR
+            ((Y [high] /\ RealInf.high) = RealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+      IF
+        --{{{  X and Y have different signs
+        (X [high] >< Y [high]) < 0       -- Still infinities but no NaNs
+          --Signs are different hence test Y < 0 and not both 0
+          bool := (Y [high] < 0) AND
+                  ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) <> 0)
+        --}}}
+        --{{{  X and Y both negative
+        X [high] < 0
+          SEQ
+            IF
+              MagY = MagX
+                --This is the equivalent of an unsigned comparison
+                bool := (Y [low] >< #8000) > (X [low] >< #8000)
+              TRUE
+                bool := (MagY > MagX)
+        --}}}
+        --{{{  TRUE - X and Y both positive
+        TRUE
+          SEQ
+            IF
+              MagX = MagY
+                --This is the equivalent of an unsigned comparison
+                bool := (X [low] >< #8000) > (Y [low] >< #8000)
+              TRUE
+                bool := (MagX > MagY)
+        --}}}
+    RESULT bool
+:
+--}}}
+
+#ENDIF

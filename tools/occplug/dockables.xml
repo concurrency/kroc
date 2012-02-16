@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE DOCKABLES SYSTEM "dockables.dtd">
+
+<DOCKABLES>
+	<DOCKABLE NAME="occPlug">
+		new org.transterpreter.occPlug.OccPlug(view, position);
+	</DOCKABLE>
+	<DOCKABLE NAME="srvCamera">
+		new org.transterpreter.occPlug.SrvCamera(view, position);
+	</DOCKABLE>
+</DOCKABLES>

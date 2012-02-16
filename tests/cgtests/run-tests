@@ -1,0 +1,170 @@
+#!/usr/bin/env python
+#
+#	run-tests -- run the CG tests and produce a report
+#	Copyright (C) 2006, 2008 Adam Sampson <ats@offog.org>
+#
+#	This program is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; either version 2 of the License, or
+#	(at your option) any later version.
+#
+#	This program is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program; if not, write to the Free Software
+#	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+#
+
+import sys, os, re, getopt, time, select, signal
+
+# Give up on a test if it hasn't finished after this many seconds.
+TIMEOUT = 30.0
+
+# Tests that are known not to work.
+KNOWN_BROKEN = []
+
+def run_command(cmd):
+	"""Run a program with arguments and return the exit code.
+	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
+	is available."""
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+
+def status(s):
+	sys.stderr.write(s)
+	sys.stderr.flush()
+
+def run_test(name, verbose, interpreter):
+	status("%-10s ... " % name)
+
+	if interpreter is not None:
+		path = "%s.tbc" % name
+		cmd = [interpreter, path]
+	else:
+		path = name
+		cmd = ["./%s" % path]
+	if name in KNOWN_BROKEN:
+		status("%s skipped: known broken\n" % path)
+		return None
+	elif not os.access(path, os.F_OK):
+		status("%s skipped: no binary found\n" % path)
+		return None
+
+	null = os.open("/dev/null", os.O_RDWR)
+	(pr, pw) = os.pipe()
+
+	pid = os.fork()
+	if pid == 0:
+		os.close(pr)
+		os.dup2(null, 0)
+		os.dup2(pw, 1)
+		os.dup2(pw, 2)
+		os.execvp(cmd[0], cmd)
+		os._exit(111)
+	os.close(null)
+	os.close(pw)
+
+	start_time = time.time()
+
+	buf = []
+	while 1:
+		(rfds, wfds, efds) = select.select([pr], [], [], 1.0)
+		if rfds == []:
+			if time.time() - start_time > TIMEOUT:
+				os.kill(pid, signal.SIGKILL)
+				buf.append("\n(test timed out)\n")
+				break
+			else:
+				continue
+
+		s = os.read(pr, 4096)
+		if s == "":
+			break
+		buf.append(s)
+	lines = [s.rstrip() for s in "".join(buf).split("\n")]
+
+	os.close(pr)
+	(pid, code) = os.waitpid(pid, 0)
+	code = os.WEXITSTATUS(code)
+
+	passed = False
+	ntests = 0
+	for line in lines:
+		m = re.match('^\^\^\^ Passed : .*: All (\d+) tests', line)
+		if m is not None:
+			passed = True
+			ntests = int(m.group(1))
+	if code != 0:
+		passed = False
+
+	if passed:
+		status("ok (%d tests)" % ntests)
+		if verbose:
+			status("\n")
+		else:
+			status("\r\033[K")
+		return True
+	else:
+		status("failed\n")
+		status("  Exit code %d\n" % code)
+		status("  Output:\n")
+		for line in lines:
+			status("  > " + line + "\n")
+		return False
+
+if __name__ == "__main__":
+	try:
+		(opts, args) = getopt.getopt(sys.argv[1:], "v", ["tvm="])
+	except getopt.GetoptError:
+		status("Usage: run-tests [-v] [--tvm=PATH] [TEST ...]\n")
+		sys.exit(1)
+
+	verbose = False
+	interpreter = None
+	for (o, a) in opts:
+		if o == "-v":
+			verbose = True
+		elif o == "--tvm":
+			interpreter = a
+
+	if interpreter is not None and interpreter.startswith("./"):
+		interpreter = os.path.join(os.getcwd(), interpreter)
+	os.chdir(sys.path[0])
+
+	if args == []:
+		tests = ["cgtest%02d" % n for n in range(100)]
+		tests = [t for t in tests if os.access("%s.occ" % t, os.F_OK)]
+	else:
+		tests = [re.sub('\..*', '', a) for a in args]
+		for t in tests:
+			if not os.access("%s.occ" % t, os.F_OK):
+				status("Test %s does not exist\n" % t)
+				sys.exit(1)
+
+	tests.sort()
+
+	passed = []
+	failed = []
+	skipped = []
+	for test in tests:
+		r = run_test(test, verbose, interpreter)
+		if r is None:
+			skipped.append(test)
+		elif r:
+			passed.append(test)
+		else:
+			failed.append(test)
+
+	status("Tests complete; ran %d; passed %d, skipped %d, failed %d\n" % (len(tests), len(passed), len(skipped), len(failed)))
+	if skipped != []:
+		status("Skipped: %s\n" % " ".join(skipped))
+	if failed != []:
+		status("Failed: %s\n" % " ".join(failed))
+		sys.exit(1)
+

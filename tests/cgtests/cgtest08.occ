@@ -1,0 +1,777 @@
+-- version control marker $Id: cgtest08.occ,v 1.7 1996/11/05 12:16:16 svd Exp $
+
+PROC cgtest8 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  -- ticks per second
+  #IF (TARGET.BITS.PER.WORD = 16)
+  VAL sec IS 1000 :
+  #ELSE
+  VAL sec IS 1000000 :
+  #ENDIF
+
+  -- T4 (rev A)      IS   625000
+  -- T4 (rev B) (Hi) IS  1000000 (also T2 and T8)
+  -- T4 (rev B) (Lo) IS    15625 (also T2 and T8)
+  -- Stride          IS       50
+  -- Vax             IS 10000000
+  -- KROC SPARC      IS  1000000
+  -- KROC Alpha      IS  1000000
+
+  VAL tenth.sec IS sec / 10 :
+  SEQ
+    init ("CG test 8", "Timer - Please wait a few seconds")
+
+    --{{{  time waits
+    --{{{  output message
+    title ("Testing waits on the timer queue")
+    --}}}
+    --{{{  T0
+    INT X:
+    TIMER T:
+    SEQ
+      T ? X
+      T ? AFTER (X PLUS (sec / 10))
+      check (1, 1, "T0")
+    --}}}
+    --{{{  T1
+    INT X, Y:
+    TIMER T:
+    SEQ
+      T ? X
+      T ? Y
+      T ? AFTER (X PLUS (sec / 10))
+      T ? AFTER (Y PLUS (sec / 10))
+      check (1, 1, "T1")
+    --}}}
+    --{{{  T2
+    INT X, Y:
+    [2]TIMER T:
+    SEQ
+      PAR
+        SEQ
+          T[0] ? X
+          T[0] ? AFTER (X PLUS (sec / 10))
+        SEQ
+          T[1] ? Y
+          T[1] ? AFTER (Y PLUS (sec / 5))
+      check (1, 1, "T2")
+    --}}}
+    --{{{  T3
+    TIMER TIMER1:
+    TIMER TIMER2:
+    SEQ
+      PAR
+        --{{{  
+        INT X, Y:
+        SEQ
+          TIMER1 ? X
+          TIMER1 ? AFTER (X PLUS (sec / 10))
+          TIMER1 ? Y
+          TIMER1 ? AFTER (Y PLUS (sec / 5))
+        --}}}
+        --{{{  
+        INT X, Y:
+        SEQ
+          TIMER2 ? X
+          TIMER2 ? AFTER (X PLUS (sec / 7))
+          TIMER2 ? Y
+          TIMER2 ? AFTER (Y PLUS (sec / 3))
+        --}}}
+      check (1, 1, "T3")
+    --}}}
+    --{{{  T4
+    [10]CHAN OF INT c:
+    [10]INT X:
+    [10]TIMER T:
+    BOOL ok:
+    SEQ
+      ok := TRUE
+      PAR
+        --{{{  sender
+        PAR i = 0 FOR 7
+          INT X:
+          SEQ
+            T[i] ? X
+            T[i] ? AFTER (X PLUS (tenth.sec / (i + 1)))
+            c[i] ! i
+        --}}}
+        --{{{  receiver
+        SEQ i = 0 FOR 7
+          c[i] ? X[i]
+        --}}}
+      --{{{  checker
+      SEQ i = 0 FOR 7
+        IF
+          X[i] = i
+            SKIP
+          TRUE
+            ok := FALSE
+      --}}}
+      IF
+        ok
+          check (1, 1, "T4")
+        TRUE
+          check (1, 0, "T4")
+    --}}}
+    --{{{  T5
+    [10]CHAN OF INT c:
+    [10]INT X:
+    BOOL ok:
+    SEQ
+      ok := TRUE
+      PAR
+        --{{{  sender
+        PAR i = 0 FOR 10
+          TIMER T:
+          INT X:
+          SEQ
+            T ? X
+            T ? AFTER (X PLUS (tenth.sec / (i + 1)))
+            c[i] ! i
+        --}}}
+        --{{{  receiver
+        SEQ i = 0 FOR 10
+          c[i] ? X[i]
+        --}}}
+      --{{{  checker
+      SEQ i = 0 FOR 10
+        IF
+          X[i] = i
+            SKIP
+          TRUE
+            ok := FALSE
+      --}}}
+      check (INT ok, INT TRUE, "T5")
+    --}}}
+    --{{{  T6
+    CHAN OF INT c:
+    [10]TIMER Tim:
+    TIMER Time:
+    [10]INT X:
+    SEQ
+      PAR
+        PAR i = 0 FOR 10    -- noise on timer queue
+          SEQ
+            Tim[i] ? X[i]
+            Tim[i] ? AFTER (X[i] PLUS (tenth.sec / (i + 1)))
+        INT A:     -- sender
+        SEQ
+          Time ? A
+          Time ? AFTER (A PLUS (tenth.sec * 2))
+          c ! 0
+        INT A:     -- receiver
+        SEQ
+          c ? A
+          check (1, 1, "T6")
+    --}}}
+    --{{{  T7
+    PROC T7()
+      CHAN OF INT c:
+      [10]TIMER Tim:
+      TIMER Time:
+      [10]INT X:
+      SEQ
+        PAR
+          PAR i = 0 FOR 10    -- noise on timer queue
+            INT when :
+            SEQ
+              Tim[i] ? X[i]
+              when := (X[i] PLUS (tenth.sec / (i + 1)))
+              Tim[i] ? AFTER when
+          INT A, when:     -- sender
+          SEQ
+            Time ? A
+            when := (A PLUS (tenth.sec * 2))
+            Time ? AFTER when
+            c ! 0
+          INT A:     -- receiver
+          SEQ
+            c ? A
+            check (1, 1, "T7")
+    :
+    T7()
+    --}}}
+    --{{{  T8
+    PROC T8()
+      CHAN OF INT c:
+      [10]TIMER Tim:
+      TIMER Time:
+      [10]INT X:
+      SEQ
+        PAR
+          PAR i = 0 FOR 10    -- noise on timer queue
+            SEQ
+              Tim[i] ? X[i]
+              X[i] := (X[i] PLUS (tenth.sec / (i + 1)))
+              Tim[i] ? AFTER X[i]
+          INT A:     -- sender
+          SEQ
+            Time ? A
+            A := (A PLUS (tenth.sec * 2))
+            Time ? AFTER A
+            c ! 0
+          INT A:     -- receiver
+          SEQ
+            c ? A
+            check (1, 1, "T8")
+    :
+    T8()
+    --}}}
+    
+    --}}}
+    --{{{  time ALTS
+    --{{{  output message
+    title ("Testing time channel ALTs")
+    --}}}
+    --{{{  TA0  - TA1
+    BOOL ok:
+    [3]TIMER T:
+    INT time0, time1, time2:
+    SEQ
+      ok := TRUE
+      T[0] ? time0
+      T[1] ? time1
+      T[2] ? time2
+      ALT
+        T[0] ? AFTER (time0 MINUS tenth.sec)
+          check(1, 1, "TA0")
+        T[1] ? AFTER (time1 PLUS tenth.sec)
+          ok := FALSE
+        T[2] ? AFTER (time2 PLUS tenth.sec)
+          ok := FALSE
+      check(INT ok, INT TRUE, "TA1")
+    --}}}
+    --{{{  TA2  - TA3
+    BOOL ok:
+    [3]TIMER T:
+    INT time0, time1, time2:
+    SEQ
+      ok := TRUE
+      T[0] ? time0
+      T[1] ? time1
+      T[2] ? time2
+      ALT
+        T[0] ? AFTER (time0 PLUS 10000)
+          ok := FALSE
+        T[1] ? AFTER (time1 MINUS 1)
+          check(1, 1, "TA2")
+        T[2] ? AFTER (time2 PLUS 10000)
+          ok := FALSE
+      check(INT ok, INT TRUE, "TA3")
+    --}}}
+    --{{{  TA4  - TA5
+    BOOL ok:
+    [3]TIMER T:
+    INT time0, time1, time2:
+    SEQ
+      ok := TRUE
+      T[0] ? time0
+      T[1] ? time1
+      T[2] ? time2
+      ALT
+        T[0] ? AFTER (time0 PLUS tenth.sec)
+          ok := FALSE
+        T[1] ? AFTER (time1 PLUS tenth.sec)
+          ok := FALSE
+        T[2] ? AFTER (time2 MINUS 1)
+          check(1, 1, "TA4")
+      check(INT ok, INT TRUE, "TA5")
+    --}}}
+    --{{{  TA6  - TA7
+    BOOL ok:
+    [3]TIMER T:
+    INT time0, time1, time2:
+    SEQ
+      ok := TRUE
+      T[0] ? time0
+      T[1] ? time1
+      T[2] ? time2
+      ALT
+        T[0] ? AFTER (time0 PLUS tenth.sec)
+          ok := FALSE
+        T[1] ? AFTER (time1 PLUS tenth.sec)
+          ok := FALSE
+        T[2] ? AFTER (time2 PLUS (tenth.sec / 2))
+          check(1, 1, "TA6")
+      check(INT ok, INT TRUE, "TA7")
+    --}}}
+    --{{{  TA8  - TA9
+    BOOL ok:
+    [3]TIMER T:
+    INT time0, time1, time2:
+    SEQ
+      ok := TRUE
+      T[0] ? time0
+      T[1] ? time1
+      T[2] ? time2
+      ALT
+        T[0] ? AFTER (time0 PLUS sec)
+          ok := FALSE
+        T[1] ? AFTER (time1 PLUS (sec / 20))
+          check(1, 1, "TA8")
+        T[2] ? AFTER (time2 PLUS (sec / 2))
+          ok := FALSE
+      check(INT ok, INT TRUE, "TA9")
+    --}}}
+    --{{{  TA10 - TA11
+    BOOL ok:
+    [3]TIMER T:
+    INT time0, time1, time2:
+    SEQ
+      ok := TRUE
+      T[0] ? time0
+      T[1] ? time1
+      T[2] ? time2
+      ALT
+        T[0] ? AFTER (time0 PLUS (sec / 30))
+          check(1, 1, "TA10")
+        T[1] ? AFTER (time1 PLUS sec)
+          ok := FALSE
+        T[2] ? AFTER (time2 PLUS (sec / 2))
+          ok := FALSE
+      check(INT ok, INT TRUE, "TA11")
+    --}}}
+    --{{{  TA12 - TA15
+    INT ok:
+    [6]TIMER T:
+    [6]INT time:
+    SEQ
+      ok := 0
+      --{{{  
+      SEQ i = 0 FOR 3
+        T[i] ? time[i]
+      ALT i = 0 FOR 3
+        T[i] ? AFTER (time[i] PLUS (tenth.sec / (i + 1)))
+          check(i, 2, "TA12")
+      --}}}
+      --{{{  
+      SEQ i = 0 FOR 6
+        T[i] ? time[i]
+      ALT i = 0 FOR 6
+        T[i] ? AFTER (time[i] PLUS (tenth.sec + (tenth.sec * i)))
+          SEQ
+            check(i, 0, "TA13")
+            ok := ok + 1
+      --}}}
+      --{{{  
+      T[1] ? time[1]
+      SEQ i = 1 FOR 5
+        T[i] ? time[i]
+      ALT i = 1 FOR 5
+        T[i] ? AFTER (time[i] PLUS (sec + ((10*tenth.sec) / i)))
+          check(i, 5, "TA14")
+      --}}}
+      check(ok, 1, "TA15")
+    --}}}
+    --{{{  TA20
+    CHAN OF INT c :
+    PAR
+      TIMER t1 :
+      INT x :
+      SEQ
+        t1 ? x
+        t1 ? AFTER (x PLUS (sec / 10))
+        c ! 0
+      TIMER t2 :
+      INT y , z :
+      SEQ
+        t2 ? y
+        ALT
+          t2 ? AFTER (y PLUS (sec / 5))
+            z := 1
+          c ? z
+            SKIP
+        check (z, 0, "TA20")
+    --}}}
+    --{{{  TA21 - TA23
+    CHAN OF INT c1, c2 :
+    PAR
+      --{{{  output on c1 after sec/100
+      TIMER t1 :
+      INT x :
+      SEQ
+        t1 ? x
+        t1 ? AFTER (x PLUS (sec / 100))
+        c1 ! 0
+      --}}}
+      --{{{  output on c2 after sec/50
+      TIMER t2 :
+      INT x :
+      SEQ
+        t2 ? x
+        t2 ? AFTER (x PLUS (sec / 50))
+        c2 ! 0
+      --}}}
+      TIMER t3 :
+      INT y , z :
+      BOOL wait.for.timer :
+      SEQ
+        t3 ? y
+        wait.for.timer := TRUE
+        SEQ i = 0 FOR 3
+          ALT
+            wait.for.timer & t3 ? AFTER (y PLUS (sec / 5))
+              SEQ
+                check (i, 2, "TA21")
+                wait.for.timer := FALSE
+            c1 ? z
+              check (i, 0, "TA22")
+            c2 ? z
+              check (i, 1, "TA23")
+    --}}}
+    --{{{  guarded ALTs               (TA30 -> TA49)
+    PROC guarded.ALTs()
+      -- This tests every combination of 3 guards, using local vars for
+      -- the guards
+      SEQ i = 0 FOR 8  -- 8 combinations of three guards
+        TIMER clock :
+        INT start, time.a, time.b, time.c, long.time :
+        BOOL guard.a, guard.b, guard.c :
+        BOOL taken.a, taken.b, taken.c :
+        --{{{  PROC init.locals
+        PROC init.locals()
+          SEQ
+            taken.a, taken.b, taken.c := FALSE, FALSE, FALSE
+            guard.a := (i /\ 1) <> 0
+            guard.b := (i /\ 2) <> 0
+            guard.c := (i /\ 4) <> 0
+            clock ? start
+            time.a    := start PLUS ((sec / 10) * 1)
+            time.b    := start PLUS ((sec / 10) * 2)
+            time.c    := start PLUS ((sec / 10) * 3)
+            long.time := start PLUS ((sec / 10) * 4)
+        :
+        --}}}
+        --{{{  PROC check.taken
+        PROC check.taken()
+          CASE i
+            0
+              check.BOOL(NOT (taken.a OR taken.b OR taken.c), TRUE, "TA34")
+            1, 3, 5, 7
+              check.BOOL(taken.a AND (NOT (taken.b OR taken.c)), TRUE, "TA35")
+            2, 6
+              check.BOOL(taken.b AND (NOT (taken.a OR taken.c)), TRUE, "TA36")
+            4
+              check.BOOL(taken.c AND (NOT (taken.a OR taken.b)), TRUE, "TA37")
+        :
+        --}}}
+        SEQ
+          init.locals()
+          --{{{  ALT in order
+          PRI ALT
+            guard.a & clock ? AFTER time.a
+              SEQ
+                check.BOOL(guard.a, TRUE, "TA30")
+                taken.a := TRUE
+            guard.b & clock ? AFTER time.b
+              SEQ
+                check.BOOL(guard.b, TRUE, "TA31")
+                taken.b := TRUE
+            guard.c & clock ? AFTER time.c
+              SEQ
+                check.BOOL(guard.c, TRUE, "TA32")
+                taken.c := TRUE
+            clock ? AFTER long.time
+              SEQ
+                check.BOOL(guard.a OR guard.b OR guard.c, FALSE, "TA33")
+          --}}}
+          check.taken()
+          init.locals()
+          --{{{  ALT out of order
+          PRI ALT
+            guard.c & clock ? AFTER time.c
+              SEQ
+                check.BOOL(guard.c, TRUE, "TA42")
+                taken.c := TRUE
+            guard.a & clock ? AFTER time.a
+              SEQ
+                check.BOOL(guard.a, TRUE, "TA40")
+                taken.a := TRUE
+            guard.b & clock ? AFTER time.b
+              SEQ
+                check.BOOL(guard.b, TRUE, "TA41")
+                taken.b := TRUE
+            clock ? AFTER long.time
+              SEQ
+                check.BOOL(guard.a OR guard.b OR guard.c, FALSE, "TA43")
+          --}}}
+          check.taken()
+    :
+    guarded.ALTs()
+    --}}}
+    --{{{  guarded array ALTs         (TA50 -> TA69)
+    PROC guarded.array.ALTs()
+      -- This tests every combination of guards, using array vars for
+      -- the guards
+      VAL n IS 3 : -- number of branches in ALT
+      SEQ i = 0 FOR 1 << n
+        TIMER clock :
+        [n]INT time :
+        [n]BOOL guard, taken :
+        INT start, long.time :
+        --{{{  init.array
+        PROC init.array()
+          SEQ
+            clock ? start
+            SEQ j = 0 FOR n
+              SEQ
+                taken[j] := FALSE
+                guard[j] := (i /\ (1 << j)) <> 0
+                time[j]  := start PLUS ((sec / 10) * (j + 1))
+            long.time    := start PLUS ((sec / 10) * (n + 1))
+        :
+        --}}}
+        --{{{  check.taken.array
+        PROC check.taken.array()
+          BOOL set :
+          SEQ
+            set := FALSE
+            SEQ j = 0 FOR n
+              SEQ
+                IF
+                  set
+                    check.BOOL(taken[j], FALSE, "TA52")
+                  taken[j]
+                    SEQ
+                      check.BOOL((i /\ (1 << j)) <> 0, TRUE, "TA53")
+                      set := TRUE
+                  TRUE
+                    SKIP
+        :
+        --}}}
+        SEQ
+          init.array()
+          --{{{  ALT in order
+          ALT
+            ALT j = 0 FOR n
+              guard[j] & clock ? AFTER time[j]
+                SEQ
+                  check.BOOL(guard[j], TRUE, "TA50")
+                  taken[j] := TRUE
+            clock ? AFTER long.time
+              SEQ k = 0 FOR n
+                check.BOOL(guard[k], FALSE, "TA51")
+          --}}}
+          check.taken.array()
+          init.array()
+          --{{{  ALT out of order
+          ALT
+            clock ? AFTER long.time
+              SEQ k = 0 FOR n
+                check.BOOL(guard[k], FALSE, "TA61")
+            ALT j = 0 FOR n
+              VAL j IS ((n - 1) - j) :
+              guard[j] & clock ? AFTER time[j]
+                SEQ
+                  check.BOOL(guard[j], TRUE, "TA60")
+                  taken[j] := TRUE
+          --}}}
+          check.taken.array()
+    :
+    guarded.array.ALTs()
+    --}}}
+    
+    --}}}
+    --{{{  timers as free variables
+    PROC timers.as.free.variables()
+      TIMER timer :
+      INT x, y :
+      PROC read.x(INT x)
+        timer ? x
+      :
+      PROC read()
+        timer ? x
+      :
+      PROC after()
+        timer ? AFTER x
+      :
+      PROC after.x(VAL INT x)
+        timer ? AFTER x
+      :
+      SEQ
+        read()
+        read.x(y)
+        check.BOOL((y AFTER x) OR (y = x), TRUE, "FREE01")
+        x := x PLUS (sec / 100)
+        y := y PLUS (sec / 100)
+        after()
+        after.x(y)
+        check.BOOL((y AFTER x) OR (y = x), TRUE, "FREE02")
+    :
+    timers.as.free.variables()
+    --}}}
+    --{{{  timers in parallel
+    PROC timers.in.parallel()
+      TIMER timer :
+      --{{{  read.timer
+      PROC read.timer(TIMER timer, INT time)
+        timer ? time
+      :
+      --}}}
+      --{{{  read
+      PROC read(INT time)
+        timer ? time
+      :
+      --}}}
+      --{{{  delay
+      PROC delay()
+        TIMER t :
+        INT now :
+        SEQ
+          t ? now
+          t ? AFTER now PLUS (sec / 100)
+      :
+      --}}}
+      INT time0, time1, time2, time3 :
+      SEQ
+        --{{{  passing timer as parameter
+        read.timer(timer, time0)
+        delay()
+        PAR
+          SEQ
+            read.timer(timer, time1)
+            delay()
+          SEQ
+            read.timer(timer, time2)
+            delay()
+        delay()
+        read.timer(timer, time3)
+        
+        check.BOOL(time1 AFTER time0, TRUE, "PAR001")
+        check.BOOL(time2 AFTER time0, TRUE, "PAR002")
+        check.BOOL(time3 AFTER time0, TRUE, "PAR003")
+        check.BOOL(time3 AFTER time1, TRUE, "PAR004")
+        check.BOOL(time3 AFTER time2, TRUE, "PAR005")
+        --}}}
+        --{{{  passing timer as free var
+        read(time0)
+        delay()
+        PAR
+          SEQ
+            read(time1)
+            delay()
+          SEQ
+            read(time2)
+            delay()
+        delay()
+        read(time3)
+        
+        check.BOOL(time1 AFTER time0, TRUE, "PAR001")
+        check.BOOL(time2 AFTER time0, TRUE, "PAR002")
+        check.BOOL(time3 AFTER time0, TRUE, "PAR003")
+        check.BOOL(time3 AFTER time1, TRUE, "PAR004")
+        check.BOOL(time3 AFTER time2, TRUE, "PAR005")
+        --}}}
+    :
+    timers.in.parallel()
+    --}}}
+    --{{{  bug 287
+    PROC bug.287 ()
+      INT time, x :
+      SEQ
+        x := id(1)
+        [4]TIMER clock :
+        SEQ
+          TIMER clock.a IS clock[2] :
+          clock.a ? time
+          check(time, time, "B287a")
+          clock [x] ? time
+          check(time, time, "B287b")
+        [100][200]TIMER clocks :
+        c IS clocks [x][x] :
+        SEQ
+          c ? time
+          check (time, time, "B287c")
+    :
+    bug.287 ()
+    --}}}
+    --{{{  bug.TS.1774
+    PROC bug.TS.1774()
+      PROC wait.for.time(TIMER t, VAL INT time)
+        ALT
+          t ? AFTER time
+            SKIP
+      :
+      TIMER t :
+      INT now, answer :
+      VAL z IS -99 :
+      SEQ
+        answer := 374
+        t ? now
+        now := now PLUS (sec / 30)
+        PAR
+    
+          -- This process ALTs on a timer, and does nothing else
+          -- We need more than one process on the timer queue!
+          wait.for.time(t, now)
+    
+          -- This process tries to corrupt the queue
+          INT a,b,c,d,e,f,g,h,i :
+          a,b,c,d,e,f,g,h,i := z,z,z,z,z,z,z,z,z
+    
+          -- This process ALTs on a timer, and does nothing else
+          SEQ
+            wait.for.time(t, now)
+            answer := 999
+    
+          -- This process ALTs on a timer, and does nothing else
+          -- We need more than one process on the timer queue!
+          wait.for.time(t, now)
+    
+          -- This process tries to corrupt the queue
+          INT a,b,c,d,e,f,g,h,i :
+          a,b,c,d,e,f,g,h,i := z,z,z,z,z,z,z,z,z
+    
+          -- This process ALTs on a timer, and does nothing else
+          -- We need more than one process on the timer queue!
+          wait.for.time(t, now)
+    
+        check(answer, 999, "B1774b")
+    :
+    bug.TS.1774()
+    --}}}
+    --{{{  bug INSdi01967
+    PROC bug.INSdi01967()
+      INT FUNCTION f(VAL INT x) IS x :
+      TIMER clock :
+      [10]INT a :
+      INT i, j, k, now :
+      PROC init()
+        SEQ
+          clock ? now
+          SEQ i = 0 FOR SIZE a
+            a[i] := now PLUS (i+10)
+          i, j, k := 3, 5, 4
+      :
+      SEQ
+        init()
+        PRI ALT
+          clock ? AFTER f([a FROM i FOR j] [k])
+            i := j
+          clock ? AFTER now PLUS 20000
+            i := j + 1
+        check(i, j, "B01967a")
+    
+        init()
+        clock ? AFTER f([a FROM i FOR j] [k])
+        check(f([a FROM i FOR j] [k]), now PLUS 17, "B01967b")
+    
+        init()
+        #IF DEFINED (COMPILER.TOCK)
+        VAL xx IS [a FROM i FOR j] :
+        clock ? AFTER f(xx [k])
+        #ELSE
+        clock ? AFTER (VAL xx IS [a FROM i FOR j] :
+                       VALOF
+                         SKIP
+                         RESULT f(xx [k])
+                      )
+        #ENDIF
+        check(f([a FROM i FOR j] [k]), now PLUS 17, "B01967c")
+    :
+    bug.INSdi01967()
+    --}}}
+    finish ()
+:

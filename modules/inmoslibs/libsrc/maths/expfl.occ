@@ -1,0 +1,85 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module maths
+
+#OPTION "V"  -- no vector space
+#COMMENT "Floating point maths library, V1.1 27/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#INCLUDE "mathhdr.inc"
+
+--* Single-precision exponent.
+--
+-- @param X Input value
+-- @return e raised to the power X
+REAL32 FUNCTION EXP (VAL REAL32 X)
+
+  --{{{  history
+  -- version F2.4 14-oct-87
+  -- V1.0 1-Jul-88
+  -- Added OPTION "V"; V1.1 27-Mar-90 SRH
+  --}}}
+
+  REAL32 RWork :
+  VALOF
+    --{{{  definitions and variables
+    VAL REAL32 XMax   RETYPES #42B17218(INT32) : --  88.722839355468750
+    VAL REAL32 XMin   RETYPES #42CE8ED1(INT32) : -- 103.278938293457031250
+    VAL REAL32 InvLn2 RETYPES #3FB8AA3B(INT32) : --   1.442695021629333496093750
+    --}}}
+    IF
+      NOTFINITE (X)
+        --{{{  Infs and NaNs
+        INT order :
+        SEQ
+          order := IEEECOMPARE (X, Zero)
+          CASE order
+            less.than
+              RWork := Zero -- underflow
+            greater.than
+              RWork := RInf
+            is.nan
+              RWork := X
+        --}}}
+      TRUE
+        VAL PosX IS ABS (X) : -- not to be evaluated until certainly finite
+        IF
+          X > XMax
+            RWork := RInf
+          PosX > XMin     --  if true, X must be negative
+            RWork := Zero --  underflow to 0
+          TRUE
+            --{{{  compute rational function
+            REAL32 XWork :
+            INT32 N :
+            SEQ
+              N := INT32 ROUND (X * InvLn2)
+              XWork := REAL32 ROUND ((REAL64 X) - ((REAL64 ROUND N) * DLn2))
+              --{{{  coefficients
+              VAL A0 IS 4.1602886268E-3(REAL32) :
+              VAL A1 IS 2.4999999950E-1(REAL32) :
+              VAL B0 IS 0.5(REAL32) :
+              VAL B1 IS 4.9987178778E-2(REAL32) :
+              --}}}
+              VAL Z   IS XWork * XWork :
+              VAL GPZ IS XWork * ((Z * A0) + A1) :
+              RWork := SCALEB (B0 + (GPZ / ((B0 + (Z * B1)) - GPZ)), (INT N) + 1)
+            --}}}
+    RESULT RWork
+:

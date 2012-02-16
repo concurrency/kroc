@@ -1,0 +1,64 @@
+
+                             READING LIST
+                             ------------
+
+Note: YOU DO NOT NEED TO BUY A BOOK to follow the parallel computing
+component in this unit.  However, if you want another point of view or
+just want to learn some more, you may care to inspect the following books.
+For coping with this course, none of these books are essential:
+
+    o INMOS Ltd: `Occam2.1 Reference Manual';
+      http://wotug.ukc.ac.uk/parallel/occam/documentation/oc21refman.ps.gz
+
+This is the basic reference text.  Pure syntax and semantics - no teaching.
+
+    o R. Pountain and D. May: `A Tutorial Introduction to Occam2 Programming';
+      BSP Professional Books (ISBN 0-632-01847-X); 1987.
+
+This is the `Bible'.  Very readable - but still primarily syntax and semantics.
+Not much in the way of deeper insights as to how to really design parallel
+systems - but an excellent first book.
+
+    o K. C. Bowler et al.: `An Introduction to Occam2 Programming';
+      Chartwell-Bratt (ISBN 0-86-238-137-1); 1987.
+
+OK - but fairly basic stuff.  Not all completely relevant though!
+
+    o A. Burns: `Programming in Occam2';
+      Addison-Wesley (ISBN 0-201-17371-9); 1988.
+
+Good stuff.  Teaching to a higher level than the above.  Ignore the chapter
+comparing Ada and occam2.  Look out for some not-very-well-flagged `extensions'
+to occam2 in the text.  These were proposed by the author but never taken up.
+
+    o G. Jones: `Programming in Occam2';
+      Prentice-Hall (ISBN 0-13-729773-4); 1987.
+      http://web.comlab.ox.ac.uk/oucl/work/geraint.jones/publications/book/Pio2/
+
+First class material - strong stuff but hardly any pictures!!  But really
+deep insights - aimed at those who are comfortable with fairly abstract
+reasoning (i.e. mathematicians and logicians).
+
+    o J. Kerridge: `Occam Programming - a Practical Approach';
+      Blackwell Scientific Publications (ISBN 0-632-01659-0); 1987.
+
+First class material - aimed at everyone.  A really good book BUT ONLY DEALS
+with occam - not occam2.  As such, the language syntax is slightly different
+and there are no data-types.  The ideas are really well presented though.
+
+    o J. Galletly: `Occam2';
+      Pitman (ISBN 0-273-03067-1); 1990.
+
+An excellent new book ... nice big font and lots of pictures ... very
+good for the basic information but not much higher-level stuff.
+
+    o J. Galletly: `Occam2 (including occam2.1);
+      UCL Press (ISBN 1-85728-362-7); 1996);
+
+A 2nd. edition to the above, updated to include the extended language.
+All good stuff.
+
+BEWARE OF OTHER BOOKS - there are some real turkeys out there!  I am
+happy to discuss them person-to-person.
+
+Peter Welch.

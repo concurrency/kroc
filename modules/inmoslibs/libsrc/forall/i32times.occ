@@ -1,0 +1,55 @@
+--
+--      Inmos Libraries
+--      Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--      This library is free software; you can redistribute it and/or
+--      modify it under the terms of the GNU Lesser General Public
+--      License as published by the Free Software Foundation; either
+--      version 2 of the License, or (at your option) any later version.
+--
+--      This library is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--      Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU Lesser General Public
+--      License along with this library; if not, write to the Free Software
+--      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT32TIMES "INT32TIMES%CHK"
+
+--{{{  INT32TIMES -- T2
+INT32 FUNCTION INT32TIMES (VAL INT32 A, VAL INT32 B)
+
+  --  Function version (10 Jun 87)
+
+  INT32 Prod :
+  VALOF
+    --{{{  DEFs
+    VAL MaxInt  IS #FFFF :
+    VAL SignBit IS #8000 :
+    --}}}
+    [2]INT W RETYPES Prod :
+    VAL [2]INT A RETYPES A :
+    VAL [2]INT B RETYPES B :
+    INT Carry :
+    SEQ
+      Carry,  W [0] := LONGPROD ( A [0],  B [0],  0)
+      Carry,  W [1] := LONGPROD ( A [1],  B [0],  Carry)
+      Carry,  W [1] := LONGPROD ( A [0],  B [1],  W [1])
+    RESULT Prod
+:
+--}}}
+
+#ENDIF

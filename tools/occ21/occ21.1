@@ -1,0 +1,549 @@
+.\" occ21 command man page, last updated 30/12/2005 by Fred Barnes
+.TH OCC21 "1" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+occ21 \- KRoC occam compiler
+.SH SYNOPSIS
+.B occ21
+[\fIOPTION\fR]... \fIFILE\fR
+.SH DESCRIPTION
+.PP
+Compiles the named occam source FILE, generating extended transputer byte-code (ETC) output.
+Users need not run this command directly -- the \fIkroc\fR command will invoke the compiler
+with the right options.  Compiler options can be added through the use of the \fI--oc-opts\fR flag
+to \fIkroc\fR.
+
+.SH OPTIONS
+.PP
+The options are divided into various categories: standard, all, and hidden.  The options given
+in \fIHIDDEN OPTIONS\fR are largely uninteresting to users, comprised of specific code-generation,
+language and debugging options.
+
+.SH STANDARD OPTIONS
+.\" standard options
+.TP
+\fB\-d\fR
+(REDUNDANT) include minimum debugging data in TCOFF records
+.TP
+\fB\-h\fR
+compile in HALT error-mode.  in this mode, a run-time error will cause the run-time system
+to exit.
+.TP
+\fB\-s\fR
+compile in STOP error-mode.  in this mode, a run-time error will cause the single process that
+generated the error to terminate, leaving other processes running.
+.TP
+\fB\-x\fR
+universal error mode (not currently supported).
+.TP
+\fB\-help\fR
+display a full help page (standard options and full options).
+.TP
+\fB\-i\fR
+show compiler version.
+.TP
+\fB\-o \fIfile\fR
+specify \fIfile\fR as output file.
+.TP
+\fB\-p \fIfile\fR
+specify \fIfile\fR as map file name.
+.TP
+\fB\-v\fR
+disable separate vector-space.
+.TP
+\fB\-wall\fR
+enable all warnings.
+.TP
+\fB\-y\fR
+disable library I/O.
+
+.PP
+.SH ALL OPTIONS
+.\" all options
+.TP
+\fB\-a\fR
+disable alias checking.
+.TP
+\fB\-alpha\fR
+alpha revision of chip (unsupported).
+.TP
+\fB\-axp\fR
+target to DEC Alpha AXP (unsupported).
+.TP
+\fB\-b\fR
+display brief error messages.
+.TP
+\fB\-be\fR
+generate alternate-endian constants.
+.TP
+\fB\-c\fR
+check only.
+.TP
+\fB\-code\fR \fIsize\fR
+set output code-buffer size to \fIsize\fR k-bytes.
+.TP
+\fB\-def\fR \fIname\fR[=\fIval\fR]
+define pre-processor value \fIname\fR with optional value \fIval\fR.
+.TP
+\fB\-e\fR
+disable compiler libraries.
+.TP
+\fB\-etc\fR
+target to ETC code.
+.TP
+\fB\-g\fR
+sequential code insertion (unsupported).
+.TP
+\fB\-gamma\fR
+gamma revision of chip (unsupported).
+.TP
+\fB\-gammae\fR
+gamma-E revision of chip (unsupported).
+.TP
+\fB\-init\fR
+enable INITIAL declarations.
+.TP
+\fB\-k\fR
+disable range checking.
+.TP
+\fB\-mobiles\fR
+enable mobile data types and mobile channel types.
+.TP
+\fB\-mpt\fR
+enable mobile process types.
+.TP
+\fB\-msf\fR
+enable mobile size-field (needed for user-defined channels).
+.TP
+\fB\-n\fR
+disable usage checking.
+.TP
+\fB\-na\fR
+disable run-time ASSERT checks.
+.TP
+\fB\-ndm\fR
+disable dynamic memory support.
+.TP
+\fB\-npc\fR
+disable placed-channel support.
+.TP
+\fB\-nwca\fR
+disable warnings on CHAN ANY.
+.TP
+\fB\-nwgy\fR
+disable warnings on GUY constructs.
+.TP
+\fB\-nwp\fR
+disable unused parameter warnings.
+.TP
+\fB\-nwu\fR
+disable unused name warnings.
+.TP
+\fB\-pg\fR
+enable call graph profiling (unsupported).
+.TP
+\fB\-pl\fR
+enable line profiling (unsupported).
+.TP
+\fB\-pr\fR
+enable routine profiling (unsupported).
+.TP
+\fB\-qs\fR
+favour space efficiency in generated code.
+.TP
+\fB\-qt\fR
+favour time efficiency in generated code (default).
+.TP
+\fB\-r\fR \fIfile\fR
+redirect screen output to \fIfile\fR.
+.TP
+\fB\-revalt\fR
+enable reversed ALT disabling sequence.
+.TP
+\fB\-safe\fR
+compile safe code only.
+.TP
+\fB\-strict\fR
+strict usage-checking.
+.TP
+\fB\-t\fR
+write TCOFF records without code.
+.TP
+\fB\-t2\fR
+target to T2 processor class.
+.TP
+\fB\-t212\fR
+target to T212 processor.
+.TP
+\fB\-t222\fR
+target to T222 processor.
+.TP
+\fB\-t225\fR
+target to T225 processor.
+.TP
+\fB\-t3\fR
+target to T3 processor class.
+.TP
+\fB\-t4\fR
+target to T4 processor class.
+.TP
+\fB\-t400\fR
+target to T400 processor.
+.TP
+\fB\-t414\fR
+target to T414 processor.
+.TP
+\fB\-t425\fR
+target to T425 processor.
+.TP
+\fB\-t450\fR
+target to T450 processor.
+.TP
+\fB\-t5\fR
+target to T5 processor class.
+.TP
+\fB\-t8\fR
+target to T8 processor class.
+.TP
+\fB\-t800\fR
+target to T800 processor.
+.TP
+\fB\-t801\fR
+target to T801 processor.
+.TP
+\fB\-t805\fR
+target to T805 processor.
+.TP
+\fB\-t9\fR
+target to T9 processor class.
+.TP
+\fB\-t9000\fR
+target to T9000 (L-process) processor.
+.TP
+\fB\-t9000gamma\fR
+target to T9000-gamma processor.
+.TP
+\fB\-t9000gammae\fR
+target to T9000-gamma-E processor.
+.TP
+\fB\-ta\fR
+target to TA processor class.
+.TP
+\fB\-tal\fR
+target requires aligned memory accesses.
+.TP
+\fB\-tb\fR
+target to TB processor class.
+.TP
+\fB\-tbe\fR
+target to big-endian processor (default for MIPS, Sparc).
+.TP
+\fB\-tle\fR
+target to litten-endian processor (default for x86).
+.TP
+\fB\-tul\fR
+target supports unaligned memory accesses (default).
+.TP
+\fB\-u\fR
+disable run-time error checking.
+.TP
+\fB\-udo\fR
+enable user-defined operators.
+.TP
+\fB\-w\fR
+full code insertion (unsupported).
+.TP
+\fB\-walign\fR
+warn on alignment checks.
+.TP
+\fB\-wd\fR
+provide descoped name warnings.
+.TP
+\fB\-wo\fR
+provide overlap-check warnings.
+.TP
+\fB\-wqual\fR
+enable software quality warnings.
+.TP
+\fB\-xin\fR
+enable extended input.
+.TP
+\fB\-xtag\fR
+enable extended input on tagged/CASE input.
+.TP
+\fB\-zen\fR
+use enhanced ALT enabling sequence.
+.TP
+\fB\-zep\fR
+use ALT pre-enabling sequence.
+
+.PP
+.SH HIDDEN OPTIONS
+.\" hidden options
+.TP
+\fB\-za\fR
+generate assembler diagnostics.
+.TP
+\fB\-zam\fR
+allocate max below WS.
+.TP
+\fB\-zand\fR
+don't allocate divided by size.
+.TP
+\fB\-zas\fR
+allocate variables in scope order.
+.TP
+\fB\-zasm\fR
+assembler output (unsupported).
+.TP
+\fB\-zb\fR
+assembler output only (unsupported).
+.TP
+\fB\-zxcdiv\fR
+allocate temporaries for complex DIV operations.
+.TP
+\fB\-zxcrem\fR
+allocate temporaries for complex REM operations.
+.TP
+\fB\-zd\fR
+disassemble after crunch (unsupported).
+.TP
+\fB\-ze\fR
+visible compiler library names.
+.TP
+\fB\-zen\fR
+use enhanced ALT enabling sequence.
+.TP
+\fB\-zep\fR
+use ALT pre-enabling sequence.
+.TP
+\fB\-zer64\fR
+swap words of REAL64s.
+.TP
+\fB\-zgrp\fR
+output suitable for the grouper (unsupported).
+.TP
+\fB\-zh\fR
+mark output as an occam harness (unsupported).
+.TP
+\fB\-zi\fR \fIpath\fR
+change default pathname to \fIpath\fR.
+.TP
+\fB\-zk\fR
+code generation for KRoC.
+.TP
+\fB\-zlc\fR \fIlib\fR
+change compiler library to \fIlib\fR.
+.TP
+\fB\-zlcp\fR \fIsfx\fR
+specify \fIsfx\fR as compiler pre-define suffix.
+.TP
+\fB\-zlcs\fR \fIsfx\fR
+specify \fIsfx\fR as compiler library suffix.
+.TP
+\fB\-zli\fR \fIlib\fR
+change compiler I/O library to \fIlib\fR.
+.TP
+\fB\-zlis\fR \fIsfx\fR
+specify \fIsfx\fR as I/O library suffix.
+.TP
+\fB\-zmem\fR
+display memory (sbrk) statistics.
+.TP
+\fB\-zmp\fR
+map all PROCs.
+.TP
+\fB\-zmppa\fR
+check for terminated MOBILE PROCs at activation.
+.TP
+\fB\-zna\fR
+no outermost preamble/postamble.
+.TP
+\fB\-znc\fR
+no variable I/O for counted arrays.
+.TP
+\fB\-zncc\fR
+no call compatibility checks.
+.TP
+\fB\-znd\fR
+no debugging information at all.
+.TP
+\fB\-zneas\fR
+no errors for illegal ASM instructions.
+.TP
+\fB\-znec\fR
+no comment indentation errors.
+.TP
+\fB\-zner\fR
+no errors at all (beware!).
+.TP
+\fB\-zni\fR
+disable INLINEd PROCs/FUNCTIONs.
+.TP
+\fB\-znj\fR
+generate conditional jumps where possible.
+.TP
+\fB\-znl\fR
+no disassembly line numbers.
+.TP
+\fB\-znm\fR
+no disassembly comments.
+.TP
+\fB\-zno\fR
+no disassembly operands.
+.TP
+\fB\-znp\fR
+no pre-defines allowed.
+.TP
+\fB\-znv\fR
+don't optimise when vsoffset_flag is zero.
+.TP
+\fB\-znwf\fR
+no formal parameter descope warnings.
+.TP
+\fB\-zod\fR
+merge types in descriptors.
+.TP
+\fB\-zoe\fR
+disable export of origin symbol.
+.TP
+\fB\-zoi\fR
+disable imported origin checks.
+.TP
+\fB\-zol\fR
+prioritise linkage.
+.TP
+\fB\-zon\fR
+short names in descriptors.
+.TP
+\fB\-zops\fR
+try and optimise for space.
+.TP
+\fB\-zor\fR
+read in incompatible library entries.
+.TP
+\fB\-zos\fR
+set code output buffer size (see \fI-code\fR).
+.TP
+\fB\-zov\fR
+don't hash version into origin.
+.TP
+\fB\-zow\fR
+don't output WS, VS and MS symbols.
+.TP
+\fB\-zoys\fR
+add space in descriptors.
+.TP
+\fB\-zpd\fR
+profiling trace information (unsupported).
+.TP
+\fB\-zpnn\fR
+ignore null trap handlers (unsupported).
+.TP
+\fB\-zpp\fR
+show pre-processor defines.
+.TP
+\fB\-zprm\fR
+print all messages.
+.TP
+\fB\-zrv\fR
+generate new variable(s) for RESULT abbreviations.
+.TP
+\fB\-zsc\fR
+stop after type-check.
+.TP
+\fB\-zse\fR
+stop after all errors.
+.TP
+\fB\-zsm\fR
+stop after mapping.
+.TP
+\fB\-zsp\fR
+stop after parse.
+.TP
+\fB\-zsrc\fR
+print source tree.
+.TP
+\fB\-zst\fR
+stop after trans.
+.TP
+\fB\-zsu\fR
+stop after and debug usage-check.
+.TP
+\fB\-zt\fR
+show parse tree and variable allocation if mapped.
+.TP
+\fB\-zt450awa\fR
+disable T450 workarounds.
+.TP
+\fB\-ztst\fR
+generic test flag.
+.TP
+\fB\-zv\fR
+disable library I/O.
+.TP
+\fB\-zw\fR
+do channels not by pointer.
+.TP
+\fB\-zwau\fR
+warn on alias and usage checks.
+.TP
+\fB\-zwc\fR
+warn on comment indentation.
+.TP
+\fB\-zwtag\fR
+warn about unused tags in tagged input.
+.TP
+\fB\-zx\fR
+8-byte libpatch (unsupported).
+.TP
+\fB\-zypt\fR
+visible PROTOCOL tags.
+.TP
+\fB\-zz\fR
+use ALT for PRI PAR (unsupported).
+
+.PP
+.SH AUTHOR
+See the file AUTHORS in the distribution for the list of contributors to KRoC.  This
+manual page is maintained by Fred Barnes <frmb@kent.ac.uk>
+.SH "SEE ALSO"
+kroc(1)
+.SH "REPORTING BUGS"
+Please report bugs to <ofa-bugs@kent.ac.uk>
+.SH COPYRIGHT
+Original occam2.1 toolset compiler Copyright (C) 1984-1997 Inmos Limited.  Copyright
+released (by SGS-THOMPSON Microelectronics Limited, 1997) for open-source development
+under the condition that the compiler is not used to generate code for an real transputer
+(this capability has been removed from the compiler).
+.PP
+Modifications Copyright \(co 1997-1999  Jim Moores, Michael Poole, David Wood
+.PP
+Copyright \(co 1999-2005  Fred Barnes
+.PP
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation;
+either version 2 of the License, or (at your option) any
+later version.
+.PP
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+.PP
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+02139, USA.
+.PP
+An additional restriction is that this compiler may not be used
+to generate code for an actual Transputer (T200, T400, T800 and T9000 series).
+This restriction is still theoretically valid, but it is unlikely that
+ST Microelectronics (who own the copyright on the original compiler
+developed by Inmos Limited) will enforce it:  the number of real
+Transputers in use is dwindling; Transputers have not been
+manufactured since 1997;  and the compiler has been modified to
+the extent where code-generation for a real transputer is probably
+not practical.
+

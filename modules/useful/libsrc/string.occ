@@ -1,0 +1,179 @@
+--
+--	String utilities
+--	Copyright (C) 2008, 2010 Adam Sampson <ats@offog.org>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module useful
+
+#INCLUDE "course.module"
+#USE "math"
+
+--{{{  PROC resize.string
+--* Resize a string, keeping its contents intact.
+-- @param s String to resize
+-- @param new.size New length
+PROC resize.string (MOBILE []BYTE s, VAL INT new.size)
+  RESIZE.MOBILE.ARRAY.1D (s, new.size)
+:
+--}}}
+--{{{  PROC append.string
+--* Append a string to a string.
+-- @param out String to append to
+-- @param in String that will be appended to [@code out]
+PROC append.string (MOBILE []BYTE out, VAL []BYTE in)
+  VAL INT old.size IS SIZE out:
+  SEQ
+    resize.string (out, old.size + (SIZE in))
+    [out FROM old.size] := in
+:
+--}}}
+--{{{  PROC append.int
+--* Append a number to a string.
+-- @param out String to which the decimal representation of [@code n] will be appended
+-- @param n Integer to format
+PROC append.int (MOBILE []BYTE out, VAL INT n)
+  [20]BYTE s:
+  INITIAL INT i IS 0:
+  INITIAL INT n IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          n := -n
+      TRUE
+        SKIP
+    i := (SIZE s) - 1
+    WHILE n >= 10
+      SEQ
+        s[i] := '0' + (BYTE (n \ 10))
+        n := n / 10
+        i := i - 1
+    s[i] := '0' + (BYTE (n \ 10))
+    IF
+      neg
+        SEQ
+          i := i - 1
+          s[i] := '-'
+      TRUE
+        SKIP
+    append.string(out, [s FROM i])
+:
+--}}}
+--{{{  FUNCTION same.string
+--* Compare two strings for equality.
+-- @param a, b Strings to compare
+-- @return [@code TRUE] if the strings are the same, [@code FALSE] otherwise
+BOOL FUNCTION same.string (VAL []BYTE a, b)
+  BOOL r:
+  VALOF
+    IF
+      (SIZE a) <> (SIZE b)
+        r := FALSE
+      IF i = 0 FOR SIZE a
+        a[i] <> b[i]
+          r := FALSE
+      TRUE
+        r := TRUE
+    RESULT r
+:
+--}}}
+--{{{  FUNCTION is.whitespace
+--* Is a character whitespace?
+-- @param ch Character to examine
+-- @return [@code TRUE] if [@code ch] is a space, tab, carriage-return, line-feed, form-feed or vertical-tab
+BOOL FUNCTION is.whitespace (VAL BYTE ch)
+  BOOL result:
+  VALOF
+    CASE ch
+      ' ', '*t', '*c', '*n', 11, 12
+        result := TRUE
+      ELSE
+        result := FALSE
+    RESULT result
+:
+--}}}
+--{{{  PROC rstrip.string
+--* Remove trailing whitespace from a string.
+PROC rstrip.string (MOBILE []BYTE s)
+  INITIAL INT len IS SIZE s:
+  SEQ
+    INITIAL BOOL scanning IS TRUE:
+    WHILE scanning
+      IF
+        len = 0
+          scanning := FALSE
+        is.whitespace (s[len - 1])
+          len := len - 1
+        TRUE
+          scanning := FALSE
+    resize.string (s, len)
+:
+--}}}
+--{{{  FUNCTION string.char
+--* Return the position of [@code needle] inside [@code haystack], or
+--[@code -1] if it isn't found.
+INT FUNCTION string.char (VAL []BYTE haystack, VAL BYTE needle)
+  INT result:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE haystack
+        haystack[i] = needle
+          result := i
+      TRUE
+        result := (-1)
+    RESULT result
+:
+--}}}
+--{{{  PROC tail.string
+--* Remove [@code n] bytes from the start of [@code src],
+-- writing the result into [@code dest].
+PROC tail.string (VAL INT n, VAL []BYTE src, MOBILE []BYTE dest)
+  SEQ
+    dest := MOBILE [(SIZE src) - n]BYTE
+    [dest FOR SIZE dest] := [src FROM n]
+:
+--}}}
+--{{{  PROC split.string
+--* Split [@code src] on [@code sep], writing each substring to [@code out],
+-- terminated by [@code []].
+PROC split.string (VAL []BYTE src, VAL BYTE sep, CHAN MOBILE []BYTE out!)
+  INITIAL INT start IS 0:
+  SEQ
+    WHILE start < (SIZE src)
+      INT pos, end:
+      SEQ
+        --{{{  find the next separator
+        pos := string.char ([src FROM start], sep)
+        IF
+          pos = (-1)
+            end := SIZE src
+          TRUE
+            end := start + pos
+        --}}}
+        --{{{  send out that string
+        INITIAL MOBILE []BYTE s IS MOBILE [end - start]BYTE:
+        SEQ
+          s := [src FROM start FOR (end - start)]
+          out ! s
+        --}}}
+        start := end + 1
+
+    out ! MOBILE [0]BYTE
+:
+--}}}

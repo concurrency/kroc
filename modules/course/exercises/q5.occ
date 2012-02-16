@@ -1,0 +1,168 @@
+
+--** Overflow buffer.
+
+--{{{  opening remarks
+--
+-- You have to implement an 'overflow' buffer and demonstrate it.  Note
+-- this is briefly mentioned in the "choice" slides (towards the end
+-- of the section on "Serial FIFO buffers").
+--
+-- An 'overflow' buffer is the same as a standard blocking buffer *except*
+-- when it is full.  In that state, it still accepts further input -- though
+-- the item is discarded and an error signal ("overflow") is generated.
+--
+-- Complete the following processes and system to demonstrate your buffer.
+-- It includes an 'auto.prompter' process to relieve, safely, 'slow.process'
+-- from the need to make requests for input data.  The 'auto.prompter' is
+-- described in the "choice" slides (the sections on "Memory Cells" and
+-- Serial FIFO buffers").  The 'slow.process' and 'bell.plex' are described
+-- below.
+--
+--}}}
+
+--{{{  diagram
+--
+--              _____________________________________________________________
+--             |                                                             |
+--             |    ____________________                 _________________   |
+--             |   |                    |    request    |                 |  |
+--    keyboard |   |                    |-------<-------|                 |  |
+--   ------>-------|  overflow.buffer   |               |  auto.prompter  |  |
+--             |   |                    |------->-------|                 |  |
+--             |   |____________________|   character   |_________________|  |
+--             |             |                                   |           |
+--             |             |                                   |           |
+--             |             v overflow                          v           |
+--             |             |                                   |           |
+--             |    _________|_________                  ________|_________  |
+--      screen |   |                   |                |                 |  |
+--   ------<---|---|     bell.plex     |-------<--------|   slow.process  |  |
+--             |   |___________________|                |_________________|  |
+--             |                                                             |
+--             | q5                                                          |
+--             |_____________________________________________________________|
+--
+--}}}
+
+--{{{  the `overflow' buffer
+--
+-- Choose a buffer size around ten, so that you don't have to type too long
+-- in this demonstration) before it fills up and overflows.
+--
+--}}}
+
+--{{{  the `slow.process'
+--
+-- For this demonstration, the `slow.process' should be a simple process that
+-- inputs a character, waits a short while to think about it, does some
+-- processing on the character (converts lower case letters to upper case),
+-- outputs the character, flushes the output (otherwise your OS may wait for
+-- a complete line to be sent before displaying it) and then loops to input
+-- the next character.  Set the "short while" above to be long enough so that
+-- you can type characters faster than `slow.process' can consume them (e.g.
+-- around 0.25 seconds).  To flush output, just send the FLUSH character
+-- defined in the course.module) to the channel.
+--
+--}}}
+
+--{{{  the `bell.plex' process
+--
+-- This process listens to both its input channels, giving higher priority
+-- to its `overflow' line.  Normal input is passed straight through.  If
+-- a signal arrives from `overflow', it responds by outputting a `BELL'
+-- character, followed by a `FLUSH' (to ensure immediate feedback to the
+-- typist).
+--
+--}}}
+
+--{{{  what should happen
+--
+-- When this program is run, keyboard characters are echoed (slowly) back
+-- to the screen at whatever rate you chose in `slow.process' (say, every
+-- quarter-second).  Lower-case chacters are converted to upper-case, but
+-- otherwise no changes are made.  You may build up a type-ahead up to
+-- the buffer size you chose in `type-ahead.buffer' (say ten), after
+-- which characters are rejected and the screen is bleeped.  As soon as
+-- the buffer has some room, further keystrokes will be accepted.
+--
+--}}}
+
+
+#INCLUDE "course.module"
+
+
+--* This is the same as a standard blocking buffer *except* when it is full.
+--  In that state, it still accepts further input -- though the item is discarded
+--  and an error signal ("overflow") is generated.
+--  
+--  This process needs some parameters!
+--
+PROC overflow.buffer ()          -- needs some parameters
+  SKIP                           -- and a body
+:
+
+
+--* This process makes requests for data from a source that needs them
+--  (prehaps, because it needs a request *input* as a guard in an ALT)
+--  and on behalf of a target that just sucks.  One item of (potentially)
+--  stale data is buffered here.  For some systems (e.g. when the source
+--  is itself a buffering process), this does not matter.  For others,
+--  it will matter and this process should not be used -- make the target
+--  request data for itself!
+--
+--  This process is described in the "choice" slides (see the sections on
+--  "Memory Cells" and Serial FIFO buffers").
+--  
+--  This process needs some parameters!
+--
+PROC auto.prompter ()            -- needs some parameters
+  SKIP                           -- and a body
+:
+
+
+--* This pauses execution of the invoking process by delay microseconds.
+--
+-- @param delay The length of the pause (in microseconds)
+--
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+
+--* This process inputs a character, waits a short while to think about it,
+--  does some processing on the character (converts lower case letters to
+--  upper case), outputs the character, flushes the output and then loops.
+--  
+--  This process needs some parameters!
+--
+PROC slow.process ()             -- needs some parameters
+  SKIP                           -- and a body
+:
+
+
+--* This process listens to both its input channels, giving higher priority
+--  to its 'overflow?' line.  Normal input is passed straight through.  If
+--  a signal arrives from 'overflow?', it responds by outputting a BELL
+--  character, followed by a FLUSH (to ensure immediate feedback, in the
+--  case that its 'out!' channel is connected to a terminal screen).
+--  
+--  This process needs some parameters!
+--
+PROC bell.plex ()                -- needs some parameters
+  SKIP                           -- and a body
+:
+
+
+--* The main process.
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
+--
+PROC q5 (CHAN BYTE keyboard?, screen!, error!)
+  SKIP  -- replace with your own code
+:

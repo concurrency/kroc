@@ -1,0 +1,107 @@
+-- ==================================================================================
+--  WHAT CONCURRENT_HELLO_2 DOES
+--
+--  This program has two 'writer' processes and one 'output.collector' process. The writers each have a bespoke channel for communication with
+--  output.collector. Each writer sends series of digits (int) down it's channel to output.collector. Number of messages sent is passed upon 
+--  invocation of the writer process. 
+--  Output.collector receives data from each writer, and prints that data to the terminal. There is a timer that determines when the output.collector
+--  process should terminate.   
+--
+--  In this architecture (and those that follow in other programms) the writers act as clients to output.collector, which is a server prividing
+--  a print-to-the-terminal service.
+--
+--  This program should be compiled with "kroc -d -di concurrent_hello_2.occ"
+--  and then run with ./concurrent_hello_2
+-- ==================================================================================
+
+-- ==================================================================================
+-- FUNCTIONALITY/FEATURES INTRODUCED
+--  1) writers write several messages, the number of which is dictated by a parameter
+--  2) output.collector performs its function until a timeout is reached
+-- ==================================================================================
+
+-- ==================================================================================
+-- ITEMS STILL TODO
+--  1) shared channel for communication between writers and output collector
+--  2) barrier syncronisation
+--  3) syncronised termination of output collector, rather than timed
+-- ==================================================================================
+
+
+--{{{ this module contains utilities for pringint useful types (like strings)
+--    (like strings) to a chanel (which can be linked to the terminal screen)
+#INCLUDE "course.module" 
+--}}} 
+        
+--{{{ outer most procedure, with a parameter list that corresponds to that required to run in unix
+PROC outer(CHAN BYTE in?, out!, err!)
+  CHAN INT w1.to.oc :                     -- channel for writer.1 to communicate with output.collector
+  CHAN INT w2.to.oc :                     -- channel for writer.2 to communicate with output.collector
+  VAL INT number.of.writers IS 2:
+  TIMER timer:                            -- timer used to terminate output.collector after a period of time
+  
+  
+  --{{{ PROC writer.1
+  --  sends a series of messages to output.collector containing the writer's ID
+  PROC writer.1 (VAL INT loops)
+    VAL INT id IS 1 :                     -- constant that stores the ID of this writer.
+    SEQ i = 0 FOR loops                   -- like a 'for' loop.
+      w1.to.oc! id+i
+  :
+  --}}}
+  
+  
+  --{{{ PROC writer.2
+  PROC writer.2 (VAL INT loops)
+    VAL INT id IS 200 :                     -- constant that stores the ID of this writer.
+    SEQ i = 0 FOR loops                   -- like a 'for' loop.
+      w2.to.oc! id+i
+  :
+  --}}}
+  
+  
+  --{{{ PROC output.collector
+  -- process receives data from the writers and outputs it to the terminal
+  -- the process temrinates itself after a pre-determinted period of time has passed
+  PROC output.collector (CHAN INT in.from.w1, in.from.w2)
+    INT data:                                       -- temporarily store data to be output
+    INT start.time, end.time:
+    VAL INT running.time IS 1000:                   -- how long the server should run for
+    INITIAL BOOL terminate IS FALSE:                -- flag used to indicate satisfaction of termination condition
+    --{{{ start receiving and outputting data
+    SEQ
+      timer ? start.time                            -- get the time of server startup
+      end.time := start.time + running.time         -- calculate when to terminate this process
+      WHILE NOT terminate                           -- loop until termination condition met
+        ALT                                         -- receive data, and run timeout in parallel
+          in.from.w1 ? data                         -- receive data from writer 1
+            SEQ
+              out.int(data, 0, out!)
+              out.string("*n", 0, out!)
+          in.from.w2 ? data                         -- receive data from writer 2
+            SEQ
+              out.int(data, 0, out!)
+              out.string("*n", 0, out!)
+          timer ? AFTER end.time                    -- timeout function, this process suspends until end.time is exceeded by timer
+            SEQ
+              terminate := TRUE                     -- set termination conditiion
+    --}}}
+  :
+  --}}}
+  
+  
+  --{{{ the main body of the program
+  SEQ
+    out.string("starting the writers...*n", 0, out!)
+    PAR
+      output.collector (w1.to.oc, w2.to.oc)
+      PAR           -- run two writers together in parallel
+        writer.1 (50)
+        writer.2 (50)
+    out.string("writers have finished.*n", 0, out!)
+  --}}}
+:
+--}}}
+
+
+

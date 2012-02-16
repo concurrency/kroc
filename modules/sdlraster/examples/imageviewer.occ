@@ -1,0 +1,88 @@
+--
+--	imageviewer: view images in any format loadable by rasterio
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+--
+--	This program is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU General Public License as
+--	published by the Free Software Foundation, either version 2 of the
+--	License, or (at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+#INCLUDE "rasterio.module"
+#INCLUDE "sdlraster.module"
+
+--{{{  PROC main
+PROC main (CHAN BYTE err!)
+  --{{{  PROC show.image
+  PROC show.image (VAL []BYTE name)
+    RASTER image:
+    SEQ
+      read.raster (name, image)
+      CHAN RASTER in, out:
+      CHAN RASTER.EVENT events:
+      PAR
+        raster.display (name, SIZE image[0], SIZE image, 1, out?, in!, events!)
+        RASTER.EVENT event:
+        SEQ
+          --{{{  show image
+          RASTER r:
+          in ? r
+          out ! image
+          --}}}
+          --{{{  wait for space bar
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            SEQ
+              events ? event
+              IF
+                (event[type] = RASTER.ET.KEYDOWN) AND (event[id] = ' ')
+                  running := FALSE
+                TRUE
+                  SKIP
+          --}}}
+          --{{{  close raster
+          PAR
+            SEQ
+              RASTER r:
+              in ? r
+              raster.shutdown (in?, out!)
+            WHILE event[type] <> RASTER.ET.SHUTDOWN
+              events ? event
+          --}}}
+  :
+  --}}}
+
+  --{{{  parse args
+  PROC usage ()
+    SEQ
+      out.string ("Usage: imageviewer IMAGE ...*n", 0, err!)
+      CAUSEERROR ()
+  :
+  CHAN GETOPT opts:
+  PAR
+    file.get.options ("", opts!)
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      BYTE o:
+      MOBILE []BYTE a:
+      opts ? CASE
+        arg; a
+          show.image (a)
+        bad; o
+          usage ()
+        done
+          running := FALSE
+  --}}}
+:
+--}}}

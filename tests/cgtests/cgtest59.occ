@@ -1,0 +1,1612 @@
+-- version control marker $Id: cgtest59.occ,v 1.3 1995/10/11 10:21:29 djb1 Exp $
+
+PROC cgtest59 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  INT key :
+  BOOL x :
+  INT dummy :
+  VAL []BYTE b.dummy RETYPES dummy :
+  VAL bpw IS SIZE b.dummy :
+  SEQ
+    init ("CG test 59", "Misc occam 2.5")
+    --{{{  SIZE on user-defined-types
+    PROC SIZE.on.types()
+      VAL n IS 2 :
+      DATA TYPE myarr IS [n]INT :
+      INT x :
+      [n]INT arr :
+      myarr  m :
+      SEQ
+        title("SIZE")
+        x := SIZE arr
+        check(x, n, "SIZE00")
+        x := SIZE m
+        check(x, n, "SIZE01")
+        x := SIZE myarr
+        check(x, n, "SIZE02")
+        x := SIZE [n]INT
+        check(x, n, "SIZE03")
+    :
+    SIZE.on.types()
+    --}}}
+    --{{{  BYTESIN
+    PROC BYTESIN.on.types()
+      INT x :
+      SEQ
+        title("BYTESIN")
+    
+        --{{{  some user types
+        VAL n IS 2 :
+        DATA TYPE myarr IS [n]INT :
+        [n]INT arr :
+        myarr  m :
+        SEQ
+          x := BYTESIN(arr)
+          check(x, n * bpw, "BYTESIN00")
+          x := BYTESIN(m)
+          check(x, n * bpw, "BYTESIN01")
+          x := BYTESIN(myarr)
+          check(x, n * bpw, "BYTESIN02")
+          x := BYTESIN([n]INT)
+          check(x, n * bpw, "BYTESIN03")
+        --}}}
+        --{{{  basic types
+        check(BYTESIN(BOOL),    1, "BYTESIN10")
+        check(BYTESIN(BYTE),    1, "BYTESIN11")
+        check(BYTESIN(INT),   bpw, "BYTESIN12")
+        check(BYTESIN(INT16),   2, "BYTESIN13")
+        check(BYTESIN(INT32),   4, "BYTESIN14")
+        check(BYTESIN(INT64),   8, "BYTESIN15")
+        check(BYTESIN(REAL32),  4, "BYTESIN16")
+        check(BYTESIN(REAL64),  8, "BYTESIN17")
+        check(BYTESIN("hello"), 5, "BYTESIN18")
+        --}}}
+        --{{{  variable length arrays
+        PROC test.params(VAL []BYTE open.byte, VAL INT b.open.byte,
+                         VAL []INT  open.int,  VAL INT b.open.int,
+                         VAL [][]BYTE d.open.byte, VAL INT b.d.open.byte)
+          SEQ
+            check(BYTESIN(open.byte),   b.open.byte,   "BYTESIN20")
+            check(BYTESIN(open.int),    b.open.int,    "BYTESIN21")
+            check(BYTESIN(d.open.byte), b.d.open.byte, "BYTESIN22")
+        
+            VAL []BYTE bb RETYPES open.byte :
+            VAL []BYTE bi RETYPES open.int :
+            VAL []BYTE bd RETYPES d.open.byte :
+            SEQ
+              check(SIZE bb, b.open.byte,   "BYTESIN23")
+              check(SIZE bi, b.open.int,    "BYTESIN24")
+              check(SIZE bd, b.d.open.byte, "BYTESIN25")
+        :
+        SEQ
+          test.params("hi there", 8,
+                      [1,2,3,4,5], 5*bpw,
+                      ["yes  ", "no   ", "maybe"], 5*3)
+        
+        --}}}
+        --{{{  looking at segments
+        [10]INT a :
+        [20]BYTE b :
+        INT one, zero, ten :
+        SEQ
+          zero, one, ten := id(0), id(1), id(10)
+          x := BYTESIN([a FROM zero FOR ten])
+          check(x, 10*bpw, "BYTESIN30")
+          x := BYTESIN([a FROM zero FOR ten + zero])
+          check(x, 10*bpw, "BYTESIN31")
+          x := BYTESIN([a FROM one FOR ten - one])
+          check(x,  9*bpw, "BYTESIN32")
+          x := BYTESIN([b FROM zero FOR ten])
+          check(x, 10, "BYTESIN33")
+          x := BYTESIN([b FROM zero FOR ten + zero])
+          check(x, 10, "BYTESIN34")
+          x := BYTESIN([b FROM one FOR ten - one])
+          check(x,  9, "BYTESIN35")
+          x := BYTESIN([b FROM one FOR ten + 1])
+          check(x, 11, "BYTESIN36")
+        
+        --}}}
+        --{{{  declaring arrays using BYTESIN
+        PROC init([]BYTE a)
+          SEQ i = 0 FOR BYTESIN (a)
+            a[i] := BYTE i
+        :
+        [10]BYTE a :
+        [BYTESIN (a)]BYTE b :
+        SEQ
+          init(a)
+          b := a
+        
+          SEQ i = 0 FOR SIZE b
+            check.BYTE(b[i], BYTE i, "BYTESIN40")
+        --}}}
+        --{{{  layout of sub-arrays
+        PROC layout.of.sub.arrays()
+          DATA TYPE my.record
+            RECORD
+              INT x, y, z :
+              [4]INT16 p, q, r :
+              [3]BYTE b1, b2, b3 :
+              -- etc
+          :
+          VAL bytes.per.word IS BYTESIN (INT) :
+          BOOL b :
+          SEQ
+            b := BYTESIN(my.record) >= (((3 * bytes.per.word) +
+                                         ((4 * 2) * 3)      ) +
+                                         ((3 * 1) * 3)         )
+            check.BOOL(b, TRUE, "SUB001")
+        :
+        layout.of.sub.arrays()
+        --}}}
+    :
+    BYTESIN.on.types()
+    --}}}
+    --{{{  OFFSETOF
+    -- The two arrays and all uses of them are commented out for Tock, because
+    -- in Tock OFFSETOF applied to a non-PACKED RECORD is not knowable at compile-time,
+    -- and dynamically sized arrays are not yet allowed
+    PROC test.OFFSETOF()
+      DATA TYPE record1
+        RECORD
+          INT field0, field1:
+      :
+      #IF NOT DEFINED (COMPILER.TOCK)
+      [(OFFSETOF(record1, field1))+1]INT silly :
+      [OFFSETOF(record1, field1)+1]INT silly2 :
+      #ENDIF
+      SEQ
+        title("OFFSETOF")
+        check.BOOL((OFFSETOF(record1, field1)) <> (OFFSETOF(record1, field0)),
+                   TRUE, "OFFSET00")
+        #IF NOT DEFINED (COMPILER.TOCK)
+        SEQ i = 0 FOR SIZE silly
+          silly[i] := id(i)
+        #ENDIF
+        check.BOOL((OFFSETOF(record1, field1)) < (BYTESIN(record1)), TRUE, "OFFSET01")
+        check.BOOL((OFFSETOF(record1, field0)) < (BYTESIN(record1)), TRUE, "OFFSET02")
+        #IF NOT DEFINED (COMPILER.TOCK)
+        check.BOOL((OFFSETOF(record1, field1)) < (SIZE silly), TRUE, "OFFSET03")
+        SEQ i = 0 FOR SIZE silly
+          check(silly[i], i, "OFFSET04")
+        #ENDIF
+        check.BOOL(OFFSETOF(record1, field1) <> OFFSETOF(record1, field0),
+                   TRUE, "OFFSET10")
+        check.BOOL(OFFSETOF(record1, field1) < BYTESIN(record1), TRUE, "OFFSET21")
+        check.BOOL(OFFSETOF(record1, field0) < BYTESIN(record1), TRUE, "OFFSET22")
+        #IF NOT DEFINED (COMPILER.TOCK)
+        check.BOOL(OFFSETOF(record1, field1) < (SIZE silly), TRUE, "OFFSET23")
+        #ENDIF
+    :
+    test.OFFSETOF()
+    --}}}
+    --{{{  PACKED RECORD
+    PROC packed.records()
+      DATA TYPE packed
+        PACKED RECORD
+          INT x, y, z:
+      :
+      SEQ
+        title("PACKED RECORDs")
+        check(BYTESIN(packed), 3 * bpw,   "PACK00")
+        check(OFFSETOF(packed, x), 0,     "PACK01")
+        check(OFFSETOF(packed, y), bpw,   "PACK02")
+        check(OFFSETOF(packed, z), bpw*2, "PACK03")
+    :
+    packed.records()
+    --}}}
+    --{{{  MOSTPOS / MOSTNEG BYTEs
+    PROC MOSTPOS.MOSTNEG.BYTE()
+      DATA TYPE byte IS BYTE :
+      
+      VAL xb IS MOSTPOS byte :
+      VAL yb IS MOSTNEG byte :
+    
+      VAL xB IS MOSTPOS BYTE :
+      VAL yB IS MOSTNEG BYTE :
+      
+      PROC p0 (byte b)
+        SEQ
+          b := xb
+      :
+      PROC p1 (byte b)
+        SEQ
+          b := yb
+      :
+      PROC p2 (BYTE b)
+        SEQ
+          b := xB
+      :
+      PROC p3 (BYTE b)
+        SEQ
+          b := yB
+      :
+      BYTE b0 :
+      byte b1 :
+      PROC check.byte(VAL byte b1, b2, VAL []BYTE msg)
+        check.BYTE(BYTE b1, BYTE b2, msg)
+      :
+      SEQ
+        title("MOSTPOS / MOSTNEG on BYTE")
+        p0(b1)
+        check.byte(b1,     255(byte), "MOST00")
+        check     (INT b1, 255,       "MOST01")
+        p1(b1)
+        check.byte(b1,       0(byte), "MOST02")
+        check     (INT b1,   0,       "MOST03")
+        p2(b0)
+        check.BYTE(b0,     255(BYTE), "MOST04")
+        check     (INT b0, 255,       "MOST05")
+        p3(b0)
+        check.BYTE(b0,       0(BYTE), "MOST06")
+        check     (INT b0,   0,       "MOST07")
+    :
+    MOSTPOS.MOSTNEG.BYTE()
+    --}}}
+    --{{{  Untyped literals
+    PROC untyped.literals()
+      SEQ
+        title("Untyped literals")
+        --{{{  simple assignments etc    LIT000 - LIT099
+        PROC simple.literals()
+          INT i :
+          INT16 i16 :
+          INT32 i32 :
+          INT64 i64 :
+          BYTE b :
+          REAL32 r32 :
+          REAL64 r64 :
+          SEQ
+            i := 1(INT)
+            check(i, 1(INT), "LIT000")
+            i := 1
+            check(i, 1(INT), "LIT001")
+            i := 'a'
+            check(i, INT 'a', "LIT002")
+            i16 := 1(INT16)
+            check.INT16(i16, 1(INT16), "LIT003")
+            i16 := 1
+            check.INT16(i16, 1(INT16), "LIT004")
+            i16 := 'a'
+            check.INT16(i16, INT16 'a', "LIT005")
+            i32 := 1(INT32)
+            check.INT32(i32, 1(INT32), "LIT006")
+            i32 := 1
+            check.INT32(i32, 1(INT32), "LIT007")
+            i32 := 'a'
+            check.INT32(i32, INT32 'a', "LIT008")
+            i64 := 1(INT64)
+            check.INT64(i64, 1(INT64), "LIT009")
+            i64 := 1
+            check.INT64(i64, 1(INT64), "LIT010")
+            i64 := 'a'
+            check.INT64(i64, INT64 'a', "LIT011")
+            b := 1(BYTE)
+            check.BYTE(b, 1(BYTE), "LIT012")
+            b := 1
+            check.BYTE(b, 1(BYTE), "LIT013")
+            b := 'a'
+            check.BYTE(b, 'a', "LIT014")
+            r32 := 1.0(REAL32)
+            check.REAL32(r32, 1.0(REAL32), "LIT015")
+            r32 := 1.0
+            check.REAL32(r32, 1.0(REAL32), "LIT016")
+            r64 := 1.0(REAL64)
+            check.REAL64(r64, 1.0(REAL64), "LIT017")
+            r64 := 1.0
+            check.REAL64(r64, 1.0(REAL64), "LIT018")
+        :
+        simple.literals()
+        
+        --}}}
+        --{{{  named types               LIT100 - LIT199
+        PROC named.types()
+          DATA TYPE int IS INT :
+          DATA TYPE int16 IS INT16 :
+          DATA TYPE int32 IS INT32 :
+          DATA TYPE int64 IS INT64 :
+          DATA TYPE real32 IS REAL32 :
+          DATA TYPE real64 IS REAL64 :
+          DATA TYPE byte IS BYTE :
+          int i :
+          int16 i16 :
+          int32 i32 :
+          int64 i64 :
+          byte b :
+          real32 r32 :
+          real64 r64 :
+          SEQ
+            i := 1(int)
+            check(INT i, 1(INT), "LIT100")
+            i := 1
+            check(INT i, 1(INT), "LIT101")
+            i := 'a'
+            check(INT i, INT 'a', "LIT102")
+            i16 := 1(int16)
+            check.INT16(INT16 i16, 1(INT16), "LIT103")
+            i16 := 1
+            check.INT16(INT16 i16, 1(INT16), "LIT104")
+            i16 := 'a'
+            check.INT16(INT16 i16, INT16 'a', "LIT105")
+            i32 := 1(int32)
+            check.INT32(INT32 i32, 1(INT32), "LIT106")
+            i32 := 1
+            check.INT32(INT32 i32, 1(INT32), "LIT107")
+            i32 := 'a'
+            check.INT32(INT32 i32, INT32 'a', "LIT108")
+            i64 := 1(int64)
+            check.INT64(INT64 i64, 1(INT64), "LIT109")
+            i64 := 1
+            check.INT64(INT64 i64, 1(INT64), "LIT110")
+            i64 := 'a'
+            check.INT64(INT64 i64, INT64 'a', "LIT111")
+            b := 1(byte)
+            check.BYTE(BYTE b, 1(BYTE), "LIT112")
+            b := 1
+            check.BYTE(BYTE b, 1(BYTE), "LIT113")
+            b := 'a'
+            check.BYTE(BYTE b, 'a', "LIT114")
+            r32 := 1.0(real32)
+            check.REAL32(REAL32 ROUND r32, 1.0(REAL32), "LIT115")
+            r32 := 1.0
+            check.REAL32(REAL32 ROUND r32, 1.0(REAL32), "LIT116")
+            r64 := 1.0(real64)
+            check.REAL64(REAL64 ROUND r64, 1.0(REAL64), "LIT117")
+            r64 := 1.0
+            check.REAL64(REAL64 ROUND r64, 1.0(REAL64), "LIT118")
+        :
+        named.types()
+        --}}}
+        --{{{  places expecting an INT   LIT200 - LIT299
+        PROC places.expecting.an.INT()
+          SEQ
+            --{{{  array size and subscript
+            SEQ
+              ['Z']INT alphabet :
+              SEQ
+                SEQ i = 0 FOR SIZE alphabet
+                  alphabet[i] := i
+                alphabet['A'] := -22
+                check(alphabet[INT 'A'], -22, "LIT200")
+                check(SIZE alphabet, INT 'Z', "LIT201")
+              [('Z' + 1) - 'A']INT alphabet :
+              INT x :
+              SEQ
+                SEQ i = 0 FOR SIZE alphabet
+                  alphabet[i] := i
+                x := INT id.BYTE('F')
+                alphabet['A' - 'A'] := -22
+                alphabet[x - 'A'] := 88
+                check(alphabet[0], -22, "LIT202")
+                check(alphabet['F' - 'A'],  88, "LIT203")
+                check(SIZE alphabet, 26, "LIT204")
+            
+            --}}}
+            --{{{  start and length of segment
+            [100]BYTE array :
+            [26]BYTE buf :
+            SEQ
+              SEQ i = 0 FOR SIZE buf
+                buf[i] := BYTE i
+              SEQ i = 0 FOR SIZE array
+                array[i] := 0
+            
+              [array FROM 'A' FOR 26] := buf
+              [array FROM 0 FOR ('Z' + 1) - 'A'] := buf
+              SEQ i = 0 FOR 26
+                check(INT array[i], i, "LIT210")
+              SEQ i = 'A' FOR ('Z' + 1) - 'A'
+                check(INT array[i], i-'A', "LIT211")
+              check((('Z' + 1) - 'A'), 26, "LIT212")
+            
+            --}}}
+            --{{{  shifts
+            INT x, y :
+            SEQ
+              x := id(10)
+              x := x << '*#01'
+              check(x, 20, "LIT220")
+              x := x >> '*#02'
+              check(x,  5, "LIT221")
+            
+            --}}}
+        :
+        places.expecting.an.INT()
+        --}}}
+        --{{{  abbreviations             LIT300 - LIT399
+        PROC abbrs()
+          SEQ
+            --{{{  INT
+            VAL INT x IS 1 :
+            VAL INT y IS 'a' :
+            VAL INT z IS 2(INT) :
+            SEQ
+              check(x, 1, "LIT300")
+              check(y, 'a'(INT), "LIT301")
+              check(z, 2, "LIT302")
+              
+            --}}}
+            --{{{  INT16
+            VAL INT16 x IS 1 :
+            VAL INT16 y IS 'a' :
+            VAL INT16 z IS 2(INT16) :
+            SEQ
+              check.INT16(x, 1(INT16), "LIT310")
+              check.INT16(y, 'a'(INT16), "LIT311")
+              check.INT16(z, 2(INT16), "LIT312")
+              
+            --}}}
+            --{{{  INT32
+            VAL INT32 x IS 1 :
+            VAL INT32 y IS 'a' :
+            VAL INT32 z IS 2(INT32) :
+            SEQ
+              check.INT32(x, 1(INT32), "LIT320")
+              check.INT32(y, 'a'(INT32), "LIT321")
+              check.INT32(z, 2(INT32), "LIT322")
+              
+            --}}}
+            --{{{  INT64
+            VAL INT64 x IS 1 :
+            VAL INT64 y IS 'a' :
+            VAL INT64 z IS 2(INT64) :
+            SEQ
+              check.INT64(x, 1(INT64), "LIT330")
+              check.INT64(y, 'a'(INT64), "LIT331")
+              check.INT64(z, 2(INT64), "LIT332")
+              
+            --}}}
+            --{{{  BYTE
+            VAL BYTE x IS 1 :
+            VAL BYTE y IS 'a' :
+            VAL BYTE z IS 2(BYTE) :
+            SEQ
+              check.BYTE(x, 1(BYTE), "LIT340")
+              check.BYTE(y, 'a'(BYTE), "LIT341")
+              check.BYTE(z, 2(BYTE), "LIT342")
+              
+            --}}}
+            --{{{  REAL32
+            VAL REAL32 x IS 1.0 :
+            VAL REAL32 z IS 2.0(REAL32) :
+            SEQ
+              check.REAL32(x, 1.0(REAL32), "LIT350")
+              check.REAL32(z, 2.0(REAL32), "LIT352")
+              
+            --}}}
+            --{{{  REAL64
+            VAL REAL64 x IS 1.0 :
+            VAL REAL64 z IS 2.0(REAL64) :
+            SEQ
+              check.REAL64(x, 1.0(REAL64), "LIT360")
+              check.REAL64(z, 2.0(REAL64), "LIT362")
+              
+            --}}}
+        :
+        abbrs()
+        --}}}
+        --{{{  abbreviations with names  LIT400 - LIT499
+        PROC abbrs()
+          SEQ
+            --{{{  int
+            DATA TYPE int IS INT :
+            VAL int x IS 1 :
+            VAL int y IS 'a' :
+            VAL int z IS 2(int) :
+            SEQ
+              check(INT x, 1, "LIT400")
+              check(INT y, 'a'(INT), "LIT401")
+              check(INT z, 2, "LIT402")
+              
+            --}}}
+            --{{{  int16
+            DATA TYPE int16 IS INT16 :
+            VAL int16 x IS 1 :
+            VAL int16 y IS 'a' :
+            VAL int16 z IS 2(int16) :
+            SEQ
+              check.INT16(INT16 x, 1(INT16), "LIT410")
+              check.INT16(INT16 y, 'a'(INT16), "LIT411")
+              check.INT16(INT16 z, 2(INT16), "LIT412")
+              
+            --}}}
+            --{{{  int32
+            DATA TYPE int32 IS INT32 :
+            VAL int32 x IS 1 :
+            VAL int32 y IS 'a' :
+            VAL int32 z IS 2(int32) :
+            SEQ
+              check.INT32(INT32 x, 1(INT32), "LIT420")
+              check.INT32(INT32 y, 'a'(INT32), "LIT421")
+              check.INT32(INT32 z, 2(INT32), "LIT422")
+              
+            --}}}
+            --{{{  int64
+            DATA TYPE int64 IS INT64 :
+            VAL int64 x IS 1 :
+            VAL int64 y IS 'a' :
+            VAL int64 z IS 2(int64) :
+            SEQ
+              check.INT64(INT64 x, 1(INT64), "LIT430")
+              check.INT64(INT64 y, 'a'(INT64), "LIT431")
+              check.INT64(INT64 z, 2(INT64), "LIT432")
+              
+            --}}}
+            --{{{  byte
+            DATA TYPE byte IS BYTE :
+            VAL byte x IS 1 :
+            VAL byte y IS 'a' :
+            VAL byte z IS 2(byte) :
+            SEQ
+              check.BYTE(BYTE x, 1(BYTE), "LIT440")
+              check.BYTE(BYTE y, 'a'(BYTE), "LIT441")
+              check.BYTE(BYTE z, 2(BYTE), "LIT442")
+              
+            --}}}
+            --{{{  real32
+            DATA TYPE real32 IS REAL32 :
+            VAL real32 x IS 1.0 :
+            VAL real32 z IS 2.0(real32) :
+            SEQ
+              check.REAL32(REAL32 ROUND x, 1.0(REAL32), "LIT450")
+              check.REAL32(REAL32 ROUND z, 2.0(REAL32), "LIT452")
+              
+            --}}}
+            --{{{  real64
+            DATA TYPE real64 IS REAL64 :
+            VAL real64 x IS 1.0 :
+            VAL real64 z IS 2.0(real64) :
+            SEQ
+              check.REAL64(REAL64 ROUND x, 1.0(REAL64), "LIT460")
+              check.REAL64(REAL64 ROUND z, 2.0(REAL64), "LIT462")
+              
+            --}}}
+        :
+        abbrs()
+        --}}}
+        --{{{  array constructors        LIT500 - LIT599
+        PROC constructors()
+          --{{{  data types
+          DATA TYPE int IS INT :
+          DATA TYPE ints IS [2]int :
+          DATA TYPE INTS IS [2]INT :
+          DATA TYPE intr
+            RECORD
+              int x, y :
+          :
+          PROC check.int(VAL int x, y, VAL []BYTE msg)
+            check.INT(INT x, INT y, msg)
+          :
+          PROC check.ints(VAL ints x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE ints
+              check.int(x[i], y[i], msg)
+          :
+          PROC check.INTS(VAL INTS x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE ints
+              check.INT(x[i], y[i], msg)
+          :
+          PROC check.intr(VAL intr x, y, VAL []BYTE msg)
+            SEQ
+              check.int(x[x], y[x], msg)
+              check.int(x[y], y[y], msg)
+          :
+          PROC check.2.int(VAL [2]int x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE x
+              check.int(x[i], y[i], msg)
+          :
+          PROC check.2.INT(VAL [2]INT x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE x
+              check.INT(x[i], y[i], msg)
+          :
+          
+          --}}}
+        
+          INT local.INT :
+          int local.int :
+          ints local.ints :
+          INTS local.INTS :
+          intr local.intr :
+          [2]INT local.2.INT :
+          [2]int local.2.int :
+          SEQ
+            --{{{  scalars
+            VAL i.INT IS 1 :
+            VAL i.int IS 1(int) :
+            VAL INT j.INT IS 1 :
+            VAL int j.int IS 1 :
+            VAL INT k.INT IS 1(INT) :
+            VAL int k.int IS 1(int) :
+            SEQ
+              local.INT := i.INT
+              check.INT(local.INT, 1(INT), "LIT500")
+              local.int := i.int
+              check.int(local.int, 1(int), "LIT501")
+              local.INT := j.INT
+              check.INT(local.INT, 1(INT), "LIT502")
+              local.int := j.int
+              check.int(local.int, 1(int), "LIT503")
+              local.INT := k.INT
+              check.INT(local.INT, 1(INT), "LIT504")
+              local.int := k.int
+              check.int(local.int, 1(int), "LIT505")
+            --}}}
+        
+            --{{{  types on lhs
+            VAL [2]INT l.array IS [1, 2] :
+            VAL [2]int m.array IS [2, 3] :
+            VAL ints   n.array IS [3, 4] :
+            VAL INTS   o.array IS [5, 6] :
+            VAL intr   p.rec   IS [1, 4] :
+            --VAL INTS   q.array IS [1, 4] :
+            SEQ
+              local.2.INT := l.array
+              check.2.INT(local.2.INT, [1,2], "LIT510")
+              local.2.int := m.array
+              check.2.int(local.2.int, [2(int),3(int)], "LIT511")
+              local.ints := n.array
+              check.ints(local.ints, [3(int),4(int)](ints), "LIT512")
+              local.INTS := o.array
+              check.INTS(local.INTS, [5,6](INTS), "LIT513")
+              local.intr := p.rec
+              check.intr(local.intr, [1(int),4(int)](intr), "LIT514")
+            
+            
+            --}}}
+        
+            --{{{  types on rhs
+            VAL ll.array IS [1, 3] :
+            VAL mm.array IS [2(int), 4(int)] :
+            VAL mn.array IS [2(int), 4(int)](ints) :
+            VAL nn.array IS [1, 5](ints) :
+            VAL oo.array IS [2, 5](INTS) :
+            VAL pp.rec   IS [3, 5](intr) :
+            VAL pq.rec   IS [3(int), 5(int)](intr) :
+            --VAL qq.array IS [1, 4]([3]INT) : -- only names are permitted
+            VAL rr.array IS [2(int), 4] :
+            VAL ss.array IS [2, 4(int)] :
+            SEQ
+              local.2.INT := ll.array
+              check.2.INT(local.2.INT, [1,3], "LIT520")
+              local.2.int := mm.array
+              check.2.int(local.2.int, [2(int),4(int)], "LIT521")
+              local.ints := mn.array
+              check.ints(local.ints, [2(int),4(int)](ints), "LIT522")
+              local.ints := nn.array
+              check.ints(local.ints, [1(int),5(int)](ints), "LIT523")
+              local.INTS := oo.array
+              check.INTS(local.INTS, [2,5](INTS), "LIT524")
+              local.intr := pp.rec
+              check.intr(local.intr, [3(int),5(int)](intr), "LIT525")
+              local.2.int := rr.array
+              check.2.int(local.2.int, [2(int),4(int)], "LIT526")
+              local.2.int := ss.array
+              check.2.int(local.2.int, [2(int),4(int)], "LIT527")
+              local.intr := pq.rec
+              check.intr(local.intr, [3(int),5(int)](intr), "LIT528")
+            
+            --}}}
+        
+        :
+        constructors()
+        --}}}
+        --{{{  formal/actual             LIT600 - LIT699
+        PROC formal.actual()
+          --{{{  types
+          DATA TYPE int IS INT32 :
+          DATA TYPE ints IS [2]int :
+          DATA TYPE INTS IS [2]INT32 :
+          --}}}
+          SEQ
+            --{{{  procs
+            PROC local.INT32(VAL INT32 x, y, VAL []BYTE msg)
+              check.INT32(x, y, msg)
+            :
+            PROC local.INT32s(VAL []INT32 x, y, VAL []BYTE msg)
+              SEQ i = 0 FOR SIZE x
+                check.INT32(x[i], y[i], msg)
+            :
+            PROC local.int(VAL int x, y, VAL []BYTE msg)
+              check.INT32(INT32 x, INT32 y, msg)
+            :
+            PROC local.int.array(VAL [2]int x, y, VAL []BYTE msg)
+              SEQ i = 0 FOR SIZE x
+                local.int(x[i], y[i], msg)
+            :
+            PROC local.ints(VAL ints x, y, VAL []BYTE msg)
+              SEQ i = 0 FOR SIZE x
+                local.int(x[i], y[i], msg)
+            :
+            PROC local.INTS(VAL INTS x, y, VAL []BYTE msg)
+              SEQ i = 0 FOR SIZE x
+                check.INT32(x[i], y[i], msg)
+            :
+            
+            --}}}
+            SEQ
+              local.INT32(77, 77(INT32), "LIT600")
+              local.INT32s([77, 88], [77(INT32), 88(INT32)], "LIT601")
+              local.int(77, 77(int), "LIT602")
+              local.int.array([77, 66], [77(int), 66(int)], "LIT603")
+              local.ints([77, 66], [77(int), 66(int)](ints), "LIT604")
+              local.INTS([77, 66], [77(INT32), 66(INT32)](INTS), "LIT605")
+            --{{{  funcs
+            BOOL FUNCTION local.INT32(VAL INT32 x, y) IS x = y :
+            BOOL FUNCTION local.INT32s(VAL []INT32 x, y)
+              BOOL eq :
+              VALOF
+                SEQ
+                  eq := TRUE
+                  SEQ i = 0 FOR SIZE x
+                    eq := eq AND (x[i] = y[i])
+                RESULT eq
+            :
+            BOOL FUNCTION local.int(VAL int x, y) IS x = y :
+            BOOL FUNCTION local.int.array(VAL [2]int x, y)
+              BOOL eq :
+              VALOF
+                SEQ
+                  eq := TRUE
+                  SEQ i = 0 FOR SIZE x
+                    eq := eq AND (x[i] = y[i])
+                RESULT eq
+            :
+            BOOL FUNCTION local.ints(VAL ints x, y)
+              BOOL eq :
+              VALOF
+                SEQ
+                  eq := TRUE
+                  SEQ i = 0 FOR SIZE x
+                    eq := eq AND (x[i] = y[i])
+                RESULT eq
+            :
+            BOOL FUNCTION local.INTS(VAL INTS x, y)
+              BOOL eq :
+              VALOF
+                SEQ
+                  eq := TRUE
+                  SEQ i = 0 FOR SIZE x
+                    eq := eq AND (x[i] = y[i])
+                RESULT eq
+            :
+            
+            --}}}
+            SEQ
+              check.BOOL(local.INT32(77, 77(INT32)), TRUE, "LIT610")
+              check.BOOL(local.INT32s([77, 88], [77(INT32), 88(INT32)]), TRUE, "LIT611")
+              check.BOOL(local.int(77, 77(int)), TRUE, "LIT612")
+              check.BOOL(local.int.array([77, 66], [77(int), 66(int)]), TRUE, "LIT613")
+              check.BOOL(local.ints([77, 66], [77(int), 66(int)](ints)), TRUE, "LIT614")
+              check.BOOL(local.INTS([77, 66], [77(INT32), 66(INT32)](INTS)), TRUE, "LIT615")
+        :
+        formal.actual()
+        --}}}
+        --{{{  result lists              LIT700 - LIT799
+        PROC result.lists()
+          --{{{  types
+          DATA TYPE int IS INT32 :
+          DATA TYPE ints IS [2]int :
+          DATA TYPE INTS IS [2]INT32 :
+          --}}}
+          --{{{  functions
+          INT32 FUNCTION f.INT32() IS 0 :
+          int   FUNCTION f.int()   IS 0 :
+          INTS  FUNCTION f.INTS()  IS [0,0] :
+          ints  FUNCTION f.ints()  IS [0,0] :
+          [2]INT32 FUNCTION f.2.INT32() IS [0,0] :
+          [2]int   FUNCTION f.2.int()   IS [0,0] :
+          --}}}
+          --{{{  variables
+          INT32 i32 :
+          int i :
+          INTS i32s :
+          ints is :
+          [2]INT32 i32.2 :
+          [2]int   i.2 :
+          --}}}
+          SEQ
+            --{{{  call each function
+            i32 := f.INT32()
+            check.INT32(i32, 0(INT32), "LIT700")
+            i := f.int()
+            check.INT32(INT32 i, 0(INT32), "LIT701")
+            i32s := f.INTS()
+            is   := f.ints()
+            i32.2 := f.2.INT32()
+            i.2   := f.2.int()
+            SEQ k = 0 FOR 2
+              SEQ
+                check.INT32(      i32s [k], 0(INT32), "LIT702")
+                check.INT32(INT32 is   [k], 0(INT32), "LIT703")
+                check.INT32(      i32.2[k], 0(INT32), "LIT704")
+                check.INT32(INT32 i.2  [k], 0(INT32), "LIT705")
+            --}}}
+            --{{{  multi result functions
+            BOOL, BYTE, INT, INT16, INT32, INT64, REAL32, REAL64 FUNCTION multi() IS
+              TRUE, 1, 2, 3, 4, 5, 6.0, 7.0 :
+            BOOL bool :
+            BYTE byte :
+            INT int :
+            INT16 i16 :
+            INT32 i32 :
+            INT64 i64 :
+            REAL32 r32 :
+            REAL64 r64 :
+            SEQ
+              bool, byte, int, i16, i32, i64, r32, r64 := multi()
+              check.BOOL(bool, TRUE, "LIT710")
+              check.BYTE(byte, 1(BYTE), "LIT711")
+              check.INT  (int, 2(INT), "LIT712")
+              check.INT16(i16, 3(INT16), "LIT713")
+              check.INT32(i32, 4(INT32), "LIT714")
+              check.INT64(i64, 5(INT64), "LIT715")
+              check.REAL32(r32, 6.0(REAL32), "LIT716")
+              check.REAL64(r64, 7.0(REAL64), "LIT717")
+            
+            
+            --}}}
+        :
+        result.lists()
+        --}}}
+        --{{{  communication             LIT800 - LIT899
+        PROC communication()
+          --{{{  data types etc
+          DATA TYPE int32 IS INT32 :
+          DATA TYPE INT32s IS [2]INT32 :
+          DATA TYPE int32s IS [2]int32 :
+          PROC check.int32(VAL int32 x, y, VAL []BYTE msg)
+            check.INT32(INT32 x, INT32 y, msg)
+          :
+          PROC check.int32S(VAL [2]int32 x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE x
+              check.int32(x[i], y[i], msg)
+          :
+          PROC check.int32s(VAL int32s x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE int32s
+              check.int32(x[i], y[i], msg)
+          :
+          PROC check.INT32S(VAL [2]INT32 x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE x
+              check.INT32(x[i], y[i], msg)
+          :
+          PROC check.INT32s(VAL INT32s x, y, VAL []BYTE msg)
+            SEQ i = 0 FOR SIZE x
+              check.INT32(x[i], y[i], msg)
+          :
+          --}}}
+          SEQ
+            --{{{  sequential protocol
+            PROTOCOL p.INT32 IS INT32 :
+            PROTOCOL p.int32 IS int32 :
+            CHAN OF INT32 c0 :
+            CHAN OF p.INT32 c1 :
+            CHAN OF int32 c2 :
+            CHAN OF p.int32 c3 :
+            PAR
+              SEQ
+                c0 ! 88
+                c1 ! 66
+                c2 ! 16
+                c3 ! -77
+            
+              INT32 v.INT32 :
+              int32 v.int32 :
+              SEQ
+                c0 ? v.INT32
+                check.INT32(v.INT32, 88(INT32), "LIT800")
+                c1 ? v.INT32
+                check.INT32(v.INT32, 66(INT32), "LIT801")
+                c2 ? v.int32
+                check.int32(v.int32, 16(int32), "LIT802")
+                c3 ? v.int32
+                check.int32(v.int32, -77(int32), "LIT803")
+            
+            --}}}
+            --{{{  tagged protocol
+            PROTOCOL p
+              CASE
+                tag1; INT32
+                tag2; int32
+            :
+            CHAN OF p c :
+            PAR
+              SEQ
+                c ! tag1; 45
+                c ! tag2; 65
+                c ! tag1; -3
+                c ! tag2; 99
+            
+              INT32 v.INT32 :
+              int32 v.int32 :
+              SEQ
+                SEQ i = 0 FOR 2
+                  SEQ
+                    c ? CASE
+                      tag1 ; v.INT32
+                        SEQ
+                          check.INT32(v.INT32, 45(INT32), "LIT810")
+                          check(i, 0, "LIT811")
+                      tag2 ; v.int32
+                        SEQ
+                          check.int32(v.int32, 65(int32), "LIT812")
+                          check(i, 1, "LIT813")
+                c ? CASE tag1; v.INT32
+                check.INT32(v.INT32, -3(INT32), "LIT814")
+                c ? CASE tag2; v.int32
+                check.int32(v.int32, 99(int32), "LIT815")
+            
+            --}}}
+            --{{{  sequential protocol with arrays
+            PROTOCOL p.INT32 IS [2]INT32 :
+            PROTOCOL p.int32 IS [2]int32 :
+            PROTOCOL p.int32s IS int32s :
+            PROTOCOL p.INT32s IS INT32s :
+            CHAN OF [2]INT32 c0 :
+            CHAN OF p.INT32 c1 :
+            CHAN OF [2]int32 c2 :
+            CHAN OF p.int32 c3 :
+            CHAN OF p.int32s c4 :
+            CHAN OF INT32s c5 :
+            CHAN OF p.INT32s c6 :
+            PAR
+              SEQ
+                c0 ! [88, 77]
+                c1 ! [66, 53]
+                c2 ! [16, -1]
+                c3 ! [-77, 3]
+                c4 ! [54, 99]
+                c5 ! [19, 99]
+                c6 ! [10, 99]
+            
+              [2]INT32 v.INT32 :
+              [2]int32 v.int32 :
+              int32s v.int32s :
+              INT32s v.INT32s :
+              SEQ
+                c0 ? v.INT32
+                check.INT32S(v.INT32, [88(INT32), 77(INT32)], "LIT820")
+                c1 ? v.INT32
+                check.INT32S(v.INT32, [66(INT32), 53(INT32)], "LIT821")
+                c2 ? v.int32
+                check.int32S(v.int32, [16(int32), -1(int32)], "LIT822")
+                c3 ? v.int32
+                check.int32S(v.int32, [-77(int32), 3(int32)], "LIT823")
+                c4 ? v.int32s
+                check.int32s(v.int32s, [54,99], "LIT824")
+                c5 ? v.INT32s
+                check.INT32s(v.INT32s, [19,99], "LIT825")
+                c6 ? v.INT32s
+                check.INT32s(v.INT32s, [10,99], "LIT826")
+            
+            
+            --}}}
+            --{{{  tagged protocol with arrays
+            PROTOCOL p.INT32 IS [2]INT32 :
+            PROTOCOL p.int32 IS [2]int32 :
+            PROTOCOL p.int32s IS int32s :
+            PROTOCOL p.INT32s IS INT32s :
+            PROTOCOL p
+              CASE
+                tag1; [2]int32
+                tag2; int32s
+                tag3; [2]INT32
+                tag4; INT32s
+            :
+            CHAN OF p c :
+            PAR
+              SEQ
+                c ! tag1; [88, 77]
+                c ! tag2; [66, 53]
+                c ! tag3; [16, -1]
+                c ! tag4; [-77, 3]
+                c ! tag1; [33, 22]
+                c ! tag2; [6, 531]
+                c ! tag3; [16, -10]
+                c ! tag4; [-17, 32]
+            
+              [2]INT32 v.INT32 :
+              [2]int32 v.int32 :
+              int32s v.int32s :
+              INT32s v.INT32s :
+              SEQ
+                SEQ i = 0 FOR 4
+                  SEQ
+                    c ? CASE
+                      tag1; v.int32
+                        SEQ
+                          check.int32S(v.int32, [88,77], "LIT830")
+                          check(i, 0, "LIT831")
+                      tag2; v.int32s
+                        SEQ
+                          check.int32s(v.int32s, [66,53], "LIT832")
+                          check(i, 1, "LIT833")
+                      tag3; v.INT32
+                        SEQ
+                          check.INT32S(v.INT32, [16,-1], "LIT834")
+                          check(i, 2, "LIT835")
+                      tag4; v.INT32s
+                        SEQ
+                          check.INT32s(v.INT32s, [-77,3], "LIT836")
+                          check(i, 3, "LIT837")
+            
+                c ? CASE tag1; v.int32
+                check.int32S(v.int32, [33,22], "LIT838")
+                c ? CASE tag2; v.int32s
+                check.int32s(v.int32s, [6,531], "LIT839")
+                c ? CASE tag3; v.INT32
+                check.INT32S(v.INT32, [16,-10], "LIT840")
+                c ? CASE tag4; v.INT32s
+                check.INT32s(v.INT32s, [-17,32], "LIT841")
+            
+            --}}}
+        :
+        communication()
+        --}}}
+    :
+    untyped.literals()
+    --}}}
+    --{{{  Fns in CASE statements
+    PROC fns.in.CASE.statements()
+      DATA TYPE int1 IS INT :
+      DATA TYPE int2 IS INT :
+      VAL int3 IS 3 :
+      VAL int4 IS 4 :
+      VAL int5 IS 5 :
+      VAL int6 IS 6 :
+      VAL int96 IS 96 :
+      VAL int97 IS 97 :
+      VAL int99 IS 99 :
+      INT miss :
+      SEQ
+        title("FUNCTIONS in CASE statements")
+        miss := 0
+        SEQ i = 0 FOR 10
+          CASE i
+            int1, int2 FUNCTION f1() IS 1, 2 :
+            1, 98
+              int1 i1 :
+              int2 i2 :
+              SEQ
+                check(i, 1, "CASE00")
+                i1, i2 := f1()
+                check(INT i1, 1, "CASE05")
+                check(INT i2, 2, "CASE06")
+            int97, int96
+              check(i, -1, "CASE01")
+            int1, int2 FUNCTION f2() IS 1, 2 :
+            int1 i1 :
+            int2 i2 :
+            int5, int99
+              SEQ
+                check(i, 5, "CASE02")
+                i1, i2 := f2()
+                check(INT i1, 1, "CASE03")
+                check(INT i2, 2, "CASE04")
+            int1 i1 :
+            int2 i2 :
+            int1, int2 FUNCTION f3() IS 1, 2 :
+            int3, int4
+              SEQ
+                check(i, i, "CASE07")
+                i1, i2 := f3()
+                check(INT i1, 1, "CASE08")
+                check(INT i2, 2, "CASE09")
+            ELSE
+              miss := miss + 1
+        check(miss, 6, "CASE10")
+    :
+    fns.in.CASE.statements()
+    --}}}
+    --{{{  dropping FROM and FOR
+    PROC dropping.FROM.and.FOR([]BYTE unknown, [][]BYTE double, [][][]BYTE treble)
+      [100]BYTE buffer :
+      INT start, llen, len :
+      SEQ
+        title("FROM and FOR")
+        --{{{  initialise
+        len := id(10)
+        SEQ i = 0 FOR SIZE buffer
+          buffer[i] := BYTE i
+        start := id(0)
+        llen := id(1)
+        --}}}
+    
+        --{{{  drop 'FROM'
+        --{{{  buffer
+        SEQ
+          x IS [buffer FOR 10] :
+          SEQ
+            check(INT x[0], 0, "FROM000")
+            check(SIZE x, 10, "FROM001")
+        
+          x IS [buffer FOR len] :
+          SEQ
+            check(INT x[0], 0, "FROM002")
+            check(SIZE x, 10, "FROM003")
+        
+          x IS [buffer FOR id(len)] :
+          SEQ
+            check(INT x[0], 0, "FROM004")
+            check(SIZE x, 10, "FROM005")
+        
+          x IS [buffer FOR id(len) + 13] :
+          SEQ
+            check(INT x[22], 22, "FROM006")
+            check(SIZE x, 23, "FROM007")
+        
+        --}}}
+        --{{{  unknown
+        SEQ
+          x IS [unknown FOR 10] :
+          SEQ
+            check(INT x[0], 0, "FROM010")
+            check(SIZE x, 10, "FROM011")
+        
+          x IS [unknown FOR len] :
+          SEQ
+            check(INT x[0], 0, "FROM012")
+            check(SIZE x, 10, "FROM013")
+        
+          x IS [unknown FOR id(len)] :
+          SEQ
+            check(INT x[0], 0, "FROM014")
+            check(SIZE x, 10, "FROM015")
+        
+          x IS [unknown FOR id(len) + 13] :
+          SEQ
+            check(INT x[22], 22, "FROM016")
+            check(SIZE x, 23, "FROM017")
+        
+        --}}}
+        --{{{  double
+        SEQ
+          x IS [double[start] FOR 10] :
+          SEQ
+            check(INT x[0], 0, "FROM020")
+            check(SIZE x, 10, "FROM021")
+        
+          x IS [double[start] FOR len] :
+          SEQ
+            check(INT x[0], 0, "FROM022")
+            check(SIZE x, 10, "FROM023")
+        
+          x IS [double[start] FOR id(len)] :
+          SEQ
+            check(INT x[0], 0, "FROM024")
+            check(SIZE x, 10, "FROM025")
+        
+          x IS [double[start] FOR id(len) + 13] :
+          SEQ
+            check(INT x[22], 22, "FROM026")
+            check(SIZE x, 23, "FROM027")
+        
+        --}}}
+        --{{{  treble
+        SEQ
+          x IS [treble[start][start] FOR 10] :
+          SEQ
+            check(INT x[0], 0, "FROM030")
+            check(SIZE x, 10, "FROM031")
+        
+          x IS [treble[start][start] FOR len] :
+          SEQ
+            check(INT x[0], 0, "FROM032")
+            check(SIZE x, 10, "FROM033")
+        
+          x IS [treble[start][start] FOR id(len)] :
+          SEQ
+            check(INT x[0], 0, "FROM034")
+            check(SIZE x, 10, "FROM035")
+        
+          x IS [treble[start][start] FOR id(len) + 13] :
+          SEQ
+            check(INT x[22], 22, "FROM036")
+            check(SIZE x, 23, "FROM037")
+        
+        --}}}
+        --{{{  mucky
+        SEQ
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FOR 10] :
+          SEQ
+            check(INT x[0], 0, "FROM040")
+            check(SIZE x, 10, "FROM041")
+        
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FOR len] :
+          SEQ
+            check(INT x[0], 0, "FROM042")
+            check(SIZE x, 10, "FROM043")
+        
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FOR id(len)] :
+          SEQ
+            check(INT x[0], 0, "FROM044")
+            check(SIZE x, 10, "FROM045")
+        
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FOR id(len) + 13] :
+          SEQ
+            check(INT x[22], 22, "FROM046")
+            check(SIZE x, 23, "FROM047")
+        
+        --}}}
+        
+        --}}}
+    
+        --{{{  drop 'FOR'
+        --{{{  buffer
+        SEQ
+          x IS [buffer FROM 10] :
+          SEQ
+            check(INT x[0], 10, "FOR000")
+            check(SIZE x, 90, "FOR001")
+        
+          x IS [buffer FROM len] :
+          SEQ
+            check(INT x[0], 10, "FOR002")
+            check(SIZE x, 90, "FOR003")
+        
+          x IS [buffer FROM id(len)] :
+          SEQ
+            check(INT x[0], 10, "FOR004")
+            check(SIZE x, 90, "FOR005")
+        
+          x IS [buffer FROM id(len) + 13] :
+          SEQ
+            check(INT x[76], 99, "FOR006")
+            check(SIZE x, 77, "FOR007")
+        
+        --}}}
+        --{{{  unknown
+        SEQ
+          x IS [unknown FROM 10] :
+          SEQ
+            check(INT x[0], 10, "FOR010")
+            check(SIZE x, 90, "FOR011")
+        
+          x IS [unknown FROM len] :
+          SEQ
+            check(INT x[0], 10, "FOR012")
+            check(SIZE x, 90, "FOR013")
+        
+          x IS [unknown FROM id(len)] :
+          SEQ
+            check(INT x[0], 10, "FOR014")
+            check(SIZE x, 90, "FOR015")
+        
+          x IS [unknown FROM id(len) + 13] :
+          SEQ
+            check(INT x[76], 99, "FOR016")
+            check(SIZE x, 77, "FOR017")
+        
+        --}}}
+        --{{{  double
+        SEQ
+          x IS [double[start] FROM 10] :
+          SEQ
+            check(INT x[0], 10, "FOR020")
+            check(SIZE x, 90, "FOR021")
+        
+          x IS [double[start] FROM len] :
+          SEQ
+            check(INT x[0], 10, "FOR022")
+            check(SIZE x, 90, "FOR023")
+        
+          x IS [double[start] FROM id(len)] :
+          SEQ
+            check(INT x[0], 10, "FOR024")
+            check(SIZE x, 90, "FOR025")
+        
+          x IS [double[start] FROM id(len) + 13] :
+          SEQ
+            check(INT x[76], 99, "FOR026")
+            check(SIZE x, 77, "FOR027")
+        
+        --}}}
+        --{{{  treble
+        SEQ
+          x IS [treble[start][start] FROM 10] :
+          SEQ
+            check(INT x[0], 10, "FOR030")
+            check(SIZE x, 90, "FOR031")
+        
+          x IS [treble[start][start] FROM len] :
+          SEQ
+            check(INT x[0], 10, "FOR032")
+            check(SIZE x, 90, "FOR033")
+        
+          x IS [treble[start][start] FROM id(len)] :
+          SEQ
+            check(INT x[0], 10, "FOR034")
+            check(SIZE x, 90, "FOR035")
+        
+          x IS [treble[start][start] FROM id(len) + 13] :
+          SEQ
+            check(INT x[76], 99, "FOR036")
+            check(SIZE x, 77, "FOR037")
+        
+        --}}}
+        --{{{  mucky
+        SEQ
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FROM 10] :
+          SEQ
+            check(INT x[0], 10, "FOR040")
+            check(SIZE x, 90, "FOR041")
+        
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FROM len] :
+          SEQ
+            check(INT x[0], 10, "FOR042")
+            check(SIZE x, 90, "FOR043")
+        
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FROM id(len)] :
+          SEQ
+            check(INT x[0], 10, "FOR044")
+            check(SIZE x, 90, "FOR045")
+        
+          x IS [[[treble FROM start FOR llen][start] FOR llen][start] FROM id(len) + 13] :
+          SEQ
+            check(INT x[76], 99, "FOR046")
+            check(SIZE x, 77, "FOR047")
+        
+        --}}}
+        
+        --}}}
+    :
+    --{{{  PROC dropping.FROM.and.FOR.complete()
+    PROC dropping.FROM.and.FOR.complete()
+      [100]BYTE unknown :
+      [1][100]BYTE double :
+      [1][1][100]BYTE treble :
+      SEQ
+        SEQ i = 0 FOR SIZE unknown
+          unknown[i] := BYTE i
+        double[0] := unknown
+        treble[0] := double
+        dropping.FROM.and.FOR(unknown, double, treble)
+    :
+    --}}}
+    dropping.FROM.and.FOR.complete()
+    --}}}
+    --{{{  RESHAPES
+    VAL n IS 16 :
+    PROC test.RESHAPES([]BYTE buffer2, []INT buffer4)
+      --{{{  PROC test.BYTES
+      PROC test.BYTES([][]BYTE buffer, VAL INT dim0, dim1, VAL []BYTE msg)
+        SEQ
+          check(SIZE buffer,    dim0, msg)
+          check(SIZE buffer[0], dim1, msg)
+          []BYTE b RESHAPES buffer :
+          SEQ
+            check(SIZE b, n, msg)
+            SEQ i = 0 FOR n
+              check(INT b[i], i, msg)
+      :
+      --}}}
+      --{{{  PROC test.INTS
+      PROC test.INTS([][]INT buffer, VAL INT dim0, dim1, VAL []BYTE msg)
+        SEQ
+          check(SIZE buffer,    dim0, msg)
+          check(SIZE buffer[0], dim1, msg)
+          []INT b RESHAPES buffer :
+          SEQ
+            check(SIZE b, n, msg)
+            SEQ i = 0 FOR n
+              check(b[i], i, msg)
+      :
+      --}}}
+      [n]BYTE buffer1 :
+      [n]INT buffer3 :
+      INT x, y :
+      SEQ
+        title("RESHAPES")
+        --{{{  initialise
+        SEQ i = 0 FOR SIZE buffer1
+          SEQ
+            buffer1[i] := BYTE id(i)
+            buffer3[i] := id(i)
+        buffer2 := buffer1
+        buffer4 := buffer3
+        
+        x := id(4)
+        y := id(x)
+        --}}}
+        --{{{  tests on buffer1
+        [x][y]BYTE bb RESHAPES buffer1 :
+        test.BYTES(bb, 4, 4, "RES000")
+        
+        [][y]BYTE bb RESHAPES buffer1 :
+        test.BYTES(bb, 4, 4, "RES001")
+        
+        [x][]BYTE bb RESHAPES buffer1 :
+        test.BYTES(bb, 4, 4, "RES002")
+        
+        [x/2][x+y]BYTE bb RESHAPES buffer1 :
+        test.BYTES(bb, 2, 8, "RES003")
+        
+        [][x+y]BYTE bb RESHAPES buffer1 :
+        test.BYTES(bb, 2, 8, "RES004")
+        
+        [x/2][]BYTE bb RESHAPES buffer1 :
+        test.BYTES(bb, 2, 8, "RES005")
+        
+        [1][2][2][(x+y)/2]BYTE bbb RESHAPES buffer1 :
+        SEQ
+          check(SIZE bbb[0][0][0], 4, "RES006")
+        
+        --}}}
+        --{{{  tests on buffer2
+        [x][y]BYTE bb RESHAPES buffer2 :
+        test.BYTES(bb, 4, 4, "RES010")
+        
+        [][y]BYTE bb RESHAPES buffer2 :
+        test.BYTES(bb, 4, 4, "RES011")
+        
+        [x][]BYTE bb RESHAPES buffer2 :
+        test.BYTES(bb, 4, 4, "RES012")
+        
+        [x/2][x+y]BYTE bb RESHAPES buffer2 :
+        test.BYTES(bb, 2, 8, "RES013")
+        
+        [][x+y]BYTE bb RESHAPES buffer2 :
+        test.BYTES(bb, 2, 8, "RES014")
+        
+        [x/2][]BYTE bb RESHAPES buffer2 :
+        test.BYTES(bb, 2, 8, "RES015")
+        
+        [1][2][2][(x+y)/2]BYTE bbb RESHAPES buffer2 :
+        SEQ
+          check(SIZE bbb[0][0][0], 4, "RES016")
+        
+        --}}}
+        --{{{  tests on buffer3
+        [x][y]INT bb RESHAPES buffer3 :
+        test.INTS(bb, 4, 4, "RES020")
+        
+        [][y]INT bb RESHAPES buffer3 :
+        test.INTS(bb, 4, 4, "RES021")
+        
+        [x][]INT bb RESHAPES buffer3 :
+        test.INTS(bb, 4, 4, "RES022")
+        
+        [x/2][x+y]INT bb RESHAPES buffer3 :
+        test.INTS(bb, 2, 8, "RES023")
+        
+        [][x+y]INT bb RESHAPES buffer3 :
+        test.INTS(bb, 2, 8, "RES024")
+        
+        [x/2][]INT bb RESHAPES buffer3 :
+        test.INTS(bb, 2, 8, "RES025")
+        
+        [1][2][2][(x+y)/2]INT bbb RESHAPES buffer3 :
+        SEQ
+          check(SIZE bbb[0][0][0], 4, "RES026")
+        
+        --}}}
+        --{{{  tests on buffer4
+        [x][y]INT bb RESHAPES buffer4 :
+        test.INTS(bb, 4, 4, "RES030")
+        
+        [][y]INT bb RESHAPES buffer4 :
+        test.INTS(bb, 4, 4, "RES031")
+        
+        [x][]INT bb RESHAPES buffer4 :
+        test.INTS(bb, 4, 4, "RES032")
+        
+        [x/2][x+y]INT bb RESHAPES buffer4 :
+        test.INTS(bb, 2, 8, "RES033")
+        
+        [][x+y]INT bb RESHAPES buffer4 :
+        test.INTS(bb, 2, 8, "RES034")
+        
+        [x/2][]INT bb RESHAPES buffer4 :
+        test.INTS(bb, 2, 8, "RES035")
+        
+        [1][2][2][(x+y)/2]INT bbb RESHAPES buffer4 :
+        SEQ
+          check(SIZE bbb[0][0][0], 4, "RES036")
+        
+        --}}}
+    :
+    [n]BYTE buffer2 :
+    [n]INT buffer4 :
+    test.RESHAPES(buffer2, buffer4)
+    --}}}
+    --{{{  PROTOCOL tags
+    PROC PROTOCOL.tags()
+      VAL n IS 10 :
+      --{{{  PROTOCOLs
+      PROTOCOL prot1
+        CASE
+          data1; INT
+          stop
+      :
+      PROTOCOL prot2
+        CASE
+          data2; INT
+          stop
+      :
+      PROTOCOL prot3
+        CASE
+          data3; INT
+          stop
+      :
+      --}}}
+      --{{{  channels
+      CHAN OF prot1 c1 :
+      CHAN OF prot2 c2 :
+      CHAN OF prot3 c3 :
+      --}}}
+      PAR
+        --{{{  sender
+        SEQ
+          SEQ i = 0 FOR n
+            c1 ! data1; i
+          c1 ! stop
+        --}}}
+        --{{{  buffer
+        INT x :
+        BOOL stop :
+        SEQ
+          stop := FALSE
+          WHILE NOT stop
+            c1 ? CASE
+              data1 ; x
+                c2 ! data2 ; x
+              stop
+                stop := TRUE
+          c2 ! stop
+        --}}}
+        --{{{  buffer
+        SEQ
+          SEQ i = 0 FOR n
+            INT x :
+            SEQ
+              c2 ? CASE data2 ; x
+              c3 ! data3 ; x
+          c2 ? CASE stop
+          c3 ! stop
+        --}}}
+        --{{{  checker
+        SEQ
+          title("PROTOCOL tags")
+          SEQ i = 0 FOR n
+            INT x :
+            SEQ
+              c3 ? CASE data3 ; x
+              check(x, i, "PROT00")
+          c3 ? CASE stop
+        --}}}
+    :
+    PROTOCOL.tags()
+    --}}}
+    --{{{  constant folding functions
+    PROC constant.folding.functions()
+      SEQ
+        --{{{  INTs
+        INT FUNCTION sum (VAL INT x, y) IS x + y :
+        INT FUNCTION inc1(VAL INT x)    IS x + 1 :
+        INT FUNCTION inc2(VAL INT x)    IS sum(x, 1) :
+        [sum(1,2)] INT a1 :
+        [inc1(3)]  INT a2 :
+        [inc2(3)]  INT a3 :
+        SEQ
+          check(SIZE a1, 3, "FUNC00")
+          check(SIZE a2, 4, "FUNC01")
+          check(SIZE a3, 4, "FUNC02")
+        --}}}
+        --{{{  MYTYPE
+        DATA TYPE MYTYPE IS INT :
+        MYTYPE FUNCTION sum (VAL MYTYPE x, y) IS x + y :
+        MYTYPE FUNCTION inc1(VAL MYTYPE x)    IS x + 1 :
+        MYTYPE FUNCTION inc2(VAL MYTYPE x)    IS sum(x, 1) :
+        [INT sum(1,2)] MYTYPE a1 :
+        [INT inc1(3)]  MYTYPE a2 :
+        [INT inc2(3)]  MYTYPE a3 :
+        SEQ
+          check(SIZE a1, 3, "FUNC00")
+          check(SIZE a2, 4, "FUNC01")
+          check(SIZE a3, 4, "FUNC02")
+        --}}}
+    :
+    constant.folding.functions()
+    --}}}
+    finish ()
+:

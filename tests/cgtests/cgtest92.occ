@@ -1,0 +1,342 @@
+--
+--	cgtest92.occ -- PROC TYPEs
+--	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
+--	Copyright (C) 2007 University of Kent
+--
+--	This procram is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This procram is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this procram; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+-- FIXME: These definitions should be inside the test PROCs, but that confuses
+-- tranx86 at the moment.
+
+#IF DEFINED (OCCBUILD.KROC)
+--{{{  definitions for tests
+--{{{  definitions for test0
+PROC TYPE PT.0 IS (CHAN INT in?, out!):
+
+MOBILE PROC double (CHAN INT in?, out!) IMPLEMENTS PT.0
+  -- This one terminates...
+  SEQ i = 0 FOR 5
+    INT v:
+    SEQ
+      in ? v
+      out ! v * 2
+      SUSPEND
+:
+MOBILE PROC treble (CHAN INT in?, out!) IMPLEMENTS PT.0
+  -- ... and this one doesn't.
+  WHILE TRUE
+    INT v:
+    SEQ
+      in ? v
+      out ! v * 3
+      SUSPEND
+:
+--}}}
+--{{{  definitions for test1
+CHAN TYPE CT.1
+  MOBILE RECORD
+    CHAN INT i?:
+    CHAN INT back!:
+:
+-- FIXME: This should include BARRIER/MOBILE BARRIER too.
+PROC TYPE PT.1 IS (CHAN INT c!, SHARED CHAN INT cs!, CT.1! cli, SHARED CT.1? ssvr):
+
+MOBILE PROC various (CHAN INT c!, SHARED CHAN INT cs!, CT.1! cli, SHARED CT.1? ssvr) IMPLEMENTS PT.1
+  INT v:
+  SEQ
+    c ! 11234
+    CLAIM cs!
+      cs ! 21234
+    cli[i] ! 31234
+    CLAIM ssvr
+      SEQ
+        ssvr[i] ? v
+        ssvr[back] ! v / 10
+:
+--}}}
+--{{{  definitions for test2
+-- This test is based on the "mobprocex1.occ" example.
+
+PROC plus (CHAN INT in.0?, in.1?, out!)
+  WHILE TRUE
+    ALT
+      INT v:
+      in.0 ? v
+        IF
+          v = (MOSTNEG INT)
+            SEQ
+              out ! v
+              SUSPEND
+          TRUE
+            INT w:
+            SEQ
+              in.1 ? w
+              out ! v + w
+      INT v:
+      in.1 ? v
+        INT w:
+        SEQ
+          in.0 ? w
+          WHILE w = (MOSTNEG INT)
+            SEQ
+              out ! w
+              SUSPEND
+              in.0 ? w
+          out ! v + w
+:
+
+PROC delta (CHAN INT in?, out.0!, out.1!)
+  WHILE TRUE
+    INT v:
+    SEQ
+      in ? v
+      IF
+        v = (MOSTNEG INT)
+          SEQ
+            out.0 ! v
+            SUSPEND
+        TRUE
+          SEQ
+            out.0 ! v
+            out.1 ! v
+:
+
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  SEQ
+    out ! n
+    WHILE TRUE
+      INT v:
+      SEQ
+        in ? v
+        IF
+          v = (MOSTNEG INT)
+            SUSPEND
+          TRUE
+            out ! v
+:
+
+PROC TYPE PT.2 IS (CHAN INT in?, out!):
+
+MOBILE PROC integrate (CHAN INT in?, out!) IMPLEMENTS PT.2
+  CHAN INT a, b, c:
+  PAR
+    plus (in?, c?, a!)
+    delta (a?, b!, out!)
+    prefix (0, b?, c!)
+:
+--}}}
+--{{{  definitions for test3/4
+PROC TYPE PT.3 IS (CHAN INT config?, in?, out!):
+
+MOBILE PROC config.multiply (CHAN INT config?, in?, out!) IMPLEMENTS PT.3
+  INT factor:
+  SEQ
+    config ? factor
+    SUSPEND
+
+    WHILE TRUE
+      INT n:
+      SEQ
+        in ? n
+        out ! n * factor
+        SUSPEND
+:
+--}}}
+--}}}
+#ENDIF
+
+PROC cgtest92 (CHAN OF BYTE keyb?, scr!, err!)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  #IF DEFINED (OCCBUILD.KROC)
+  --{{{  tests
+  --{{{  test0 -- simple PROC TYPEs
+  PROC test0 ()
+    MOBILE PT.0 proc:
+    VAL []INT expected IS [0, 2, 4, 6, 8, 15, 18, 21, 24, 27]:
+    SEQ
+      proc := MOBILE double
+
+      SEQ i = 0 FOR 10
+        INT r:
+        SEQ
+          IF
+            i = 5
+              -- Switch to a different process
+              proc := MOBILE treble
+            TRUE
+              SKIP
+          CHAN INT in, out:
+          PAR
+            in ! i
+            proc (in?, out!)
+            out ? r
+          check.INT (r, expected[i], "t0 simple PROC TYPE")
+  :
+  --}}}
+  --{{{  test1 -- different argument types
+  PROC test1 ()
+    MOBILE PT.1 proc:
+
+    CHAN INT c:
+    INT c.v:
+    SHARED CHAN INT cs:
+    INT cs.v:
+    CT.1! cli:
+    CT.1? svr:
+    INT svr.v:
+    SHARED CT.1! scli:
+    SHARED CT.1? ssvr:
+    INT ssvr.v:
+    SEQ
+      cli, svr := MOBILE CT.1
+      scli, ssvr := MOBILE CT.1
+
+      SEQ i = 0 FOR 10
+        SEQ
+          proc := MOBILE various
+
+          PAR
+            proc (c!, cs!, cli, ssvr)
+            c ? c.v
+            CLAIM cs?
+              cs ? cs.v
+            svr[i] ? svr.v
+            CLAIM scli
+              SEQ
+                scli[i] ! 412340
+                scli[back] ? ssvr.v
+        
+          check.INT (c.v, 11234, "t1 CHAN INT arg")
+          check.INT (cs.v, 21234, "t1 SHARED CHAN INT arg")
+          check.INT (svr.v, 31234, "t1 MY.CT arg")
+          check.INT (ssvr.v, 41234, "t1 SHARED MY.CT arg")
+  :
+  --}}}
+  --{{{  test2 -- with internal parallelism
+  PROC test2 ()
+    MOBILE PT.2 x:
+    INITIAL INT cycles IS 0:
+    SEQ
+      x := MOBILE integrate
+
+      SEQ i = 0 FOR 10
+        INT v:
+        SEQ
+          CHAN INT c, d:
+          PAR
+            SEQ
+              c ! 1
+              c ! MOSTNEG INT
+            d ? v
+            x (c?, d!)
+
+          cycles := cycles + 1
+
+      check.INT (cycles, 10, "t2 number of cycles")
+  :
+  --}}}
+  --{{{  test3 -- multiple invocation points
+  -- The idea here is to check that we return to the correct invocation point
+  -- after a MOBILE PROC call.
+  PROC test3 ()
+    MOBILE PT.3 proc:
+    SEQ factor = 1 FOR 5
+      CHAN INT config, in, out:
+      INT state, n:
+      SEQ
+        proc := MOBILE config.multiply
+
+        state := 0
+        PAR
+          proc (config?, in?, out!)
+          config ! factor
+        check.INT (state, 0, "t3 state 0")
+
+        SEQ i = 1 FOR 10 STEP 2
+          SEQ
+            state := i
+            PAR
+              proc (config?, in?, out!)
+              in ! i
+              out ? n
+            check.INT (state, i, "t3 state odd")
+            check.INT (n, i * factor, "t3 return value")
+
+            state := i + 1
+            PAR
+              proc (config?, in?, out!)
+              in ! i + 1
+              out ? n
+            check.INT (state, i + 1, "t3 state even")
+            check.INT (n, (i + 1) * factor, "t3 return value")
+  :
+  --}}}
+  --{{{  test4 -- MOBILE PROC as FORK parameter
+  PROC test4 ()
+    PROC run.factor (MOBILE PT.3 proc, SHARED CHAN INT out!)
+      SEQ i = 0 FOR 10
+        CHAN INT dummy, in:
+        PAR
+          CLAIM out!
+            proc (dummy?, in?, out!)
+          in ! i
+    :
+
+    MOBILE PT.3 proc:
+    SEQ factor = 1 FOR 5
+      CHAN INT config, in, out:
+      INT state, n:
+      SEQ
+        proc := MOBILE config.multiply
+
+        state := 0
+        PAR
+          SEQ
+            proc (config?, in?, out!)
+            check.INT (state, 0, "t4 state 0")
+          config ! factor
+
+        state := 1
+        SHARED! CHAN INT sout:
+        SEQ
+          FORK run.factor (proc, sout!)
+          SEQ i = 0 FOR 10
+            SEQ
+              sout ? n
+              check.INT (state, 1, "t4 state 1")
+              check.INT (n, i * factor, "t4 result")
+  :
+  --}}}
+  --}}}
+  #ENDIF
+
+  SEQ
+    init ("CG test 92", "PROC TYPEs")
+    #IF DEFINED (OCCBUILD.KROC)
+    test0 ()
+    test1 ()
+    test2 ()
+    test3 ()
+    test4 ()
+    #ENDIF
+    finish ()
+:
+

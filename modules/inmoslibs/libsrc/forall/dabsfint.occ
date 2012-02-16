@@ -1,0 +1,118 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF NOT DEFINED(TARGET.HAS.FPU)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.2 10/07/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DABS "DABS%O"
+#PRAGMA TRANSLATE DFPINT "DFPINT%O"
+
+#INCLUDE "realvals.inc"
+
+#IF (TARGET.BITS.PER.WORD = 32)
+--{{{  DABS
+--{{{  
+REAL64 FUNCTION DABS (VAL REAL64 Y)
+
+  --  Stop version: Beta-2 (27feb87)
+  --  Halt and undefined versions: 16-sep-87
+
+  REAL64 X :
+  VALOF
+    VAL DRealInf IS #7FF00000 :
+    [2]INT X RETYPES X:
+    VAL [2]INT Y RETYPES Y:
+    SEQ
+      X [1] := Y [1] /\ (~(MOSTNEG INT))
+      X [0] := Y [0]
+      IF
+        (X[1] /\ DRealInf) = DRealInf -- Inf or NaN
+          CAUSEERROR()
+        TRUE
+          SKIP
+    RESULT X
+:
+--}}}
+--}}}
+#ENDIF -- TARGET.BITS.PER.WORD = 32
+#IF (TARGET.BITS.PER.WORD = 16)
+--{{{  DABS
+--{{{  
+REAL64 FUNCTION DABS (VAL REAL64 Y)
+
+  -- Function version (10 Jun 87)
+  -- Error behaviour modified 16-sep-87
+
+  REAL64 X :
+  VALOF
+    VAL DRealInf IS #7FF0 :
+    [4]INT X RETYPES X:
+    VAL [4]INT Y RETYPES Y:
+    SEQ
+      [X FROM 0 FOR 3] := [Y FROM 0 FOR 3]
+      X [3] := Y [3] /\ (~(MOSTNEG INT))
+      IF
+        (X[3] /\ DRealInf) = DRealInf -- Inf or NaN
+          CAUSEERROR()
+        TRUE
+          SKIP
+    RESULT X
+:
+--}}}
+--}}}
+#ENDIF -- TARGET.BITS.PER.WORD = 16
+
+--{{{  DFPINT
+--{{{  T2 and TA code is same
+REAL64 FUNCTION DFPINT (VAL REAL64 X)
+
+  --{{{  history
+  -- rounding mode corrected 20 Aug 87 PWT
+  -- V1.1, 2-Aug-89
+  -- Corrected behaviour for small negative X; V1.2, 10-Jul-90 SRH
+  --}}}
+
+  REAL64 Res :
+  VALOF
+    VAL REAL64 largest.non.integer IS REAL64 ROUND ( 1(INT64) << DBitsInFrac ) :
+    IF
+      DABS(X) > largest.non.integer  -- nothing after decimal point anyway
+        Res := X
+      TRUE
+        REAL64 temp :
+        SEQ
+          -- IEEE 754-1985 Sec 6.3 says that the sign must be preserved;
+          -- do in the following way because INT64 ROUND has no concept
+          -- of -0
+          temp := REAL64 ROUND (INT64 ROUND X)
+          VAL INT64 temp.int64 RETYPES temp :
+          VAL INT64 X.int64 RETYPES X :
+          INT64 Res.int64 RETYPES Res :
+          Res.int64 := temp.int64 \/ ( X.int64 /\ ( MOSTNEG INT64 ) )
+    RESULT Res
+:
+--}}}
+--}}}
+
+#ENDIF

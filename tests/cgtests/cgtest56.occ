@@ -1,0 +1,1703 @@
+-- version control marker $Id: cgtest56.occ,v 1.3 1995/10/11 10:21:29 djb1 Exp $
+
+PROC cgtest56 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  SEQ
+    init ("CG test 56", "User defined types, and RECORDs")
+    --{{{  syntax
+    PROC user.syntax()
+      --{{{  some basic data types
+      DATA TYPE MYINT  IS INT :
+      DATA TYPE MYREAL IS REAL32 :
+      DATA TYPE MYBYTE IS BYTE :
+      DATA TYPE MYBOOL IS BOOL :
+      
+      MYINT FUNCTION id.MYINT(VAL MYINT x) IS x :
+      
+      PROC check.MYINT(VAL MYINT x, y, VAL []BYTE str)
+        check(INT x, INT y, str)
+      :
+      PROC check.MYREAL(VAL MYREAL x, y, VAL []BYTE str)
+        check.REAL32(REAL32 ROUND x, REAL32 ROUND y, str)
+      :
+      PROC check.MYBYTE(VAL MYBYTE x, y, VAL []BYTE str)
+        check.BYTE(BYTE x, BYTE y, str)
+      :
+      PROC check.MYBOOL(VAL MYBOOL x, y, VAL []BYTE str)
+        check.BOOL(BOOL x, BOOL y, str)
+      :
+      
+      --}}}
+      SEQ
+        title("syntax")
+        --{{{  literals
+        PROC literals()
+          MYINT myint :
+          MYREAL myreal :
+          MYBYTE mybyte :
+          MYBOOL mybool :
+          SEQ
+            myint := 99(MYINT)
+            check.MYINT(myint, 99(MYINT), "SYN-00")
+            myint := 'a'(MYINT)
+            check.MYINT(myint, 'a'(MYINT), "SYN-01")
+            myreal := 99.9(MYREAL)
+            check(INT ROUND myreal, 100, "SYN-02")
+            mybyte := 99(MYBYTE)
+            check(INT mybyte, 99, "SYN-03")
+            mybyte := 'a'(MYBYTE)
+            check(INT mybyte, INT 'a', "SYN-04")
+            mybool := MYBOOL TRUE -- not strictly a literal!
+            check(INT mybool, INT TRUE, "SYN-05")
+        :
+        literals()
+        --}}}
+        --{{{  declarations
+        PROC declarations()
+          MYINT a, b, c :
+          SEQ
+            a := MYINT(id(1))
+            b := a * 2(MYINT)
+            c := a + b
+            check.MYINT(c, 3(MYINT), "DECL00")
+        :
+        declarations()
+        --}}}
+        --{{{  simple protocol
+        PROC protocols()
+          SEQ
+            --{{{  very simple
+            PROTOCOL p IS MYINT :
+            CHAN OF p c :
+            PAR
+              c ! MYINT(id(77))
+              MYINT x :
+              SEQ
+                c ? x
+                check.MYINT(x, 77(MYINT), "PROT00")
+            --}}}
+            --{{{  two very simple
+            PROTOCOL p IS MYINT; MYINT :
+            CHAN OF p c :
+            PAR
+              c ! MYINT(id(77)); 3(MYINT)
+              MYINT x, y :
+              SEQ
+                c ? x; y
+                check.MYINT(x, 77(MYINT), "PROT01")
+                check.MYINT(y,  3(MYINT), "PROT02")
+            --}}}
+            --{{{  tagged simple
+            PROTOCOL p
+              CASE
+                tag ; MYINT
+                tag2 ; INT
+            :
+            CHAN OF p c :
+            PAR
+              SEQ
+                c ! tag ; MYINT(id(77))
+                c ! tag2 ; id(88)
+                c ! tag ; MYINT(id(66))
+              MYINT x :
+              SEQ
+                c ? CASE tag ; x
+                check.MYINT(x, 77(MYINT), "PROT03")
+                SEQ j = 0 FOR 2
+                  c ? CASE
+                    tag ; x
+                      check(j, 1, "PROT05")
+                    INT i :
+                    tag2; i
+                      check(j, 0, "PROT04")
+            --}}}
+        :
+        protocols()
+        --}}}
+        --{{{  mostpos / mostneg
+        PROC mostpos.neg()
+          MYINT x :
+          SEQ
+            x := MOSTPOS MYINT
+            check.MYINT(x, MYINT (MOSTPOS INT), "MOST00")
+            x := MOSTNEG MYINT
+            check.MYINT(x, MYINT (MOSTNEG INT), "MOST01")
+        :
+        mostpos.neg()
+        --}}}
+        --{{{  conversions
+        PROC conversions()
+          MYINT myint :
+          MYREAL myreal :
+          MYBYTE mybyte :
+          MYBOOL mybool :
+          INT i :
+          REAL32 r :
+          BYTE b :
+          BOOL l :
+          SEQ
+            i := id(77)
+            r := id.REAL32(66.6(REAL32))
+            b := id.BYTE('a')
+            l := id.BOOL(TRUE)
+          
+            --{{{  basic                                CONV00 - 04
+            myint := MYINT i
+            check.MYINT(myint, 77(MYINT), "CONV00")
+            myreal := MYREAL r
+            check(INT ROUND myreal, 67, "CONV01")
+            mybyte := MYBYTE b
+            check(INT TRUNC myreal, 66, "CONV02")
+            mybyte := MYBYTE b
+            check(INT mybyte, INT 'a', "CONV03")
+            mybool := MYBOOL l
+            check(INT mybool, INT TRUE, "CONV04")
+            --}}}
+            --{{{  other combinations                   CONV05 - 43
+            --{{{  to myint
+            
+            --myint := MYINT i -- already done
+            --check.MYINT(myint, 77(MYINT), "CONV05")
+            myint := MYINT b
+            check.MYINT(myint, 'a'(MYINT), "CONV05")
+            myint := MYINT ROUND r
+            check.MYINT(myint, 67(MYINT), "CONV06")
+            myint := MYINT TRUNC r
+            check.MYINT(myint, 66(MYINT), "CONV07")
+            myint := MYINT l
+            check.MYINT(myint, MYINT TRUE, "CONV08")
+            
+            myint := MYINT i
+            myint := MYINT myint
+            check.MYINT(myint, 77(MYINT), "CONV09")
+            myint := MYINT mybyte
+            check.MYINT(myint, 'a'(MYINT), "CONV10")
+            myint := MYINT ROUND myreal
+            check.MYINT(myint, 67(MYINT), "CONV11")
+            myint := MYINT TRUNC myreal
+            check.MYINT(myint, 66(MYINT), "CONV12")
+            myint := MYINT mybool
+            check.MYINT(myint, MYINT TRUE, "CONV13")
+            
+            myint := MYINT i
+            --}}}
+            --{{{  to myreal
+            
+            myreal := MYREAL ROUND i
+            check.MYREAL(myreal, 77.0(MYREAL), "CONV14")
+            --myreal := MYREAL ROUND b
+            --check.MYREAL(myreal, MYREAL ROUND 'a', "CONV15")
+            myreal := MYREAL ROUND r
+            check.MYREAL(myreal, 66.6(MYREAL), "CONV16")
+            myreal := MYREAL TRUNC r
+            check.MYREAL(myreal, 66.6(MYREAL), "CONV17")
+            --myreal := MYREAL l
+            --check.MYREAL(myreal, MYREAL TRUE, "CONV18")
+            
+            myreal := MYREAL ROUND myint
+            check.MYREAL(myreal, 77.0(MYREAL), "CONV19")
+            --myreal := MYREAL ROUND mybyte
+            --check.MYREAL(myreal, MYREAL ROUND 'a', "CONV20")
+            myreal := MYREAL r
+            myreal := MYREAL ROUND myreal
+            check.MYREAL(myreal, 66.6(MYREAL), "CONV21")
+            myreal := MYREAL r
+            myreal := MYREAL TRUNC myreal
+            check.MYREAL(myreal, 66.6(MYREAL), "CONV22")
+            --myreal := MYREAL ROUND mybool
+            --check.MYREAL(myreal, MYREAL TRUE, "CONV23")
+            
+            myreal := MYREAL r
+            --}}}
+            --{{{  to mybyte
+            
+            mybyte := MYBYTE i
+            check.MYBYTE(mybyte, 77(MYBYTE), "CONV24")
+            mybyte := MYBYTE  b
+            check.MYBYTE(mybyte, 'a'(MYBYTE), "CONV25")
+            --mybyte := MYBYTE ROUND r
+            --check.MYBYTE(mybyte, 67.0(MYBYTE), "CONV26")
+            --mybyte := MYBYTE TRUNC r
+            --check.MYBYTE(mybyte, 66.0(MYBYTE), "CONV27")
+            mybyte := MYBYTE l
+            check.MYBYTE(mybyte, MYBYTE TRUE, "CONV28")
+            
+            mybyte := MYBYTE myint
+            check.MYBYTE(mybyte, 77(MYBYTE), "CONV29")
+            mybyte := MYBYTE b
+            mybyte := MYBYTE mybyte
+            check.MYBYTE(mybyte, 'a'(MYBYTE), "CONV30")
+            --mybyte := MYBYTE ROUND myreal
+            --check.MYBYTE(mybyte, 67.0(MYBYTE), "CONV31")
+            --mybyte := MYBYTE TRUNC myreal
+            --check.MYBYTE(mybyte, 66.0(MYBYTE), "CONV32")
+            mybyte := MYBYTE mybool
+            check.MYBYTE(mybyte, MYBYTE TRUE, "CONV33")
+            
+            mybyte := MYBYTE b
+            --}}}
+            --{{{  to mybool
+            i := id(INT TRUE)
+            b := id.BYTE(BYTE TRUE)
+            
+            mybool := MYBOOL i
+            check.MYBOOL(mybool, MYBOOL TRUE, "CONV34")
+            mybool := MYBOOL  b
+            check.MYBOOL(mybool, MYBOOL TRUE, "CONV35")
+            --mybool := MYBOOL ROUND r
+            --check.MYBOOL(mybool, 67.0(MYBYTE), "CONV36")
+            --mybool := MYBOOL TRUNC r
+            --check.MYBOOL(mybool, 66.0(MYBYTE), "CONV37")
+            mybool := MYBOOL l
+            check.MYBOOL(mybool, MYBOOL TRUE, "CONV38")
+            
+            myint := MYINT i
+            mybyte := MYBYTE b
+            
+            mybool := MYBOOL myint
+            check.MYBOOL(mybool, MYBOOL TRUE, "CONV39")
+            mybool := MYBOOL mybyte
+            check.MYBOOL(mybool, MYBOOL TRUE, "CONV40")
+            --mybool := MYBOOL ROUND myreal
+            --check.MYBOOL(mybool, 67.0(MYBYTE), "CONV41")
+            --mybool := MYBOOL TRUNC myreal
+            --check.MYBOOL(mybool, 66.0(MYBYTE), "CONV42")
+            mybool := MYBOOL mybool
+            check.MYBOOL(mybool, MYBOOL TRUE, "CONV43")
+            
+            mybool := MYBOOL l
+            i := id(77)
+            b := id.BYTE('a')
+            
+            --}}}
+            
+            --}}}
+            --{{{  basic, with brackets                 CONV50 - 54
+            myint := MYINT (i)
+            check.MYINT(myint, 77(MYINT), "CONV50")
+            myreal := MYREAL (r)
+            check(INT ROUND myreal, 67, "CONV51")
+            mybyte := MYBYTE (b)
+            check(INT TRUNC myreal, 66, "CONV52")
+            mybyte := MYBYTE (b)
+            check(INT mybyte, INT 'a', "CONV53")
+            mybool := MYBOOL (l)
+            check(INT mybool, INT TRUE, "CONV54")
+            --}}}
+            --{{{  other combinations, with brackets    CONV60 - 69
+            --{{{  to myint                             CONV60 - 69
+            
+            --myint := MYINT (i) -- already done
+            --check.MYINT(myint, 77(MYINT), "CONV60")
+            myint := MYINT (b)
+            check.MYINT(myint, 'a'(MYINT), "CONV61")
+            myint := MYINT ROUND (r)
+            check.MYINT(myint, 67(MYINT), "CONV62")
+            myint := MYINT TRUNC (r)
+            check.MYINT(myint, 66(MYINT), "CONV63")
+            myint := MYINT (l)
+            check.MYINT(myint, MYINT (TRUE), "CONV64")
+            
+            myint := MYINT (i)
+            myint := MYINT (myint)
+            check.MYINT(myint, 77(MYINT), "CONV65")
+            myint := MYINT (mybyte)
+            check.MYINT(myint, 'a'(MYINT), "CONV66")
+            myint := MYINT ROUND (myreal)
+            check.MYINT(myint, 67(MYINT), "CONV67")
+            myint := MYINT TRUNC (myreal)
+            check.MYINT(myint, 66(MYINT), "CONV68")
+            myint := MYINT (mybool)
+            check.MYINT(myint, MYINT (TRUE), "CONV69")
+            
+            myint := MYINT (i)
+            --}}}
+            --}}}
+            --{{{  fn call                              CONV70 - 79
+            myint := MYINT id (1)
+            check.MYINT(myint, 1(MYINT), "CONV70")
+            myint := MYINT (id (2))
+            check.MYINT(myint, 2(MYINT), "CONV71")
+            --}}}
+            --{{{  element                              CONV80 - 89
+            [10]INT array :
+            VAL index IS id(2) :
+            SEQ
+              SEQ i = 0 FOR SIZE array
+                array[i] := id(i)
+              myint := MYINT array [index]
+              check.MYINT(myint, 2(MYINT), "CONV80")
+              myint := MYINT (array [index+2])
+              check.MYINT(myint, 4(MYINT), "CONV81")
+            --}}}
+            --{{{  literal                              CONV90 - 99
+            SEQ
+              myint := MYINT 37
+              check.MYINT(myint, 37(MYINT), "CONV90")
+              myint := MYINT 38(MYINT)
+              check.MYINT(myint, 38(MYINT), "CONV91")
+              myint := MYINT (39)
+              check.MYINT(myint, 39(MYINT), "CONV92")
+              myint := MYINT (40(MYINT))
+              check.MYINT(myint, 40(MYINT), "CONV93")
+            --}}}
+            --{{{  table element                        CONV100 - 109
+            VAL index IS id(2) :
+            SEQ
+              --myint := MYINT [0,1,2,3,4] [index]
+              --check.MYINT(myint, 2(MYINT), "CONV100")
+              myint := MYINT ([0,1,2,3,4] [index+2])
+              check.MYINT(myint, 4(MYINT), "CONV101")
+              myint := MYINT "string" [index]
+              check.MYINT(myint, 'r'(MYINT), "CONV102")
+              myint := MYINT ("string" [index+1])
+              check.MYINT(myint, 'i'(MYINT), "CONV103")
+            
+            --}}}
+        :
+        conversions()
+        --}}}
+        --{{{  specifiers (abbr)
+        PROC specifiers()
+          MYINT m0, m1 :
+          [10]MYINT a0, a1, a2 :
+          INT i :
+          SEQ
+            i := id(1)
+            m0 := MYINT i
+            m1 := MYINT (id(2))
+            SEQ k = 0 FOR SIZE a0
+              a0[k], a1[k], a2[k] := MYINT k, MYINT (k + 1), MYINT(k - 1)
+        
+            --{{{  VAL abbrs
+            VAL vxx IS 1(MYINT) :
+            VAL MYINT mvxx IS 2(MYINT) :
+            VAL axx IS [1(MYINT), 2(MYINT)] :
+            VAL [2]MYINT maxx IS [3(MYINT), 4(MYINT)] :
+            VAL []MYINT oaxx IS [4(MYINT), 5(MYINT)] :
+            SEQ
+              check.MYINT(vxx,  1(MYINT), "SPEC00")
+              check.MYINT(mvxx, 2(MYINT), "SPEC01")
+              check.MYINT(axx[i], 2(MYINT), "SPEC02")
+              check.MYINT(maxx[i], 4(MYINT), "SPEC03")
+              check.MYINT(oaxx[i], 5(MYINT), "SPEC04")
+              check(SIZE oaxx, 2, "SPEC05")
+            --}}}
+            --{{{  VAR abbrs
+            xx IS m0 :
+            MYINT mxx IS m1 :
+            axx IS a0 :
+            [10]MYINT maxx IS a1 :
+            []MYINT oaxx IS [a2 FROM i FOR i+3] :
+            SEQ
+              check.MYINT(xx,  1(MYINT), "SPEC06")
+              check.MYINT(mxx, 2(MYINT), "SPEC07")
+              check.MYINT(axx[i], 1(MYINT), "SPEC08")
+              check.MYINT(maxx[i], 2(MYINT), "SPEC09")
+              check.MYINT(oaxx[i], 1(MYINT), "SPEC10")
+              check(SIZE oaxx, 4, "SPEC11")
+              
+              xx := 77(MYINT)
+              mxx := 88(MYINT)
+              SEQ j = 0 FOR SIZE maxx
+                axx[j], maxx[j] := axx[j]-1(MYINT), maxx[j]+10(MYINT)
+              
+              SEQ j = 0 FOR SIZE oaxx
+                oaxx[j] := MYINT (j+99)
+              
+            check.MYINT(m0, 77(MYINT), "SPEC12")
+            check.MYINT(m1, 88(MYINT), "SPEC13")
+            check.MYINT(a0[i], 0(MYINT), "SPEC14")
+            check.MYINT(a1[i], 12(MYINT), "SPEC15")
+            check.MYINT(a2[i], 99(MYINT), "SPEC16")
+            --}}}
+        :
+        specifiers()
+        
+        --}}}
+        --{{{  formals
+        PROC formals()
+          SEQ
+            --{{{  VAL name
+            PROC val.name(VAL MYINT x)
+              check.MYINT(x, 99(MYINT), "FORM00")
+            :
+            val.name(99(MYINT))
+            --}}}
+            --{{{  VAR name
+            PROC var.name(MYINT x)
+              SEQ
+                check.MYINT(x, 77(MYINT), "FORM01")
+                x := 88(MYINT)
+            :
+            MYINT x :
+            SEQ
+              x := 77(MYINT)
+              var.name(x)
+              check.MYINT(x, 88(MYINT), "FORM02")
+            --}}}
+            --{{{  VAL array
+            PROC val.array(VAL [2]MYINT x)
+              check.MYINT(x[1], 101(MYINT), "FORM03")
+            :
+            val.array([99(MYINT), 101(MYINT)])
+            --}}}
+            --{{{  VAR array
+            PROC var.array([2]MYINT x)
+              SEQ
+                check.MYINT(x[1], 83(MYINT), "FORM04")
+                x[0] := 88(MYINT)
+            :
+            [2]MYINT x :
+            SEQ
+              x[0] := 77(MYINT)
+              x[1] := x[0] + 6(MYINT)
+              var.array(x)
+              check.MYINT(x[0], 88(MYINT), "FORM05")
+            --}}}
+            --{{{  open VAL array
+            PROC val.open(VAL []MYINT x)
+              SEQ
+                check.MYINT(x[1], 101(MYINT), "FORM06")
+                check(SIZE x, 2, "FORM07")
+            :
+            val.open([99(MYINT), 101(MYINT)])
+            --}}}
+            --{{{  open VAR array
+            PROC var.open([]MYINT x)
+              SEQ
+                check.MYINT(x[1], 83(MYINT), "FORM08")
+                check(SIZE x, 2, "FORM09")
+                x[0] := 88(MYINT)
+            :
+            [2]MYINT x :
+            SEQ
+              x[0] := 77(MYINT)
+              x[1] := x[0] + 6(MYINT)
+              var.open(x)
+              check.MYINT(x[0], 88(MYINT), "FORM10")
+            --}}}
+        :
+        formals()
+        --}}}
+        --{{{  valofs
+        #IF NOT DEFINED (COMPILER.TOCK)
+        PROC user.valofs()
+          MYINT x, y :
+          SEQ
+            y := id.MYINT(77(MYINT))
+        
+            x := (MYINT x :
+                  VALOF
+                    x := y + 1(MYINT)
+                    RESULT x
+                 )
+            check.MYINT(x, 78(MYINT), "VALOF00")
+        
+            x := (MYINT FUNCTION f() IS y :
+                  VALOF
+                    SKIP
+                    RESULT f()
+                 )
+            check.MYINT(x, 77(MYINT), "VALOF01")
+        
+            x := (MYINT, INT FUNCTION f() IS y, 99 :
+                  INT jim :
+                  MYINT bert :
+                  VALOF
+                    bert, jim := f()
+                    RESULT bert + (MYINT jim)
+                 )
+            check.MYINT(x, 176(MYINT), "VALOF02")
+        
+            x := (MYINT x, z :
+                  VALOF
+                    SEQ
+                      z := y
+                      x := y + 1(MYINT)
+                    RESULT x + z
+                 )
+            check.MYINT(x, 155(MYINT), "VALOF03")
+        :
+        user.valofs()
+        #ENDIF
+        --}}}
+    :
+    user.syntax()
+    --}}}
+    --{{{  arrays of arrays
+    PROC arrays.of.arrays()
+      VAL n IS 5 :
+      DATA TYPE m0 IS INT :
+      DATA TYPE m1 IS [n]m0 :
+      DATA TYPE m2 IS [n]m1 :
+      DATA TYPE m3 IS [n]m2 :
+      INT i, j, k :
+      m0 m.0 :
+      m1 m.1 :
+      m2 m.2 :
+      m3 m.3 :
+      SEQ
+        title("arrays of arrays")
+        i := SIZE m.3
+        check(i, n, "ARR-01")
+        i := SIZE m.3[0]
+        check(i, n, "ARR-02")
+        i := SIZE m.3[0][0]
+        check(i, n, "ARR-03")
+    
+        SEQ i = 0 FOR SIZE m.3
+          SEQ j = 0 FOR SIZE m.3[0]
+            SEQ k = 0 FOR SIZE m.3[0][0]
+              m.3[i][j][k] := m0 ((i + j) + k)
+    
+        i := id(1)
+        m.2 := m.3[i]
+        SEQ j = 0 FOR SIZE m.2
+          SEQ k = 0 FOR SIZE m.2[0]
+            check(INT m.2[j][k], (j + k) + 1, "ARR-04")
+    
+        j := id(2)
+        m.1 := m.2[j]
+        SEQ k = 0 FOR SIZE m.1
+          check(INT m.1[k], k + 3, "ARR-05")
+    
+        i := id(2)
+        j := id(3)
+        m.1 := m.3[i][j]
+        SEQ k = 0 FOR SIZE m.1
+          check(INT m.1[k], k + 5, "ARR-06")
+    
+        k := id(4)
+        m.0 := m.1[k] -- m1 already has m.3[2][3]
+        check(INT m.0, 9, "ARR-07")
+    
+        j := id(3)
+        k := id(4)
+        m.0 := m.2[j][k] -- m2 already has m.3[1]
+        check(INT m.0, 8, "ARR-08")
+    
+        i := id(2)
+        j := id(3)
+        k := id(4)
+        m.0 := m.3[i][j][k]
+        check(INT m.0, 9, "ARR-09")
+    :
+    arrays.of.arrays()
+    --}}}
+    --{{{  slices of arrays
+    PROC slices.of.arrays()
+      DATA TYPE myint IS INT :
+      DATA TYPE mytype IS [5]myint :
+      mytype a, b :
+      PROC my.check(VAL myint x, VAL INT y, VAL []BYTE s)
+        check(INT x, y, s)
+      :
+      SEQ
+        title("slices of arrays")
+        --a := [0(myint), 1(myint), 2(myint)]
+        SEQ i = 0 FOR SIZE a
+          a[i] := myint i
+        b := a
+        SEQ i = 0 FOR (SIZE b) - 1
+          my.check([b FROM i FOR 1][0], i, "SLICE01")
+    :
+    slices.of.arrays()
+    --}}}
+    --{{{  records
+    PROC records()
+      --{{{  DATA TYPE record
+      DATA TYPE record
+        RECORD
+          INT i, j :
+          BYTE byte :
+          BOOL bool :
+          INT16 i16 :
+          INT32 i32 :
+          INT64 i64 :
+          REAL32 r32 :
+          REAL64 r64 :
+      :
+      --}}}
+      record r :
+      SEQ
+        title("records")
+        r[i] := 77
+        r[j] := 22
+        r[byte] := 'a'
+        r[bool] := TRUE
+        r[i16] := 55(INT16)
+        r[i32] := -10(INT32)
+        r[i64] := (MOSTNEG INT64) + 88(INT64)
+        r[r32] := 88.8(REAL32)
+        r[r64] := 77.7(REAL64)
+    
+        check(r[i], 77, "REC00")
+        check(r[j], 22, "REC01")
+        check.BYTE(r[byte], 'a', "REC02")
+        check.BOOL(r[bool], TRUE, "REC03")
+        check.INT16(r[i16], 55(INT16), "REC04")
+        check.INT32(r[i32], -10(INT32), "REC05")
+        check.INT64(r[i64], (MOSTNEG INT64) + 88(INT64), "REC06")
+        check.REAL32(r[r32], 88.8(REAL32), "REC07")
+        check.REAL64(r[r64], 77.7(REAL64), "REC08")
+        
+    :
+    records()
+    --}}}
+    --{{{  records with arrays
+    PROC records.with.arrays()
+      --{{{  DATA TYPE record
+      DATA TYPE record
+        RECORD
+          BYTE dummy : -- to misalign everything
+          [3]BYTE bytes :
+          [3]INT16 int16s :
+          [3]INT32 int32s :
+          [3]INT64 int64s :
+          [3]INT   ints :
+          [3]REAL32 real32s :
+          [3]REAL64 real64s :
+      :
+      --}}}
+      record r, zero :
+      [5]record rr :
+      INT i, j, k, l, kk, ll :
+      SEQ
+        --{{{  initialise
+        i := id(1)
+        j := id(i)
+        k := id(0)
+        l := id(3)
+        kk := k + id(0)
+        ll := j + id(2)
+        
+        r[bytes] := "abc"
+        r[int16s] := [11(INT16), 12(INT16), 13(INT16)]
+        r[int32s] := [21(INT32), 22(INT32), 23(INT32)]
+        r[int64s] := [31(INT64), 32(INT64), 33(INT64)]
+        r[ints]   := [41, 42, 43]
+        r[real32s] := [51.0(REAL32), 52.0(REAL32), 53.0(REAL32)]
+        r[real64s] := [61.0(REAL64), 62.0(REAL64), 63.0(REAL64)]
+        
+        []BYTE b.zero RETYPES zero :
+        SEQ b = 0 FOR SIZE b.zero
+          b.zero[b] := BYTE 0
+        
+        SEQ k = 0 FOR SIZE rr
+          rr[k] := zero
+        rr[i] := r
+        
+        --}}}
+    
+        --{{{  scalar records
+        --{{{  check constant indices      REC100 - REC199
+        check.BYTE (r[bytes][0], 'a', "REC100")
+        check.BYTE (r[bytes][1], 'b', "REC101")
+        check.BYTE (r[bytes][2], 'c', "REC102")
+        check.INT16(r[int16s][0], 11(INT16), "REC110")
+        check.INT16(r[int16s][1], 12(INT16), "REC111")
+        check.INT16(r[int16s][2], 13(INT16), "REC112")
+        check.INT32(r[int32s][0], 21(INT32), "REC120")
+        check.INT32(r[int32s][1], 22(INT32), "REC121")
+        check.INT32(r[int32s][2], 23(INT32), "REC122")
+        check.INT64(r[int64s][0], 31(INT64), "REC130")
+        check.INT64(r[int64s][1], 32(INT64), "REC131")
+        check.INT64(r[int64s][2], 33(INT64), "REC132")
+        check.INT  (r[ints][0],   41(INT)  , "REC140")
+        check.INT  (r[ints][1],   42(INT)  , "REC141")
+        check.INT  (r[ints][2],   43(INT)  , "REC142")
+        check.REAL32(r[real32s][0], 51.0(REAL32), "REC150")
+        check.REAL32(r[real32s][1], 52.0(REAL32), "REC151")
+        check.REAL32(r[real32s][2], 53.0(REAL32), "REC152")
+        check.REAL64(r[real64s][0], 61.0(REAL64), "REC160")
+        check.REAL64(r[real64s][1], 62.0(REAL64), "REC161")
+        check.REAL64(r[real64s][2], 63.0(REAL64), "REC162")
+        
+        --}}}
+        --{{{  check variable indices      REC200 - REC299
+        check.BYTE (r[bytes][i], 'b', "REC201")
+        check.INT16(r[int16s][i], 12(INT16), "REC211")
+        check.INT32(r[int32s][i], 22(INT32), "REC221")
+        check.INT64(r[int64s][i], 32(INT64), "REC231")
+        check.INT  (r[ints][i],   42(INT)  , "REC241")
+        check.REAL32(r[real32s][i], 52.0(REAL32), "REC251")
+        check.REAL64(r[real64s][i], 62.0(REAL64), "REC261")
+        
+        --}}}
+        --}}}
+    
+        --{{{  arrays of records
+        --{{{  check constant indices      REC300 - REC399
+        check.BYTE (rr[1][bytes][0], 'a', "REC300")
+        check.BYTE (rr[1][bytes][1], 'b', "REC301")
+        check.BYTE (rr[1][bytes][2], 'c', "REC302")
+        check.INT16(rr[1][int16s][0], 11(INT16), "REC310")
+        check.INT16(rr[1][int16s][1], 12(INT16), "REC311")
+        check.INT16(rr[1][int16s][2], 13(INT16), "REC312")
+        check.INT32(rr[1][int32s][0], 21(INT32), "REC320")
+        check.INT32(rr[1][int32s][1], 22(INT32), "REC321")
+        check.INT32(rr[1][int32s][2], 23(INT32), "REC322")
+        check.INT64(rr[1][int64s][0], 31(INT64), "REC330")
+        check.INT64(rr[1][int64s][1], 32(INT64), "REC331")
+        check.INT64(rr[1][int64s][2], 33(INT64), "REC332")
+        check.INT  (rr[1][ints][0],   41(INT)  , "REC340")
+        check.INT  (rr[1][ints][1],   42(INT)  , "REC341")
+        check.INT  (rr[1][ints][2],   43(INT)  , "REC342")
+        check.REAL32(rr[1][real32s][0], 51.0(REAL32), "REC350")
+        check.REAL32(rr[1][real32s][1], 52.0(REAL32), "REC351")
+        check.REAL32(rr[1][real32s][2], 53.0(REAL32), "REC352")
+        check.REAL64(rr[1][real64s][0], 61.0(REAL64), "REC360")
+        check.REAL64(rr[1][real64s][1], 62.0(REAL64), "REC361")
+        check.REAL64(rr[1][real64s][2], 63.0(REAL64), "REC362")
+        
+        --}}}
+        --{{{  check variable indices      REC400 - REC499
+        check.BYTE (rr[j][bytes][i], 'b', "REC401")
+        check.INT16(rr[j][int16s][i], 12(INT16), "REC411")
+        check.INT32(rr[j][int32s][i], 22(INT32), "REC421")
+        check.INT64(rr[j][int64s][i], 32(INT64), "REC431")
+        check.INT  (rr[j][ints][i],   42(INT)  , "REC441")
+        check.REAL32(rr[j][real32s][i], 52.0(REAL32), "REC451")
+        check.REAL64(rr[j][real64s][i], 62.0(REAL64), "REC461")
+        
+        --}}}
+        --}}}
+    
+        --{{{  arrays of records, with slices
+        --{{{  check constant indices      REC500 - REC599
+        check.BYTE ([rr[1][bytes] FROM k FOR l][0], 'a', "REC500")
+        check.BYTE ([rr[1][bytes] FROM k FOR l][1], 'b', "REC501")
+        check.BYTE ([rr[1][bytes] FROM k FOR l][2], 'c', "REC502")
+        check.INT16([rr[1][int16s] FROM k FOR l][0], 11(INT16), "REC510")
+        check.INT16([rr[1][int16s] FROM k FOR l][1], 12(INT16), "REC511")
+        check.INT16([rr[1][int16s] FROM k FOR l][2], 13(INT16), "REC512")
+        check.INT32([rr[1][int32s] FROM k FOR l][0], 21(INT32), "REC520")
+        check.INT32([rr[1][int32s] FROM k FOR l][1], 22(INT32), "REC521")
+        check.INT32([rr[1][int32s] FROM k FOR l][2], 23(INT32), "REC522")
+        check.INT64([rr[1][int64s] FROM k FOR l][0], 31(INT64), "REC530")
+        check.INT64([rr[1][int64s] FROM k FOR l][1], 32(INT64), "REC531")
+        check.INT64([rr[1][int64s] FROM k FOR l][2], 33(INT64), "REC532")
+        check.INT  ([rr[1][ints] FROM k FOR l][0],   41(INT)  , "REC540")
+        check.INT  ([rr[1][ints] FROM k FOR l][1],   42(INT)  , "REC541")
+        check.INT  ([rr[1][ints] FROM k FOR l][2],   43(INT)  , "REC542")
+        check.REAL32([rr[1][real32s] FROM k FOR l][0], 51.0(REAL32), "REC550")
+        check.REAL32([rr[1][real32s] FROM k FOR l][1], 52.0(REAL32), "REC551")
+        check.REAL32([rr[1][real32s] FROM k FOR l][2], 53.0(REAL32), "REC552")
+        check.REAL64([rr[1][real64s] FROM k FOR l][0], 61.0(REAL64), "REC560")
+        check.REAL64([rr[1][real64s] FROM k FOR l][1], 62.0(REAL64), "REC561")
+        check.REAL64([rr[1][real64s] FROM k FOR l][2], 63.0(REAL64), "REC562")
+        
+        --}}}
+        --{{{  check variable indices      REC600 - REC699
+        check.BYTE ([rr[j][bytes] FROM k FOR l][i], 'b', "REC601")
+        check.INT16([rr[j][int16s] FROM k FOR l][i], 12(INT16), "REC611")
+        check.INT32([rr[j][int32s] FROM k FOR l][i], 22(INT32), "REC621")
+        check.INT64([rr[j][int64s] FROM k FOR l][i], 32(INT64), "REC631")
+        check.INT  ([rr[j][ints] FROM k FOR l][i],   42(INT)  , "REC641")
+        check.REAL32([rr[j][real32s] FROM k FOR l][i], 52.0(REAL32), "REC651")
+        check.REAL64([rr[j][real64s] FROM k FOR l][i], 62.0(REAL64), "REC661")
+        
+        --}}}
+        --}}}
+    
+        --{{{  slices of arrays of records
+        --{{{  check constant indices      REC700 - REC799
+        check.BYTE ([rr FROM kk FOR ll][1][bytes][0], 'a', "REC700")
+        check.BYTE ([rr FROM kk FOR ll][1][bytes][1], 'b', "REC701")
+        check.BYTE ([rr FROM kk FOR ll][1][bytes][2], 'c', "REC702")
+        check.INT16([rr FROM kk FOR ll][1][int16s][0], 11(INT16), "REC710")
+        check.INT16([rr FROM kk FOR ll][1][int16s][1], 12(INT16), "REC711")
+        check.INT16([rr FROM kk FOR ll][1][int16s][2], 13(INT16), "REC712")
+        check.INT32([rr FROM kk FOR ll][1][int32s][0], 21(INT32), "REC720")
+        check.INT32([rr FROM kk FOR ll][1][int32s][1], 22(INT32), "REC721")
+        check.INT32([rr FROM kk FOR ll][1][int32s][2], 23(INT32), "REC722")
+        check.INT64([rr FROM kk FOR ll][1][int64s][0], 31(INT64), "REC730")
+        check.INT64([rr FROM kk FOR ll][1][int64s][1], 32(INT64), "REC731")
+        check.INT64([rr FROM kk FOR ll][1][int64s][2], 33(INT64), "REC732")
+        check.INT  ([rr FROM kk FOR ll][1][ints][0],   41(INT)  , "REC740")
+        check.INT  ([rr FROM kk FOR ll][1][ints][1],   42(INT)  , "REC741")
+        check.INT  ([rr FROM kk FOR ll][1][ints][2],   43(INT)  , "REC742")
+        check.REAL32([rr FROM kk FOR ll][1][real32s][0], 51.0(REAL32), "REC750")
+        check.REAL32([rr FROM kk FOR ll][1][real32s][1], 52.0(REAL32), "REC751")
+        check.REAL32([rr FROM kk FOR ll][1][real32s][2], 53.0(REAL32), "REC752")
+        check.REAL64([rr FROM kk FOR ll][1][real64s][0], 61.0(REAL64), "REC760")
+        check.REAL64([rr FROM kk FOR ll][1][real64s][1], 62.0(REAL64), "REC761")
+        check.REAL64([rr FROM kk FOR ll][1][real64s][2], 63.0(REAL64), "REC762")
+        
+        --}}}
+        --{{{  check variable indices      REC800 - REC899
+        check.BYTE ([rr FROM kk FOR ll][j][bytes][i], 'b', "REC801")
+        check.INT16([rr FROM kk FOR ll][j][int16s][i], 12(INT16), "REC811")
+        check.INT32([rr FROM kk FOR ll][j][int32s][i], 22(INT32), "REC821")
+        check.INT64([rr FROM kk FOR ll][j][int64s][i], 32(INT64), "REC831")
+        check.INT  ([rr FROM kk FOR ll][j][ints][i],   42(INT)  , "REC841")
+        check.REAL32([rr FROM kk FOR ll][j][real32s][i], 52.0(REAL32), "REC851")
+        check.REAL64([rr FROM kk FOR ll][j][real64s][i], 62.0(REAL64), "REC861")
+        
+        --}}}
+        --}}}
+    
+        --{{{  slices of arrays of records, with slices
+        --{{{  check constant indices      REC900 - REC969
+        check.BYTE ([[rr FROM kk FOR ll][1][bytes] FROM k FOR l][0], 'a', "REC900")
+        check.BYTE ([[rr FROM kk FOR ll][1][bytes] FROM k FOR l][1], 'b', "REC901")
+        check.BYTE ([[rr FROM kk FOR ll][1][bytes] FROM k FOR l][2], 'c', "REC902")
+        check.INT16([[rr FROM kk FOR ll][1][int16s] FROM k FOR l][0], 11(INT16), "REC910")
+        check.INT16([[rr FROM kk FOR ll][1][int16s] FROM k FOR l][1], 12(INT16), "REC911")
+        check.INT16([[rr FROM kk FOR ll][1][int16s] FROM k FOR l][2], 13(INT16), "REC912")
+        check.INT32([[rr FROM kk FOR ll][1][int32s] FROM k FOR l][0], 21(INT32), "REC920")
+        check.INT32([[rr FROM kk FOR ll][1][int32s] FROM k FOR l][1], 22(INT32), "REC921")
+        check.INT32([[rr FROM kk FOR ll][1][int32s] FROM k FOR l][2], 23(INT32), "REC922")
+        check.INT64([[rr FROM kk FOR ll][1][int64s] FROM k FOR l][0], 31(INT64), "REC930")
+        check.INT64([[rr FROM kk FOR ll][1][int64s] FROM k FOR l][1], 32(INT64), "REC931")
+        check.INT64([[rr FROM kk FOR ll][1][int64s] FROM k FOR l][2], 33(INT64), "REC932")
+        check.INT  ([[rr FROM kk FOR ll][1][ints] FROM k FOR l][0],   41(INT)  , "REC940")
+        check.INT  ([[rr FROM kk FOR ll][1][ints] FROM k FOR l][1],   42(INT)  , "REC941")
+        check.INT  ([[rr FROM kk FOR ll][1][ints] FROM k FOR l][2],   43(INT)  , "REC942")
+        check.REAL32([[rr FROM kk FOR ll][1][real32s] FROM k FOR l][0], 51.0(REAL32), "REC950")
+        check.REAL32([[rr FROM kk FOR ll][1][real32s] FROM k FOR l][1], 52.0(REAL32), "REC951")
+        check.REAL32([[rr FROM kk FOR ll][1][real32s] FROM k FOR l][2], 53.0(REAL32), "REC952")
+        check.REAL64([[rr FROM kk FOR ll][1][real64s] FROM k FOR l][0], 61.0(REAL64), "REC960")
+        check.REAL64([[rr FROM kk FOR ll][1][real64s] FROM k FOR l][1], 62.0(REAL64), "REC961")
+        check.REAL64([[rr FROM kk FOR ll][1][real64s] FROM k FOR l][2], 63.0(REAL64), "REC962")
+        
+        --}}}
+        --{{{  check variable indices      REC980 - REC989
+        check.BYTE ([[rr FROM kk FOR ll][j][bytes] FROM k FOR l][i], 'b', "REC981")
+        check.INT16([[rr FROM kk FOR ll][j][int16s] FROM k FOR l][i], 12(INT16), "REC982")
+        check.INT32([[rr FROM kk FOR ll][j][int32s] FROM k FOR l][i], 22(INT32), "REC983")
+        check.INT64([[rr FROM kk FOR ll][j][int64s] FROM k FOR l][i], 32(INT64), "REC984")
+        check.INT  ([[rr FROM kk FOR ll][j][ints] FROM k FOR l][i],   42(INT)  , "REC985")
+        check.REAL32([[rr FROM kk FOR ll][j][real32s] FROM k FOR l][i], 52.0(REAL32), "REC986")
+        check.REAL64([[rr FROM kk FOR ll][j][real64s] FROM k FOR l][i], 62.0(REAL64), "REC987")
+        
+        --}}}
+        --}}}
+    
+        --{{{  slices of arrays of records, with slices, indexed by repl
+        SEQ ii = id(0) FOR 2
+          SEQ
+            --{{{  check variable indices      REC990 - REC999
+            check.BYTE ([[rr FROM kk FOR ll][j][bytes] FROM k FOR l][ii], "abc"[ii], "REC991")
+            check.INT16([[rr FROM kk FOR ll][j][int16s] FROM k FOR l][ii], INT16 (ii + 11), "REC992")
+            check.INT32([[rr FROM kk FOR ll][j][int32s] FROM k FOR l][ii], INT32 (ii + 21), "REC993")
+            check.INT64([[rr FROM kk FOR ll][j][int64s] FROM k FOR l][ii], INT64 (ii + 31), "REC994")
+            check.INT  ([[rr FROM kk FOR ll][j][ints] FROM k FOR l][ii],          ii + 41 , "REC995")
+            check.REAL32([[rr FROM kk FOR ll][j][real32s] FROM k FOR l][ii], 51.0(REAL32) + (REAL32 ROUND ii), "REC996")
+            check.REAL64([[rr FROM kk FOR ll][j][real64s] FROM k FOR l][ii], 61.0(REAL64) + (REAL64 ROUND ii), "REC997")
+            
+            --}}}
+        --}}}
+    
+        --{{{  passing arrays as parameters
+        VAL n IS 3 :
+        VAL m IS 5 :
+        PROC test.record.param.n.m([n][m]record param, VAL INT i, j, k)
+          SEQ
+            check.INT16 (param[i][j][int16s][k],  13(INT16),    "PARAM00")
+            check.REAL32(param[i][j][real32s][k], 53.0(REAL32), "PARAM01")
+        :
+        PROC test.record.param.o.m([][m]record param, VAL INT i, j, k)
+          SEQ
+            check.INT16 (param[i][j][int16s][k],  13(INT16),    "PARAM10")
+            check.REAL32(param[i][j][real32s][k], 53.0(REAL32), "PARAM11")
+        :
+        PROC test.record.param.n.o([n][]record param, VAL INT i, j, k)
+          SEQ
+            check.INT16 (param[i][j][int16s][k],  13(INT16),    "PARAM20")
+            check.REAL32(param[i][j][real32s][k], 53.0(REAL32), "PARAM21")
+        :
+        PROC test.record.param.o.o([n][]record param, VAL INT i, j, k)
+          SEQ
+            check.INT16 (param[i][j][int16s][k],  13(INT16),    "PARAM30")
+            check.REAL32(param[i][j][real32s][k], 53.0(REAL32), "PARAM31")
+        :
+        [n][m]record a :
+        [m]record z.a :
+        SEQ
+          SEQ ii = 0 FOR SIZE z.a
+            z.a[ii] := zero
+          SEQ ii = 0 FOR SIZE a
+            a[ii] := z.a
+          a[2] := rr
+        
+          VAL i IS id(2) :
+          VAL j IS id(1) :
+          VAL k IS id(2) :
+          SEQ
+            test.record.param.n.m(a, i, j, k)
+            test.record.param.o.m(a, i, j, k)
+            test.record.param.n.o(a, i, j, k)
+            test.record.param.o.o(a, i, j, k)
+        --}}}
+    :
+    records.with.arrays()
+    --}}}
+    --{{{  records with sub-records
+    PROC records.with.sub.records()
+      --{{{  DATA TYPEs
+      DATA TYPE int  IS INT :
+      DATA TYPE real IS REAL64 :
+      PROC check.real(VAL real x, y, VAL []BYTE b)
+        check.REAL64(REAL64 ROUND x, REAL64 ROUND y, b)
+      :
+      PROC check.int(VAL int x, y, VAL []BYTE b)
+        check.INT(INT x, INT y, b)
+      :
+      DATA TYPE record1
+        RECORD
+          int i :
+          real r :
+      :
+      DATA TYPE record2
+        RECORD
+          record1 ra, rb :
+      :
+      DATA TYPE record3
+        RECORD
+          [3]record1 a :
+      :
+      DATA TYPE threerecord1 IS [3]record1 :
+      DATA TYPE record4
+        RECORD
+          threerecord1 a :
+      :
+        
+      --}}}
+      record1 r1 :
+      record2 r2 :
+      record3 r3 :
+      record4 r4 :
+      threerecord1 threer1 :
+      SEQ
+        r1[i] := 99(int)
+        r1[r] := 99.9(real)
+        r2[ra] := r1
+        r2[rb] := r1
+        check.int (r2[ra][i], 99(int),    "SUB000")
+        check.int (r2[rb][i], 99(int),    "SUB001")
+        check.real(r2[ra][r], 99.9(real), "SUB002")
+        check.real(r2[rb][r], 99.9(real), "SUB003")
+        SEQ k = 0 FOR SIZE r3[a]
+          r3[a][k] := r1
+        SEQ k = id(0) FOR SIZE r3[a]
+          SEQ
+            check.int (r3[a][k][i], 99(int),    "SUB004")
+            check.real(r3[a][k][r], 99.9(real), "SUB005")
+        SEQ k = 0 FOR 3
+          threer1[k] := r1
+        r4[a] := threer1
+        SEQ k = 0 FOR 3
+          SEQ
+            check.int (r4[a][k][i], 99(int),    "SUB006")
+            check.real(r4[a][k][r], 99.9(real), "SUB007")
+    :
+    records.with.sub.records()
+    --}}}
+    --{{{  communicating records
+    PROC communicating.records()
+      --{{{  DATA TYPE my.record
+      DATA TYPE my.record
+        RECORD
+          INT x, y, z :
+      :
+      --}}}
+      --{{{  PROC init.my.record
+      PROC init.my.record(my.record x, VAL INT offset)
+        SEQ
+          x[x] := 88 + offset
+          x[y] := 66 + offset
+          x[z] := (-5) + offset
+      :
+      --}}}
+      --{{{  PROC check.my.record
+      PROC check.my.record(VAL my.record x, VAL []BYTE msg)
+        SEQ
+          check(x[x], 88, msg)
+          check(x[y], 66, msg)
+          check(x[z], -5, msg)
+      :
+      --}}}
+      --{{{  protocols and channels
+      PROTOCOL protocol2 IS my.record :
+      PROTOCOL protocol3 IS my.record ; INT :
+      PROTOCOL protocol4 IS INT ; my.record :
+      PROTOCOL protocol5
+        CASE
+          tag0 ; my.record
+          tag1 ; my.record ; INT
+          tag2 ; INT ; my.record
+          tag3 ; INT
+      :
+      CHAN OF my.record c1 :
+      CHAN OF protocol2 c2 :
+      CHAN OF protocol3 c3 :
+      CHAN OF protocol4 c4 :
+      CHAN OF protocol5 c5 :
+      --}}}
+      PAR
+        --{{{  sender
+        my.record sender :
+        SEQ
+          init.my.record(sender, id(0))
+          c1 ! sender
+          c2 ! sender
+          c3 ! sender ; id(8)
+          c4 ! id(66); sender
+          c5 ! tag0 ; sender
+          c5 ! tag1 ; sender ; id(7)
+          c5 ! tag2 ; id(-1) ; sender
+          c5 ! tag3 ; id(2)
+          c5 ! tag0 ; sender
+          c5 ! tag1 ; sender ; id(7)
+          c5 ! tag2 ; id(-1) ; sender
+          c5 ! tag3 ; id(2)
+        
+        --}}}
+        --{{{  receiver
+        my.record receiver :
+        INT x :
+        SEQ
+          --{{{  simple chans
+          init.my.record(receiver, 77)
+          c1 ? receiver
+          check.my.record(receiver, "COMM00")
+          
+          init.my.record(receiver, 77)
+          c2 ? receiver
+          check.my.record(receiver, "COMM01")
+          
+          init.my.record(receiver, 77)
+          c3 ? receiver ; x
+          check.my.record(receiver, "COMM02")
+          check(x, 8, "COMM03")
+          
+          init.my.record(receiver, 77)
+          c4 ? x ; receiver
+          check.my.record(receiver, "COMM04")
+          check(x, 66, "COMM05")
+          --}}}
+        
+          --{{{  CASE input
+          init.my.record(receiver, 77)
+          c5 ? CASE tag0 ; receiver
+          check.my.record(receiver, "COMM10")
+          
+          init.my.record(receiver, 77)
+          c5 ? CASE tag1 ; receiver ; x
+          check.my.record(receiver, "COMM11")
+          check(x, 7, "COMM12")
+          
+          init.my.record(receiver, 77)
+          c5 ? CASE tag2 ; x ; receiver
+          check.my.record(receiver, "COMM13")
+          check(x, -1, "COMM14")
+          
+          c5 ? CASE tag3 ; x
+          check(x, 2, "COMM15")
+          
+          SEQ i = 0 FOR 4
+            SEQ
+              init.my.record(receiver, 99)
+              c5 ? CASE
+                tag0 ; receiver
+                  SEQ
+                    check.my.record(receiver, "COMM20")
+                    check(i, 0, "COMM30")
+                tag1 ; receiver ; x
+                  SEQ
+                    check.my.record(receiver, "COMM21")
+                    check(x, 7, "COMM22")
+                    check(i, 1, "COMM31")
+                tag2 ; x ; receiver
+                  SEQ
+                    check.my.record(receiver, "COMM23")
+                    check(x, -1, "COMM24")
+                    check(i, 2, "COMM32")
+                tag3 ; x
+                  SEQ
+                    check(x, 2, "COMM25")
+                    check(i, 3, "COMM33")
+          
+          --}}}
+        
+        --}}}
+    :
+    communicating.records()
+    --}}}
+    --{{{  user defined array types
+    PROC user.defined.array.types()
+      DATA TYPE fred IS INT :
+      DATA TYPE freds IS [3]fred :
+      DATA TYPE ints  IS [3]INT :
+      PROC check.fred(VAL fred f1, f2, VAL []BYTE msg)
+        check(INT f1, INT f2, msg)
+      :
+      freds fs :
+      ints  is :
+      SEQ
+        fs := [1(fred),2(fred),3(fred)](freds)
+        is := [11,12,13](ints)
+        SEQ i = id(0) FOR 3
+          SEQ
+            check.fred(fs[i], 1(fred) + (fred i), "USERA00")
+            check(is[i], 11 + i, "USERA01")
+    :
+    user.defined.array.types()
+    --}}}
+    --{{{  record literals
+    PROC record.literals()
+      --{{{  record structures
+      DATA TYPE basic.record
+        RECORD
+          INT i :
+          BYTE b :
+      :
+      DATA TYPE contains.array
+        RECORD
+          BYTE b :
+          [3]INT a :
+          INT i :
+      :
+      DATA TYPE contains.record
+        RECORD
+          basic.record r :
+          BYTE b :
+          INT i :
+      :
+      
+      --}}}
+      SEQ
+        --{{{  fully qualified literals
+        --{{{  assignment of record literals
+        basic.record br :
+        contains.array ca :
+        contains.record cr :
+        SEQ
+          br := [1, 'a'](basic.record)
+          check(br[i], 1, "RECLIT00")
+          check.BYTE(br[b], 'a', "RECLIT01")
+          
+          ca := ['a', [2,3,4], 6](contains.array)
+          check.BYTE(ca[b], 'a', "RECLIT02")
+          check(ca[i], 6, "RECLIT03")
+          SEQ i = 0 FOR SIZE ca[a]
+            check(ca[a][i], i+2, "RECLIT04")
+          
+          cr := [[2,'b'](basic.record),'c',-1](contains.record)
+          check(cr[r][i], 2, "RECLIT05")
+          check.BYTE(cr[r][b], 'b', "RECLIT06")
+          check.BYTE(cr[b], 'c', "RECLIT07")
+          check(cr[i], -1, "RECLIT08")
+        --}}}
+        --{{{  assignment of named record literals
+        basic.record br :
+        contains.array ca :
+        contains.record cr :
+        VAL vbr IS [77, 'z'](basic.record) :
+        VAL vca IS ['Z', [-1, 100, 6], 27](contains.array) :
+        VAL vcr IS [[77, 'z'](basic.record), 'D', 88](contains.record) :
+        SEQ
+          br := vbr
+          check(br[i], 77, "RECLIT10")
+          check.BYTE(br[b], 'z', "RECLIT11")
+          
+          ca := vca
+          check.BYTE(ca[b], 'Z', "RECLIT12")
+          check(ca[i], 27, "RECLIT13")
+          SEQ i = 0 FOR SIZE ca[a]
+            check(ca[a][i], [-1, 100, 6][i], "RECLIT14")
+          
+          cr := vcr
+          check(cr[r][i], 77, "RECLIT15")
+          check.BYTE(cr[r][b], 'z', "RECLIT16")
+          check.BYTE(cr[b], 'D', "RECLIT17")
+          check(cr[i], 88, "RECLIT18")
+        --}}}
+        --{{{  assignment of named, nested, record literals
+        basic.record br :
+        contains.array ca :
+        contains.record cr :
+        VAL three.ints IS [-1, 100, 5] :
+        VAL vbr IS [77, 'w'](basic.record) :
+        VAL vca IS ['X', three.ints, 27](contains.array) :
+        VAL vcr IS [vbr, 'E', 88](contains.record) :
+        SEQ
+          br := vbr
+          check(br[i], 77, "RECLIT20")
+          check.BYTE(br[b], 'w', "RECLIT21")
+          
+          ca := vca
+          check.BYTE(ca[b], 'X', "RECLIT22")
+          check(ca[i], 27, "RECLIT23")
+          SEQ i = 0 FOR SIZE ca[a]
+            check(ca[a][i], three.ints[i], "RECLIT24")
+          
+          cr := vcr
+          check(cr[r][i], 77, "RECLIT25")
+          check.BYTE(cr[r][b], 'w', "RECLIT26")
+          check.BYTE(cr[b], 'E', "RECLIT27")
+          check(cr[i], 88, "RECLIT28")
+        --}}}
+        --{{{  assignment of arrays of record literals
+        [2]basic.record abr :
+        [2]contains.array aca :
+        [2]contains.record acr :
+        SEQ
+          abr := [[1, 'a'](basic.record), [2,'b'](basic.record)]
+          SEQ k = id(0) FOR 2
+            SEQ
+              check(abr[k][i], k+1, "RECLIT30")
+              check.BYTE(abr[k][b], BYTE (k + (INT 'a')), "RECLIT31")
+          
+          aca := [['a', [2,3,4], 6](contains.array),['b', [3,4,5], 7](contains.array)]
+          SEQ k = id(0) FOR 2
+            SEQ
+              check.BYTE(aca[k][b], BYTE (k + (INT 'a')), "RECLIT32")
+              check(aca[k][i], 6 + k, "RECLIT33")
+              SEQ i = 0 FOR SIZE aca[k][a]
+                check(aca[k][a][i], k+(i+2), "RECLIT34")
+          
+          acr := [[[2,'b'](basic.record),'c',-1](contains.record),[[3,'c'](basic.record),'d',0](contains.record)]
+          SEQ k = id(0) FOR 2
+            SEQ
+              check(acr[k][r][i], 2+k, "RECLIT35")
+              check.BYTE(acr[k][r][b], BYTE (k + (INT 'b')), "RECLIT36")
+              check.BYTE(acr[k][b], BYTE (k + (INT 'c')), "RECLIT37")
+              check(acr[k][i], (-1) + k, "RECLIT38")
+          
+        --}}}
+        --{{{  constant folding from record literals
+        VAL three.ints IS [-1, 100, 5] :
+        VAL vbr IS [77, 'w'](basic.record) :
+        VAL vca IS ['X', three.ints, 27](contains.array) :
+        VAL vcr IS [vbr, 'E', 88](contains.record) :
+        SEQ
+          check(vbr[i], 77, "RECLIT40")
+          check.BYTE(vbr[b], 'w', "RECLIT41")
+        
+          check.BYTE(vca[b], 'X', "RECLIT42")
+          SEQ i = 0 FOR SIZE vca[a]
+            check(vca[a][i], three.ints[i], "RECLIT43")
+          check(vca[i], 27, "RECLIT44")
+        
+          check(vcr[r][i], 77, "RECLIT45")
+          check.BYTE(vcr[r][b], 'w', "RECLIT46")
+          check.BYTE(vcr[b], 'E', "RECLIT47")
+          check(vcr[i], 88, "RECLIT48")
+        --}}}
+        --}}}
+    
+        --{{{  types must be deduced
+        --{{{  assignment of record literals
+        basic.record br :
+        contains.array ca :
+        contains.record cr :
+        SEQ
+          br := [1, 'a']
+          check(br[i], 1, "RECLIT50")
+          check.BYTE(br[b], 'a', "RECLIT51")
+          
+          ca := ['a', [2,3,4], 6]
+          check.BYTE(ca[b], 'a', "RECLIT52")
+          check(ca[i], 6, "RECLIT53")
+          SEQ i = 0 FOR SIZE ca[a]
+            check(ca[a][i], i+2, "RECLIT54")
+          
+          cr := [[2,'b'],'c',-1]
+          check(cr[r][i], 2, "RECLIT55")
+          check.BYTE(cr[r][b], 'b', "RECLIT56")
+          check.BYTE(cr[b], 'c', "RECLIT57")
+          check(cr[i], -1, "RECLIT58")
+        --}}}
+        --{{{  assignment of named record literals
+        basic.record br :
+        contains.array ca :
+        contains.record cr :
+        VAL basic.record    vbr IS [77, 'z'] :
+        VAL contains.array  vca IS ['Z', [-1, 100, 6], 27] :
+        VAL contains.record vcr IS [[77, 'z'], 'D', 88] :
+        SEQ
+          br := vbr
+          check(br[i], 77, "RECLIT60")
+          check.BYTE(br[b], 'z', "RECLIT61")
+          
+          ca := vca
+          check.BYTE(ca[b], 'Z', "RECLIT62")
+          check(ca[i], 27, "RECLIT63")
+          SEQ i = 0 FOR SIZE ca[a]
+            check(ca[a][i], [-1, 100, 6][i], "RECLIT64")
+          
+          cr := vcr
+          check(cr[r][i], 77, "RECLIT65")
+          check.BYTE(cr[r][b], 'z', "RECLIT66")
+          check.BYTE(cr[b], 'D', "RECLIT67")
+          check(cr[i], 88, "RECLIT68")
+        --}}}
+        --{{{  assignment of named, nested, record literals
+        basic.record br :
+        contains.array ca :
+        contains.record cr :
+        VAL three.ints IS [-1, 100, 5] :
+        VAL basic.record    vbr IS [77, 'w'] :
+        VAL contains.array  vca IS ['X', three.ints, 27] :
+        VAL contains.record vcr IS [vbr, 'E', 88] :
+        SEQ
+          br := vbr
+          check(br[i], 77, "RECLIT70")
+          check.BYTE(br[b], 'w', "RECLIT71")
+          
+          ca := vca
+          check.BYTE(ca[b], 'X', "RECLIT72")
+          check(ca[i], 27, "RECLIT73")
+          SEQ i = 0 FOR SIZE ca[a]
+            check(ca[a][i], three.ints[i], "RECLIT74")
+          
+          cr := vcr
+          check(cr[r][i], 77, "RECLIT75")
+          check.BYTE(cr[r][b], 'w', "RECLIT76")
+          check.BYTE(cr[b], 'E', "RECLIT77")
+          check(cr[i], 88, "RECLIT78")
+        --}}}
+        --{{{  assignment of arrays of record literals
+        [2]basic.record abr :
+        [2]contains.array aca :
+        [2]contains.record acr :
+        SEQ
+          abr := [[1, 'a'], [2,'b']]
+          SEQ k = id(0) FOR 2
+            SEQ
+              check(abr[k][i], k+1, "RECLIT80")
+              check.BYTE(abr[k][b], BYTE (k + (INT 'a')), "RECLIT81")
+          
+          aca := [['a', [2,3,4], 6],['b', [3,4,5], 7]]
+          SEQ k = id(0) FOR 2
+            SEQ
+              check.BYTE(aca[k][b], BYTE (k + (INT 'a')), "RECLIT82")
+              check(aca[k][i], 6 + k, "RECLIT83")
+              SEQ i = 0 FOR SIZE aca[k][a]
+                check(aca[k][a][i], k+(i+2), "RECLIT84")
+          
+          acr := [[[2,'b'],'c',-1],[[3,'c'],'d',0]]
+          SEQ k = id(0) FOR 2
+            SEQ
+              check(acr[k][r][i], 2+k, "RECLIT85")
+              check.BYTE(acr[k][r][b], BYTE (k + (INT 'b')), "RECLIT86")
+              check.BYTE(acr[k][b], BYTE (k + (INT 'c')), "RECLIT87")
+              check(acr[k][i], (-1) + k, "RECLIT88")
+          
+        --}}}
+        --{{{  constant folding from record literals
+        VAL three.ints IS [-1, 100, 5] :
+        VAL basic.record    vbr IS [77, 'w'] :
+        VAL contains.array  vca IS ['X', three.ints, 27] :
+        VAL contains.record vcr IS [vbr, 'E', 88] :
+        SEQ
+          check(vbr[i], 77, "RECLIT90")
+          check.BYTE(vbr[b], 'w', "RECLIT91")
+        
+          check.BYTE(vca[b], 'X', "RECLIT92")
+          SEQ i = 0 FOR SIZE vca[a]
+            check(vca[a][i], three.ints[i], "RECLIT93")
+          check(vca[i], 27, "RECLIT94")
+        
+          check(vcr[r][i], 77, "RECLIT95")
+          check.BYTE(vcr[r][b], 'w', "RECLIT96")
+          check.BYTE(vcr[b], 'E', "RECLIT97")
+          check(vcr[i], 88, "RECLIT98")
+        --}}}
+        --}}}
+    :
+    record.literals()
+    --}}}
+    --{{{  usage in parallel
+    PROC usage.in.parallel()
+      DATA TYPE record
+        RECORD
+          INT x, y :
+      :
+      PROC init.1(record r)
+        PAR
+          r[x] := 77
+          r[y] := 66
+      :
+      PROC init.2(record r)
+        xx IS r[x] :
+        yy IS r[y] :
+        PAR
+          xx := 66
+          yy := 55
+      :
+      PROC init.3(record r)
+        PAR
+          xx IS r[x] :
+          xx := 55
+          yy IS r[y] :
+          yy := 44
+      :
+      record r :
+      SEQ
+        init.1(r)
+        check(r[x], 77, "RECUSE00")
+        check(r[y], 66, "RECUSE01")
+        init.2(r)
+        check(r[x], 66, "RECUSE02")
+        check(r[y], 55, "RECUSE03")
+        init.3(r)
+        check(r[x], 55, "RECUSE04")
+        check(r[y], 44, "RECUSE05")
+    :
+    usage.in.parallel()
+    --}}}
+    --{{{  passing fields as params
+    PROC fields.as.params()
+      --{{{  initialisation routines
+      PROC init.BYTE(BYTE b, VAL BYTE value)
+        b := value
+      :
+      PROC init.BOOL(BOOL b, VAL BOOL value)
+        b := value
+      :
+      PROC init.INT(INT i, VAL INT value)
+        i := value
+      :
+      PROC init.INT16(INT16 i16, VAL INT16 value)
+        i16 := value
+      :
+      PROC init.INT32(INT32 i32, VAL INT32 value)
+        i32 := value
+      :
+      PROC init.INT64(INT64 i64, VAL INT64 value)
+        i64 := value
+      :
+      PROC init.REAL32(REAL32 r32, VAL REAL32 value)
+        r32 := value
+      :
+      PROC init.REAL64(REAL64 r64, VAL REAL64 value)
+        r64 := value
+      :
+      --}}}
+      SEQ
+        --{{{  multiple BYTE
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            BYTE x, y :
+        :
+        record r :
+        SEQ
+          init.BYTE(r[x], 'a')
+          init.BYTE(r[y], 'z')
+          check.BYTE(r[x], 'a', "FLD00")
+          check.BYTE(r[y], 'z', "FLD01")
+        
+        --}}}
+        --{{{  multiple BOOL
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            BOOL x, y :
+        :
+        record r :
+        SEQ
+          init.BOOL(r[x], FALSE)
+          init.BOOL(r[y], TRUE)
+          check.BOOL(r[x], FALSE, "FLD10")
+          check.BOOL(r[y], TRUE, "FLD11")
+        
+        --}}}
+        --{{{  multiple INT
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            INT x, y :
+        :
+        record r :
+        SEQ
+          init.INT(r[x], -1)
+          init.INT(r[y], 27)
+          check.INT(r[x], -1, "FLD20")
+          check.INT(r[y], 27, "FLD21")
+        
+        --}}}
+        --{{{  multiple INT16
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            INT16 x, y :
+        :
+        record r :
+        SEQ
+          init.INT16(r[x], -1(INT16))
+          init.INT16(r[y], 27(INT16))
+          check.INT16(r[x], -1(INT16), "FLD30")
+          check.INT16(r[y], 27(INT16), "FLD31")
+        
+        --}}}
+        --{{{  multiple INT32
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            INT32 x, y :
+        :
+        record r :
+        SEQ
+          init.INT32(r[x], -1(INT32))
+          init.INT32(r[y], 27(INT32))
+          check.INT32(r[x], -1(INT32), "FLD40")
+          check.INT32(r[y], 27(INT32), "FLD41")
+        
+        --}}}
+        --{{{  multiple INT64
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            INT64 x, y :
+        :
+        record r :
+        SEQ
+          init.INT64(r[x], -1(INT64))
+          init.INT64(r[y], 27(INT64))
+          check.INT64(r[x], -1(INT64), "FLD50")
+          check.INT64(r[y], 27(INT64), "FLD51")
+        
+        --}}}
+        --{{{  multiple REAL32
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            REAL32 x, y :
+        :
+        record r :
+        SEQ
+          init.REAL32(r[x], -1.25(REAL32))
+          init.REAL32(r[y], 27.7(REAL32))
+          check.REAL32(r[x], -1.25(REAL32), "FLD60")
+          check.REAL32(r[y], 27.7(REAL32), "FLD61")
+        
+        --}}}
+        --{{{  multiple REAL64
+        DATA TYPE record
+          RECORD
+            BYTE dummy :
+            REAL64 x, y :
+        :
+        record r :
+        SEQ
+          init.REAL64(r[x], -1.25(REAL64))
+          init.REAL64(r[y], 27.7(REAL64))
+          check.REAL64(r[x], -1.25(REAL64), "FLD70")
+          check.REAL64(r[y], 27.7(REAL64), "FLD71")
+        
+        --}}}
+    :
+    fields.as.params()
+    --}}}
+    --{{{  bug example
+    PROC bug.example()
+      --{{{  DATA TYPE personnel.data
+      DATA TYPE personnel.data
+        RECORD
+          [10]BYTE    name          :
+          [5][10]BYTE address       :
+          [7]BYTE     postcode      :
+          REAL32      salary        :
+          [3]INT      date.of.birth :
+          [3]INT      starting.date :
+      :
+      --}}}
+      --{{{  PROC init1(personnel.data r, VAL BYTE b)
+      PROC init1(personnel.data r, VAL BYTE b, VAL BYTE garbage)
+        SEQ
+          []BYTE bb RETYPES r :
+          SEQ i = 0 FOR SIZE bb
+            bb[i] := garbage
+          []BYTE bb RESHAPES r[address] :
+          SEQ i = 0 FOR SIZE bb
+            bb[i] := b
+      :
+      --}}}
+      --{{{  PROC init2(personnel.data r, VAL BYTE b)
+      PROC init2(personnel.data r, VAL BYTE b, VAL BYTE garbage)
+        SEQ
+          init1(r, garbage, garbage)
+          ASSERT((SIZE r[name]) = (SIZE r[address][0]))
+          SEQ i = 0 FOR SIZE r[name]
+            r[name][i] := b
+          SEQ i = 0 FOR SIZE r[address]
+            r[address][i] := r[name]
+      :
+      --}}}
+      --{{{  PROC check1(VAL personnel.data r, VAL BYTE b, VAL []BYTE msg)
+      PROC check1(VAL personnel.data r, VAL BYTE b, VAL []BYTE msg)
+        INT wrong :
+        SEQ
+          wrong := 0
+          VAL []BYTE bb RESHAPES r[address] :
+          SEQ i = 0 FOR SIZE bb
+            wrong := wrong + (INT (bb[i] <> b))
+          check(wrong, 0, msg)
+      :
+      --}}}
+      --{{{  PROC check2(VAL personnel.data r, VAL BYTE b, VAL []BYTE msg)
+      PROC check2(VAL personnel.data r, VAL BYTE b, VAL []BYTE msg)
+        INT wrong :
+        SEQ
+          wrong := 0
+          SEQ i = 0 FOR SIZE r[address]
+            SEQ j = 0 FOR SIZE r[address][0]
+              wrong := wrong + (INT (r[address][i][j] <> b))
+          check(wrong, 0, msg)
+      :
+      --}}}
+      SEQ
+        personnel.data r1, r2 :
+        SEQ
+          init1(r1, ' ', 'z')
+          check1(r1, ' ', "EX001")
+          check2(r1, ' ', "EX002")
+          init2(r2, 'A', 'x')
+          check1(r2, 'A', "EX003")
+          check2(r2, 'A', "EX004")
+          check1(r1, ' ', "EX005")
+          check2(r1, ' ', "EX006")
+        [10]personnel.data r :
+        SEQ
+          SEQ j = 0 FOR 10
+            init1(r[j], ' ', 'y')
+          check1(r[0], ' ', "EX101")
+          check2(r[0], ' ', "EX102")
+          init2(r[1], 'A', 'w')
+          check1(r[1], 'A', "EX103")
+          check2(r[1], 'A', "EX104")
+          SEQ j = 0 FOR 10
+            IF
+              j <> 1
+                SEQ
+                  check1(r[j], ' ', "EX105")
+                  check2(r[j], ' ', "EX106")
+              TRUE
+                SKIP
+    :
+    bug.example()
+    --}}}
+    --{{{  REAL constant folding
+    PROC REAL.constant.folding()
+      -- This example is described in "The transputer applications notebook,
+      -- Architecture and Software", section 6.4
+    
+      REAL32 r32 :
+      REAL64 r64 :
+      SEQ
+        r32 := 16777216.0 + 1.0
+        r64 := 16777216.0(REAL64) + 1.0(REAL64)
+        check.REAL32(r32, 16777216.0(REAL32), "REAL00")
+        check.REAL64(r64, 16777217.0(REAL64), "REAL01")
+    :
+    REAL.constant.folding()
+    --}}}
+    finish ()
+:

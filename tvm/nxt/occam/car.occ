@@ -1,0 +1,94 @@
+#INCLUDE "nxt.inc"
+
+--{{{  FUNCTION same.string
+--* Compare two strings for equality.
+-- @param a, b Strings to compare
+-- @return [@code TRUE] if the strings are the same, [@code FALSE] otherwise
+BOOL FUNCTION same.string (VAL []BYTE a, b)
+  BOOL r:
+  VALOF
+    IF
+      (SIZE a) <> (SIZE b)
+        r := FALSE
+      IF i = 0 FOR SIZE a
+        a[i] <> b[i]
+          r := FALSE
+      TRUE
+        r := TRUE
+    RESULT r
+:
+--}}}
+
+
+PROC main ()
+  INT handle:
+  INT port:
+  INITIAL [8]BYTE read IS "        ":
+  TIMER tim:
+  INT t:
+  SEQ
+    nx.display.clear ()
+    -- Set up Bluetooth
+    nx.bt.init ()
+    nx.bt.set.discoverable (TRUE)
+    nx.bt.open.port (port)
+    -- Wait for an incoming connection
+    nx.display.string ("Waiting for connection")
+    INITIAL INT pending IS 0:
+    WHILE pending < 1
+      nx.bt.connection.pending (pending) 
+    nx.bt.accept.connection (TRUE)
+    nx.display.string ("Accepted Connection")
+    nx.bt.connection.established (handle)
+    WHILE handle < 0
+      SEQ
+        tim ? t
+        t := t PLUS 1000
+        tim ? AFTER t
+        nx.bt.connection.established (handle)
+    IF 
+      handle >= 0
+        SEQ
+          nx.display.string ("Connection Established")
+      TRUE  
+        SEQ
+          nx.display.string ("No connection")
+          STOP
+    nx.bt.stream.open (handle)
+    WHILE TRUE
+      SEQ
+        delay.ms (50)
+        nx.bt.stream.read ([ read FOR 1 ])
+        nx.display.clear ()
+        nx.display.string (read)
+        IF
+          same.string (read, "l       ")
+            PAR
+              nx.display.string ("LEFT")
+              nx.motors.rotate (0,  100)
+              nx.motors.rotate (1, -100)
+          same.string (read, "r       ")
+            PAR
+              nx.display.string ("RIGHT")
+              nx.motors.rotate (0, -100)
+              nx.motors.rotate (1,  100)
+          same.string(read, "f       ")
+            PAR
+              nx.display.string ("FORWARD")
+              nx.motors.rotate (0,  100)
+              nx.motors.rotate (1,  100)
+          same.string(read, "b       ")
+            PAR
+              nx.display.string ("BACKWARD")
+              nx.motors.rotate (0, -100)
+              nx.motors.rotate (1, -100)
+          same.string(read, "s       ")
+            PAR
+              nx.display.string ("STOP")
+              nx.motors.stop (0, TRUE)
+              nx.motors.stop (1, TRUE)
+          TRUE
+            SKIP          
+:
+
+

@@ -1,0 +1,226 @@
+--
+--	sdlmatrix.occ -- SDLRaster (dot-)matrix demo
+--	Copyright (C) 2003-2006 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+--{{{  includes
+#INCLUDE "sdlraster.module"
+#INCLUDE "course.module"
+
+--}}}
+--{{{  constants/types
+PROTOCOL BUTTON IS INT; INT; INT:
+
+--}}}
+--{{{  PROC cell (INT t1, t2, t3, t4, left, right, top, bottom, MOBILER BARRIER timer, BOOL running)
+PROC cell (INT t1, t2, t3, t4, left, right, top, bottom, MOBILE BARRIER timer, BOOL running)
+  VAL INT blank IS #404040:
+  INITIAL INT bg IS blank:
+  SEQ
+    t1 := bg
+    t2 := bg
+    t3 := bg
+    t4 := bg
+
+    SEQ i = 0 FOR 4
+      SYNC timer
+
+    INITIAL INT is.blank IS 0:
+    WHILE running
+      SEQ
+        CASE is.blank
+          0
+            IF
+              t1 <> blank
+                is.blank := 1
+              ((top <> blank) OR (left <> blank))
+                is.blank := 1
+              TRUE
+                SKIP
+          1
+            SEQ
+              bg := ((top PLUS left) /\ #FFFFFF) MINUS #080808
+              is.blank := 2
+          2
+            SEQ
+              bg := bg MINUS #111111
+
+        IF
+          (bg /\ #FF0000) < (blank /\ #FF0000)
+            bg := (blank /\ #FF0000) \/ (bg /\ #00FFFF)
+          TRUE
+            SKIP
+        IF
+          (bg /\ #00FF00) < (blank /\ #00FF00)
+            bg := (blank /\ #00FF00) \/ (bg /\ #FF00FF)
+          TRUE
+            SKIP
+        IF
+          (bg /\ #0000FF) < (blank /\ #0000FF)
+            bg := (blank /\ #0000FF) \/ (bg /\ #FFFF00)
+          TRUE
+            SKIP
+
+        IF
+          (bg <= blank) AND (is.blank = 2)
+            SEQ
+              bg := blank
+              is.blank := 0
+          TRUE
+            SKIP
+
+        t1 := bg
+        t2 := bg
+        t3 := bg
+        t4 := bg
+
+        SYNC timer
+:
+--}}}
+--{{{  PROC sdlmatrix.real (CHAN RASTER raster.in?, raster.out!, CHAN BYTE out!, CHAN BUTTON ev.in, BOOL running)
+PROC sdlmatrix.real (CHAN RASTER raster.in?, raster.out!, CHAN BYTE out!, CHAN BUTTON ev.in, BOOL running)
+  #PRAGMA SHARED running
+  INITIAL MOBILE BARRIER b IS MOBILE BARRIER:
+  RASTER r:
+  #PRAGMA SHARED r
+  INT r.w, r.h:
+  SEQ
+    raster.in ? r
+    r.h := SIZE r
+    r.w := SIZE r[0]
+
+    out.string ("raster height = ", 0, out!)
+    out.int (SIZE r, 0, out!)
+    out.string (", raster width = ", 0, out!)
+    out.int (SIZE r[0], 0, out!)
+    out.string ("*n", 0, out!)
+
+    SEQ y = 0 FOR r.h
+      SEQ x = 0 FOR r.w
+        r[y][x] := 0
+
+    SDLRasterUpdateBuf (0)
+
+    FORKING
+      SEQ
+        SEQ y = 0 FOR (r.h / 4) STEP 4
+          SEQ x = 0 FOR (r.w / 4) STEP 4
+            INITIAL INT y IS y + 1:
+            INITIAL INT x IS x + 1:
+            INITIAL INT t.y IS ((y + 4) \ r.h):
+            INITIAL INT b.y IS (((y + r.h) - 4) \ r.h):
+            INITIAL INT l.x IS (((x + r.w) - 4) \ r.w):
+            INITIAL INT r.x IS ((x + 4) \ r.w):
+            SEQ
+              FORK cell (r[y][x], r[y][x+1], r[y+1][x], r[y+1][x+1],
+                         r[y][l.x], r[y][r.x], r[t.y][x], r[b.y][x], b, running)
+
+        INT t:
+        TIMER tim:
+        INITIAL INT i IS 0:
+        INT seed:
+        SEQ
+          tim ? seed
+          seed := ((seed >> 2) + 1) \/ (seed /\ #FF)
+          tim ? t
+          WHILE running
+            SEQ
+              t := t PLUS 30000
+              tim ? AFTER t
+              SDLRasterUpdateBuf (0)
+              #IF FALSE
+              SEQ
+                out ! '.'
+                out ! '*#FF'
+              #ENDIF
+              IF
+                --i = 9
+                --  i := 0
+                i = 10
+                  INT x, y, pix:
+                  SEQ
+                    x, seed := random ((r.w / 4), seed)
+                    y, seed := random ((r.h / 4), seed)
+                    x := (x * 4) + 1
+                    y := (y * 4) + 1
+                    pix, seed := random (#808080, seed)
+                    pix := (pix + #7F7F7F) /\ #FFFFFF
+                    r[y][x] := pix
+                    i := 0
+                TRUE
+                  i := i + 1
+              SYNC b
+              INITIAL BOOL collecting IS TRUE:
+              WHILE collecting
+                PRI ALT
+                  INT x, y, b:
+                  ev.in ? x; y; b
+                    SEQ
+                      -- fixup x and y to be at the cell top-left pixel
+                      x := (x /\ #FFFFFFFC)
+                      y := (y /\ #FFFFFFFC)
+                      r[y+1][x+1] := #FFFFFF00
+                      r[y+1][x+2] := #FFFFFF00
+                      r[y+2][x+1] := #FFFFFF00
+                      r[y+2][x+2] := #FFFFFF00
+                  TRUE & SKIP
+                    collecting := FALSE
+:
+--}}}
+--{{{  PROC button.press.events (CHAN SDLEVENT events?, CHAN BUTTON out!, CHAN INT control!, BOOL running)
+PROC button.press.events (CHAN SDLEVENT events?, CHAN BUTTON out!, CHAN INT control!, BOOL running)
+  INT r:
+  WHILE running
+    SDLEVENT ev:
+    SEQ
+      events ? ev
+      CASE ev[data]
+        EVENT.BUTTON.PRESS
+          out ! SDLEVENT.XPOS(ev); SDLEVENT.YPOS(ev); SDLEVENT.BUTTON(ev)
+        EVENT.QUIT
+          SEQ
+            control ! CTL.SHUTDOWN
+            running := FALSE
+        ELSE
+          SKIP
+:
+--}}}
+--{{{  PROC sdlmatrix (CHAN BYTE kyb?, scr!, err!)
+PROC sdlmatrix (CHAN BYTE kyb?, scr!, err!)
+  INT width, height:
+  BOOL running:
+  #PRAGMA SHARED running
+  SEQ
+    ask.int ("raster width?: ", width, 4, kyb?, scr!)
+    ask.int ("raster height?: ", height, 4, kyb?, scr!)
+    running := TRUE
+
+    CHAN RASTER c, d:
+    CHAN SDLEVENT events:
+    CHAN INT control:
+    PAR
+      SDLRaster ("sdlmatrix", width, height, 1, d?, c!, events!, control?)
+
+      CHAN BUTTON btn.events:
+      PAR
+        sdlmatrix.real (c?, d!, scr!, btn.events?, running)
+        button.press.events (events?, btn.events!, control!, running)
+:
+--}}}
+
+

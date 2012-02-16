@@ -1,0 +1,85 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 21/05/90"
+#COMMENT "(c) Copyright INMOS Limited 1989, 1990"
+#INCLUDE "hostio.inc"
+#USE "solib.lib"
+#USE "convert.lib"
+
+--* Read a 64-bit integer in ( two's complement ) hexadecimal form from
+-- the keyboard, and to echo it to standard out.
+--
+-- The hexadecimal number must begin with one of '#', '$' or '%'; a
+-- sign is not allowed ( nor necessary since the most significant bit
+-- indicates the sign ). A '#' and '$' mean exactly the same thing: the
+-- following digits form a hex integer. A '%' means add the given hex
+-- integer to MOSTNEG INT64 using modulo arithmetic to give the result.
+-- Both upper and lower case hex digits are permissible. The number
+-- typed at the keyboard must be terminated by pressing 'RETURN'.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param n if error is FALSE, the value of the hexadecimal number
+--   read; otherwise undefined
+-- @param error FALSE if everything was in order; TRUE otherwise: 1) if
+--   the integer overflows the INT64 range; 2) if there is a non-hex
+--   character in the string read from the keyboard ( other than #, $,
+--   or % in the first character position )
+PROC so.read.echo.hex.int64 (CHAN OF SP fs, ts, INT64 n, BOOL error)
+  --{{{  history
+  -- V1.1  bug fix TS/0052 SRH 21-May-90; lower case hex digits allowed;
+  -- also allowed '%' prefix possibility and gave string an extra byte
+  -- so that the user could enter a full 64-bit hex number.
+  --}}}
+
+  [17]BYTE string : -- 17 = 16 + 1, the 1 being for the #, $ or %
+  INT len :
+  BYTE result :
+
+  SEQ
+    so.read.echo.line (fs, ts, len, string, result)
+    IF
+      (result = spr.ok) AND (len > 0) AND
+      ((string[0] = '#') OR (string[0] = '$') OR (string[0] = '%'))
+        SEQ
+          --{{{  convert any lower case hex digits to upper case SRH 21/05/90
+          SEQ i = 1 FOR ( len - 1 ) -- assumes len > 0
+            IF  -- assumes ASCII
+              ( 'a' <= string[i] ) AND ( string[i] <= 'f' )
+                string[i] := BYTE( (INT string[i]) -
+                                   ( (INT 'a') - (INT 'A') ) )
+              TRUE
+                SKIP
+          --}}}
+          STRINGTOHEX64 (error, n, [string FROM 1 FOR len - 1])
+          --{{{  deal with % if necessary - SRH 21-May-90
+          IF
+            string[0] = '%'
+              --n := n PLUS (MOSTNEG INT64)  -- can't overflow even if error
+              [2]INT32 N RETYPES n :
+              N[1] := N[1] PLUS (MOSTNEG INT32) -- save calling INT64PLUS on T2's
+            TRUE  -- ( string[0] = '#' ) OR ( string[0] = '$' )
+              SKIP
+          --}}}
+      TRUE
+        error := TRUE
+:

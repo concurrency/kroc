@@ -1,0 +1,107 @@
+-- version control marker $Id: cgreal.occ,v 1.1 1995/10/10 13:03:56 djb1 Exp $
+--{{{  PROC check.INT16 (VAL INT16 val1, val2, VAL []BYTE test.type)
+PROC check.INT16 (VAL INT16 val1, val2, VAL []BYTE test.type)
+  INT key :
+  SEQ
+    IF
+      val1 = val2
+        completed.ok (test.type)
+      TRUE
+        SEQ
+          failed.test(test.type)
+          writehex (INT val1, 4)
+          writes ("  ")
+          writehex (INT val2, 4)
+          in (key)
+          error.count := error.count + 1
+:
+--}}}
+--{{{  PROC print.failed.values(VAL []BYTE test.type, VAL []INT x1, x2)
+PROC print.failed.values(VAL []BYTE test.type, VAL []INT x1, x2)
+  PROC print.value(VAL []INT x)
+    SEQ i = 0 FOR SIZE x
+      writehex (x [((SIZE x) - 1) - i], nibbles.per.INT)
+  :
+  INT key :
+  SEQ
+    failed.test(test.type)
+    print.value(x1)
+    writes("  ")
+    print.value(x2)
+    in (key)
+    error.count := error.count + 1
+:
+--}}}
+--{{{  PROC check.INT32 (VAL INT32 val1, val2, VAL []BYTE test.type)
+PROC check.INT32 (VAL INT32 val1, val2, VAL []BYTE test.type)
+  IF
+    val1 = val2
+      completed.ok (test.type)
+    TRUE
+      VAL []INT i.val1 RETYPES val1 :
+      VAL []INT i.val2 RETYPES val2 :
+      print.failed.values(test.type, i.val1, i.val2)
+:
+--}}}
+--{{{  PROC check.INT64 (VAL INT64 val1, val2, VAL []BYTE test.type)
+PROC check.INT64 (VAL INT64 val1, val2, VAL []BYTE test.type)
+  IF
+    val1 = val2
+      completed.ok (test.type)
+    TRUE
+      VAL []INT i.val1 RETYPES val1 :
+      VAL []INT i.val2 RETYPES val2 :
+      print.failed.values(test.type, i.val1, i.val2)
+:
+--}}}
+--{{{  old out.REAL32 and out.REAL64
+--PROC outREAL32 (VAL REAL32 Real)
+--  SKIP
+--:
+--PROC outREAL64 (VAL REAL64 real)
+--  SKIP
+--:
+--}}}
+--{{{  PROC check.REAL32 (VAL REAL32 val1, val2, VAL []BYTE test.type)
+PROC check.REAL32 (VAL REAL32 val1, val2, VAL []BYTE test.type)
+  IF
+    val1 = val2
+      completed.ok (test.type)
+    TRUE
+      VAL []INT i.val1 RETYPES val1 :
+      VAL []INT i.val2 RETYPES val2 :
+      print.failed.values(test.type, i.val1, i.val2)
+:
+--}}}
+--{{{  PROC check.REAL64 (VAL REAL64 val1, val2, VAL []BYTE test.type)
+PROC check.REAL64 (VAL REAL64 val1, val2, VAL []BYTE test.type)
+  IF
+    val1 = val2
+      completed.ok (test.type)
+    TRUE
+      VAL []INT i.val1 RETYPES val1 :
+      VAL []INT i.val2 RETYPES val2 :
+      print.failed.values(test.type, i.val1, i.val2)
+:
+--}}}
+--{{{  PROC check.string (VAL []BYTE val1, val2, VAL []BYTE test.type)
+PROC check.string (VAL []BYTE val1, val2, VAL []BYTE test.type)
+  INT key:
+  IF
+    (SIZE val1) <> (SIZE val2)
+      SEQ
+        failed.test (test.type)
+        writes (" string size mismatch")
+        in (key)
+        error.count := error.count + 1
+    IF i = 0 FOR SIZE val1
+      val1[i] <> val2[i]
+        SEQ
+          failed.test (test.type)
+          writes (" strings not equal")
+          in (key)
+          error.count := error.count + 1
+    TRUE
+      completed.ok (test.type)
+:
+--}}}

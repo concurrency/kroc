@@ -1,0 +1,6 @@
+#INCLUDE "raster.module"
+
+PROC main ()
+  RASTER r:
+  r := MOBILE [20][20]INT
+:

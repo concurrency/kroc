@@ -1,0 +1,469 @@
+--
+--	video.occ -- video-4-linux(-2) frame-grabber
+--	Copyright (C) 2008 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+--** @module video
+
+--{{{  includes
+#INCLUDE "raster.module"
+#INCLUDE "video.inc"
+--}}}
+--{{{  private structures
+
+DATA TYPE VIDEO.DEVICE IS INT:
+
+--}}}
+--{{{  external C functions
+#PRAGMA EXTERNAL "PROC C.video.initstruct (RESULT VIDEO.DEVICE vdev) = 0"
+#PRAGMA EXTERNAL "PROC B.video.open (VAL VIDEO.DEVICE vdev, VAL []BYTE fn, RESULT BOOL ok) = 3"
+#PRAGMA EXTERNAL "PROC C.video.close (VAL VIDEO.DEVICE vdev, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.freestruct (RESULT VIDEO.DEVICE vdev) = 0"
+
+-- #PRAGMA EXTERNAL "PROC B.video.v4l2.readrgbframe (VAL INT fd, [][]INT r) = 3"
+#PRAGMA EXTERNAL "PROC C.video.identity (VAL VIDEO.DEVICE vdev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.numinputs (VAL VIDEO.DEVICE vdev, RESULT INT num) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getinputs (VAL VIDEO.DEVICE vdev, []VIDEO.INPUT inputs) = 0"
+#PRAGMA EXTERNAL "PROC C.video.currentinput (VAL VIDEO.DEVICE vdev, RESULT INT id) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setinput (VAL VIDEO.DEVICE vdev, VIDEO.INPUT input, RESULT BOOL ok) = 0"
+
+#PRAGMA EXTERNAL "PROC C.video.getframeinfo (VAL VIDEO.DEVICE vdev, RESULT VIDEO.FRAMEINFO frameinfo) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setframeinfo (VAL VIDEO.DEVICE vdev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.getpicture (VAL VIDEO.DEVICE vdev, RESULT VIDEO.PICTURE picture) = 0"
+#PRAGMA EXTERNAL "PROC C.video.setpicture (VAL VIDEO.DEVICE vdev, VIDEO.PICTURE picture, RESULT BOOL ok) = 0"
+
+#PRAGMA EXTERNAL "PROC C.video.initio (VAL VIDEO.DEVICE vdev, VAL BOOL oneshot, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok) = 0"
+#PRAGMA EXTERNAL "PROC C.video.shutdownio (VAL VIDEO.DEVICE vdev) = 0"
+
+#PRAGMA EXTERNAL "PROC B.video.grabframe (VAL VIDEO.DEVICE vdev, VAL BOOL raw, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok) = 3"
+
+--}}}
+
+
+
+--{{{  PROC video.server (...)
+--* This process implements a video server for a particular V4L device.
+-- Once initialised, this will output either 'ok' or 'error' to the client.
+PROC video.server (CT.VIDEO? vsvr, VAL []BYTE device)
+  --{{{  PROC video.opendev (...)
+  --* Opens a video device.
+  -- @private
+  PROC video.opendev (VAL []BYTE fname, RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
+    SEQ
+      C.video.initstruct (dev)
+      B.video.open (dev, fname, ok)
+      IF
+        ok
+          SKIP
+        TRUE
+          C.video.freestruct (dev)
+  :
+  --}}}
+  --{{{  PROC video.closedev (...)
+  --* Closes a video device.
+  -- @private
+  PROC video.closedev (RESULT VIDEO.DEVICE dev, RESULT BOOL ok)
+    SEQ
+      C.video.close (dev, ok)
+      C.video.freestruct (dev)
+  :
+  --}}}
+  --{{{  PROC video.identity (...)
+  --* Identifies a video device.
+  -- @private
+  PROC video.identity (VAL VIDEO.DEVICE dev, RESULT VIDEO.IDENTITY ident, RESULT BOOL ok)
+    SEQ
+      C.video.identity (dev, ident, ok)
+  :
+  --}}}
+  --{{{  PROC video.getcaminputs (...)
+  --* Gets information about video inputs.
+  -- @private
+  PROC video.getinputs (VAL VIDEO.DEVICE dev, RESULT MOBILE []VIDEO.INPUT inputs)
+    INT ninputs:
+    SEQ
+      C.video.numinputs (dev, ninputs)
+      inputs := MOBILE [ninputs]VIDEO.INPUT
+
+      IF
+        ninputs > 0
+          C.video.getinputs (dev, inputs)
+        TRUE
+          SKIP
+  :
+  --}}}
+  --{{{  PROC video.getcaminputs (...)
+  --* Gets information about video inputs.
+  -- @private
+  PROC video.currentinput (VAL VIDEO.DEVICE dev, RESULT INT id)
+    SEQ
+      C.video.currentinput (dev, id)
+  :
+  --}}}
+  --{{{  PROC video.setinput (...)
+  --* Sets the particular video input to use.
+  -- @private
+  PROC video.setinput (VAL VIDEO.DEVICE dev, VIDEO.INPUT input, RESULT BOOL ok)
+    SEQ
+      C.video.setinput (dev, input, ok)
+  :
+  --}}}
+  --{{{  PROC video.getframeinfo (...)
+  --* Gets the current frame (width, height, etc.)
+  -- @private
+  PROC video.getframeinfo (VAL VIDEO.DEVICE dev, RESULT VIDEO.FRAMEINFO frameinfo)
+    SEQ
+      C.video.getframeinfo (dev, frameinfo)
+  :
+  --}}}
+  --{{{  PROC video.setframeinfo (...)
+  --* Sets the current frame (width, height, etc.)
+  -- @private
+  PROC video.setframeinfo (VAL VIDEO.DEVICE dev, VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
+    SEQ
+      C.video.setframeinfo (dev, frameinfo, ok)
+  :
+  --}}}
+  --{{{  PROC video.getpicture (...)
+  --* Gets the current picture properties (brightness, etc.)
+  -- @private
+  PROC video.getpicture (VAL VIDEO.DEVICE dev, RESULT VIDEO.PICTURE picture)
+    SEQ
+      C.video.getpicture (dev, picture)
+  :
+  --}}}
+  --{{{  PROC video.setpicture (...)
+  --* Sets the current picture properties (brightness, etc.)
+  -- @private
+  PROC video.setpicture (VAL VIDEO.DEVICE dev, VIDEO.PICTURE picture, RESULT BOOL ok)
+    SEQ
+      C.video.setpicture (dev, picture, ok)
+  :
+  --}}}
+  --{{{  PROC video.initio (...)
+  --* Initialises video I/O.
+  -- @private
+  PROC video.initio (VAL VIDEO.DEVICE dev, VAL BOOL oneshot, RESULT VIDEO.FRAMEINFO frameinfo, RESULT BOOL ok)
+    SEQ
+      C.video.initio (dev, oneshot, frameinfo, ok)
+  :
+  --}}}
+  --{{{  PROC video.shutdownio (...)
+  --* Shuts down video I/O.
+  -- @private
+  PROC video.shutdownio (VAL VIDEO.DEVICE dev)
+    SEQ
+      C.video.shutdownio (dev)
+  :
+  --}}}
+  --{{{  PROC video.grabframe (...)
+  --* Grabs a new video frame from the input.
+  -- @private
+  PROC video.grabframe (VAL VIDEO.DEVICE dev, VAL BOOL raw, VIDEO.FRAMEINFO finf, []BYTE buffer, RESULT BOOL ok)
+    SEQ
+      B.video.grabframe (dev, raw, finf, buffer, ok)
+  :
+  --}}}
+  --{{{  PROC calc.frame.size (...)
+  --* Calculates image size
+  -- @private
+  PROC calc.frame.bytes (VIDEO.FRAMEINFO finfo)
+    CASE INT16 finfo[format]
+      VIDEO.PAL.INVALID
+        finfo[bytes] := 0
+      VIDEO.PAL.GRAY
+        finfo[bytes] := finfo[width] * finfo[height]
+      VIDEO.PAL.YUV420P
+        finfo[bytes] := ((finfo[width] * finfo[height]) * 3) / 2
+      VIDEO.PAL.YUYV
+        finfo[bytes] := (finfo[width] * finfo[height]) * 2
+      VIDEO.PAL.YUV422
+        finfo[bytes] := (finfo[width] * finfo[height]) * 2
+      VIDEO.PAL.RGB24
+        finfo[bytes] := (finfo[width] * finfo[height]) * 3
+      VIDEO.PAL.RGB32
+        finfo[bytes] := (finfo[width] * finfo[height]) * 4
+      ELSE
+        finfo[bytes] := 0
+  :
+  --}}}
+  --{{{  PROC video.capture (...)
+  --* Streams video frames.
+  -- @private
+  PROC video.capture (VAL VIDEO.DEVICE vdev, VAL BOOL raw, RESULT VIDEO.FRAMEINFO finfo, CHAN BOOL stop?, CHAN P.VIDEO.RESP out!)
+    INITIAL BOOL running IS TRUE:
+    INITIAL BOOL error IS FALSE:
+    WHILE running
+      SEQ
+        IF
+          raw
+            MOBILE []BYTE frame:
+            SEQ
+              frame := MOBILE [finfo[bytes]]BYTE
+              video.grabframe (vdev, raw, finfo, frame, running)
+              IF
+                running
+                  out ! frame; frame
+                TRUE
+                  SEQ
+                    out ! error; "frame capture failed"
+                    error := TRUE
+          TRUE
+            RASTER r:
+            SEQ
+              r := MOBILE [finfo[height]][finfo[width]]INT
+              []BYTE frame RETYPES r:
+              video.grabframe (vdev, raw, finfo, frame, running)
+              IF
+                running
+                  out ! raster; r
+                TRUE
+                  SEQ
+                    out ! error; "frame capture failed"
+                    error := TRUE
+        IF
+          error
+            stop ? running
+          TRUE
+            PRI ALT
+              stop ? running
+                out ! ok
+              TRUE & SKIP
+                SKIP
+  :
+  --}}}
+
+  MOBILE []BYTE error:
+  MOBILE []VIDEO.INPUT inputs:
+  VIDEO.IDENTITY ident:
+  VIDEO.DEVICE vdev:
+  BOOL ok:
+  SEQ
+    video.opendev (device, vdev, ok)
+    #PRAGMA DEFINED vdev
+    IF
+      ok
+        SEQ
+          video.identity (vdev, ident, ok)
+          IF
+            ok
+              SEQ
+                video.getinputs (vdev, inputs)
+                IF
+                  (SIZE inputs) > 0
+                    ok := TRUE
+                  TRUE
+                    error := "no inputs on this device"
+            TRUE
+              error := "failed to identify video device"
+      TRUE
+        error := "failed to open video device"
+
+    IF
+      ok
+        VIDEO.FRAMEINFO finfo:
+        INT selected.input:
+        SEQ
+          #PRAGMA DEFINED inputs
+          video.currentinput (vdev, selected.input)
+          #PRAGMA DEFINED selected.input
+          video.getframeinfo (vdev, finfo)
+          #PRAGMA DEFINED finfo
+          calc.frame.bytes (finfo)
+
+          INITIAL BOOL io.ready IS FALSE:
+          INITIAL BOOL running IS TRUE:
+          WHILE running
+            PRI ALT
+              vsvr[req] ? CASE
+                get.identity
+                  vsvr[resp] ! identity; ident
+                get.inputs
+                  MOBILE []VIDEO.INPUT copy:
+                  SEQ
+                    copy := MOBILE [SIZE inputs]VIDEO.INPUT
+                    #PRAGMA DEFINED copy
+                    SEQ i = 0 FOR SIZE inputs
+                      copy[i] := inputs[i]
+                    vsvr[resp] ! inputs; copy
+                get.current.input
+                  vsvr[resp] ! input.number; selected.input
+                INT id:
+                set.input; id
+                  IF
+                    selected.input = id
+                      vsvr[resp] ! ok
+                    IF i = 0 FOR SIZE inputs
+                      inputs[i][id] = id
+                        SEQ
+                          video.setinput (vdev, inputs[i], ok)
+                          IF
+                            ok
+                              SEQ
+                                selected.input := id
+                                vsvr[resp] ! ok
+                            TRUE
+                              vsvr[resp] ! error; "failed to select specified input"
+                    TRUE
+                      vsvr[resp] ! error; "failed to find specified input" 
+                get.picture
+                  VIDEO.PICTURE pict:
+                  SEQ
+                    video.getpicture (vdev, pict)
+                    vsvr[resp] ! picture; pict
+                VIDEO.PICTURE pict:
+                set.picture; pict
+                  SEQ
+                    video.setpicture (vdev, pict, ok)
+                    IF
+                      ok
+                        vsvr[resp] ! picture; pict
+                      TRUE
+                        vsvr[resp] ! error; "failed to set picture properties"
+                get.frameinfo
+                  vsvr[resp] ! frameinfo; finfo
+                set.frameinfo; finfo
+                  SEQ
+                    IF
+                      io.ready
+                        video.shutdownio (vdev)
+                      TRUE
+                        SKIP
+                    video.setframeinfo (vdev, finfo, ok)
+                    video.getframeinfo (vdev, finfo)
+                    calc.frame.bytes (finfo)
+                    IF
+                      ok
+                        vsvr[resp] ! frameinfo; finfo
+                      TRUE
+                        vsvr[resp] ! error; "failed to set frame properties"
+                BOOL raw:
+                grab.frame; raw
+                  SEQ
+                    IF
+                      io.ready
+                        SKIP
+                      TRUE
+                        video.initio (vdev, TRUE, finfo, io.ready)
+                    IF
+                      io.ready
+                        SEQ
+                          IF
+                            raw
+                              MOBILE []BYTE frame:
+                              SEQ
+                                frame := MOBILE [finfo[bytes]]BYTE
+                                video.grabframe (vdev, raw, finfo, frame, ok)
+                                IF
+                                  ok
+                                    vsvr[resp] ! frame; frame
+                                  TRUE
+                                    SKIP
+                            TRUE
+                              RASTER r:
+                              SEQ
+                                r := MOBILE [finfo[height]][finfo[width]]INT
+                                []BYTE frame RETYPES r:
+                                video.grabframe (vdev, raw, finfo, frame, ok)
+                                IF
+                                  ok
+                                    vsvr[resp] ! raster; r
+                                  TRUE
+                                    SKIP
+                          IF
+                            ok
+                              SKIP
+                            TRUE
+                              vsvr[resp] ! error; "failed to capture frame"
+                      TRUE
+                        vsvr[resp] ! error; "failed to start capture"
+                BOOL raw:
+                capture; raw
+                  SEQ
+                    IF
+                      io.ready
+                        video.shutdownio (vdev)
+                      TRUE
+                        SKIP
+                    
+                    video.initio (vdev, FALSE, finfo, io.ready)
+                    IF
+                      io.ready
+                        SEQ
+                          CHAN BOOL stop:
+                          PAR
+                            video.capture (vdev, raw, finfo, stop?, vsvr[resp]!)
+                            SEQ
+                              vsvr[req] ? CASE stop
+                              stop ! FALSE
+                          video.shutdownio (vdev)
+                          io.ready := FALSE
+                      TRUE
+                        vsvr[resp] ! error; "failed to start capture"
+                stop
+                  vsvr[resp] ! error; "not running"
+              CT.VIDEO! cli:
+              vsvr[return] ? cli
+                SEQ
+                  running := FALSE
+                  IF
+                    io.ready
+                      video.shutdownio (vdev)
+                    TRUE
+                      SKIP
+      TRUE
+        INITIAL BOOL running IS TRUE:
+        WHILE running
+          PRI ALT
+            vsvr[req] ? CASE
+              get.identity
+                vsvr[resp] ! error; CLONE error
+              get.inputs
+                vsvr[resp] ! error; CLONE error
+              get.current.input
+                vsvr[resp] ! error; CLONE error
+              INT id:
+              set.input; id
+                vsvr[resp] ! error; CLONE error
+              get.picture
+                vsvr[resp] ! error; CLONE error
+              VIDEO.PICTURE pict:
+              set.picture; pict
+                vsvr[resp] ! error; CLONE error
+              get.frameinfo
+                vsvr[resp] ! error; CLONE error
+              BOOL raw:
+              grab.frame; raw
+                vsvr[resp] ! error; CLONE error
+              BOOL raw:
+              capture; raw
+                vsvr[resp] ! error; CLONE error
+              stop
+                vsvr[resp] ! error; CLONE error
+            CT.VIDEO! cli:
+            vsvr[return] ? cli
+              running := FALSE
+
+    IF
+      vdev <> 0
+        video.closedev (vdev, ok)
+      TRUE
+        SKIP
+:
+--}}}
+
+

@@ -1,0 +1,114 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module maths
+
+#OPTION "V"  -- no vector space
+#COMMENT "Floating point maths library, V1.1 27/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#INCLUDE "mathhdr.inc"
+
+--{{{  history
+-- V1.0 1-Jul-88
+-- Added OPTION "V"; V1.1 27-Mar-90 SRH
+--}}}
+--{{{  DALOG
+--* Double-precision natural logarithm.
+--
+-- @param X Input value
+-- @return Natural logarithm of X
+REAL64 FUNCTION DALOG (VAL REAL64 X)
+
+  REAL64 RWork :
+  VALOF
+    IF
+      DNOTFINITE (X)
+        --{{{  NaN or Inf
+        IF
+          DISNAN (X) -- NaN
+            RWork := X   -- transmit NaN
+          TRUE       -- Inf
+            RWork := Dundefined.NaN
+        --}}}
+      X <= DZero  -- X is negative
+        RWork := Dundefined.NaN
+      TRUE
+        REAL64 XWork :
+        INT N :
+        SEQ
+          N, XWork := DFLOATING.UNPACK (X)
+          XWork := DDIVBY2 (XWork)  -- to map XWork into the range [0.5, 1.0)
+          --{{{  Reduced Log
+          VAL REAL64 C0 RETYPES #3FE6A09E667F3BCD(INT64) : -- SQRT(0.5)
+          VAL A2 IS -7.8956112887491257267E-1(REAL64) :
+          VAL A1 IS  1.6383943563021534222E+1(REAL64) :
+          VAL A0 IS -6.4124943423745581147E+1(REAL64) :
+          VAL B2 IS -3.5667977739034646171E+1(REAL64) :
+          VAL B1 IS  3.1203222091924532844E+2(REAL64) :
+          VAL B0 IS -7.6949932108494879777E+2(REAL64) :
+          REAL64 Z :
+          SEQ
+            IF
+              XWork > C0
+                SEQ
+                  Z := ((XWork - DHalf) - DHalf) / ((XWork * DHalf) + DHalf)
+                  N := N + 1              -- to ensure N corresponds
+              TRUE
+                VAL REAL64 ZNum IS XWork - DHalf :
+                Z := ZNum / ((ZNum * DHalf) + DHalf)
+            VAL W IS Z * Z :
+            RWork := Z+(Z*(((((((A2*W)+A1)*W)+A0)*W)/(((((W+B2)*W)+B1)*W)+B0))))
+          --}}}
+          IF
+            N = 0
+              SKIP
+            TRUE
+              --{{{  C1, C2 : C1 + C2 = Ln(2) to extra precision
+              VAL REAL64 C1 RETYPES #3FE6300000000000(INT64) :
+              VAL REAL64 C2 RETYPES #BF2BD0105C610CA8(INT64) :
+              --}}}
+              VAL RealN IS REAL64 ROUND N :
+              RWork := ( RWork + (RealN * C2)) + (RealN * C1)
+    RESULT RWork
+:
+--}}}
+--{{{  DALOG10
+--* Double-precision base-10 logarithm.
+--
+-- @param X Input value
+-- @return Base-10 logarithm of X
+REAL64 FUNCTION DALOG10 (VAL REAL64 X)
+
+  REAL64 RWork :
+  VALOF
+    -- LogE = 0.434294481903251816667932416748953983187675476074218750,
+    -- which is the closest IEEE double precision number to the
+    -- exact  0.43429448190325182765....
+    VAL REAL64 LogE RETYPES #3FDBCB7B1526E50E(INT64) :
+    REAL64 NLog :
+    SEQ
+      NLog := DALOG (X)
+      IF
+        DISNAN (NLog)
+          RWork := NLog -- transmit NaN
+        TRUE
+          RWork := NLog * LogE
+    RESULT RWork
+:
+--}}}

@@ -1,0 +1,54 @@
+
+--** Bugs.
+--
+--  This process contains many syntactic errors.  Once you have corrected
+--  those and made it compile, you have to fix the semantic errors to get
+--  it to work without crashing.  What is supposed to happen is that the
+--  process echoes capital letters once, lower case letters three times
+--  and digits five times ... anything else should be ignored.
+--
+--  Note: comments in occam-pi run from "[@code --]" to the end of the line.
+--  Most of the comments in this file are in the formal style needed by
+--  the [@link https://www.cs.kent.ac.uk/research/groups/sys/wiki/OccamDoc
+--  occamdoc] tool (for producing HTML documentation).
+--
+--  To (try to) compile this process:
+--
+--  [@text
+--
+--    kroc bugs.occ
+--
+--  ]
+
+
+#INCLUDE "course.module"   -- supplies the constant FLUSH (used below)
+
+
+--* The main process.
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+--
+PROC bugs (CHAN BYTE keyboard?, screen?, error!)
+  WHILE FALSE
+   INT ch
+     keyboard ? ch
+     IF ('A' <= ch) AND (ch <= 'Z')
+        SEQ
+          scr ! ch              -- echo ch once
+          scr ! FLUSH           -- and force it out
+      ('a' <= ch) AND (ch <= 'z')
+        SEQ
+          scr ! ch              -- echo ch three times
+          scr ! ch
+          scr ! ch
+          scr ! FLUSH           -- and force it out
+      ('0' <= ch) AND (ch <= '9')
+        PAR
+          scr ! ch              -- echo ch five times
+          scr ! ch
+          scr ! ch
+          scr ! ch
+          scr ! ch
+          scr ! FLUSH           -- and force it out
+:

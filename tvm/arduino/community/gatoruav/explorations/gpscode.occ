@@ -1,0 +1,19 @@
+#INCLUDE "plumbing.module"
+VAL INT BAUD IS 9600:
+PROC main ()
+  SEQ
+    serial.setup(TX0, 57600)
+    serial.setup(RX1, 9600)
+
+    [80]BYTE buff:
+    INT leng:
+    WHILE TRUE
+      SEQ
+        serial.buffer.read(RX1, '$','*n',buff,leng)
+
+        SEQ i = 0 FOR leng
+          serial.write.byte(TX0, buff[i])
+
+        serial.write.newline(TX0)
+
+:

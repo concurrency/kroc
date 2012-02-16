@@ -1,0 +1,741 @@
+--
+--	game-room.occ -- room code
+--	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "types.inc"
+#INCLUDE "config.inc"
+
+#USE "game-utils"
+
+
+--{{{  PROC move.new.client (SHARED CT.ROOMLINK! link, MOBILE []BYTE name, CT.CLIENT! cli)
+PROC move.new.client (SHARED CT.ROOMLINK! link, MOBILE []BYTE name, CT.CLIENT! cli)
+  CLAIM link
+    link[in] ! new.client; name; cli
+:
+--}}}
+--{{{  PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOMACK! local.ack)
+PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOMACK! local.ack)
+  MOBILE []SHARED CT.ROOMLINK! clinks:
+  [4]BOOL link.ok:
+  INT nexits:
+
+  MOBILE []GSTR desclines:
+  INT ndesclines:
+
+  INT nclients:
+  MOBILE []CT.CLIENT! people:
+  MOBILE []GSTR pnames:
+  MOBILE []BOOL people.ok:
+
+  INT nobjects:
+  MOBILE []CT.OBJECT! objects:
+  MOBILE []GSTR onames:
+  MOBILE []BOOL objects.ok:
+
+  SHARED CT.ROOMLINK! in.link:
+  CT.ROOMLINK? in:
+  
+  [128]BYTE t.buf:
+  INT t.len:
+  SEQ
+    --{{{  initialise
+    in, in.link := MOBILE CT.ROOMLINK
+
+    clinks := MOBILE [4]SHARED CT.ROOMLINK!
+
+    SEQ i = 0 FOR 4
+      link.ok[i] := FALSE
+    #PRAGMA DEFINED clinks
+    nexits := 0
+
+    -- room 0 must be able to hold everybody
+    IF
+      (roomno = 0) AND (##MAX.USERS > ##MAX.USERS.PER.ROOM)
+        nclients := ##MAX.USERS
+      TRUE
+        nclients := ##MAX.USERS.PER.ROOM
+    people := MOBILE [nclients]CT.CLIENT!
+    pnames := MOBILE [nclients]GSTR
+    people.ok := MOBILE [nclients]BOOL
+    SEQ i = 0 FOR nclients
+      SEQ
+        people.ok[i] := FALSE
+        pnames[i][slen] := 0
+
+    nobjects := ##MAX.OBJECTS.PER.ROOM
+    objects := MOBILE [nobjects]CT.OBJECT!
+    onames := MOBILE [nobjects]GSTR
+    objects.ok := MOBILE [nobjects]BOOL
+    SEQ i = 0 FOR nobjects
+      SEQ
+        objects.ok[i] := FALSE
+        onames[i][slen] := 0
+
+    --}}}
+    --{{{  read room description
+    CLAIM to.game
+      SEQ
+        ndesclines := 0
+        to.game[in] ! read.room.desc; name
+        INITIAL BOOL done IS FALSE:
+        WHILE NOT done
+          to.game[out] ? CASE
+            MOBILE []BYTE str:
+            string; str
+              ndesclines := ndesclines + 1
+            end.of.list
+              done := TRUE
+    IF
+      ndesclines > 0
+        SEQ
+          desclines := MOBILE [ndesclines + 1]GSTR
+          CLAIM to.game
+            SEQ
+              ndesclines := 0
+              to.game[in] ! read.room.desc; name
+              INITIAL BOOL done IS FALSE:
+              WHILE (NOT done) AND (ndesclines < (SIZE desclines))
+                to.game[out] ? CASE
+                  MOBILE []BYTE str:
+                  string; str
+                    INITIAL INT slen IS SIZE str:
+                    SEQ
+                      [desclines[ndesclines][str] FOR slen] := [str FOR slen]
+                      desclines[ndesclines][slen] := slen
+                      ndesclines := ndesclines + 1
+                  end.of.list
+                    done := TRUE
+      TRUE
+        SKIP
+    --}}}
+    --{{{  attach room to game
+    local.ack[link] ! roomno; in.link
+    --CLAIM to.game
+    --  to.game[in] ! attach.room; roomno; in.link
+    --}}}
+
+    --{{{  local message handing
+    PROC enter.msg (VAL []BYTE msg, VAL INT notcli)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND (i <> notcli)
+            people[i][s.in] ! enter.room; msg
+          TRUE
+            SKIP
+    :
+    PROC leave.msg (VAL []BYTE name, VAL INT dir, VAL INT notcli)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND (i <> notcli)
+            people[i][s.in] ! leaving.room; name; dir
+          TRUE
+            SKIP
+    :
+    PROC drop.msg (VAL []BYTE who, VAL []BYTE obj, VAL INT notcli)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND (i <> notcli)
+            people[i][s.in] ! drop.object; who; obj
+          TRUE
+            SKIP
+    :
+    PROC all.msg (VAL []BYTE msg, VAL INT notcli)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND (i <> notcli)
+            people[i][s.in] ! genmsg; msg
+          TRUE
+            SKIP
+    :
+    PROC all.msg2 (VAL []BYTE msg, VAL INT notcli1, notcli2)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND ((i <> notcli1) AND (i <> notcli2))
+            people[i][s.in] ! genmsg; msg
+          TRUE
+            SKIP
+    :
+    PROC one.msg (VAL []BYTE pname, msg)
+      IF
+        IF i = 0 FOR nclients
+          people.ok[i] AND ([pnames[i][str] FOR pnames[i][slen]] = pname)
+            people[i][s.in] ! genmsg; msg
+        TRUE
+          SKIP
+    :
+    PROC onen.msg (VAL []BYTE msg, VAL INT pnum)
+      IF
+        people.ok[pnum]
+          people[pnum][s.in] ! genmsg; msg
+        TRUE
+          SKIP
+    :
+    PROC say.msg (VAL []BYTE pname, msg, VAL INT notcli)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND (i <> notcli)
+            people[i][s.in] ! say.room; pname; msg
+          TRUE
+            SKIP
+    :
+    PROC action.msg (VAL []BYTE pname, msg, VAL INT notcli)
+      SEQ i = 0 FOR nclients
+        IF
+          people.ok[i] AND (i <> notcli)
+            people[i][s.in] ! action.room; pname; msg
+          TRUE
+            SKIP
+    :
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        --{{{  debug
+        #IF DEFINED (DEBUG)
+        SEQ
+          trace.s ("room() loop-start: ")
+          trace.s (name)
+          trace.s (" num ")
+          trace.i (roomno)
+          trace.s ("*n")
+        #ENDIF
+        --}}}
+        PRI ALT
+          in[in] ? CASE
+            CT.CLIENT! t.cli:
+            MOBILE []BYTE t.name:
+            new.client; t.name; t.cli
+              --{{{  incoming client
+              INT cs:
+              SEQ
+                --{{{  debug
+                #IF DEFINED (DEBUG)
+                SEQ
+                  trace.s ("room() new.client: ")
+                  trace.s (name)
+                  trace.s (" num ")
+                  trace.i (roomno)
+                  trace.s ("*n")
+                #ENDIF
+                --}}}
+                IF
+                  IF i = 0 FOR nclients
+                    people.ok[i] = FALSE
+                      INITIAL INT tslen IS SIZE t.name:
+                      SEQ
+                        people.ok[i] := TRUE
+                        people[i] := t.cli
+                        [pnames[i][str] FOR tslen] := [t.name FOR tslen]
+                        pnames[i][slen] := tslen
+                        cs := i
+                  TRUE
+                    -- this room filled up ...!
+                    CLAIM to.game
+                      SEQ
+                        to.game[in] ! attach.client; t.name; t.cli
+                        to.game[out] ? CASE
+                          ok
+                            SKIP
+                          MOBILE []BYTE msg:
+                          cli.error; msg; t.cli
+                            STOP
+                --{{{  tell client
+                people[cs][s.in] ! self.enter.room; roomno
+                --}}}
+                --{{{  inform others
+                SEQ
+                  enter.msg ([pnames[cs][str] FOR pnames[cs][slen]], cs)
+                --}}}
+              --}}}
+            CT.OBJECT! t.obj:
+            MOBILE []BYTE t.name:
+            new.object; t.name; t.obj
+              --{{{  incoming object
+              INT os:
+              BOOL destroyed:
+              SEQ
+                --{{{  debug
+                #IF DEFINED (DEBUG)
+                SEQ
+                  trace.s ("room() new.object: ")
+                  trace.s (name)
+                  trace.s (" num ")
+                  trace.i (roomno)
+                  trace.s ("*n")
+                #ENDIF
+                --}}}
+                IF
+                  IF i = 0 FOR nobjects
+                    objects.ok[i] = FALSE
+                      INITIAL INT tslen IS SIZE t.name:
+                      SEQ
+                        objects.ok[i] := TRUE
+                        objects[i] := t.obj
+                        [onames[i][str] FOR tslen] := [t.name FOR tslen]
+                        onames[i][slen] := tslen
+                        os := i
+                        destroyed := FALSE
+                  TRUE
+                    SEQ
+                      t.obj[in] ! die
+                      destroyed := TRUE
+                --{{{  inform clients
+                t.len := 0
+                objects[os][in] ! get.name
+                objects[os][out] ? CASE name; t.name
+                buffer.set.string (t.buf, t.len, t.name)
+                IF
+                  destroyed
+                    buffer.set.string (t.buf, t.len, " appeared and vanished")
+                  TRUE
+                    buffer.set.string (t.buf, t.len, " appeared")
+                all.msg ([t.buf FOR t.len], -1)
+                --}}}
+              --}}}
+            INT nesw:
+            set.link; nesw
+              --{{{  set link to another room
+              IF
+                (nesw < 0) OR (nesw >= 4)
+                  STOP
+                TRUE
+                  INITIAL BOOL new IS NOT link.ok[nesw]:
+                  SEQ
+                    in[link.in] ? clinks[nesw]
+                    link.ok[nesw] := TRUE
+                    --{{{  debug
+                    #IF DEFINED (DEBUG)
+                    SEQ
+                      trace.s ("room() set.link: ")
+                      trace.s (name)
+                      trace.s (" num ")
+                      trace.i (roomno)
+                      trace.s ("*n")
+                    #ENDIF
+                    --}}}
+                    nexits := 0
+                    SEQ r = 0 FOR 4
+                      IF
+                        link.ok[r]
+                          nexits := nexits + 1
+                        TRUE
+                          SKIP
+                    --{{{  tell clients about it
+                    SEQ
+                      t.len := 0
+                      IF
+                        new
+                          buffer.set.string (t.buf, t.len, "an exit appears to the ")
+                        TRUE
+                          buffer.set.string (t.buf, t.len, "the exit to the ")
+                      buffer.set.exit (t.buf, t.len, nesw)
+                      IF
+                        new
+                          SKIP
+                        TRUE
+                          buffer.set.string (t.buf, t.len, " has changed")
+                      all.msg ([t.buf FOR t.len], -1)
+                    --}}}
+              --}}}
+            INT nesw:
+            del.link; nesw
+              --{{{  delete link to another room
+              IF
+                (nesw < 0) OR (nesw >= 4)
+                  STOP
+                TRUE
+                  SEQ
+                    --{{{  debug
+                    #IF DEFINED (DEBUG)
+                    SEQ
+                      trace.s ("room() del.link: ")
+                      trace.s (name)
+                      trace.s (" num ")
+                      trace.i (roomno)
+                      trace.s ("*n")
+                    #ENDIF
+                    --}}}
+                    link.ok[nesw] := FALSE
+                    SEQ r = 0 FOR 4
+                      IF
+                        link.ok[r]
+                          nexits := nexits + 1
+                        TRUE
+                          SKIP
+                    --{{{  tell clients about it
+                    SEQ
+                      t.len := 0
+                      buffer.set.string (t.buf, t.len, "the exit to the ")
+                      buffer.set.exit (t.buf, t.len, nesw)
+                      buffer.set.string (t.buf, t.len, " disappears")
+                      all.msg ([t.buf FOR t.len], -1)
+                    --}}}
+              --}}}
+          ALT i = 0 FOR nclients
+            people.ok[i] & people[i][out] ? CASE
+              MOBILE []BYTE str:
+              say; str
+                --{{{  say something
+                say.msg ([pnames[i][str] FOR pnames[i][slen]], str, -1)
+                --}}}
+              MOBILE []BYTE str:
+              action; str
+                --{{{  perform arbitrary action
+                action.msg ([pnames[i][str] FOR pnames[i][slen]], str, -1)
+                --}}}
+              MOBILE []BYTE oname:
+              get; oname
+                --{{{  get object
+                IF
+                  IF j = 0 FOR nobjects
+                    objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
+                      BOOL can.get:
+                      SEQ
+                        --{{{  query object first
+                        objects[j][in] ! support.action; "get"
+                        objects[j][out] ? CASE
+                          yes
+                            can.get := TRUE
+                          no
+                            can.get := FALSE
+                        --}}}
+                        IF
+                          can.get
+                            SEQ
+                              --{{{  prep tell others about it
+                              SEQ
+                                t.len := 0
+                                buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
+                                buffer.set.string (t.buf, t.len, " picked up the ")
+                                buffer.set.string (t.buf, t.len, oname)
+                              --}}}
+                              objects.ok[j] := FALSE
+                              people[i][in] ! get.object; oname; objects[j]
+                              --{{{  really tell others about it
+                              all.msg ([t.buf FOR t.len], i)
+                              --}}}
+                          TRUE
+                            people[i][in] ! no
+                  TRUE
+                    people[i][in] ! no
+                --}}}
+              MOBILE []BYTE oname:
+              use; oname
+                --{{{  use object
+                IF
+                  IF j = 0 FOR nobjects
+                    objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
+                      BOOL can.use, cli.use:
+                      SEQ
+                        --{{{  query object first
+                        objects[j][in] ! support.action; "cliuse"
+                        objects[j][out] ? CASE
+                          yes
+                            cli.use := TRUE
+                          no
+                            cli.use := FALSE
+                        objects[j][in] ! support.action; "use"
+                        objects[j][out] ? CASE
+                          yes
+                            can.use := TRUE
+                          no
+                            can.use := FALSE
+                        --}}}
+                        IF
+                          cli.use
+                            SEQ
+                              -- give client to object
+                              people[i][in] ! yes
+                              t.len := 0
+                              buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
+                              buffer.set.string (t.buf, t.len, " left using the ")
+                              buffer.set.string (t.buf, t.len, [onames[j][str] FOR onames[j][slen]])
+                              all.msg ([t.buf FOR t.len], i)
+                              people.ok[i] := FALSE
+                              objects[j][in] ! use.client; [pnames[i][str] FOR pnames[i][slen]]; people[i]
+                          can.use
+                            SEQ
+                              -- send use message to client
+                              people[i][in] ! yes
+                              objects[j][in] ! use
+                          TRUE
+                            people[i][in] ! string; "cannot use that object"
+                  TRUE
+                    people[i][in] ! no
+                --}}}
+              MOBILE []BYTE oname:
+              examine; oname
+                --{{{  examine object
+                IF
+                  IF j = 0 FOR nobjects
+                    objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
+                      SEQ
+                        objects[j][in] ! examine
+                        objects[j][out] ? CASE name; oname
+                        people[i][in] ! string; oname
+                  IF j = 0 FOR nclients
+                    people.ok[j] AND ([pnames[j][str] FOR pnames[j][slen]] = oname)
+                      IF
+                        j = i
+                          people[i][in] ! string; "I*'m fine :)"
+                        TRUE
+                          SEQ
+                            -- examining person (provide some basic info)
+                            people[j][s.in] ! status
+                            people[j][s.out] ? CASE
+                              no
+                                SEQ
+                                  t.len := 0
+                                  buffer.set.string (t.buf, t.len, oname)
+                                  buffer.set.string (t.buf, t.len, " resists your examination")
+                                  people[i][in] ! string; [t.buf FOR t.len]
+                              INT health, vitality:
+                              MOBILE []BYTE desc:
+                              status; health; vitality; desc
+                                SEQ
+                                  t.len := 0
+                                  buffer.set.string (t.buf, t.len, oname)
+                                  buffer.set.string (t.buf, t.len, " (")
+                                  buffer.set.string (t.buf, t.len, desc)
+                                  IF
+                                    (health = (-1)) AND (vitality = (-1))
+                                      buffer.set.string (t.buf, t.len, ")")
+                                    (health = 101) AND (vitality = 101)
+                                      buffer.set.string (t.buf, t.len, ") looks invincible")
+                                    TRUE
+                                      SEQ
+                                        buffer.set.string (t.buf, t.len, ") health: ")
+                                        buffer.set.number (t.buf, t.len, health)
+                                        buffer.set.string (t.buf, t.len, ", vitality: ")
+                                        buffer.set.number (t.buf, t.len, vitality)
+                                  people[i][in] ! string; [t.buf FOR t.len]
+                  TRUE
+                    people[i][in] ! no
+                --}}}
+              MOBILE []BYTE oname:
+              CT.OBJECT! obj:
+              roomdrop; oname; obj
+                --{{{  dropping object in room
+                SEQ
+                  drop.msg ([pnames[i][str] FOR pnames[i][slen]], oname, -1)
+                  FORK forked.inobj (in.link, oname, obj)
+                --}}}
+              MOBILE []BYTE who, oname:
+              INT damage:
+              do.attack; who; oname; damage
+                --{{{  attack someone
+                INT other:
+                SEQ
+                  IF
+                    IF j = 0 FOR nclients
+                      people.ok[j] AND ([pnames[j][str] FOR pnames[j][slen]] = who)
+                        other := j
+                    TRUE
+                      other := -1
+                  IF
+                    other = i
+                      SEQ
+                        onen.msg ("attack yourself, are you mad?", i)
+                        other := -1
+                    TRUE
+                      SKIP
+                  IF
+                    other >= 0
+                      --{{{  do attack
+                      SEQ
+                        t.len := 0
+                        buffer.set.string (t.buf, t.len, "you attack ")
+                        buffer.set.string (t.buf, t.len, who)
+                        buffer.set.string (t.buf, t.len, " using a ")
+                        buffer.set.string (t.buf, t.len, oname)
+                        buffer.set.string (t.buf, t.len, "  (")
+                        buffer.set.number (t.buf, t.len, damage)
+                        buffer.set.string (t.buf, t.len, " hit points)")
+                        onen.msg ([t.buf FOR t.len], i)
+
+                        people[other][s.in] ! take.damage; [pnames[i][str] FOR pnames[i][slen]]; oname; damage
+                        people[other][s.out] ? CASE
+                          dead
+                            --{{{  that killed them
+                            SEQ
+                              t.len := 0
+                              buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
+                              buffer.set.string (t.buf, t.len, " killed ")
+                              buffer.set.string (t.buf, t.len, who)
+                              all.msg ([t.buf FOR t.len], -1)
+                              -- recover objects into this room
+                              people[other][s.in] ! dropall; in.link
+
+                              -- move person to the void
+                              CLAIM to.game
+                                to.game[in] ! dead.client; [pnames[other][str] FOR pnames[other][slen]]; people[other]
+                              people.ok[other] := FALSE
+                            --}}}
+                          yes
+                            SKIP
+
+                        -- tell others
+                        t.len := 0
+                        buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
+                        buffer.set.string (t.buf, t.len, " attacks ")
+                        buffer.set.string (t.buf, t.len, who)
+                        all.msg2 ([t.buf FOR t.len], i, other)
+                      --}}}
+                    TRUE
+                      onen.msg ("cannot attack that", i)
+                --}}}
+              look
+                --{{{  examine room
+                SEQ
+                  --{{{  general info
+                  t.len := 0
+                  buffer.set.string (t.buf, t.len, "[")
+                  buffer.set.string (t.buf, t.len, name)
+                  buffer.set.string (t.buf, t.len, "] locn ")
+                  buffer.set.number (t.buf, t.len, roomno)
+                  people[i][in] ! string; [t.buf FOR t.len]
+                  --}}}
+                  --{{{  room description
+                  IF
+                    ndesclines > 0
+                      SEQ j = 0 FOR ndesclines
+                        people[i][in] ! string; [desclines[j][str] FOR desclines[j][slen]]
+                    TRUE
+                      SKIP
+                  --}}}
+                  people[i][in] ! end.of.list
+                --}}}
+              others
+                --{{{  look for other people
+                SEQ
+                  SEQ j = 0 FOR nclients
+                    IF
+                      people.ok[j] AND (j <> i)
+                        people[i][in] ! string; [pnames[j][str] FOR pnames[j][slen]]
+                      TRUE
+                        SKIP
+                  people[i][in] ! end.of.list
+                --}}}
+              objects
+                --{{{  look for objects in the room
+                SEQ
+                  SEQ j = 0 FOR nobjects
+                    IF
+                      objects.ok[j]
+                        people[i][in] ! string; [onames[j][str] FOR onames[j][slen]]
+                      TRUE
+                        SKIP
+                  people[i][in] ! end.of.list
+                --}}}
+              north
+                --{{{  go north
+                SHARED CT.ROOMLINK! tmpct:
+                CT.CLIENT! tmpcli:
+                MOBILE []BYTE tmpname:
+                IF
+                  link.ok[0]
+                    SEQ
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 0, i)
+                      people.ok[i] := FALSE
+                      tmpct := clinks[0]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
+                      tmpcli := people[i]
+                      FORK move.new.client (tmpct, tmpname, tmpcli)
+                      --CLAIM clinks[0]
+                      --  clinks[0][in] ! new.client; tmpname; tmpcli
+                  TRUE
+                    people[i][s.in] ! genmsg; "cannot go that way"
+                --}}}
+              east
+                --{{{  go east
+                SHARED CT.ROOMLINK! tmpct:
+                CT.CLIENT! tmpcli:
+                MOBILE []BYTE tmpname:
+                IF
+                  link.ok[1]
+                    SEQ
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 1, i)
+                      people.ok[i] := FALSE
+                      tmpct := clinks[1]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
+                      tmpcli := people[i]
+                      FORK move.new.client (tmpct, tmpname, tmpcli)
+                  TRUE
+                    people[i][s.in] ! genmsg; "cannot go that way"
+                --}}}
+              south
+                --{{{  go south
+                SHARED CT.ROOMLINK! tmpct:
+                CT.CLIENT! tmpcli:
+                MOBILE []BYTE tmpname:
+                IF
+                  link.ok[2]
+                    SEQ
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 2, i)
+                      people.ok[i] := FALSE
+                      tmpct := clinks[2]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
+                      tmpcli := people[i]
+                      FORK move.new.client (tmpct, tmpname, tmpcli)
+                  TRUE
+                    people[i][s.in] ! genmsg; "cannot go that way"
+                --}}}
+              west
+                --{{{  go west
+                SHARED CT.ROOMLINK! tmpct:
+                CT.CLIENT! tmpcli:
+                MOBILE []BYTE tmpname:
+                IF
+                  link.ok[3]
+                    SEQ
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 3, i)
+                      people.ok[i] := FALSE
+                      tmpct := clinks[3]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
+                      tmpcli := people[i]
+                      FORK move.new.client (tmpct, tmpname, tmpcli)
+                  TRUE
+                    people[i][s.in] ! genmsg; "cannot go that way"
+                --}}}
+              lookexits
+                --{{{  look for exits (bots, etc. do this)
+                people[i][in] ! exits; roomno; link.ok
+                --}}}
+              logout
+                --{{{  client logging out of game
+                SEQ
+                  action.msg ([pnames[i][str] FOR pnames[i][slen]], "left the game", i)
+                  people.ok[i] := FALSE
+                  people[i][in] ! returned.client; [pnames[i][str] FOR pnames[i][slen]]; people[i]
+                --}}}
+        --{{{  debug
+        #IF DEFINED (DEBUG)
+        SEQ
+          trace.s ("room() loop-end: ")
+          trace.s (name)
+          trace.s (" num ")
+          trace.i (roomno)
+          trace.s ("*n")
+        #ENDIF
+        --}}}
+          
+:
+--}}}
+

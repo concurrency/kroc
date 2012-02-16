@@ -1,0 +1,5 @@
+#INCLUDE "course.module"
+PROC hello (CHAN BYTE out!)
+  out.string ("Hello, world!*n", 0, out!)
+:
+

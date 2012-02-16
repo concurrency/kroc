@@ -1,0 +1,71 @@
+--
+--	rasterio: write PPM files
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module rasterio
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+
+--{{{  PROC write.raster.ppm
+--* Write a raster out as a PPM file.
+PROC write.raster.ppm (VAL []BYTE filename, VAL [][]INT raster)
+  INT fd, result:
+  SEQ
+    file.open3 (filename, (O.WRONLY \/ O.CREAT) \/ O.TRUNC, S.I644, fd)
+    ASSERT (fd <> (-1))
+    CHAN BYTE out:
+    CHAN BOOL kill:
+    PAR
+      --{{{  write to file
+      INITIAL BOOL running IS TRUE:
+      WHILE running
+        ALT
+          kill ? running
+            running := FALSE
+          BYTE ch:
+          out ? ch
+            SEQ
+              file.write (fd, [ch], result)
+              ASSERT (result = 1)
+      --}}}
+      SEQ
+        out.string ("P6*n", 0, out!)
+        out.int (SIZE raster[0], 0, out!)
+        out ! ' '
+        out.int (SIZE raster, 0, out!)
+        out.string (" 255*n", 0, out!)
+        kill ! TRUE
+    INITIAL MOBILE []BYTE buf IS MOBILE [((SIZE raster) * (SIZE raster[0])) * 3]BYTE:
+    INITIAL INT i IS 0:
+    SEQ
+      SEQ y = 0 FOR SIZE raster
+        SEQ x = 0 FOR SIZE raster[y]
+          VAL INT v IS raster[y][x]:
+          SEQ
+            buf[i] := BYTE ((v >> 16) /\ #FF)
+            buf[i + 1] := BYTE ((v >> 8) /\ #FF)
+            buf[i + 2] := BYTE (v /\ #FF)
+            i := i + 3
+      file.write (fd, buf, result)
+      ASSERT (result = (SIZE buf))
+    file.close (fd, result)
+    ASSERT (result = 0)
+:
+--}}}
+

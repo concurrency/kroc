@@ -1,0 +1,466 @@
+-- version control marker $Id: cgtest23.occ,v 1.4 1995/10/10 12:58:36 djb1 Exp $
+#OPTION "AN"
+-- Usage and Alias checking turned off
+
+PROC cgtest23 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  SEQ
+    init ("CG test 23", "Alias and Usage checking disabled")
+
+    --{{{  tests from cgtest3
+    PROC abbreviations()
+      SEQ
+        --{{{  simple abbreviations           (A000 - A099)
+        --{{{  output message
+        title ("Simple abbreviations")
+        --}}} 
+        SEQ
+          --{{{  other abbreviations          (A010 - A019)
+          INT z :
+          --#PRAGMA PERMITALIASES z
+          SEQ
+            z := 42
+            c IS z :
+            SEQ
+              z := 175
+              check (c, 175, "A017")
+              check (z, 175, "A018")
+          --}}} 
+          --{{{  nested abbreviations         (A020 - A039)
+          INT x, y, z, a :
+          --#PRAGMA PERMITALIASES x, y
+          SEQ
+            x := 42
+            a := 99
+            a IS x :
+            SEQ
+              check (a, 42, "A021")
+              y := 54
+              a IS y :
+              b IS y :
+              SEQ
+                check (a, 54, "A022")
+                b := b + 1
+                check (b, 55, "A023")
+                check (a, 55, "A024")
+                z := 10
+                b IS z :
+                check (b, 10, "A025")
+                check (b, 55, "A026")
+                a IS a :
+                check (a, 55, "A027")
+              check (a, 42, "A028")
+              check (x, 42, "A029")
+            check (a, 99, "A030")
+            check (x, 42, "A031")
+          --}}} 
+          --{{{  abbreviations before WHILE   (A040 - A049)
+          INT x :
+          --#PRAGMA PERMITALIASES x
+          SEQ
+            x := 2
+            y IS x :
+            WHILE x > 0
+              IF
+                x = 2
+                  x := 1
+                x = 1
+                  SEQ
+                    x := 0
+                    check (y, 0, "A041")
+          --}}} 
+        --}}} 
+        --{{{  channel abbreviations          (A300 - A399)
+        --{{{  output message
+        title ("Channel abbreviations")
+        --}}} 
+        CHAN OF INT c :
+        [10] CHAN OF INT cs :
+        INT x, y :
+        SEQ
+          --{{{  A306
+          d IS cs [3] :
+          --#PRAGMA PERMITALIASES cs
+          PAR
+            cs [3] ! 12
+            ALT
+              ALT i = 0 FOR 10
+                (i <> 3) & cs [i] ? y
+                  check (y, -y, "A306")
+              d ? x
+                check (x, 12, "A306")
+          --}}} 
+        --}}} 
+    :
+    abbreviations()
+    --}}}
+    --{{{  tests from cgtest9
+    PROC arrays()
+      SEQ
+        --{{{  abbreviated arrays              (A100 - A110)
+        --{{{  output message
+        title ("Abbreviated arrays")
+        --}}} 
+        --{{{  A100 to A103
+        [10] INT a :
+        --#PRAGMA PERMITALIASES a
+        z IS a :
+        INT x :
+        SEQ
+          SEQ i = 0 FOR 10
+            a [i] := i
+          SEQ i = 0 FOR 10
+            IF
+              a [i] = z [i]
+                check (i, i, "A100")
+              TRUE
+                check (-1, i, "A101")
+          x := 4
+          check (z[x], a[x], "A102")
+          check (z[x], 4,    "A103")
+        --}}} 
+        --{{{  A110
+        VAL test IS ["hello","every","blurb"] :
+        [3] [5] BYTE a :
+        --#PRAGMA PERMITALIASES a
+        b IS a [2] :
+        SEQ
+          a := test
+          SEQ i = 0 FOR 5
+            check (INT b [i], INT "blurb" [i], "A110")
+        --}}} 
+        --}}} 
+        --{{{  testing SIZE                    (A600 - A701)
+        --{{{  output message
+        title ("SIZE operator")
+        --}}} 
+        --{{{  proc test.size (of an []INT array)
+        PROC test.size (VAL []INT a, VAL INT size, VAL []BYTE string)
+          check (SIZE a, size, string)
+        :
+        --}}} 
+        SEQ
+          --{{{  integer arrays
+          [10] INT a :
+          --#PRAGMA PERMITALIASES a
+          b IS a :
+          [15] [6] INT c :
+          d IS c [4] :
+          
+          SEQ
+            check (SIZE a, 10, "A631")
+            check (SIZE b, 10, "A632")
+            check (SIZE c, 15, "A633")
+            check (SIZE d, 6, "A634")
+            test.size (a, 10, "A635")
+            test.size (b, 10, "A636")
+            test.size (c[0], 6, "A637")
+            test.size (d, 6, "A638")
+          --}}} 
+          --{{{  byte arrays
+          [5] BYTE a :
+          [5] [3] BYTE b :
+          --#PRAGMA PERMITALIASES a, b
+          c IS b :
+          d IS a :
+          e IS b [2] :
+          SEQ
+            check (SIZE a, 5, "A641")
+            check (SIZE b, 5, "A642")
+            check (SIZE c, 5, "A643")
+            check (SIZE d, 5, "A644")
+            check (SIZE e, 3, "A645")
+            a := "howdy"
+            check (SIZE a, 5, "A646")
+            check (SIZE d, 5, "A647")
+          --}}} 
+        --}}} 
+        --{{{  strings                         (A800 - A899)
+        --{{{  output message
+        title ("String handling")
+        --}}} 
+        --{{{  check subscript access          (A800 - A819)
+        INT x , y :
+        VAL z IS 3 :
+        VAL word IS "antidisestablishmentarianism" :
+        [7] BYTE message :
+        --#PRAGMA PERMITALIASES message
+        message2 IS message :
+        SEQ
+          check (INT "help" [2], INT 'l', "A800")
+          check (INT word [2], INT 't', "A801")
+          check (INT "help" [z], INT 'p', "A802")
+          check (INT word [z], INT 'i', "A803")
+          x := 2
+          check (INT "help" [x], INT 'l', "A804")
+          check (INT word [x], INT 't', "A805")
+          message := "blurble"
+          check (INT message [3], INT 'r', "A806")
+          check (INT message2 [3], INT 'r', "A807")
+          check (INT message [z], INT 'r', "A808")
+          check (INT message2 [z], INT 'r', "A809")
+          check (INT message [x], INT 'u', "A810")
+          check (INT message2 [x], INT 'u', "A811")
+        --}}} 
+        --}}} 
+        --{{{  bug 1563
+        -- Note that this test isn't concerned with array handling, but it does
+        -- need to be compiled with alias checking disabled, so it has been put here
+        --
+        PROC bug.1563()
+          SEQ
+            INT32, INT32 FUNCTION swap.INT32s(VAL INT32 a, b) IS b, a :
+            PROC swap.PROC1(INT32 res1, res2, VAL INT32 in1, in2)
+              --#PRAGMA PERMITALIASES res1, res2, in1, in2
+              -- NOTE that in this example, res1 and res2 are aliased with in1, and in2
+              -- ON PURPOSE!
+              res1, res2 := swap.INT32s(in1, in2)
+            :
+            INT32 a, b :
+            --#PRAGMA PERMITALIASES a, b
+            SEQ
+              a, b := -1(INT32), 0(INT32)
+            
+              swap.PROC1(a, b, a, b)
+            
+              --ASSERT(a =   0(INT32) )
+              --ASSERT(b = (-1(INT32)))
+              check(INT a,  0, "B1563a")
+              check(INT b, -1, "B1563b")
+            INT64, INT64 FUNCTION swap.INT64s(VAL INT64 a, b) IS b, a :
+            PROC swap.PROC1(INT64 res1, res2, VAL INT64 in1, in2)
+              --#PRAGMA PERMITALIASES res1, res2, in1, in2
+              -- NOTE that in this example, res1 and res2 are aliased with in1, and in2
+              -- ON PURPOSE!
+              res1, res2 := swap.INT64s(in1, in2)
+            :
+            INT64 a, b :
+            --#PRAGMA PERMITALIASES a, b
+            SEQ
+              a, b := -1(INT64), 0(INT64)
+            
+              swap.PROC1(a, b, a, b)
+            
+              --ASSERT(a =   0(INT64) )
+              --ASSERT(b = (-1(INT64)))
+              check(INT a,  0, "B1563c")
+              check(INT b, -1, "B1563d")
+        :
+        bug.1563()
+        --}}}
+    :
+    arrays()
+    --}}}
+    --{{{  tests from cgtest17
+    PROC misc()
+      --{{{  Static link tests      SL2 - SL4
+      PROC static.link()
+        SEQ
+          title("Static link tests")
+          --{{{  SL2
+          PROC P ()
+            [4]INT a :
+            --#PRAGMA SHARED a
+            PROC Q (VAL INT i)
+              a[i] := 1
+            :
+            SEQ
+              SEQ i = 0 FOR 4
+                a[i] := 0
+              PAR
+                SKIP
+                PAR i = 0 FOR 4
+                  -- Static link passed to Q needs normalising, so that it points
+                  -- to P's normalised workspace
+                  Q(i)
+              SEQ i = 0 FOR 4
+                check(a[i], 1, "SL2")
+          :
+          SEQ
+            P()
+          --}}}
+          --{{{  SL3
+          PROC P ()
+            [4]INT a :
+            --#PRAGMA SHARED a
+            SEQ
+              SEQ i = 0 FOR 4
+                a[i] := 0
+              PAR
+                SKIP
+                PROC Q (VAL INT i)
+                  a[i] := 1
+                :
+                PAR i = 0 FOR 4
+                  -- Static link passed to Q needs normalising, so that it points
+                  -- to P's normalised workspace
+                  Q(i)
+              SEQ i = 0 FOR 4
+                check(a[i], 1, "SL3")
+          :
+          SEQ
+            P()
+          --}}}
+          --{{{  SL4
+          [4]INT a :
+          --#PRAGMA SHARED a
+          PROC Q (VAL INT i)
+            a[i] := 1
+          :
+          PROC P ()
+            SEQ
+              SEQ i = 0 FOR 4
+                a[i] := 0
+              PAR
+                SKIP
+                PAR i = 0 FOR 4
+                  -- Static link passed to Q should be static link passed to P
+                  Q(i)
+              SEQ i = 0 FOR 4
+                check(a[i], 1, "SL4")
+          :
+          SEQ
+            P()
+          --}}}
+      :
+      static.link()
+      --}}}
+    :
+    misc()
+    --}}}
+    --{{{  bug TS/2024
+    PROC bug.TS.2024()
+      INT64 FUNCTION strange64()
+        INT64 result :
+        VALOF
+          result := 99(INT64)
+          RESULT result
+      :
+      INT32 FUNCTION strange32()
+        INT32 result :
+        VALOF
+          result := 99(INT32)
+          RESULT result
+      :
+      INT32 int32 :
+      INT64 int64 :
+      SEQ
+        int32 := strange32()
+        check(INT int32, 99, "B2024A")
+        int64 := strange64()
+        check(INT int64, 99, "B2024B")
+    :
+    bug.TS.2024()
+    --}}}
+    --{{{  bug INSdi02414
+    PROC bug.INSdi02414()
+      SEQ
+        --{{{  basic test, REAL64
+        PROC test1 (REAL64 verf, VAL INT32 running.time)
+          VAL real.run IS REAL64 ROUND running.time:
+          --#PRAGMA PERMITALIASES real.run
+          verf := real.run
+        :
+        INT32 running.time :
+        REAL64 verf :
+        SEQ
+          running.time := id.INT32(99(INT32))
+          test1(verf, running.time)
+          check(INT ROUND verf, 99, "di02414a")
+        --}}}
+        --{{{  basic test, REAL32
+        PROC test1 (REAL32 verf, VAL INT32 running.time)
+          VAL real.run IS REAL32 ROUND running.time:
+          --#PRAGMA PERMITALIASES real.run
+          verf := real.run
+        :
+        INT32 running.time :
+        REAL32 verf :
+        SEQ
+          running.time := id.INT32(99(INT32))
+          test1(verf, running.time)
+          check(INT ROUND verf, 99, "di02414b")
+        --}}}
+        --{{{  user test, REAL64
+        PROC test1 (REAL64 verf, VAL INT32 running.time)
+          REAL64 FUNCTION f(VAL INT32 x) IS REAL64 ROUND (x+1(INT32)) :
+          VAL real.run IS f(running.time):
+          --#PRAGMA PERMITALIASES real.run
+          verf := real.run
+        :
+        INT32 running.time :
+        REAL64 verf :
+        SEQ
+          running.time := id.INT32(99(INT32))
+          test1(verf, running.time)
+          check(INT ROUND verf, 100, "di02414c")
+        --}}}
+        --{{{  user test, REAL32
+        PROC test1 (REAL32 verf, VAL INT32 running.time)
+          REAL32 FUNCTION f(VAL INT32 x) IS REAL32 ROUND (x+1(INT32)) :
+          VAL real.run IS f(running.time):
+          --#PRAGMA PERMITALIASES real.run
+          verf := real.run
+        :
+        INT32 running.time :
+        REAL32 verf :
+        SEQ
+          running.time := id.INT32(99(INT32))
+          test1(verf, running.time)
+          check(INT ROUND verf, 100, "di02414d")
+        --}}}
+    :
+    bug.INSdi02414()
+    --}}}
+    --{{{  bug INSdi03389
+    PROC bug.INSdi03389()
+      SEQ
+        --{{{  INT32 version
+        INT32 FUNCTION get.address (VAL INT socket)
+          VALOF
+            SKIP
+            RESULT (INT32 socket) * 4 (INT32)
+        :
+        
+        INLINE PROC set.address ( [24]INT32 header, VAL INT32 addr )
+          SEQ
+            header[INT header[1]] := addr + 5 (INT32)
+        :
+        
+        [24]INT32 header:
+        SEQ
+          SEQ i = 0 FOR SIZE header
+            header[i] := id.INT32(INT32 i)
+        
+          set.address(header, get.address(300))
+        
+          check(INT header[1], 1205, "di03389a")
+        --}}}
+        --{{{  INT64 version
+        INT64 FUNCTION get.address (VAL INT socket)
+          VALOF
+            SKIP
+            RESULT (INT64 socket) * 4 (INT64)
+        :
+        
+        INLINE PROC set.address ( [24]INT64 header, VAL INT64 addr )
+          SEQ
+            header[INT header[1]] := addr + 5 (INT64)
+        :
+        
+        [24]INT64 header:
+        SEQ
+          SEQ i = 0 FOR SIZE header
+            header[i] := id.INT64(INT64 i)
+        
+          set.address(header, get.address(300))
+        
+          check(INT header[1], 1205, "di03389b")
+        --}}}
+    :
+    bug.INSdi03389()
+    --}}}
+    finish ()
+:

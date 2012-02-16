@@ -1,0 +1,2470 @@
+-- version control marker $Id: cgtest14.occ,v 1.4 1995/10/10 12:57:33 djb1 Exp $
+
+PROC cgtest14 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  SEQ
+    init ("CG test 14", "Functions")
+
+    --{{{  integer functions           (F000 - F199)
+    PROC integer()
+      SEQ
+        --{{{  output message
+        title ("Testing integer functions")
+        --}}}
+        --{{{  square, in-line definition  (F000 - F009)
+        INT FUNCTION sq (VAL INT x) IS x * x :
+        INT y :
+        SEQ
+          y := sq (0)
+          check (y, 0, "F000")
+          y := sq (1)
+          check (y, 1, "F001")
+          y := sq (4)
+          check (y, 16, "F002")
+          y := 4
+          y := sq (y)
+          check (y, 16, "F003")
+          check (sq (5), 25, "F004")
+          y := 7
+          check (sq (y), 49, "F005")
+          VAL n IS 3 :
+          check (sq(n), 9, "F006")
+          y := 7
+          check (sq (y) + sq (y), 98, "F007")
+          y := 3
+          check (sq (sq (y)), 81, "F008")
+        --}}}
+        --{{{  square, expanded definition (F010 - F019)
+        INT FUNCTION sq (VAL INT x)
+          VALOF
+            SKIP
+            RESULT x * x
+        :
+        INT y :
+        SEQ
+          --{{{
+          y := sq (0)
+          check (y, 0, "F010")
+          y := sq (1)
+          check (y, 1, "F011")
+          y := sq (4)
+          check (y, 16, "F012")
+          y := 4
+          y := sq (y)
+          check (y, 16, "F013")
+          check (sq (5), 25, "F014")
+          --}}}
+          --{{{
+          y := 7
+          check (sq (y), 49, "F015")
+          VAL n IS 3 :
+          check (sq(n), 9, "F016")
+          y := 7
+          check (sq (y) + sq (y), 98, "F017")
+          y := 3
+          check (sq (sq (y)), 81, "F018")
+          --}}}
+        --}}}
+        --{{{  factorial, expanded def     (F020 - F039)
+        --{{{  function definition (fac)
+        INT FUNCTION fac (VAL INT n)
+          INT result :
+          VALOF
+            IF
+              n < 2
+                result := 1
+              TRUE
+                SEQ
+                  result := n
+                  SEQ i = 1 FOR n - 1
+                    result := result * i
+            RESULT result
+        :
+        --}}}
+        INT x, y :
+        SEQ
+          check (fac(0), 1, "F020")
+          check (fac(1), 1, "F021")
+          check (fac(-1), 1, "F022")
+          check (fac (2), 2, "F023")
+          check (fac (4), 24, "F024")
+          x := fac (0)
+          check (x, 1, "F025")
+          x := fac (5)
+          check (x, 120, "F026")
+          x := 4
+          x := fac (x)
+          check (x, 24, "F027")
+          x := 3
+          check (fac (fac (x)), 720, "F028")
+          x := 3
+          y := 4
+          check (fac (y) + fac (x), 30, "F029")
+        --}}}
+        --{{{  swap, in-line def           (F040 - F059)
+        INT , INT FUNCTION swap (VAL INT x, y) IS y, x :
+        INT a, b, c, d :
+        SEQ
+          a, b := swap (4, 9999)
+          check (a, 9999, "F040")
+          check (b, 4, "F041")
+          a := 67
+          b := 42
+          a, b := swap (a, b)
+          check (a, 42, "F042")
+          check (b, 67, "F043")
+          a, b := 10000, 1
+          c, d := swap (a, b)
+          check (a, 10000, "F044")
+          check (b, 1,     "F045")
+          check (c, 1,     "F046")
+          check (d, 10000, "F047")
+          c, d := 10000, 500
+          INT temp1, temp2 :
+          SEQ
+            temp1, temp2 := swap (c, d)
+            a, b := swap (temp1, temp2)
+          check (a, 10000, "F048")
+          check (b, 500,   "F049")
+        --}}}
+        --{{{  swap, expanded def          (F060 - F079)
+        --{{{  function definition
+        INT , INT FUNCTION swap (VAL INT x, y)
+          VALOF
+            SKIP
+            RESULT y, x
+        :
+        --}}}
+        INT a, b, c, d :
+        SEQ
+          a, b := swap (4, 9999)
+          check (a, 9999, "F060")
+          check (b, 4, "F061")
+          a := 67
+          b := 42
+          a, b := swap (a, b)
+          check (a, 42, "F062")
+          check (b, 67, "F063")
+          a, b := 10000, 1
+          c, d := swap (a, b)
+          check (a, 10000, "F064")
+          check (b, 1,     "F065")
+          check (c, 1,     "F066")
+          check (d, 10000, "F067")
+          c, d := 10000, 500
+          INT temp1, temp2 :
+          SEQ
+            temp1, temp2 := swap (c, d)
+            a, b := swap (temp1, temp2)
+          check (a, 10000, "F068")
+          check (b, 500,   "F069")
+        --}}}
+        --{{{  sum, in-line def            (F080 - F089)
+        INT FUNCTION sum (VAL INT x, y) IS x + y :
+        INT x, y :
+        SEQ
+          x := 0
+          check (sum (5, 7), 12, "F080")
+          x, y := 42, 13
+          check (sum (x, y), 55, "F081")
+          check (x, 42, "F082")
+          check (y, 13, "F083")
+          check (sum (sum (x, y), sum (x, y)), 110, "F084")
+          check (sum (x, 6), 48, "F085")
+          check (sum (6, x), 48, "F086")
+          check (sum (x, y) * sum (-11, y), 110, "F087")
+        --}}}
+        --{{{  sum, expanded def           (F090 - F099)
+        INT FUNCTION sum (VAL INT x, y)
+          VALOF
+            SKIP
+            RESULT x + y
+        :
+        INT x, y :
+        SEQ
+          check (sum (5, 7), 12, "F090")
+          x, y := 42, 13
+          check (sum (x, y), 55, "F091")
+          check (x, 42, "F092")
+          check (y, 13, "F093")
+          check (sum (sum (x, y), sum (x, y)), 110, "F094")
+          check (sum (x, 6), 48, "F095")
+          check (sum (6, x), 48, "F096")
+          check (sum (x, y) * sum (-11, y), 110, "F097")
+        --}}}
+        --{{{  sum3, in-line def           (F100 - F109)
+        INT FUNCTION sum3 (VAL INT x, y, z) IS x + (y + z) :
+        INT x, y, z :
+        SEQ
+          check (sum3 (5, 7, 10), 22, "F100")
+          x, y, z := 42, 13, 15
+          check (sum3 (x, y, z), 70, "F101")
+          check (x, 42, "F102")
+          check (y, 13, "F103")
+          check (sum3 (sum3 (x, y, z), sum3 (x, y, z), sum3 (x, y, z)), 210, "F104")
+          check (sum3 (x, 6, z), 63, "F105")
+          check (sum3 (6, x, z), 63, "F106")
+          check (sum3 (x, y, z) * sum3 (-11, y, 0), 140, "F107")
+        --}}}
+        --{{{  sum3, expanded def          (F110 - F119)
+        --{{{  function definition
+        INT FUNCTION sum3 (VAL INT x, y, z)
+          VALOF
+            SKIP
+            RESULT x + (y + z)
+        :
+        --}}}
+        INT x, y, z :
+        SEQ
+          check (sum3 (5, 7, 10), 22, "F110")
+          x, y, z := 42, 13, 15
+          check (sum3 (x, y, z), 70, "F111")
+          check (x, 42, "F112")
+          check (y, 13, "F113")
+          check (sum3 (sum3 (x, y, z), sum3 (x, y, z), sum3 (x, y, z)), 210, "F114")
+          check (sum3 (x, 6, z), 63, "F115")
+          check (sum3 (6, x, z), 63, "F116")
+          check (sum3 (x, y, z) * sum3 (-11, y, 0), 140, "F117")
+        --}}}
+        --{{{  sum4, in-line def           (F120 - F129)
+        INT FUNCTION sum4 (VAL INT x, y, z, w) IS x + (y + (z + w)) :
+        INT x, y, z, w :
+        SEQ
+          check (sum4 (5, 7, 10, 0), 22, "F120")
+          x, y, z, w := 42, 13, 15, 0
+          check (sum4 (x, y, z, w), 70, "F121")
+          check (x, 42, "F122")
+          check (y, 13, "F123")
+          -- check (sum4 (sum4 (x, y, z, w), sum4 (x, y, z, w),
+          --              sum4 (x, y, z, w), sum4 (x, y, z, w)), 280, "F124")
+          check (sum4 (x, 6, z, 7), 70, "F125")
+          check (sum4 (6, x, z, 7), 70, "F126")
+          check (sum4 (x, y, z, w) * sum4 (-11, y, 0, w), 140, "F127")
+          check (w, 0, "F128")
+        --}}}
+        --{{{  sum4, expanded def          (F130 - F139)
+        --{{{  function definition
+        INT FUNCTION sum4 (VAL INT x, y, z, w)
+          VALOF
+            SKIP
+            RESULT x + (y + (z + w))
+        :
+        --}}}
+        INT x, y, z, w :
+        SEQ
+          check (sum4 (5, 7, 10, 0), 22, "F130")
+          x, y, z, w := 42, 13, 15, 0
+          check (sum4 (x, y, z, w), 70, "F131")
+          check (x, 42, "F132")
+          check (y, 13, "F133")
+          check (sum4 (sum4 (x, y, z, w), sum4 (x, y, z, w),
+                       sum4 (x, y, z, w), sum4 (x, y, z, w)), 280, "F134")
+          check (sum4 (x, 6, z, 7), 70, "F135")
+          check (sum4 (6, x, z, 7), 70, "F136")
+          check (sum4 (x, y, z, w) * sum4 (-11, y, 0, w), 140, "F137")
+          check (w, 0, "F138")
+        --}}}
+        --{{{  long in-line definition     (F140 - F149)
+        INT FUNCTION long (VAL INT x) IS x +
+          0 :
+        SEQ
+          check (long (0), 0, "F140")
+        --}}}
+        --{{{  complicated internal stuff  (F150 - F159)
+        --{{{  function definition
+        INT FUNCTION inc (VAL INT x)
+          INT y, b :
+          VALOF
+            INT a :
+            SEQ
+              a := 1
+              b := a
+              y := x
+            RESULT y + b
+        :
+        --}}}
+        INT x :
+        SEQ
+          check (inc (0), 1, "F150")
+          check (inc (10000), 10001, "F151")
+          x := 150
+          check (inc (x), 151, "F152")
+          x := inc (x)
+          check (x, 151, "F153")
+          check (inc (inc (inc (inc (x)))), 155, "F154")
+        --}}}
+        --{{{  zero parameters             (F160 - F169)
+        INT FUNCTION zero () IS 666 :
+        INT x :
+        SEQ
+          check (zero (), 666, "F160")
+          x := zero ()
+          check (x, 666, "F161")
+          VAL test IS 42 :
+          INT FUNCTION t () IS test :
+          SEQ
+            check (t (), test, "F162")
+            check (t (), 42, "F163")
+        --}}}
+        --{{{  array parameter             (F170 - F179)
+        INT FUNCTION size (VAL [] INT a) IS SIZE a :
+        [6] INT a :
+        VAL tbl IS [5,6,7,8,9] :
+        SEQ
+          check (size (a), 6, "F170")
+          check (size (tbl), 5, "F171")
+        --}}}
+        --{{{  heavy arithmetic stuff      (F180 - F189)
+        --{{{  function definition (calc (x), power (x, y) )
+        INT FUNCTION calc (VAL INT x)
+          INT y, z :
+          VALOF
+            SEQ
+              z := (2 * x) + 4
+              y := z * z
+              y := y + 17
+            RESULT x + (y + z)
+        :
+        INT FUNCTION power (VAL INT base, exp)
+          INT res :
+          VALOF
+            SEQ
+              res := 1
+              SEQ i = 0 FOR exp
+                res := res * base
+            RESULT res
+        :
+        --}}}
+        
+        VAL calc.stuff  IS [37, 60, 91, 130, 177] :
+        VAL power.two   IS [ 1,  2,  4,   8,  16] :
+        VAL power.three IS [ 1,  3,  9,  27,  81] :
+        VAL power.ten   IS [ 1, 10, 100, 1000, 10000] :
+        INT x :
+        
+        SEQ
+          SEQ i = 0 FOR 5
+            SEQ
+              check (calc (i),     calc.stuff  [i], "F180")
+              check (power (2, i), power.two   [i], "F181")
+              check (power (3, i), power.three [i], "F182")
+              check (power (10,i), power.ten   [i], "F183")
+          x := 5
+          IF
+            (INT (MOSTPOS INT16)) = (MOSTPOS INT)
+              SKIP      -- a bit excessive for the poor T212
+            TRUE
+              check (calc (calc (x) + calc (x)), calc (calc (x) + calc (x)), "F184")
+        --}}}
+    :
+    integer()
+    --}}}
+    --{{{  boolean and byte functions  (F200 - F299)
+    PROC bool.and.byte()
+      SEQ
+        --{{{  output message
+        title ("Testing BOOL and BYTE functions")
+        --}}}
+        --{{{  even in-line definition   (F200 - F209)
+        BOOL FUNCTION even (VAL INT n) IS 0 = (n \ 2) :
+        INT x :
+        BOOL y :
+        SEQ
+          check (INT even (0), INT TRUE, "F201")
+          check (INT even (1), INT FALSE, "F202")
+          x := 1
+          check (INT even (x), INT FALSE, "F203")
+          check (INT even (x + 1), INT TRUE, "F204")
+          y := even (10)
+          check (INT y, INT TRUE, "F205")
+          y := even (x)
+          check (INT y, INT FALSE, "F206")
+          x := 18
+          IF
+            even (x)
+              check (0, 0, "F207")
+            NOT even (x)
+              check (0, 1, "F207")
+            TRUE
+              check (0, 2, "F207")
+        --}}}
+        --{{{  even expanded definition  (F210 - F219)
+        BOOL FUNCTION even (VAL INT n)
+          VALOF
+            SKIP
+            RESULT 0 = (n \ 2)
+        :
+        INT x :
+        BOOL y :
+        SEQ
+          check (INT even (0), INT TRUE, "F211")
+          check (INT even (1), INT FALSE, "F212")
+          x := 1
+          check (INT even (x), INT FALSE, "F213")
+          check (INT even (x + 1), INT TRUE, "F214")
+          y := even (10)
+          check (INT y, INT TRUE, "F215")
+          y := even (x)
+          check (INT y, INT FALSE, "F216")
+          x := 18
+          IF
+            even (x)
+              check (0, 0, "F217")
+            NOT even (x)
+              check (0, 1, "F217")
+            TRUE
+              check (0, 2, "F217")
+        --}}}
+        --{{{  even longer definition    (F220 - F229)
+        --{{{  function definition
+        BOOL FUNCTION even (VAL INT n)
+          BOOL yes :
+          VALOF
+            INT temp :
+            SEQ
+              temp := n \ 2
+              yes := FALSE               -- yes, I know this is inefficient!
+              IF
+                temp = 0
+                  yes := TRUE
+                TRUE
+                  SKIP
+            RESULT yes
+        :
+        --}}}
+        INT x :
+        BOOL y :
+        SEQ
+          check (INT even (0), INT TRUE, "F221")
+          check (INT even (1), INT FALSE, "F222")
+          x := 1
+          check (INT even (x), INT FALSE, "F223")
+          check (INT even (x + 1), INT TRUE, "F224")
+          y := even (10)
+          check (INT y, INT TRUE, "F225")
+          y := even (x)
+          check (INT y, INT FALSE, "F226")
+          x := 18
+          IF
+            even (x)
+              check (0, 0, "F227")
+            NOT even (x)
+              check (0, 1, "F227")
+            TRUE
+              check (0, 2, "F227")
+        --}}}
+        --{{{  less                      (F230 - F239)
+        BOOL FUNCTION less (VAL INT x, y) IS x < y :
+        INT x, y :
+        SEQ
+          x := 78
+          y := 42
+          check (INT less (x, y), INT FALSE, "F230")
+          check (INT less (y, x), INT TRUE,  "F231")
+          check (INT less (0, 0), INT FALSE, "F232")
+          check (INT less (0, 1), INT TRUE,  "F233")
+          check (INT less (1, 0), INT FALSE, "F234")
+        --}}}
+        --{{{  convert INT to BYTE       (F240 - F249)
+        BYTE FUNCTION conv (VAL INT n) IS BYTE n :
+        BYTE x :
+        INT y :
+        SEQ
+          check (INT conv (47), 47, "F240")
+          x := 'a'
+          check (INT conv (INT x), INT x, "F241")
+          x := conv (64)
+          check (INT x, 64, "F242")
+          y := 42
+          check (INT conv (y), 42, "F243")
+        --}}}
+        --{{{  upper to lower            (F250 - F259)
+        --{{{  function definition (u.to.l)
+        BYTE FUNCTION u.to.l (VAL BYTE b)
+          BYTE res :
+          VALOF
+            VAL upper.to.lower IS (INT 'a') - (INT 'A') :
+            SEQ
+              IF
+                (b < 'A') OR (b > 'Z')
+                  res := b
+                TRUE
+                  res := BYTE ( (INT b) + upper.to.lower)
+            RESULT res
+        :
+        --}}}
+        BYTE b :
+        VAL word IS "HelioGRAPHIC 345" :
+        INT a :
+        BOOL test :
+        SEQ
+          check (INT u.to.l ('a'), INT 'a', "F250")
+          check (INT u.to.l ('F'), INT 'f', "F251")
+          check (INT u.to.l ('%'), INT '%', "F252")
+          b := 'G'
+          check (INT u.to.l (b), INT 'g', "F253")
+          b := u.to.l (b)
+          check (INT b, INT 'g', "F254")
+          check (INT u.to.l (word [0]), INT 'h', "F255")
+          check (INT u.to.l (word [1]), INT 'e', "F256")
+          a := 2
+          check (INT u.to.l (word [a]), INT 'l', "F256")
+          test := TRUE
+          SEQ i = 0 FOR SIZE word
+            test := test AND (u.to.l (word [i]) = "heliographic 345" [i])
+          check (INT test, INT TRUE, "F257")
+        --}}}
+    :
+    bool.and.byte()
+    --}}}
+    --{{{  Extended type functions     (F300 - F399)
+    PROC extended()
+      SEQ
+        --{{{  output message
+        title ("Testing Extended type functions")
+        --}}}
+        --{{{  null parameter funcs        (F300 - F309)
+        VAL fred IS 10101(INT64) :
+        VAL bert IS 10101.1(REAL64) :
+        REAL32 FUNCTION pi.32 () IS 3.1415926 (REAL32) :
+        REAL64 FUNCTION pi.64 () IS 3.1415926 (REAL64) :
+        INT64  FUNCTION fred () IS fred :
+        REAL64 FUNCTION bert () IS bert + 15.1 (REAL64) :
+        VAL jim IS 12345.0 (REAL64) :
+        --{{{  FUNCTION a ()   -- should return  12345.0
+        REAL64 FUNCTION a ()
+          VALOF
+            SKIP
+            RESULT jim
+        :
+        --}}}
+        --{{{  FUNCTION b ()   -- should return -12345.0
+        REAL64 FUNCTION b ()
+          VALOF
+            SKIP
+            RESULT -jim
+        :
+        --}}}
+        INT x :
+        SEQ
+          x := INT TRUNC (pi.32 ())
+          --out (INT 'Y')
+          check (x, 3, "F300")
+          x := INT TRUNC (pi.64 ())
+          --out (INT 'Y')
+          check (x, 3, "F301")
+          check (INT fred (), 10101, "F302")
+          check (INT TRUNC bert (), 10116, "F303")
+          check (INT TRUNC a (), 12345, "F304")
+          check (INT TRUNC b (),-12345, "F305")
+          check (INT TRUNC (a() + b()), 0, "F306")
+        --}}}
+        --{{{  INT64 arithmetic            (F310 - F319)
+        INT64 FUNCTION double  (VAL INT64  x) IS x * 2(INT64) :
+        INT64 FUNCTION   half  (VAL INT64  x) IS x / 2(INT64) :
+        --{{{  FUNCTION calc
+        INT64, INT64 FUNCTION calc  (VAL INT64 a, b, c)
+          INT64 p, q, r :
+          VALOF
+            INT64 t :
+            SEQ
+              p, q, r := a + b, b + c, c + a
+              t := p + (q + r)
+              p, q, r := a * b, b * c, c * a
+              t := t + (p + (q + r))
+              p, q, r := a / b, b / c, c / a
+              t := t + (p + (q + r))
+              p, q, r := a - b, b - c, c - a
+              t := t + (p + (q + r))
+              p, q, r := a \ b, b \ c, c \ a
+              p, q := t, (p + q) + r
+            RESULT p , q
+        :
+        --}}}
+        INT64 v, v1 :
+        SEQ
+          v := 1(INT64)
+          check (INT double (v), 2, "F310")
+          check (INT double (double (double (v))), 8, "F311")
+          v := 23(INT64)
+          SEQ i = 0 FOR 10
+            v := (double (half (double (v)) +
+                           1(INT64) ) / 2 (INT64) ) - 1 (INT64)
+          check (INT v, 23, "F312")
+          v := (MOSTPOS INT64) >> 1
+          check (INT (double (v) = ((MOSTPOS INT64) - 1(INT64)) ), INT TRUE, "F313")
+          v, v1 := calc (7(INT64), 5(INT64), 3(INT64))
+          check (INT v, 103, "F314")
+          check (INT v1, 7, "F315")
+        
+        -- test for bug 183 from buglist
+        INT64 FUNCTION f ()
+          INT64 x :
+          VALOF
+            x := #123456789ABCDEF0(INT64)
+            RESULT x
+        :
+        INT64 y :
+        SEQ
+          y := #DEFACEDDEFACEDFF(INT64)
+          y := f()
+          check(INT ((y>>0)  /\ #FFF(INT64)), #EF0, "B183a")
+          check(INT ((y>>12) /\ #FFF(INT64)), #BCD, "B183b")
+          check(INT ((y>>24) /\ #FFF(INT64)), #89A, "B183c")
+          check(INT ((y>>36) /\ #FFF(INT64)), #567, "B183d")
+          check(INT ((y>>48) /\ #FFF(INT64)), #234, "B183e")
+          check(INT ((y>>60) /\ #FFF(INT64)), #001, "B183e")
+        --}}}
+        --{{{  INT32 arithmetic            (F320 - F329)
+        INT32 FUNCTION double  (VAL INT32  x) IS x * 2(INT32) :
+        INT32 FUNCTION   half  (VAL INT32  x) IS x / 2(INT32) :
+        --{{{  FUNCTION calc
+        INT32, INT32 FUNCTION calc  (VAL INT32 a, b, c)
+          INT32 p, q, r :
+          VALOF
+            INT32 t :
+            SEQ
+              p, q, r := a + b, b + c, c + a
+              t := p + (q + r)
+              p, q, r := a * b, b * c, c * a
+              t := t + (p + (q + r))
+              p, q, r := a / b, b / c, c / a
+              t := t + (p + (q + r))
+              p, q, r := a - b, b - c, c - a
+              t := t + (p + (q + r))
+              p, q, r := a \ b, b \ c, c \ a
+              p, q := t, (p + q) + r
+            RESULT p , q
+        :
+        --}}}
+        INT32 v, v1 :
+        SEQ
+          v := 1(INT32)
+          check (INT double (v), 2, "F320")
+          check (INT double (double (double (v))), 8, "F321")
+          v := 23(INT32)
+          SEQ i = 0 FOR 10
+            v := (double (half (double (v)) +
+                           1(INT32) ) / 2 (INT32) ) - 1 (INT32)
+          check (INT v, 23, "F322")
+          v := (MOSTPOS INT32) >> 1
+          check (INT (double (v) = ((MOSTPOS INT32) - 1(INT32)) ), INT TRUE, "F323")
+          v, v1 := calc (7(INT32), 5(INT32), 3(INT32))
+          check (INT v, 103, "F324")
+          check (INT v1, 7, "F325")
+        --}}}
+        --{{{  INT16 arithmetic            (F330 - F339)
+        INT16 FUNCTION double  (VAL INT16  x) IS x * 2(INT16) :
+        INT16 FUNCTION   half  (VAL INT16  x) IS x / 2(INT16) :
+        --{{{  FUNCTION calc
+        INT16, INT16 FUNCTION calc  (VAL INT16 a, b, c)
+          INT16 p, q, r :
+          VALOF
+            INT16 t :
+            SEQ
+              p, q, r := a + b, b + c, c + a
+              t := p + (q + r)
+              p, q, r := a * b, b * c, c * a
+              t := t + (p + (q + r))
+              p, q, r := a / b, b / c, c / a
+              t := t + (p + (q + r))
+              p, q, r := a - b, b - c, c - a
+              t := t + (p + (q + r))
+              p, q, r := a \ b, b \ c, c \ a
+              p, q := t, (p + q) + r
+            RESULT p , q
+        :
+        --}}}
+        INT16 v, v1 :
+        SEQ
+          v := 1(INT16)
+          check (INT double (v), 2, "F330")
+          check (INT double (double (double (v))), 8, "F331")
+          v := 23(INT16)
+          SEQ i = 0 FOR 10
+            v := (double (half (double (v)) +
+                           1(INT16) ) / 2 (INT16) ) - 1 (INT16)
+          check (INT v, 23, "F332")
+          v := (MOSTPOS INT16) >> 1
+          check (INT (double (v) = ((MOSTPOS INT16) - 1(INT16)) ), INT TRUE, "F333")
+          v, v1 := calc (7(INT16), 5(INT16), 3(INT16))
+          check (INT v, 103, "F334")
+          check (INT v1, 7, "F335")
+        --}}}
+        --{{{  INT arithmetic              (F340 - F349)
+        INT FUNCTION double  (VAL INT  x) IS x * 2(INT) :
+        INT FUNCTION   half  (VAL INT  x) IS x / 2(INT) :
+        --{{{  FUNCTION calc
+        INT, INT FUNCTION calc  (VAL INT a, b, c)
+          INT p, q, r :
+          VALOF
+            INT t :
+            SEQ
+              p, q, r := a + b, b + c, c + a
+              t := p + (q + r)
+              p, q, r := a * b, b * c, c * a
+              t := t + (p + (q + r))
+              p, q, r := a / b, b / c, c / a
+              t := t + (p + (q + r))
+              p, q, r := a - b, b - c, c - a
+              t := t + (p + (q + r))
+              p, q, r := a \ b, b \ c, c \ a
+              p, q := t, (p + q) + r
+            RESULT p , q
+        :
+        --}}}
+        INT v, v1 :
+        SEQ
+          v := 1(INT)
+          check (INT double (v), 2, "F340")
+          check (INT double (double (double (v))), 8, "F341")
+          v := 23(INT)
+          SEQ i = 0 FOR 10
+            v := (double (half (double (v)) +
+                           1(INT) ) / 2 (INT) ) - 1 (INT)
+          check (INT v, 23, "F342")
+          v := (MOSTPOS INT) >> 1
+          check (INT (double (v) = ((MOSTPOS INT) - 1(INT)) ), INT TRUE, "F343")
+          v, v1 := calc (7(INT), 5(INT), 3(INT))
+          check (INT v, 103, "F344")
+          check (INT v1, 7, "F345")
+        --}}}
+        --{{{  REAL64 arithmetic           (F350 - F359)
+        REAL64 FUNCTION double (VAL REAL64 x) IS x * 2.0(REAL64) :
+        REAL64 FUNCTION   half (VAL REAL64 x) IS x / 2.0(REAL64) :
+        --{{{  FUNCTION calc
+        REAL64, REAL64 FUNCTION calc  (VAL REAL64 a, b, c)
+          REAL64 p, q, r :
+          VALOF
+            REAL64 t :
+            SEQ
+              p, q, r := a + b, b + c, c + a
+              t := p + (q + r)
+              p, q, r := a * b, b * c, c * a
+              t := t + (p + (q + r))
+              p, q, r := a / b, b / c, c / a
+              t := t + (p + (q + r))
+              p, q, r := a - b, b - c, c - a
+              t := t + (p + (q + r))
+              p, q, r := a \ b, b \ c, c \ a
+              p, q := t, (p + q) + r
+            RESULT p , q
+        :
+        --}}}
+        REAL64 v, v1 :
+        SEQ
+          v := 1.0(REAL64)
+          check (INT ROUND double (v), 2, "F350")
+          check (INT ROUND double (double (double (v))), 8, "F351")
+          v := 23.0(REAL64)
+          SEQ i = 0 FOR 10
+            v := (double (half (double (v)) +
+                           1.0 (REAL64) ) / 2.0 (REAL64) ) - 1.0 (REAL64)
+          check (INT ROUND v, 23, "F352")
+          v := 0.5(REAL64)
+          check (INT (double (v) = 1.0(REAL64) ), INT TRUE, "F353")
+          --{{{  this calculation needs to be tested by hand!
+          v, v1 := calc (7.0(REAL64), 5.0(REAL64), 3.0(REAL64))
+          check (INT ROUND v, 104, "F354")
+          check (INT ROUND v1, 4, "F355")
+          --}}}
+        
+        -- check bug 135 from buglist
+        BOOL, REAL64 FUNCTION f ()
+          BOOL error :
+          REAL64 res :
+          VALOF
+            error, res := TRUE, 1234.0(REAL64)
+            RESULT error, res
+        :
+        BOOL b :
+        REAL64 r :
+        SEQ
+          b, r := FALSE, 987654321.0(REAL64)
+          b, r := f ()
+          check(INT ROUND r, 1234, "B135a")
+        --}}}
+    :
+    extended()
+    --}}}
+    --{{{  checks for aliasing         (F400 - F499)
+    PROC aliasing()
+      SEQ
+        --{{{  output message
+        title ("Testing aliasing in functions")
+        --}}}
+        --{{{  access to globals           (F400 - F409)
+        INT x :
+        SEQ
+          x := 42
+          INT FUNCTION t () IS x :
+          check (t (), 42, "F400")
+          INT FUNCTION inc (VAL INT n) IS n + x :
+          SEQ
+            check (inc (1), 43, "F401")
+            check (inc (x), 84, "F402")
+            x := 13
+            check (inc (1), 14, "F403")
+            check (inc (x), 26, "F404")
+          SEQ i = 0 FOR 3
+            INT FUNCTION t () IS i :
+            check (t (), i, "F405")
+        --}}}
+    :
+    aliasing()
+    --}}}
+    --{{{  long constants              (F700 - F799)
+    PROC long.constants()
+      SEQ
+        --{{{  output message
+        title ("Testing constant handling")
+        --}}}
+        --{{{  internal constant           (F700 - F709)
+        INT FUNCTION f1 (VAL INT x) IS (MOSTPOS INT) - 1 :
+        INT FUNCTION f2 (VAL INT x) IS ((MOSTPOS INT) - 1) - x :
+        INT FUNCTION f3 (VAL INT x)
+          VAL big.int IS (MOSTPOS INT) - 1 :
+          VALOF
+            INT a, b, c :
+            SEQ
+              a := 1
+              a, b, c := big.int, big.int, big.int - a
+            RESULT big.int
+        :
+        INT x :
+        SEQ
+          x := 13
+          check (f1 (1), (MOSTPOS INT) - 1, "F700")
+          check (f1 (x), (MOSTPOS INT) - 1, "F701")
+          check (f2 (1), (MOSTPOS INT) - 2, "F702")
+          check (f2 (x), (MOSTPOS INT) - 14, "F703")
+          check (f3 (1), (MOSTPOS INT) - 1, "F704")
+          check (f3 (x), (MOSTPOS INT) - 1, "F705")
+        --}}}
+        --{{{  external constant           (F710 - F719)
+        VAL big.int IS (MOSTPOS INT) - 1 :
+        INT FUNCTION f1 (VAL INT x) IS big.int :
+        INT FUNCTION f2 (VAL INT x) IS big.int - x :
+        INT FUNCTION f3 (VAL INT x)
+          VALOF
+            INT a, b, c :
+            SEQ
+              a := 1
+              a, b, c := big.int, big.int, big.int - a
+            RESULT big.int
+        :
+        INT x :
+        SEQ
+          x := 13
+          check (f1 (1), big.int, "F710")
+          check (f1 (x), big.int, "F711")
+          check (f2 (1), big.int - 1, "F712")
+          check (f2 (x), big.int - 13, "F713")
+          check (f3 (1), big.int, "F714")
+          check (f3 (x), big.int, "F715")
+        --}}}
+        --{{{  two constants               (F720 - F729)
+        INT FUNCTION f1 (VAL INT x)
+          VAL a IS (MOSTNEG INT) + 7 :
+          VAL b IS (MOSTPOS INT) - 1 :
+          VALOF
+            INT c, d, e :
+            SEQ
+              c, d, e := a, b, a
+              c, d, e := b, a, b - x
+            RESULT b - x
+        :
+        INT x :
+        SEQ
+          x := 13
+          check (f1 (1), (MOSTPOS INT) - 2, "F720")
+          check (f1 (x), (MOSTPOS INT) - 14, "F721")
+        --}}}
+    :
+    long.constants()
+    --}}}
+    --{{{  nested functions            (F800 - F899)
+    PROC nested()
+      SEQ
+        --{{{  output message
+        title ("Testing nested functions")
+        --}}}
+        --{{{  calling predefines in-line  (F800 - F809)
+        INT FUNCTION f0 (VAL INT x) IS LONGADD (x, 42, 0) :
+        INT FUNCTION f1 (VAL INT x, y) IS LONGADD (x, y, 0) :
+        INT FUNCTION f2 (VAL INT x, y, z) IS LONGADD (x, y, z) :
+        INT a, b, c :
+        SEQ
+          a, b, c := 1, 2, 3
+          check (f0(a),      43, "F800")
+          check (f1(a, b),    3, "F801")
+          check (f2(a, b, c), 4, "F802")
+        --}}}
+        --{{{  calling predefines          (F810 - F819)
+        INT FUNCTION f (VAL INT x, y, z)
+          INT a, b, c :
+          VALOF
+            SEQ
+              a, b, c := LONGADD (x, y, z), LONGADD (x, y, 0), LONGADD (x, 42, 0)
+            RESULT LONGADD (a, b, c)
+        :
+        INT a, b, c :
+        SEQ
+          a, b, c := 1, 2, 3
+          check (f (a, b, c), 8, "F810")
+          check (f (b, b, c), 9, "F811")
+        --}}}
+        --{{{  nested declarations         (F820 - F829)
+        INT FUNCTION f0 (VAL INT x)
+          INT FUNCTION f1 (VAL INT x)
+            INT FUNCTION f2 (VAL INT x)
+              INT FUNCTION f3 (VAL INT x)
+                VALOF
+                  SKIP
+                  RESULT x + 1
+              :
+              VALOF
+                SKIP
+                RESULT f3 (x) + 1
+            :
+            VALOF
+              SKIP
+              RESULT f2 (x) + 1
+          :
+          VALOF
+            SKIP
+            RESULT f1 (x) + 1
+        :
+        INT x :
+        SEQ
+          x := 42
+          check (f0 (x), 46, "F820")
+        --}}}
+        --{{{  more nested declarations    (F830 - F839)
+        INT FUNCTION f (VAL INT x)
+          INT FUNCTION f (VAL INT x)
+            INT FUNCTION f (VAL INT x)
+              INT FUNCTION f (VAL INT x)
+                VALOF
+                  SKIP
+                  RESULT x + 1
+              :
+              VALOF
+                SKIP
+                RESULT f (x) + 1
+            :
+            VALOF
+              SKIP
+              RESULT f (x) + 1
+          :
+          VALOF
+            SKIP
+            RESULT f (x) + 1
+        :
+        INT x :
+        SEQ
+          x := 42
+          check (f (x), 46, "F830")
+        --}}}
+        --{{{  more nested declarations    (F840 - F849)
+        INT FUNCTION f0 (VAL INT x, x0)
+          INT FUNCTION f1 (VAL INT x, x1)
+            INT FUNCTION f2 (VAL INT x, x2)
+              INT FUNCTION f3 (VAL INT x, x3)
+                VALOF
+                  SKIP
+                  RESULT x + (x0 + (x1 + (x2 + x3)))
+              :
+              VALOF
+                SKIP
+                RESULT f3 (x, x2 + 1) + (x0 + (x1 + x2))
+            :
+            VALOF
+              SKIP
+              RESULT f2 (x, x1 + 1) + (x0 + x1)
+          :
+          VALOF
+            SKIP
+            RESULT f1 (x, x0 + 1) + x0
+        :
+        INT x :
+        SEQ
+          x := 42
+          check (f0 (x  , 10), 152, "F840")
+          check (f0 (x+1, 10), 153, "F841")
+          check (f0 (x  , 11), 162, "F842")
+        --}}}
+        --{{{  sequential declarations     (F850 - F859)
+        --{{{  FUNCTION inc
+        INT FUNCTION inc (VAL INT x) IS x + 1 :
+        INT FUNCTION inc (VAL INT x) IS inc (x) + 1 :   -- each of these descopes
+        INT FUNCTION inc (VAL INT x) IS inc (x) + 1 :   -- the one above
+        INT FUNCTION inc (VAL INT x) IS inc (x) + 1 :
+        INT FUNCTION inc (VAL INT x) IS inc (x) + 1 :
+        INT FUNCTION inc (VAL INT x) IS inc (x) + 1 :
+        INT FUNCTION inc (VAL INT x) IS inc (x) + 1 :
+        --}}}
+        --{{{  FUNCTION inc.n
+        INT FUNCTION inc.0 (VAL INT x) IS x + 1 :
+        INT FUNCTION inc.1 (VAL INT x) IS inc.0 (x) + 1 :
+        INT FUNCTION inc.2 (VAL INT x) IS inc.1 (x) + 1 :
+        INT FUNCTION inc.3 (VAL INT x) IS inc.2 (x) + 1 :
+        INT FUNCTION inc.4 (VAL INT x) IS inc.3 (x) + 1 :
+        INT FUNCTION inc.5 (VAL INT x) IS inc.4 (x) + 1 :
+        INT FUNCTION inc.6 (VAL INT x) IS inc.5 (x) + 1 :
+        --}}}
+        --{{{  FUNCTION mul
+        INT FUNCTION mul (VAL INT x) IS x :
+        INT FUNCTION mul (VAL INT x) IS mul (x) + mul (x) :   -- each of these descopes
+        INT FUNCTION mul (VAL INT x) IS mul (x) + mul (x) :   -- the one above
+        INT FUNCTION mul (VAL INT x) IS mul (x) + mul (x) :
+        INT FUNCTION mul (VAL INT x) IS mul (x) + mul (x) :
+        INT FUNCTION mul (VAL INT x) IS mul (x) + mul (x) :
+        INT FUNCTION mul (VAL INT x) IS mul (x) + mul (x) :
+        --}}}
+        --{{{  FUNCTION mul.n
+        INT FUNCTION mul.0 (VAL INT x) IS x :
+        INT FUNCTION mul.1 (VAL INT x) IS mul.0 (x) + mul.0 (x) :
+        INT FUNCTION mul.2 (VAL INT x) IS mul.1 (x) + mul.1 (x) :
+        INT FUNCTION mul.3 (VAL INT x) IS mul.2 (x) + mul.2 (x) :
+        INT FUNCTION mul.4 (VAL INT x) IS mul.3 (x) + mul.3 (x) :
+        INT FUNCTION mul.5 (VAL INT x) IS mul.4 (x) + mul.4 (x) :
+        INT FUNCTION mul.6 (VAL INT x) IS mul.5 (x) + mul.5 (x) :
+        --}}}
+        --{{{  FUNCTION add
+        INT FUNCTION add (VAL INT x1) IS x1 :
+        INT FUNCTION add (VAL INT x1, x2) IS add (x1) + x2 :
+        INT FUNCTION add (VAL INT x1, x2, x3) IS add (x1, x2) + x3 :
+        INT FUNCTION add (VAL INT x1, x2, x3, x4) IS add (x1, x2, x3) + x4 :
+        --}}}
+        INT x :
+        SEQ
+          x := 42
+          check (inc   (x),  49, "F850")
+          check (inc.6 (x),  49, "F851")
+          check (inc.3 (x),  46, "F852")
+          check (inc.0 (x),  43, "F853")
+          check (mul   (1),  64, "F854")
+          check (mul   (2), 128, "F855")
+          check (mul.6 (1),  64, "F856")
+          check (mul.6 (2), 128, "F857")
+          check (mul.3 (1),   8, "F858")
+          check (add (1, 2, 3, 4), 10, "F859")
+        --}}}
+        --{{{  Return involves computation (F860 - F865)
+        -- Each calc fills stack, must store temp results
+        INT a, b, c :
+        INT, INT, INT FUNCTION f() IS LONGADD(a, b, c),
+                                      LONGADD(b, c, a),
+                                      LONGADD(c, a, b) :
+        [3]INT a0, a1, a2 :
+        SEQ
+          a, b, c := 1, 3, 5
+          a, b, c := f()
+          check(a, 5, "F860")
+          check(b, 9, "F861")
+          check(c, 7, "F862")
+        
+          -- Require calculation on left side of assignment
+          a, b, c := 1, 3, 5
+          SEQ i = 0 FOR SIZE a0
+            a0[i], a1[i], a2[i] := i, i, i
+          a0[c-(b+(a+a))], a1[(2*c)-(b*b)], a2[c-(a*b)] := f()
+          check(a0[0], 5, "F863")
+          check(a1[1], 9, "F864")
+          check(a2[2], 7, "F865")
+        
+          -- Similar check but with builtin
+          a0[c-(b+(a+a))], a1[(2*c)-(b*b)], a2[c-(a*b)] :=
+            NORMALISE( MOSTPOS INT, 5)
+          check(a0[0],  1, "F866")
+          check(a1[1], -2, "F867")
+          check(a2[2], 10, "F868")
+        
+        --}}}
+    :
+    nested()
+    --}}}
+    --{{{  large numbers of parameters (F900 - F999)
+    PROC lots.of.params()
+      SEQ
+        --{{{  output message
+        title ("Testing multiple parameter functions")
+        --}}}
+        --{{{  ten params  (INTs)          (F900 - F909)
+        --{{{  FUNCTION ten
+        INT FUNCTION ten (VAL INT a, b, c, d, e, f, g, h, i, j)
+          INT r :
+          VALOF
+            r := (((a + b) + (c + d)) + ((e + f) + (g + h))) + (i + j)
+            RESULT r
+        :
+        --}}}
+        INT a, b, c, d, e, f, g, h, i, j, r :
+        SEQ
+          a, b, c, d, e, f, g, h, i, j := 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+          r := ten (a, b, c, d, e, f, g, h, i, j)
+          check (r, 55, "F900")
+          check (ten (a, b, c, d, e, f, g, h, i, j) + j, 65, "F901")
+        --}}}
+        --{{{  ten params  (INT64s)        (F910 - F919)
+        --{{{  FUNCTION ten
+        INT64 FUNCTION ten (VAL INT64 a, b, c, d, e, f, g, h, i, j)
+          INT64 r :
+          VALOF
+            r := (((a + b) + (c + d)) + ((e + f) + (g + h))) + (i + j)
+            RESULT r
+        :
+        --}}}
+        INT64 a, b, c, d, e, f, g, h, i, j, r :
+        SEQ
+          --{{{  initialise a .. j
+          a, b, c, d := 1(INT64), 2(INT64), 3(INT64), 4(INT64)
+          e, f, g, h := 5(INT64), 6(INT64), 7(INT64), 8(INT64)
+          i, j       := 9(INT64), 10(INT64)
+          --}}}
+          r := ten (a, b, c, d, e, f, g, h, i, j)
+          check (INT r, 55, "F910")
+          check (INT (ten (a, b, c, d, e, f, g, h, i, j) + j), 65, "F911")
+        --}}}
+        --{{{  call each parameter five    (F920 - F929)
+        --{{{  INT FUNCTION five
+        INT FUNCTION five (VAL INT a, b, c, d, e) IS (a + b) + (c + (d + e)) :
+        --}}}
+        INT a, b, c, d, e, r :
+        SEQ
+          a, b, c, d, e := 1, 2, 3, 4, 5
+          r := five (a, b, c, d, e)
+          check (r, 15, "F920")
+          check (five (a, b, c, d, e) + e, 20, "F921")
+          r := five (five (a, b, c, d, e),
+                     five (a, b, c, d, e),
+                     five (a, b, c, d, e),
+                     five (a, b, c, d, e),
+                     five (a, b, c, d, e)  )
+          check (r, 75, "F922")
+        --}}}
+    :
+    lots.of.params()
+    --}}}
+    --{{{  fns returning multiple types(F1000 - F1199)
+    PROC multiple.types()
+      SEQ
+        --{{{  output message
+        title ("Testing functions which return multiple vars of different types")
+        --}}}
+    
+        --{{{  BOOL, BYTE   (F1000 - F1001)
+        BOOL, BYTE FUNCTION f() IS TRUE, 1(BYTE) :
+        BOOL a :
+        BYTE b :
+        SEQ
+          a, b := FALSE, 101(BYTE)
+          a, b := f()
+          check(INT a, INT TRUE, "F1000")
+          check(INT b, INT 1(BYTE), "F1001")
+        --}}}
+        --{{{  BOOL, INT
+        BOOL, INT FUNCTION f() IS TRUE, 1 :
+        BOOL a :
+        INT  b :
+        SEQ
+          a, b := FALSE, 101
+          a, b := f()
+          check(INT a, INT TRUE, "F1002")
+          check(INT b, INT 1, "F1003")
+        --}}}
+        --{{{  BOOL, INT16
+        BOOL, INT16 FUNCTION f() IS TRUE, 1(INT16) :
+        BOOL  a :
+        INT16 b :
+        SEQ
+          a, b   := FALSE, 101(INT16)
+          a, b := f()
+          check(INT a, INT TRUE, "F1004")
+          check(INT b, INT 1(INT16), "F1005")
+        --}}}
+        --{{{  BOOL, INT32
+        BOOL, INT32 FUNCTION f() IS TRUE, 1(INT32) :
+        BOOL a :
+        INT32 b :
+        SEQ
+          a, b := FALSE, 101(INT32)
+          a, b := f()
+          check(INT a, INT TRUE, "F1006")
+          check(INT b, INT 1(INT32), "F1007")
+        --}}}
+        --{{{  BOOL, INT64
+        BOOL, INT64 FUNCTION f() IS TRUE, 1(INT64) :
+        BOOL a :
+        INT64 b :
+        SEQ
+          a, b := FALSE, 101(INT64)
+          a, b := f()
+          check(INT a, INT TRUE, "F1008")
+          check(INT b, INT 1(INT64), "F1009")
+        --}}}
+        --{{{  BOOL, REAL32
+        BOOL, REAL32 FUNCTION f() IS TRUE, 1.0(REAL32) :
+        BOOL a :
+        REAL32 b :
+        SEQ
+          a, b := FALSE, 101.0(REAL32)
+          a, b := f()
+          check(INT a, INT TRUE, "F1010")
+          check(INT TRUNC b, INT TRUNC 1.0(REAL32), "F1011")
+        --}}}
+        --{{{  BOOL, REAL64 (F1012 - F1013)
+        BOOL, REAL64 FUNCTION f() IS TRUE, 1.0(REAL64) :
+        BOOL a :
+        REAL64 b :
+        SEQ
+          a, b := FALSE, 101.0(REAL64)
+          a, b := f()
+          check(INT a, INT TRUE, "F1012")
+          check(INT TRUNC b, INT TRUNC 1.0(REAL64), "F1013")
+        --}}}
+    
+        --{{{  Check single REAL return (F1098 - F1099)
+        REAL32 FUNCTION f1() IS 1.0(REAL32) :
+        REAL64 FUNCTION f2() IS 2.0(REAL64) :
+        REAL32 a :
+        REAL64 b :
+        SEQ
+          a := 101.0(REAL32)
+          b := 102.0(REAL64)
+          a := f1()
+          b := f2()
+          check(INT TRUNC a, 1, "F1098")
+          check(INT TRUNC b, 2, "F1099")
+        
+        --}}}
+    
+        --{{{  Single line returning all types              (F1100 - F1107)
+        BOOL, BYTE, INT, INT16, INT32, INT64, REAL32, REAL64 FUNCTION t() IS
+          TRUE, 1(BYTE), 2, 3(INT16), 4(INT32), 5(INT64),
+          6.0(REAL32), 7.0(REAL64) :
+        BOOL   a :
+        BYTE   b :
+        INT    c :
+        INT16  d :
+        INT32  e :
+        INT64  f :
+        REAL32 g :
+        REAL64 h :
+        SEQ
+          a, b       := FALSE, 101(BYTE)
+          c, d, e, f := 102, 103(INT16), 104(INT32), 105(INT64)
+          g, h       := 106.0(REAL32), 107.0(REAL64)
+          a, b, c, d, e, f, g, h := t()
+          check(INT a, INT TRUE      , "F1100")
+          check(INT b, INT 1  (BYTE ), "F1101")
+          check(INT c,     2         , "F1102")
+          check(INT d, INT 3  (INT16), "F1103")
+          check(INT e, INT 4  (INT32), "F1104")
+          check(INT f, INT 5  (INT64), "F1105")
+          check(INT TRUNC g, INT TRUNC 6.0(REAL32), "F1106")
+          check(INT TRUNC h, INT TRUNC 7.0(REAL64), "F1107")
+        
+        
+        --}}}
+        --{{{  Sinlge line returning all types, but aliased (F1110 - F1117)
+        BOOL, BYTE, INT, INT16, INT32, INT64,
+          REAL32, REAL64 FUNCTION t(VAL BOOL a, VAL BYTE b,
+          VAL INT c, VAL INT16 d, VAL INT32 e, VAL INT64 f,
+          VAL REAL32 g, VAL REAL64 h) IS
+          TRUE, 1(BYTE), 2, 3(INT16), 4(INT32), 5(INT64),
+          6.0(REAL32), 7.0(REAL64) :
+        BOOL   a :
+        BYTE   b :
+        INT    c :
+        INT16  d :
+        INT32  e :
+        INT64  f :
+        REAL32 g :
+        REAL64 h :
+        SEQ
+          a, b       := FALSE, 101(BYTE)
+          c, d, e, f := 102, 103(INT16), 104(INT32), 105(INT64)
+          g, h       := 106.0(REAL32), 107.0(REAL64)
+          a, b, c, d, e, f, g, h := t(a, b, c, d, e, f, g, h)
+          check(INT a, INT TRUE    , "F1110")
+          check(INT b, INT 1(BYTE ), "F1111")
+          check(INT c,     2       , "F1112")
+          check(INT d, INT 3(INT16), "F1113")
+          check(INT e, INT 4(INT32), "F1114")
+          check(INT f, INT 5(INT64), "F1115")
+          check(INT TRUNC g, INT TRUNC 6.0(REAL32), "F1116")
+          check(INT TRUNC h, INT TRUNC 7.0(REAL64), "F1117")
+        
+        
+        --}}}
+        --{{{  Multi line returning all types               (F1120 - F1127)
+        BOOL, BYTE, INT, INT16, INT32, INT64, REAL32, REAL64 FUNCTION t()
+          VALOF
+            SKIP
+            RESULT TRUE, 1(BYTE), 2, 3(INT16), 4(INT32), 5(INT64),
+                   6.0(REAL32), 7.0(REAL64)
+        :
+        BOOL   a :
+        BYTE   b :
+        INT    c :
+        INT16  d :
+        INT32  e :
+        INT64  f :
+        REAL32 g :
+        REAL64 h :
+        SEQ
+          a, b       := FALSE, 101(BYTE)
+          c, d, e, f := 102, 103(INT16), 104(INT32), 105(INT64)
+          g, h       := 106.0(REAL32), 107.0(REAL64)
+          a, b, c, d, e, f, g, h := t()
+          check(INT a, INT TRUE    , "F1120")
+          check(INT b, INT 1(BYTE ), "F1121")
+          check(INT c,     2       , "F1122")
+          check(INT d, INT 3(INT16), "F1123")
+          check(INT e, INT 4(INT32), "F1124")
+          check(INT f, INT 5(INT64), "F1125")
+          check(INT TRUNC g, INT TRUNC 6.0(REAL32), "F1126")
+          check(INT TRUNC h, INT TRUNC 7.0(REAL64), "F1127")
+        
+        
+        --}}}
+        --{{{  Multi line returning all types, but aliased  (F1130 - F1137)
+        BOOL, BYTE, INT, INT16, INT32, INT64,
+          REAL32, REAL64 FUNCTION t(VAL BOOL a, VAL BYTE b,
+          VAL INT c, VAL INT16 d, VAL INT32 e, VAL INT64 f,
+          VAL REAL32 g, VAL REAL64 h)
+          INT x :
+          VALOF
+            x:= (INT a)+((INT b)+(c + ((INT d)+((INT e)+((INT f)+
+                  ((INT TRUNC g)+(INT TRUNC h)))))))
+            RESULT TRUE, 1(BYTE), 2, 3(INT16), 4(INT32), 5(INT64),
+                   6.0(REAL32), 7.0(REAL64)
+        :
+        BOOL   a :
+        BYTE   b :
+        INT    c :
+        INT16  d :
+        INT32  e :
+        INT64  f :
+        REAL32 g :
+        REAL64 h :
+        SEQ
+          a, b       := FALSE, 101(BYTE)
+          c, d, e, f := 102, 103(INT16), 104(INT32), 105(INT64)
+          g, h       := 106.0(REAL32), 107.0(REAL64)
+          a, b, c, d, e, f, g, h := t(a, b, c, d, e, f, g, h)
+          check(INT a, INT TRUE    , "F1130")
+          check(INT b, INT 1(BYTE ), "F1131")
+          check(INT c,     2       , "F1132")
+          check(INT d, INT 3(INT16), "F1133")
+          check(INT e, INT 4(INT32), "F1134")
+          check(INT f, INT 5(INT64), "F1135")
+          check(INT TRUNC g, INT TRUNC 6.0(REAL32), "F1136")
+          check(INT TRUNC h, INT TRUNC 7.0(REAL64), "F1137")
+        
+        
+        --}}}
+    :
+    multiple.types()
+    --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    --{{{  value processes             (F1200 - F1299)
+    PROC value.processes()
+      SEQ
+        --{{{  output title
+        title ("Testing value functions")
+        --}}}
+    
+        --{{{  Simple test BOOL   (F1200)
+        BOOL a :
+        SEQ
+          a := TRUE
+          a := (VALOF
+                  SKIP
+                  RESULT FALSE
+               )
+          check(INT a, INT FALSE, "F1200")
+        --}}}
+        --{{{  Simple test BYTE   (F1201)
+        BYTE a :
+        SEQ
+          a := 1(BYTE)
+          a := (VALOF
+                  SKIP
+                  RESULT 2(BYTE)
+               )
+          check(INT a, 2, "F1201")
+        --}}}
+        --{{{  Simple test INT    (F1202)
+        INT a :
+        SEQ
+          a := 1
+          a := (VALOF
+                  SKIP
+                  RESULT 2
+               )
+          check(a, 2, "F1202")
+        --}}}
+        --{{{  Simple test INT16  (F1203)
+        INT16 a :
+        SEQ
+          a := 1(INT16)
+          a := (VALOF
+                  SKIP
+                  RESULT 2(INT16)
+               )
+          check(INT a, 2, "F1203")
+        --}}}
+        --{{{  Simple test INT32  (F1204)
+        INT32 a :
+        SEQ
+          a := 1(INT32)
+          a := (VALOF
+                  SKIP
+                  RESULT 2(INT32)
+               )
+          check(INT a, 2, "F1204")
+        --}}}
+        --{{{  Simple test INT64  (F1205)
+        INT64 a :
+        SEQ
+          a := 1(INT64)
+          a := (VALOF
+                  SKIP
+                  RESULT 2(INT64)
+               )
+          check(INT a, 2, "F1205")
+        --}}}
+        --{{{  Simple test REAL32 (F1206)
+        REAL32 a :
+        SEQ
+          a := 1.0(REAL32)
+          a := (VALOF
+                  SKIP
+                  RESULT 2.0(REAL32)
+               )
+          check(INT TRUNC a, 2, "F1206")
+        --}}}
+        --{{{  Simple test REAL64 (F1207)
+        REAL64 a :
+        SEQ
+          a := 1.0(REAL64)
+          a := (VALOF
+                  SKIP
+                  RESULT 2.0(REAL64)
+               )
+          check(INT TRUNC a, 2, "F1207")
+        --}}}
+    
+        --{{{  Ensure local var descopes free (F1210 - F1212)
+        INT a, b :
+        REAL64 c, d :
+        SEQ
+          a := 1
+          b := 2
+          a := (INT a :
+                VALOF
+                  a := 3
+                  RESULT a + b
+               )
+          check(a, 5, "F1210")
+        
+          c, d := 3.0(REAL64), 4.0(REAL64)
+          c := (REAL64 c :
+                VALOF
+                  c := 5.0(REAL64)
+                  RESULT c + d
+               )
+          check(INT TRUNC c, 9, "F1211")
+        
+          c, d := 6.0(REAL64), 7.0(REAL64)
+          c := (INT c :
+                VALOF
+                  c := 8
+                  RESULT (REAL64 TRUNC c) + d
+               )
+          check(INT TRUNC c, 15, "F1212")
+        
+        --}}}
+    
+        --{{{  Process returning all types (F1220 - F1229)
+        BOOL   a :
+        BYTE   b :
+        INT    c :
+        INT16  d :
+        INT32  e :
+        INT64  f :
+        REAL32 g :
+        REAL64 h :
+        SEQ
+          a, b       := FALSE, 101(BYTE)
+          c, d, e, f := 102, 103(INT16), 104(INT32), 105(INT64)
+          g, h       := 106.0(REAL32), 107.0(REAL64)
+          a, b, c, d, e, f, g, h := (VALOF
+                                       --{{{
+                                       SKIP
+                                       RESULT TRUE, 1(BYTE), 2, 3(INT16), 4(INT32), 5(INT64),
+                                              6.0(REAL32), 7.0(REAL64)
+                                       --}}}
+                                    )
+          check(INT a, INT TRUE      , "F1220")
+          check(INT b, INT 1  (BYTE ), "F1221")
+          check(INT c,     2         , "F1222")
+          check(INT d, INT 3  (INT16), "F1223")
+          check(INT e, INT 4  (INT32), "F1224")
+          check(INT f, INT 5  (INT64), "F1225")
+          check(INT TRUNC g, INT TRUNC 6.0(REAL32), "F1226")
+          check(INT TRUNC h, INT TRUNC 7.0(REAL64), "F1227")
+        
+        
+        --}}}
+        --{{{  Simple test returning BOOL,  BYTE   (F1230 - F1231)
+        BOOL a :
+        BYTE b :
+        SEQ
+          a, b := FALSE, 1(BYTE)
+          a, b := (VALOF
+                     SKIP
+                     RESULT TRUE, 3(BYTE)
+                  )
+          check(INT a, INT TRUE, "F1230")
+          check(INT b, 3, "F1231")
+        
+        --}}}
+        --{{{  Simple test returning BYTE,  INT    (F1232 - F1233)
+        BYTE a :
+        INT  b :
+        SEQ
+          a, b := 0(BYTE), 1
+          a, b := (VALOF
+                     --{{{
+                     SKIP
+                     RESULT 2(BYTE), 3
+                     --}}}
+                  )
+          check(INT a, 2, "F1232")
+          check(    b, 3, "F1233")
+        
+        --}}}
+        --{{{  Simple test returning INT,   INT16  (F1234 - F1235)
+        INT a :
+        INT16 b :
+        SEQ
+          a, b := 0, 1(INT16)
+          a, b := (VALOF
+                     --{{{
+                     SKIP
+                     RESULT 2, 3(INT16)
+                     --}}}
+                  )
+          check(    a, 2, "F1234")
+          check(INT b, 3, "F1235")
+        
+        --}}}
+        --{{{  Simple test returning INT16, INT32  (F1236 - F1237)
+        INT16 a :
+        INT32 b :
+        SEQ
+          a, b := 0(INT16), 1(INT32)
+          a, b := (VALOF
+                     --{{{
+                     SKIP
+                     RESULT 2(INT16), 3(INT32)
+                     --}}}
+                  )
+          check(INT a, 2, "F1236")
+          check(INT b, 3, "F1237")
+        
+        --}}}
+        --{{{  Simple test returning INT32, INT64  (F1238 - F1239)
+        INT32 a :
+        INT64 b :
+        SEQ
+          a, b := 0(INT32), 1(INT64)
+          a, b := (VALOF
+                     --{{{
+                     SKIP
+                     RESULT 2(INT32), 3(INT64)
+                     --}}}
+                  )
+          check(INT a, 2, "F1238")
+          check(INT b, 3, "F1239")
+        
+        --}}}
+        --{{{  Simple test returning INT64, REAL32 (F1240 - F1241)
+        INT64 a :
+        REAL32 b :
+        SEQ
+          a, b := 0(INT64), 1.0(REAL32)
+          a, b := (VALOF
+                     --{{{
+                     SKIP
+                     RESULT 2(INT64), 3.0(REAL32)
+                     --}}}
+                  )
+          check(INT a, 2, "F1240")
+          check(INT TRUNC b, 3, "F1241")
+        
+        --}}}
+        --{{{  Simple test returning REAL32,REAL64 (F1242 - F1243)
+        REAL32 a :
+        REAL64 b :
+        SEQ
+          a, b := 0.0(REAL32), 1.0(REAL64)
+          a, b := (VALOF
+                     --{{{
+                     SKIP
+                     RESULT 2.0(REAL32), 3.0(REAL64)
+                     --}}}
+                  )
+          check(INT TRUNC a, 2, "F1242")
+          check(INT TRUNC b, 3, "F1243")
+        
+        --}}}
+    
+        --{{{  Nested value processes (F1250 - F1251)
+        PROC F1250()
+          INT a, b :
+          SEQ
+            a, b := 0, 1
+            a := (VALOF
+                    SKIP
+                    RESULT (INT x:
+                            VALOF
+                              x := b
+                              RESULT x
+                           ) + 1
+                 )
+            check(a, 2, "F1250")
+        :
+        
+        PROC F1251()
+          INT a, b, c:
+          SEQ
+            a, b, c := 0, 1, 2
+            a := (VALOF
+                    SKIP
+                    RESULT (INT x:
+                            VALOF
+                              x := b
+                              RESULT x
+                           ) + ((INT x :
+                                 VALOF
+                                   x := c
+                                   RESULT x
+                                ) + 1)
+                 )
+            check(a, 4, "F1251")
+        :
+        SEQ
+          F1250()
+          F1251()
+        --}}}
+        --{{{  Functions and value processes (F1252 - F1257)
+        PROC F1252()
+          INT, INT FUNCTION two(VAL INT a, b) IS a + 1, b + 1:
+          INT a, b :
+          SEQ
+            a, b := 0, 1
+            a, b := two((VALOF
+                           SKIP
+                           RESULT 1
+                        ),
+                        (VALOF
+                           SKIP
+                           RESULT 2
+                        ) + (INT x :
+                             VALOF
+                               x := 99
+                               RESULT x
+                            ))
+            check(a, 2, "F1252")
+            check(b, 102, "F1253")
+        :
+        PROC F1254()
+          INT a, b:
+          INT FUNCTION f() IS (VALOF
+                                 SKIP
+                                 RESULT a + 100
+                              ) :
+          SEQ
+            a, b := 1,2
+            b := f()
+            check(b, 101, "F1254")
+        :
+        PROC F1255()
+          INT a, b:
+          INT, INT FUNCTION f(VAL INT x) IS (VALOF
+                                               SKIP
+                                               RESULT x + 1
+                                            ), (INT x :
+                                                VALOF
+                                                  x := 42
+                                                  RESULT b + x
+                                               ) :
+          SEQ
+            a, b := 1,2
+            a, b := f(b)
+            check(a, 3, "F1255")
+            check(b, 44, "F1256")
+        :
+        PROC F1257()
+          INT a :
+          SEQ
+            a := 1
+            a := (INT b :
+                  INT FUNCTION f() IS b+a  :
+                  VALOF
+                    b := 42
+                    RESULT f()
+                 )
+            check(a, 43, "F1257")
+        :
+        SEQ
+          F1252()
+          F1254()
+          F1255()
+          F1257()
+        --}}}
+    
+        --{{{  More exotic uses of value processes (F1260-
+        PROC exotic()
+          VAL array IS [1, 2, 3, 4] :
+          VAL array2 IS [[ 1, 2], [3, 4]] :
+          INT a:
+          SEQ
+            a := 1
+            a := array[(INT a, b, c :
+                        VALOF
+                          SEQ
+                            a, b, c := 1, 2, 0
+                            a, b := LONGSUM(a, b, c)
+                          RESULT b
+                       )]
+            check(a, 4, "F1260")
+            a := array2[(INT a, b, c :
+                         VALOF
+                           SEQ
+                             a, b, c := 0, 1, 0
+                             a, b := LONGSUM(a, b, c)
+                           RESULT b
+                        )][(INT a, b, c :
+                            VALOF
+                              SEQ
+                                a, b, c := 0, 0, 0
+                                a, b := LONGSUM(a, b, c)
+                              RESULT b
+                           )]
+            check(a, 3, "F1261")
+        
+        
+        
+        
+        
+        :
+        exotic()
+        --}}}
+        --{{{  value processes and ALTs (F1270 - F1274)
+        PROC valueAndAlt()
+          CHAN OF INT chan :
+          [2]CHAN OF INT chan2 :
+          INT value :
+          SEQ
+            value := 0
+            PAR
+              ALT
+                (INT a, b :
+                 VALOF
+                   a := b
+                   RESULT TRUE
+                ) & chan ? value
+                  check(value, 1, "F1270")
+                (VALOF
+                   SKIP
+                   RESULT FALSE
+                ) & SKIP
+                  check(0, 1, "F1271")
+              chan ! 1
+        
+            PAR
+              ALT i = 0 FOR SIZE chan2
+                (INT a, b :
+                 VALOF
+                   SEQ
+                     a, b := 0, 0
+                     a, b := LONGSUM(a, b, i)
+                   RESULT (b = 0)
+                ) & chan2[i] ? value
+                  SEQ
+                    check(value, 2, "F1272")
+                    check(i,     0, "F1273")
+              chan2[0] ! 2
+        
+            [2]CHAN OF INT chan :
+            [5]INT data :
+            INT answer :
+            SEQ
+              PAR
+                SEQ
+                  --{{{  Perform ALT input
+                  ALT i = (INT a, b, c :
+                           VALOF
+                             SEQ
+                               a, b, c := 0, 0, 0
+                               a, b    := LONGSUM(a, b, c)
+                             RESULT b
+                           ) FOR (INT a, b, c :
+                                  VALOF
+                                    SEQ
+                                      a, b, c := 1, 0, 0
+                                      a, b    := LONGSUM(a, b, c)
+                                    RESULT b
+                                 )
+                    --chan[(INT a, b, c : -- bug 779
+                    --      VALOF
+                    --        SEQ
+                    --          a, b, c := -1, i, 1
+                    --          a, b    := LONGSUM(a, b, c)
+                    --        RESULT b
+                    --     )] ? data[(INT a, b, c :
+                    chan[0] ? data[(INT a, b, c :
+                                    VALOF
+                                      SEQ
+                                        a, b, c := -1, i, 1
+                                        a, b    := LONGSUM(a, b, c)
+                                      RESULT b
+                                   )]
+                      chan[1] ! data[0]+1
+                  --}}}
+                chan[0] ! 0
+                chan[1] ? answer
+              check(answer, 1, "F1274")
+        :
+        valueAndAlt()
+        
+        
+        --}}}
+    :
+    value.processes()
+    --}}}
+    #ENDIF
+    --{{{  INLINE procs and fns        (F1300 - F1399)
+    PROC inlines()
+      SEQ
+        --{{{  output title
+        title ("Testing INLINE functions and procs")
+        --}}}
+    
+        --{{{  Simple test FN returning BOOL   (F1300)
+        BOOL INLINE FUNCTION f() IS FALSE :
+        BOOL a :
+        SEQ
+          a := TRUE
+          a := f()
+          check(INT a, INT FALSE, "F1300")
+        --}}}
+        --{{{  Simple test FN returning BYTE   (F1301)
+        BYTE INLINE FUNCTION f() IS 2(BYTE) :
+        BYTE a :
+        SEQ
+          a := 1(BYTE)
+          a := f()
+          check(INT a, 2, "F1301")
+        --}}}
+        --{{{  Simple test FN returning INT    (F1302)
+        INT INLINE FUNCTION f() IS 2 :
+        INT a :
+        SEQ
+          a := 1
+          a := f()
+          check(a, 2, "F1302")
+        --}}}
+        --{{{  Simple test FN returning INT16  (F1303)
+        INT16 INLINE FUNCTION f() IS 2(INT16) :
+        INT16 a :
+        SEQ
+          a := 1(INT16)
+          a := f()
+          check(INT a, 2, "F1303")
+        --}}}
+        --{{{  Simple test FN returning INT32  (F1304)
+        INT32 INLINE FUNCTION f() IS 2(INT32) :
+        INT32 a :
+        SEQ
+          a := 1(INT32)
+          a := f()
+          check(INT a, 2, "F1304")
+        --}}}
+        --{{{  Simple test FN returning INT64  (F1305)
+        INT64 INLINE FUNCTION f() IS 2(INT64) :
+        INT64 a :
+        SEQ
+          a := 1(INT64)
+          a := f()
+          check(INT a, 2, "F1305")
+        --}}}
+        --{{{  Simple test FN returning REAL32 (F1306)
+        REAL32 INLINE FUNCTION f() IS 2.0(REAL32) :
+        REAL32 a :
+        SEQ
+          a := 1.0(REAL32)
+          a := f()
+          check(INT TRUNC a, 2, "F1306")
+        --}}}
+        --{{{  Simple test FN returning REAL64 (F1307)
+        REAL64 INLINE FUNCTION f() IS 2.0(REAL64) :
+        REAL64 a :
+        SEQ
+          a := 1.0(REAL64)
+          a := f()
+          check(INT TRUNC a, 2, "F1307")
+        --}}}
+    
+        --{{{  FN with params       (F1310 - F1314)
+        BOOL INLINE FUNCTION f1(VAL BOOL a) IS NOT a :
+        INT  INLINE FUNCTION f2(VAL INT a)  IS a + 1:
+        REAL32 INLINE FUNCTION f3(VAL REAL32 a) IS a * 2.0(REAL32) :
+        REAL64 INLINE FUNCTION f4(VAL REAL64 a) IS a * 3.0(REAL64) :
+        INT16 INLINE FUNCTION f5(VAL INT16 a) IS a * 2(INT16) :
+        INT32 INLINE FUNCTION f6(VAL INT32 a) IS a * 3(INT32) :
+        INT64 INLINE FUNCTION f7(VAL INT64 a) IS a * 4(INT64) :
+        BOOL a :
+        INT b :
+        REAL32 c :
+        REAL64 d :
+        INT16 i1 :
+        INT32 i2 :
+        INT64 i3, i4 :
+        SEQ
+          a, b := FALSE, 0
+          a := f1(a)
+          b := f2(b)
+          check(INT a, INT TRUE, "F1310")
+          check(b, 1, "F1311")
+          a, b := f1(a), f2(b)
+          check(INT a, INT FALSE, "F1312")
+          check(b, 2, "F1313")
+          c, d := 6.0(REAL32), 5.0(REAL64)
+          c, d := f3(c), f4(d)
+          check(INT TRUNC c, 12, "F1313")
+          check(INT TRUNC d, 15, "F1314")
+          i1, i2, i3, i4 := 2(INT16), 3(INT32), 4(INT64), 5(INT64)
+          i1, i2, i3, i4 := f5(i1), f6(i2), f7(i3), f7(i4)
+          check(INT i1,  4, "F1315")
+          check(INT i2,  9, "F1316")
+          check(INT i3, 16, "F1317")
+          check(INT i4, 20, "F1318")
+        
+        --}}}
+        --{{{  FN involves calc     (F1320 - F1321)
+        -- Calculations use whole (of both) stacks internally
+        REAL32, INT INLINE FUNCTION f()
+          REAL32 a, b :
+          INT c, d :
+          VALOF
+            SEQ
+              a, b := 1.0(REAL32), 2.0(REAL32)
+              a := b * (a + b)
+              c, d := 1, 2
+              c := d * (c + d)
+            RESULT a, c
+        :
+        REAL32 a :
+        INT    b :
+        SEQ
+          a, b := f()
+          check(INT TRUNC a, 6, "F1320")
+          check(b, 6, "F1321")
+        --}}}
+    
+        --{{{  Simple PROCs                (F1330 - F1331)
+        INT a:
+        INLINE PROC p1()
+          a := a + 1
+        :
+        INLINE PROC p2(INT a)
+          a := a + 2
+        :
+        INLINE PROC p3(VAL INT a)
+          check(a, 4, "F1332")
+        :
+        SEQ
+          a := 0
+          p1()
+          check(a, 1, "F1330")
+        
+          p2(a)
+          check(a, 3, "F1331")
+        
+          p3(a+1)
+        --}}}
+    
+        --{{{  Combined PROC and FN passing BOOL   (F1340)
+        BOOL a :
+        BOOL INLINE FUNCTION f1(VAL BOOL p)
+          VALOF
+            SKIP
+            RESULT NOT p
+        :
+        INLINE PROC p1(VAL BOOL b)
+          a := b
+        :
+        SEQ
+          a := TRUE
+          p1(f1(TRUE))
+          check(INT a, INT FALSE, "F1340")
+        --}}}
+        --{{{  Combined PROC and FN passing BYTE   (F1341)
+        BYTE a :
+        BYTE INLINE FUNCTION f1(VAL BYTE p)
+          VALOF
+            SKIP
+            RESULT BYTE((INT p) * 2)
+        :
+        INLINE PROC p1(VAL BYTE b)
+          a := BYTE((INT b) + 1)
+        :
+        SEQ
+          a := 129(BYTE)
+          p1(f1(42(BYTE)))
+          check(INT a, 85, "F1341")
+        --}}}
+        --{{{  Combined PROC and FN passing INT16  (F1342)
+        INT16 a :
+        INT16 INLINE FUNCTION f1(VAL INT16 p)
+          VALOF
+            SKIP
+            RESULT p * 2(INT16)
+        :
+        INLINE PROC p1(VAL INT16 b)
+          a := b + 1(INT16)
+        :
+        SEQ
+          a := 999(INT16)
+          p1(f1(42(INT16)))
+          check(INT a, 85, "F1342")
+        --}}}
+        --{{{  Combined PROC and FN passing INT32  (F1343)
+        INT32 a :
+        INT32 INLINE FUNCTION f1(VAL INT32 p)
+          VALOF
+            SKIP
+            RESULT p * 2(INT32)
+        :
+        INLINE PROC p1(VAL INT32 b)
+          a := b + 1(INT32)
+        :
+        SEQ
+          a := 999(INT32)
+          p1(f1(42(INT32)))
+          check(INT a, 85, "F1343")
+        --}}}
+        --{{{  Combined PROC and FN passing INT64  (F1344)
+        INT64 a :
+        INT64 INLINE FUNCTION f1(VAL INT64 p)
+          VALOF
+            SKIP
+            RESULT p * 2(INT64)
+        :
+        INLINE PROC p1(VAL INT64 b)
+          a := b + 1(INT64)
+        :
+        SEQ
+          a := 999(INT64)
+          p1(f1(42(INT64)))
+          check(INT a, 85, "F1344")
+        --}}}
+        --{{{  Combined PROC and FN passing REAL32 (F1345)
+        REAL32 a :
+        REAL32 INLINE FUNCTION f1(VAL REAL32 p)
+          VALOF
+            SKIP
+            RESULT p * 2.0(REAL32)
+        :
+        INLINE PROC p1(VAL REAL32 b)
+          a := b + 1.0(REAL32)
+        :
+        SEQ
+          a := 999.0(REAL32)
+          p1(f1(42.0(REAL32)))
+          check(INT TRUNC a, 85, "F1345")
+        --}}}
+        --{{{  Combined PROC and FN passing REAL64 (F1346)
+        REAL64 a :
+        REAL64 INLINE FUNCTION f1(VAL REAL64 p)
+          VALOF
+            SKIP
+            RESULT p * 2.0(REAL64)
+        :
+        INLINE PROC p1(VAL REAL64 b)
+          a := b + 1.0(REAL64)
+        :
+        SEQ
+          a := 999.0(REAL64)
+          p1(f1(42.0(REAL64)))
+          check(INT TRUNC a, 85, "F1346")
+        --}}}
+    
+    
+        --{{{  FNs with multiple BOOL   params and return values (F1350)
+        BOOL, BOOL, BOOL, BOOL INLINE FUNCTION f1(VAL BOOL a, b, c, d)
+          VALOF
+            SKIP
+            RESULT NOT a, b, c, NOT d
+        :
+        BOOL a, b, c, d :
+        SEQ
+          a, b, c, d := TRUE, FALSE, TRUE, FALSE
+          a, b, c, d := f1(a, b, c, d)
+          check(INT a, INT FALSE, "F1350a")
+          check(INT b, INT FALSE, "F1350b")
+          check(INT c, INT TRUE,  "F1350c")
+          check(INT d, INT TRUE,  "F1350d")
+        
+        --}}}
+        --{{{  FNs with multiple BYTE   params and return values (F1351)
+        BYTE, BYTE, BYTE, BYTE INLINE FUNCTION f1(VAL BYTE a, b, c, d)
+          VALOF
+            SKIP
+            RESULT BYTE((INT a)+1), BYTE((INT b)+2), BYTE((INT c)+4), BYTE((INT d)+5)
+        :
+        BYTE a, b, c, d :
+        SEQ
+          a, b, c, d := 101(BYTE), 102(BYTE), 103(BYTE), 104(BYTE)
+          a, b, c, d := f1(a, b, c, d)
+          check(INT a, 102, "F1351a")
+          check(INT b, 104, "F1351b")
+          check(INT c, 107, "F1351c")
+          check(INT d, 109, "F1351d")
+        
+        --}}}
+        --{{{  FNs with multiple INT16  params and return values (F1352)
+        INT16, INT16, INT16, INT16 INLINE FUNCTION f1(VAL INT16 a, b, c, d)
+          VALOF
+            SKIP
+            RESULT a+1(INT16), b+2(INT16), c+3(INT16), d+4(INT16)
+        :
+        INT16 a, b, c, d :
+        SEQ
+          a, b, c, d := 101(INT16), 102(INT16), 103(INT16), 104(INT16)
+          a, b, c, d := f1(a*2(INT16), b*2(INT16), c*2(INT16), d*2(INT16))
+          check(INT a, 203, "F1352a")
+          check(INT b, 206, "F1352b")
+          check(INT c, 209, "F1352c")
+          check(INT d, 212, "F1352d")
+        
+        --}}}
+        --{{{  FNs with multiple INT32  params and return values (F1353)
+        INT32, INT32, INT32, INT32 INLINE FUNCTION f1(VAL INT32 a, b, c, d)
+          VALOF
+            SKIP
+            RESULT a+1(INT32), b+2(INT32), c+3(INT32), d+4(INT32)
+        :
+        INT32 a, b, c, d :
+        SEQ
+          a, b, c, d := 101(INT32), 102(INT32), 103(INT32), 104(INT32)
+          a, b, c, d := f1(a*2(INT32), b*2(INT32), c*2(INT32), d*2(INT32))
+          check(INT a, 203, "F1353a")
+          check(INT b, 206, "F1353b")
+          check(INT c, 209, "F1353c")
+          check(INT d, 212, "F1353d")
+        
+        --}}}
+        --{{{  FNs with multiple INT64  params and return values (F1354)
+        INT64, INT64, INT64, INT64 INLINE FUNCTION f1(VAL INT64 a, b, c, d)
+          VALOF
+            SKIP
+            RESULT a+1(INT64), b+2(INT64), c+3(INT64), d+4(INT64)
+        :
+        INT64 a, b, c, d :
+        SEQ
+          a, b, c, d := 101(INT64), 102(INT64), 103(INT64), 104(INT64)
+          a, b, c, d := f1(a*2(INT64), b*2(INT64), c*2(INT64), d*2(INT64))
+          check(INT a, 203, "F1354a")
+          check(INT b, 206, "F1354b")
+          check(INT c, 209, "F1354c")
+          check(INT d, 212, "F1354d")
+        
+        --}}}
+        --{{{  FNs with multiple REAL32 params and return values (F1355)
+        REAL32, REAL32, REAL32, REAL32 INLINE FUNCTION f1(VAL REAL32 a, b, c, d)
+          VALOF
+            SKIP
+            RESULT a+1.0(REAL32), b+2.0(REAL32), c+3.0(REAL32), d+4.0(REAL32)
+        :
+        REAL32 a, b, c, d :
+        SEQ
+          a, b, c, d := 101.0(REAL32), 102.0(REAL32), 103.0(REAL32), 104.0(REAL32)
+          a, b, c, d := f1(a*2.0(REAL32), b*2.0(REAL32), c*2.0(REAL32), d*2.0(REAL32))
+          check(INT TRUNC a, 203, "F1355a")
+          check(INT TRUNC b, 206, "F1355b")
+          check(INT TRUNC c, 209, "F1355c")
+          check(INT TRUNC d, 212, "F1355d")
+        
+        --}}}
+        --{{{  FNs with multiple REAL64 params and return values (F1356)
+        REAL64, REAL64, REAL64, REAL64 INLINE FUNCTION f1(VAL REAL64 a, b, c, d)
+          VALOF
+            SKIP
+            RESULT a+1.0(REAL64), b+2.0(REAL64), c+3.0(REAL64), d+4.0(REAL64)
+        :
+        REAL64 a, b, c, d :
+        SEQ
+          a, b, c, d := 101.0(REAL64), 102.0(REAL64), 103.0(REAL64), 104.0(REAL64)
+          a, b, c, d := f1(a*2.0(REAL64), b*2.0(REAL64), c*2.0(REAL64), d*2.0(REAL64))
+          check(INT TRUNC a, 203, "F1356a")
+          check(INT TRUNC b, 206, "F1356b")
+          check(INT TRUNC c, 209, "F1356c")
+          check(INT TRUNC d, 212, "F1356d")
+        
+        --}}}
+    
+        --{{{  Combined PROC and FNs passing all types (F1360)
+        INLINE PROC p(VAL BOOL a, VAL BYTE b,
+               VAL INT c, VAL INT16 d, VAL INT32 e, VAL INT64 f,
+               VAL REAL32 g, VAL REAL64 h)
+          INT x :
+          SEQ
+            x:= (INT a)+((INT b)+(c + ((INT d)+((INT e)+((INT f)+
+                  ((INT TRUNC g)+(INT TRUNC h)))))))
+            check(x, 57, "F1360")
+        :
+        BOOL   INLINE FUNCTION f1(VAL BOOL   a) IS NOT a :
+        BYTE   INLINE FUNCTION f2(VAL BYTE   a) IS BYTE((INT a) + 1) :
+        INT    INLINE FUNCTION f3(VAL INT    a) IS a + 2 :
+        INT16  INLINE FUNCTION f4(VAL INT16  a) IS a + 3(INT16) :
+        INT32  INLINE FUNCTION f5(VAL INT32  a) IS a + 4(INT32) :
+        INT64  INLINE FUNCTION f6(VAL INT64  a) IS a + 5(INT64) :
+        REAL32 INLINE FUNCTION f7(VAL REAL32 a) IS a + 6.0(REAL32) :
+        REAL64 INLINE FUNCTION f8(VAL REAL64 a) IS a + 7.0(REAL64) :
+        
+        BOOL   a :
+        BYTE   b :
+        INT    c :
+        INT16  d :
+        INT32  e :
+        INT64  f :
+        REAL32 g :
+        REAL64 h :
+        SEQ
+          a, b       := FALSE, 1(BYTE)
+          c, d, e, f := 2, 3(INT16), 4(INT32), 5(INT64)
+          g, h       := 6.0(REAL32), 7.0(REAL64)
+          p(f1(a), f2(b), f3(c), f4(d), f5(e), f6(f), f7(g), f8(h))
+        
+        --}}}
+        ---  This also checks multi parameter PROCs but not FNs
+    :
+    inlines()
+    --}}}
+
+    --{{{  Bug 118
+    PROC bug.118() -- test for bug 118 in buglist
+      INT FUNCTION f ()
+        INT e :
+        VALOF
+          PROC s ()
+            e := 19191
+          :
+          SEQ
+            e := 99
+            s ()
+          RESULT e
+      :
+      INT x :
+      SEQ
+        x := 7272
+        x := f ()
+        check (x, 19191, "B118a")
+    :
+    bug.118()
+    --}}}
+    --{{{  Bug 315
+    PROC bug.315()
+      INT INLINE FUNCTION f (VAL []INT a, VAL INT x)
+        INT r :
+        VALOF
+          r := a[x]
+          RESULT r
+      :
+      INT p, q :
+      [5]INT a :
+      SEQ
+        SEQ i = 0 FOR SIZE a
+          a[i] := i
+        q := 2
+        p := f (a, q)
+        check (p, 2, "B315a")
+    :
+    bug.315()
+    --}}}
+    --{{{  Bug 597
+    PROC bug.597()
+      INT INLINE FUNCTION f (VAL INT x) IS x + 1 :
+      [100]INT buf :
+      INT s, l :
+      SEQ
+        s, l := 10, 1
+        SEQ i = 0 FOR SIZE buf
+          buf[i] := i
+        []INT test IS [buf FROM s FOR f(l)] :
+        SEQ
+          check(test[0], 10, "B597a")
+          check(test[1], 11, "B597b")
+          check(SIZE test, 2, "B597c")
+    :
+    bug.597()
+    --}}}
+    --{{{  Bug 633
+    PROC bug.633()
+      INT INLINE FUNCTION f()
+        INT x :
+        VALOF
+          x := 99
+          RESULT x
+      :
+      PROC r(VAL INT x)
+        check(x, 99, "B633a")
+      :
+      r (f())
+    :
+    bug.633()
+    --}}}
+    --{{{  Bug 867
+    PROC bug.867()
+      INT FUNCTION f(VAL [12]BYTE b, VAL INT k, n)
+        INT x :
+        VAL []INT a RETYPES [b FROM k+2 FOR n] :
+        VALOF
+          x := a[0]
+          RESULT x
+      :
+      INT y :
+      SEQ
+        #IF DEFINED(TARGET.BIGENDIAN)
+        y := f("xxxx*#00*#00*#00*#FFyyyy", 2, 8)
+        #ELSE
+        y := f("xxxx*#FF*#00*#00*#00yyyy", 2, 8)
+        #ENDIF
+        check(y, #FF, "B867A")
+    :
+    bug.867()
+    --}}}
+    --{{{  Bug 1004
+    PROC bug.1004()
+      SEQ
+        REAL64 a :
+        REAL64 INLINE FUNCTION f1(VAL REAL64 p) IS p * 2.0(REAL64) :
+        INLINE PROC p1(VAL REAL64 b)
+          a := b + 1.0(REAL64)
+        :
+        SEQ
+          a := 999.0(REAL64)
+          p1(f1(42.0(REAL64)))
+          check.REAL64(a, 85.0(REAL64), "B1004a")
+        REAL32 a :
+        REAL32 INLINE FUNCTION f1(VAL REAL32 p) IS p * 2.0(REAL32) :
+        INLINE PROC p1(VAL REAL32 b)
+          a := b + 1.0(REAL32)
+        :
+        SEQ
+          a := 999.0(REAL32)
+          p1(f1(42.0(REAL32)))
+          check.REAL32(a, 85.0(REAL32), "B1004b")
+        INT64 a :
+        INT64 INLINE FUNCTION f1(VAL INT64 p) IS p * 2(INT64) :
+        INLINE PROC p1(VAL INT64 b)
+          a := b + 1(INT64)
+        :
+        SEQ
+          a := 999(INT64)
+          p1(f1(42(INT64)))
+          check.INT64(a, 85(INT64), "B1004c")
+        INT32 a :
+        INT32 INLINE FUNCTION f1(VAL INT32 p) IS p * 2(INT32) :
+        INLINE PROC p1(VAL INT32 b)
+          a := b + 1(INT32)
+        :
+        SEQ
+          a := 999(INT32)
+          p1(f1(42(INT32)))
+          check.INT32(a, 85(INT32), "B1004d")
+        INT16 a :
+        INT16 INLINE FUNCTION f1(VAL INT16 p) IS p * 2(INT16) :
+        INLINE PROC p1(VAL INT16 b)
+          a := b + 1(INT16)
+        :
+        SEQ
+          a := 999(INT16)
+          p1(f1(42(INT16)))
+          check.INT16(a, 85(INT16), "B1004e")
+        INT a :
+        INT INLINE FUNCTION f1(VAL INT p) IS p * 2(INT) :
+        INLINE PROC p1(VAL INT b)
+          a := b + 1(INT)
+        :
+        SEQ
+          a := 999(INT)
+          p1(f1(42(INT)))
+          check.INT(a, 85(INT), "B1004f")
+    :
+    bug.1004()
+    --}}}
+    --{{{  bug INSdi03203
+    PROC bug.INSdi03203()
+      SEQ
+        --{{{  test 1
+        INT64 FUNCTION f(VAL INT64 x)
+          INT64 result :
+          PROC copy.from.result(INT64 y)
+            y := result
+          :
+          INT64 y :
+          VALOF
+            SEQ
+              result := x
+              copy.from.result(y)
+              result := y
+            RESULT result
+        :
+        INT64 x, y :
+        SEQ
+          x := id.INT64(88(INT64))
+          x := f(x)
+          check.INT64(x, 88(INT64), "di3203a")
+          y := id.INT64(77(INT64))
+          x := f(y)
+          check.INT64(x, 77(INT64), "di3203b")
+        --}}}
+        --{{{  test 2
+        INT64 FUNCTION f(VAL INT64 z)
+          INT64 res :
+          INT64, INT64 FUNCTION g(VAL INT64 x)
+            VALOF
+              SKIP
+              RESULT res, x
+          :
+          INT64 y :
+          VALOF
+            SEQ
+              res := z
+              res, y := g(z)
+              res := res + y
+            RESULT res
+        :
+        INT64 x :
+        SEQ
+          x := id.INT64(8(INT64))
+          x := f(x)
+          check.INT64(x, 16(INT64), "di3203c")
+        --}}}
+    :
+    bug.INSdi03203()
+    --}}}
+    finish ()
+:

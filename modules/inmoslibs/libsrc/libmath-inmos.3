@@ -1,0 +1,112 @@
+'\" t
+.\"
+.\" Manual page for tbmaths.lib - INMOS occam toolset maths libraries
+.\"
+.\" $Source: /usr/src/local/bin/oc2man/RCS/tbmaths-lib.man,v $
+.\"
+.\" $Id: tbmaths-lib.man,v 1.1 1993/03/12 11:30:18 djb1 Exp $
+.\"
+.\" Copyright (C) 1993 David Beckett, University of Kent at Canterbury
+.\"
+.\" This was derived from snglmath.lib, dblmath.lib and tbmaths.lib
+.\" (the libraries) using ilist and the perl program fixilist.pl
+.\" which cleaned up the output. 
+.\"
+.\" Modified July 2004, 2005  Fred Barnes  <frmb@kent.ac.uk>
+.TH LIBMATH-INMOS "3" "8 March 1993" "kroc 1.4.0" KRoC
+.SH NAME
+ACOS, ALOG, ALOG10, ASIN, ATAN, ATAN2, COS, COSH, EXP, POWER, RAN, SIN, SINH, TAN, TANH,
+DACOS, DALOG, DALOG10, DASIN, DATAN, DATAN2, DCOS, DCOSH, DEXP, DPOWER, DRAN, DSIN, DSINH, DTAN, DTANH
+\- KRoC INMOS occam toolset maths libraries
+.SH SYNOPSIS
+.B #INCLUDE \fB"maths.module\fB"\fR
+.PP
+.BI "REAL32 FUNCTION ACOS (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION ALOG (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION ALOG10 (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION ASIN (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION ATAN (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION ATAN2 (VAL REAL32 " U ", VAL REAL32 " V ")"
+.br
+.BI "REAL32 FUNCTION COS (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION COSH (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION EXP (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION POWER (VAL REAL32 " Base.r ", VAL REAL32 " Expn.r ")"
+.br
+.BI "REAL32,INT32 FUNCTION RAN (VAL INT32 " SeedRan ")"
+.br
+.BI "REAL32 FUNCTION SIN (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION SINH (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION TAN (VAL REAL32 " X ")"
+.br
+.BI "REAL32 FUNCTION TANH (VAL REAL32 " X ")"
+.PP
+.BI "REAL64 FUNCTION DACOS (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DALOG (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DALOG10 (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DASIN (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DATAN (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DATAN2 (VAL REAL64 " U ", VAL REAL64 " V ")"
+.br
+.BI "REAL64 FUNCTION DCOS (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DCOSH (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DEXP (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DPOWER (VAL REAL64 " Base.r ", VAL REAL64 " Expn.r ")"
+.br
+.BI "REAL64,INT64 FUNCTION DRAN (VAL INT64 " DSeedIn ")"
+.br
+.BI "REAL64 FUNCTION DSIN (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DSINH (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DTAN (VAL REAL64 " X ")"
+.br
+.BI "REAL64 FUNCTION DTANH (VAL REAL64 " X ")"
+.PP
+.SH SUMMARY
+The occam toolset maths libraries snglmath.lib and dblmath.lib
+provide various mathematical functions.
+.PP
+All the libraries provide the following standard mathematical
+functions: COS,SIN, TAN, COSH, SINH, TANH, ATAN, ACOS, ASIN, ATAN2.
+Also provided is LOG (logarithm base 2), LOG10 (base 10), EXP and
+POWER.
+.PP
+The single precision (\fBREAL32\fR) functions have the names above
+and the double precision versions (\fBREAL64\fR) have the same name
+but prefixed with a \fBD\fR.
+.LP
+.SH "SINGLE PRECISION FUNCTIONS"
+This library provides functions that handle \fBREAL32\fR numbers.
+.PP
+.SH "DOUBLE PRECISION FUNCTIONS"
+This library provides functions that handle \fBREAL64\fR numbers.
+.PP
+.SH "SEE ALSO"
+kroc(1)
+.BR
+INMOS  occam 2 toolset user manual - part 2 (occam libraries and
+appendices) INMOS document number 72 TDS 276 02.
+.SH AUTHOR
+This document is Copyright (C) 1993 David Beckett, University of Kent
+at Canterbury.  This manual page is maintained by Fred Barnes  <frmb@kent.ac.uk>
+.PP
+The library contents are Copyright (C) 1991 INMOS Limited.

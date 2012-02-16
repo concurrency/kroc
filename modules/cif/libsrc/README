@@ -1,0 +1,15 @@
+
+This directory contains the source code for the C interface (CIF).
+This allows C functions to intermix with occam code using the
+Inmos-toolkit / CCSP style C API.
+
+This directory contains the following files:
+
+  cif.h
+
+    C header for the CIF interface
+
+  cif.inc
+
+    occam header to enable CIF support
+

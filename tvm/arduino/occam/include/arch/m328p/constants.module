@@ -1,0 +1,106 @@
+--
+--	Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Matt Jadud
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--      Copyright (C) 2009-2010   Adam Sampson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** Occam definitions for the ATmega328.
+--
+-- @module 328.constants
+
+#IF NOT (DEFINED (CONSTANTS.MODULE))
+#DEFINE CONSTANTS.MODULE
+
+--{{{  per-MCU configuration
+#DEFINE AVR.ATMEGA328P
+
+#IF DEFINED (AVR.ATMEGA328P)
+#INCLUDE "iom328p.inc"
+#ENDIF
+--}}}
+
+--* The CPU frequency in Hz.
+VAL INT32 F.CPU IS ##F.CPU:
+
+--* A value that's guaranteed to be higher than the highest port value defined
+-- by this module.
+--
+-- This is for placing an array over all the ports:
+--
+-- [@code
+-- PLACED [MAX.PORT]BYTE ports 0:
+--ports[PORTB] := 42
+-- ]
+VAL INT MAX.PORT IS #200:
+
+--{{{  Interrupt numbers
+VAL INT VINTR.INT0 IS 0:
+VAL INT VINTR.INT1 IS 1:
+VAL INT VINTR.PCINT0 IS 2:
+VAL INT VINTR.PCINT1 IS 3:
+VAL INT VINTR.PCINT2 IS 4:
+VAL INT VINTR.TIMER1 IS 5:
+VAL INT VINTR.TIMER2 IS 6:
+VAL INT VINTR.ADC IS 7:
+VAL INT VINTR.USART.RX0 IS 8:
+VAL INT VINTR.USART.UDRE0 IS 9:
+VAL INT VINTR.USART.TX0 IS 10:
+VAL INT VINTR.TWI IS 11:
+--}}}
+
+--{{{ Constants and array mappings for (8 bit) pulse width modulation
+VAL INT NO.MAP IS (- 1):
+VAL []INT ARDUINO.PIN.MAP IS [NO.MAP, NO.MAP, NO.MAP, 5, NO.MAP, 1, 0, NO.MAP, NO.MAP, 2, 3, 4]:
+VAL []INT TCR.MODE IS [TCCR0A, TCCR0A, TCCR1A, TCCR1A, TCCR2A, TCCR2A]:
+VAL []INT TCR.PRESCALE IS [TCCR0B, TCCR0B, TCCR1B, TCCR1B, TCCR2B, TCCR2B]:
+VAL []INT CS1 IS [CS01, CS01, CS11, CS11, CS22, CS22]:
+VAL []INT CS0 IS [CS00, CS00, CS10, CS10, CS22, CS22]:
+VAL []INT COM IS [COM0A1, COM0B1, COM1A1, COM1B1, COM2A1, COM2B1]:
+VAL []INT WGM IS [WGM00, WGM00, WGM10, WGM10, WGM20, WGM20]:
+VAL []INT OCR IS [OCR0A, OCR0B, OCR1A, OCR1B, OCR2A, OCR2B]:
+--}}}
+
+--{{{ serial constants
+-- Because we are working only working with one serial port, we place
+--  the critical register into arrays that can be indexed the same way
+--  critical registers are accessed by boards with multiple serial ports.
+
+-- Baud Rate Registers (low/high bites)
+VAL []INT UBRRL IS [UBRR0L]:
+VAL []INT UBRRH IS [UBRR0H]:
+-- UCSR -- Control and Status register
+VAL []INT UCSRC IS [UCSR0C]:
+VAL []INT UCSRB IS [UCSR0B]:
+VAL []INT UCSRA IS [UCSR0A]:
+
+VAL []INT UDRE IS [UDRE0]:
+VAL []INT UDR  IS [UDR0]:
+
+VAL []INT UDRIE IS [UDRIE0]:
+VAL []INT VINTR.UDRE IS [VINTR.USART.UDRE0]:
+
+VAL []INT TXEN IS [TXEN0]:
+VAL []INT RXEN IS [RXEN0]:
+
+VAL []INT UCSZN0 IS [UCSZ00]:
+VAL []INT UCSZN1 IS [UCSZ01]:
+
+VAL []INT RXC IS [RXC0]:
+VAL []INT RXCIE IS [RXCIE0]:
+VAL []INT VINTR.RX IS [VINTR.USART.RX0]:
+--}}}
+
+#ENDIF

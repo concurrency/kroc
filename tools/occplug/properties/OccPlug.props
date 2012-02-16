@@ -1,0 +1,98 @@
+#
+# OccPlug.props
+# part of the occPlug plugin for the jEdit text editor
+# Copyright (C) 2004-2010 Christian L. Jacobsen
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+
+# general plugin information
+plugin.org.transterpreter.occPlug.OccPlugPlugin.name=occPlug
+plugin.org.transterpreter.occPlug.OccPlugPlugin.author=Christian L. Jacobsen, Jon Simpson
+plugin.org.transterpreter.occPlug.OccPlugPlugin.version=1.0-pre1
+plugin.org.transterpreter.occPlug.OccPlugPlugin.docs=occPlug.html
+plugin.org.transterpreter.occPlug.OccPlugPlugin.depend.0=jedit 04.02.02.00
+plugin.org.transterpreter.occPlug.OccPlugPlugin.depend.2=plugin errorlist.ErrorListPlugin 1.3
+plugin.org.transterpreter.occPlug.OccPlugPlugin.activate=defer
+
+# application menu items
+#plugin.OccPlugPlugin.menu=occPlug - occPlug.occdoc occPlug.occdocview - occPlug.firmdl occPlug.firmdlfast - occPlug.tvmdl - occPlug.versions
+#plugin.org.transterpreter.occPlug.OccPlugPlugin.menu=\
+#  occPlug - occPlug.occdoc occPlug.occdocview - \
+#  occPlug.firmdl occPlug.firmdlfast - \
+#  occPlug.help occPlug.versions
+plugin.org.transterpreter.occPlug.OccPlugPlugin.menu=\
+  occPlug - occPlug.firmware
+
+# plugin option pane
+#plugin.org.transterpreter.occPlug.OccPlugPlugin.option-group=occPlugCmds
+plugin.org.transterpreter.occPlug.OccPlugPlugin.option-pane=occPlugOptions
+
+# Option pane activation BeanShell snippet
+options.occPlugOptions.label=occPlug
+options.occPlugOptions.code=new org.transterpreter.occPlug.options.OccPlugOptionPaneCmd();
+
+# dockable window name
+occPlug.title=occPlug
+srvCamera.title=SRV-1 Camera
+
+# occamdoc error dialog
+occPlug.occdoc-not-found.title=No occamdoc documentation found
+occPlug.occdoc-not-found.message=No occamdoc documentation was found, \
+generate some documentaton and then try again
+
+# action labels
+occPlug.label=Start occPlug
+occPlug.firmdl.label=Download Transterpreter to Mindstorms (slow)
+occPlug.firmdlfast.label=Download Transterpreter to Mindstorms (fast)
+occPlug.tvmdl.label=Download Transterpreter to Mindstorms
+occPlug.compile.label=Compile
+occPlug.compile.icon=Undo.png
+occPlug.occdoc.label=Generate occamDoc
+occPlug.occdocview.label=View occamDoc
+occPlug.run.label=Run
+occPlug.run.icon=Run.png
+occPlug.stop.label=Stop Running Process
+occPlug.stop.icon=Stop.png
+occPlug.clearTextArea.label=Clear Text Area
+occPlug.clearTextArea.icon=Clear.png
+occPlug.versions.label=Versions...
+occPlug.TransterpreterVersion=Not Applicable
+occPlug.help.label=View help
+occPlug.firmware.label = Upload Firmware...
+
+# Settings, these should probably be overidden depending on installation
+# path, and platform
+options.occPlug.occbuildCmd=occbuild
+options.occPlug.tvmCmd=tvm
+options.occPlug.tvmArgs=
+options.occPlug.dllCmd=firmdl3
+options.occPlug.dllArgs=
+options.occPlug.firmdlCmd=firmdl3
+options.occPlug.firmdlArgs=lego.srec
+#options.occPlug.legotvm=lego/tvm.lx
+options.occPlug.occamdocCmd=occamdoc
+options.occPlug.occamdocArgs=
+options.occPlug.libPath=../lib
+options.occPlug.legoTowerPort=DEFAULT
+
+options.occPlug.verbose=false
+
+# This should be set by the installer or something
+#options.occPlug.helpIndex=/Users/clj3/work/windows-release/common-files/docs/index.html
+
+# SRV-1 Network Settings
+options.occPlug.srvHost=169.254.0.10
+options.occPlug.srvPort=10001

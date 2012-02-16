@@ -1,0 +1,1295 @@
+-- version control marker $Id: cgtest58.occ,v 1.4 1995/10/23 13:48:03 djb1 Exp $
+
+PROC cgtest58 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  INT key :
+  BOOL x :
+  SEQ
+    init ("CG test 58", "More RECORDs")
+
+    --{{{  subscripted function calls
+    PROC subscripted.function.calls()
+      SEQ
+        --{{{  arrays
+        --{{{  arrays, [n]INT, n = 2
+        VAL title.str IS "[2]INT" :
+        VAL n IS 2 :
+        DATA TYPE sub.type IS INT :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [0(sub.type), 0(sub.type)](type) :
+        VAL init.value IS [2(sub.type), 2(sub.type)](type) :
+        VAL dbl.value  IS [4(sub.type), 4(sub.type)](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i] := x[i] * 2(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        --{{{  arrays, [n]INT, n = 3
+        VAL title.str IS "[3]INT" :
+        VAL n IS 3 :
+        DATA TYPE sub.type IS INT :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [0(sub.type), 0(sub.type), 0(sub.type)](type) :
+        VAL init.value IS [2(sub.type), 2(sub.type), 2(sub.type)](type) :
+        VAL dbl.value  IS [4(sub.type), 4(sub.type), 4(sub.type)](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i] := x[i] * 2(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        --{{{  arrays, [n]INT, n = 5
+        VAL title.str IS "[5]INT" :
+        VAL n IS 5 :
+        DATA TYPE sub.type IS INT :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [0(sub.type), 0(sub.type), 0(sub.type), 0(sub.type), 0(sub.type)](type) :
+        VAL init.value IS [2(sub.type), 2(sub.type), 2(sub.type), 2(sub.type), 2(sub.type)](type) :
+        VAL dbl.value  IS [4(sub.type), 4(sub.type), 4(sub.type), 4(sub.type), 4(sub.type)](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i] := x[i] * 2(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        --{{{  arrays, [n]REAL32, n = 5
+        VAL title.str IS "[5]REAL32" :
+        VAL n IS 5 :
+        DATA TYPE sub.type IS REAL32 :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  0.0(sub.type) :
+        VAL init.subvalue IS  2.0(sub.type) :
+        VAL dbl.subvalue  IS  4.0(sub.type) :
+        VAL zero.value IS [0.0(sub.type), 0.0(sub.type), 0.0(sub.type), 0.0(sub.type), 0.0(sub.type)](type) :
+        VAL init.value IS [2.0(sub.type), 2.0(sub.type), 2.0(sub.type), 2.0(sub.type), 2.0(sub.type)](type) :
+        VAL dbl.value  IS [4.0(sub.type), 4.0(sub.type), 4.0(sub.type), 4.0(sub.type), 4.0(sub.type)](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.REAL32(REAL32 ROUND x, REAL32 ROUND y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i] := x[i] * 2.0(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        --{{{  arrays, [n]REAL64, n = 5
+        VAL title.str IS "[5]REAL64" :
+        VAL n IS 5 :
+        DATA TYPE sub.type IS REAL64 :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  0.0(sub.type) :
+        VAL init.subvalue IS  2.0(sub.type) :
+        VAL dbl.subvalue  IS  4.0(sub.type) :
+        VAL zero.value IS [0.0(sub.type), 0.0(sub.type), 0.0(sub.type), 0.0(sub.type), 0.0(sub.type)](type) :
+        VAL init.value IS [2.0(sub.type), 2.0(sub.type), 2.0(sub.type), 2.0(sub.type), 2.0(sub.type)](type) :
+        VAL dbl.value  IS [4.0(sub.type), 4.0(sub.type), 4.0(sub.type), 4.0(sub.type), 4.0(sub.type)](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.REAL64(REAL64 ROUND x, REAL64 ROUND y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i] := x[i] * 2.0(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        --{{{  arrays, [n]record, n = 5
+        VAL title.str IS "[5]record" :
+        VAL n IS 5 :
+        DATA TYPE sub.type
+          RECORD
+            REAL64 r64 :
+        :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  [0.0(REAL64)](sub.type) :
+        VAL init.subvalue IS  [2.0(REAL64)](sub.type) :
+        VAL dbl.subvalue  IS  [4.0(REAL64)](sub.type) :
+        VAL zero.value IS [zero.subvalue, zero.subvalue, zero.subvalue, zero.subvalue, zero.subvalue](type) :
+        VAL init.value IS [init.subvalue, init.subvalue, init.subvalue, init.subvalue, init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue,  dbl.subvalue,  dbl.subvalue,  dbl.subvalue,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.REAL64(x[r64], y[r64], msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i][r64] := x[i][r64] * 2.0(REAL64)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        --{{{  arrays, [n]BYTE, n = 5
+        VAL title.str IS "[5]BYTE" :
+        VAL n IS 5 :
+        DATA TYPE sub.type IS BYTE :
+        DATA TYPE type IS [n]sub.type :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [0(sub.type), 0(sub.type), 0(sub.type), 0(sub.type), 0(sub.type)](type) :
+        VAL init.value IS [2(sub.type), 2(sub.type), 2(sub.type), 2(sub.type), 2(sub.type)](type) :
+        VAL dbl.value  IS [4(sub.type), 4(sub.type), 4(sub.type), 4(sub.type), 4(sub.type)](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.BYTE(BYTE x, BYTE y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.sub.type(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              result[i] := sub.type ((INT x[i]) * (INT 2(sub.type)))
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58arr.occ"
+        
+        --}}}
+        --{{{  records
+        --{{{  records, sub-field is INT
+        VAL title.str IS "RECORD, sub is INT" :
+        DATA TYPE sub.type IS INT :
+        DATA TYPE type
+          RECORD
+            sub.type field :
+        :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [zero.subvalue](type) :
+        VAL init.value IS [init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              result[field] := x[field] * 2(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        --{{{  records, sub-field is INT, INT, dummy first
+        VAL title.str IS "RECORD, sub is INT,INT, dummy first" :
+        DATA TYPE sub.type IS INT :
+        DATA TYPE type
+          RECORD
+            sub.type dummy :
+            sub.type field :
+        :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [zero.subvalue, zero.subvalue](type) :
+        VAL init.value IS [init.subvalue, init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.sub.type(x[dummy], y[dummy], msg)
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              result[dummy] := x[dummy] * 2(sub.type)
+              result[field] := x[field] * 2(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        --{{{  records, sub-field is INT, INT, dummy last
+        VAL title.str IS "RECORD, sub is INT,INT, dummy last" :
+        DATA TYPE sub.type IS INT :
+        DATA TYPE type
+          RECORD
+            sub.type field :
+            sub.type dummy :
+        :
+        VAL zero.subvalue IS  0(sub.type) :
+        VAL init.subvalue IS  2(sub.type) :
+        VAL dbl.subvalue  IS  4(sub.type) :
+        VAL zero.value IS [zero.subvalue, zero.subvalue](type) :
+        VAL init.value IS [init.subvalue, init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.sub.type(x[dummy], y[dummy], msg)
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              result[dummy] := x[dummy] * 2(sub.type)
+              result[field] := x[field] * 2(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        --{{{  records, sub-field is REAL32, REAL32, dummy last
+        VAL title.str IS "RECORD, sub is REAL32,REAL32, dummy last" :
+        DATA TYPE sub.type IS REAL32 :
+        DATA TYPE type
+          RECORD
+            sub.type field :
+            sub.type dummy :
+        :
+        VAL zero.subvalue IS  0.0(sub.type) :
+        VAL init.subvalue IS  2.0(sub.type) :
+        VAL dbl.subvalue  IS  4.0(sub.type) :
+        VAL zero.value IS [zero.subvalue, zero.subvalue](type) :
+        VAL init.value IS [init.subvalue, init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.REAL32(REAL32 x, REAL32 y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.sub.type(x[dummy], y[dummy], msg)
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              result[dummy] := x[dummy] * 2.0(sub.type)
+              result[field] := x[field] * 2.0(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        --{{{  records, sub-field is INT, REAL32, dummy first
+        VAL title.str IS "RECORD, sub is INT,REAL32, dummy first" :
+        DATA TYPE sub.type IS REAL32 :
+        DATA TYPE type
+          RECORD
+            INT dummy :
+            sub.type field :
+        :
+        VAL zero.subvalue IS  0.0(sub.type) :
+        VAL init.subvalue IS  2.0(sub.type) :
+        VAL dbl.subvalue  IS  4.0(sub.type) :
+        VAL zero.value IS [-1, zero.subvalue](type) :
+        VAL init.value IS [-1, init.subvalue](type) :
+        VAL dbl.value  IS [-1,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          check.REAL32(REAL32 x, REAL32 y, msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT(x[dummy], y[dummy], msg)
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              result[dummy] := x[dummy]
+              result[field] := x[field] * 2.0(sub.type)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        --{{{  records, sub-field is [n]INT, [n]INT, dummy first
+        VAL title.str IS "RECORD, sub is [n]INT,[n]INT, dummy first" :
+        VAL n IS 3 :
+        DATA TYPE sub.type IS [n]INT :
+        DATA TYPE type
+          RECORD
+            sub.type dummy :
+            sub.type field :
+        :
+        VAL zero.subvalue IS  [0,0,0](sub.type) :
+        VAL init.subvalue IS  [2,2,2](sub.type) :
+        VAL dbl.subvalue  IS  [4,4,4](sub.type) :
+        VAL zero.value IS [zero.subvalue, zero.subvalue](type) :
+        VAL init.value IS [init.subvalue, init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.INT(x[i], y[i], msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.sub.type(x[dummy], y[dummy], msg)
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              SEQ i = 0 FOR SIZE x[field]
+                SEQ
+                  result[dummy][i] := x[dummy][i] * 2
+                  result[field][i] := x[field][i] * 2
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        --{{{  records, sub-field is [n]INT16, [n]INT16, dummy first
+        VAL title.str IS "RECORD, sub is [n]INT16,[n]INT16, dummy first" :
+        VAL n IS 3 :
+        DATA TYPE sub.type IS [n]INT16 :
+        DATA TYPE type
+          RECORD
+            sub.type dummy :
+            sub.type field :
+        :
+        VAL zero.subvalue IS  [0(INT16),0(INT16),0(INT16)](sub.type) :
+        VAL init.subvalue IS  [2(INT16),2(INT16),2(INT16)](sub.type) :
+        VAL dbl.subvalue  IS  [4(INT16),4(INT16),4(INT16)](sub.type) :
+        VAL zero.value IS [zero.subvalue, zero.subvalue](type) :
+        VAL init.value IS [init.subvalue, init.subvalue](type) :
+        VAL dbl.value  IS [ dbl.subvalue,  dbl.subvalue](type) :
+        
+        PROC check.sub.type(VAL sub.type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.INT16(x[i], y[i], msg)
+        :
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.sub.type(x[dummy], y[dummy], msg)
+            check.sub.type(x[field], y[field], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type result :
+          VALOF
+            SEQ
+              SEQ i = 0 FOR SIZE x[field]
+                SEQ
+                  result[dummy][i] := x[dummy][i] * 2(INT16)
+                  result[field][i] := x[field][i] * 2(INT16)
+            RESULT result
+        :
+        --}}}
+        #INCLUDE "cg58rec.occ"
+        
+        --}}}
+    :
+    subscripted.function.calls()
+    --}}}
+    --{{{  place in vectorspace
+    PROC place.in.vectorspace()
+      DATA TYPE record
+        RECORD
+          INT x, y :
+      :
+      record r1, r2 :
+      #IF NOT DEFINED (COMPILER.TOCK)
+      PLACE r1 IN VECSPACE :
+      PLACE r2 IN WORKSPACE :
+      #ENDIF
+      SEQ
+        title("Place in vectorspace")
+        r1[x], r1[y] := id(77), id(44)
+        r2[x], r2[y] := id(-1), id(1000)
+        check(r1[x], 77, "VEC00")
+        check(r1[y], 44, "VEC01")
+        check(r2[x], -1, "VEC02")
+        check(r2[y], 1000, "VEC03")
+    :
+    place.in.vectorspace()
+    --}}}
+    #IF FALSE
+    --{{{  some RETYPES work
+    PROC some.RETYPES.work()
+      DATA TYPE record
+        RECORD
+          INT x, y, z :
+      :
+      record dummy :
+      VAL []BYTE b.dummy RETYPES dummy :
+      VAL bytes IS SIZE b.dummy :
+    
+      INT correct.addr :
+    
+      --{{{  PROC check.addr(VAL INT addr, VAL []BYTE msg)
+      PROC check.addr(VAL INT addr, VAL []BYTE msg)
+        check(addr, correct.addr, msg)
+      :
+      --}}}
+      --{{{  PROC addr.of.VAL.open.array(VAL []BYTE open)
+      PROC addr.of.VAL.open.array(VAL []BYTE open, VAL []BYTE msg)
+        INT addr :
+        SEQ
+          LOAD.BYTE.VECTOR(addr, open)
+          check.addr(addr, msg)
+      :
+      --}}}
+      --{{{  PROC addr.of.open.array([]BYTE open)
+      PROC addr.of.open.array([]BYTE open, VAL []BYTE msg)
+        INT addr :
+        SEQ
+          LOAD.BYTE.VECTOR(addr, open)
+          check.addr(addr, msg)
+      :
+      --}}}
+      --{{{  PROC addr.of.VAL.array(VAL [bytes]BYTE open)
+      PROC addr.of.VAL.array(VAL [bytes]BYTE open, VAL []BYTE msg)
+        INT addr :
+        SEQ
+          LOAD.BYTE.VECTOR(addr, open)
+          check.addr(addr, msg)
+      :
+      --}}}
+      --{{{  PROC addr.of.array([bytes]BYTE open)
+      PROC addr.of.array([bytes]BYTE open, VAL []BYTE msg)
+        INT addr :
+        SEQ
+          LOAD.BYTE.VECTOR(addr, open)
+          check.addr(addr, msg)
+      :
+      --}}}
+      --{{{  PROC take.address(record r)
+      PROC take.address(record r, VAL []BYTE msg)
+        SEQ
+          VAL []BYTE b.r RETYPES r :
+          INT a1 :
+          SEQ
+            LOAD.BYTE.VECTOR(a1, b.r)
+            check(a1, correct.addr, msg)
+            addr.of.VAL.open.array(b.r, msg)
+            addr.of.VAL.array(b.r, msg)
+      
+          []BYTE b.r RETYPES r :
+          INT a2 :
+          SEQ
+            LOAD.BYTE.VECTOR(a2, b.r)
+            check(a2, correct.addr, msg)
+            addr.of.VAL.open.array(b.r, msg)
+            addr.of.VAL.array(b.r, msg)
+            addr.of.open.array(b.r, msg)
+            addr.of.array(b.r, msg)
+      :
+      --}}}
+      --{{{  PROC take.VAL.address(VAL record r)
+      PROC take.VAL.address(VAL record r, VAL []BYTE msg)
+        SEQ
+          VAL []BYTE b.r RETYPES r :
+          INT a1 :
+          SEQ
+            LOAD.BYTE.VECTOR(a1, b.r)
+            check(a1, correct.addr, msg)
+            addr.of.VAL.open.array(b.r, msg)
+            addr.of.VAL.array(b.r, msg)
+      :
+      --}}}
+      record r :
+      SEQ
+        title("RETYPES of records")
+    
+        --{{{  basic tests of records and RETYPE
+        r := [id(1),id(2),id(3)](record)
+        VAL []BYTE b.r RETYPES r :
+        SEQ
+          LOAD.BYTE.VECTOR(correct.addr, b.r)
+          addr.of.VAL.open.array(b.r, "RETYPE00")
+          addr.of.VAL.array     (b.r, "RETYPE01")
+          VAL record r.b.r RETYPES b.r :
+          take.VAL.address      (r.b.r, "RETYPE02")
+        
+        []BYTE b.r RETYPES r :
+        INT a2 :
+        SEQ
+          LOAD.BYTE.VECTOR(a2, b.r)
+          check(a2, correct.addr, "RETYPE10")
+          addr.of.VAL.open.array(b.r, "RETYPE11")
+          addr.of.VAL.array(b.r, "RETYPE12")
+          addr.of.open.array(b.r, "RETYPE13")
+          addr.of.array(b.r, "RETYPE14")
+          record r.b.r RETYPES b.r :
+          SEQ
+            take.address(r.b.r, "RETYPE15")
+            take.VAL.address(r.b.r, "RETYPE16")
+        
+        take.address(r, "RETYPE20")
+        take.VAL.address(r, "RETYPE21")
+        
+        check(r[x], 1, "RETYPE30")
+        check(r[y], 2, "RETYPE31")
+        check(r[z], 3, "RETYPE32")
+        --}}}
+    
+        --{{{  slicing into arrays
+        --{{{  PROC pass.array.of.bytes([]BYTE bs)
+        PROC pass.array.of.bytes([]BYTE bs, VAL []BYTE msg)
+          sub.bs IS [bs FROM bytes FOR bytes] :
+          SEQ
+            addr.of.VAL.open.array(sub.bs, msg)
+            addr.of.open.array(sub.bs, msg)
+            addr.of.VAL.array(sub.bs, msg)
+            addr.of.array(sub.bs, msg)
+            record rr RETYPES sub.bs :
+            SEQ
+              take.address(rr, msg)
+              take.VAL.address(rr, msg)
+        :
+        --}}}
+        --{{{  PROC pass.array.of.bytes.with.offsets([]BYTE bs)
+        PROC pass.array.of.bytes.with.offsets([]BYTE bs, VAL INT start, len, VAL []BYTE msg)
+          sub.bs IS [bs FROM start FOR len] :
+          SEQ
+            addr.of.VAL.open.array(sub.bs, msg)
+            addr.of.open.array(sub.bs, msg)
+            addr.of.VAL.array(sub.bs, msg)
+            addr.of.array(sub.bs, msg)
+            record rr RETYPES sub.bs :
+            SEQ
+              take.address(rr, msg)
+              take.VAL.address(rr, msg)
+        :
+        --}}}
+        --{{{  PROC pass.array.of.VAL.bytes([]BYTE bs)
+        PROC pass.array.of.VAL.bytes(VAL []BYTE bs, VAL []BYTE msg)
+          VAL sub.bs IS [bs FROM bytes FOR bytes] :
+          SEQ
+            addr.of.VAL.open.array(sub.bs, msg)
+            addr.of.VAL.array(sub.bs, msg)
+            VAL record rr RETYPES sub.bs :
+            SEQ
+              take.VAL.address(rr, msg)
+        :
+        --}}}
+        --{{{  PROC pass.array.of.VAL.bytes.with.offsets([]BYTE bs)
+        PROC pass.array.of.VAL.bytes.with.offsets(VAL []BYTE bs, VAL INT start, len, VAL []BYTE msg)
+          VAL sub.bs IS [bs FROM start FOR len] :
+          SEQ
+            addr.of.VAL.open.array(sub.bs, msg)
+            addr.of.VAL.array(sub.bs, msg)
+            VAL record rr RETYPES sub.bs :
+            SEQ
+              take.VAL.address(rr, msg)
+        :
+        --}}}
+        --{{{  PROC pass.array.of.VAL.bytes.with.offsets.extra([]BYTE bs)
+        PROC pass.array.of.VAL.bytes.with.offsets.extra(VAL []BYTE bs, VAL INT start, len, VAL INT zero, VAL []BYTE msg)
+          VAL sub.bs IS [bs FROM start+zero FOR len+zero] :
+          SEQ
+            addr.of.VAL.open.array(sub.bs, msg)
+            addr.of.VAL.array(sub.bs, msg)
+            VAL record rr RETYPES [sub.bs FROM zero FOR len + zero] :
+            SEQ
+              take.VAL.address(rr, msg)
+        :
+        --}}}
+        [3]record rs :
+        SEQ
+          SEQ i = 0 FOR SIZE rs
+            rs[i] := r
+          VAL []BYTE b.rs.1 RETYPES rs[1] :
+          LOAD.BYTE.VECTOR(correct.addr, b.rs.1)
+        
+          []BYTE b.rs RETYPES rs :
+          SEQ
+            pass.array.of.bytes(b.rs, "RETYPE40")
+            pass.array.of.bytes.with.offsets(b.rs, id(bytes), id(bytes), "RETYPE41")
+            pass.array.of.VAL.bytes(b.rs, "RETYPE42")
+            pass.array.of.VAL.bytes.with.offsets(b.rs, id(bytes), id(bytes), "RETYPE43")
+            pass.array.of.VAL.bytes.with.offsets.extra(b.rs, id(bytes), id(bytes), id(0), "RETYPE44")
+          VAL []BYTE b.rs RETYPES rs :
+          SEQ
+            pass.array.of.VAL.bytes(b.rs, "RETYPE50")
+            pass.array.of.VAL.bytes.with.offsets(b.rs, id(bytes), id(bytes), "RETYPE51")
+            pass.array.of.VAL.bytes.with.offsets.extra(b.rs, id(bytes), id(bytes), id(0), "RETYPE52")
+        
+          SEQ i = 0 FOR SIZE rs
+            SEQ
+              check(rs[i][x], 1, "RETYPE60")
+              check(rs[i][y], 2, "RETYPE61")
+              check(rs[i][z], 3, "RETYPE62")
+        --}}}
+    :
+    some.RETYPES.work()
+    --}}}
+    #ENDIF
+    --{{{  access to fn result array
+    PROC const.access.to.result()
+      VAL n IS 3 :
+      --{{{  f1
+      [n]INT FUNCTION f1(VAL [n]INT y, VAL INT x)
+        [n]INT res :
+        #IF NOT DEFINED (COMPILER.TOCK)
+        PLACE res IN WORKSPACE :
+        #ENDIF
+        VALOF
+          SEQ
+            res := y
+            abbr0 IS res[0] :
+            abbr0 := abbr0 + x
+            abbr1 IS res[1] :
+            abbr1 := abbr1 + x
+            abbr2 IS res[2] :
+            abbr2 := abbr2 + x
+            SEQ i = 0 FOR n
+              res[i] := res[i] + x
+          RESULT res
+      :
+      --}}}
+      --{{{  f2
+      [n]INT FUNCTION f2(VAL [n]INT y, VAL INT x)
+        [n]INT res :
+        #IF NOT DEFINED (COMPILER.TOCK)
+        PLACE res IN VECSPACE :
+        #ENDIF
+        VALOF
+          SEQ
+            res := y
+            abbr0 IS res[0] :
+            abbr0 := abbr0 + x
+            abbr1 IS res[1] :
+            abbr1 := abbr1 + x
+            abbr2 IS res[2] :
+            abbr2 := abbr2 + x
+            SEQ i = 0 FOR n
+              res[i] := res[i] + x
+          RESULT res
+      :
+      --}}}
+      --{{{  f3
+      [n]INT FUNCTION f3(VAL [n]INT y, VAL INT x)
+        [n]INT res :
+        #IF NOT DEFINED (COMPILER.TOCK)
+        PLACE res IN VECSPACE :
+        #ENDIF
+        VALOF
+          SEQ
+            res := y
+            SEQ i = 0 FOR n
+              abbri IS res[i] :
+              abbri := abbri + x
+            SEQ i = 0 FOR n
+              res[i] := res[i] + x
+          RESULT res
+      :
+      --}}}
+    
+      [n]INT x :
+      SEQ
+        title("access to const index into fn result")
+        x := f1([9,10,11], 2)
+        SEQ i = 0 FOR SIZE x
+          check(x[i], 13+i, "CONST00")
+        x := f2([9,10,11], 3)
+        SEQ i = 0 FOR SIZE x
+          check(x[i], 15+i, "CONST01")
+        x := f3([9,10,11], 4)
+        SEQ i = 0 FOR SIZE x
+          check(x[i], 17+i, "CONST02")
+    :
+    const.access.to.result()
+    --}}}
+    --{{{  complicated example returning arrays
+    PROC more.LONGPROD()
+      --{{{  QRealIDiv.0, local in WSP
+      VAL MaxInt  IS BITNOT 0 :
+      VAL SignBit IS MOSTNEG INT :
+      
+      INT, INT, INT, INT, INT FUNCTION QRealIDiv.0 (VAL INT Dv3.in, Dv2.in, Dv1.in,
+                                                  Dv0.in, Guard.in, VAL [4]INT Yfrac)
+      
+        -- Function version (10 Jun 87)
+        -- Fix for Q=0 case 16-sep-87
+        --
+        -- unsigned part divide operation
+        -- Divides Dv3..Dv0 by Yfrac[0..3] to produce quotient Quot and
+        -- remainder Dv2..Dv0
+      
+        INT Q, Dv2, Dv1, Dv0, Guard :
+        VALOF
+          INT Carry, Dv3 :
+          [5] INT W :
+          #IF NOT DEFINED (COMPILER.TOCK)
+          PLACE W IN WORKSPACE :
+          #ENDIF
+          SEQ
+            IF
+              Yfrac[3] = Dv3.in
+                Q := MaxInt
+              TRUE
+                Q,  Carry := LONGDIV ( Dv3.in,  Dv2.in,  Yfrac[3])
+            IF
+              Q <> 0                --ensure not too big
+                SEQ
+                  W[1],  W[0] := LONGPROD ( Q,  Yfrac[0],  0)
+                  W[2],  W[1] := LONGPROD ( Q,  Yfrac[1],  W[1])
+                  W[3],  W[2] := LONGPROD ( Q,  Yfrac[2],  W[2])
+                  W[4],  W[3] := LONGPROD ( Q,  Yfrac[3],  W[3])
+                  Carry,Guard := LONGDIFF ( Guard.in,  W[0],  0)
+                  Carry,  Dv0 := LONGDIFF ( Dv0.in,  W[1],  Carry)
+                  Carry,  Dv1 := LONGDIFF ( Dv1.in,  W[2],  Carry)
+                  Carry,  Dv2 := LONGDIFF ( Dv2.in,  W[3],  Carry)
+                  Carry,  Dv3 := LONGDIFF ( Dv3.in,  W[4],  Carry)
+                  WHILE (Dv3 /\ SignBit) <> 0   --too big, add back
+                    SEQ
+                      Carry,  Q  := LONGDIFF ( Q,  1,  0)
+                      Carry,Guard := LONGSUM ( Guard,  Yfrac[0],  0)
+                      Carry,  Dv0 := LONGSUM ( Dv0,  Yfrac[1],  Carry)
+                      Carry,  Dv1 := LONGSUM ( Dv1,  Yfrac[2],  Carry)
+                      Carry,  Dv2 := LONGSUM ( Dv2,  Yfrac[3],  Carry)
+                      Carry,  Dv3 := LONGSUM ( Dv3,  0,  Carry)
+              TRUE
+                SEQ
+                  Dv2 := Dv2.in
+                  Dv1 := Dv1.in
+                  Dv0 := Dv0.in
+                  Guard := Guard.in -- fix added 16-sep-87
+          RESULT Q, Dv2, Dv1, Dv0, Guard
+      :
+      --}}}
+      --{{{  QRealIDiv.1, local scalars
+      VAL MaxInt  IS BITNOT 0 :
+      VAL SignBit IS MOSTNEG INT :
+      
+      INT, INT, INT, INT, INT FUNCTION QRealIDiv.1 (VAL INT Dv3.in, Dv2.in, Dv1.in,
+                                                  Dv0.in, Guard.in, VAL [4]INT Yfrac)
+      
+        -- Function version (10 Jun 87)
+        -- Fix for Q=0 case 16-sep-87
+        --
+        -- unsigned part divide operation
+        -- Divides Dv3..Dv0 by Yfrac[0..3] to produce quotient Quot and
+        -- remainder Dv2..Dv0
+      
+        INT Q, Dv2, Dv1, Dv0, Guard :
+        VALOF
+          INT Carry, Dv3 :
+          INT W.0, W.1, W.2, W.3, W.4 :
+          SEQ
+            IF
+              Yfrac[3] = Dv3.in
+                Q := MaxInt
+              TRUE
+                Q,  Carry := LONGDIV ( Dv3.in,  Dv2.in,  Yfrac[3])
+            IF
+              Q <> 0                --ensure not too big
+                SEQ
+                  W.1,  W.0 := LONGPROD ( Q,  Yfrac[0],  0)
+                  W.2,  W.1 := LONGPROD ( Q,  Yfrac[1],  W.1)
+                  W.3,  W.2 := LONGPROD ( Q,  Yfrac[2],  W.2)
+                  W.4,  W.3 := LONGPROD ( Q,  Yfrac[3],  W.3)
+                  Carry,Guard := LONGDIFF ( Guard.in,  W.0,  0)
+                  Carry,  Dv0 := LONGDIFF ( Dv0.in,  W.1,  Carry)
+                  Carry,  Dv1 := LONGDIFF ( Dv1.in,  W.2,  Carry)
+                  Carry,  Dv2 := LONGDIFF ( Dv2.in,  W.3,  Carry)
+                  Carry,  Dv3 := LONGDIFF ( Dv3.in,  W.4,  Carry)
+                  WHILE (Dv3 /\ SignBit) <> 0   --too big, add back
+                    SEQ
+                      Carry,  Q  := LONGDIFF ( Q,  1,  0)
+                      Carry,Guard := LONGSUM ( Guard,  Yfrac[0],  0)
+                      Carry,  Dv0 := LONGSUM ( Dv0,  Yfrac[1],  Carry)
+                      Carry,  Dv1 := LONGSUM ( Dv1,  Yfrac[2],  Carry)
+                      Carry,  Dv2 := LONGSUM ( Dv2,  Yfrac[3],  Carry)
+                      Carry,  Dv3 := LONGSUM ( Dv3,  0,  Carry)
+              TRUE
+                SEQ
+                  Dv2 := Dv2.in
+                  Dv1 := Dv1.in
+                  Dv0 := Dv0.in
+                  Guard := Guard.in -- fix added 16-sep-87
+          RESULT Q, Dv2, Dv1, Dv0, Guard
+      :
+      --}}}
+      --{{{  QRealIDiv.2, array in and out, res in VSP, local in WSP
+      VAL MaxInt  IS BITNOT 0 :
+      VAL SignBit IS MOSTNEG INT :
+      
+      INT, [3]INT, INT FUNCTION QRealIDiv.2 (VAL [4]INT Dv.in,
+                                             VAL INT Guard.in, VAL [4]INT Yfrac)
+      
+        -- Function version (10 Jun 87)
+        -- Fix for Q=0 case 16-sep-87
+        --
+        -- unsigned part divide operation
+        -- Divides Dv3..Dv0 by Yfrac[0..3] to produce quotient Quot and
+        -- remainder Dv2..Dv0
+      
+        INT Q, Guard :
+        [3]INT Dv :
+        VALOF
+          INT Carry, Dv3 :
+          [5] INT W :
+          #IF NOT DEFINED (COMPILER.TOCK)
+          PLACE W IN WORKSPACE :
+          #ENDIF
+          SEQ
+            IF
+              Yfrac[3] = Dv.in[3]
+                Q := MaxInt
+              TRUE
+                Q,  Carry := LONGDIV ( Dv.in[3],  Dv.in[2],  Yfrac[3])
+            IF
+              Q <> 0                --ensure not too big
+                SEQ
+                  W[1],  W[0] := LONGPROD ( Q,  Yfrac[0],  0)
+                  W[2],  W[1] := LONGPROD ( Q,  Yfrac[1],  W[1])
+                  W[3],  W[2] := LONGPROD ( Q,  Yfrac[2],  W[2])
+                  W[4],  W[3] := LONGPROD ( Q,  Yfrac[3],  W[3])
+                  Carry,Guard := LONGDIFF ( Guard.in,  W[0],  0)
+                  Carry,  Dv[0] := LONGDIFF ( Dv.in[0],  W[1],  Carry)
+                  Carry,  Dv[1] := LONGDIFF ( Dv.in[1],  W[2],  Carry)
+                  Carry,  Dv[2] := LONGDIFF ( Dv.in[2],  W[3],  Carry)
+                  Carry,  Dv3 := LONGDIFF ( Dv.in[3],  W[4],  Carry)
+                  WHILE (Dv3 /\ SignBit) <> 0   --too big, add back
+                    SEQ
+                      Carry,  Q  := LONGDIFF ( Q,  1,  0)
+                      Carry,Guard := LONGSUM ( Guard,  Yfrac[0],  0)
+                      Carry,  Dv[0] := LONGSUM ( Dv[0],  Yfrac[1],  Carry)
+                      Carry,  Dv[1] := LONGSUM ( Dv[1],  Yfrac[2],  Carry)
+                      Carry,  Dv[2] := LONGSUM ( Dv[2],  Yfrac[3],  Carry)
+                      Carry,  Dv3 := LONGSUM ( Dv3,  0,  Carry)
+              TRUE
+                SEQ
+                  Dv := [Dv.in FROM 0 FOR 3]
+                  Guard := Guard.in -- fix added 16-sep-87
+          RESULT Q, Dv, Guard
+      :
+      --}}}
+      --{{{  QRealIDiv.3, array in and out, res in VSP, local scalars
+      VAL MaxInt  IS BITNOT 0 :
+      VAL SignBit IS MOSTNEG INT :
+      
+      INT, [3]INT, INT FUNCTION QRealIDiv.3 (VAL [4]INT Dv.in,
+                                             VAL INT Guard.in, VAL [4]INT Yfrac)
+      
+        -- Function version (10 Jun 87)
+        -- Fix for Q=0 case 16-sep-87
+        --
+        -- unsigned part divide operation
+        -- Divides Dv3..Dv0 by Yfrac[0..3] to produce quotient Quot and
+        -- remainder Dv2..Dv0
+      
+        INT Q, Guard :
+        [3]INT Dv :
+        VALOF
+          INT Carry, Dv3 :
+          INT W.0, W.1, W.2, W.3, W.4 :
+          SEQ
+            IF
+              Yfrac[3] = Dv.in[3]
+                Q := MaxInt
+              TRUE
+                Q,  Carry := LONGDIV ( Dv.in[3],  Dv.in[2],  Yfrac[3])
+            IF
+              Q <> 0                --ensure not too big
+                SEQ
+                  W.1,  W.0 := LONGPROD ( Q,  Yfrac[0],  0)
+                  W.2,  W.1 := LONGPROD ( Q,  Yfrac[1],  W.1)
+                  W.3,  W.2 := LONGPROD ( Q,  Yfrac[2],  W.2)
+                  W.4,  W.3 := LONGPROD ( Q,  Yfrac[3],  W.3)
+                  Carry,Guard := LONGDIFF ( Guard.in,  W.0,  0)
+                  Carry,  Dv[0] := LONGDIFF ( Dv.in[0],  W.1,  Carry)
+                  Carry,  Dv[1] := LONGDIFF ( Dv.in[1],  W.2,  Carry)
+                  Carry,  Dv[2] := LONGDIFF ( Dv.in[2],  W.3,  Carry)
+                  Carry,  Dv3 := LONGDIFF ( Dv.in[3],  W.4,  Carry)
+                  WHILE (Dv3 /\ SignBit) <> 0   --too big, add back
+                    SEQ
+                      Carry,  Q  := LONGDIFF ( Q,  1,  0)
+                      Carry,Guard := LONGSUM ( Guard,  Yfrac[0],  0)
+                      Carry,  Dv[0] := LONGSUM ( Dv[0],  Yfrac[1],  Carry)
+                      Carry,  Dv[1] := LONGSUM ( Dv[1],  Yfrac[2],  Carry)
+                      Carry,  Dv[2] := LONGSUM ( Dv[2],  Yfrac[3],  Carry)
+                      Carry,  Dv3 := LONGSUM ( Dv3,  0,  Carry)
+              TRUE
+                SEQ
+                  Dv := [Dv.in FROM 0 FOR 3]
+                  Guard := Guard.in -- fix added 16-sep-87
+          RESULT Q, Dv, Guard
+      :
+      --}}}
+      --{{{  QRealIDiv.4, array in and out, res in WSP, local in WSP
+      VAL MaxInt  IS BITNOT 0 :
+      VAL SignBit IS MOSTNEG INT :
+      
+      INT, [3]INT, INT FUNCTION QRealIDiv.4 (VAL [4]INT Dv.in,
+                                             VAL INT Guard.in, VAL [4]INT Yfrac)
+      
+        -- Function version (10 Jun 87)
+        -- Fix for Q=0 case 16-sep-87
+        --
+        -- unsigned part divide operation
+        -- Divides Dv3..Dv0 by Yfrac[0..3] to produce quotient Quot and
+        -- remainder Dv2..Dv0
+      
+        INT Q, Guard :
+        [3]INT Dv :
+        #IF NOT DEFINED (COMPILER.TOCK)
+        PLACE Dv IN WORKSPACE :
+        #ENDIF
+        VALOF
+          INT Carry, Dv3 :
+          [5] INT W :
+          #IF NOT DEFINED (COMPILER.TOCK)
+          PLACE W IN WORKSPACE :
+          #ENDIF
+          SEQ
+            IF
+              Yfrac[3] = Dv.in[3]
+                Q := MaxInt
+              TRUE
+                Q,  Carry := LONGDIV ( Dv.in[3],  Dv.in[2],  Yfrac[3])
+            IF
+              Q <> 0                --ensure not too big
+                SEQ
+                  W[1],  W[0] := LONGPROD ( Q,  Yfrac[0],  0)
+                  W[2],  W[1] := LONGPROD ( Q,  Yfrac[1],  W[1])
+                  W[3],  W[2] := LONGPROD ( Q,  Yfrac[2],  W[2])
+                  W[4],  W[3] := LONGPROD ( Q,  Yfrac[3],  W[3])
+                  Carry,Guard := LONGDIFF ( Guard.in,  W[0],  0)
+                  Carry,  Dv[0] := LONGDIFF ( Dv.in[0],  W[1],  Carry)
+                  Carry,  Dv[1] := LONGDIFF ( Dv.in[1],  W[2],  Carry)
+                  Carry,  Dv[2] := LONGDIFF ( Dv.in[2],  W[3],  Carry)
+                  Carry,  Dv3 := LONGDIFF ( Dv.in[3],  W[4],  Carry)
+                  WHILE (Dv3 /\ SignBit) <> 0   --too big, add back
+                    SEQ
+                      Carry,  Q  := LONGDIFF ( Q,  1,  0)
+                      Carry,Guard := LONGSUM ( Guard,  Yfrac[0],  0)
+                      Carry,  Dv[0] := LONGSUM ( Dv[0],  Yfrac[1],  Carry)
+                      Carry,  Dv[1] := LONGSUM ( Dv[1],  Yfrac[2],  Carry)
+                      Carry,  Dv[2] := LONGSUM ( Dv[2],  Yfrac[3],  Carry)
+                      Carry,  Dv3 := LONGSUM ( Dv3,  0,  Carry)
+              TRUE
+                SEQ
+                  Dv := [Dv.in FROM 0 FOR 3]
+                  Guard := Guard.in -- fix added 16-sep-87
+          RESULT Q, Dv, Guard
+      :
+      --}}}
+      --{{{  QRealIDiv.5, array in and out, res in WSP, local scalars
+      VAL MaxInt  IS BITNOT 0 :
+      VAL SignBit IS MOSTNEG INT :
+      
+      INT, [3]INT, INT FUNCTION QRealIDiv.5 (VAL [4]INT Dv.in,
+                                             VAL INT Guard.in, VAL [4]INT Yfrac)
+      
+        -- Function version (10 Jun 87)
+        -- Fix for Q=0 case 16-sep-87
+        --
+        -- unsigned part divide operation
+        -- Divides Dv3..Dv0 by Yfrac[0..3] to produce quotient Quot and
+        -- remainder Dv2..Dv0
+      
+        INT Q, Guard :
+        [3]INT Dv :
+        #IF NOT DEFINED (COMPILER.TOCK)
+        PLACE Dv IN WORKSPACE :
+        #ENDIF
+        VALOF
+          INT Carry, Dv3 :
+          INT W.0, W.1, W.2, W.3, W.4 :
+          SEQ
+            IF
+              Yfrac[3] = Dv.in[3]
+                Q := MaxInt
+              TRUE
+                Q,  Carry := LONGDIV ( Dv.in[3],  Dv.in[2],  Yfrac[3])
+            IF
+              Q <> 0                --ensure not too big
+                SEQ
+                  W.1,  W.0 := LONGPROD ( Q,  Yfrac[0],  0)
+                  W.2,  W.1 := LONGPROD ( Q,  Yfrac[1],  W.1)
+                  W.3,  W.2 := LONGPROD ( Q,  Yfrac[2],  W.2)
+                  W.4,  W.3 := LONGPROD ( Q,  Yfrac[3],  W.3)
+                  Carry,Guard := LONGDIFF ( Guard.in,  W.0,  0)
+                  Carry,  Dv[0] := LONGDIFF ( Dv.in[0],  W.1,  Carry)
+                  Carry,  Dv[1] := LONGDIFF ( Dv.in[1],  W.2,  Carry)
+                  Carry,  Dv[2] := LONGDIFF ( Dv.in[2],  W.3,  Carry)
+                  Carry,  Dv3 := LONGDIFF ( Dv.in[3],  W.4,  Carry)
+                  WHILE (Dv3 /\ SignBit) <> 0   --too big, add back
+                    SEQ
+                      Carry,  Q  := LONGDIFF ( Q,  1,  0)
+                      Carry,Guard := LONGSUM ( Guard,  Yfrac[0],  0)
+                      Carry,  Dv[0] := LONGSUM ( Dv[0],  Yfrac[1],  Carry)
+                      Carry,  Dv[1] := LONGSUM ( Dv[1],  Yfrac[2],  Carry)
+                      Carry,  Dv[2] := LONGSUM ( Dv[2],  Yfrac[3],  Carry)
+                      Carry,  Dv3 := LONGSUM ( Dv3,  0,  Carry)
+              TRUE
+                SEQ
+                  Dv := [Dv.in FROM 0 FOR 3]
+                  Guard := Guard.in -- fix added 16-sep-87
+          RESULT Q, Dv, Guard
+      :
+      --}}}
+    
+      --{{{  PROC check.results
+      VAL Dv.in IS [10,10,10,1] :
+      VAL Guard.in IS 1 :
+      VAL Yfrac IS [2,2,2,2] :
+      
+      VAL Dv3.in IS Dv.in[3] :
+      VAL Dv2.in IS Dv.in[2] :
+      VAL Dv1.in IS Dv.in[1] :
+      VAL Dv0.in IS Dv.in[0] :
+      
+      PROC check.results(VAL INT Q, VAL [3]INT Dv, VAL INT Guard, VAL []BYTE msg)
+        SEQ
+          check(Q,     (MOSTNEG INT)+4, msg)
+          check(Dv[2],   1, msg)
+          check(Dv[1],   1, msg)
+          check(Dv[0],   0, msg)
+          check(Guard, -7, msg)
+      :
+      --}}}
+      --{{{  variables
+      INT Q, Dv2, Dv1, Dv0, Guard :
+      [3]INT Dv :
+      --}}}
+      SEQ
+        Q, Dv2, Dv1, Dv0, Guard := QRealIDiv.0(Dv3.in, Dv2.in, Dv1.in, Dv0.in,
+                                   Guard.in, Yfrac)
+        check.results(Q, [Dv0, Dv1, Dv2], Guard, "QReal00")
+    
+        Q, Dv2, Dv1, Dv0, Guard := QRealIDiv.1(Dv3.in, Dv2.in, Dv1.in, Dv0.in,
+                                   Guard.in, Yfrac)
+        check.results(Q, [Dv0, Dv1, Dv2], Guard, "QReal01")
+        
+        Q, Dv, Guard := QRealIDiv.2(Dv.in, Guard.in, Yfrac)
+        check.results(Q, Dv, Guard, "QReal02")
+    
+        Q, Dv, Guard := QRealIDiv.3(Dv.in, Guard.in, Yfrac)
+        check.results(Q, Dv, Guard, "QReal03")
+    
+        Q, Dv, Guard := QRealIDiv.4(Dv.in, Guard.in, Yfrac)
+        check.results(Q, Dv, Guard, "QReal04")
+    
+        Q, Dv, Guard := QRealIDiv.5(Dv.in, Guard.in, Yfrac)
+        check.results(Q, Dv, Guard, "QReal05")
+    :
+    more.LONGPROD()
+    
+    --}}}
+    --{{{  packing and unpacking functions
+    PROC packing.and.unpacking.functions()
+      --{{{  data types
+      DATA TYPE r1
+        RECORD
+          INT16 f1 :
+          BYTE  f2 :
+          BYTE  f3 :
+          INT64 f4 :
+          INT   f5 :
+      :
+      DATA TYPE r2
+        PACKED RECORD
+          INT16 f1 :
+          BYTE  f2 :
+          BYTE  f3 :
+          INT32 pad :
+          INT64 f4 :
+          INT   f5 :
+      :
+      
+      --}}}
+      --{{{  init.r1
+      PROC init.r1(r1 r)
+        r := [1, 2, 3, 4, 5]
+      :
+      --}}}
+      --{{{  init.r2
+      PROC init.r2(r2 r)
+        r := [1, 2, 3, 0, 4, 5]
+      :
+      --}}}
+      --{{{  PROC check.r1
+      PROC check.r1(VAL r1 r, VAL []BYTE msg)
+        SEQ
+          check.INT16(r[f1], 1, msg)
+          check.BYTE (r[f2], 2, msg)
+          check.BYTE (r[f3], 3, msg)
+          check.INT64(r[f4], 4, msg)
+          check.INT  (r[f5], 5, msg)
+      :
+      --}}}
+      --{{{  PROC check.r2
+      PROC check.r2(VAL r2 r, VAL []BYTE msg)
+        SEQ
+          check.INT16(r[f1], 1, msg)
+          check.BYTE (r[f2], 2, msg)
+          check.BYTE (r[f3], 3, msg)
+          check.INT64(r[f4], 4, msg)
+          check.INT  (r[f5], 5, msg)
+      :
+      --}}}
+      r1 rec1 :
+      r2 rec2 :
+      SEQ
+        --{{{  non-INLINE, single-line
+        r1 FUNCTION unpack(VAL r2 r) IS [r[f1], r[f2], r[f3], r[f4], r[f5]] :
+        r2 FUNCTION   pack(VAL r1 r) IS [r[f1], r[f2], r[f3], 0, r[f4], r[f5]] :
+        SEQ
+          init.r1(rec1)
+          rec2 := pack(rec1)
+          check.r2(rec2, "PACK00")
+          init.r2(rec2)
+          rec1 := unpack(rec2)
+          check.r1(rec1, "PACK01")
+        
+        --}}}
+        --{{{      INLINE, single-line
+        r1 INLINE FUNCTION unpack(VAL r2 r) IS [r[f1], r[f2], r[f3], r[f4], r[f5]] :
+        r2 INLINE FUNCTION   pack(VAL r1 r) IS [r[f1], r[f2], r[f3], 0, r[f4], r[f5]] :
+        SEQ
+          init.r1(rec1)
+          rec2 := pack(rec1)
+          check.r2(rec2, "PACK10")
+          init.r2(rec2)
+          rec1 := unpack(rec2)
+          check.r1(rec1, "PACK11")
+        
+        --}}}
+        --{{{  non-INLINE, multi-line
+        r1 FUNCTION unpack(VAL r2 r)
+          r1 res :
+          VALOF
+            SEQ
+              res[f1] := r[f1]
+              res[f2] := r[f2]
+              res[f3] := r[f3]
+              res[f4] := r[f4]
+              res[f5] := r[f5]
+            RESULT res
+        :
+        r2 FUNCTION   pack(VAL r1 r)
+          r2 res :
+          VALOF
+            SEQ
+              res[f1] := r[f1]
+              res[f2] := r[f2]
+              res[f3] := r[f3]
+              res[f4] := r[f4]
+              res[f5] := r[f5]
+            RESULT res
+        :
+        SEQ
+          init.r1(rec1)
+          rec2 := pack(rec1)
+          check.r2(rec2, "PACK20")
+          init.r2(rec2)
+          rec1 := unpack(rec2)
+          check.r1(rec1, "PACK21")
+        
+        --}}}
+        --{{{      INLINE, multi-line
+        r1 INLINE FUNCTION unpack(VAL r2 r)
+          r1 res :
+          VALOF
+            SEQ
+              res[f1] := r[f1]
+              res[f2] := r[f2]
+              res[f3] := r[f3]
+              res[f4] := r[f4]
+              res[f5] := r[f5]
+            RESULT res
+        :
+        r2 INLINE FUNCTION   pack(VAL r1 r)
+          r2 res :
+          VALOF
+            SEQ
+              res[f1] := r[f1]
+              res[f2] := r[f2]
+              res[f3] := r[f3]
+              res[f4] := r[f4]
+              res[f5] := r[f5]
+            RESULT res
+        :
+        SEQ
+          init.r1(rec1)
+          rec2 := pack(rec1)
+          check.r2(rec2, "PACK30")
+          init.r2(rec2)
+          rec1 := unpack(rec2)
+          check.r1(rec1, "PACK31")
+        
+        --}}}
+    :
+    packing.and.unpacking.functions()
+    --}}}
+    finish ()
+:

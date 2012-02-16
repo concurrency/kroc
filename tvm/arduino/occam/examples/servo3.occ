@@ -1,0 +1,105 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "servo.module"
+
+--PROC sawtooth (VAL INT max, CHAN INT ch!)
+--  WHILE TRUE
+--    SEQ
+--      SEQ i = 0 FOR max
+--        SEQ
+--          tock ? SIGNAL
+--          ch ! i
+--      SEQ i = max FOR max STEP -1
+--        SEQ
+--          tock ? SIGNAL
+--          ch ! i
+--:
+--
+--PROC tick (VAL INT msec, CHAN SIGNAL t!)
+--  WHILE TRUE
+--    SEQ
+--      delay(msec)
+--      t ! SIGNAL
+--:
+--
+--PROC all.procs ()
+--  CHAN SERVO s:
+--  CHAN SIGNAL t:
+--  SEQ
+--    digital.mode (9, OUTPUT)
+--    PAR
+--      heartbeat ()
+--      servo (9, s?)
+--      tick(1000, t!)
+--      sawtooth(t?, s!)
+--:
+--
+PROC main ()
+  CHAN SERVO s:
+  SEQ
+    digital.mode (2, OUTPUT)
+    PAR
+      servo (2, s?)
+      SEQ
+        s ! min ; 650
+        s ! max ; 2350
+        s ! div ; 4
+        s ! pos ; 0
+        s ! start
+        delay (2000)
+        WHILE TRUE
+          SEQ
+            SEQ i = 0 FOR 4
+              SEQ
+                s ! pos ; i
+                delay (1000)
+            SEQ i = 4 FOR 4 STEP -1
+              SEQ
+                s ! pos ; i
+                delay (1000)
+:
+
+#IF FALSE
+        WHILE TRUE
+          SEQ
+            s ! pos ; n.pos
+            IF
+              up = TRUE
+                IF
+                  n.pos <> 180
+                    n.pos := n.pos + 1 
+                  TRUE
+                    up := FALSE
+              TRUE
+                IF
+                  n.pos <> 0
+                    n.pos := n.pos - 1
+                  TRUE
+                    up := TRUE
+            serial.write.string ("Set servo to ")
+            serial.write.int (n.pos)
+            serial.write ('*n')
+            delay (25)
+
+        SEQ i = 800 FOR 15 STEP -50
+          SEQ
+            s ! pos ; i
+            serial.write.string ("Set servo to ")
+            serial.write.int (i)
+            serial.write ('*n')
+            delay (500)
+        SEQ i = 50 FOR 4 STEP -10
+          SEQ
+            s ! pos ; i
+            serial.write.string ("Set servo to ")
+            serial.write.int (i)
+            serial.write ('*n')
+            delay (500)
+        SEQ i = 10 FOR 10 STEP -1
+          SEQ
+            s ! pos ; i
+            serial.write.string ("Set servo to ")
+            serial.write.int (i)
+            serial.write ('*n')
+            delay (500)
+        s ! pos ; 200
+#ENDIF

@@ -1,0 +1,100 @@
+--
+--      Inmos Libraries
+--      Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--      This library is free software; you can redistribute it and/or
+--      modify it under the terms of the GNU Lesser General Public
+--      License as published by the Free Software Foundation; either
+--      version 2 of the License, or (at your option) any later version.
+--
+--      This library is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--      Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU Lesser General Public
+--      License along with this library; if not, write to the Free Software
+--      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT32MUL "INT32MUL%CHK"
+
+--{{{  INT32MUL -- T2
+INT32 FUNCTION INT32MUL (VAL INT32 A, VAL INT32 B)
+
+  -- Function version (10 Jun 87)
+
+  INT32 Prod :
+  VALOF
+    --{{{  DEFs
+    VAL MaxInt  IS #FFFF :
+    VAL SignBit IS #8000 :
+    --}}}
+    [2]INT Prod RETYPES Prod :
+    VAL [2]INT A RETYPES A :
+    VAL [2]INT B RETYPES B :
+    [4]INT W :
+    PLACE W IN WORKSPACE :
+    INT Carry1, Carry2, Carry3 :
+    INT Asign, Bsign :
+    SEQ
+      Asign := A [1] /\ SignBit
+      Bsign := B [1] /\ SignBit
+      Carry1,  W [0] := LONGPROD (   A [0],   B [0],   0)
+      Carry1,  W [1] := LONGPROD (   A [1],   B [0],   Carry1)
+      Carry2,  W [1] := LONGPROD (   A [0],   B [1],   W [1])
+      Carry3,  Carry2 := LONGPROD (     A [1],   B [1],   Carry2)
+      Carry1,  W [2] := LONGSUM ( Carry2,  Carry1,  0)
+      W [3] := Carry3 PLUS Carry1
+      --{{{  If A < 0 subtract B from carry part
+      IF
+        Asign <> 0
+          INT Borrow :
+          SEQ
+            Borrow,  W [2] := LONGDIFF ( W [2],  B [0],  0)
+            Borrow,  W [3] := LONGDIFF ( W [3],  B [1],  Borrow)
+        TRUE
+          SKIP
+      --}}}
+      --{{{  If B < 0 subtract A from carry part
+      IF
+        Bsign <> 0
+          INT Borrow :
+          SEQ
+            Borrow,  W [2] := LONGDIFF ( W [2],  A [0],  0)
+            Borrow,  W [3] := LONGDIFF ( W [3],  A [1],  Borrow)
+        TRUE
+          SKIP
+      --}}}
+      --{{{  Test for overflow
+      IF
+        W [1] < 0
+          IF
+            (W [2] /\ W [3]) <> (-1)
+              CAUSEERROR()
+            TRUE
+              SKIP
+        TRUE
+          IF
+            (W[2] \/ W [3]) <> 0
+              CAUSEERROR()
+            TRUE
+              SKIP
+      --}}}
+      Prod [0] := W [0]
+      Prod [1] := W [1]
+    RESULT Prod
+:
+--}}}
+
+#ENDIF

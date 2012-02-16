@@ -1,0 +1,26 @@
+#
+# TEDIOUS
+# 
+# Building occamdoc is just a touch tedious, and isn't 
+# necessary for where we are right now. So, we'll skip,
+# but leave our stubbed-in SConscript here.
+
+import os
+from string import Template
+
+Import("env")
+
+local = env.Clone()
+
+# This builder just does a syscall to invoke the 
+# python distutils script "setup.py".
+def build (target, source, env):
+  cmd = Template("python $source build")
+  cmdstring = cmd.substitute(source = source[0].rstr())
+  os.system(cmdstring)
+
+# In an odd way, "setup.py" is actually the source for
+# this particular build, and the target is "occamdoc".
+# If the former doesn't exist, it's bad, and if the latter
+# isn't produced, it's bad. So, that works for me.
+local.Command("occamdoc", "setup.py", build)

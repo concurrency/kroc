@@ -1,0 +1,86 @@
+--
+--	Random number generator
+--	Copyright (C) 1985  David Morse
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module course
+
+--* Pseudorandom number generator.
+-- On 32-bit platforms, this is an implementation by David Morse of the
+-- "minimal standard" described in
+-- "[@link http://portal.acm.org/citation.cfm?id=63042 Random number
+-- generators:  Good ones are hard to find]",
+-- Park, K.P. & Miller, K.W. (1988), Comm. ACM, 31(10), 1192-1201.
+--
+-- The routine must be called with a valid seed:  an integer of
+-- between 1 and 2 147 483 647.  The value of the seed must be
+-- preserved from one call of the function to the next.  This
+-- implementation of the random number generator returns an integer
+-- lying between 0 and ([@code upto] - 1) inclusive as its first result,
+-- the seed is the second result.
+--
+-- The random number is full period, with a period of 2 ** 31,
+-- that is 2 147 483 647.
+--
+-- On 16-bit platforms, this is a much less impressive LFSR, with a
+-- period of (2 ** 16) - 1.
+--
+-- @param upto The upper bound (exclusive) of the output value
+-- @param seed The input seed
+-- @return The output value
+-- @return The output seed
+INT, INT FUNCTION random (VAL INT upto, seed)
+  INT int.result, new.seed:
+
+  VALOF
+#IF (TARGET.BITS.PER.WORD = 32)
+    --{{{  32-bit PRNG
+    --{{{  miscellaneous constants
+    VAL INT magic IS 16807:
+    VAL INT period IS 2147483647:
+    VAL INT quotient IS period / magic:
+    VAL INT remainder IS period \ magic:
+    --}}}
+
+    INT lo, hi, test:
+    SEQ
+      hi := seed / quotient
+      lo := seed \ quotient
+      test := (magic TIMES lo) MINUS (remainder TIMES hi)
+      IF
+        test > 0
+          new.seed := test
+        TRUE
+          new.seed := test PLUS period
+      int.result := new.seed \ upto
+    --}}}
+#ELSE
+    --{{{  16-bit PRNG
+    INT new:
+    SEQ
+      new := (((seed >> 15) >< (seed >> 13)) >< (seed >> 12)) >< (seed >> 10)
+      new.seed := (seed << 1) \/ (new >< 1)
+
+      IF
+        new.seed < 0
+          int.result := (-new.seed) \ upto
+        TRUE
+          int.result := new.seed \ upto
+    --}}}
+#ENDIF
+    RESULT int.result, new.seed
+:

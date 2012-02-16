@@ -1,0 +1,507 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module convert
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.5 10/12/90"
+#COMMENT "(c) Copyright INMOS Limited 1988, 1989"
+#PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
+#PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
+#USE "rimul"  --  13-Sep-07
+#USE "ridiv"  --  13-Sep-07
+
+--* Converts BYTE array string into a REAL64 number X
+--
+-- A sign may start string. If the value represented by string
+-- overflows the REAL64 range then an appropriately signed infinity is
+-- returned in X. If the absolute value represented by string is in the
+-- range 2^-1074 to just less than 2^-1022, then a denormalised number
+-- is returned. If the absolute value represented by string is less
+-- than 2^-1074 then zero is returned. If the syntax of string is
+-- incorrect then not only is Error set to TRUE, but a Not-a-Number (
+-- NaN ) is returned for X. If there remain characters after the end of
+-- the longest correct string, although Error is set to TRUE, X is
+-- returned with the value of the correct part of string
+--
+-- @param Error TRUE if the syntax of string is not correct occam, or
+--   if there are any characters after the end of the longest correct
+--   string; otherwise it is FALSE
+-- @param X the binary representation in IEEE double precision format
+--   of the real decimal in string
+-- @param string a sequence of ASCII characters
+PROC STRINGTOREAL64 (BOOL Error, REAL64 X, VAL []BYTE string)
+  --{{{  more information
+  --          For a detailed description of the algorithm used see Ch 7 of
+  --            "Contributions to a Proposed Standard for Binary
+  --             Floating-Point Arithmetic" by J T Coonen
+  --             PhD thesis, Uni of California, Berkeley. 1984.
+  --}}}
+  --{{{  history
+  -- V1.0 1-Jul-88
+  -- Overflow is now checked for in the integer which forms the exponent
+  -- of the string; V1.1 18-Jan-90 SRH
+  -- Altered order of two lines so as to give correct rounding for denormalised
+  -- numbers: bug fix TS/0094, V1.2 15-Mar-90 SRH.  And whilst I was here I
+  -- altered the old SEQs to SKIPs. ( In older versions of occam there was no
+  -- SKIP so people used to use a SEQ with nothing following. )
+  -- Ensured that no vector space is used by adding 'V' to the #OPTION
+  -- line; V1.3 22-Mar-90 SRH
+  -- Cleaned up code to make it more readable and improved DScaleX by
+  -- being careful with the setting of Guard; V1.4, 4-Dec-90 SRH
+  -- More code cleaning: M was used inefficiently in setting N, and
+  -- introduced some more localised variables: dummy, Xfrac and Places;
+  -- V1.5 10-Dec-90 SRH
+  --}}}
+
+  #IF TARGET.BITS.PER.WORD = 32
+  VAL hi IS 1:
+  VAL lo IS 0:
+  [ 2 ]INT X RETYPES X:
+
+  --{{{  Definitions
+  --{{{  Word length specific values for 32 bit machine
+  VAL SignBit        IS #80000000 :
+  VAL BitsPerWord    IS        32 :
+  VAL MaxUnsignedInt IS #FFFFFFFF :
+  VAL BytesPerWord   IS         4 :
+  VAL IntegerLimit   IS 214748363 : -- #0CCCCCCB = ( MaxSignedInt DIV 10 ) - 1
+  --}}}
+  --{{{  IEEE Double length constants for 32 bit implementation
+  VAL DRealShift  IS        11 :
+  VAL DBitsInFrac IS        53 :
+  VAL DRealExpSh  IS        20 :
+  VAL DRealExp    IS      #7FF :
+  VAL DRealXcess  IS      1023 :
+  VAL DRealRBit   IS      #400 :
+  VAL DRealInf    IS #7FF00000 :           --for highest word; lowest word is 0
+  VAL DRealNaN.hi IS  DRealInf :
+  VAL DRealNaN.lo IS #00000001 :
+  --}}}
+  --{{{  read/write constants
+  -- write number constants
+  VAL Table10 IS    27 : --exact power of ten in word
+  VAL Bias10  IS     4 : --extras for full power ten range
+  VAL MaxDecN IS    17 : --maximum dec digits; IEEE 754-1985, Sec 5.6
+  VAL R2L     IS #4D10 : --Log10(2) = 0.3010299956639811952 in low half word
+  
+  -- The table PowerTenFrac contains the fraction with implicit bit
+  -- explicit and then normalized so that there is a one bit in bit 31
+  -- of powers of 10 from 10^0 to 10^27.  For example,
+  -- 10^3 = 1111101000 in binary, which is 1.111101 * 2^9; so the fraction
+  -- bits, with implicit bit explicit ( ie the 1 before the point kept ) is
+  -- 1111101, and the actual exponent is 9.  This latter ( the actual
+  -- exponent ) is what is in the corresponding table PowerTenExp.
+  -- The index of an entry is the same as the power of 10 in
+  -- PowerTenExp; hence PowerTenExp[ 3 ] = 9.  For PowerTenFrac twice
+  -- the power of 10 gives the index of the lower word of the fraction,
+  -- the upper word being in the next element; hence
+  -- PowerTenFrac[ 2 * 3 ] = #00000000 and
+  -- PowerTenFrac[ 2 * 3 + 1 ] = #FA000000.
+  -- These two tables of constants are simply set up in advance for
+  -- efficiency.
+  VAL PowerTenFrac IS [#00000000, #80000000, #00000000, #A0000000,
+   #00000000, #C8000000, #00000000, #FA000000, #00000000, #9C400000,
+   #00000000, #C3500000, #00000000, #F4240000, #00000000, #98968000,
+   #00000000, #BEBC2000, #00000000, #EE6B2800, #00000000, #9502F900,
+   #00000000, #BA43B740, #00000000, #E8D4A510, #00000000, #9184E72A,
+   #80000000, #B5E620F4, #A0000000, #E35FA931, #04000000, #8E1BC9BF,
+   #C5000000, #B1A2BC2E, #76400000, #DE0B6B3A, #89E80000, #8AC72304,
+   #AC620000, #AD78EBC5, #177A8000, #D8D726B7, #6EAC9000, #87867832,
+   #0A57B400, #A968163F, #CCEDA100, #D3C21BCE, #401484A0, #84595161,
+   #9019A5C8, #A56FA5B9, #F4200F3A, #CECB8F27] :
+  
+  VAL PowerTenExp IS [0, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36,
+   39, 43, 46, 49, 53, 56, 59, 63, 66, 69, 73, 76, 79, 83, 86, 89] :
+  
+  VAL BiasTenFrac IS [0, 0, #F4200F3A, #CECB8F27, #CFE20766, #D0CF4B50,
+   #1A708DEA, #DA01EE64, #BD203E41, #9F79A169] : --P27, P55, P108, P206
+  
+  VAL BiasTenExp IS [0, 89, 182, 358, 684] :
+  
+  VAL BiasTen IS [0, 27, 55, 108, 206] :
+  --}}}
+  --}}}
+  --{{{  DScaleX
+  PROC DScaleX (INT Xexp, [2]INT Xfrac, VAL INT Scale)
+  
+    -- Scale X by value of 10^Scale
+  
+    INT Carry, Guard, N, Places, S, Zexp, dummy :
+    [ 2 ]INT Zfrac :
+    SEQ
+      --{{{  get abs value of Scale
+      IF
+        Scale < 0
+          S := -Scale
+        TRUE
+          S := Scale
+      --}}}
+      --{{{  Set Z to 1
+      Zexp := 0
+      Zfrac[1] := SignBit
+      Zfrac[0] := 0
+      --}}}
+      --{{{  set Zexp and Zfrac - evaluate 10^S
+      N := Bias10                           --and largest ten
+      WHILE N >= 0
+        IF
+          (N > 0) AND (S < BiasTen[N])
+            N := N - 1                      --don't need this power
+          TRUE
+            SEQ
+              IF
+                (N = 0) AND (S <= Table10)  --final scale factor
+                  SEQ
+                    Zfrac[1], Zfrac[0], Guard :=
+                      RealIMul (Zfrac, [PowerTenFrac FROM (S + S) FOR 2])
+                    Zexp := (Zexp + PowerTenExp[S]) + 1
+                TRUE
+                  SEQ
+                    Zfrac[1], Zfrac[0], Guard :=
+                      RealIMul (Zfrac, [BiasTenFrac FROM (N + N) FOR 2])
+                    S := S - BiasTen[N]
+                    Zexp := (Zexp + BiasTenExp[N]) + 1
+              --{{{  Normalise and round Z
+              Places, Zfrac[1], dummy := NORMALISE (Zfrac[1], Zfrac[0])
+              Zfrac[0], Guard         := SHIFTLEFT (Zfrac[0], Guard, Places)
+              Zexp := Zexp - Places
+              IF
+                (Guard /\ SignBit) = 0      --no need to round up
+                  SKIP
+                TRUE
+                  SEQ
+                    Carry, Zfrac[0] := LONGSUM (Zfrac[0], 1, 0)
+                    Carry, Zfrac[1] := LONGSUM (Zfrac[1], 0, Carry)
+                    IF
+                      Carry = 0
+                        SKIP
+                      TRUE                  --carry out to exp
+                        SEQ
+                          Zexp := Zexp + 1
+                          Zfrac[1] := SignBit --"Shift" carry back into fractional part
+              --}}}
+              N := N - 1                    --go down for next exponent
+      --}}}
+      --{{{  set Xexp, Xfrac and Guard
+      IF
+        --{{{  Scale was out of range so return a very big/small number
+        S > Table10
+          SEQ
+            IF
+              Scale > 0
+                Xexp := DRealExp
+              TRUE
+                Xexp := -DRealExp
+            Xfrac[1] := SignBit             --prevent normalisation
+            Xfrac[0] := 0
+            Guard := 0
+        --}}}
+        --{{{  scale down - divide X by Z
+        Scale < 0
+          SEQ
+            Xexp := Xexp - Zexp
+            Xfrac[1], Xfrac[0] := SHIFTRIGHT (Xfrac[1], Xfrac[0], 1)
+            Xfrac[1], Xfrac[0], Guard :=
+              RealIDiv (Xfrac[1], Xfrac[0], 0, Zfrac)
+            Xfrac[0], Guard, Carry :=
+              RealIDiv (Xfrac[0], Guard, 0, Zfrac)
+        
+            -- Original code to assign Guard ( V1.3 )
+            --INT Borrow :
+            --SEQ
+            --  Zfrac[1], Zfrac[0] := SHIFTRIGHT (Zfrac[1], Zfrac[0], 1)
+            --  Borrow, dummy := LONGDIFF (Carry, Zfrac[0], 0)
+            --  Borrow, dummy := LONGDIFF (Guard, Zfrac[1], Carry)
+            --  IF
+            --    Borrow = 0                     --over half left
+            --      Guard := SignBit
+            --    TRUE
+            --      Guard := 0
+        
+            --{{{  obtain more accurate Guard ( V1.4 )
+            IF
+              ( Guard = 0 ) AND ( Carry = 0 )
+                SKIP                            --divided exactly
+              TRUE
+                INT Rem.hi, Rem.lo :
+                Guard, Rem.hi, Rem.lo := RealIDiv( Guard, Carry, 0, Zfrac )
+                -- Guard is not zero now if this branch of the IF taken
+            --}}}
+        --}}}
+        --{{{  scale up - multiply X by Z
+        TRUE
+          SEQ
+            Xexp := (Xexp + Zexp) + 1
+            Xfrac[1], Xfrac[0], Guard := RealIMul (Xfrac, Zfrac)
+        --}}}
+      --}}}
+      --{{{  Normalise result
+      Places, Xfrac[1], dummy := NORMALISE (Xfrac[1], Xfrac[0])
+      Xfrac[0], Guard         := SHIFTLEFT (Xfrac[0], Guard, Places)
+      Xexp := Xexp - Places
+      --}}}
+      --{{{  Round
+      IF
+        (Guard /\ SignBit) = 0              --don't round
+          SKIP
+        TRUE
+          SEQ
+            Carry, Xfrac[0] := LONGSUM (Xfrac[0], 1, 0)
+            Carry, Xfrac[1] := LONGSUM (Xfrac[1], 0, Carry)
+            IF
+              Carry = 0                     --no overflow to exp
+                SKIP
+              TRUE
+                Xexp := Xexp + 1
+      --}}}
+  :
+  --}}}
+  --{{{  ValidDigit
+  PROC ValidDigit (INT digit, BOOL valid)
+    --convert char to decimal digit and set valid flag
+    IF
+      ((INT '0') <= digit) AND (digit <= (INT '9'))
+        SEQ
+          digit:= (digit - (INT '0'))
+          valid := TRUE
+      TRUE
+        valid := FALSE
+  :
+  --}}}
+
+  INT chars.scanned :
+  --{{{  get.byte
+  PROC get.byte (INT b)
+    SEQ
+      IF
+        chars.scanned >= (SIZE string)
+          b := (INT ' ')
+        TRUE
+          b := (INT string [chars.scanned])
+      chars.scanned := chars.scanned + 1
+  :
+  --}}}
+
+  --{{{  declarations
+  INT Ch, Carry, Guard, Lost, Scale, Xexp :
+  [ 2 ]INT N : -- integer
+  [ 2 ]INT W : -- real64
+  BOOL More, Neg, PosExponent :
+  --}}}
+  SEQ
+    --{{{  main body
+    chars.scanned := 0
+    Error := FALSE
+    Neg   := FALSE
+    get.byte (Ch)
+    --{{{  check for sign
+    IF
+      (Ch = (INT '-')) OR (Ch = (INT '+'))
+        SEQ
+          Neg := Ch = (INT '-')             --set negative
+          get.byte (Ch)
+      TRUE
+        SKIP
+    --}}}
+    --{{{  Set initial values of N, Scale, Carry, Lost
+    Scale := 0
+    N[0]  := 0
+    N[1]  := 0
+    Carry := 0                              --no number overflow
+    Lost  := 0                              --no extra bits so far
+    --}}}
+    --{{{  Read in Integer and Fractional parts
+    ValidDigit (Ch, More)
+    SEQ i = -1 FOR 2
+      SEQ
+        IF
+          (i = 0) AND (Ch = (INT '.'))      --read integer, now fraction
+            SEQ
+              get.byte (Ch)                 --skip point
+              ValidDigit (Ch, More)
+          TRUE
+            SKIP
+        Error := Error OR (NOT More)        --must have at least one digit
+        WHILE More
+          SEQ
+            IF
+              i = 0                         --count frac places
+                Scale := Scale - 1
+              TRUE
+                SKIP
+            IF
+              Carry = 0                     --no overflow yet
+                [ 2 ]INT M :
+                SEQ
+                  M[1], M[0], Guard := RealIMul (N, [0, 10])
+                  IF
+                    M[1] = 0                --still in range
+                      SEQ
+                        Carry, Guard := LONGSUM (Guard, Ch, 0)
+                        M[1], M[0]   := LONGSUM (M[0], 0, Carry)
+                    TRUE
+                      SKIP
+                  Carry := M[1]             --set overflow flag
+                  IF
+                    Carry = 0               --no overflow
+                      SEQ
+                        N[1] := M[0]        --get value in N
+                        N[0] := Guard
+                    TRUE                    --set sticky bit
+                      SEQ
+                        Lost := Lost \/ Ch
+                        Scale := Scale + 1
+              TRUE                          --has overflow
+                SEQ
+                  Lost := Lost \/ Ch
+                  Scale := Scale + 1
+            get.byte (Ch)
+            ValidDigit (Ch, More)
+    --}}}
+    --{{{  Read in Exponent if present
+    IF
+      (Ch = (INT 'E'))                      --exponent bias
+        SEQ
+          PosExponent := TRUE               --assume positive
+          get.byte (Ch)
+          IF
+            (Ch = (INT '+')) OR (Ch = (INT '-'))
+              SEQ
+                PosExponent := ( Ch = ( INT '+' ) )
+                get.byte (Ch)
+            TRUE
+              Error := TRUE                 --must have sign
+          Xexp := 0                         --set exponent bias
+          ValidDigit (Ch, More)
+          Error := Error OR (NOT More)      --must have at least one digit
+          WHILE More
+            --{{{  now checks for overflow 18-jan-90 SRH
+            SEQ
+              IF
+                IntegerLimit >= Xexp
+                  -- do not use ((MaxSignedInt - Ch) / 10) >= Xexp due to divide
+                  SEQ
+                    Xexp := (Xexp * 10) + Ch
+                    get.byte (Ch)
+                    ValidDigit (Ch, More)
+                TRUE
+                  BOOL still.checking :
+                  SEQ  -- integer overflow would occur
+                    More := FALSE
+                    Scale := 0 -- this will be added to Xexp in a moment
+                    Xexp := ( MOSTPOS INT ) -- to act as signal, but be sure
+                    --                         not to add 1 to it!
+                    -- now check rest of string so that Error can be correctly
+                    -- assigned
+                    still.checking := TRUE
+                    WHILE still.checking
+                      SEQ
+                        get.byte( Ch )
+                        ValidDigit( Ch, still.checking )
+            --}}}
+          IF
+            PosExponent                     --positive exponent
+              Scale := Scale + Xexp
+            TRUE                            --negative exponent
+              Scale := Scale - Xexp
+      TRUE
+        SKIP
+    --}}}
+    Xexp := 0
+    IF
+      --{{{  have read in zero
+      (N[1] \/ N[0]) = 0
+        W := N  -- floating point zero has same representation as integer zero!
+      --}}}
+      --{{{  otherwise scale and pack result
+      TRUE
+        INT dummy, Places :
+        [ 2 ]INT Xfrac :
+        SEQ
+          Places, Xfrac[1], Xfrac[0] := NORMALISE (N[1], N[0])   --left justify
+          Xexp := Xexp + ((BitsPerWord * 2) - (Places + 1))
+          IF
+            Scale <> 0                      --must adjust
+              DScaleX (Xexp, Xfrac, Scale)
+            TRUE
+              SKIP
+          Xexp := Xexp + DRealXcess
+          IF
+            Xexp >= DRealExp                --overflow
+              SEQ
+                W[hi] := DRealInf
+                W[lo] := 0
+            TRUE
+              SEQ
+                IF
+                  Xexp <= 0                 --check underflow
+                    SEQ
+                      -- first get any lost bits
+                      Ch, Carry := SHIFTRIGHT (Xfrac[0], 0, 1 - Xexp)
+                      Xfrac[1], Xfrac[0] := SHIFTRIGHT (Xfrac[1],
+                                                        Xfrac[0], 1 - Xexp)
+                      -- next line should have been before the previous
+                      -- SRH 15-Mar-90
+                      --Ch, Carry := SHIFTRIGHT (Xfrac[0], 0, 1 - Xexp)
+                      Xexp := 0
+                      Lost := Lost \/ Carry
+                  TRUE
+                    SKIP
+                IF
+                  Lost = 0                  --no lost data
+                    SKIP
+                  TRUE
+                    Xfrac[0] := Xfrac[0] \/ 1
+                dummy, W[lo] := SHIFTRIGHT (Xfrac[1], Xfrac[0], DRealShift)
+                dummy, W[hi] := SHIFTRIGHT (Xexp, Xfrac[1] << 1, DRealShift + 1)
+                IF
+                  (Xfrac[0] /\ DRealRBit) = 0 --no round bit
+                    SKIP
+                  (Xfrac[0] /\ ((DRealRBit << 1) \/ DRealXcess)) = 0--round down
+                    SKIP
+                  TRUE                      --round up
+                    SEQ
+                      Carry, W[lo] := LONGSUM (W[lo], 1, 0)
+                      Carry, W[hi] := LONGSUM (W[hi], 0, Carry)
+      --}}}
+    --{{{  set sign of result
+    IF
+      Neg
+        X[hi] := W[hi] \/ SignBit
+      TRUE
+        X[hi] := W[hi]
+    X[lo] := W[lo]
+    --}}}
+    --{{{  return NaN for bad format
+    IF
+      Error
+        SEQ
+          X [hi] := DRealNaN.hi
+          X [lo] := DRealNaN.lo
+      TRUE
+        SKIP
+    --}}}
+    -- Error returned if not all of string has been scanned
+    Error := Error OR (chars.scanned <= (SIZE string))
+    --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
+:

@@ -1,0 +1,10 @@
+-- Test assertion error
+
+PROC main (CHAN BYTE in?, out!)
+  INITIAL BOOL false IS FALSE:
+  SEQ
+    out ! 'e'
+    out ! '1'
+    out ! '*n'
+    ASSERT (false)
+:

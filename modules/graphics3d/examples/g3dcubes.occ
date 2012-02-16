@@ -1,0 +1,102 @@
+--
+--	g3dcubes.occ -- simple test for graphics3d primitives
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+#INCLUDE "maths.module"
+
+PROC cube.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, VAL REAL32 iangle, radius, VAL INT rmode) --{{{
+  CHAN INT trigger:
+  CHAN MOBILE []G3D.POINT3 gp1, gp2:
+  CHAN MOBILE []G3D.POINT2.3 gc1:
+  CHAN MOBILE []G3D.POLY pc1:
+  CHAN MOBILE []G3D.POLY.SCAN ps1:
+  CHAN G3D.GEN.CONTROL gen.ctl:
+  CHAN G3D.ROT.CONTROL rot.ctl:
+  CHAN G3D.PRJ.CONTROL prj.ctl:
+  CHAN G3D.PGN.CONTROL pgn.ctl:
+  CHAN G3D.PSC.CONTROL psc.ctl:
+  CHAN G3D.RDR.CONTROL rdr.ctl:
+  PAR
+    cubepoints.generator (trigger?, gp1!, gen.ctl?) 
+    points3d.rotate (gp1?, gp2!, rot.ctl?)
+    points.3d.to.2d3 (gp2?, gc1!, prj.ctl?, G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT)
+    cubify.points (gc1?, pc1!, pgn.ctl?)
+    poly.scanlines (pc1?, ps1!, psc.ctl?, G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT)
+    render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT)
+
+    SEQ
+      gen.ctl ! set.scale; [0.5, 0.5, 0.5]
+      CASE rmode
+        G3D.ROTATE.MODE.X
+          gen.ctl ! add.trans; [0.0, radius, 0.0]
+        G3D.ROTATE.MODE.Y
+          gen.ctl ! add.trans; [0.0, 0.0, radius]
+        G3D.ROTATE.MODE.Z
+          gen.ctl ! add.trans; [radius, 0.0, 0.0]
+        ELSE
+          SKIP
+      prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
+      rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
+      pgn.ctl ! set.trimap; FALSE
+      pgn.ctl ! set.backfaces; FALSE
+      pgn.ctl ! set.face.colours; [#000000F0,#0000B0B0,#0000F000,#00B0B000,#00F00000,#00B000B0]
+      psc.ctl ! set.zcolour; TRUE
+      rot.ctl ! set.mode; rmode
+      rot.ctl ! set.angle; iangle
+      rot.ctl ! add.increment; (PI / 64.0)
+:
+--}}}
+PROC cube.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL REAL32 iangle, radius, VAL INT rmode) --{{{
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK cube.network (rsvr?, width, height, iangle, radius, rmode)
+    new.link ! rlink
+:
+--}}}
+
+
+PROC g3dcubes (CHAN BYTE kyb?, scr!) --{{{
+  CHAN RASTER rc1, rc2, rc3:
+  SHARED! CHAN G3D.RENDER.ENGINE! rre:
+  CHAN G3D.TMR.CONTROL tmr.ctl:
+  CHAN BOOL go:
+  PAR
+    raster.timed.buffer (rc1?, rc2!, 60, tmr.ctl?)
+    raster.display.simple ("Graphics test", G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, 3, rc2?, rc3!)
+    raster.chain (rc3?, rc1!, rre?, FALSE)
+
+    CLAIM rre!
+      SEQ
+        tmr.ctl ! set.fps; 5
+        SEQ ia = 0 FOR 6
+          INITIAL REAL32 iang IS (PI / 3.0) * (REAL32 ROUND ia):
+          SEQ
+            cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, iang, 5.0, G3D.ROTATE.MODE.Y)
+            cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, iang, 5.0, G3D.ROTATE.MODE.X)
+            cube.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, iang, 5.0, G3D.ROTATE.MODE.Z)
+        tmr.ctl ! set.fps; 60
+
+:
+--}}}
+
+

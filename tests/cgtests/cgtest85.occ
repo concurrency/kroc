@@ -1,0 +1,475 @@
+--
+--	cgtest85.occ -- dynamic MOBILE array types
+--	Copyright (C) 2002 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+PROC cgtest85 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  --{{{  tests
+  --{{{  test0 -- basic types
+  PROC test0 ()
+    MOBILE []BYTE a.byte:
+    MOBILE []INT a.int:
+    MOBILE []BOOL a.bool:
+    SEQ
+      a.byte := MOBILE [4]BYTE
+      a.byte := [i = 0 FOR 4 | 'a' + (BYTE i)]
+      check.BYTE (id.BYTE (a.byte[2]), 'c', "test0.0")
+      a.int := MOBILE [4]INT
+      a.int[2] := 42
+      a.int[3] := 99
+      a.int[1] := a.int[2] + a.int[3]
+      check.INT (id.INT (a.int[1]), 141, "test0.1")
+      a.bool := MOBILE [4]BOOL
+      a.bool := [i = 0 FOR 4 | FALSE]
+      check.BOOL (id.BOOL (NOT a.bool[2]), TRUE, "test0.2")
+
+      CHAN MOBILE []BYTE c.byte:
+      PAR
+        c.byte ! a.byte
+        MOBILE []BYTE r:
+        SEQ
+          c.byte ? r
+          check.BYTE (r[1], 'b', "test0.3")
+
+      CHAN MOBILE []INT c.int:
+      PAR
+        MOBILE []INT s:
+        SEQ
+          c.int ? s
+          check.INT (id.INT (s[2]), 42, "test0.4")
+        c.int ! a.int
+
+      CHAN MOBILE []BOOL c.bool:
+      PAR
+        c.bool ! a.bool
+        MOBILE []BOOL t:
+        SEQ
+          c.bool ? t
+          check.INT (SIZE t, 4, "test0.5")
+          check.BOOL (id.BOOL (t[3]), FALSE, "test0.6")
+
+      --{{{  BYTE parameter tests
+      PROC t.val.0.7 (VAL []BYTE array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.7.1")
+          check.BYTE (id.BYTE (array[2]), 'f', "test0.7.2")
+      :
+      PROC t.val2.0.7 (VAL []BYTE array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.7.12")
+          check.BYTE (id.BYTE (array[0]), 'f', "test0.7.13")
+      :
+      PROC t.val3.0.7 (VAL []BYTE array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.7.17")
+          check.BYTE (id.BYTE (array[2]), 'o', "test0.7.18")
+      :
+      PROC t.ptr.0.7 ([]BYTE array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.7.3")
+          check.BYTE (id.BYTE (array[3]), 'r', "test0.7.4")
+          array[1] := 'X'
+      :
+      PROC t.ptr2.0.7 ([]BYTE array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.7.14")
+          check.BYTE (id.BYTE (array[1]), 'o', "test0.7.15")
+          array[0] := 's'
+      :
+      PROC t.mob.0.7 (MOBILE []BYTE array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.7.6")
+          check.BYTE (id.BYTE (array[4]), 'e', "test0.7.7")
+          array := "testing"
+          check.INT (id.INT (SIZE array), 7, "test0.7.8")
+          check.BYTE (id.BYTE (array[3]), 't', "test0.7.9")
+      :
+      SEQ
+        a.byte := MOBILE [8]BYTE
+        [a.byte FROM 2 FOR 4] := "fred"
+        check.BYTE (id.BYTE (a.byte[5]), 'd', "test0.7")
+        t.val.0.7 (a.byte, 8)
+        t.ptr.0.7 (a.byte, 8)
+        check.BYTE (id.BYTE (a.byte[1]), 'X', "test0.7.5")
+        t.mob.0.7 (a.byte, 8)
+        check.INT (id.INT (SIZE a.byte), 7, "test0.7.10")
+        check.BYTE (id.BYTE (a.byte[1]), 'e', "test0.7.11")
+        a.byte := "  foo  "
+        t.val2.0.7 ([a.byte FROM 2], 5)
+        t.ptr2.0.7 ([a.byte FROM 3 FOR 2], 2)
+        check.BYTE (id.BYTE (a.byte[3]), 's', "test0.7.16")
+        a.byte := "frodo"
+        t.val3.0.7 ([a.byte FOR 4], 4)
+      --}}}  
+      --{{{  INT parameter tests
+      PROC t.val.0.8 (VAL []INT array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.8.2")
+          check.INT (id.INT (array[2]), 5, "test0.8.3")
+      :
+      PROC t.ptr.0.8 ([]INT array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.8.4")
+          check.INT (id.INT (array[3]), 4, "test0.8.5")
+          array[0] := 99
+      :
+      PROC t.mob.0.8 (MOBILE []INT array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.8.7")
+          array := MOBILE [4]INT
+          array := [i = 0 FOR 4 | i]
+          check.INT (id.INT (SIZE array), 4, "test0.8.8")
+          check.INT (id.INT (array[2]), 2, "test0.8.9")
+      :
+      SEQ
+        a.int := MOBILE [8]INT
+        a.int := [i = 0 FOR 8 | i]
+        [a.int FROM 2 FOR 4] := [i = 5 FOR 4 STEP -1 | i]
+        check.INT (id.INT (a.int[0]), 0, "test0.8")
+        check.INT (id.INT (a.int[5]), 2, "test0.8.1")
+        t.val.0.8 (a.int, 8)
+        t.ptr.0.8 (a.int, 8)
+        check.INT (id.INT (a.int[0]), 99, "test0.8.6")
+        t.mob.0.8 (a.int, 8)
+        check.INT (id.INT (SIZE a.int), 4, "test0.8.10")
+      --}}}  
+      --{{{  BYTE abbreviations
+      SEQ
+        a.byte := "hello world"
+        VAL []BYTE hello IS [a.byte FOR 5]:
+        SEQ
+          check.INT (id.INT (SIZE hello), 5, "test0.9")
+          check.BYTE (id.BYTE (hello[2]), 'l', "test0.9.1")
+        VAL []BYTE world IS [a.byte FROM 6]:
+        SEQ
+          check.INT (id.INT (SIZE world), 5, "test0.9.2")
+          check.BYTE (id.BYTE (world[4]), 'd', "test0.9.3")
+        []BYTE a.hello IS [a.byte FOR 5]:
+        SEQ
+          check.INT (id.INT (SIZE a.hello), 5, "test0.9.4")
+          check.BYTE (id.BYTE (a.hello[0]), 'h', "test0.9.5")
+          a.hello[3] := 'p'
+        check.BYTE (id.BYTE (a.byte[3]), 'p', "test0.9.6")
+        []BYTE a.world IS [a.byte FROM 6]:
+        SEQ
+          check.INT (id.INT (SIZE a.world), 5, "test0.9.7")
+          check.BYTE (id.BYTE (a.world[3]), 'l', "test0.9.8")
+          a.world[4] := 's'
+        check.BYTE (id.BYTE (a.byte[10]), 's', "test0.9.9")
+      --}}}  
+      --{{{  INT abbreviations
+      SEQ
+        a.int := MOBILE [8]INT
+        a.int := [i = 0 FOR 8 | i]
+        VAL []INT first IS [a.int FOR 4]:
+        VAL []INT second IS [a.int FROM 4]:
+        SEQ
+          check.INT (id.INT (SIZE first), 4, "test0.10")
+          check.INT (id.INT (SIZE second), 4, "test0.10.1")
+          check.INT (id.INT (first[0]), 0, "test0.10.2")
+          check.INT (id.INT (second[0]), 4, "test0.10.3")
+        []INT a.first IS [a.int FOR 4]:
+        []INT a.second IS [a.int FROM 4]:
+        SEQ
+          check.INT (id.INT (SIZE a.first), 4, "test0.10.4")
+          check.INT (id.INT (SIZE a.second), 4, "test0.10.5")
+          check.INT (id.INT (a.first[3]), 3, "test0.10.6")
+          check.INT (id.INT (a.second[3]), 7, "test0.10.7")
+          a.first[1], a.second[1] := 42, 99
+        check.INT (id.INT (a.int[1]), 42, "test0.10.8")
+        check.INT (id.INT (a.int[5]), 99, "test0.10.9")
+      --}}}  
+      --{{{  BOOL params/abbrevs
+      PROC a.ptr.b11 ([]BOOL array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.11.1")
+          check.BOOL (id.BOOL (array[1]), FALSE, "test0.11.2")
+          []BOOL va IS [array FROM 1 FOR 2]:
+          va[0], va[1] := TRUE, TRUE
+          check.BOOL (id.BOOL (array[1]), TRUE, "test0.11.3")
+      :
+      PROC a.mob.b11 (MOBILE []BOOL array, VAL INT size)
+        SEQ
+          check.INT (id.INT (SIZE array), size, "test0.11.5")
+          check.BOOL (id.BOOL (array[0]), FALSE, "test0.11.6")
+          VAL []BOOL second IS [array FROM 2]:
+          SEQ
+            check.BOOL (id.BOOL (second[0]), TRUE, "test0.11.7")
+            check.BOOL (id.BOOL (second[1]), FALSE, "test0.11.8")
+          array := [i = 0 FOR 8 | TRUE]
+          check.INT (id.INT (SIZE array), 8, "test0.11.9")
+      :
+
+      SEQ
+        a.bool := [i = 0 FOR 4 | FALSE]
+        check.INT (id.INT (SIZE a.bool), 4, "test0.11")
+        a.ptr.b11 (a.bool, 4)
+        check.BOOL (id.BOOL (a.bool[2]), TRUE, "test0.11.4")
+        a.mob.b11 (a.bool, 4)
+        check.INT (id.INT (SIZE a.bool), 8, "test0.11.10")
+        check.BOOL (id.BOOL (a.bool[7]), TRUE, "test0.11.11")
+      --}}}  
+  :
+  --}}}
+  --{{{  test1 -- INT16/32/64 types
+  PROC test1 ()
+    MOBILE []INT16 a.i16:
+    MOBILE []INT32 a.i32:
+    MOBILE []INT64 a.i64:
+    SEQ
+      a.i16 := MOBILE [4]INT16
+      a.i32 := MOBILE [SIZE a.i16]INT32
+      a.i64 := MOBILE [SIZE a.i32]INT64
+      check.INT (id.INT (SIZE a.i64), 4, "test1.0")
+      a.i16 := [i = 0 FOR 4 | INT16 i]
+      a.i32 := [i = 0 FOR 4 | INT32 a.i16[i]]
+      a.i64 := [i = 0 FOR 4 | INT64 a.i32[i]]
+      check.INT64 (id.INT64 (a.i64[2]), 2, "test1.1")
+
+      PROC r64pv (VAL []INT64 a)
+        SEQ
+          check.INT (id.INT (SIZE a), 4, "test1.1.1")
+          check.INT64 (id.INT64 (a[0]), 0, "test1.1.2")
+      :
+      r64pv (a.i64)
+
+      PROC r32pv (VAL []INT32 a)
+        SEQ
+          check.INT (id.INT (SIZE a), 4, "test1.1.3")
+          check.INT32 (id.INT32 (a[3]), 3, "test1.1.4")
+      :
+      r32pv (a.i32)
+
+      PROC r16pv (VAL []INT16 a)
+        SEQ
+          check.INT (id.INT (SIZE a), 4, "test1.1.5")
+          check.INT16 (id.INT16 (a[1]), 1, "test1.1.6")
+      :
+      r16pv (a.i16)
+
+  :
+  --}}}
+  --{{{  test2 -- REAL32/64 types
+  PROC test2 ()
+    MOBILE []REAL32 a.r32:
+    MOBILE []REAL64 a.r64:
+    SEQ
+      a.r32 := MOBILE [8]REAL32
+      a.r64 := MOBILE [SIZE a.r32]REAL64
+      check.INT (id.INT (SIZE a.r64), 8, "test2.0")
+      a.r32 := [i = 0 FOR 8 | 2.0 (REAL32)]
+      a.r64 := [i = 0 FOR 8 | REAL64 TRUNC a.r32[i]]
+      check.REAL64 (id.REAL64 (a.r64[3]), 2.0, "test2.1")
+      check.REAL32 (id.REAL32 (a.r32[2]), 2.0, "test2.2")
+  :
+  --}}}
+  --{{{  user-defined types
+  PROC test3 ()
+    DATA TYPE BLUE IS REAL64:
+    DATA TYPE GREEN
+      RECORD
+        INT i:
+        REAL64 j:
+        [64]BYTE payload:
+    :
+
+    MOBILE []BLUE a.blue:
+    VAL BLUE b1 IS 123.456 (BLUE):
+    MOBILE []GREEN a.green:
+    SEQ
+      a.blue := MOBILE [40]BLUE
+      check.INT (id.INT (SIZE a.blue), 40, "test3.0")
+      a.blue[id.INT (SIZE a.blue) / 2] := b1
+      a.blue := [i = 0 FOR 40 | b1]
+      check.REAL64 (REAL64 TRUNC a.blue[id.INT (SIZE a.blue) / 2], REAL64 TRUNC b1, "test3.1")
+
+      a.green := MOBILE [64]GREEN
+      a.green[15][i] := 42
+      a.green[16][j] := 25.5
+      [a.green[17][payload] FOR 5] := "hello"
+
+      SEQ p = 0 FOR 3
+        IF
+          p = 0
+            check.INT (a.green[15+p][i], 42, "test3.2")
+          p = 1
+            check.REAL64 (a.green[15+p][j], 25.5, "test3.3")
+          p = 2
+            check.BYTE (a.green[15+p][payload][4], 'o', "test3.4")
+  :
+  --}}}
+  --{{{  BYTESIN on mobiles
+  PROC test4 ()
+    MOBILE []BYTE s:
+    MOBILE []INT ns:
+    SEQ
+      s := MOBILE [14]BYTE
+      [s FOR 14] := "abcdefghijklmn"
+      check.INT (BYTESIN (s), 14, "test4.0")
+      ns := MOBILE [12]INT
+      ns := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      check.INT (BYTESIN (ns), 12 * BYTESIN (INT), "test4.1")
+  :
+  --}}}
+  --{{{  DEFINED on mobiles
+  PROC test5 ()
+    PROC check.defined (MOBILE []INT m, VAL BOOL want, VAL []BYTE name)
+      IF
+        DEFINED m
+          check.BOOL (TRUE, want, name)
+        TRUE
+          check.BOOL (FALSE, want, name)
+    :
+    MOBILE []INT a1, a2:
+    SEQ
+      check.defined (a1, FALSE, "test5.0")
+      CHAN MOBILE []INT c:
+      PAR
+        MOBILE []INT a, b:
+        BOOL x:
+        SEQ
+          c ! a
+          check.defined (a, FALSE, "test5.10a")
+          check.defined (b, FALSE, "test5.10b")
+          a := MOBILE [10]INT
+          check.defined (a, TRUE,  "test5.11a")
+          check.defined (b, FALSE, "test5.11b")
+          b := a
+          check.defined (a, FALSE, "test5.12a")
+          check.defined (b, TRUE,  "test5.12b")
+          c ! b
+          check.defined (a, FALSE, "test5.13a")
+          check.defined (b, FALSE, "test5.13b")
+        SEQ
+          c ? a1
+          c ? a2
+      check.defined (a1, FALSE, "test5.20")
+      check.defined (a2, TRUE, "test5.21")
+  :
+  --}}}
+  --{{{  RESIZE.MOBILE.ARRAY
+  PROC test6 ()
+    PROC int.type ()
+      MOBILE []INT a:
+      SEQ
+        a := MOBILE [10]INT
+        SEQ i = 0 FOR 10
+          a[i] := 42 \/ (i << 8)
+        
+        RESIZE.MOBILE.ARRAY.1D (a, 20)
+        check.INT (id.INT (SIZE a), 20, "test6.1a")
+        SEQ i = 0 FOR 10
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.1b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 10)
+        check.INT (id.INT (SIZE a), 10, "test6.2a")
+        SEQ i = 0 FOR 10
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.2b")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 5)
+        check.INT (id.INT (SIZE a), 5, "test6.3a")
+        SEQ i = 0 FOR 5
+          check.INT (id.INT (a[i]), 42 \/ (i << 8), "test6.3b")
+
+        #IF FALSE
+        RESIZE.MOBILE.ARRAY.1D (a, 0)
+        check.INT (id.INT (SIZE a), 0, "test6.4a")
+        IF
+          DEFINED a
+            SKIP
+          TRUE
+            check.BOOL (FALSE, TRUE, "test6.4b")
+        #ENDIF
+    :
+    PROC record.type ()
+      DATA TYPE R1
+        RECORD
+          INT x, y, z:
+      :
+      MOBILE []R1 a:
+      SEQ
+        a := MOBILE [1]R1
+        check.INT (id.INT (SIZE a), 1, "test6.10")
+        a[0][x] := 42
+        a[0][y] := 17
+        a[0][z] := 95
+        
+        RESIZE.MOBILE.ARRAY.1D (a, 2)
+        check.INT (id.INT (SIZE a), 2, "test6.11a")
+        check.INT (id.INT (a[0][x]), 42, "test6.11b")
+        check.INT (id.INT (a[0][y]), 17, "test6.11c")
+        check.INT (id.INT (a[0][z]), 95, "test6.11d")
+
+        RESIZE.MOBILE.ARRAY.1D (a, 1)
+        check.INT (id.INT (SIZE a), 1, "test6.12a")
+        check.INT (id.INT (a[0][x]), 42, "test6.12b")
+        check.INT (id.INT (a[0][y]), 17, "test6.12c")
+        check.INT (id.INT (a[0][z]), 95, "test6.12d")
+    :
+      
+    SEQ
+      int.type ()
+      record.type ()
+  :
+  
+  PROC test7()
+    PROC proc.set.array([]BYTE s)
+      SEQ i = 0 FOR SIZE s
+        s[i] := BYTE i
+    :
+
+    BYTE FUNCTION func.get.array(VAL []BYTE s, VAL INT i) IS s[i]:
+
+    MOBILE []MOBILE []BYTE foo:
+    SEQ
+      foo := MOBILE [10] MOBILE[] BYTE
+      foo[4] := MOBILE [20]BYTE
+      proc.set.array(foo[4])
+      SEQ i = 0 FOR 20
+        check.BYTE(func.get.array(foo[4], i), BYTE i, "test7")
+  :
+
+  --}}}
+  --}}}  
+  SEQ
+    init ("CG test 85", "dynamic MOBILE arrays")
+    title ("basic types")
+    test0 ()
+    title ("int types")
+    test1 ()
+    title ("real types")
+    test2 ()
+    title ("user-defined types")
+    test3 ()
+    title ("BYTESIN")
+    test4 ()
+    title ("DEFINED")
+    test5 ()
+    title ("RESIZE.MOBILE.ARRAY")
+    test6 ()
+    title ("MOBILE arrays of MOBILE arrays")
+    test7 ()
+    finish ()
+:
+
+

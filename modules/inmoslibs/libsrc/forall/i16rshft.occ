@@ -1,0 +1,95 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD > 16) AND (NOT (DEFINED(COMPILER.TOCK)))
+
+--{{{  #options and #comments
+#OPTION "E V W"  -- no compiler libs, no vector space, full ASMs
+#COMMENT "TA compiler library, V2.1 24/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988, 1990"
+--}}}
+
+#PRAGMA TRANSLATE INT16RSHIFT "INT16RSHIFT%CHK"
+
+--{{{  INT16RSHIFT -- TA/8
+-- old code ( V1.1 21/02/89 ):
+--INT16 FUNCTION INT16RSHIFT (VAL INT16 A, VAL INT B)
+--  ---  Integer Arithmetic (26sep86) --- DES
+--  ---  converted to functions 26jan87 --- PWT
+--  INT16 Res :
+--  VALOF
+--    VAL Signbit IS #8000 :
+--    VAL Bits    IS #FFFF :
+--    INT Value :
+--    SEQ
+--      Value := ((INT A) /\ Bits) >> B
+--      IF
+--        (Value /\ Signbit) <> 0
+--          Res := INT16 (Value \/ (~Bits))
+--        TRUE
+--          Res := INT16 (Value /\ Bits)
+--    RESULT Res
+--:
+
+
+INT16 FUNCTION INT16RSHIFT (VAL INT16 A, VAL INT B)
+
+  --{{{  history
+  -- Integer Arithmetic (26sep86) --- DES
+  -- Converted to functions 26jan87 --- PWT
+  -- Converted to use ASM for speed - see SW-0064 "occam Run-time Model
+  -- Specification" for the validity of the following assumptions:
+  -- INT16s on 32-bit transputers are held in lowest two bytes of word;
+  -- the upper two bytes of a word containing an INT16 are undefined.
+  -- TS/0723; V2.0; 1 Oct 90  SRH
+  -- V2.1, 24 Nov 92, SRH; TS/1270.  Compiler ensures that B is in range.
+  -- Modified by MDP for OFA to avoid premature exit avoiding RESULT
+  --}}}
+
+  INT16 R:
+  VALOF
+    ASM
+      --{{{  V2.0 code
+      --LDAB #0000FFFF, A
+      --AND                -- zero bits are to be shifted in
+      --LDL    B           -- B is a local because it is a
+      --VAL parameter
+      --LDC   17
+      --CSUB0              -- IF ( ( B < 0 ) OR ( 16 < B ) ) THEN set error flag
+      --SHR
+      --AJW  .WSSIZE
+      --RET                -- leave result in Areg, upper two bytes are irrelevant
+      --}}}
+      --{{{  V2.1 code
+      LDAB #0000FFFF, A
+      AND                -- zero bits are to be shifted in
+      LDL    B           -- B is a local because it is a VAL parameter
+      SHR
+      ST     R
+      --AJW  .WSSIZE
+      --RET                -- leave result in Areg, upper two bytes are irrelevant
+      --}}}  
+    --RESULT 0( INT16 )    -- dummy
+    RESULT R
+:
+--}}}
+
+#ENDIF

@@ -1,0 +1,55 @@
+Import('env')
+local = env.Clone()
+
+snglmath_lib_srcs = Split('''
+    acosfl.occ
+    alogfl.occ
+    asinfl.occ
+    atanfl.occ
+    cosfl.occ
+    expfl.occ
+    hyperfl.occ
+    powfl.occ
+    ranfl.occ
+    sinfl.occ
+    tanfl.occ
+    ''')
+
+dblmath_lib_srcs = Split('''
+    dacosfl.occ
+    dalogfl.occ
+    dasinfl.occ
+    datanfl.occ
+    dcosfl.occ
+    dexpfl.occ
+    dhyperfl.occ
+    dpowfl.occ
+    dranfl.occ
+    dsinfl.occ
+    dtanfl.occ
+    ''')
+
+
+sngl_math = local.OccamLibrary(
+    'snglmath.lib', 
+    snglmath_lib_srcs, 
+    INCPATH=['.', '../forall'])
+
+dbl_math = local.OccamLibrary(
+    'dblmath.lib', 
+    dblmath_lib_srcs, 
+    INCPATH=['.', '../forall'])
+
+maths = local.OccamLibrary(
+    'maths.lib',
+    [],
+    OCCBUILDFLAGS='--include mathhdr.inc --include mathvals.inc ' +
+                  '--need snglmath --need dblmath')
+env.Depends(maths, [sngl_math, dbl_math])
+
+env.Depends(sngl_math, '../forall/forall.lib')
+env.Depends(dbl_math, '../forall/forall.lib')
+
+# FIXME: Autodepend
+for f in snglmath_lib_srcs + dblmath_lib_srcs:
+    local.Depends(f, 'mathhdr.inc')

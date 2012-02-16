@@ -1,0 +1,79 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC simplified version 1995"
+
+#INCLUDE "hostio.inc"
+#USE "conv"
+
+--#PRAGMA EXTERNAL "PROC OC.fremove (INT result, VAL[sp.max.removename.size+1]BYTE fname)  = 0 "
+--{{{  OC.fremove
+VAL unix.max.removename.size IS (sp.max.removename.size/4) + 1:
+#PRAGMA EXTERNAL "PROC C.fremove (INT result, VAL[unix.max.removename.size]INT fname)  = 0 "
+PROC OC.fremove (INT result, VAL[]BYTE fname)
+  [unix.max.removename.size]INT unixname:
+  SEQ
+    bytes.to.chars (fname, unixname)
+    C.fremove (result, unixname)
+:
+--}}}  
+--{{{  sp.remove
+--* Delete the specified file.
+--
+-- No path environment variable is used; what is in name is all that is
+-- considered.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param fname the name of the file to be deleted; the filename must
+--   fill all of the bytes of name
+-- @param result equals spr.ok if the file was removed; otherwise takes
+--   on a value indicating what went wrong: spr.bad.packet.size   name
+--   too large, (SIZE name) > sp.max.removename.size spr.bad.name
+--      name is null >=spr.operation.failed  the delete failed - see
+--   hostio.inc or iserver documentation for further details
+PROC sp.remove (CHAN OF SP fs, ts, VAL []BYTE fname, BYTE result)
+  IF
+    (SIZE fname) > sp.max.removename.size
+      result := spr.bad.packet.size
+    (SIZE fname) = 0
+      result := spr.bad.name
+    TRUE
+      --{{{  Call Unix
+      INT res:
+      SEQ
+        OC.fremove (res, fname)
+        IF
+          res = 0
+            result := spr.ok
+          TRUE  -- FILE/PATH.NOT.FOUND, ACCESS.DENIED
+            result := spr.operation.failed
+      --}}}  
+:
+--}}}  sp.remove
+--{{{  so.remove
+PROC so.remove (CHAN OF SP fs, ts, VAL []BYTE name, BYTE result)
+
+  sp.remove (fs, ts, name, result)
+:
+--}}}  so.remove

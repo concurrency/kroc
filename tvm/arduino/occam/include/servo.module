@@ -1,0 +1,169 @@
+--
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** Servo wrapper functions.
+--
+-- @module servo
+
+#IF NOT (DEFINED (SERVO.MODULE))
+#DEFINE SERVO.MODULE
+
+--FIXME: There are no sanity checks around here... maybe a problem?
+--{{{ PROTOCOL SERVO
+--* Servo control protocol.
+PROTOCOL SERVO
+  CASE
+    --* Maximum time active; in microseconds.
+    -- @item max Initially 2300. must be less than [@code frequency].
+    max ; INT
+    --* Minimum time active; in microseconds.
+    -- @item min Initially 700. must be more than 0.
+    min ; INT
+    --* Number of divisions in the span between [@code max] - [@code min.]
+    -- @item div Initially 180. Must be <= [@code max] - [@code min].
+    div ; INT
+    --* Positition of the servo; [@em This is what you will be using the most].
+    -- @item pos Initially 90. Must be between 0:[@code pos].
+    pos ; INT
+    --* Number of microseconds (greater than [@code min]) the pulse to the
+    -- servo will last. 
+    --
+    -- [@em We strongly recommend using [@code div] and [@code pos] to
+    -- effect the position of the servo].
+    -- @item usec Automatically calculated when [@code pos] is reset.
+    usec ; INT
+    --* Frequency of the servo pulse.
+    --
+    -- [@em Do not change this casually.] Most servos require a pulse once
+    -- every 20 milliseconds, which is what [@code frequency] defaults to.
+    -- @item frequency Initially 20000. Measured in microseconds.
+    frequency ; INT
+    --* Starts servo operations.
+    --
+    -- We recommened setting [@code div] and [@code pos] before sending
+    -- the [@code start] signal, and not
+    -- changing [@code div] after.
+    start
+    --* Supposed to stop servo operations. We've not added that
+    -- functionality yet.
+    stop
+:
+--}}}
+
+--{{{ PROC servo
+--* General servo control.
+-- Pass a PWM pin and SERVO channel into this process, and all signals sent
+-- over the channel will be acted upon properly.
+--
+-- @param board.pin The board pin to be used for servo operations. For the
+--   time being, only PWM pins connected to a 16 bit timer can be used to
+--   operate servos.
+-- @param s The servo channel used for controlling servo operations.
+PROC servo (VAL INT board.pin, CHAN SERVO s?)
+  INITIAL INT avr.pin IS board.to.chip (board.pin):
+  INITIAL BOOL RUNNING IS FALSE: -- Perhaps this should be a register check?
+  INITIAL INT max IS 2200: --In muSeconds
+  INITIAL INT min IS 800:  --In muSeconds
+  INITIAL INT div IS 180:  --Unitless
+  INITIAL INT pos IS 90:   --Must be between 0:div
+  INITIAL INT increment IS (max - min) / div:
+  INITIAL INT usec IS (pos * increment) + min:
+  INITIAL INT frequency IS 20000: --In muSeconds
+  INLINE PROC set.increment ()
+    increment := (max - min) / div
+  :
+  INLINE PROC set.usec ()
+    usec := (pos * increment) + min
+  :
+
+  WHILE TRUE
+    s ? CASE
+      max ; max
+        SEQ
+          set.increment ()
+          set.usec ()
+      min ; min
+        SEQ
+          set.increment ()
+          set.usec()
+      div ; div -- we should totally clamp this...
+        set.increment()
+      pos ; pos
+        SEQ
+          set.usec ()
+          IF
+            RUNNING
+              pwm16.set.compare (avr.pin, usec)
+            TRUE
+              SKIP
+      usec ; usec
+        SEQ
+          pos := usec
+          IF
+            RUNNING
+              pwm16.set.compare (avr.pin, usec)
+            TRUE
+              SKIP 
+      INT refresh:  --FIXME: I'm guessing this is one of those things that
+                        --really ought to get revised one of these days..
+      frequency ; refresh
+        SKIP
+      start
+        SEQ
+          RUNNING := TRUE
+          digital.mode(board.pin, OUTPUT)
+          pwm16.setup (avr.pin, 8)
+          pwm16.set.top (avr.pin, frequency)
+          pwm16.set.compare (avr.pin, pos)
+      stop
+        SKIP
+:
+--}}}
+
+--{{{ PROC simple.servo
+--* Stepping-stone servo control process.
+--  The idea is this is a simpler process to work with servos than the
+--  PROTOCOL. You need to know your servo's bounds for this one, but it does
+--  allow for a single-channel servo control.
+--
+-- @param board.pin The board pin to be used for servo operations. For the
+--   time being, only PWM pins connected to a 16 bit timer can be used to
+--   operate servos.
+-- @param umin The shortest pulse the servo is designed to recieve.
+-- @param umax The longest pluse the servo is designed to recieve.
+-- @param p The input BYTE channel for setting the position of the servo.
+--   [@em This is hard-coded to be a range from 0 to 180. Do not attempt to
+--   send anything outside of that range.]
+
+-- 20101001 MCJ
+-- Removed 'umin' and 'umax' parameters, since they aren't used.
+PROC simple.servo (VAL INT board.pin, CHAN BYTE p?)
+  CHAN SERVO s:
+  BYTE b:
+  PAR
+    servo (board.pin, s?)
+    SEQ
+      s ! min ; 1000
+      s ! max ; 2000
+      s ! start
+      WHILE TRUE
+        SEQ
+          p ? b
+          s ! pos ; (INT b)
+:
+--}}}
+
+#ENDIF

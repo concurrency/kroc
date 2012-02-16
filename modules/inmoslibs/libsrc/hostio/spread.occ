@@ -1,0 +1,97 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--      Modifications Copyright (C) 2004  Fred Barnes
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.1, 16/08/90"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC simplified version 1995"
+
+--#PRAGMA EXTERNAL "PROC OC.fread (INT result, VAL INT32 handle, []BYTE buffer, INT bytes.read)  = 0 "
+#INCLUDE "hostio.inc"
+#INCLUDE "unixerrs.inc"
+#USE "conv"
+
+
+--{{{  OC.fread
+VAL unix.max.readbuffer.size IS (sp.max.readbuffer.size/4) + 1:
+#PRAGMA EXTERNAL "PROC C.fread (INT result, VAL INT32 handle, [unix.max.readbuffer.size]INT buffer, VAL INT bytes.to.read, INT bytes.read)  = 0 "
+PROC OC.fread (INT result, VAL INT32 handle, []BYTE buffer, INT bytes.read)
+  [unix.max.readbuffer.size]INT unixbuffer:
+  SEQ
+    C.fread (result, handle, unixbuffer, SIZE buffer, bytes.read)
+    IF
+      (result = 0) AND (bytes.read > 0)
+        chars.to.bytes (unixbuffer, [buffer FOR bytes.read])
+      TRUE
+        SKIP
+:
+--}}}
+--{{{  sp.read
+--* Read a limited number of bytes from a stream.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the open stream to be
+--   read from
+-- @param bytes.read if result is spr.ok then this gives the number of
+--   bytes read from the file; these bytes will be [data FROM 0 FOR
+--   bytes.read]; if bytes.read <> (SIZE data) then either an error
+--   occurred or the end of the file was reached.  If result is not
+--   spr.ok then bytes.read will be zero. 0 <= bytes.read <=
+--   sp.max.readbuffer.size
+-- @param data if result is spr.ok then this contains the bytes read
+--   from the file; otherwise it is undefined.  The number of bytes
+--   requested to be read is (SIZE data); the limit to this is
+--   sp.max.readbuffer.size.
+-- @param result equal to spr.bad.packet.size if too many bytes asked
+--   for ie (SIZE data) > sp.max.readbuffer.size, otherwise it is equal
+--   to spr.ok
+PROC sp.read (CHAN OF SP fs, ts, VAL INT32 streamid,
+              INT bytes.read, []BYTE data, BYTE result)
+  --{{{  history
+  -- Removed the IF on result = spr.ok because it always is
+  -- spr.ok due to the stupid sp.read.tag action of the server;
+  -- V1.1, SRH 16-Aug-90
+  --}}}
+
+  IF
+    (SIZE data) > sp.max.readbuffer.size
+      SEQ
+        result     := spr.bad.packet.size
+        bytes.read := 0
+    TRUE
+      INT res:
+      SEQ
+        --{{{  Call Unix
+        OC.fread (res, streamid, data, bytes.read)
+        IF
+          res = 0
+            result := spr.ok
+          res = Unix.ACCESS.DENIED
+            result := spr.bad.stream.use
+          res = Unix.INVALID.HANDLE
+            result := spr.invalid.streamid
+          TRUE
+            result := spr.operation.failed
+        --}}}
+:
+--}}}  sp.read
+

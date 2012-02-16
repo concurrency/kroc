@@ -1,0 +1,633 @@
+--
+--	game-irc.occ -- IRC interface for game
+--	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "types.inc"
+#INCLUDE "config.inc"
+
+#IF DEFINED (USE.IRC.IF)
+
+#INCLUDE "sock.module"
+
+#INCLUDE "ircproto.inc"
+#USE "ircplug"
+#USE "game-utils"
+#USE "game-tty"
+#USE "game-client"
+
+VAL INT MAX.MESSAGE.SIZE IS 1024:
+VAL INT OUT.DELAY IS 10000:               -- 10ms output delay
+
+--{{{  PROC irc.if.encode (VAL []BYTE name, CHAN S.CLIENT.IN in?, SHARED CHAN IRC.GAME.OUT out!)
+PROC irc.if.encode (VAL []BYTE name, CHAN S.CLIENT.IN in?, SHARED CHAN IRC.GAME.OUT out!)
+  INT t.len:
+  [512]BYTE t.buf:
+  MOBILE []BYTE str:
+  TIMER tim:
+  INT t:
+  BOOL flush.now:
+  SEQ
+    t.len := 0
+    flush.now := FALSE
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      PRI ALT
+        flush.now & SKIP
+          SEQ
+            flush.now := FALSE
+            CLAIM out!
+              out ! message; name; [t.buf FOR t.len]
+            t.len := 0
+        in ? CASE
+          genmsg; str
+            --{{{  general message
+            SEQ
+              IF
+                t.len > 0
+                  buffer.set.string (t.buf, t.len, "*#0A")
+                TRUE
+                  SKIP
+              buffer.set.string (t.buf, t.len, "--> ")
+              IF
+                (SIZE str) < 2
+                  buffer.set.string (t.buf, t.len, "  ")
+                (str[0] = '**') OR (str[0] = '+')
+                  buffer.set.string (t.buf, t.len, [str FROM 1])
+                (str[0] = '<') AND (str[1] = '<')
+                  SEQ
+                    t.len := 0
+                    buffer.set.string (t.buf, t.len, "<-- ")
+                    buffer.set.string (t.buf, t.len, [str FROM 3])
+                TRUE
+                  buffer.set.string (t.buf, t.len, str)
+              IF
+                t.len > 384
+                  flush.now := TRUE
+                TRUE
+                  SKIP
+              tim ? t
+              t := t PLUS OUT.DELAY
+            --}}}
+          enter.room; str
+            --{{{  someone entering the room
+            SEQ
+              IF
+                t.len > 0
+                  buffer.set.string (t.buf, t.len, "*#0A")
+                TRUE
+                  SKIP
+              buffer.set.string (t.buf, t.len, str)
+              buffer.set.string (t.buf, t.len, " entered the room")
+              IF
+                t.len > 384
+                  flush.now := TRUE
+                TRUE
+                  SKIP
+              tim ? t
+              t := t PLUS OUT.DELAY
+            --}}}
+          INT nesw:
+          leaving.room; str; nesw
+            --{{{  someone leaving the room
+            SEQ
+              IF
+                t.len > 0
+                  buffer.set.string (t.buf, t.len, "*#0A")
+                TRUE
+                  SKIP
+              buffer.set.string (t.buf, t.len, str)
+              buffer.set.string (t.buf, t.len, " left the room (")
+              buffer.set.exit (t.buf, t.len, nesw)
+              buffer.set.string (t.buf, t.len, ")")
+              IF
+                t.len > 384
+                  flush.now := TRUE
+                TRUE
+                  SKIP
+              tim ? t
+              t := t PLUS OUT.DELAY
+            --}}}
+          MOBILE []BYTE oname:
+          drop.object; str; oname
+            --{{{  someone dropping an object
+            SEQ
+              IF
+                t.len > 0
+                  buffer.set.string (t.buf, t.len, "*#0A")
+                TRUE
+                  SKIP
+              buffer.set.string (t.buf, t.len, str)
+              buffer.set.string (t.buf, t.len, " dropped ")
+              buffer.set.string (t.buf, t.len, oname)
+              IF
+                t.len > 384
+                  flush.now := TRUE
+                TRUE
+                  SKIP
+              tim ? t
+              t := t PLUS OUT.DELAY
+            --}}}
+          MOBILE []BYTE pname:
+          say.room; pname; str
+            --{{{  someone saying something
+            SEQ
+              IF
+                t.len > 0
+                  buffer.set.string (t.buf, t.len, "*#0A")
+                TRUE
+                  SKIP
+              buffer.set.string (t.buf, t.len, pname)
+              buffer.set.string (t.buf, t.len, " said *"")
+              buffer.set.string (t.buf, t.len, str)
+              buffer.set.string (t.buf, t.len, "*"")
+              IF
+                t.len > 384
+                  flush.now := TRUE
+                TRUE
+                  SKIP
+              tim ? t
+              t := t PLUS OUT.DELAY
+            --}}}
+          MOBILE []BYTE pname:
+          action.room; pname; str
+            --{{{  someone performing an action
+            SEQ
+              IF
+                t.len > 0
+                  buffer.set.string (t.buf, t.len, "*#0A")
+                TRUE
+                  SKIP
+              buffer.set.string (t.buf, t.len, pname)
+              buffer.set.string (t.buf, t.len, " ")
+              buffer.set.string (t.buf, t.len, str)
+              IF
+                t.len > 384
+                  flush.now := TRUE
+                TRUE
+                  SKIP
+              tim ? t
+              t := t PLUS OUT.DELAY
+            --}}}
+          do.logout
+            --{{{  shutting down
+            SEQ
+              IF
+                t.len > 0
+                  CLAIM out!
+                    out ! message; name; [t.buf FOR t.len]
+                TRUE
+                  SKIP
+              running := FALSE
+            --}}}
+        (t.len > 0) & tim ? AFTER t
+          flush.now := TRUE
+:
+--}}}
+--{{{  PROC irc.tty.client.if (VAL []BYTE name, CT.CLIENT? link, SHARED CT.GAMECTRL! to.game, SHARED CHAN IRC.GAME.OUT irc.out!, IO.LINK! io.link)
+PROC irc.tty.client.if (VAL []BYTE name, CT.CLIENT? link, SHARED CT.GAMECTRL! to.game, SHARED CHAN IRC.GAME.OUT irc.out!, IO.LINK! io.link)
+  CHAN S.CLIENT.IN scplexed:
+  CHAN MOBILE []BYTE inject, scmds, icopy:
+  CHAN P.CLIENT.OUT cmds:
+  [3]CHAN S.CLIENT.IN sc.chans:
+  CHAN P.CLIENT.IN pci:
+  CHAN P.CLIENT.OUT pco:
+  CHAN S.CLIENT.IN cti, lcti:
+
+  PAR
+    irc.if.encode (name, scplexed?, irc.out!)
+    mstr.plex ([io.link[out]?, inject?], scmds!, 1)
+    tty.if.decode (scmds?, icopy!, cmds!, FALSE)
+
+    handle.cmd (cmds?, sc.chans[0]!, link[out]!, link[in]?, pco!, pci?, to.game, FALSE)
+    local.if (name, pco?, pci!, cti?, link[s.out]!, sc.chans[1]!)
+
+    if.split (link[s.in]?, sc.chans[2]!, cti!, lcti!)
+    if.local.logic.buf (lcti?, inject!)
+
+    sclient.in.plex (sc.chans?, scplexed!)
+:
+--}}}
+--{{{  PROC irc.client.if (VAL []BYTE name, IO.LINK! iolink, SHARED CT.GAMECTRL! to.game, SHARED CHAN IRC.GAME.OUT irc.out!)
+PROC irc.client.if (VAL []BYTE name, IO.LINK! iolink, SHARED CT.GAMECTRL! to.game, SHARED CHAN IRC.GAME.OUT irc.out!)
+  CT.CLIENT? link:
+  CT.CLIENT! gamelink:
+  INITIAL BOOL registered IS FALSE:
+  SEQ
+    link, gamelink := MOBILE CT.CLIENT
+
+    CLAIM to.game
+      SEQ
+        to.game[in] ! register.name; name
+        to.game[out] ? CASE
+          name.in.use
+            CLAIM irc.out!
+              irc.out ! failmessage; name; "name in use"
+          ok
+            registered := TRUE
+
+    -- attach to game
+    IF
+      registered
+        MOBILE []BYTE msg:
+        SEQ
+          CLAIM irc.out!
+            irc.out ! message; name; "connecting to the game..."
+          CLAIM to.game
+            SEQ
+              to.game[in] ! attach.client; name; gamelink
+              to.game[out] ? CASE
+                ok
+                  SKIP
+                cli.error; msg; gamelink
+                  registered := FALSE
+          IF
+            NOT registered
+              CLAIM irc.out!
+                irc.out ! failmessage; name; msg
+            TRUE
+              SKIP
+      TRUE
+        SKIP
+
+    IF
+      registered
+        irc.tty.client.if (name, link, to.game, irc.out!, iolink)
+      TRUE
+        SKIP
+:
+--}}}
+
+--{{{  INT FUNCTION split.name (VAL []BYTE name)
+INT FUNCTION split.name (VAL []BYTE name)
+  INT r:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE name
+        name[i] = '!'
+	  r := i
+      TRUE
+        r := 0
+    RESULT r
+:
+--}}}
+--{{{  PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game, SHARED CT.LINCLINK! to.linc)
+PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game, SHARED CT.LINCLINK! to.linc)
+  CHAN IRC.CS.PROTO to.irc:
+  CHAN IRC.SC.PROTO from.irc:
+  SHARED! CHAN IRC.GAME.OUT irc.out:
+  PAR
+    ircplug.client (to.irc?, from.irc!)
+    --{{{  do stuff
+    INITIAL BOOL connected IS FALSE:
+    MOBILE []GSTR cli.names:
+    MOBILE []BOOL cli.ok:
+    MOBILE []IO.LINK? cli.svr:
+    SEQ
+      --{{{  connect to server
+      SEQ
+        to.irc ! connect; SIZE hostname::hostname; port
+        from.irc ? CASE connected; connected
+      --}}}
+      --{{{  if connected, send credentials
+      IF
+        connected
+          VAL []BYTE un IS ##IRCUSERNAME:
+          VAL []BYTE hn IS ##IRCHOSTNAME:
+          VAL []BYTE rn IS ##IRCREALNAME:
+          VAL []BYTE nn IS ##IRCNICKNAME:
+          SEQ
+            to.irc ! user; SIZE un::un; SIZE hn::hn; SIZE hostname::hostname; SIZE rn::rn
+            to.irc ! nick; SIZE nn::nn; -1
+        TRUE
+          SKIP
+      --}}}
+      --{{{  initialise
+      VAL INT max.irc.clients IS 64:
+      SEQ
+        cli.names := MOBILE [max.irc.clients]GSTR
+        cli.ok := MOBILE [max.irc.clients]BOOL
+        cli.svr := MOBILE [max.irc.clients]IO.LINK?
+        SEQ i = 0 FOR max.irc.clients
+          SEQ
+            cli.ok[i] := FALSE
+      --}}}
+      --{{{  enter processing loop
+      INITIAL BOOL running IS connected:
+      INITIAL INT on.channel IS 0:
+      INITIAL BOOL first.pong IS FALSE:
+      [MAX.MESSAGE.SIZE]BYTE a1, a2, a3:
+      INT l1, l2, l3:
+      WHILE running
+        PRI ALT
+          MOBILE []BYTE name:
+          MOBILE []BYTE msg:
+          irc.out ? CASE
+            message; name; msg
+              SEQ
+                to.irc ! privmsg; SIZE name::[name FROM 0]; SIZE msg::[msg FROM 0]
+            failmessage; name; msg
+              INT idx:
+              SEQ
+                IF
+                  IF i = 0 FOR SIZE cli.names
+                    cli.ok[i] AND ([cli.names[i][str] FOR cli.names[i][slen]] = name)
+                      idx := i
+                  TRUE
+                    idx := (-1)
+                IF
+                  idx = (-1)
+                    SKIP
+                  TRUE
+                    SEQ
+                      cli.names[idx][slen] := 0
+                      cli.ok[idx] := FALSE
+                to.irc ! privmsg; SIZE name::[name FROM 0]; SIZE msg::[msg FROM 0]
+          from.irc ? CASE
+            --{{{  connected message
+            BOOL b:
+            connected; b
+              IF
+                NOT b
+                  running := FALSE
+                TRUE
+                  SKIP
+            --}}}  
+            --{{{  isconnected message
+            BOOL b:
+            isconnected; b
+              IF
+                NOT b
+                  running := FALSE
+                TRUE
+                  SKIP
+            --}}}  
+            --{{{  disconnect message
+            disconnect
+              running := FALSE
+            --}}}  
+	    --{{{  command reply
+	    INT code:
+	    repl; l1::a1; code; l2::a2
+	      SEQ
+                l3 := 0
+                buffer.set.string (a3, l3, "irc.server: REPL from [")
+                buffer.set.string (a3, l3, [a1 FOR l1])
+                buffer.set.string (a3, l3, "] code = ")
+                buffer.set.number (a3, l3, code)
+                buffer.set.string (a3, l3, " message [")
+                buffer.set.string (a3, l3, [a2 FOR l2])
+                buffer.set.string (a3, l3, "*n")
+                CLAIM to.game
+                  to.game[in] ! debug; [a3 FOR l3]
+	    --}}}  
+	    --{{{  unknown reply
+	    INT code:
+	    unknown; l1::a1; code; l2::a2
+	      SEQ
+                l3 := 0
+                buffer.set.string (a3, l3, "irc.server: UNKNOWN from [")
+                buffer.set.string (a3, l3, [a1 FOR l1])
+                buffer.set.string (a3, l3, "] code = ")
+                buffer.set.number (a3, l3, code)
+                buffer.set.string (a3, l3, " message [")
+                buffer.set.string (a3, l3, [a2 FOR l2])
+                buffer.set.string (a3, l3, "]")
+	        CLAIM to.game
+                  to.game[in] ! debug; [a3 FOR l3]
+	    --}}}  
+	    --{{{  error reply
+	    INT code:
+	    error; l1::a1; code; l2::a2
+	      SEQ
+                l3 := 0
+                buffer.set.string (a3, l3, "irc.server: ERROR from [")
+                buffer.set.string (a3, l3, [a1 FOR l1])
+                buffer.set.string (a3, l3, "] code = ")
+                buffer.set.number (a3, l3, code)
+                buffer.set.string (a3, l3, " message [")
+                buffer.set.string (a3, l3, [a2 FOR l2])
+                buffer.set.string (a3, l3, "]")
+	        CLAIM to.game
+                  to.game[in] ! debug; [a3 FOR l3]
+	    --}}}  
+            --{{{  notice message of some form
+            notice; l1::a1; l2::a2; l3::a3
+              [MAX.MESSAGE.SIZE]BYTE tbuf:
+              INT tlen:
+	      SEQ
+                tlen := 0
+                buffer.set.string (tbuf, tlen, "irc.server: NOTICE from [")
+                buffer.set.string (tbuf, tlen, [a1 FOR l1])
+                buffer.set.string (tbuf, tlen, "] for [")
+                buffer.set.string (tbuf, tlen, [a2 FOR l2])
+                buffer.set.string (tbuf, tlen, "] message [")
+                buffer.set.string (tbuf, tlen, [a3 FOR l3])
+                buffer.set.string (tbuf, tlen, "]")
+	        CLAIM to.game
+                  to.game[in] ! debug; [tbuf FOR tlen]
+            --}}}  
+            --{{{  privmsg
+            privmsg; l1::a1; l2::a2; l3::a3
+	      INT namelen:
+              [MAX.MESSAGE.SIZE]BYTE tbuf:
+              INT tlen:
+	      SEQ
+	        namelen := split.name ([a1 FOR l1])
+		--{{{  log
+                tlen := 0
+                buffer.set.string (tbuf, tlen, "ogi/irc: PRIVMSG from [")
+                buffer.set.string (tbuf, tlen, [a1 FOR l1])
+                buffer.set.string (tbuf, tlen, "] for [")
+                buffer.set.string (tbuf, tlen, [a2 FOR l2])
+                buffer.set.string (tbuf, tlen, "] message [")
+                buffer.set.string (tbuf, tlen, [a3 FOR l3])
+                buffer.set.string (tbuf, tlen, "]")
+	        CLAIM to.game
+                  to.game[in] ! debug; [tbuf FOR tlen]
+		--}}}
+                IF
+		  (namelen > 0) AND ([a2 FOR l2] = ##IRCNICKNAME)
+		    --{{{  its for us  :)
+		    SEQ
+		      IF
+		        [a3 FOR l3] = "help"
+			  SEQ
+			    --{{{  chuck out help stuff
+			    l3 := 0
+			    buffer.set.string (a3, l3, "welcome to the occam adventure, ")
+			    buffer.set.string (a3, l3, [a1 FOR namelen])
+			    buffer.set.string (a3, l3, ".  help as follows:")
+			    to.irc ! privmsg; namelen::a1; l3::a3
+			    VAL []BYTE str IS "send the command `start*' to begin.":
+			    to.irc ! privmsg; namelen::a1; SIZE str::str
+			    VAL []BYTE str IS "to disconnect from the game (at any time) send the command `exit*' or `stop*'.":
+			    to.irc ! privmsg; namelen::a1; SIZE str::str
+			    --}}}
+			[a3 FOR l3] = "start"
+			  INT idx, free:
+			  SEQ
+			    --{{{  check existing / find-free slot, tell game engine
+			    IF
+			      IF i = 0 FOR SIZE cli.names
+                                cli.ok[i] AND ([cli.names[i][str] FOR cli.names[i][slen]] = [a1 FOR namelen])
+				  idx := i
+			      TRUE
+			        idx := (-1)
+			    --}}}
+			    IF
+			      idx = (-1)
+			        --{{{  not in game, find free slot
+				SEQ
+				  IF
+				    IF i = 0 FOR SIZE cli.names
+				      NOT cli.ok[i]
+				        free := i
+			            TRUE
+				      free := (-1)
+				  IF
+				    free = (-1)
+				      --{{{  no free slots, send message back
+				      SEQ
+				        VAL []BYTE str IS "sorry, no more room.  try again later!*n":
+					to.irc ! privmsg; namelen::a1; SIZE str::str
+				      --}}}
+				    TRUE
+				      --{{{  free slot at index `free' -- forward to game handler
+                                      IO.LINK! iocli:
+				      SEQ
+                                        cli.svr[free], iocli := MOBILE IO.LINK
+                                        [cli.names[free][str] FOR namelen] := [a1 FOR namelen]
+                                        cli.ok[free] := TRUE
+                                        FORK irc.client.if ([a1 FOR namelen], iocli, to.game, irc.out!)
+					-- we ALT for the answer
+				      --}}}
+				--}}}
+			      TRUE
+			        --{{{  client connected in index `idx'
+				SEQ
+				  VAL []BYTE str IS "you*'re already in the game!*n":
+				  to.irc ! privmsg; namelen::a1; SIZE str::str
+				--}}}
+                        #IF FALSE
+			([a3 FOR l3] = "stop") OR (([a3 FOR l3] = "exit") OR ([a3 FOR l3] = "quit"))
+			  INT idx:
+			  SEQ
+			    --{{{  find client index
+			    IF
+			      IF i = 0 FOR n.irc.clients
+			        (cli.name.len[i] > 0) AND ([cli.name[i] FOR cli.name.len[i]] = [a1 FOR namelen])
+				  idx := i
+			      TRUE
+			        idx := n.irc.clients
+			    --}}}
+			    IF
+			      idx = n.irc.clients
+			        --{{{  not here!
+				SEQ
+				  VAL []BYTE str IS "you*'re not connected!":
+				  to.irc ! privmsg; namelen::a1; SIZE str::str
+				--}}}
+			      cli.uid[idx] = 0
+			        --{{{  not properly connected to game
+				SEQ
+				  VAL []BYTE str IS "unable to comply!  something may be broken.":
+				  to.irc ! privmsg; namelen::a1; SIZE str::str
+				--}}}
+			      TRUE
+			        --{{{  disconnect from game
+				SEQ
+				  VAL []BYTE str IS "disconnecting from the game...":
+				  to.irc ! privmsg; namelen::a1; SIZE str::str
+				  cli.uid[idx] := 0
+				  out[idx] ! stop
+				--}}}
+                        #ENDIF
+			TRUE
+			  INT idx:
+			  SEQ
+			    --{{{  find client index
+			    IF
+			      IF i = 0 FOR SIZE cli.names
+                                cli.ok[i] AND ([cli.names[i][str] FOR cli.names[i][slen]] = [a1 FOR namelen])
+				  idx := i
+			      TRUE
+			        idx := -1
+			    --}}}
+			    IF
+			      idx = (-1)
+			        --{{{  not connected to game
+				SEQ
+				  l2 := 0
+				  buffer.set.string (a2, l2, "i don*'t understand your request to [")
+				  buffer.set.string (a2, l2, [a3 FOR l3])
+				  buffer.set.string (a2, l2, "]")
+				  to.irc ! privmsg; namelen::a1; l2::a2
+				--}}}
+			      TRUE
+			        --{{{  forward message into game handler
+				cli.svr[idx][out] ! [a3 FOR l3]
+				--}}}
+		    --}}}
+		  TRUE
+		    SKIP
+                SKIP
+            --}}} 
+            --{{{  ping
+            ping; l1::a1; l2::a2
+              SEQ
+                first.pong := TRUE
+                to.irc ! pong; l1::a1; l2::a2
+		--SEQ i = 0 FOR n.irc.clients
+		--  IF
+		--    (cli.name.len[i] > 0) AND (cli.uid[i] <> 0)
+		--      out[i] ! irc.ping
+		--    TRUE
+		--      SKIP
+            --}}}  
+            --{{{  join message
+            join; l1::a1; l2::a2
+              SEQ
+                -- was it us ?
+                IF
+                  (l1 >= (SIZE ##IRCNICKNAME)) AND (l2 >= (SIZE ##IRCCHANNAME))
+                    IF
+                      ([a1 FOR l1] = ##IRCNICKNAME) AND ([a2 FOR l2] = ##IRCCHANNAME)
+                        -- quite possibly
+                        SEQ
+                          on.channel := 2
+                      TRUE
+                        SKIP
+                  TRUE
+                    SKIP
+            --}}}  
+          (first.pong AND (on.channel = 0)) & SKIP
+            --{{{  controlled SKIP for channel join
+            SEQ
+              on.channel := 1
+              to.irc ! join; SIZE ##IRCCHANNAME::##IRCCHANNAME; 0::""
+            --}}}
+      --}}}
+
+    --}}}
+
+:
+--}}}
+
+#ENDIF
+

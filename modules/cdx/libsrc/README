@@ -1,0 +1,177 @@
+CDX and netbar libraries for occam
+Fred Barnes <frmb@kent.ac.uk>
+Adam Sampson <ats1@kent.ac.uk>
+
+## Introduction
+
+This package contains two libraries, two server programs, and a demonstration
+client program, all aimed at implementors of graphical simulations in occam-pi
+that must run on a cluster of machines.
+
+The CDX library (cdxclient/cdx.lib) and server (cdxview) provide 2D bitmap
+graphics over the network. Clients provide a section of 32-bit bitmap and a
+location on the screen, and the library sends it over a TCP connection or as
+UDP packets to the server. The server uses the SDL graphics library to display
+the output either in a window or using the full screen.
+
+cdxview keeps a buffer of several frames to reduce the effects of packet
+reordering/retransmission on slow networks. The frame that is being displayed
+is thus 5 frames behind the one that is currently being computed.
+
+The netbar library (netbar.lib) and server (netbard) provide a simple network
+barrier implementation -- equivalent to regular occam UBARRIERs. In addition to
+barrier functionality, netbard also hands out unique IDs to its clients which
+may be used to divide work up among them.
+
+The demo (cdxmandel) is a client program that renders the Mandelbrot set in a
+distributed manner; each cdxmandel instance draws a section of the screen. The
+output is monochrome, but is tinted a different colour based on the unique ID
+obtained from netbar; this makes it fairly easy to see which bit of the screen
+is being calculated by which client.
+
+## Compiling
+
+You'll need at least KRoC 1.3.4-pre8, and the SDL development headers
+(libsdl1.2-dev on Debian/Ubuntu).
+
+You will need to tweak some options in the source code before you compile. The
+first is the names of the hosts that are going to be running cdxview and
+netbard, which are constants at the top of cdxmandel.occ:
+  VAL []BYTE Host IS "localhost":
+  VAL []BYTE BHost IS "localhost":
+For testing, you can run all the software on one machine (in which case
+"localhost" will work fine).
+
+You can also select whether to use TCP or UDP for CDX communications by
+changing this line in cdxclient.c (0 for UDP, 1 for TCP):
+  c->use_tcp = 1;
+cdxview always listens for both UDP and TCP messages on port 2345 -- if you
+have problems make sure that you can get this port through any intervening
+firewalls and routers. netbard similarly uses TCP port 2346.
+
+Once you've done this, to compile the software, type:
+  make
+
+## Running
+
+cdxview takes no options, so you can just run it on the host that "Host" points
+to.
+  cdxview
+It'll open a window. You can toggle full-screen mode with "f", and quit with
+"q".
+
+netbard takes two options: the port to listen on (always 2346) and the number
+of clients that should be enrolled on the barrier.
+  netbard 2346 2
+It'll print some output as clients connect and synchronise.
+
+Since we just said that 2 clients were enrolled, we'll need to start two copies
+of cdxmandel.
+  cdxmandel
+  cdxmandel
+
+After a couple of seconds, you'll now see some pictures in the cdxview window,
+with the top and bottom halves different colours. Now try restarting netbard
+with a bigger final argument and starting more cdxmandels.
+
+## Programming with the CDX library
+
+To use the CDX client library from your occam-pi program, put this at
+the top:
+  #USE "cdx.lib"
+
+This will import three PROCs.
+
+  PROC cdxclient.new (VAL []BYTE host, VAL INT port, width, height,
+                      RESULT INT handle)
+
+This opens a connection to cdxview. The host and port should be those
+that cdxview is running on; width and height specify the size of the
+display in pixels; handle returns an integer which represents the
+connection. If a connection cannot be made, handle will be set to 0.
+You should call this PROC once when your program starts up; if it
+returns 0, print an error message (or just STOP).
+
+  PROC cdxclient.send (VAL INT handle, VAL INT frame, offset, VAL []INT data,
+                       RESULT INT rc)
+
+This sends a chunk of graphics down a connection. handle should be
+whatever cdxclient.new returned. frame is the frame number, starting
+from 0 and being incremented by 1 for each frame drawn. (You don't have
+to draw something on every frame -- the display is cleared to black at
+the start of each frame, so if you were only going to draw black anyway
+you don't need to bother.) offset is the offset in pixels of the first
+pixel you want to draw; if you have X and Y coordinates, it's "(Y *
+width) + X". data contains the pixels that you want to draw, with each
+INT representing a single pixel; the most significant byte is ignored,
+and the other three represent red, green and blue values for the pixel
+(so the value is #00RRGGBB), with 8 bits of colour per pixel. If you
+write past the end of a line on the display, it'll wrap around to the
+next one, so you can send multiple lines of graphics at once if you
+like. (It's probably not a good idea to send more than ~62 KiB of data
+at once, though, since that's all that'll fit in a UDP packet.)
+rc will be set to 0 on success or -1 on failure (for example, if the
+connection to cdxview is lost).
+
+  PROC cdxclient.close (VAL INT handle, RESULT INT rc)
+
+This closes a connection. If your program is going to run forever,
+you won't need to worry about calling this PROC (it just closes the
+socket, which will happen automatically when your occam-pi program exits
+anyway). rc will be set to 0 on success and -1 on failure.
+
+Since cdxview only buffers a small number of frames, if you've got
+multiple clients using CDX to talk to a single cdxview, you must make sure
+that they don't get too far out of step -- i.e. they're all drawing
+frame N at about the same time. The easiest way to arrange this is to do
+a barrier sync at the end of each frame.
+
+There's no reason why you can't use multiple CDX connections from within
+one occam program. You may find that it crashes very occasionally if
+you're on a slow network link; we suspect there's some bug in the C
+interface that we haven't found yet.
+
+## Programming with the netbar library
+
+The netbar interface is very similar to the CDX library's interface.
+To use the CDX client library from your occam-pi program, put this at
+the top:
+  #INCLUDE "netbar.inc"
+  #USE "netbar.lib"
+
+This defines a datatype and imports three PROCs.
+
+  DATA TYPE NETBAR
+    RECORD
+      SOCKET sock:
+      INT id:
+      INT max:
+  :
+
+This datatype represents a connection to a netbar server. Ignore sock;
+it's used internally by the library. max is the number of clients
+connected to the server. id is a unique ID for this client in the range
+0 to max - 1. You can use id and max to automatically partition work
+between multiple clients.
+
+  PROC netbar.new (VAL []BYTE host, VAL INT port, RESULT NETBAR n)
+
+This connects to a netbar server on the given host and port, and returns
+a NETBAR. It'll STOP if anything goes wrong (at the moment; it probably
+ought to return a status code).
+
+  PROC netbar.sync (NETBAR n, SHARED CHAN BYTE err!)
+
+This performs a barrier sync on the netbar. It writes some characters to
+the given output channel to show its progress; a running program will
+print "[|][|][|][|][|]...". (If you don't want this, then remove the
+CLAIM blocks from netbar.sync!)
+
+  PROC netbar.close (NETBAR n)
+
+This closes a netbar.
+
+## Contact
+
+If you have any problems, please contact Adam <ats1@kent.ac.uk>.
+Thanks!
