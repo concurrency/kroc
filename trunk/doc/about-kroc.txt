@@ -1,0 +1,77 @@
+
+                   THE KENT RETARGETABLE OCCAM COMPILER
+                   ====================================
+
+The Kent Retargetable occam Compiler (KRoC) provides a compiler, run-time
+system and library support for the occam multiprocessing language.  This
+version implements the full occam2.1 language as defined by Inmos:
+
+  http://www.wotug.org/parallel/occam/compilers/documentation
+
+This version also includes some experimental extensions for INITIALising
+declarations (as defined in the occam3 draft specification - see above URL)
+and user-defined operators (see the document `udo.ps' in this directory).
+
+Details of how to compile, build libraries and run KRoC occam programs are
+given in the `essential-kroc.txt' file (in this directory).
+
+The KRoC run-time system provides an ultra-lightweight multiprocessing kernel.
+Context-switch and process startup/shutdown overheads are below 200 nanoseconds
+on modern PCs (e.g. 500 MHz. Pentium IIIs).  The KRoC compiler performs full
+anti-aliasing and parallel useage checks - as required by occam semantics -
+that eliminate accidental race conditions.
+
+Details of how to call native C or 386-assembler routines are given in the
+document `native-call.ps' (in this directory).  Support for blocking system
+calls is provided via native threads - these will not block the occam kernel.
+Details are given in `blocking-native.ps', also in the directory.
+
+KRoC uses a modified version of the Transputer toolset compiler.  Accordingly,
+it accepts the various #PRAGMAs supported by that compiler along with in-line
+transputer ASM code.  See, for example, the extra synchronisation primitives
+provided in the `syncs/libsrc' directory (which are programmed in transputer
+ASM and, therefore, port without change to all KRoC platforms).
+
+[Note: the above new primitives are provided through a *library* mechanism.
+This means that there is a potential for misuse and that such misuse will
+introduce race hazards.  To make secure, they really need to be bound into
+the *language* so that the necessary semantic constraints can be enforced
+by the compiler and/or run-time system.  It is hoped that this open source
+release of KRoC will enable such developments.]
+
+This version of KRoC compiles first to a byte-code file (`.tce').  This is
+basically a transputer binary TCOFF file (`.tco'), augmented by some extra
+pseudo-instructions (containing type and jump information) to assist in
+the second stage.  The second stage translates this byte-code into target
+native code.  Details can be found in:
+
+  "The Kent Retargetable occam Compiler", D.C.Wood and D.C.Wood,
+    WoTUG-19 Proceedings, IOS Press (Amsterdam), ISBN 90 5199 261 0,
+    April 1996.
+
+  "Extended Transputer Code - a Target-Independent Representation for
+    Parallel Programs", M.D.Poole, WoTUG-21 Proceedings, IOS Press,
+    ISBN 90 5199 391 9, April 1998.
+
+A mailing list for reporting and discussing items relevant to the development
+and application of occam is:
+
+  occam-com@ukc.ac.uk
+
+However, in an effort to reduce spam, only subscribers to the list may post
+to it and subscription is moderated (to refuse spammers).  To subscribe,
+just email:
+
+  P.H.Welch@ukc.ac.uk
+
+an empty message with the title: "subscribe occam-com" and it will be done.
+
+This is the first open source release of KRoC.  Please would all developers
+coordinate activity using the above mailing list?
+
+Many thanks,
+
+Peter Welch.
+Canterbury,
+January 2000.
+

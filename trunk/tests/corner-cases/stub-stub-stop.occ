@@ -1,0 +1,14 @@
+-- This program should STOP -- it tests that dead code elimination does the
+-- right thing for stub processes.
+
+PROC blink ()
+  STOP
+:
+
+PROC heartbeat ()
+  blink ()
+:
+
+PROC main ()
+  heartbeat ()
+:

@@ -1,0 +1,1549 @@
+-- version control marker $Id: cgtest00.occ,v 1.4 1995/10/10 12:55:57 djb1 Exp $
+
+PROC cgtest0 (CHAN OF BYTE keyb, scr, err)
+ 
+  #INCLUDE "cgmain.occ"
+
+  --{{{  space allocation
+  --{{{  space for single variable
+  --{{{  S0   word
+  PROC S0 ()
+    INT X:
+    SEQ
+      X := 42
+      INT Y:
+      Y := -1
+      check( X, 42, "S0")
+  :
+  --}}}
+  --{{{  S1   byte
+  PROC S1 ()
+    INT X:
+    SEQ
+      X := 42
+      BYTE Y:
+      Y := 'z'
+      check (X, 42, "S1")
+  :
+  --}}}
+  --{{{  S2   bool
+  PROC S2 ()
+    INT X:
+    SEQ
+      X := 42
+      BOOL Y:
+      Y := TRUE
+      check( X, 42, "S2")
+  :
+  --}}}
+  --{{{  S3   extra
+  PROC S3 ()
+    BYTE X:
+    SEQ
+      X := 'd'
+      BOOL Y:
+      Y := TRUE
+      INT Z:
+      Z := -1
+      check(INT X, INT 'd', "S3")
+  :
+  --}}}
+  --}}}
+  --{{{  space for arrays
+  --{{{  S4  int  var and array
+  PROC S4 ()
+    INT X:
+    SEQ
+      X := 42
+      INT Y:
+      Y := -1
+      [2]INT Y:
+      SEQ i = 0 FOR 2
+        Y[i] := -1
+      check( X, 42, "S4")
+  :
+  --}}}
+  --{{{  S5  byte var and array
+  PROC S5 ()
+    INT X:
+    SEQ
+      X := 42
+      BYTE Y:
+      Y := 'q'
+      [2]BYTE Y:
+      SEQ
+        Y[0] := 'p'
+        Y[1] := 'r'
+      check( X, 42, "S5")
+  :
+  --}}}
+  --{{{  S6  bool var and array
+  PROC S6 ()
+    INT X:
+    SEQ
+      X := 42
+      BOOL Y:
+      Y := TRUE
+      [2]BOOL Y:
+      SEQ
+        Y[0] := FALSE
+        Y[1] := TRUE
+      check( X, 42, "S6")
+  :
+  --}}}
+  --{{{  S7  bool var and int array
+  PROC S7 ()
+    INT X:
+    SEQ
+      X := 42
+      BOOL Y:
+      Y := TRUE
+      [2]INT Y:
+      SEQ
+        Y[0] := -2
+        Y[1] := 6
+      check( X, 42, "S7")
+  :
+  --}}}
+  --{{{  S8  int  var and bool array
+  PROC S8 ()
+    INT X:
+    SEQ
+      X := 42
+      INT Y:
+      Y := -1
+      [2]BOOL Y:
+      SEQ
+        Y[0] := TRUE
+        Y[1] := FALSE
+      check( X, 42, "S8")
+  :
+  --}}}
+  --{{{  S9  byte with int var and array
+  PROC S9 ()
+    BYTE X:
+    SEQ
+      X := 't'
+      INT Y:
+      Y := -1
+      [2]INT Y:
+      SEQ i = 0 FOR 2
+        Y[i] := -1
+      check(INT X, INT 't', "S9")
+  :
+  --}}}
+  --{{{  S10 byte with bool var and array
+  PROC S10 ()
+    BYTE X:
+    SEQ
+      X := ']'
+      BOOL Y:
+      Y := TRUE
+      [2]BOOL Y:
+      SEQ
+        Y[0] := FALSE
+        Y[1] := TRUE
+      check(INT X, INT ']', "S10")
+  :
+  --}}}
+  --}}}
+  --{{{  WHILE loops
+  --{{{  S11
+  PROC S11 ()
+    INT X:
+    SEQ
+      X := 42
+      INT Y:
+      WHILE Y <> 0
+        INT Z:
+        SEQ
+          Y := 0
+      check( X, 42, "S11")
+  :
+  --}}}
+  --{{{  S12
+  PROC S12 ()
+    INT X:
+    SEQ
+      X := 42
+      INT Y:
+      WHILE Y <> 0
+        BYTE Z:
+        SEQ
+          Y := 0
+      check( X, 42, "S12")
+  :
+  --}}}
+  --}}}
+  --{{{  IF statements
+  --{{{  S13
+  PROC S13 ()
+    INT X:
+    SEQ
+      X := 42
+      IF
+        X = 42
+          INT Y:
+          BYTE b:
+          SEQ
+            Y := 0
+            b := 'u'
+        TRUE
+          SKIP
+      check( X, 42, "S13")
+  :
+  --}}}
+  --{{{  S14
+  PROC S14 ()
+    BYTE X:
+    SEQ
+      X := '4'
+      IF
+        X = '4'
+          [3]BYTE Z:
+          [3]INT Y:
+          SEQ
+            Z[1] := '1'
+            Y[2] := -1
+        X = '4'
+          INT Z:
+          BYTE Y:
+          SEQ
+            Z := 2
+            Y := '2'
+        TRUE
+          SKIP
+      check(INT X, INT '4', "S14")
+  :
+  --}}}
+  --{{{  S15
+  PROC S15 ()
+    INT X:
+    SEQ
+      X := 42
+      IF
+        --{{{
+        X = 42
+          IF
+            X = 42
+              INT Y:
+              [7]BYTE Z:
+              SEQ
+                Y := 0
+                Z[0] := 'a'
+                Z[6] := 'z'
+            TRUE
+              SKIP
+        --}}}
+        --{{{
+        X = 42
+          IF
+            X = 42
+              BYTE Y:
+              [7]INT Z:
+              SEQ
+                Y := 'q'
+                Z[0] := -1
+                Z[6] := 9
+            TRUE
+              SKIP
+        --}}}
+        TRUE
+          SKIP
+      check(X, 42, "S15")
+  :
+  --}}}
+  --{{{  S16
+  PROC S16 ()
+    INT X:
+    SEQ
+      X := 42
+      IF
+        TRUE
+          INT channel, count :
+          channel := count
+        TRUE
+          PAR
+            SKIP
+        TRUE
+          BOOL up:
+          SKIP
+        TRUE
+          BYTE channel:
+          SKIP
+      check (X, 42, "S16")
+  :
+  --}}}
+  --}}}
+  --{{{  SEQ replicated
+  --{{{  S17
+  PROC S17 ()
+    INT X:
+    SEQ
+      X := 42
+      [4]BYTE V:
+      SEQ i = 0 FOR 4
+        [3]INT VB:
+        SEQ j = 0 FOR 3
+          SEQ
+            V[i] := 'a'
+            VB[j] := 0
+      check(X, 42, "S17")
+  :
+  --}}}
+  --}}}
+  --{{{  IF  replicated
+  --{{{  S18
+  PROC S18 ()
+    INT X:
+    SEQ
+      X := 42
+      [5]BOOL V:
+      SEQ
+        V[4] := TRUE
+        IF i = 0 FOR 5
+          IF j = 0 FOR 3
+            IF
+              V[i]
+                [3]BYTE VB :
+                VB[j] := 'e'
+      check (X, 42, "S18")
+  :
+  --}}}
+  --}}}
+  --{{{  PAR replicated
+  --{{{  S19
+  PROC S19 ()
+    INT X:
+    SEQ
+      X := 42
+      [4]INT V:
+      [3]CHAN OF INT c:
+      PAR
+        PAR i = 0 FOR 3
+          c[i] ! (i + 5)
+        X := X
+        PAR i = 0 FOR 3
+          c[i] ? V[i]
+      check(X, 42, "S19")
+  :
+  --}}}
+  --}}}
+  --}}}
+  --{{{  expressions
+  --{{{  E1  shifts                        (tests E1   to E10, R1 to R10)
+  PROC E1 ()
+    INT zero, one, two, three, z, bitsperword:
+    SEQ
+      zero  := 0
+      one   := 1
+      two   := 2
+      three := 3
+      --{{{  set up bitsperword (must be a variable!)
+      IF
+        (INT32 (MOSTPOS INT)) = (MOSTPOS INT32)  -- ie 32 bit machine
+          bitsperword := 32
+        TRUE
+          bitsperword := 16
+      --}}}
+      --{{{  E1 to E10
+      z := zero << 0
+      check( z, 0, "E1")
+      z := one << 1
+      check( z, 2, "E2")
+      z := one << 2
+      check( z, 4, "E3")
+      z := zero << zero
+      check( z, 0, "E4")
+      z := one << one
+      check( z, 2, "E5")
+      z := one << bitsperword
+      check( z, 0, "E6")
+      z := (one << one) + three
+      check( z, 5, "E7")
+      z := ((one * two) << one) + three
+      check( z, 7, "E8")
+      z := (one << (two * one)) + three
+      check( z, 7, "E9")
+      z := ((one * two) << (one * two)) + three
+      check( z, 11, "E10")
+      --}}}
+      --{{{  R1 to R10
+      z := zero >> 0
+      check( z, 0, "R1")
+      z := (two * two) >> 1
+      check( z, 2, "R2")
+      z := 16 >> two
+      check( z, 4, "R3")
+      z := zero >> zero
+      check( z, 0, "R4")
+      z := one >> one
+      check( z, 0, "R5")
+      z := (-one) >> (two * (three * one))
+      check( z, (-1)>>6, "R6")
+      z := (two >> one) + three
+      check( z, 4, "R7")
+      z := (((one * two) << one) + three) >> one
+      check( z, 3, "R8")
+      z := (one << (two * three)) >> (two + three)
+      check( z, 2, "R9")
+      z := (((one * two) << (one * two)) + three) >> (((-one) >> bitsperword) + zero)
+      check( z, 11, "R10")
+      --}}}
+  :
+  --}}}
+  --{{{  E2  fully evaluated expressions   (tests E11  to E60)
+  PROC E2 ()
+    INT zero, one, two, three, z:
+    BOOL q:
+    SEQ
+      zero  := 0
+      one   := 1
+      two   := 2
+      three := 3
+      --{{{  E11 to E20
+      z := one + 2                  -- id op const
+      check( z, 3, "E11")
+      z := one /\ 2
+      check( z, 0, "E12")
+      z := one \/ 2
+      check( z, 3, "E13")
+      z := one >< 3
+      check( z, 2, "E14")
+      z := one * 2
+      check( z, 2, "E15")
+      z := one / 2
+      check( z, 0, "E16")
+      z := one \ 2
+      check( z, 1, "E17")
+      q := one = 2
+      check( INT q, INT FALSE, "E18")
+      q := one <> 2
+      check( INT q, INT TRUE, "E19")
+      q := one >= 2
+      check( INT q, INT FALSE, "E20")
+      --}}}
+      --{{{  E21 to E30
+      q := one <= 2
+      check(INT q, INT TRUE, "E21")
+      q := one > 2
+      check(INT q, INT FALSE, "E22")
+      q := one < 2
+      check(INT q, INT TRUE, "E23")
+      z := one + (two * one)          -- id op (id * id)
+      check( z, 3, "E24")
+      z := one /\ (two * one)
+      check( z, 0, "E25")
+      z := one \/ (two * one)
+      check( z, 3, "E26")
+      z := one >< (three * one)
+      check( z, 2, "E27")
+      z := three * (two * one)
+      check( z, 6, "E28")
+      z := three / (three * one)
+      check( z, 1, "E29")
+      z := two \ (three * one)
+      check( z, 2, "E30")
+      --}}}
+      --{{{  E31 to E40
+      q := one = (three * one)
+      check(INT q, INT FALSE, "E31")
+      q := one <> (three * one)
+      check(INT q, INT TRUE, "E32")
+      q := three >= (three * one)
+      check(INT q, INT TRUE, "E33")
+      q := one <= (three * one)
+      check(INT q, INT TRUE, "E34")
+      q := one > (three * one)
+      check(INT q, INT FALSE, "E35")
+      q := one < (three * one)
+      check(INT q, INT TRUE, "E36")
+      z := (two * one) + one          -- (id * id) op id
+      check( z, 3, "E37")
+      z := (two * one) /\ one
+      check( z, 0, "E38")
+      z := (two * one) \/ one
+      check( z, 3, "E39")
+      z := (three * one) * two
+      check( z, 6, "E40")
+      --}}}
+      --{{{  E41 to E50
+      z := (three * one) / two
+      check( z, 1, "E41")
+      z := (three * one) \ two
+      check( z, 1, "E42")
+      q := (three * one) = two
+      check(INT q, INT FALSE, "E43")
+      q := (three * one) <> two
+      check(INT q, INT TRUE, "E44")
+      q := (three * one) >= two
+      check(INT q, INT TRUE, "E45")
+      q := (three * one) <= two
+      check(INT q, INT FALSE, "E46")
+      q := (three * one) > two
+      check(INT q, INT TRUE, "E47")
+      q := (three * one) < two
+      check(INT q, INT FALSE, "E48")
+      z := (two * one) + (one * one)         -- (id * id) op (id * id)
+      check( z, 3, "E49")
+      z := (two * one) /\ (one * one)
+      check( z, 0, "E50")
+      --}}}
+      --{{{  E51 to E60
+      z := (two * one) \/ (one * one)
+      check( z, 3, "E51")
+      z := (three * one) * (two * one)
+      check( z, 6, "E52")
+      z := (three * one) / (two * one)
+      check( z, 1, "E53")
+      z := (three * one) \ (two * one)
+      check( z, 1, "E54")
+      q := (three * one) = (two * one)
+      check(INT q, INT FALSE, "E55")
+      q := (three * one) <> (two * one)
+      check(INT q, INT TRUE, "E56")
+      q := (three * one) >= (two * one)
+      check(INT q, INT TRUE, "E57")
+      q := (three * one) <= (two * one)
+      check(INT q, INT FALSE, "E58")
+      q := (three * one) > (two * one)
+      check(INT q, INT TRUE, "E59")
+      q := (three * one) < (two * one)
+      check(INT q, INT FALSE, "E60")
+      --}}}
+  :
+  --}}}
+  --{{{  E3  boolean sets                  (tests E61  to E100)
+  PROC E3 ()
+    INT zero, one, two, three, z :
+    BOOL true.id, false.id, q:
+    SEQ
+      zero    := 0
+      one     := 1
+      two     := 2
+      three   := 3
+      true.id  := TRUE
+      false.id := FALSE
+  
+      --{{{  E61 to E70
+      --{{{  E61
+      IF
+        TRUE                           -- const
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E61")
+      --}}}
+      --{{{  E62
+      IF
+        FALSE
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E62")
+      --}}}
+      --{{{  E63
+      IF
+        true.id                           -- id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E63")
+      --}}}
+      --{{{  E64
+      IF
+        false.id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E64")
+      --}}}
+      --{{{  E65
+      IF                                 -- id op const
+        one = 1
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E65")
+      --}}}
+      --{{{  E651
+      IF                                 -- id op const
+        1 = one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E651")
+      --}}}
+      --{{{  E66
+      IF
+        one <> 1
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E66")
+      --}}}
+      --{{{  E661
+      IF
+        1 <> one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E661")
+      --}}}
+      --{{{  E67
+      IF
+        one >= 1
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E67")
+      --}}}
+      --{{{  E671
+      IF
+        1 <= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E671")
+      --}}}
+      --{{{  E68
+      IF
+        one <= 1
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E68")
+      --}}}
+      --{{{  E681
+      IF
+        1 >= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E681")
+      --}}}
+      --{{{  E69
+      IF
+        one > 1
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E69")
+      --}}}
+      --{{{  E691
+      IF
+        1 < one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E691")
+      --}}}
+      --{{{  E70
+      IF
+        one < 1
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E70")
+      --}}}
+      --{{{  E701
+      IF
+        1 > one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E701")
+      --}}}
+      --}}}
+      --{{{  E71 to E80
+      --{{{  E71
+      IF                                 -- id op id
+        one = one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E71")
+      --}}}
+      --{{{  E72
+      IF
+        one <> one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E72")
+      --}}}
+      --{{{  E73
+      IF
+        one >= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E73")
+      --}}}
+      --{{{  E74
+      IF
+        one <= one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E74")
+      --}}}
+      --{{{  E75
+      IF
+        one > one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E75")
+      --}}}
+      --{{{  E76
+      IF
+        one < one
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E76")
+      --}}}
+      --{{{  E77
+      IF                                 -- id op (id op)
+        one = (three * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E77")
+      --}}}
+      --{{{  E78
+      IF
+        three = (three * one)
+          q:= TRUE
+        TRUE
+          q:= FALSE
+      check(INT q, INT TRUE, "E78")
+      --}}}
+      --{{{  E79
+      IF
+        one <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E79")
+      --}}}
+      --{{{  E80
+      IF
+        two <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E80")
+      --}}}
+      --}}}
+      --{{{  E81 to E90
+      --{{{  E81
+      IF
+        one >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E81")
+      --}}}
+      --{{{  E82
+      IF
+        three >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E82")
+      --}}}
+      --{{{  E83
+      IF
+        one <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E83")
+      --}}}
+      --{{{  E84
+      IF
+        three <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E84")
+      --}}}
+      --{{{  E85
+      IF
+        one > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E85")
+      --}}}
+      --{{{  E86
+      IF
+        three > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E86")
+      --}}}
+      --{{{  E87
+      IF
+        one < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E87")
+      --}}}
+      --{{{  E88
+      IF
+        three < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E88")
+      --}}}
+      --{{{  E89
+      IF                                 -- (id * id) op (id * id)
+        (one * one) = (three * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E89")
+      --}}}
+      --{{{  E90
+      IF
+        (three  * one) = (three * one)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E90")
+      --}}}
+      --}}}
+      --{{{  E91 to E100
+      --{{{  E91
+      IF
+        (one  * one)<> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E91")
+      --}}}
+      --{{{  E92
+      IF
+        (two * one) <> (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E92")
+      --}}}
+      --{{{  E93
+      IF
+        (one * one) >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E93")
+      --}}}
+      --{{{  E94
+      IF
+        (three * one) >= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E94")
+      --}}}
+      --{{{  E95
+      IF
+        (one * one) <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E95")
+      --}}}
+      --{{{  E96
+      IF
+        (three * one) <= (one * three)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E96")
+      --}}}
+      --{{{  E97
+      IF
+        (one * one) > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E97")
+      --}}}
+      --{{{  E98
+      IF
+        (three * one) > (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E98")
+      --}}}
+      --{{{  E99
+      IF
+        (one * one) < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT TRUE, "E99")
+      --}}}
+      --{{{  E100
+      IF
+        (three * one) < (one * two)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E100")
+      --}}}
+      --}}}
+  :
+  --}}}
+  --{{{  E4  negate bitnot and not         (tests E101 to E106, N1 to N10)
+  PROC E4 ()
+    INT zero, one, two, three, z :
+    BOOL true.id, false.id, q:
+    SEQ
+      zero    := 0
+      one     := 1
+      two     := 2
+      three   := 3
+      true.id  := TRUE
+      false.id := FALSE
+      --{{{  E101, E102  (negate)
+      z := - (two * one)
+      check(z, -2, "E101")
+      z := - two
+      check(z, -2, "E102")
+      --}}}
+      --{{{  E103 - E106 (NOT)
+      q := NOT FALSE
+      check(INT q, INT TRUE, "E103")
+      q := NOT (true.id AND true.id)
+      check(INT q, INT FALSE, "E104")
+      IF
+        NOT (true.id AND true.id)
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E105")
+      IF
+        NOT true.id
+          q := TRUE
+        TRUE
+          q := FALSE
+      check(INT q, INT FALSE, "E106")
+      --}}}
+      --{{{  N1 - N10  (Bitnot (~))
+      z := ~ 0
+      check (z, -1, "N1")
+      z := ~ zero
+      check (z, -1, "N2")
+      z := ~z
+      check (z, 0, "N3")
+      z := ~ 1
+      check (z, -2, "N4")
+      z := ~ one
+      check (z, -2, "N5")
+      z := ~ (~ one)
+      check (z, 1, "N6")
+      z := MOSTPOS INT
+      z := ~ z
+      check (z, MOSTNEG INT, "N7")
+      --}}}
+  :
+  --}}}
+  --{{{  E5  AND and OR                    (tests E119 to E122)
+  PROC E5 ()
+    BOOL true.id, false.id, z:
+    SEQ
+      true.id  := TRUE
+      false.id := FALSE
+      --{{{  E111 to E118
+      z := true.id AND false.id
+      check(INT z, INT FALSE, "E111")
+      z := true.id AND true.id
+      check(INT z, INT TRUE, "E112")
+      z := false.id AND false.id
+      check(INT z, INT FALSE, "E113")
+      z := false.id AND true.id
+      check(INT z, INT FALSE, "E114")
+      z := true.id OR false.id
+      check(INT z, INT TRUE, "E115")
+      z := true.id OR true.id
+      check(INT z, INT TRUE, "E116")
+      z := false.id OR false.id
+      check(INT z, INT FALSE, "E117")
+      z := false.id OR true.id
+      check(INT z, INT TRUE, "E118")
+      --}}}
+      --{{{  E119
+      IF
+        true.id AND false.id
+          z := FALSE
+        TRUE
+          z := TRUE
+      check(INT z,INT TRUE, "E119")
+      --}}}
+      --{{{  E120
+      IF
+        true.id AND true.id
+          z := FALSE
+        TRUE
+          z := TRUE
+      check(INT z,INT FALSE, "E120")
+      --}}}
+      --{{{  E121
+      IF
+        false.id AND false.id
+          z := FALSE
+        TRUE
+          z := TRUE
+      check(INT z,INT TRUE, "E121")
+      --}}}
+      --{{{  E122
+      IF
+        false.id AND true.id
+          z := FALSE
+        TRUE
+          z := TRUE
+      check(INT z, INT TRUE, "E122")
+      --}}}
+  :
+  --}}}
+  --{{{  E6  combined booleans             (tests B1   to B20)
+  PROC E6 ()
+    --{{{  test.and.reset
+    PROC test.and.reset(BOOL is, VAL BOOL want, VAL []BYTE s)
+      SEQ
+        check(INT is, INT want, s)
+        is := FALSE
+    :
+    --}}}
+  
+    BOOL a, b, c, d, e, f :
+    SEQ
+      a := TRUE
+      b := TRUE
+      c := FALSE
+      e := FALSE
+      --{{{  B1 to B5
+      --{{{  B1
+      d := a AND b
+      test.and.reset (d, TRUE, "B1")
+      --}}}
+      --{{{  B2
+      d := a OR b
+      test.and.reset (d, TRUE, "B2")
+      --}}}
+      --{{{  B3
+      d := a AND c
+      test.and.reset (d, FALSE, "B3")
+      --}}}
+      --{{{  B4
+      d := a OR c
+      test.and.reset (d, TRUE, "B4")
+      --}}}
+      --{{{  B5
+      d := c OR e
+      test.and.reset (d, FALSE, "B5")
+      --}}}
+      --}}}
+      --{{{  B6 to B10
+      --{{{  B6
+      d := TRUE
+      f := FALSE
+      IF
+        a AND b
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B6")
+      --}}}
+      --{{{  B7
+      IF
+        a OR b
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B7")
+      --}}}
+      --{{{  B8
+      IF
+        a AND c
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, FALSE, "B8")
+      --}}}
+      --{{{  B9
+      IF
+        a OR c
+          f := TRUE
+      test.and.reset (f, TRUE, "B9")
+      --}}}
+      --{{{  B10
+      IF
+        c OR e
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, FALSE, "B10")
+      --}}}
+      --}}}
+      --{{{  B11 to B15
+      --{{{  B11
+      IF
+        (a = b) OR d
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B11")
+      --}}}
+      --{{{  B12
+      IF
+        c OR (a = b)
+          f := TRUE
+      test.and.reset (f, TRUE, "B12")
+      --}}}
+      --{{{  B13
+      IF
+        (NOT c) OR (a = e)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B13")
+      --}}}
+      --{{{  B14
+      IF
+        (a = e) OR (NOT c)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B14")
+      --}}}
+      --{{{  B15
+      IF
+        (a = b) AND (c = e)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B15")
+      --}}}
+      --}}}
+      --{{{  B16 to B20
+      --{{{  B16
+      IF
+        (a = b) AND (c = d)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, FALSE, "B16")
+      --}}}
+      --{{{  B17
+      IF
+        (a AND b) AND (c OR d)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B17")
+      --}}}
+      --{{{  B18
+      IF
+        (b AND c) OR (a AND e)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, FALSE, "B18")
+      --}}}
+      --{{{  B19
+      IF
+        (NOT a) OR (NOT b) OR (NOT c)
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B19")
+      --}}}
+      --{{{  B20
+      IF
+        (NOT c) AND ((a = b) AND
+          (e OR c OR (NOT a) OR b))
+          f := TRUE
+        TRUE
+          SKIP
+      test.and.reset (f, TRUE, "B20")
+      --}}}
+      --}}}
+  :
+  --}}}
+  #IF NOT DEFINED (COMPILER.TOCK)
+  --{{{  E6b limited evaluation of bools   (tests B21  to B22)
+  -- Disabled for Tock: it can tell statically that the array accesses are
+  -- unsafe.
+  PROC E6b(VAL BOOL true, false)
+    -- In these checks the array should never be accessed
+    [1]BOOL array :
+    SEQ
+      IF
+        FALSE AND array[1]
+          check(INT TRUE, INT FALSE, "B21")
+        TRUE
+          SKIP
+      IF
+        TRUE OR array[1]
+          SKIP
+        TRUE
+          check(INT TRUE, INT FALSE, "B22")
+      IF
+        false AND array[0]
+          check(INT TRUE, INT FALSE, "B23")
+        TRUE
+          SKIP
+      IF
+        true OR array[0]
+          SKIP
+        TRUE
+          check(INT TRUE, INT FALSE, "B24")
+  :
+  --}}}
+  #ENDIF
+  --{{{  E7  complex expressions           (tests X1   to X9)
+  PROC E7 ()
+    INT a, b, c, d, x :
+    SEQ
+      a := 2
+      b := 4
+      c := 5
+      d := 6
+      --{{{  X1
+      x := (a-2)+b
+      check (x, b,"X1")
+      --}}}
+      --{{{  X2
+      x := (a*b) - (d-1)
+      check (x, 3, "X2")
+      --}}}
+      --{{{  X3
+      x := (a /\ b) \/ (d + (b - (a+a)))
+      check (x, 6, "X3")
+      --}}}
+      --{{{  X4
+      x := a+((a+((a+((a+((a+((a+((a+((d-c)+b))+b))+b))+b))+b))+b))+b)
+      check (x, 43, "X4")
+      --}}}
+      --{{{  X5
+      x := d-(b-(b-(b-(b-(b-(b-(b-(b+c))))))))
+      check (x, 11, "X5")
+      --}}}
+      --{{{  X6
+      x := (((d*c)/(a+b))*(a+b)) + ((d*c)\(a+b))
+      check (x, 30, "X6")
+      --}}}
+      --{{{  X7
+      x := (d << 4) >> ((b << a) >> 2)
+      check (x, 6, "X7")
+      --}}}
+      --{{{  X8
+      x := c >< ((a >< b) >< d)
+      check (x, 5, "X8")
+      --}}}
+      --{{{  X9
+      a := INT TRUE
+      b := INT FALSE
+      c := INT TRUE
+      d := INT FALSE
+      x := (a /\ c) /\ (INT TRUE)
+      check (x, INT TRUE, "X9")
+      --}}}
+  :
+  --}}}
+  --{{{  E8  PLUS MINUS TIMES and AFTER    (tests P00  to P99)
+  PROC E8 ()
+    INT x, y, z :
+    SEQ
+      --{{{  PLUS   (test P00 - 09)
+      x := MOSTPOS INT
+      y := x PLUS 1
+      check (y, MOSTNEG INT, "P00")
+      check ((MOSTPOS INT) PLUS 1, MOSTNEG INT, "P01")
+      x := (MOSTNEG INT) >> 1
+      check (x PLUS x, MOSTNEG INT, "P02")
+      check (((MOSTNEG INT) >> 1) PLUS ((MOSTNEG INT) >> 1), MOSTNEG INT, "P03")
+      --}}}
+      --{{{  MINUS  (test P10 - 19)
+      x := MOSTNEG INT
+      y := x MINUS 1
+      check (y, MOSTPOS INT, "P10")
+      check ((MOSTNEG INT) MINUS 1, MOSTPOS INT, "P11")
+      --}}}
+      --{{{  TIMES  (test P20 - 29)
+      x := (MOSTNEG INT) >> 1
+      IF
+        x >= 0
+          check (x, x, "P20")    -- just checking that gives the right answer
+        TRUE
+          check (x, 0, "P20")
+      y := x TIMES 2
+      check (y, MOSTNEG INT, "P21")
+      check (((MOSTNEG INT) >> 1) TIMES 2, MOSTNEG INT, "P22")
+      --}}}
+      --{{{  AFTER  (test P30 - 39)
+      x := MOSTPOS INT
+      y := MOSTNEG INT
+      check (INT (x > y), INT TRUE, "P30")
+      check (INT (x AFTER y), INT FALSE, "P31")
+      check (INT ((MOSTPOS INT) AFTER (MOSTNEG INT)), INT FALSE, "P32")
+      --}}}
+  :
+  --}}}
+  --{{{  E9  constant folding              (tests C000 to C999)
+  PROC E9 ()
+    SEQ
+      --{{{  test identities               (tests C000 to C019)
+      INT n :
+      SEQ
+        n := 5
+        check (n + 0, n, "C000")
+        check (0 + n, n, "C001")
+        check (n * 1, n, "C002")
+        check (1 * n, n, "C003")
+        check (n - 0, n, "C004")
+        check (0 - n,-n, "C005")
+        check (n / 1, n, "C006")
+        check (1 / n, 0, "C007")
+        check (n PLUS  0, n, "C008")
+        check (0 PLUS  n, n, "C009")
+        check (n TIMES 1, n, "C010")
+        check (1 TIMES n, n, "C011")
+        check (n MINUS 0, n, "C012")
+        check (0 MINUS n,-n, "C013")    -- (almost true!)
+        check (n \ 1, 0, "C014")
+        check (1 \ n, 1, "C015")
+      --}}}
+      --{{{  test comparisons of identities(tests C020 to C039)
+      INT n :
+      SEQ
+        n := 5
+        check.BOOL ( (n + 0) = n,       TRUE, "C020")
+        check.BOOL ( (0 + n) = n,       TRUE, "C021")
+        check.BOOL ( (n * 1) = n,       TRUE, "C022")
+        check.BOOL ( (1 * n) = n,       TRUE, "C023")
+        check.BOOL ( (n - 0) = n,       TRUE, "C024")
+        check.BOOL ( (0 - n) =(-n),     TRUE, "C025")
+        check.BOOL ( (n / 1) = n,       TRUE, "C026")
+        check.BOOL ( (1 / n) = 0,       TRUE, "C027")
+        check.BOOL ( (n PLUS  0) = n,   TRUE, "C028")
+        check.BOOL ( (0 PLUS  n) = n,   TRUE, "C029")
+        check.BOOL ( (n TIMES 1) = n,   TRUE, "C030")
+        check.BOOL ( (1 TIMES n) = n,   TRUE, "C031")
+        check.BOOL ( (n MINUS 0) = n,   TRUE, "C032")
+        check.BOOL ( (0 MINUS n) =(-n), TRUE, "C033")   -- (almost true!)
+        check.BOOL ( (n \ 1) = 0,       TRUE, "C034")
+        check.BOOL ( (1 \ n) = 1,       TRUE, "C035")
+        check.BOOL ( (n PLUS 1) AFTER n,TRUE, "C036")
+        check.BOOL ( n AFTER n,        FALSE, "C037")
+      --}}}
+      --{{{  BOOL constant folding tests   (tests C040 to C059)
+      BOOL true, false :
+      SEQ
+        true := TRUE
+        false := FALSE
+        check.BOOL (false AND TRUE,  FALSE, "C040")
+        check.BOOL (false AND FALSE, FALSE, "C041")
+        check.BOOL (TRUE AND false,  FALSE, "C042")
+        check.BOOL (FALSE AND false, FALSE, "C043")
+        check.BOOL (false OR TRUE,   TRUE,  "C044")
+        check.BOOL (false OR FALSE,  FALSE, "C045")
+        check.BOOL (TRUE OR false,   TRUE,  "C046")
+        check.BOOL (FALSE OR false,  FALSE, "C047")
+        check.BOOL (true AND TRUE,   TRUE,  "C048")
+        check.BOOL (true AND FALSE,  FALSE, "C049")
+        check.BOOL (TRUE AND true,   TRUE,  "C050")
+        check.BOOL (FALSE AND true,  FALSE, "C051")
+        check.BOOL (true OR TRUE,    TRUE,  "C052")
+        check.BOOL (true OR FALSE,   TRUE,  "C053")
+        check.BOOL (TRUE OR true,    TRUE,  "C054")
+        check.BOOL (FALSE OR true,   TRUE,  "C055")
+        check.BOOL (0 AFTER 1,       FALSE, "C056")
+        check.BOOL (1 AFTER 0,       TRUE,  "C056")
+        check.BOOL ((MOSTNEG INT) AFTER (MOSTPOS INT), TRUE, "C057")
+      --}}}
+      --{{{  NOTE : there are some more tests in extended types for INTs etc
+      --}}}
+  :
+  --}}}
+  --{{{  E10 data conversions              (tests D000 to D999)
+  PROC E10 ()
+    BYTE byte.0, byte.1 :
+    BOOL bool.t, bool.f :
+    INT  int.0,  int.1  :
+    SEQ
+      --{{{  initialise the vars
+      byte.0 := '*#00'
+      byte.1 := '*#01'
+      int.0  := 0
+      int.1  := 1
+      bool.f := FALSE
+      bool.t := TRUE
+      --}}}
+      --{{{  BYTE of BOOL of INT          (tests D000 to D009)
+      check (INT (BYTE (BOOL (INT byte.0))), 0, "D000")
+      check (INT (BYTE (BOOL (INT bool.f))), 0, "D001")
+      check (INT (BYTE (BOOL (INT byte.1))), 1, "D002")
+      check (INT (BYTE (BOOL (INT bool.t))), 1, "D003")
+      --}}}
+      --{{{  BOOL of BYTE of INT          (tests D010 to D019)
+      check (INT (BOOL (BYTE (INT byte.0))), 0, "D010")
+      check (INT (BOOL (BYTE (INT bool.f))), 0, "D011")
+      check (INT (BOOL (BYTE (INT byte.1))), 1, "D012")
+      check (INT (BOOL (BYTE (INT bool.t))), 1, "D013")
+      --}}}
+      --{{{  INT  of BYTE of INT          (tests D020 to D029)
+      check (INT (BYTE (INT byte.0)), 0, "D020")
+      check (INT (BYTE (INT bool.f)), 0, "D021")
+      check (INT (BYTE (INT byte.1)), 1, "D022")
+      check (INT (BYTE (INT bool.t)), 1, "D023")
+      --}}}
+      --{{{  INT  of BOOL of INT          (tests D030 to D039)
+      check (INT (BOOL (INT byte.0)), 0, "D030")
+      check (INT (BOOL (INT bool.f)), 0, "D031")
+      check (INT (BOOL (INT byte.1)), 1, "D032")
+      check (INT (BOOL (INT bool.t)), 1, "D033")
+      --}}}
+      --{{{  INT  of BOOL of BYTE         (tests D040 to D049)
+      check (INT (BOOL (BYTE int.0 )), 0, "D040")
+      check (INT (BOOL (BYTE bool.f)), 0, "D041")
+      check (INT (BOOL (BYTE int.1 )), 1, "D042")
+      check (INT (BOOL (BYTE bool.t)), 1, "D043")
+      --}}}
+      --{{{  BYTE of BOOL of BYTE         (tests D050 to D059)
+      check (INT (BYTE (BOOL (BYTE int.0 ))), 0, "D050")
+      check (INT (BYTE (BOOL (BYTE bool.f))), 0, "D051")
+      check (INT (BYTE (BOOL (BYTE int.1 ))), 1, "D052")
+      check (INT (BYTE (BOOL (BYTE bool.t))), 1, "D053")
+      --}}}
+      --{{{  BYTE of INT  of BYTE         (tests D060 to D069)
+      check (INT (BYTE (INT  (BYTE int.0 ))), 0, "D060")
+      check (INT (BYTE (INT  (BYTE bool.f))), 0, "D061")
+      check (INT (BYTE (INT  (BYTE int.1 ))), 1, "D062")
+      check (INT (BYTE (INT  (BYTE bool.t))), 1, "D063")
+      --}}}
+      --{{{  BOOL of INT  of BYTE         (tests D070 to D079)
+      check (INT (BOOL (INT  (BYTE int.0 ))), 0, "D070")
+      check (INT (BOOL (INT  (BYTE bool.f))), 0, "D071")
+      check (INT (BOOL (INT  (BYTE int.1 ))), 1, "D072")
+      check (INT (BOOL (INT  (BYTE bool.t))), 1, "D073")
+      --}}}
+      --{{{  BOOL of INT  of BOOL         (tests D080 to D089)
+      check (INT (BOOL (INT  (BOOL int.0 ))), 0, "D080")
+      check (INT (BOOL (INT  (BOOL byte.0))), 0, "D081")
+      check (INT (BOOL (INT  (BOOL int.1 ))), 1, "D082")
+      check (INT (BOOL (INT  (BOOL byte.1))), 1, "D083")
+      --}}}
+      --{{{  BOOL of BYTE of BOOL         (tests D090 to D099)
+      check (INT (BOOL (BYTE (BOOL int.0 ))), 0, "D090")
+      check (INT (BOOL (BYTE (BOOL byte.0))), 0, "D091")
+      check (INT (BOOL (BYTE (BOOL int.1 ))), 1, "D092")
+      check (INT (BOOL (BYTE (BOOL byte.1))), 1, "D093")
+      --}}}
+      --{{{  BYTE of INT  of BOOL         (tests D100 to D109)
+      check (INT (BYTE (INT  (BOOL int.0 ))), 0, "D100")
+      check (INT (BYTE (INT  (BOOL byte.0))), 0, "D101")
+      check (INT (BYTE (INT  (BOOL int.1 ))), 1, "D102")
+      check (INT (BYTE (INT  (BOOL byte.1))), 1, "D103")
+      --}}}
+      --{{{  INT  of BYTE of BOOL         (tests D110 to D119)
+      check (INT (BYTE (BOOL int.0 )), 0, "D110")
+      check (INT (BYTE (BOOL byte.0)), 0, "D111")
+      check (INT (BYTE (BOOL int.1 )), 1, "D112")
+      check (INT (BYTE (BOOL byte.1)), 1, "D113")
+      --}}}
+  :
+  --}}}
+  #IF NOT DEFINED (COMPILER.TOCK)
+  --{{{  E11 lists of things in relation expressions  (tests D120 to D121)
+  -- This is supported by occ21, but it's not in the language spec.
+  PROC E11 ()
+    INT a, b, c, d, e, f, g, h:
+    BOOL r:
+    SEQ
+      a, b, c, d := 5, 6, 7, 100
+      e, f, g, h := 5, 2, 6, 100
+      IF
+        (a, b) = (e, f)
+          r := FALSE
+        TRUE
+          r := TRUE
+      check (INT r, 1, "D120")
+      IF
+        (a, d) = (e, h)
+          r := TRUE
+        TRUE
+          r := FALSE
+      check (INT r, 1, "D121")
+  :
+  --}}}  
+  #ENDIF
+  --}}}
+  INT key :
+  SEQ
+    init ("CG test 0", "Miscellaneous bits")
+
+    --{{{  space tests
+    --{{{  output message
+    title("Testing space allocation")
+    --}}}
+    --check (0, 1, "test")
+    S0  ()
+    S1  ()
+    S2  ()
+    S3  ()
+    S4  ()
+    S5  ()
+    S6  ()
+    S7  ()
+    S8  ()
+    S9  ()
+    S10 ()
+    S11 ()
+    S12 ()
+    S13 ()
+    S14 ()
+    S15 ()
+    S16 ()
+    S17 ()
+    S18 ()
+    S19 ()
+    --}}}
+    --{{{  expression tests
+    --{{{  output message
+    title("Testing expressions")
+    --}}}
+    E1 ()
+    E2 ()
+    E3 ()
+    E4 ()
+    E5 ()
+    E6 ()
+    #IF NOT DEFINED (COMPILER.TOCK)
+    E6b(TRUE, FALSE)
+    #ENDIF
+    E7 ()
+    E8 ()
+    E9 ()
+    E10 ()
+    --}}}
+    PROC tabs ()
+      INT	x : -- there's a tab there
+      SEQ
+        x := 1
+        check (x, 1, "TAB1")
+	check (x, 1, "TAB2") -- This line indented by a TAB
+    :
+    tabs()
+    finish ()
+:

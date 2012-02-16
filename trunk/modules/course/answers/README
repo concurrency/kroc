@@ -1,0 +1,58 @@
+
+README
+------
+
+  bugs.occ
+
+    This is the fixed bugs.occ program, as presented in ../exercises.
+
+  q1
+
+    This is the model solution to the first exercise (q1.occ)
+
+  q2
+
+    This is the model solution to the second exercise (q2.occ)
+
+  q3
+
+    This is the model solution to the third exercise (q3.occ)
+
+  q4
+
+    This is the model solution to the fourth exercise (q4.occ)
+
+  q5
+
+    This is the model solution to the fifth exercise (q5.occ)
+
+  q6
+
+    This is a model solution to the sixth exercise (q6.occ)
+
+  q6-sort
+
+    This is another solution to q6.occ, with a different sorting implementation.
+
+  q7-fred
+
+    Fred's solution to the dining philosophers animation (q7.occ)
+
+  q7-nick
+
+    Nick's solution to the dining philosophers animation (q7.occ)
+
+  q7-richard
+
+    Solution to the dining philosophers animation (q7.occ)
+    by Richard Braun, 2000, from Mid-Kent college
+
+  q7-adam
+
+    Solution to the dining philosophers animation (q7.occ)
+    by Adam Sampson, 2002
+
+
+For teachers presenting this course, source code solutions to questions 1-7
+can be obtained from Peter Welch <P.H.Welch@ukc.ac.uk>.
+

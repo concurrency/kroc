@@ -1,0 +1,7 @@
+PROC hello.world (CHAN BYTE keyboard?, screen!, error!)
+  --{{{
+  VAL []BYTE greeting IS "Hello World*c*n":
+  SEQ i = 0 FOR SIZE greeting
+    screen ! greeting[i]
+  --}}}
+:

@@ -1,0 +1,155 @@
+
+#USE "convert.lib" 
+
+-- ascii to value routines based on C library functionality
+-- Adrian Cockcroft - adrian.cockcroft@gmail.com
+-- Originally written in 1988, updated in 2005
+
+--** @module fmtout
+
+-- atod for REAL64 
+-- atof for REAL32 
+-- atoi for decimal ascii to INT 
+-- axtoi for hex ascii to INT 
+-- useful for reading values off the argv string 
+-- floating point input MUST have a point in the string with a digit each side 
+ 
+-- this reads the string starting at string[n] stopping at the next space 
+-- or the end of the string. If a value is successfully converted then 
+-- value is updated, otherwise it is left alone. Leading spaces are skipped. 
+PROC atod(REAL64 value, INT n, VAL []BYTE string) 
+  INT len: 
+  BOOL skipping, done, error: 
+  REAL64 result: 
+  SEQ 
+    len := 0 
+    done := FALSE 
+    skipping := TRUE 
+    WHILE (NOT done) AND ((n + len) < (SIZE string)) 
+      IF 
+        string[n+len] = ' ' 
+          IF 
+            skipping 
+              len := len + 1 
+            NOT skipping 
+              done := TRUE 
+        TRUE 
+          SEQ 
+            skipping := FALSE 
+            len := len + 1 
+    IF 
+      (len = 0) OR skipping 
+        SKIP 
+      TRUE 
+        SEQ 
+          STRINGTOREAL64(error, result, [string FROM n FOR len]) 
+          n := n + len 
+          IF 
+            NOT error 
+              value := result 
+            TRUE 
+              SKIP 
+: 
+ 
+PROC atoi(INT value, INT n, VAL []BYTE string) 
+  INT len: 
+  BOOL skipping, done, error: 
+  INT result: 
+  SEQ 
+    len := 0 
+    done := FALSE 
+    skipping := TRUE 
+    WHILE (NOT done) AND ((n + len) < (SIZE string)) 
+      IF 
+        string[n+len] = ' ' 
+          IF 
+            skipping 
+              len := len + 1 
+            NOT skipping 
+              done := TRUE 
+        TRUE 
+          SEQ 
+            skipping := FALSE 
+            len := len + 1 
+    IF 
+      (len = 0) OR skipping 
+        SKIP 
+      TRUE 
+        SEQ 
+          STRINGTOINT(error, result, [string FROM n FOR len]) 
+          n := n + len 
+          IF 
+            NOT error 
+              value := result 
+            TRUE 
+              SKIP 
+: 
+ 
+PROC atof(REAL32 value, INT n, VAL []BYTE string) 
+  INT len: 
+  BOOL skipping, done, error: 
+  REAL32 result: 
+  SEQ 
+    len := 0 
+    done := FALSE 
+    skipping := TRUE 
+    WHILE (NOT done) AND ((n + len) < (SIZE string)) 
+      IF 
+        string[n+len] = ' ' 
+          IF 
+            skipping 
+              len := len + 1 
+            NOT skipping 
+              done := TRUE 
+        TRUE 
+          SEQ 
+            skipping := FALSE 
+            len := len + 1 
+    IF 
+      (len = 0) OR skipping 
+        SKIP 
+      TRUE 
+        SEQ 
+          STRINGTOREAL32(error, result, [string FROM n FOR len]) 
+          n := n + len 
+          IF 
+            NOT error 
+              value := result 
+            TRUE 
+              SKIP 
+: 
+ 
+PROC axtoi(INT value, INT n, VAL []BYTE string) 
+  INT len: 
+  BOOL skipping, done, error: 
+  INT result: 
+  SEQ 
+    len := 0 
+    done := FALSE 
+    skipping := TRUE 
+    WHILE (NOT done) AND ((n + len) < (SIZE string)) 
+      IF 
+        string[n+len] = ' ' 
+          IF 
+            skipping 
+              len := len + 1 
+            NOT skipping 
+              done := TRUE 
+        TRUE 
+          SEQ 
+            skipping := FALSE 
+            len := len + 1 
+    IF 
+      (len = 0) OR skipping 
+        SKIP 
+      TRUE 
+        SEQ 
+          STRINGTOHEX(error, result, [string FROM n FOR len]) 
+          n := n + len 
+          IF 
+            NOT error 
+              value := result 
+            TRUE 
+              SKIP 
+: 
+ 

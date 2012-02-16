@@ -1,0 +1,36 @@
+#INCLUDE "occSDL.module"
+#INCLUDE "course.module"
+
+PROC init(CHAN BYTE kyb?, scr!, err!)
+  INT result:
+  --VAL INT flags IS (((((SDL.INIT.VIDEO) \/ SDL.INIT.AUDIO) \/ SDL.INIT.CDROM) \/ SDL.INIT.JOYSTICK) \/ SDL.INIT.NOPARACHUTE): 
+  VAL INT flags IS SDL.INIT.EVERYTHING:
+  SEQ
+    out.string("Initialising SDL...*c*n", 0, scr!)
+    flush(scr!)
+
+    SDL.Init(flags, result)
+
+    out.string("Initialised SDL (Status: ", 0, scr!)
+    out.int(result, 0, scr!)
+    out.string(")*c*n", 0, scr!)
+    IF
+      result <> 0
+        [100]BYTE err.str:
+        INT err.len:
+        VAL INT err.max IS 100:
+        SEQ
+          out.string("Initialisation failed!!!*c*n", 0, scr!)
+          occ.SDL.GetError(err.str, err.max, err.len)
+          out.string([err.str FOR err.len], 0, scr!)
+          out.string("*c*n", 0, scr!)
+      TRUE
+        SKIP
+    out.string("Shutting down SDL...*c*n", 0, scr!) 
+    flush(scr!)
+
+    SDL.Quit()
+
+    out.string("Shut down SDL!*c*n", 0, scr!)
+    flush(scr!)
+:

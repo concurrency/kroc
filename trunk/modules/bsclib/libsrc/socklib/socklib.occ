@@ -1,0 +1,937 @@
+--
+--	socklib.occ - socket library implementation
+--	Copyright (C) 2000 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+--{{{  module documentation
+--** Socket library.
+--
+-- The occam socket library uses the blocking system call functionality
+-- within KRoC to allow socket operations to be performed
+-- asynchronously.
+--
+-- The interfaces in this module are wrappers around the POSIX sockets
+-- interface; see [@text socket(2)] and related manual pages for more
+-- information on their semantics. The wrappers are not complete; in
+-- particular, protocols other than IPv4 TCP and UDP are not currently
+-- supported.
+--
+-- It is sometimes useful to be able to terminate a blocking call before
+-- it finishes, or to [@code ALT] on its completion. To support this,
+-- some [@code PROC]s are provided in both "normal" and "[@code
+-- ALT]able" versions. The [@code ALT]able versions have two extra
+-- channel parameters which may be used to terminate the call.
+--
+-- To terminate a blocking call, the process running in parallel with
+-- the call sends a signal down the [@code kill] channel.  It should
+-- then await a response from the [@code response] channel indicating
+-- the outcome of the kill:
+--
+-- [@item] [@code -2]: the call had completed normally before it
+--   received the kill signal
+-- [@item] [@code -1]: the call had already finished, and the kill had
+--   no effect
+-- [@item] [@code 0]: the call was terminated successfully
+-- [@item] [@code 1]: the call was in the process of terminating, and
+--   the kill had no effect
+-- [@item] [@code 2]: the call had started terminating, and the kill had
+--   no effect
+--
+-- When the call terminates normally, i.e. upon completion, a value of
+-- [@code -2] is sent down the [@code response] channel.  The process
+-- should indicate to the blocking call that it may terminate by sending
+-- a signal down the [@code kill] channel.  The net result is that
+-- however the call terminates, a value should be expected from [@code
+-- response], and a signal should be sent down [@code kill].
+--
+-- A read from a socket, with a timeout, may be implemented thus:
+--
+-- [@code
+-- CHAN OF BOOL kill:
+-- CHAN OF INT response:
+-- PAR
+--   --{{{  blocking call
+--   socket.altable.read (kill, response, sock, buffer, bytes, result)
+--   --}}}
+--   --{{{  wait for response or timeout
+--   TIMER tim:
+--   INT t:
+--   SEQ
+--     tim ? t
+--     ALT
+--       --{{{  incoming response for normal termination
+--       INT any:
+--       response ? any
+--         kill ! TRUE
+--       --}}}
+--       --{{{  timeout (after 1 second)
+--       tim ? AFTER (t PLUS 1000000)
+--         INT k.result:
+--         SEQ
+--           kill ! TRUE
+--           response ? k.result
+--           -- take action on k.result if necessary
+--       --}}}
+--   --}}}]
+--
+-- To use this library:
+--
+-- [@code
+-- #INCLUDE "sock.module"]
+--
+-- @module sock
+
+--}}}
+
+#INCLUDE "socklib.inc"
+
+--{{{  EXTERNAL declarations
+--{{{  basic socket stuff
+#PRAGMA EXTERNAL "PROC C.sl.socket (SOCKET sock) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.close (SOCKET sock) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.read (SOCKET sock, []BYTE buffer, VAL INT count, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.read (SOCKET sock, []BYTE buffer, VAL INT count, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.fullread (SOCKET sock, []BYTE buffer, VAL INT count, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.fullread (SOCKET sock, []BYTE buffer, VAL INT count, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.write (SOCKET sock, VAL []BYTE buffer, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.write.addr (SOCKET sock, VAL INT addr, size, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.write (SOCKET sock, VAL []BYTE buffer, INT result) = 3"
+#PRAGMA EXTERNAL "PROC B.sl.write.addr (SOCKET sock, VAL INT addr, size, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.fullwrite (SOCKET sock, VAL []BYTE buffer, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.fullwrite (SOCKET sock, VAL []BYTE buffer, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.fullwrite.addr (SOCKET sock, VAL INT addr, size, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.fullwrite.addr (SOCKET sock, VAL INT addr, size, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.connect (SOCKET sock, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.connect (SOCKET sock, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.listen (SOCKET sock, VAL INT backlog, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.bind (SOCKET sock, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.accept (SOCKET sock, SOCKET client, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.accept (SOCKET sock, SOCKET client, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.sendto (SOCKET sock, VAL []BYTE message, VAL INT flags, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.recvfrom (SOCKET sock, []BYTE buffer, VAL INT flags, INT result) = 0"
+#PRAGMA EXTERNAL "PROC B.sl.recvfrom (SOCKET sock, []BYTE buffer, VAL INT flags, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.sl.setsockopt (SOCKET sock, VAL INT level, VAL INT option, VAL INT value, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.getsockopt (SOCKET sock, VAL INT level, VAL INT option, INT value, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.error (SOCKET sock, []BYTE dest, INT length) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.shutdown (SOCKET sock, VAL INT how, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.getsockname (SOCKET sock, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.getpeername (SOCKET sock, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.gethostname (RESULT []BYTE name, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.sethostname (VAL []BYTE name, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.getdomainname (RESULT []BYTE name, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.setdomainname (VAL []BYTE name, RESULT INT result) = 0"
+--}}}  
+--{{{  resolution stuff
+#PRAGMA EXTERNAL "PROC C.sl.addr.of.host (VAL []BYTE hostname, INT addr, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.addrs.of.host (VAL []BYTE hostname, RESULT []INT addrs, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.naddrs.of.host (VAL []BYTE hostname, RESULT INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.host.of.addr (VAL INT addr, []BYTE hostname, INT length, INT result) = 0"
+#PRAGMA EXTERNAL "PROC C.sl.ip.of.addr (VAL INT addr, []BYTE ip.addr, INT length, INT result) = 0"
+--}}}  
+#IF DEFINED (OCCBUILD.KROC)
+--{{{  blocking call prototypes
+#PRAGMA EXTERNAL "PROC BX.sl.connect (CHAN OF INT c, SOCKET sock, INT result) = 3"
+#PRAGMA EXTERNAL "PROC BX.sl.read (CHAN OF INT c, SOCKET sock, []BYTE buffer, VAL INT count, INT result) = 3"
+#PRAGMA EXTERNAL "PROC BX.sl.fullread (CHAN OF INT c, SOCKET sock, []BYTE buffer, VAL INT count, INT result) = 3"
+#PRAGMA EXTERNAL "PROC BX.sl.write (CHAN OF INT c, SOCKET sock, VAL []BYTE buffer, INT result) = 3"
+#PRAGMA EXTERNAL "PROC BX.sl.fullwrite (CHAN OF INT c, SOCKET sock, VAL []BYTE buffer, INT result) = 3"
+#PRAGMA EXTERNAL "PROC BX.sl.accept (CHAN OF INT c, SOCKET sock, SOCKET client, INT result) = 3"
+#PRAGMA EXTERNAL "PROC BX.sl.recvfrom (CHAN OF INT c, SOCKET sock, []BYTE buffer, VAL INT flags, INT result) = 3"
+#PRAGMA EXTERNAL "PROC C.killcall (CHAN OF INT c, INT status) = 0"
+--}}}  
+#ENDIF
+--}}}  
+--{{{  plain interface
+--{{{  PROC socket.create (RESULT SOCKET sock, VAL INT domain, VAL INT type, VAL INT protocol)
+--* Create a socket.
+-- If the socket is successfully created, a valid file descriptor will
+-- be in the [@code fd] field of the returned socket, otherwise it will
+-- contain [@code -1]. Example:
+--
+-- [@code
+-- SOCKET sock:
+-- SEQ
+--   create.socket (sock, PF.INET, SOCK.STREAM, IPPROTO.TCP)
+--   IF
+--     sock[fd] = -1
+--       SEQ
+--         -- failed to create the socket
+--         STOP
+--     TRUE
+--       SKIP]
+--
+-- @param sock The returned socket
+-- @param domain Address family (one of [@ref AF])
+-- @param type Socket type (one of [@ref SOCK])
+-- @param protocol IP protocol (one of [@ref IPPROTO])
+PROC socket.create (RESULT SOCKET sock, VAL INT domain, VAL INT type, VAL INT protocol)
+  SEQ
+    sock[s.family] := domain
+    sock[s.type] := type
+    sock[s.proto] := protocol
+    C.sl.socket (sock)
+:
+--}}}  
+--{{{  PROC socket.close (SOCKET sock)
+--* Close a socket.
+-- No result is provided. The socket is shut down before being closed to
+-- cause the return of any parallel readers/writers.
+-- @param sock The socket to close
+PROC socket.close (SOCKET sock)
+  INT res:
+  SEQ
+    -- shutdown to cause reads/writes to fail (apparently doesn't work on 2.3.19 -> ?)
+    C.sl.shutdown (sock, SHUT.RDWR, res)
+    C.sl.close (sock)
+:
+--}}}  
+--{{{  PROC socket.read (SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+--* Read from a socket.
+-- Read as much data as is currently available from a socket into a
+-- buffer.
+--
+-- @param sock Socket to read from
+-- @param buffer Buffer to write data to
+-- @param count The maximum amount of data to read
+-- @param result [@code -1] on error, [@code 0] on end-of-file (remote
+--   connection closed), otherwise the number of bytes read into [@code
+--   buffer] (which may be less than [@code count])
+PROC socket.read (SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+  SEQ
+    B.sl.read (sock, buffer, count, result)
+:
+--}}}  
+--{{{  PROC socket.fullread (SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+--* Read a fixed number of bytes from a socket.
+-- Read exactly [@code count] bytes from a socket into a buffer. This is
+-- equivalent to repeatedly calling [@ref socket.read] until the
+-- requested number of bytes have been read.
+--
+-- @param sock Socket to read from
+-- @param buffer Buffer to write data to
+-- @param count The amount of data to read
+-- @param result [@code -1] on error, [@code 0] on end-of-file (remote
+--   connection closed), otherwise the number of bytes read into [@code
+--   buffer]
+PROC socket.fullread (SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+  SEQ
+    B.sl.fullread (sock, buffer, count, result)
+:
+--}}}  
+--{{{  PROC socket.write (SOCKET sock, VAL []BYTE buffer, INT result)
+--* Write to a socket.
+-- Write as much data as possible from the buffer to the socket.
+--
+-- @param sock Socket to write to
+-- @param buffer Buffer to read from
+-- @param result [@code -1] on error, otherwise the number of bytes
+--   written (which may be less than the length of [@code buffer])
+PROC socket.write (SOCKET sock, VAL []BYTE buffer, INT result)
+  SEQ
+    B.sl.write (sock, buffer, result)
+:
+--}}}  
+--{{{  PROC socket.fullwrite (SOCKET sock, VAL []BYTE buffer, INT result)
+--* Write a fixed number of bytes to a socket.
+-- Write the entirety of [@code buffer] to a socket.
+-- This is equivalent to repeatedly calling [@code socket.write] until
+-- the entire buffer has been written.
+--
+-- @param sock Socket to write to
+-- @param buffer Buffer to read from
+-- @param result [@code -1] on error, otherwise the number of bytes
+--   written
+PROC socket.fullwrite (SOCKET sock, VAL []BYTE buffer, INT result)
+  SEQ
+    B.sl.fullwrite (sock, buffer, result)
+:
+--}}}  
+--{{{  PROC socket.write.addr (SOCKET sock, VAL INT addr, size, INT result)
+--* Write data from memory to a socket (unsafe).
+-- Similar to [@ref socket.write], but reading data directly from the
+-- given memory address.
+--
+-- As this operation accesses memory directly, it is inherently unsafe,
+-- and should not be used in most occam programs.
+--
+-- @param sock Socket to write to
+-- @param addr Memory address to read from
+-- @param size Maximum number of bytes to write
+-- @param result [@code -1] on error, otherwise the number of bytes
+--   written (which may be less than [@code size])
+-- @deprecated
+PROC socket.write.addr (SOCKET sock, VAL INT addr, size, INT result)
+  SEQ
+    B.sl.write.addr (sock, addr, size, result)
+:
+--}}}  
+--{{{  PROC socket.fullwrite.addr (SOCKET sock, VAL INT addr, size, INT result)
+--* Write a fixed amount of data from memory to a socket (unsafe).
+-- Similar to [@ref socket.fullwrite], but reading data directly from
+-- the given memory address.
+--
+-- As this operation accesses memory directly, it is inherently unsafe,
+-- and should not be used in most occam programs.
+--
+-- @param sock Socket to write to
+-- @param addr Memory address to read from
+-- @param size Number of bytes to write
+-- @param result [@code -1] on error, otherwise the number of bytes
+--   written
+-- @deprecated
+PROC socket.fullwrite.addr (SOCKET sock, VAL INT addr, size, INT result)
+  SEQ
+    B.sl.fullwrite.addr (sock, addr, size, result)
+:
+--}}}
+--{{{  PROC socket.connect (SOCKET sock, INT result)
+--* Connect a socket.
+-- Attempt to make a connection to the remote port specified in [@code
+-- sock].
+--
+-- @param sock Socket to connect
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.connect (SOCKET sock, INT result)
+  SEQ
+    B.sl.connect (sock, result)
+:
+--}}}  
+--{{{  PROC socket.listen (SOCKET sock, VAL INT backlog, INT result)
+--* Make a socket listen for incoming connections.
+-- The socket should have already been bound to a host/port combination
+-- using [@ref socket.bind]. After this, [@ref socket.accept] can be
+-- used to accept incoming connections.
+--
+-- @param sock Socket to listen
+-- @param backlog The number of incoming connections that may be queued
+--   by the kernel while the program is not accepting them; most
+--   operating systems impose arbitrary limits on this, so changing it
+--   will have little effect
+-- @param result [@code -1] if an error occured, otherwise the file descriptor
+--   of the accepted socket
+PROC socket.listen (SOCKET sock, VAL INT backlog, INT result)
+  SEQ
+    C.sl.listen (sock, backlog, result)
+:
+--}}}  
+--{{{  PROC socket.bind (SOCKET sock, INT result)
+--* Bind a socket to a local address.
+-- Set the local address of a socket from the fields in [@code sock].
+-- [@code sock[local.addr]] should be a valid address for one of the
+-- host's interfaces, or the constant [@code INADDR.ANY] to specify all
+-- interfaces.
+--
+-- @param sock Socket to bind
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.bind (SOCKET sock, INT result)
+  SEQ
+    C.sl.bind (sock, result)
+:
+--}}}  
+--{{{  PROC socket.accept (SOCKET sock, SOCKET client, INT result)
+--* Accept an incoming connection on a listening socket.
+-- The socket must already have had [@ref socket.bind] and [@ref
+-- socket.listen] called on it successfully. The returned socket [@code
+-- client] is the newly-accepted connection; its fields are filled in
+-- with the details of the new connection.
+--
+-- @param sock Socket to accept a connection from
+-- @param client New socket for the accepted connection
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.accept (SOCKET sock, SOCKET client, INT result)
+  SEQ
+    B.sl.accept (sock, client, result)
+:
+--}}}  
+--{{{  PROC socket.sendto (SOCKET sock, VAL []BYTE message, VAL INT flags, INT result)
+--* Send a datagram message through a socket.
+-- This is used to send messages over connectionless protocols like UDP.
+-- The destination host and port are specified in the [@code sock]
+-- record; the host can be specified as [@ref INADDR.BROADCAST] to
+-- broadcast to all hosts on the local network, provided the [@ref
+-- SO.BROADCAST] option has been set on the socket.
+--
+-- @param sock Socket to send datagram from
+-- @param message Message to send
+-- @param flags Bitwise or of [@ref MSG] flags (normally either [@code
+--   0] or [@ref MSG.DONTROUTE])
+-- @param result [@code -1] if an error occured, otherwise the number of
+--   bytes sent
+PROC socket.sendto (SOCKET sock, VAL []BYTE message, VAL INT flags, INT result)
+  SEQ
+    C.sl.sendto (sock, message, flags, result)
+:
+--}}}  
+--{{{  PROC socket.recvfrom (SOCKET sock, []BYTE message, VAL INT flags, INT result)
+--* Receive a datagram from a socket.
+-- This is used to receive messages over connectionless protocols like
+-- UDP. The socket must have been bound to a local address. The host and
+-- port from which the message was received are filled in in the [@code
+-- sock] record.
+--
+-- @param sock Socket to receive datagram from
+-- @param message Buffer for the received datagram
+-- @param flags Bitwise or of [@ref MSG] flags (normally either [@code
+--   0] or [@ref MSG.PEEK])
+-- @param result [@code -1] if an error occurred, otherwise the number
+--   of bytes received
+PROC socket.recvfrom (SOCKET sock, []BYTE message, VAL INT flags, INT result)
+  SEQ
+    B.sl.recvfrom (sock, message, flags, result)
+:
+--}}}  
+--{{{  PROC socket.setsockopt (SOCKET sock, VAL INT level, VAL INT option, VAL INT value, INT result)
+--* Set a socket option.
+-- This only supports options with integer arguments, such as [@ref
+-- SO.BROADCAST] and [@ref SO.REUSEADDR].
+--
+-- @param sock Socket to set options upon
+-- @param level Option level (one of [@ref SOL])
+-- @param option Option to set (protocol-dependent; usually one of [@ref
+--   SO] or [@ref TCP])
+-- @param value New value for the option
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.setsockopt (SOCKET sock, VAL INT level, VAL INT option, VAL INT value, INT result)
+  SEQ
+    C.sl.setsockopt (sock, level, option, value, result)
+:
+--}}}  
+--{{{  PROC socket.getsockopt (SOCKET sock, VAL INT level, VAL INT option, INT value, INT result)
+--* Get a socket option.
+-- This only supports options with integer arguments, such as [@ref
+-- SO.BROADCAST] and [@ref SO.REUSEADDR].
+--
+-- @param sock Socket to get options from
+-- @param level Option level (one of [@ref SOL])
+-- @param option Option to get (protocol-dependent; usually one of [@ref
+--   SO] or [@ref TCP])
+-- @param value The current value of the option
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.getsockopt (SOCKET sock, VAL INT level, VAL INT option, INT value, INT result)
+  SEQ
+    C.sl.getsockopt (sock, level, option, value, result)
+:
+--}}}  
+--{{{  PROC socket.error (SOCKET sock, []BYTE buffer, INT length)
+--* Get last error as a string.
+-- This returns a human-readable string describing the last error that
+-- occurred upon [@code sock].
+--
+-- The "not connected" error ([@code ENOTCONN]) can come as a result of
+-- attempting to use a [@ref SOCKET] where the [@code fd] field is set
+-- to [@code -1].
+--
+-- @param sock Socket to get error from
+-- @param buffer Buffer to write error string into
+-- @param length The length of the string returned
+PROC socket.error (SOCKET sock, []BYTE buffer, INT length)
+  SEQ
+    C.sl.error (sock, buffer, length)
+:
+--}}}  
+--{{{  PROC socket.shutdown (SOCKET sock, VAL INT how, INT result)
+--* Close a socket in one or both directions.
+-- This is like [@ref socket.close], but allows the socket to be closed
+-- only in one direction as well.
+--
+-- @param sock Socket to close
+-- @param how Direction(s) to close the socket in (one of [@ref SHUT])
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.shutdown (SOCKET sock, VAL INT how, INT result)
+  SEQ
+    C.sl.shutdown (sock, how, result)
+:
+--}}}  
+--{{{  PROC socket.getsockname (SOCKET sock, RESULT INT result)
+--* Get the local address of a connected socket.
+-- This fills in the [@code local.addr] and [@code local.port] fields of
+-- the given [@ref SOCKET].
+--
+-- @param sock Socket to get local address of
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.getsockname (SOCKET sock, RESULT INT result)
+  SEQ
+    C.sl.getsockname (sock, result)
+:
+--}}}
+--{{{  PROC socket.getpeername (SOCKET sock, RESULT INT result)
+--* Get the remote address of a connected socket.
+-- This fills in the [@code remote.addr] and [@code remote.port] fields
+-- of the given [@ref SOCKET].
+--
+-- @param sock Socket to get remote address of
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.getpeername (SOCKET sock, RESULT INT result)
+  SEQ
+    C.sl.getpeername (sock, result)
+:
+--}}}
+--{{{  PROC socket.gethostname (RESULT []BYTE name, RESULT INT result)
+--* Get the hostname of the local machine.
+--
+-- @param name Buffer to return the name in
+-- @param result [@code -1] if an error occurred, otherwise the length
+--   of the result in [@code name]
+PROC socket.gethostname (RESULT []BYTE name, RESULT INT result)
+  SEQ
+    C.sl.gethostname (name, result)
+:
+--}}}
+--{{{  PROC socket.sethostname (VAL []BYTE name, RESULT INT result)
+--* Set the hostname of the local machine.
+-- This typically requires superuser privileges.
+--
+-- @param name The new hostname
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.sethostname (VAL []BYTE name, RESULT INT result)
+  SEQ
+    C.sl.sethostname (name, result)
+:
+--}}}
+--{{{  PROC socket.getdomainname (RESULT []BYTE name, RESULT INT result)
+--* Get the NIS domain name of the local machine.
+-- Note that this is not the DNS domain name; on the vast majority of
+-- modern machines this will be unset.
+--
+-- @param name Buffer to return the name in
+-- @param result [@code -1] if an error occurred, otherwise the length
+--   of the result in [@code name]
+PROC socket.getdomainname (RESULT []BYTE name, RESULT INT result)
+  SEQ
+    C.sl.getdomainname (name, result)
+:
+--}}}
+--{{{  PROC socket.setdomainname (VAL []BYTE name, RESULT INT result)
+--* Set the NIS domain name of the local machine.
+-- This typically requires superuser privileges.
+-- Note that this is not the DNS domain name.
+--
+-- @param name The new domain name
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.setdomainname (VAL []BYTE name, RESULT INT result)
+  SEQ
+    C.sl.setdomainname (name, result)
+:
+--}}}
+--}}}  
+#IF DEFINED (OCCBUILD.KROC)
+--{{{  kill-able versions of some of the above
+--{{{  PROC socket.altable.connect (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, INT result)
+--* [@code ALT]able version of [@ref socket.connect].
+PROC socket.altable.connect (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.connect (c, sock, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--{{{  PROC socket.altable.read (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+--* [@code ALT]able version of [@ref socket.read].
+PROC socket.altable.read (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.read (c, sock, buffer, count, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--{{{  PROC socket.altable.fullread (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+--* [@code ALT]able version of [@ref socket.fullread].
+PROC socket.altable.fullread (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE buffer, VAL INT count, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.fullread (c, sock, buffer, count, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--{{{  PROC socket.altable.write (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, VAL []BYTE buffer, INT result)
+--* [@code ALT]able version of [@ref socket.write].
+PROC socket.altable.write (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, VAL []BYTE buffer, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.write (c, sock, buffer, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--{{{  PROC socket.altable.fullwrite (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, VAL []BYTE buffer, INT result)
+--* [@code ALT]able version of [@ref socket.fullwrite].
+PROC socket.altable.fullwrite (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, VAL []BYTE buffer, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.fullwrite (c, sock, buffer, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--{{{  PROC socket.altable.accept (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, SOCKET client, INT result)
+--* [@code ALT]able version of [@ref socket.accept].
+PROC socket.altable.accept (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, SOCKET client, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.accept (c, sock, client, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--{{{  PROC socket.altable.recvfrom (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE message, VAL INT flags, INT result)
+--* [@code ALT]able version of [@ref socket.recvfrom].
+PROC socket.altable.recvfrom (CHAN OF BOOL kill, CHAN OF INT response, SOCKET sock, []BYTE message, VAL INT flags, INT result)
+  CHAN OF INT c, signal:
+  PAR
+    --{{{  make blocking call
+    INT tres:
+    SEQ
+      BX.sl.recvfrom (c, sock, message, flags, tres)
+      signal ! tres
+    --}}}  
+    --{{{  listen for terminations
+    PRI ALT
+      --{{{  result coming in
+      signal ? result
+        PAR
+          BOOL any:
+          kill ? any
+          response ! (-2)
+      --}}}  
+      --{{{  kill signal
+      BOOL any:
+      kill ? any
+        INT l.result:
+        SEQ
+          C.killcall (c, l.result)
+          signal ? result
+          response ! l.result
+      --}}}  
+    --}}}  
+:
+--}}}  
+--}}}  
+#ENDIF
+--{{{  name/address stuff
+--{{{  PROC socket.addr.of.host (VAL []BYTE hostname, INT addr, INT result)
+--* Find the address of a host given its name.
+-- This returns the address of the requested host; when there are
+-- several, it will pick an arbitrary one.
+--
+-- @param hostname Hostname to look up; this can either be a DNS-style
+--   name, or an IPv4 address in decimal dot notation
+-- @param addr The address found
+-- @param result [@code -1] if an error occured (such as the hostname
+--   not being resolvable), [@code 0] otherwise
+PROC socket.addr.of.host (VAL []BYTE hostname, INT addr, INT result)
+  SEQ
+    C.sl.addr.of.host (hostname, addr, result)
+:
+--}}}  
+--{{{  PROC socket.addrs.of.host (VAL []BYTE hostname, RESULT []INT addrs, RESULT INT result)
+--* Find all the addresses of a host given its name.
+-- Like [@ref socket.addr.of.host], but this will find all the addresses
+-- rather than just the first.
+--
+-- @param hostname Hostname to look up; this can either be a DNS-style
+--   name, or an IPv4 address in decimal dot notation
+-- @param addrs The addresses found
+-- @param result [@code -1] if an error occured (such as the hostname
+--   not being resolvable), otherwise the number of addresses returned
+PROC socket.addrs.of.host (VAL []BYTE hostname, RESULT []INT addrs, RESULT INT result)
+  SEQ
+    C.sl.addrs.of.host (hostname, addrs, result)
+:
+--}}}
+--{{{  PROC socket.naddrs.of.host (VAL []BYTE hostname, RESULT INT result)
+--* Find the number of addresses of a host given its name.
+-- This finds out how many addresses a host has, so it can be used
+-- before [@ref socket.addrs.of.host] -- but bear in mind that the
+-- resolver's response might change between the two calls, so the result
+-- of this call should only be used as a hint.
+--
+-- @param hostname Hostname to look up; this can either be a DNS-style
+--   name, or an IPv4 address in decimal dot notation
+-- @param result [@code -1] if an error occured (such as the hostname
+--   not being resolvable), otherwise the number of addresses
+PROC socket.naddrs.of.host (VAL []BYTE hostname, RESULT INT result)
+  SEQ
+    C.sl.naddrs.of.host (hostname, result)
+:
+--}}}
+--{{{  PROC socket.host.of.addr (VAL INT addr, []BYTE hostname, INT length, INT result)
+--* Find the name of a host given its address.
+-- This returns the hostname associated with the given address.
+--
+-- @param addr The address to look up
+-- @param hostname Buffer to write the hostname into
+-- @param length Length of the returned hostname
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.host.of.addr (VAL INT addr, []BYTE hostname, INT length, INT result)
+  SEQ
+    C.sl.host.of.addr (addr, hostname, length, result)
+:
+--}}}  
+--{{{  PROC socket.ip.of.addr (VAL INT addr, []BYTE ip.addr, INT length, INT result)
+--* Format an IPv4 address as a dotted-decimal string.
+--
+-- @param addr The address to format
+-- @param ip.addr Buffer to write the decimal address into
+-- @param length Length of the result
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.ip.of.addr (VAL INT addr, []BYTE ip.addr, INT length, INT result)
+  SEQ
+    C.sl.ip.of.addr (addr, ip.addr, length, result)
+:
+--}}}  
+--}}}  
+--{{{  useful stuff
+--{{{  PROC socket.create.tcp (SOCKET sock)
+--* Create a TCP socket.
+-- On failure, [@code sock[fd]] will be set to [@code -1].
+--
+-- @param sock The newly-created socket
+PROC socket.create.tcp (SOCKET sock)
+  SEQ
+    socket.create (sock, PF.INET, SOCK.STREAM, IPPROTO.TCP)
+:
+--}}}  
+--{{{  PROC socket.create.udp (SOCKET sock)
+--* Create a UDP socket.
+-- On failure, [@code sock[fd]] will be set to [@code -1].
+--
+-- @param sock The newly-created socket
+PROC socket.create.udp (SOCKET sock)
+  SEQ
+    socket.create (sock, PF.INET, SOCK.DGRAM, IPPROTO.UDP)
+:
+--}}}  
+--{{{  PROC socket.create.connect.tcp (SOCKET sock, VAL INT addr, VAL INT port, INT result)
+--* Create a TCP socket and connect it.
+--
+-- @param sock The newly-created socket
+-- @param addr IPv4 address to connect to
+-- @param port Port to connect to
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.create.connect.tcp (SOCKET sock, VAL INT addr, VAL INT port, INT result)
+  SEQ
+    socket.create (sock, PF.INET, SOCK.STREAM, IPPROTO.TCP)
+    IF
+      sock[fd] < 0
+        result := (-1)
+      TRUE
+        SEQ
+          sock[remote.addr] := addr
+          sock[remote.port] := port
+          socket.connect (sock, result)
+          IF
+            result < 0
+              socket.close (sock)
+            TRUE
+              SKIP
+:
+--}}}  
+--{{{  PROC socket.create.listen.tcp (SOCKET sock, VAL INT addr, VAL INT port, INT result)
+--* Create a TCP socket and make it listen on a local port.
+-- The socket is set to listen with a backlog of 32 connections by
+-- default; you can use [@ref socket.listen] to change the backlog if
+-- necessary.
+--
+-- @param sock The newly-created socket
+-- @param addr IPv4 address to listen on
+-- @param port Port to listen on
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.create.listen.tcp (SOCKET sock, VAL INT addr, VAL INT port, INT result)
+  SEQ
+    socket.create (sock, PF.INET, SOCK.STREAM, IPPROTO.TCP)
+    IF
+      sock[fd] < 0
+        result := (-1)
+      TRUE
+        SEQ
+          sock[local.addr] := addr
+          sock[local.port] := port
+          socket.bind (sock, result)
+          IF
+            result < 0
+              socket.close (sock)
+            TRUE
+              SEQ
+                socket.listen (sock, 32, result)
+                IF
+                  result < 0
+                    socket.close (sock)
+                  TRUE
+                    SKIP
+:
+--}}}  
+--{{{  PROC socket.create.listen.udp (SOCKET sock, VAL INT addr, VAL INT port, INT result)
+--* Create a UDP socket and bind it to a local port.
+--
+-- @param sock The newly-created socket
+-- @param addr IPv4 address to bind to
+-- @param port Port to bind to
+-- @param result [@code -1] if an error occured, [@code 0] otherwise
+PROC socket.create.listen.udp (SOCKET sock, VAL INT addr, VAL INT port, INT result)
+  SEQ
+    socket.create (sock, PF.INET, SOCK.DGRAM, IPPROTO.UDP)
+    IF
+      sock[fd] < 0
+        result := (-1)
+      TRUE
+        SEQ
+          sock[local.addr] := addr
+          sock[local.port] := port
+          socket.bind (sock, result)
+          IF
+            result < 0
+              socket.close (sock)
+            TRUE
+              SKIP
+:
+--}}}  
+--}}}  

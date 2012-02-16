@@ -1,0 +1,64 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostsp
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC hostsp version 1996"
+#INCLUDE "hostio.inc"
+--{{{  sp.close
+--* Close a stream.
+--
+-- Before closing the stream unwritten data is flushed or any unread
+-- buffered input is discarded.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param streamid the identification number of the open stream to be
+--   closed
+-- @param result equal to spr.ok if the stream closed properly;
+--   otherwise >= spr.operation.failed - refer to hostio.inc or iserver
+--   documentation for further details
+PROC sp.close (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)
+  [sp.min.packet.data.size]BYTE buffer :
+  SEQ
+    --{{{  pack the data into the buffer (5 bytes)
+    buffer [0] := sp.close.tag
+    
+    VAL [4]BYTE b.streamid RETYPES streamid :
+    [buffer FROM 1 FOR 4] := b.streamid
+    --}}}
+    --{{{  send and receive the buffer
+    ts ! INT16 sp.min.packet.data.size :: buffer
+    
+    INT16 temp.INT16 :
+    fs ? temp.INT16 :: buffer
+    --}}}
+    --{{{  copy out the result           (1 byte)
+    result := buffer [0]
+    --}}}
+:
+--}}}sp.close
+--{{{  so.close
+PROC so.close (CHAN OF SP fs, ts, VAL INT32 streamid, BYTE result)
+
+  sp.close (fs, ts, streamid, result)
+:
+--}}}so.close

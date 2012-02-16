@@ -1,0 +1,43 @@
+--#INCLUDE "../external_srv_ffi_pragmas.occ"
+--#INCLUDE "course-output.inc"
+
+PROC sleep.ms (VAL INT ms)
+  TIMER time:
+  INT now:
+  SEQ
+    time ? now
+    time ? AFTER (now PLUS ms)
+:
+
+PROC camera.test1 ()
+  PLACED [160 * 128]INT16 dma.buf1 #01000000:
+  WHILE TRUE
+    INT pixel,  r, g, b:
+    SEQ
+      pixel := INT dma.buf1[(64 * 160) + 80]
+      r := (pixel /\ #F800) >> 11
+      g := (pixel /\ #07E0) >> 5
+      b := (pixel /\ #001F)
+      
+      CHAN BYTE chars:
+      PAR
+        SEQ
+          --out.hex (pixel /\ #FFFF, 0, chars!)
+          chars ! ' '
+          --out.int (r, 0, chars!)
+          chars ! ','
+          --out.int (g, 0, chars!)
+          chars ! ','
+          --out.int (b, 0, chars!)
+          chars ! '*n'
+        INITIAL BOOL done IS FALSE:
+        WHILE NOT done
+          BYTE ch:
+          SEQ
+            chars ? ch
+            --ffi.print.char (ch)
+            done := (ch = '*n')
+
+      sleep.ms (1000)
+:
+

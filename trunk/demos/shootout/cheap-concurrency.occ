@@ -1,0 +1,30 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Adam Sampson <ats@offog.org>
+
+#INCLUDE "course.module"
+
+VAL INT N IS 15000:
+VAL INT Threads IS 500:
+
+PROC main (CHAN BYTE out!)
+  [Threads + 1]CHAN INT c:
+  PAR
+    PAR i = 0 FOR Threads
+      SEQ j = 0 FOR N
+        INT v:
+        SEQ
+          c[i] ? v
+          c[i + 1] ! (v + 1)
+    INITIAL INT sum IS 0:
+    SEQ
+      SEQ j = 0 FOR N
+        INT v:
+        SEQ
+          c[0] ! 0
+          c[Threads] ? v
+          sum := sum + v
+      out.int (sum, 0, out!)
+      out ! '*n'
+:

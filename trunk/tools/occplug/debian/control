@@ -1,0 +1,22 @@
+Source: jedit-plugin-occplug
+Section: contrib/editors
+Priority: extra
+Maintainer: Christian L. Jacobsen <christian@transterpreter.org>
+Build-Depends: debhelper (>= 5), ant, java-compiler, jedit (>= 4.2), jedit-plugin-errorlist
+Standards-Version: 3.7.2
+
+Package: jedit-plugin-occplug
+Architecture: all
+Depends: jedit (>= 4.2), jedit-plugin-errorlist, ${shlibs:Depends}, ${misc:Depends}
+Suggests: transterpreter 
+Description: occam-pi convenience plugin for jEdit
+ This is a plugin which simplifies the edit-compile-execute cycle for occam-pi
+ programs when using jEdit and the Transterpreter.
+ 
+#Package: jedit-syntax-occampi
+#Architecture: all
+#Depends: jedit (>= 4.2), ${shlibs:Depends}, ${misc:Depends}
+#Suggests: transterpreter, jedit-plugin-occplug
+#Description: occam-pi syntax highlighting file for jEdit
+# This package installs a syntax highlighting file for occam-pi for use with
+# the jEdit editor.

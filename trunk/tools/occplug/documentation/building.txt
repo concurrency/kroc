@@ -1,0 +1,48 @@
+Building occPlug
+Jon Simpson, 17/12/2005
+Updated, Christian Jacobsen 23/01/2006
+--
+
+1. Getting & Configuring jEdit
+--
+Obtain jEdit stable (version 4.2 at time of writing)
+Install jEdit & run it.
+Go to Plugins > Plugin Manager > Install
+Check 'AntFarm' for installation.
+(If this stage fails with a connection error, you may need to go into Utilities > Global Options > Plugin Manager and 'Update Mirror List')
+Obtain jedit-ant-tasks from http://community.jedit.org/?q=filestore/browse/24 and put the jar in your .jedit/jars directory under $HOME.
+(You may need to subsequently restart jEdit & check it in the 'Manage' view of Plugin Manager in jEdit)
+
+2. Getting occPlug
+--
+You can get occPlug from subversion at {REPOSITORY_URL}/occPlug/trunk.
+
+(e.g. svn co https://ssl.untyped.com/svn/repos/transterpreter.org/occPlug/trunk trunk-20050101)
+
+3. Using occPlug's sources in jEdit
+--
+Set the properties in the 'build.properties' file (this file does not exist in
+a fresh checkout of the repository, and should never be checked into the 
+repository). The file should contain the following properties:
+
+    jedit.install.dir
+    - Point this at where JEdit is installed
+      (ie /Applications/jEdit 4.2)
+    
+    jedit.user.install.dir
+    - Point this at your $HOME/.jedit/jars directory
+      (ie /Users/clj3/.jedit/jars)
+
+The file might look like this:
+jedit.install.dir=/Applications/jEdit 4.2
+jedit.user.install.dir=/Users/clj3/.jedit/jars
+	
+Choose Plugins > Ant Farm > Load Ant Build Script and load build.xml from the directory you checked OccPlug out into.
+Now you can use Plugins > Ant Farm > Ant Farm to load the Ant Farm UI.
+You'll get a window which has an item in it labeled 'OccPlug build file'.
+Double clicking 'OccPlug build file' or hitting run will compile & install occPlug into the jEdit environment (if this is the first time you've run it).
+Subsequently running the build target will reload the plugin with your changes.
+
+4. Troubleshooting
+--
+If you get errors when trying to build occPlug surrounding import errorlist.*, the path to your jEdit jars folder probably can't be found. You should check the paths you specified in build.xml.

@@ -1,0 +1,195 @@
+#INCLUDE "defBF537.inc"
+#INCLUDE "srv1.inc"
+#INCLUDE "twi_const.inc"
+
+PROC twi (CHAN BOOL req?, TWI? int, ext)
+
+  INT FUNCTION map.result (VAL INT result)
+    INT value:
+    VALOF
+      IF
+        (result /\ (INT (ANAK \/ DNAK))) <> 0
+          value := ERROR.TIMEOUT
+        (result /\ (INT (BUFRDERR \/ BUFWRERR))) <> 0
+          value := ERROR.FIFO
+        (result /\ (INT LOSTARB)) <> 0
+          value := ERROR.INTERRUPT
+        TRUE
+          value := 0
+      RESULT value
+  :
+  
+  PROTOCOL P.TWI IS INT; MOBILE []BYTE; MOBILE []BYTE:
+
+  CHAN P.TWI setup:
+  PLACE setup AT #4:
+
+  CHAN P.TWI result:
+  PLACE result AT #4:
+
+  CHAN [2]BYTE set.clock:
+  PLACE set.clock AT #4:
+
+  INITIAL [2]BYTE i.clock.div IS [ 67, 33 ]: -- 100KHz with 33% duty cycle
+  INITIAL BOOL    i.sccb      IS FALSE:
+  INITIAL INT     i.flags     IS 0:
+
+  INITIAL [2]BYTE clock.div   IS [ 67, 33 ]: -- 100KHz with 33% duty cycle
+  INITIAL BOOL    sccb        IS FALSE:
+  INITIAL INT     flags       IS 0:
+  
+  SEQ
+    set.clock ! clock.div
+
+    INITIAL BOOL internal IS FALSE:
+    INITIAL BOOL done     IS FALSE:
+    WHILE (NOT done) OR internal
+      PRI ALT
+        req ? internal
+          IF
+            internal
+              i.clock.div, i.flags, i.sccb := clock.div, flags, sccb
+            TRUE
+              internal := done
+
+        internal & int[req] ? CASE
+          disconnected
+            done, internal := TRUE, FALSE
+          
+          get.clock.div
+            int[rsp] ! clock.div; i.clock.div[0]; i.clock.div[1]
+
+          get.sccb
+            int[rsp] ! sccb; i.sccb
+
+          BYTE hi, lo:
+          set.clock.div; hi; lo
+            IF
+              (hi <= 254) AND (lo <= 254)
+                SEQ
+                  i.clock.div[0], i.clock.div[1] := hi, lo
+                  set.clock ! i.clock.div
+                  int[rsp] ! ok
+              TRUE
+                int[rsp] ! error; ERROR.INV.PARAM
+
+          set.sccb; i.sccb
+            IF
+              i.sccb
+                i.flags := i.flags \/ TWI.SCCB
+              TRUE
+                i.flags := i.flags /\ (~TWI.SCCB)
+
+          MOBILE []BYTE recv.buf:
+          BYTE address:
+          recv; address; recv.buf
+            VAL INT cfg IS (flags \/ TWI.RECV) \/ (INT address):
+            MOBILE []BYTE send.buf:
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              int[rsp] ! ret; map.result (ret); recv.buf
+
+          MOBILE []BYTE recv.buf, send.buf:
+          BYTE address:
+          recv.send; address; recv.buf; send.buf
+            VAL INT cfg IS (flags \/ TWI.RECV) \/ (INT address):
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              int[rsp] ! ret.2; map.result (ret); recv.buf; send.buf
+
+          MOBILE []BYTE send.buf:
+          BYTE address:
+          send; address; send.buf
+            VAL INT cfg IS (flags \/ TWI.SEND) \/ (INT address):
+            MOBILE []BYTE recv.buf:
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              int[rsp] ! ret; map.result (ret); send.buf
+              
+          MOBILE []BYTE recv.buf, send.buf:
+          BYTE address:
+          send.recv; address; send.buf; recv.buf
+            VAL INT cfg IS (flags \/ TWI.SEND) \/ (INT address):
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              int[rsp] ! ret.2; map.result (ret); send.buf; recv.buf
+
+        (NOT internal) & ext[req] ? CASE
+          disconnected
+            done, internal := TRUE, TRUE
+
+          get.clock.div
+            ext[rsp] ! clock.div; clock.div[0]; clock.div[1]
+
+          get.sccb
+            ext[rsp] ! sccb; sccb
+
+          BYTE hi, lo:
+          set.clock.div; hi; lo
+            IF
+              (hi <= 254) AND (lo <= 254)
+                SEQ
+                  clock.div[0], clock.div[1] := hi, lo
+                  set.clock ! clock.div
+                  ext[rsp] ! ok
+              TRUE
+                ext[rsp] ! error; ERROR.INV.PARAM
+
+          set.sccb; sccb
+            IF
+              sccb
+                flags := flags \/ TWI.SCCB
+              TRUE
+                flags := flags /\ (~TWI.SCCB)
+
+          MOBILE []BYTE recv.buf:
+          BYTE address:
+          recv; address; recv.buf
+            VAL INT cfg IS (flags \/ TWI.RECV) \/ (INT address):
+            MOBILE []BYTE send.buf:
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              ext[rsp] ! ret; map.result (ret); recv.buf
+
+          MOBILE []BYTE recv.buf, send.buf:
+          BYTE address:
+          recv.send; address; recv.buf; send.buf
+            VAL INT cfg IS (flags \/ TWI.RECV) \/ (INT address):
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              ext[rsp] ! ret.2; map.result (ret); recv.buf; send.buf
+
+          MOBILE []BYTE send.buf:
+          BYTE address:
+          send; address; send.buf
+            VAL INT cfg IS (flags \/ TWI.SEND) \/ (INT address):
+            MOBILE []BYTE recv.buf:
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              ext[rsp] ! ret; map.result (ret); send.buf
+              
+          MOBILE []BYTE recv.buf, send.buf:
+          BYTE address:
+          send.recv; address; send.buf; recv.buf
+            VAL INT cfg IS (flags \/ TWI.SEND) \/ (INT address):
+            INT ret:
+            SEQ
+              setup ! cfg; send.buf; recv.buf
+              result ? ret; recv.buf; send.buf
+              ext[rsp] ! ret.2; map.result (ret); send.buf; recv.buf
+:
+

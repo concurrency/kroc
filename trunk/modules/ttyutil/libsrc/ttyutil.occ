@@ -1,0 +1,721 @@
+--
+--	ttyutil.occ -- VT220/ANSI terminal handling library.
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+--** @module ttyutil
+
+#INCLUDE "course.module"
+#INCLUDE "ttyutil.inc"
+
+--{{{  constants
+#IF TARGET.BITS.PER.WORD = 32
+VAL INT TIMEOUT IS 300000:
+#ELSE
+VAL INT TIMEOUT IS 300:
+#ENDIF
+--}}}
+--{{{  private protocols and channel-types.
+PROTOCOL TU.MENU.IN
+  CASE
+    select; BOOL
+    key; INT
+    set.y; INT
+
+    quit
+:
+
+CHAN TYPE TU.MENU.ITEM
+  MOBILE RECORD
+    CHAN TU.MENU.IN in?:
+:
+
+
+--}}}
+
+
+--{{{  PROC ttyutil.display (CHAN TTYUTIL.DPY in?, CHAN BYTE out!)
+--* Basic display process.
+--
+-- @param in Display commands in.
+-- @param out Screen output.
+--
+PROC ttyutil.display (CHAN TTYUTIL.DPY in?, CHAN BYTE out!)
+  INITIAL BOOL running IS TRUE:
+  INITIAL INT n.follow IS 0:
+  WHILE running
+    SEQ
+      in ? CASE
+        following; n.follow
+          SKIP
+
+        clear.screen
+          SEQ
+            erase.screen (out!)
+        INT x, y, val:
+        int.xy; x; y; val
+          SEQ
+            cursor.x.y (BYTE x, BYTE y, out!)
+            out.int (val, 0, out!)
+            out ! #FF
+        INT x, y:
+        MOBILE []BYTE str:
+        string.xy; x; y; str
+          SEQ
+            cursor.x.y (BYTE x, BYTE y, out!)
+            out.string (str, 0, out!)
+            out ! #FF
+        MOBILE []BYTE col:
+        colours; col
+          SEQ
+            out.string ("*#1B[", 0, out!)
+            SEQ i = 0 FOR SIZE col
+              SEQ
+                IF
+                  i > 0
+                    out ! ';'
+                  TRUE
+                    SKIP
+                out.byte (col[i], 0, out!)
+            out.string ("m*#FF", 0, out!)
+
+        quit
+          running := FALSE
+
+      IF
+        n.follow = 0
+          out ! #FF
+        TRUE
+          n.follow := n.follow - 1
+:
+--}}}
+--{{{  PROC ttyutil.display.shared (CHAN TTYUTIL.DPY in?, SHARED CHAN BYTE out!)
+--* Display process for shared screen output.
+--
+-- @param in Display commands in.
+-- @param out Screen output.
+--
+PROC ttyutil.display.shared (CHAN TTYUTIL.DPY in?, SHARED CHAN BYTE out!)
+  CHAN BYTE l.out:
+  CHAN INT lock.kill:
+  PAR
+    --{{{  plex/lock
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      INT x:
+      SEQ
+        lock.kill ? x
+        IF
+          x = (-1)
+            running := FALSE
+          TRUE
+            CLAIM out!
+              INITIAL BOOL loop IS TRUE:
+              WHILE loop
+                ALT
+                  BYTE ch:
+                  l.out ? ch
+                    out ! ch
+                  lock.kill ? x
+                    IF
+                      x = (-1)
+                        loop, running := FALSE, FALSE
+                      TRUE
+                        loop := FALSE
+    --}}}
+    --{{{  display process
+    INITIAL BOOL locked IS FALSE:
+
+    PROC set.lock () --{{{
+      IF
+        locked
+          SKIP
+        TRUE
+          SEQ
+            lock.kill ! 0
+            locked := TRUE
+    :
+    --}}}
+    PROC set.unlock () --{{{
+      IF
+        locked
+          SEQ
+            lock.kill ! 0
+            locked := FALSE
+        TRUE
+          SKIP
+    :
+    --}}}
+
+    SEQ
+      INITIAL BOOL running IS TRUE:
+      INITIAL INT n.follow IS 0:
+      WHILE running
+        SEQ
+          in ? CASE
+            following; n.follow
+              set.lock ()
+
+            clear.screen
+              SEQ
+                set.lock ()
+                erase.screen (l.out!)
+            INT x, y, val:
+            int.xy; x; y; val
+              SEQ
+                set.lock ()
+                cursor.x.y (BYTE x, BYTE y, l.out!)
+                out.int (val, 0, l.out!)
+            INT x, y:
+            MOBILE []BYTE str:
+            string.xy; x; y; str
+              SEQ
+                set.lock ()
+                cursor.x.y (BYTE x, BYTE y, l.out!)
+                out.string (str, 0, l.out!)
+            MOBILE []BYTE col:
+            colours; col
+              SEQ
+                set.lock ()
+                out.string ("*#1B[", 0, l.out!)
+                SEQ i = 0 FOR SIZE col
+                  SEQ
+                    IF
+                      i > 0
+                        l.out ! ';'
+                      TRUE
+                        SKIP
+                    out.byte (col[i], 0, l.out!)
+                l.out ! 'm'
+
+            quit
+              running := FALSE
+
+          IF
+            n.follow = 0
+              SEQ
+                set.lock ()
+                l.out ! #FF
+                set.unlock ()
+            TRUE
+              n.follow := n.follow - 1
+
+      lock.kill ! -1
+    --}}}
+:
+--}}}
+
+--{{{  PROC ttyutil.keyhandler (CHAN BYTE in?, CHAN INT kill?, CHAN INT out!)
+--* Keyboard handler.
+--
+-- @param in Raw keyboard input in.
+-- @param kill Kill channel.
+-- @param out Processed keystrokes (see [@ref KEY]).
+--
+PROC ttyutil.keyhandler (CHAN BYTE in?, CHAN INT kill?, CHAN INT out!)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    PRI ALT
+      BYTE ch:
+      in ? ch
+        CASE ch
+          #1B
+            --{{{  could be cursor-key
+            TIMER tim:
+            INT t:
+            SEQ
+              tim ? t
+              ALT
+                tim ? AFTER (t PLUS TIMEOUT)
+                  -- timeout, escape key
+                  out ! #1B
+                in ? ch
+                  IF
+                    ch = #5B
+                      SEQ
+                        in ? ch
+                        CASE ch
+                          #44         -- left
+                            out ! KEY.LEFT
+                          #41         -- up
+                            out ! KEY.UP
+                          #43         -- right
+                            out ! KEY.RIGHT
+                          #42         -- down
+                            out ! KEY.DOWN
+                          ELSE
+                            SKIP      -- unknown escape
+                    TRUE
+                      out ! INT ch
+            --}}}
+          ELSE
+            out ! INT ch
+      INT any:
+      kill ? any
+        running := FALSE
+:
+--}}}
+
+--{{{  PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.MENU in?, SHARED CHAN TTYUTIL.DPY out!)
+--* Produces a controllable on-screen menu.
+-- Expects the first inputs to be addition of new menu items.
+--
+-- @param x X position on screen.
+-- @param y Y position on screen.
+-- @param width Width of menu.
+-- @param height Height of menu.
+-- @param border Whether or not to draw a border.
+-- @param in Menu control channel (including keys).
+-- @param out Display output channel.
+--
+PROC ttyutil.menu (VAL INT x, y, width, height, VAL BOOL border, CHAN TTYUTIL.MENU in?, SHARED CHAN TTYUTIL.DPY out!)
+
+  VAL []BYTE sel.attr IS [ANSI.BOLD, ANSI.FG.WHITE, ANSI.BG.BLUE]:
+  VAL []BYTE unsel.attr IS [ANSI.FG.WHITE, ANSI.BG.BLACK, ANSI.NORMAL]:
+  VAL []BYTE def.attr IS [ANSI.FG.WHITE, ANSI.BG.BLACK, ANSI.NORMAL]:
+
+  --{{{  PROC ttyutil.menu.itemhandler (VAL INT x, y, width, TU.MENU.ITEM? ctl, TTYUTIL.MENUITEM! link, SHARED CHAN TTYUTIL.DPY out!)
+  --* Individual menu item handler.
+  -- @private
+  PROC ttyutil.menu.itemhandler (VAL INT x, y, width, TU.MENU.ITEM? ctl, TTYUTIL.MENUITEM! link, SHARED CHAN TTYUTIL.DPY out!)
+    INITIAL INT y IS y:
+    INITIAL BOOL running IS TRUE:
+    INITIAL BOOL selected IS FALSE:
+    MOBILE []BYTE str:
+    SEQ
+      -- ask for text from handler first.
+      link[in] ! get.text
+      link[out] ? CASE text; str
+
+      IF
+        (SIZE str) > width
+          INITIAL MOBILE []BYTE tmp IS [str FOR width]:
+          SEQ
+            str := tmp
+        (SIZE str) < width
+          INITIAL MOBILE []BYTE tmp IS MOBILE [width]BYTE:
+          SEQ
+            [tmp FOR SIZE str] := str
+            SEQ i = SIZE str FOR width - (SIZE str)
+              tmp[i] := ' '
+            str := tmp
+        TRUE
+          SKIP
+
+      WHILE running
+        SEQ
+          --{{{  redraw
+          IF
+            y >= 0
+              CLAIM out!
+                SEQ
+                  -- out ! following; 3
+                  IF
+                    selected
+                      out ! colours; sel.attr
+                    TRUE
+                      out ! colours; unsel.attr
+                  out ! string.xy; x; y; CLONE str
+                  out ! colours; def.attr
+            TRUE
+              SKIP
+          --}}}
+          --{{{  wait for update or other
+          PRI ALT
+            link[out] ? CASE
+              text; str
+                SEQ
+                  IF
+                    (SIZE str) > width
+                      INITIAL MOBILE []BYTE tmp IS [str FOR width]:
+                      SEQ
+                        str := tmp
+                    (SIZE str) < width
+                      INITIAL MOBILE []BYTE tmp IS MOBILE [width]BYTE:
+                      SEQ
+                        [tmp FOR SIZE str] := str
+                        SEQ i = SIZE str FOR width - (SIZE str)
+                          tmp[i] := ' '
+                        str := tmp
+                    TRUE
+                      SKIP
+            ctl[in] ? CASE
+              select; selected
+                SKIP
+              set.y; y
+                SKIP
+              INT key:
+              key; key
+                CASE key
+                  KEY.LEFT
+                    link[in] ! key.left
+                  KEY.RIGHT
+                    link[in] ! key.right
+                  ELSE
+                    link[in] ! key.other; key
+              quit
+                SEQ
+                  running := FALSE
+                  link[in] ! quit
+          --}}}
+  :
+  --}}}
+
+  VAL INT MAX.MENU.ITEMS IS 64:
+  MOBILE []TU.MENU.ITEM! links:
+  MOBILE []BOOL valid:
+  INT n.items, top.item, sel.item:
+  INITIAL INT height IS height:
+  INITIAL INT width IS width:
+  INITIAL INT y IS y:
+  INITIAL INT x IS x:
+  SEQ
+    --{{{  initialise
+    SEQ
+      links := MOBILE [MAX.MENU.ITEMS]TU.MENU.ITEM!
+      valid := MOBILE [MAX.MENU.ITEMS]BOOL
+
+      SEQ i = 0 FOR MAX.MENU.ITEMS
+        valid[i] := FALSE
+
+      n.items := 0
+      top.item := 0
+      sel.item := -1
+
+      #PRAGMA DEFINED links
+      #PRAGMA DEFINED valid
+      SKIP
+    --}}}
+    --{{{  draw border if necessary
+    IF
+      border
+        MOBILE []BYTE sides:
+        SEQ
+          -- draw
+          sides := MOBILE [width]BYTE
+          sides[0] := '|'
+          SEQ i = 1 FOR width - 2
+            sides[i] := ' '
+          sides[width - 1] := '|'
+
+          CLAIM out!
+            SEQ
+              out ! following; 0
+              out ! colours; def.attr
+
+              SEQ i = 1 FOR height - 2
+                out ! string.xy; x; y + i; CLONE sides
+
+              sides[0] := ','
+              SEQ i = 1 FOR width - 2
+                sides[i] := '-'
+              sides[width - 1] := '.'
+              out ! string.xy; x; y; CLONE sides
+
+              sides[0] := '`'
+              sides[width - 1] := '*''
+              out ! string.xy; x; y + (height - 1); CLONE sides
+
+          -- adjust position of real menu
+          height := height - 2
+          width := width - 4
+          x := x + 2
+          y := y + 1
+      TRUE
+        SKIP
+    --}}}
+
+    FORKING
+      INITIAL BOOL running IS TRUE:
+      WHILE running
+        SEQ
+          in ? CASE
+            TTYUTIL.MENUITEM! itm:
+            add.item; itm --{{{
+              SEQ
+                IF
+                  n.items = MAX.MENU.ITEMS
+                    --{{{  can't do this, kill it
+                    SEQ
+                      itm[in] ! quit
+                    --}}}
+                  TRUE
+                    TU.MENU.ITEM? svr:
+                    INT init.y:
+                    SEQ
+                      svr, links[n.items] := MOBILE TU.MENU.ITEM
+                      valid[n.items] := TRUE
+                      init.y := (top.item + n.items)
+                      IF
+                        init.y < height
+                          init.y := init.y + y
+                        TRUE
+                          init.y := -1
+
+                      FORK ttyutil.menu.itemhandler (x, init.y, width, svr?, itm!, out!)
+
+                      IF
+                        sel.item < 0
+                          --{{{  select this one
+                          SEQ
+                            sel.item := n.items
+                            links[sel.item][in] ! select; TRUE
+                          --}}}
+                        TRUE
+                          SKIP
+
+                      n.items := n.items + 1
+            --}}}
+            TTYUTIL.MENUITEM! itm:
+            INT idx:
+            insert.item; idx; itm --{{{
+              SEQ
+                IF
+                  n.items = MAX.MENU.ITEMS
+                    --{{{  can't do this, kill it
+                    SEQ
+                      itm[in] ! quit
+                    --}}}
+                  TRUE
+                    TU.MENU.ITEM? svr:
+                    INT init.y:
+                    SEQ
+                      IF
+                        idx < 0
+                          idx := 0
+                        idx > n.items
+                          idx := n.items
+                        TRUE
+                          SKIP
+
+                      --{{{  shuffle along
+                      IF
+                        idx < n.items
+                          SEQ i = (n.items - 1) FOR (n.items - idx) STEP -1
+                            INT niy:
+                            SEQ
+                              niy := (top.item + (i + 1))
+                              IF
+                                niy < height
+                                  niy := niy + y
+                                TRUE
+                                  niy := -1
+
+                              links[i+1] := links[i]
+                              valid[i+1] := valid[i]
+
+                              links[i+1][in] ! set.y; niy
+                        TRUE
+                          SKIP
+                      --}}}
+
+                      svr, links[idx] := MOBILE TU.MENU.ITEM
+                      valid[idx] := TRUE
+                      init.y := (top.item + idx)
+                      IF
+                        init.y < height
+                          init.y := init.y + y
+                        TRUE
+                          init.y := -1
+
+                      FORK ttyutil.menu.itemhandler (x, init.y, width, svr?, itm!, out!)
+
+                      IF
+                        sel.item < 0
+                          --{{{  select this one
+                          SEQ
+                            sel.item := idx
+                            links[sel.item][in] ! select; TRUE
+                          --}}}
+                        TRUE
+                          SKIP
+
+                      n.items := n.items + 1
+            --}}}
+            quit --{{{
+              SEQ
+                SEQ i = 0 FOR n.items
+                  IF
+                    valid[i]
+                      links[i][in] ! quit
+                    TRUE
+                      SKIP
+                running := FALSE
+            --}}}
+            INT idx:
+            del.item; idx --{{{
+              IF
+                (idx < 0) OR (idx >= n.items)
+                  SKIP      -- item doesn't exist
+                NOT valid[idx]
+                  SKIP      -- invalid item
+                TRUE
+                  --{{{  remove item at idx, shuffle rest up
+                  SEQ
+                    links[idx][in] ! quit
+                    valid[idx] := FALSE
+
+                    IF
+                      sel.item = idx
+                        --{{{  unselect
+                        links[sel.item][in] ! select; FALSE
+                        --}}}
+                      TRUE
+                        SKIP
+                    --{{{  shuffle along
+                    IF
+                      idx < (n.items - 1)
+                        SEQ i = idx FOR (n.items - (idx + 1))
+                          INT niy:
+                          SEQ
+                            niy := (top.item + i)
+                            IF
+                              niy < height
+                                niy := niy + y
+                              TRUE
+                                niy := -1
+
+                            links[i] := links[i + 1]
+                            valid[i] := valid[i + 1]
+
+                            links[i][in] ! set.y; niy
+                      TRUE
+                        SKIP
+                    --}}}
+
+                    n.items := n.items - 1
+
+                    IF
+                      sel.item > idx
+                        -- will have moved down
+                        sel.item := sel.item - 1
+                      sel.item = idx
+                        -- new selection
+                        IF
+                          sel.item >= n.items
+                            SEQ
+                              sel.item := n.items - 1
+                              IF
+                                sel.item >= 0
+                                  links[sel.item][in] ! select; TRUE
+                                TRUE
+                                  SKIP
+                          TRUE
+                            SKIP
+                      TRUE
+                        SKIP
+                  --}}}
+            --}}}
+            INT key:
+            key.in; key --{{{
+              INITIAL INT old.sel.item IS sel.item:
+              SEQ
+                CASE key
+                  KEY.UP
+                    IF
+                      ((sel.item - top.item) < (height / 2)) AND (top.item > 0)
+                        --{{{  scroll menu upwards by reducing top.item
+                        INT vis:
+                        SEQ
+                          top.item := top.item - 1
+                          sel.item := sel.item - 1
+
+                          vis := n.items - top.item
+                          IF
+                            vis > height
+                              SEQ
+                                vis := height
+                                -- last item will become invisible
+                                INITIAL INT idx IS height + top.item:
+                                links[idx][in] ! set.y; -1
+                            TRUE
+                              SKIP
+
+                          -- redraw visible items
+                          SEQ i = 0 FOR vis
+                            INITIAL INT idx IS i + top.item:
+                            links[idx][in] ! set.y; y + i
+
+                          -- unselect old, reselect new
+                          links[old.sel.item][in] ! select; FALSE
+                          links[sel.item][in] ! select; TRUE
+
+                        --}}}
+                      sel.item > 0
+                        --{{{  move selection up
+                        SEQ
+                          sel.item := sel.item - 1
+
+                          -- unselect old, reselect new
+                          links[old.sel.item][in] ! select; FALSE
+                          links[sel.item][in] ! select; TRUE
+                        --}}}
+                      TRUE
+                        SKIP
+                  KEY.DOWN
+                    IF
+                      ((sel.item - top.item) >= (height / 2)) AND (((n.items - height) - top.item) > 0)
+                        --{{{  scroll menu downwards by incrementing top.item
+                        INT vis:
+                        SEQ
+                          top.item := top.item + 1
+                          sel.item := sel.item + 1
+
+                          vis := n.items - top.item
+                          IF
+                            vis > height
+                              SEQ
+                                vis := height
+                                -- top item will become invisible
+                                INITIAL INT idx IS top.item - 1:
+                                links[idx][in] ! set.y; -1
+                            TRUE
+                              SKIP
+
+                          -- redraw visible items
+                          SEQ i = 0 FOR vis
+                            INITIAL INT idx IS i + top.item:
+                            links[idx][in] ! set.y; y + i
+
+                          -- unselect old, reselect new
+                          links[old.sel.item][in] ! select; FALSE
+                          links[sel.item][in] ! select; TRUE
+
+                        --}}}
+                      sel.item < (n.items - 1)
+                        --{{{  move selection down
+                        SEQ
+                          sel.item := sel.item + 1
+
+                          -- unselect old, reselect new
+                          links[old.sel.item][in] ! select; FALSE
+                          links[sel.item][in] ! select; TRUE
+                        --}}}
+                      TRUE
+                        SKIP
+                  ELSE
+                    IF
+                      sel.item >= 0
+                        --{{{  pass to item
+                        links[sel.item][in] ! key; key
+                        --}}}
+                      TRUE
+                        SKIP
+            --}}}
+:
+--}}}
+

@@ -1,0 +1,439 @@
+---------------------------------------------------------------------------
+--
+--      bar.occ -- animated fair ALTing
+--      Copyright (C) 2000 Fred Barnes
+--	Some fixes/mods Oct 2001, Peter Welch
+--
+--      This program is free software; you can redistribute it and/or modify
+--      it under the terms of the GNU General Public License as published by
+--      the Free Software Foundation; either version 2 of the License, or
+--      (at your option) any later version.
+--
+--      This program is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--      GNU General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program; if not, write to the Free Software
+--      Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "course.module"
+#INCLUDE "time.module"
+
+--{{{  O.REQ protocol
+PROTOCOL O.REQ
+  CASE
+    movecursor; BYTE; BYTE
+    string; INT::[]BYTE
+    number; INT
+    thirsty; INT
+    happy; INT
+    sad; INT
+    blank
+    bar.blank
+    bar.happy
+    terminate
+:
+--}}}
+
+--{{{  constants
+
+VAL INT PRI.ALT IS 0:
+VAL INT FAIRISH.ALT IS 1:
+VAL INT FAIR.ALT IS 2:
+
+VAL INT num.punters IS 20:
+
+VAL INT drunk.pints IS 8:
+VAL INT limit.pints IS 16:
+
+VAL BYTE bar.left IS 1:
+VAL BYTE punter.left IS 14:
+VAL BYTE punter.top IS 2:
+VAL BYTE punter.right IS 30:
+VAL BYTE punter.bcount IS 35:
+VAL BYTE barkeep.x IS 6:
+VAL BYTE help.y IS ((BYTE num.punters) + punter.top) + 2:
+
+VAL []BYTE punter.blank IS "   ":
+VAL [][]BYTE punter.happy IS [":-)", "%-]", "X-|"]:
+VAL [][]BYTE punter.thirsty IS [":-O", "%-P", "X-|"]:
+VAL [][]BYTE punter.sad IS [":-(", "%-[", "X-|"]:
+VAL []BYTE barkeep.blank IS "    ":
+VAL []BYTE barkeep.happy IS "=:-]":
+
+--}}}
+
+--{{{  PROC draw.bar (SHARED CHAN O.REQ out!)
+PROC draw.bar (SHARED CHAN O.REQ out!)
+  VAL []BYTE bar.end IS "----------||":
+  VAL []BYTE bar.bit IS "          ||":
+  VAL []BYTE help IS "keys: 0 = normal (arbitrary) alt,  1 = fair(ish) alt,  2 = fair alt":
+  CLAIM out!
+    SEQ
+      out ! movecursor; 1; 1
+      out ! string; (SIZE bar.end)::bar.end
+      SEQ i = INT punter.top FOR INT num.punters
+        SEQ
+          out ! movecursor; 1; BYTE i
+          out ! string; (SIZE bar.bit)::bar.bit
+      out ! movecursor; 1; (BYTE num.punters) + punter.top
+      out ! string; (SIZE bar.end)::bar.end
+      out ! movecursor; 1; help.y
+      out ! string; (SIZE help)::help
+:
+--}}}
+
+--{{{  PROC punter (VAL INT me, seed,  CHAN BYTE request!, response?, SHARED CHAN O.REQ out!)
+PROC punter (VAL INT me, seed, CHAN INT request!, response?, SHARED CHAN O.REQ out!)
+  VAL INT speed.const IS milliseconds (20):
+
+  BYTE my.x, my.y:
+  INT num.pints:
+  VAL INT FINE IS 0:
+  VAL INT DRUNK IS 1:
+  VAL INT DEAD IS 2:
+  INITIAL INT state IS FINE:
+  INITIAL INT my.seed IS seed + me:
+  TIMER tim:
+  INT t:
+  SEQ
+    --{{{  Initialise
+    num.pints := 0
+    my.x := punter.right
+    my.y := (BYTE me) + punter.top
+    CLAIM out!
+      SEQ
+        out ! movecursor; punter.bcount; my.y
+        out ! number; num.pints
+    --}}}
+    --{{{  Shake up random number seed
+    SEQ i = 0 FOR 1000
+      t, my.seed := random (1<<6, my.seed)
+    --}}}
+    --{{{  Main loop
+    WHILE (state <> DEAD)
+      INT tdelay:
+      SEQ
+        --{{{  Think
+        SEQ
+          CLAIM out!
+            SEQ
+              out ! movecursor; my.x; my.y
+              out ! happy; state
+          tdelay, my.seed := random (seconds (2), my.seed)
+          tim ? t
+          tim ? AFTER (t PLUS tdelay)
+        --}}}
+        --{{{  Get thirsty and go to the bar
+        SEQ i = 0 FOR INT (punter.right - punter.left)
+          SEQ
+            CLAIM out!
+              SEQ
+                out ! movecursor; my.x; my.y
+                out ! blank
+                my.x := (my.x - 1)
+                out ! movecursor; my.x; my.y
+                out ! thirsty; state
+            tim ? t
+            tim ? AFTER (t PLUS speed.const)
+        --}}}
+        --{{{  Get unhappy and order drink
+        SEQ
+          CLAIM out!
+            SEQ
+              out ! movecursor; my.x; my.y
+              out ! sad; state
+          request ! me
+          INT any:
+          response ? any
+        --}}}
+        --{{{  Update beer count and move back to the right
+        SEQ
+          num.pints := num.pints + 1
+          IF
+            num.pints = limit.pints
+              state := DEAD
+            num.pints >= drunk.pints
+              state := DRUNK
+            TRUE
+              SKIP
+          CLAIM out!
+            SEQ
+              out ! movecursor; punter.bcount; my.y
+              out ! number; num.pints
+          SEQ i = 0 FOR INT (punter.right - punter.left)
+            SEQ
+              CLAIM out!
+                SEQ
+                  out ! movecursor; my.x; my.y
+                  out ! blank
+                  my.x := (my.x + 1)
+                  out ! movecursor; my.x; my.y
+                  out ! happy; state
+              tim ? t
+              tim ? AFTER (t PLUS speed.const)
+        --}}}
+    --}}}
+:
+--}}}
+
+--{{{  PROC punters ([]CHAN BYTE req!, rsp?, SHARED CHAN O.REQ d.chan!, CHAN BOOL kill.keyboard!, kill.bar!)
+PROC punters ([]CHAN INT req!, rsp?, SHARED CHAN O.REQ d.chan!,
+              CHAN BOOL kill.keyboard!, kill.bar!)
+
+  INT seed:                        -- random number seed
+  
+  SEQ
+
+    --{{{  Set random seed
+    TIMER tim:
+    SEQ
+      tim ? seed
+      seed := (seed >> 2) + 42
+    --}}}
+    
+    PAR i = 0 FOR num.punters
+      punter (i, seed, req[i]!, rsp[i]?, d.chan!)
+
+    kill.keyboard ! TRUE           -- kill off the others
+    kill.bar ! TRUE                -- carefully ...
+    CLAIM d.chan!
+      d.chan ! terminate             -- order!
+
+:
+--}}}
+
+--{{{  PROC display (CHAN O.REQ in?, CHAN BYTE out!)
+PROC display (CHAN O.REQ in?, CHAN BYTE out!)
+  [256]BYTE str:
+  INITIAL BOOL running IS TRUE:
+  SEQ
+    cursor.invisible (out!)
+    erase.screen (out!)
+    WHILE running
+      SEQ
+        in ? CASE
+          BYTE x, y:
+          movecursor; x; y
+            cursor.x.y (x, y, out!)
+          INT len:
+          string; len::str
+            out.string ([str FOR len], 0, out!)
+          INT n:
+          number; n
+            out.int (n, 0, out!)
+          blank
+            out.string (punter.blank, 0, out!)
+          INT s:
+          happy; s
+            SEQ
+              out.string (punter.happy[s], 0, out!)
+              out ! '*c'
+          INT s:
+          thirsty; s
+            SEQ
+              out.string (punter.thirsty[s], 0, out!)
+              out ! '*c'
+          INT s:
+          sad; s
+            SEQ
+              out.string (punter.sad[s], 0, out!)
+              out ! '*c'
+          bar.blank
+            SEQ
+              out.string (barkeep.blank, 0, out!)
+              out ! '*c'
+          bar.happy
+            SEQ
+              out.string (barkeep.happy, 0, out!)
+              out ! '*c'
+          terminate
+            SEQ
+              running := FALSE
+              cursor.x.y (1, help.y - 1, out!)
+              erase.eos (out!)
+        out ! FLUSH
+    cursor.visible (out!)
+:
+--}}}
+
+--{{{  PROC bar.brain ([]CHAN BYTE in?, CHAN BYTE out!, CHAN INT mode.change?, CHAN BOOL terminate?)
+PROC bar.brain ([]CHAN INT in?, CHAN INT out!,
+                CHAN INT mode.change?, CHAN BOOL terminate?)
+  VAL INT s IS SIZE in:
+  INITIAL INT local.alt.mode IS PRI.ALT:
+  INITIAL INT favourite IS 0:
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    CASE local.alt.mode
+      PRI.ALT
+        PRI ALT
+          BOOL any:
+          terminate ? any
+            running := FALSE
+          mode.change ? local.alt.mode
+            SKIP
+          PRI ALT i = 0 FOR s
+            INT any:
+            in[i] ? any
+              out ! any
+      FAIRISH.ALT
+        PRI ALT
+          BOOL any:
+          terminate ? any
+            running := FALSE
+          mode.change ? local.alt.mode
+            SKIP
+          PRI ALT j = favourite FOR s
+            VAL INT X IS (j \ s):
+            INT any:
+            in[X] ? any
+              SEQ
+                out ! any
+                favourite := ((favourite + 1) \ s)
+      FAIR.ALT
+        PRI ALT
+          BOOL any:
+          terminate ? any
+            running := FALSE
+          mode.change ? local.alt.mode
+            SKIP
+          PRI ALT i = favourite FOR s
+            VAL INT X IS (i \ s):
+            INT any:
+            in[X] ? any
+              SEQ
+                out ! any
+                favourite := (X + 1)
+:
+--}}}
+
+--{{{  PROC bar.body (CHAN BYTE in?, []CHAN BYTE responses!, SHARED CHAN O.REQ out!, CHAN BOOL terminate?)
+PROC bar.body (CHAN INT in?, []CHAN INT responses!, SHARED CHAN O.REQ out!,
+               CHAN BOOL terminate?)
+  VAL INT bar.delay IS milliseconds (20):
+  VAL INT bar.anim.delay IS milliseconds (20):
+
+  PROC barkeep.from.to (VAL BYTE start.y, end.y)
+    TIMER tim:
+    INT t:
+    SEQ
+      tim ? t
+      tim ? AFTER (t PLUS bar.anim.delay)
+      CLAIM out!
+        SEQ
+          out ! movecursor; barkeep.x; start.y
+          out ! bar.blank
+          out ! movecursor; barkeep.x; end.y
+          out ! bar.happy
+  :
+
+  INITIAL BYTE barkeep.y IS punter.top:
+  INITIAL BOOL running IS TRUE:
+  INITIAL BOOL serving IS FALSE:
+  TIMER tim:
+  INT wake.up:
+  SEQ
+    CLAIM out!
+      SEQ
+        out ! movecursor; barkeep.x; barkeep.y
+        out ! bar.happy
+    tim ? wake.up
+    wake.up := wake.up PLUS bar.delay
+    WHILE running
+      PRI ALT
+        BOOL any:
+        terminate ? any
+          running := FALSE
+        (NOT serving) & tim ? AFTER wake.up
+          serving := TRUE
+        INT n:
+        serving & in ? n
+          BYTE new.y:
+          SEQ
+            new.y := ((BYTE n) + punter.top)
+            IF
+              new.y < barkeep.y
+                SEQ i = 0 FOR INT (barkeep.y - new.y)
+                  VAL BYTE bi IS BYTE i:
+                  barkeep.from.to (barkeep.y - bi,
+                                   barkeep.y - (bi + 1))
+              new.y > barkeep.y
+                SEQ i = INT barkeep.y FOR INT (new.y - barkeep.y)
+                  VAL BYTE bi IS BYTE i:
+                  barkeep.from.to (bi, bi + 1)
+              TRUE
+                SKIP
+            barkeep.y := new.y
+            responses[n] ! 0
+            serving := FALSE
+            tim ? wake.up
+            wake.up := wake.up PLUS bar.delay
+:
+--}}}
+
+--{{{  PROC bar.tender ([]CHAN BYTE req?, rsp!, CHAN INT mode.change?, SHARED CHAN O.REQ d.chan!, CHAN BOOL kill?)
+PROC bar.tender ([]CHAN INT req?, rsp!, CHAN INT mode.change?,
+                 SHARED CHAN O.REQ d.chan!, CHAN BOOL kill?)
+  CHAN INT spinal.chord:
+  CHAN BOOL kill.brain, kill.body:
+  PAR
+    --{{{  terminator
+    BOOL any:
+    SEQ
+      kill ? any
+      kill.brain ! any    -- order is
+      kill.body ! any     -- important
+    --}}}
+    bar.brain (req?, spinal.chord!, mode.change?, kill.brain?)
+    bar.body (spinal.chord?, rsp!, d.chan!, kill.body?)
+:
+--}}}
+
+--{{{  PROC keyboard.reader (CHAN BYTE in?, CHAN INT out!, CHAN BOOL terminate?)
+PROC keyboard.reader (CHAN BYTE in?, CHAN INT out!, CHAN BOOL terminate?)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    PRI ALT
+      BOOL any:
+      terminate ? any
+        running := FALSE
+      BYTE ch:
+      in ? ch
+        IF
+          (ch >= '0') AND (ch <= '2')
+            CASE ch - '0'
+              0
+                out ! PRI.ALT
+              1
+                out ! FAIRISH.ALT
+              2
+                out ! FAIR.ALT
+          TRUE
+            SKIP
+:
+--}}}
+
+--{{{  PROC bar (CHAN BYTE keyboard?, screen!, error!)
+PROC bar (CHAN BYTE keyboard?, screen!, error!)
+
+  SHARED ! CHAN O.REQ d.chan:
+  [num.punters]CHAN INT req:
+  [num.punters]CHAN INT rsp:
+  CHAN INT mode.change:
+  CHAN BOOL kill.keyboard:
+  CHAN BOOL kill.bar:
+  PAR
+    display (d.chan?, screen!)
+    SEQ
+      draw.bar (d.chan!)
+      PAR
+        punters (req!, rsp?, d.chan!, kill.keyboard!, kill.bar!)
+        keyboard.reader (keyboard?, mode.change!, kill.keyboard?)
+        bar.tender (req?, rsp!, mode.change?, d.chan!, kill.bar?)
+:
+--}}}
+

@@ -1,0 +1,87 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Adam Sampson <ats@offog.org>
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+
+VAL INT N IS 3000:
+VAL INT Width IS N:
+VAL INT Height IS N:
+VAL INT Iter IS 50:
+VAL REAL64 Limit IS 2.0:
+
+PROC real.main (CHAN BYTE out!)
+  SEQ
+    out.string ("P4*n", 0, out!)
+    out.int (Width, 0, out!)
+    out ! ' '
+    out.int (Height, 0, out!)
+    out ! '*n'
+    VAL REAL64 WidthR IS REAL64 ROUND Width:
+    VAL REAL64 HeightR IS REAL64 ROUND Height:
+    SEQ y = 0 FOR Height
+      INITIAL BYTE b IS 0:
+      INITIAL INT bit.num IS 0:
+      SEQ x = 0 FOR Width
+        REAL64 Zr, Zi, Cr, Ci, Tr, Ti:
+        INITIAL BYTE v IS 1:
+        SEQ
+          Zr, Zi := 0.0, 0.0
+          Cr := ((2.0 * (REAL64 ROUND x)) / WidthR) - 1.5
+          Ci := ((2.0 * (REAL64 ROUND y)) / HeightR) - 1.0
+          INITIAL INT i IS 0:
+          WHILE i < Iter
+            SEQ
+              Tr := ((Zr * Zr) - (Zi * Zi)) + Cr
+              Ti := (2.0 * (Zr * Zi)) + Ci
+              Zr, Zi := Tr, Ti
+              IF
+                ((Zr * Zr) + (Zi * Zi)) > (Limit * Limit)
+                  SEQ
+                    i := Iter
+                    v := 0
+                TRUE
+                  SKIP
+              i := i + 1
+          b := (b << 1) \/ v
+          bit.num := bit.num + 1
+          IF
+            bit.num = 8
+              SEQ
+                out ! b
+                b := 0
+                bit.num := 0
+            x = (Width - 1)
+              SEQ
+                b := b << (8 - (Width \ 8))
+                out ! b
+                b := 0
+            TRUE
+              SKIP
+:
+
+-- Needed because the TLP channels aren't 8-bit safe at the moment...
+PROC write.8bit (CHAN BYTE in?, CHAN BOOL kill?)
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    ALT
+      BYTE b:
+      in ? b
+        INT dummy:
+        file.write (1, [b], dummy)
+      BOOL b:
+      kill ? b
+        running := FALSE
+:
+
+PROC main (CHAN BYTE out!)
+  CHAN BYTE out8:
+  CHAN BOOL kill:
+  PAR
+    SEQ
+      real.main (out8!)
+      kill ! TRUE
+    write.8bit (out8?, kill?)
+:

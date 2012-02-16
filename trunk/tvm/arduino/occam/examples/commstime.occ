@@ -1,0 +1,291 @@
+#INCLUDE "wiring.module"
+
+-- Various stuff taken from the course library that's used by these testcases.
+-- This has all been translated back to occam2 for now.
+
+VAL BYTE NULL IS 0:          --* ASCII NUL
+VAL BYTE BELL IS 7:          --* ASCII BEL - terminal bell
+VAL BYTE BACK IS 8:          --* ASCII BS - backspace key
+VAL BYTE ESCAPE IS 27:       --* ASCII ESC - escape key
+VAL BYTE DELETE IS 127:      --* ASCII DEL - delete key
+VAL BYTE FLUSH IS 255:       --* Flush output buffer
+VAL BYTE END.OF.FILE IS 255: --* End of file
+
+--{{{  PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN OF BYTE out)
+--* Write a character repeatedly to a channel.
+-- This outputs [@code ch] down the channel [@code out] [@code n] times. If
+-- [@code n] is negative, nothing happens.
+-- @param ch Character
+-- @param n Number of times to output (negative values result in no output)
+-- @param out Channel to write to
+PROC out.repeat (VAL BYTE ch, VAL INT n, CHAN OF BYTE out)
+  --{{{  
+  IF
+    n > 0
+      SEQ i = 0 FOR n
+        out ! ch
+    TRUE
+      SKIP
+  --}}}
+:
+--}}}
+--{{{  PROC out.string (VAL []BYTE s, VAL INT field, CHAN OF BYTE out)
+--* Write a string to a channel.
+-- This outputs [@code s] in a fieldwidth [@code field] down [@code out].
+-- @param s String
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.string (VAL []BYTE s, VAL INT field, CHAN OF BYTE out)
+  --{{{  
+  VAL INT length IS SIZE s:
+  SEQ
+    out.repeat (' ', field - length, out)
+    SEQ i = 0 FOR length
+      out ! s[i]
+  --}}}
+:
+--}}}
+--{{{  PROC out.byte (VAL BYTE b, VAL INT field, CHAN OF BYTE out)
+--* Write a byte in decimal to a channel.
+-- This outputs [@code b] in a fieldwidth [@code field] down [@code out].  If
+-- the fieldwidth is too wide for [@code b], it right-justifies [@code b] with
+-- spaces on the left.  If the field is not wide enough, it prints the [@code
+-- b] anyway.  These rules for fieldwidth are the same as those used by the
+-- Pascal [@text write] procedure.
+-- @param b Byte
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.byte (VAL BYTE b, VAL INT field, CHAN OF BYTE out)
+  --{{{  
+  VAL BYTE hundreds IS b/100:
+  VAL BYTE rest IS b\100:
+  VAL BYTE tens IS rest/10:
+  VAL BYTE ones IS rest\10:
+  IF
+    hundreds > 0
+      SEQ
+        out.repeat (' ', field - 3, out)
+        out ! hundreds + '0'
+        out ! tens + '0'
+        out ! ones + '0'
+    tens > 0
+      SEQ
+        out.repeat (' ', field - 2, out)
+        out ! tens + '0'
+        out ! ones + '0'
+    TRUE
+      SEQ
+        out.repeat (' ', field - 1, out)
+        out ! ones + '0'
+  --}}}
+:
+--}}}
+--{{{  PROC out.int (VAL INT n, VAL INT field, CHAN OF BYTE out)
+--* Write an integer in decimal to a channel.
+-- This outputs [@code n] in a fieldwidth [@code field] down [@code out].  The
+-- rules for fieldwidth are as [@ref out.byte].
+-- @param n Integer
+-- @param field Field width to right-justify in
+-- @param out Channel to write to
+PROC out.int (VAL INT n, VAL INT field, CHAN OF BYTE out)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      out.string ("-2147483648", field, out)
+      --}}}
+    n = 0
+      --{{{  zero
+      SEQ
+        IF
+          1 < field
+            out.repeat (' ', field - 1, out)
+          TRUE
+            SKIP
+        out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n > 0
+            out.repeat (' ', field - i, out)
+          TRUE
+            SEQ
+              out.repeat (' ', (field - 1) - i, out)
+              out ! '-'
+        --}}}
+        --{{{  output
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+--}}}
+
+-- A standalone occam 2 version of the stock commstime benchmark.
+
+--{{{  PROC id (CHAN OF INT in, out)
+PROC id (CHAN OF INT in, out)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out ! n
+:
+--}}}
+
+--{{{  PROC prefix (VAL INT n, CHAN OF INT in, out)
+PROC prefix (VAL INT n, CHAN OF INT in, out)
+  SEQ
+    out ! n
+    id (in, out)
+:
+--}}}
+
+--{{{  PROC delta (CHAN OF INT in, out.0, out.1)
+PROC delta (CHAN OF INT in, out.0, out.1)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      PAR
+        out.0 ! n
+        out.1 ! n
+:
+--}}}
+
+--{{{  PROC seq.delta (CHAN OF INT in, out.0, out.1)
+PROC seq.delta (CHAN OF INT in, out.0, out.1)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out.0 ! n
+      out.1 ! n
+:
+--}}}
+
+--{{{  PROC succ (CHAN OF INT in, out)
+PROC succ (CHAN OF INT in, out)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out ! n PLUS 1
+:
+--}}}
+
+--{{{  PROC consume (VAL INT n.loops, CHAN OF INT in, CHAN OF BYTE out)
+PROC consume (VAL INT n.loops, CHAN OF INT in, CHAN OF BYTE out)
+  TIMER tim:
+  INT t0, t1:
+  INT value:
+  SEQ
+    --{{{  warm-up loop
+    VAL INT warm.up IS 16:
+    SEQ i = 0 FOR warm.up
+      in ? value
+    --}}}
+    WHILE TRUE
+      SEQ
+        tim ? t0
+        --{{{  bench-mark loop
+        SEQ i = 0 FOR n.loops
+          in ? value
+        --}}}
+        tim ? t1
+        --{{{  report
+        VAL INT millisecs IS t1 MINUS t0:
+        VAL INT32 microsecs IS (INT32 millisecs) * 1000:
+        SEQ
+          out.string ("Last value received = ", 0, out)
+          out.int (value, 0, out)
+          out.string ("*c*n", 0, out)
+          out.string ("Time = ", 0, out)
+          out.int (millisecs, 0, out)
+          out.string (" ms*c*n", 0, out)
+          out.string ("Time per loop = ", 0, out)
+          out.int (INT (microsecs / (INT32 n.loops)), 0, out)
+          out.string (" us*c*n", 0, out)
+          out.string ("Context switch = ", 0, out)
+          out.int (INT ((microsecs / (INT32 n.loops)) / 4), 0, out)
+          out.string (" us*c*n*n", 0, out)
+        --}}}
+:
+--}}}
+
+--{{{  PROC comms.time (CHAN OF BYTE keyboard, screen, error)
+PROC comms.time (CHAN OF BYTE screen)
+
+  BOOL use.seq.delta:
+
+  SEQ
+
+    --{{{  announce
+    SEQ
+      out.string ("*c*nCommstime in occam ...*c*n*n", 0, screen)
+      out.string ("Using the SEQ-output version of the delta process*c*n", 0, screen)
+      out.string ("yields a more accurate measure of context-switch time*c*n*n", 0, screen)
+      out.string ("Using the PAR-output version carries an extra overhead*c*n", 0, screen)
+      out.string ("of one process startup/shutdown per Commstime loop*c*n*n", 0, screen)
+      out.string ("By comparing **loop** times between the SEQ and PAR versions,*c*n", 0, screen)
+      out.string ("the process startup/shutdown overhead may be deduced*c*n*n", 0, screen)
+    --}}}
+
+    --ask.bool ("Sequential delta ", use.seq.delta, keyboard, screen)
+    use.seq.delta := TRUE
+    out.string ("*nCommstime starting ...*c*n*n", 0, screen)
+
+    CHAN OF INT a, b, c, d:
+    PAR
+      prefix (0, b, a)
+      IF
+        use.seq.delta
+          seq.delta (a, c, d)    -- the one defined above
+        TRUE
+          delta (a, c, d)        -- the one that does a parallel output
+      succ (c, b)
+      consume (10000, d, screen)
+
+:
+--}}}
+
+--{{{  PROC main
+PROC main ()
+  SEQ
+    CHAN BYTE c:
+    PAR
+      comms.time (c!)
+      --{{{  write characters to serial port
+      WHILE TRUE
+        BYTE b:
+        SEQ
+          c ? b
+          serialWrite ([b])
+      --}}}
+:
+--}}}

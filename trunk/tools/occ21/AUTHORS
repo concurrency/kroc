@@ -1,0 +1,31 @@
+Copyright owners:
+
+  INMOS Ltd.
+  SGS-Thomson Microelectronics Ltd.
+
+
+Bug fixes
+KROC Output
+Native DEC Alpha Output
+Language Enhancements
+
+  Michael Poole <M.D.Poole@ukc.ac.uk>
+
+
+User Defined Operators
+INITIAL declarations
+
+  Jim Moores <jm40@ukc.ac.uk>
+
+
+Portability and Configuration
+
+  Dave Beckett <D.J.Beckett@ukc.ac.uk>
+
+
+MOBILE data types
+STEP in replicators
+Loads of other stuff
+
+  Fred Barnes <frmb2@ukc.ac.uk>
+

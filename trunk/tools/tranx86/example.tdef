@@ -1,0 +1,18 @@
+# example.tdef
+#
+# experimenting with that transputer-definition stuff..
+#
+
+&ix_resched:
+	.NEWREG %0
+	.NEWREG %1
+
+	move	$20; %0
+	move	$0; %1
+
+	add	%0, %1; %1
+
+	move	%Wptr; %0
+	move	%0; W_PRIORITY(%Wptr)
+
+

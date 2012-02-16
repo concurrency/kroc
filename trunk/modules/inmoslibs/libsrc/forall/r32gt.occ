@@ -1,0 +1,189 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT (DEFINED(COMPILER.TOCK)))
+
+#IF DEFINED(TARGET.HAS.FPU)
+
+--{{{  #options and #comments
+#IF (FILESTACK = 0)
+#OPTION "E W V"  -- no compiler libs, full ASMs, no vector space
+#COMMENT "T8 compiler library, V1.3 15/06/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
+--}}}
+
+#PRAGMA TRANSLATE REAL32GT "REAL32GT%O"
+
+--{{{  
+BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- V1.1, 1-Aug-89
+  -- Port to new compiler ( oc ); V1.2, 12-Feb-90 SRH
+  -- Bug fix: floating point unit's error flag was not being left
+  -- in its default state, so added FPUCLRERR; V1.3, 15-Jun-90 SRH
+  --}}}
+
+  BOOL result:
+  VALOF
+    ASM
+      LD ADDRESSOF X
+      FPLDNLSN
+      LD ADDRESSOF Y
+      FPLDNLSN
+      FPGT
+      ST result
+    RESULT result
+:
+--}}}
+
+#ELSE -- !TARGET.HAS.FPU
+
+--{{{  #options and #comments
+#IF (FILESTACK = 0)
+#OPTION "W V"  -- full ASMs, no vector space
+#COMMENT "TA compiler library, V1.4 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32GT "REAL32GT%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87) -- DES
+  -- New faster version (11may87) DES for T4
+  -- V1.1, 21-Feb-89
+  -- V1.2, 24-Feb-89
+  -- Port to new compiler (oc): ASM replaces GUY; V1.3, 7-Apr-90 SRH
+  -- V1.4 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL greater.than.if.ordered :
+  VALOF
+    ASM
+      LDL  X
+      LDL  X
+      MINT
+      AND
+      CJ  :Xpos
+      MINT       -- mint,X
+      REV        -- X,mint
+      DIFF       -- mint - X
+      LDC 0      -- 0, mint - X
+      :Xpos      -- 0, new X
+      ADD        -- eat the 0
+      LDL  Y     -- Y,X
+      MINT       -- Mint,Y,X
+      AND        -- cond,X
+      LDL  Y     -- dont overflow stack !
+      REV        -- cond,Y,X
+      CJ  :Ypos
+      MINT       -- mint,Y,X
+      REV        -- Y,mint,X
+      DIFF       -- mint - Y, X
+      LDC 0      -- 0, mint - Y,X
+      :Ypos      -- 0, new Y, X
+      ADD        -- eat the 0
+      GT         -- new Y, new X
+      ST greater.than.if.ordered
+    RESULT (greater.than.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF -- !TARGET.HAS.FPU
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#IF (FILESTACK = 0)
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.2 27/11/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#ENDIF
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32GT "REAL32GT%O"
+--}}}
+
+--{{{  
+BOOL FUNCTION REAL32GT (VAL REAL32 X, Y)
+
+  --{{{  history
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+  -- V1.1 21/02/89
+  -- V1.2 27-Nov-92 SRH; bug fix TS/1962 to change behaviour when one or
+  -- both arguments is NaN - NaNs should always compare FALSE.
+  --}}}
+
+  BOOL greater.than.if.ordered :
+  VALOF
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL low IS 0 :
+    VAL high IS 1 :
+    INT MagX :
+    INT MagY :
+    SEQ
+      MagX := X [high] /\ #7FFF
+      MagY := Y [high] /\ #7FFF
+      IF
+        --{{{  X and Y have different signs
+        (X [high] >< Y [high]) < 0       -- Still infinities but no NaNs
+          --Signs are different hence test Y < 0 and not both 0
+          greater.than.if.ordered := (Y [high] < 0) AND
+                  ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) <> 0)
+        --}}}
+        --{{{  X and Y both negative
+        X [high] < 0
+          SEQ
+            IF
+              MagY = MagX
+                --This is the equivalent of an unsigned comparison
+                greater.than.if.ordered := (Y [low] >< #8000) > (X [low] >< #8000)
+              TRUE
+                greater.than.if.ordered := (MagY > MagX)
+        --}}}
+        --{{{  TRUE - X and Y both positive
+        TRUE
+          SEQ
+            IF
+              MagX = MagY
+                --This is the equivalent of an unsigned comparison
+                greater.than.if.ordered := (X [low] >< #8000) > (Y [low] >< #8000)
+              TRUE
+                greater.than.if.ordered := (MagX > MagY)
+        --}}}
+    RESULT (greater.than.if.ordered AND ORDERED(X, Y))
+:
+--}}}
+
+#ENDIF

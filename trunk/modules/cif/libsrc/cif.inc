@@ -1,0 +1,29 @@
+--
+--	cif.inc: occam support for C interface to the scheduler
+--	Copyright (C) 2007  University of Kent
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** C interface to the scheduler.
+--
+-- This module should be used by occam programs that want to make CIF calls
+-- into C code. It doesn't (currently) provide any definitions itself, but
+-- using this module will make sure that CIF support is enabled in your occam
+-- implementation.
+--
+-- @module cif
+
+-- ... and currently, nothing needs to be done.

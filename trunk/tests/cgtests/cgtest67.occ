@@ -1,0 +1,161 @@
+-- version control marker $Id: cgtest67.occ,v 1.3 1995/10/11 10:21:29 djb1 Exp $
+
+PROC cgtest67 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  SEQ
+    init ("CG test 67", "Misc, including COMPLEX")
+    --{{{  COMPLEX example
+    PROC COMPLEX.example()
+      SEQ
+        title("Implementations of COMPLEX type")
+        --{{{  INT RECORD
+        VAL type.str IS "INT RECORD" :
+        DATA TYPE COMP.BASE IS INT :
+        DATA TYPE COMPLEX
+          RECORD
+            COMP.BASE re, im :
+        :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+        --{{{  INT ARRAY
+        VAL type.str IS "INT ARRAY" :
+        DATA TYPE COMP.BASE IS INT :
+        DATA TYPE COMPLEX IS [2]COMP.BASE :
+        VAL re IS 0 :
+        VAL im IS 1 :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+    
+        --{{{  INT16 RECORD
+        VAL type.str IS "INT16 RECORD" :
+        DATA TYPE COMP.BASE IS INT16 :
+        DATA TYPE COMPLEX
+          RECORD
+            COMP.BASE re, im :
+        :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT16(INT16 x, INT16 y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+        --{{{  INT16 ARRAY
+        VAL type.str IS "INT16 ARRAY" :
+        DATA TYPE COMP.BASE IS INT16 :
+        DATA TYPE COMPLEX IS [2]COMP.BASE :
+        VAL re IS 0 :
+        VAL im IS 1 :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT16(INT16 x, INT16 y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+    
+        --{{{  INT32 RECORD
+        VAL type.str IS "INT32 RECORD" :
+        DATA TYPE COMP.BASE IS INT32 :
+        DATA TYPE COMPLEX
+          RECORD
+            COMP.BASE re, im :
+        :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT32(INT32 x, INT32 y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+        --{{{  INT32 ARRAY
+        VAL type.str IS "INT32 ARRAY" :
+        DATA TYPE COMP.BASE IS INT32 :
+        DATA TYPE COMPLEX IS [2]COMP.BASE :
+        VAL re IS 0 :
+        VAL im IS 1 :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT32(INT32 x, INT32 y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+    
+        --{{{  INT64 RECORD
+        VAL type.str IS "INT64 RECORD" :
+        DATA TYPE COMP.BASE IS INT64 :
+        DATA TYPE COMPLEX
+          RECORD
+            COMP.BASE re, im :
+        :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT64(INT64 x, INT64 y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+        --{{{  INT64 ARRAY
+        VAL type.str IS "INT64 ARRAY" :
+        DATA TYPE COMP.BASE IS INT64 :
+        DATA TYPE COMPLEX IS [2]COMP.BASE :
+        VAL re IS 0 :
+        VAL im IS 1 :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.INT64(INT64 x, INT64 y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+    
+        --{{{  REAL32 RECORD
+        VAL type.str IS "REAL32 RECORD" :
+        DATA TYPE COMP.BASE IS REAL32 :
+        DATA TYPE COMPLEX
+          RECORD
+            COMP.BASE re, im :
+        :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.REAL32(REAL32 ROUND x, REAL32 ROUND y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+        --{{{  REAL32 ARRAY
+        VAL type.str IS "REAL32 ARRAY" :
+        DATA TYPE COMP.BASE IS REAL32 :
+        DATA TYPE COMPLEX IS [2]COMP.BASE :
+        VAL re IS 0 :
+        VAL im IS 1 :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.REAL32(REAL32 ROUND x, REAL32 ROUND y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+    
+        --{{{  REAL64 RECORD
+        VAL type.str IS "REAL64 RECORD" :
+        DATA TYPE COMP.BASE IS REAL64 :
+        DATA TYPE COMPLEX
+          RECORD
+            COMP.BASE re, im :
+        :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.REAL64(REAL64 ROUND x, REAL64 ROUND y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+        --{{{  REAL64 ARRAY
+        VAL type.str IS "REAL64 ARRAY" :
+        DATA TYPE COMP.BASE IS REAL64 :
+        DATA TYPE COMPLEX IS [2]COMP.BASE :
+        VAL re IS 0 :
+        VAL im IS 1 :
+        PROC check.COMP.BASE(VAL COMP.BASE x, y, VAL []BYTE msg)
+          check.REAL64(REAL64 ROUND x, REAL64 ROUND y, msg)
+        :
+        --}}}
+        #INCLUDE "cg67cplx.occ"
+    :
+    COMPLEX.example()
+    --}}}
+
+    finish ()
+:

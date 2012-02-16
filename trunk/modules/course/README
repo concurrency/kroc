@@ -1,0 +1,37 @@
+
+This directory contains sub-directories:
+
+  examples/
+
+    Sources of course example programs.  Take your own copies and
+    try compiling and running them.  See README in the directory.
+
+  exercises/
+
+    Stub sources of course exercises.  Take your own copies and extend
+    them into your answers.
+
+  libsrc/
+
+    Sources of the course libraries.  Don't take your own copies!
+    You may find it useful to browse through and take hard copy
+    of some of the source code files (those ending .occ or .inc).
+
+  etc/
+
+    Additional files that may be used in the course.
+    See README in the directory.
+
+  answers/
+
+    Model answers to exercises (ETC sources).
+
+  news/
+
+    News items posted to ukc.cs.cs2/3 about this course.
+    [NOTE: these postings are, of course, specific to one occurrence
+    of this course at UKC.  They are left in this public release but
+    will need tailoring for a local audience.]
+
+
+Peter Welch

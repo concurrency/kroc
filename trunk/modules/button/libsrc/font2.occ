@@ -1,0 +1,67 @@
+--** @module button
+
+--#INCLUDE "occOPENGL.inc"
+#INCLUDE "nine_by_fifteen.inc"
+
+-- A small helper library for rendering text to an OpenGL context for occam.
+-- It requires that a font file is included for use at compile time, like nine_by_fifteen.inc in the 
+-- source of this library.
+-- @maintainer Damian Dimmich <djd20@kent.ac.uk>
+
+--* This initialises the font included and must be called before any of the other PROC's can be used.
+-- @param fontOffset will contain a value that is needed when calling the other PROC's.  It should be
+-- passed uninitialised.
+PROC makeRasterFont(RESULT INT fontOffset)
+  INITIAL INT n IS 255:
+  INT j:
+  SEQ
+    glPixelStorei(GL.UNPACK.ALIGNMENT, 1)
+    glGenLists (fontOffset, n)
+    j := 0
+    SEQ i = 0 FOR SIZE nine.by.fifteen
+      SEQ
+        glNewList((fontOffset + j), GL.COMPILE)
+        glBitmap(8, 13, 0.0, 2.0, 10.0, 0.0, nine.by.fifteen[i])
+        glEndList()
+        j := j + 1
+:
+
+--* Print a string in an OpenGL context. 
+-- Once makeRasterFont has run, you can use this to print strings in an OpenGL context.
+-- Generally you will want to set the location you want to render the font by making a call
+-- to glRasterPos2i or similar.
+-- @param s the string you want to render
+-- @param fontOffset the value that you recieved from calling makeRasterFont
+PROC printString(VAL []BYTE s, VAL INT fontOffset)
+  MOBILE []INT tmp:
+  SEQ
+    tmp := MOBILE [SIZE s]INT
+    SEQ i = 0 FOR SIZE s
+      tmp[i] := (INT (s[i]))
+    glPushAttrib (GL.LIST.BIT)
+    glListBase(fontOffset)
+    glCallLists(SIZE s, GL.UNSIGNED.INT, ADDROF (tmp))
+    glPopAttrib()
+:
+
+--* Print a string of a given length in an OpenGL context. 
+-- Once makeRasterFont has run, you can use this to print strings in an OpenGL context.
+-- This PROC is like printString but it allows you to choose how many characters in a string
+-- you want to print.
+-- Generally you will want to set the location you want to render the font by making a call
+-- to glRasterPos2i or similar.
+-- @param s the string you want to render
+-- @param fontOffset the value that you recieved from calling makeRasterFont
+-- @param length the number of characters you want to print
+PROC printStringi(VAL []BYTE s, VAL INT fontOffset, VAL INT length)
+  MOBILE []INT tmp:
+  SEQ
+    tmp := MOBILE [length]INT
+    SEQ i = 0 FOR length
+      tmp[i] := (INT (s[i]))
+    glPushAttrib (GL.LIST.BIT)
+    glListBase(fontOffset)
+    glCallLists(SIZE s, GL.UNSIGNED.INT, ADDROF (tmp))
+    glPopAttrib()
+:
+

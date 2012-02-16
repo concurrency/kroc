@@ -1,0 +1,60 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module convert
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.2 18/01/93"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+PROC STRINGTOHEX (BOOL Error, INT n, VAL []BYTE string)
+
+  --{{{  history
+  --  Empty string behaviour corrected 19.2.88
+  -- V1.0, 1-Jul-88
+  -- Added V to the OPTIONs; V1.1, 22/03/90 SRH
+  -- Put ValidDigit into an include file, renamed it ValidHexDigit, and
+  -- converted it into an inline function.  TS/2044, V1.2, 18/01/93 SRH
+  --}}}
+
+  INT chars.scanned:
+  INT carry, digit:
+  BOOL More :
+  #INCLUDE "validch.occ" -- for ValidHexDigit
+  SEQ
+    n := 0
+    Error := FALSE
+    chars.scanned := 0
+    More := (SIZE string) > 0
+    digit := 0
+    WHILE More AND (chars.scanned < (SIZE string))
+      SEQ
+        carry, n := SHIFTLEFT (0, n, 4)
+        n := n \/ digit
+        Error := Error OR (carry <> 0)
+        digit, More := ValidHexDigit (string[chars.scanned])
+        chars.scanned := chars.scanned + 1
+    IF
+      More
+        SEQ
+          carry, n := SHIFTLEFT (0, n, 4)
+          n := n \/ digit
+          Error := Error OR (carry <> 0)
+      TRUE
+        Error := TRUE
+:

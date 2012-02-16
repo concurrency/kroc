@@ -1,0 +1,231 @@
+#INCLUDE "srv1.inc"
+#INCLUDE "memory_map.inc"
+
+#INCLUDE "delay.inc"
+#INCLUDE "tvm.inc"
+
+#INCLUDE "camera.occ"
+#INCLUDE "console.occ"
+#INCLUDE "lasers.occ"
+#INCLUDE "motors.occ"
+#INCLUDE "system.occ"
+#INCLUDE "twi.occ"
+
+#INCLUDE "out.occ"
+
+PROC drain.uart (CHAN BYTE in?)
+  INITIAL INT clear IS 0:
+  WHILE clear < 10
+    PRI ALT
+      BYTE b:
+      in ? b
+        SKIP
+      SKIP
+        SEQ
+          delay.us (100000)
+          clear := clear + 1
+:
+
+PROC download.header (SRV.HEADER header, CHAN BYTE in?, out!)
+  SEQ
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      SEQ
+        out.string ("##Send *'U*' to begin upload.*n", 0, out!)
+        INITIAL BOOL ready IS FALSE:
+        WHILE NOT ready
+          BYTE b:
+          SEQ
+            in ? b
+            ready := (b = 'U')
+        
+        out.string ("##Waiting for header (", 0, out!)
+        out.int (BYTESIN(SRV.HEADER), 0, out!)
+        out.string (" bytes)*n", 0, out!)
+
+        -- Get first 4 bytes (version)
+        []BYTE header RETYPES header:
+        SEQ i = 0 FOR 4
+          in ? header[i >< 3] -- byteswap from 32bit big-endian
+
+        IF
+          header[tbc.version] = #74766D03 -- TVM\003
+            SEQ
+              -- Get remaining header
+              []BYTE header RETYPES header:
+              SEQ i = 4 FOR (SIZE header) - 4
+                in ? header[i >< 3] -- byteswap from 32bit big-endian
+              done := TRUE
+          TRUE
+            SEQ
+              out.string ("##Bad TBC Header ID = ", 0, out!)
+              out.hex (header[tbc.version], 0, out!)
+              out ! '*n'
+    
+    #PRAGMA DEFINED header
+    out.string ("##Got header, ws.size = ", 0, out!)
+    out.int (header[ws.size], 0, out!)
+    out.string (", vs.size = ", 0, out!)
+    out.int (header[vs.size], 0, out!)
+    out.string (", ms.size = ", 0, out!)
+    out.int (header[ms.size], 0, out!)
+    out.string (".*n", 0, out!)
+:
+
+PROC download.bytecode ([]BYTE bytecode, CHAN BYTE in?, out!)
+  SEQ
+    out.string ("##Waiting for bytecode (", 0, out!)
+    out.int (SIZE bytecode, 0, out!)
+    out.string (" bytes).*n", 0, out!)
+
+    SEQ i = 0 FOR SIZE bytecode
+      SEQ
+        in ? bytecode[i]
+        out ! '.'
+
+    out ! '*n'
+:
+
+PROC run.bytecode (VAL SRV.HEADER header, VAL []BYTE bytecode, BOOL killed, CHAN BYTE in?, out!)
+  CAMERA!       camera.cli:
+  CAMERA?       camera.svr:
+  CONSOLE!      console.cli:
+  CONSOLE?      console.svr:
+  LASER!        laser.cli:
+  LASER?        laser.svr:
+  MOTOR!        motor.cli:
+  MOTOR?        motor.svr:
+  SYSTEM!       system.cli:
+  SYSTEM?       system.svr:
+  SHARED TWI!   twi.cli:
+  TWI!          twi.int.cli:
+  TWI?          twi.svr, twi.int.svr:
+  SEQ
+    out.string ("##Running bytecode...*n", 0, out!)
+
+    camera.cli, camera.svr    := MOBILE CAMERA
+    console.cli, console.svr  := MOBILE CONSOLE
+    laser.cli, laser.svr      := MOBILE LASER
+    motor.cli, motor.svr      := MOBILE MOTOR
+    system.cli, system.svr    := MOBILE SYSTEM
+    twi.cli, twi.svr          := MOBILE TWI
+    twi.int.cli, twi.int.svr  := MOBILE TWI
+
+    CHAN BOOL shutdown, twi.req:
+    PAR
+      camera (twi.req!, twi.int.cli!, camera.svr?)
+      console (console.svr?, in?, shutdown?, killed)
+      lasers (laser.svr?)
+      motors (motor.svr?)
+      system (system.svr?, twi.cli)
+      twi (twi.req?, twi.int.svr?, twi.svr?)
+      
+      SEQ
+        VAL INT ws IS header[ws.size]:
+        VAL INT vs IS header[vs.size]:
+        VAL INT ms IS header[ms.size]:
+        firmware.run.user (bytecode, ws, vs, ms, camera.cli, console.cli, laser.cli, motor.cli, system.cli)
+        shutdown ! TRUE
+:
+
+PROC report.termination (MOBILE []BYTE bytecode, VAL BOOL killed, CHAN BYTE out!)
+  ECTX context:
+  BOOL running:
+  INT state:
+  SEQ
+    []BYTE context RETYPES context:
+    firmware.query.user (running, state, context)
+
+    IF
+      killed
+        out.string ("##Program killed.*n", 0, out!)
+      state = ECTX.SHUTDOWN
+        out.string ("##Program terminated normally.*n", 0, out!)
+      state = ECTX.EMPTY
+        out.string ("##Program deadlocked.*n", 0, out!)
+      TRUE
+        SEQ
+          out.string ("##Program terminated with a ", 0, out!)
+
+          IF
+            context[eflags] = EFLAG.SETERR
+              out.string ("assertion", 0, out!)
+            context[eflags] = EFLAG.INTERR
+              out.string ("range", 0, out!)
+            context[eflags] = EFLAG.INTOV
+              out.string ("arithmetic overflow", 0, out!)
+            context[eflags] = EFLAG.ALT
+              out.string ("ALT", 0, out!)
+            context[eflags] = EFLAG.FFI
+              out.string ("FFI", 0, out!)
+            context[eflags] = EFLAG.CHAN
+              out.string ("channel", 0, out!)
+            context[eflags] = EFLAG.EXTCHAN
+              out.string ("external channel", 0, out!)
+            context[eflags] = EFLAG.BAR
+              out.string ("barrier", 0, out!)
+            context[eflags] = EFLAG.DMEM
+              out.string ("dynamic memory", 0, out!)
+            context[eflags] = EFLAG.MT
+              out.string ("mobile type", 0, out!)
+            context[eflags] = EFLAG.PROC
+              out.string ("process", 0, out!)
+            TRUE
+              out.string ("unknown", 0, out!)
+
+          out.string (" error. (state = ", 0, out!)
+          out.byte (BYTE state, 0, out!)
+          out.string (")*n", 0, out!)
+
+          VAL INT iptr IS context[iptr] - ADDROF(bytecode):
+          SEQ
+            out.string ("##WPTR = ", 0, out!)
+            out.hex (context[wptr], 0, out!)
+            out ! '*n'
+            out.string ("##IPTR = ", 0, out!)
+            out.hex (iptr, 0, out!)
+            out ! '*n'
+            out.string ("##Bytecodes before IPTR =", 0, out!)
+            SEQ i = (iptr - 8) FOR 8
+              IF 
+                (i > 0) AND (i < (SIZE bytecode))
+                  SEQ
+                    out ! ' '
+                    out.hex.byte (bytecode[i], out!)
+                TRUE
+                  SKIP
+            out ! '*n'
+:
+
+PROC loader (CHAN BYTE in?, out!)
+  INITIAL BOOL killed IS FALSE:
+
+  SRV.HEADER header:
+
+  SEQ
+    -- Clear out UART
+    drain.uart (in?)
+
+    -- Setup dynamic memory
+    reset.dynamic.memory ()
+
+    -- Download header
+    download.header (header, in?, out!)
+    #PRAGMA DEFINED header
+
+    MOBILE []BYTE bytecode:
+    SEQ
+      -- Allocate bytecode space
+      bytecode := MOBILE [header[inst.size]]BYTE
+
+      -- Download bytecode
+      download.bytecode (bytecode, in?, out!)
+      #PRAGMA DEFINED bytecode
+
+      -- Run bytecode
+      run.bytecode (header, bytecode, killed, in?, out!)
+      
+      -- Tell the user what happened to their program
+      report.termination (bytecode, killed, out!)
+:
+

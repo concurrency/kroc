@@ -1,0 +1,125 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+#USE "splib.lib"
+#USE "solib.lib"
+
+--* Provide a general purpose routine for interactively asking a user
+-- of a program a question requiring only a one character answer.
+--
+-- After the prompt and possibly the printable replies, " ? " is output
+-- and a valid key is waited for from the keyboard; invalid keys are
+-- ignored.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param prompt the prompt to be displayed on the screen to the user,
+--   but any list of possible replies and a question mark will be taken
+--   care of outside of this prompt
+-- @param replies the possible single character replies allowed, which
+--   do not necessarily need to be printable
+-- @param display.possible.replies if TRUE the printable replies are
+--   displayed ( in upper case ) inside round brackets with commas
+--   inbetween each character, this display being one space after the
+--   given prompt; if FALSE then this is not done
+-- @param echo.reply if TRUE then the reply typed at the keyboard by
+--   the user is echoed if it is printable, and it is echoed as an
+--   upper case letter if a letter; if FALSE the reply typed is not
+--   echoed
+-- @param reply.number an integer corresponding to the reply typed,
+--   where 0 is associated with the first possible reply, 1 with the
+--   second possible reply, etc., where the order is as in replies
+PROC so.ask (CHAN OF SP fs, ts, VAL []BYTE prompt, replies,
+             VAL BOOL display.possible.replies, echo.reply,
+             INT reply.number)
+  -- The ASCII character set is assumed.
+
+  --{{{  FUNCTION upper
+  BYTE FUNCTION upper (VAL BYTE ch)
+    BYTE result :
+    VALOF
+      IF
+        (ch >= 'a') AND (ch <= 'z')
+          result := BYTE ( (INT ch) + ((INT 'A') - (INT 'a')) )
+        TRUE
+          result := ch
+      RESULT result
+  :
+  --}}}upper
+
+  SEQ
+    --{{{  write the prompt, and possible replies
+    so.write.string (fs, ts, prompt)
+    IF
+      display.possible.replies
+        --{{{  display "(A,B,C,Z)"  etc
+        SEQ
+          so.write.string (fs, ts, " (")
+          SEQ i = 0 FOR SIZE replies
+            VAL char IS replies [i] :
+            IF
+              (char >= ' ') AND (char <= '~')
+                SEQ
+                  --{{{  output comma if necessary
+                  IF
+                    i <> 0
+                      so.write.char (fs, ts, ',')
+                    TRUE
+                      SKIP
+                  --}}}output comma if necessary
+                  so.write.char (fs, ts, upper (char))
+              TRUE
+                SKIP
+          so.write.char (fs, ts, ')')
+        --}}}display "(A,B,C,Z)"  etc
+      TRUE
+        SKIP
+    so.write.string (fs, ts, " ? ")
+    --}}}write the prompt, and possible replies
+    --{{{  get a key
+    BOOL waiting :
+    BYTE key, result :
+    SEQ
+      waiting := TRUE
+      WHILE waiting
+        SEQ
+          sp.getkey (fs, ts, key, result)
+          key := upper (key)
+          IF
+            IF i = 0 FOR SIZE replies
+              key = upper (replies [i])
+                SEQ
+                  reply.number := i
+                  waiting      := FALSE
+                  --{{{  echo it if required
+                  IF
+                    echo.reply AND (key >= ' ') AND (key <= '~')
+                      so.write.char (fs, ts, key)
+                    TRUE
+                      SKIP
+                  --}}}echo it if required
+            TRUE
+              SKIP
+    --}}}get a key
+:

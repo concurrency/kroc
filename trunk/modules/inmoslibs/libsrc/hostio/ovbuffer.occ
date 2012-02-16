@@ -1,0 +1,128 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#INCLUDE "hostio.inc"
+--{{{  sp.overlapped.buffer
+--* Act as two almost independent buffers.
+--
+-- The dependence of the buffers is given by the fact that the number
+-- of communications through one buffer ( buffer2 ) must match the
+-- number through the other buffer ( buffer1 ) before the routine will
+-- terminate. No more than sp.max.packet.data.size bytes can be
+-- buffered in each of the buffers.
+--
+-- @param fs input to this routine and to buffer2
+-- @param ts output from this routine and from buffer1
+-- @param from.user input to this routine and to buffer1
+-- @param to.user output from this routine and from buffer2
+-- @param stopper input to this routine; TRUE or FALSE received will
+--   cause buffer1 to stop listening on the ts channel and to terminate
+--   when buffer2 has passed through the same number of reply
+--   communications on the fs/to.user channels as buffer1 sent on the
+--   from.user/ts channels.  buffer1 terminates immediately after
+--   buffer1; the whole routine then terminates.
+PROC sp.overlapped.buffer (CHAN OF SP fs, ts, from.user, to.user,
+                           CHAN OF BOOL stopper)
+  --{{{  diagram
+  --           The buffers look as follows:
+  --
+  --                           -------------
+  --                           |           |
+  --               ts <--------|  buffer1  |<--------- from.user
+  --                           |           |
+  --                           -------------
+  --
+  --                           -------------
+  --                           |           |
+  --               fs -------->|  buffer2  |----------> to.user
+  --                           |           |
+  --                           -------------
+  --
+  --           Not shown are internal communication channels between the buffers.
+  --           The idea is that the ts channel will arrive at the server, after
+  --           perhaps having gone through other processes, and that the fs
+  --           channel has come from the server, perhaps via other processes.
+  --           This will reduce latency time in communications if a process
+  --           has to talk to the server through other processes.
+  --}}}
+
+  CHAN OF INT stop.replies, done.one.reply :
+  PAR
+    --{{{  from user to server
+    [sp.max.packet.data.size]BYTE buffer :
+    INT16 len :
+    BOOL  running :
+    INT   replies.outstanding :
+    SEQ
+      running := TRUE
+      replies.outstanding := 0
+      --{{{  copy to server until stopped, counting the replies
+      WHILE running
+        PRI ALT
+          INT any :
+          done.one.reply ? any
+            replies.outstanding := replies.outstanding - 1
+      
+          from.user ? len :: buffer
+            SEQ
+              ts    ! len :: buffer
+              replies.outstanding := replies.outstanding + 1
+      
+          stopper ? running
+            running := FALSE
+      --}}}copy to server until stopped, counting the replies
+      --{{{  wait for any outstanding replies
+      SEQ i = 0 FOR replies.outstanding
+        INT any :
+        done.one.reply ? any
+      --}}}wait for any outstanding replies
+      stop.replies ! 0
+    --}}}from user to server
+    --{{{  from server to user
+    [sp.max.packet.data.size]BYTE buffer :
+    INT16 len :
+    BOOL  running :
+    SEQ
+      running := TRUE
+      --{{{  copy from server until stopped
+      WHILE running
+        ALT
+          fs ? len :: buffer
+            PAR
+              to.user ! len :: buffer
+              done.one.reply ! 0  -- anything
+      
+          INT any :
+          stop.replies ? any
+            running := FALSE
+      --}}}copy from server until stopped
+    --}}}from server to user
+:
+--}}}sp.overlapped.buffer
+--{{{  so.overlapped.buffer
+PROC so.overlapped.buffer (CHAN OF SP fs, ts, from.user, to.user,
+                           CHAN OF BOOL stopper)
+
+  sp.overlapped.buffer (fs, ts, from.user, to.user, stopper)
+:
+--}}}so.overlapped.buffer

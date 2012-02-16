@@ -1,0 +1,143 @@
+--
+--	IOPort Serial Port Driver
+--	Copyright (C) 2008  Carl Ritson <cgr@kent.ac.uk>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+--** @module ioport
+
+#INCLUDE "file.module"
+#INCLUDE "ioport.inc"
+
+#PRAGMA EXTERNAL "PROC C.configure.serial.port (VAL INT fd, baud, parity, data.bits, stop.bits, flow, RESULT INT result) = 3"
+#PRAGMA EXTERNAL "PROC B.wait.and.read (VAL INT timeout, fd, []BYTE buffer, RESULT INT result) = 3"
+
+PROC serial.port (VAL []BYTE device, VAL INT baud, parity, data.bits, stop.bits, flow.ctl, CHAN INT error!, CHAN BOOL shutdown?, CHAN BYTE in?, out!)
+
+  PROC port.reader (VAL INT fd, CHAN BOOL shutdown?, CHAN INT error!, CHAN BYTE out!)
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      [128]BYTE buffer:
+      INT ret:
+      SEQ
+        B.wait.and.read (500000, fd, buffer, ret)
+        IF
+          ret >= 1
+            SEQ i = 0 FOR ret
+              out ! buffer[i]
+          ret < 0
+            PAR
+              error ! ret
+              shutdown ? done
+          TRUE
+            SKIP -- FIXME: ret < 0
+        PRI ALT
+          shutdown ? done
+            error ! 0
+          SKIP
+            SKIP
+  :
+
+  PROC port.writer (VAL INT fd, CHAN BOOL shutdown?, CHAN INT error!, CHAN BYTE in?)
+    INITIAL BOOL has.error IS FALSE:
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      [1]BYTE buffer:
+      PRI ALT
+        in ? buffer[0]
+          IF
+            has.error
+              SKIP
+            TRUE
+              INITIAL INT ret IS 0:
+              SEQ
+                WHILE ret = 0
+                  file.blocking.write (fd, buffer, ret)
+                IF
+                  ret < 0
+                    SEQ
+                      error ! ret
+                      has.error := TRUE
+                  TRUE
+                    SKIP
+        shutdown ? done
+          IF
+            has.error
+              SKIP
+            TRUE
+              error ! 0
+  :
+
+  INT fd, ret:
+  SEQ
+    file.open (device, (O.RDWR \/ O.NOCTTY) \/ O.NONBLOCK, fd)
+    IF
+      fd > 0
+        SEQ
+          file.fcntl0 (fd, F.GETFL, ret)
+          INITIAL INT flags IS ret /\ (~O.NONBLOCK):
+          file.fcntl1 (fd, F.SETFL, flags, ret)
+          C.configure.serial.port (fd, baud, parity, data.bits, stop.bits, flow.ctl, ret)
+          IF
+            ret >= 0
+              CHAN BOOL rs, ws:
+              CHAN INT re, we:
+              PAR
+                port.reader (fd, rs?, re!, out!)
+                port.writer (fd, ws?, we!, in?)
+
+                INITIAL BOOL done IS FALSE:
+                INITIAL BOOL e.read IS FALSE:
+                INITIAL BOOL e.write IS FALSE:
+                WHILE NOT (done AND e.read AND e.write)
+                  PRI ALT
+                    BOOL junk:
+                    shutdown ? junk
+                      PAR
+                        rs ! TRUE
+                        ws ! TRUE
+                        IF
+                          e.read OR e.write
+                            SKIP
+                          TRUE
+                            error ! 0
+                        file.close (fd, ret)
+                        done := TRUE
+                    INT e.number:
+                    re ? e.number
+                      IF
+                        done OR e.read
+                          SKIP
+                        TRUE
+                          SEQ
+                            e.read := TRUE
+                            error ! e.number
+                    INT e.number:
+                    we ? e.number
+                      IF
+                        done OR e.write
+                          SKIP
+                        TRUE
+                          SEQ
+                            e.write := TRUE
+                            error ! e.number
+            TRUE
+              SEQ
+                error ! ret
+                file.close (fd, ret)
+      TRUE
+        error ! fd
+:
+

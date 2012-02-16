@@ -1,0 +1,15 @@
+DATA TYPE FOO
+  MOBILE RECORD
+    MOBILE []INT array:
+:
+
+PROC main ()
+  FOO foo:
+  SEQ
+    foo[array] := MOBILE [10]INT
+    ASSERT ((SIZE foo[array]) = 10)
+    SEQ i = 0 FOR 10
+      foo[array][i] := i
+    SEQ i = 0 FOR 10
+      ASSERT (foo[array][i] = i)
+:

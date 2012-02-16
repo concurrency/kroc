@@ -1,0 +1,14 @@
+DATA TYPE THING
+  RECORD
+    INT x, y, z:
+:
+
+PROC main ()
+  PROC forked (MOBILE THING bar)
+    SKIP
+  :
+
+  MOBILE THING foo:
+  SEQ
+    FORK forked (foo)
+:

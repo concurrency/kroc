@@ -1,0 +1,25 @@
+#INCLUDE "course.module"
+
+DATA TYPE THING
+  PACKED RECORD
+    INT a, b, c, d:
+:
+
+PROC main (CHAN BYTE kyb?, scr!, err!)
+  MOBILE []THING old, new:
+  SEQ
+    old := MOBILE [2]THING
+    new := MOBILE [(SIZE old) + 1]THING
+
+    out.string ("trying to do copy...*n", 0, scr!)
+    scr ! #FF
+
+    -- notionally the same as:
+    --   [ new FOR (SIZE old) ] := [ old FOR (SIZE old) ]
+    VAL []BYTE old  RETYPES old:
+    []BYTE new      RETYPES new:
+    [ new FOR (SIZE old) ] := [ old FOR (SIZE old) ]
+
+    out.string ("succeeded*n", 0, scr!)
+    scr ! #FF
+:

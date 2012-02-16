@@ -1,0 +1,117 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V1.1, 14/06/90"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "hostio.inc"
+#INCLUDE "streamio.inc"
+#USE "hostio.lib"
+--* Convert output in screen stream protocol to output using ANSI
+-- screen conventions.
+--
+-- Receipt of st.endstream will terminate this procedure. ANSI screen
+-- convertions are set out in ANSI X3.64-1979 "Additional controls for
+-- use with american national standard code for information
+-- interchange."
+--
+-- @param fs from server
+-- @param ts to server
+-- @param scrn for input
+PROC so.scrstream.to.ANSI (CHAN OF SP fs, ts, CHAN OF SS scrn)
+  --{{{  history
+  -- Introduced st.help and st.initialise tags into the
+  -- CASE input.  New version is 1.1 ( old version was
+  -- 0.01, 23-Dec-88 ); 14-June-90 SRH
+  --}}}
+
+  VAL esc IS 27(BYTE):
+  BOOL going:
+  SEQ
+    --{{{  body
+    going := TRUE
+    WHILE going
+      SEQ
+        scrn ? CASE
+          [st.max.string.size]BYTE str:
+          INT32 len:
+          st.out.string; len::str
+            so.write.string (fs, ts, [str FROM 0 FOR INT len])
+          BYTE st.char :
+          st.out.byte; st.char
+            so.write.char (fs, ts, st.char)
+          BYTE st.char :
+          st.ins.char; st.char
+            SKIP
+          INT32 x :
+          st.out.int; x
+            so.write.char (fs, ts, BYTE x)
+          INT32 x,y:
+          st.goto; x; y
+            SEQ
+              so.write.string (fs, ts, [esc, '['])
+              so.write.int    (fs, ts, (INT y) + 1, 0)
+              so.write.char   (fs, ts, ';')
+              so.write.int    (fs, ts, (INT x) + 1, 0)
+              so.write.char   (fs, ts, 'H')
+          st.reset
+            SKIP
+          st.up
+            so.write.string (fs, ts, [esc, '[', 'A'])
+          st.down
+            so.write.string (fs, ts, [esc, '[', 'B'])
+          st.left
+            so.write.string (fs, ts, [esc, '[', 'D'])
+          st.right
+            so.write.string (fs, ts, [esc, '[', 'C'])
+          st.del.char
+            VAL bs IS 8(BYTE):
+            so.write.string (fs, ts, [bs, ' ', bs])
+          st.clear.eol
+            so.write.string (fs, ts, [esc, '[', 'K'])
+          st.clear.eos
+            so.write.string (fs, ts, [esc, '[', 'J'])
+          st.ins.line
+            so.write.string (fs, ts, [esc, '[', 'L'])
+          st.del.line
+            so.write.string (fs, ts, [esc, '[', 'M'])
+          st.beep
+            VAL bell IS 7(BYTE):
+            so.write.char (fs, ts, bell)
+          st.terminate
+            SKIP
+          st.help
+            SKIP
+          st.initialise
+            SKIP
+          st.key.raw
+            SKIP
+          st.key.cooked
+            SKIP
+          st.release
+            SKIP
+          st.claim
+            SKIP
+          st.endstream
+            going := FALSE
+          -- if st.spare is received then something is wrong => STOP
+    --}}}
+:

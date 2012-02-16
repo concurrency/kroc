@@ -1,0 +1,61 @@
+
+                       -----------------------------
+		       occam random number generator
+                       -----------------------------
+
+To access the random FUNCTION, include the line:
+
+  #USE "course.lib"
+
+To use the random FUNCTION, you must declare and initialise an INT seed
+variable.  Each time random is called, it must be passed two INT parameters:
+
+  o the first one, n, defines the range of the random number that will
+    be produced - this range is from 0 through to (n-1) inclusive;
+
+  o the second one is the seed variable.
+
+The random FUNCTION returns two INT results:
+
+  o the first one is the random number that was computed;
+
+  o the second one is the (updated) seed variable.
+
+For example:
+
+  INT seed:
+  SEQ
+    seed := integer.of.your.choice.but.see.below
+    ...  rest of your process
+
+Inside the `rest of your process', to obtain a random integer in the range
+from 0 through to (n-1) inclusive, where n is an INT value of your choice,
+you must make the call:
+
+    i, seed := random (n, seed)
+
+where i is an INT variable to which the random number is assigned.  Do not
+modify the seed value by any mechanism other than the above assignment!
+
+Note: the `integer.of.your.choice.but.see.below' must be an integer in the
+range 1 through to 2147483646 inclusive.  The largest value allowed for `n'
+is 2147483647 (which is one less than 2 raised to the 31, which is the
+largest 32-bit integer).
+
+Warning: philosopher number 0 had better not initialise its seed to its
+         own number - i.e. 0.  You may have been told to do this!  Set
+         its seed to its own number plus one instead.
+
+The algorithm in the random FUNCTION implements the "minimal standard" from:
+
+  Park, K.P. & Miller, K.W.: `Random number generators:  Good ones are
+			      hard to find'; Comm. ACM, 31(10), 1192-1201;
+			      (1988).
+
+Peter Welch.
+
+
+PS for those working on question 7 (dining philosophers):
+
+  Philosopher number 0 had better not initialise its seed to its own
+  number (i.e. 0).  Set its seed to its own number plus one instead.

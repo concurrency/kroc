@@ -1,0 +1,74 @@
+--
+--	cgtest89.occ -- BARRIERs
+--	Copyright (C) 2006, 2007 Adam Sampson <ats@offog.org>, Carl Ritson <cgr@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+PROC cgtest89 (CHAN OF BYTE keyb?, scr!, err!)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  --{{{  tests
+  --{{{  test0 -- enrolling barriers during PAR blocks (KRoC bug #14170)
+  PROC test0 ()
+    VAL INT NUM.PROCS IS 50:
+    VAL INT NUM.ITERATIONS IS 1000:
+
+    SHARED! CHAN INT report:
+    INITIAL BOOL success IS TRUE:
+    SEQ
+      PAR
+
+        --{{{ multiple counters
+        BARRIER b:
+        INITIAL INT n IS NUM.PROCS:
+        PAR i = 0 FOR n ENROLL b
+          SEQ j = 0 FOR NUM.ITERATIONS
+            SEQ
+              SYNC b
+              CLAIM report!
+                report ! j
+              SYNC b
+        --}}}
+
+        --{{{ check output is what we expect
+        SEQ i = 0 FOR NUM.ITERATIONS
+          SEQ j = 0 FOR NUM.PROCS
+            INT n:
+            SEQ
+              report ? n
+              IF
+                n <> i
+                  success := FALSE
+                TRUE
+                  SKIP
+        --}}}
+
+      check.BOOL (success, TRUE, "counters were synced")
+
+  :
+  --}}}
+  --}}}
+
+  SEQ
+    init ("CG test 89", "BARRIERs")
+    test0 ()
+    finish ()
+:
+

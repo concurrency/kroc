@@ -1,0 +1,62 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "Support routines library, V1.2, 10/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
+
+--{{{  RealIMul
+INT, INT, INT FUNCTION RealIMul (VAL [2]INT X, Y)
+
+  --{{{  history
+  -- V1.1, 21-Feb-89
+  -- Amalgamated T2 and TB/T8 code; V1.2, 10-Mar-90 SRH
+  --}}}
+
+  #INCLUDE "endian.inc" -- 4-Sep-07
+
+  INT R.hi, R.lo, Guard :
+  VALOF
+    INT Carry :
+    [4]INT D  :
+    PLACE D IN WORKSPACE :
+    --{{{  
+    SEQ
+      Carry,  D[0] := LONGPROD ( X[lo],  Y[lo],  0)
+      Carry,  D[1] := LONGPROD ( X[lo],  Y[hi],  Carry)
+      D[3],   D[2] := LONGPROD ( X[hi],  Y[lo],  0)
+      R.hi,   R.lo := LONGPROD ( X[hi],  Y[hi],  Carry)
+      Carry, Guard := LONGSUM ( D[2],  D[1],  0)
+      Carry,  R.lo := LONGSUM ( R.lo,  D[3],  Carry)
+      Carry,  R.hi := LONGSUM ( R.hi,  0,  Carry)
+      IF
+        D[0] = 0        -- no sticky bits
+          SKIP
+        TRUE            -- set sticky bit
+          Guard := Guard \/ 1
+    --}}}
+    RESULT R.hi, R.lo, Guard
+:
+--}}}

@@ -1,0 +1,153 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "maths.module"
+#INCLUDE "printreal32.occ"
+VAL []INT powers IS [10000, 1000, 100, 10, 1]:
+PROC serialWriteDecInt (VAL INT n)
+  INITIAL INT index IS 0:
+  INITIAL INT number IS n:
+  INITIAL BOOL neg IS FALSE:
+  SEQ
+    IF
+      n < 0
+        SEQ
+          neg := TRUE
+          number := n * (- 1)
+      TRUE
+        SKIP
+    IF 
+      neg 
+        serialWrite("-")
+      TRUE 
+        SKIP
+    WHILE (index < 5)
+      INT digit:
+      SEQ
+        digit := number / powers[index]
+        number := number REM powers[index]
+        digit := digit + (INT '0')
+        serialWrite([BYTE digit])
+        index := index + 1
+    
+:
+PROC print.32 (VAL REAL32 v)
+  [16] BYTE barr:
+  INT total:
+  SEQ
+    total := 16
+    real32toa (v, barr, total)
+    SEQ i = 0 FOR total
+      serialWrite ([barr[i]])
+:
+PROC neg.safe.print(VAL REAL32 v)
+  REAL32 tmp:
+  SEQ
+    IF
+      v < 0.0
+        SEQ
+          tmp := v * (- 1.0)
+          serialWrite("-")
+          print.32(tmp)
+      TRUE
+        print.32(v)
+:
+PROC adc.acc.conv (CHAN INT input?, CHAN REAL32 output!, VAL REAL32 zero.voltage)
+  INT val:
+  REAL32 force, val.32:
+  WHILE TRUE
+    SEQ 
+      input ? val
+      val.32 := REAL32 ROUND val
+      force := (-1.0)*((((val.32*3.3)/1023.0)-zero.voltage)/0.3)
+      output ! force
+:
+PROC r.calc (CHAN REAL32 facc.x?, facc.y?, facc.z?, AxR!, AyR!, AzR!, r.x!, r.y!, r.z!)
+  REAL32 x, y, z:
+  REAL32 x.out, y.out, z.out:
+  WHILE TRUE
+    SEQ 
+      facc.x ? x
+      facc.y ? y
+      facc.z ? z
+      
+      
+      x.out := SQRT (((x * x) + (y * y)) + (z * z))
+      y.out := SQRT (((x * x) + (y * y)) + (z * z))
+      z.out := SQRT (((x * x) + (y * y)) + (z * z))
+      
+      r.x ! x.out
+      r.y ! y.out
+      r.z ! z.out
+      AxR ! x
+      AyR ! y
+      AzR ! z
+    
+:
+PROC angle.calc (CHAN REAL32 A.R?, r?, angle!)
+  REAL32 accel.val, r.val, angle.out:
+  INT32 r.val.int32, accel.val.int32:
+  WHILE TRUE
+    SEQ
+      r ? r.val
+      A.R ? accel.val
+    
+      angle.out := ACOS(accel.val/r.val)
+      --r.val := r.val * 100.0
+      --accel.val := accel.val * 100.0
+      
+      --r.val.int32 := INT32 ROUND r.val
+      --accel.val.int32 := INT32 ROUND accel.val
+      
+      --serialWriteDecInt (INT(r.val.int32))
+      --serialWrite ("     ")
+      --serialWriteDecInt (INT(accel.val.int32))
+      --serialWrite ("*n")
+      angle ! angle.out
+:
+PROC print.angle (CHAN REAL32 x?, y?, z?)
+  REAL32 x.val, y.val, z.val:
+  WHILE TRUE
+    SEQ
+      x ? x.val
+      y ? y.val
+      z ? z.val
+    
+      --neg.safe.print (x.val)
+      --serialWrite ("           ")
+      --neg.safe.print (y.val)
+      --serialWrite ("           ")
+      --neg.safe.print (z.val)
+      --serialWrite ("*n")
+:
+
+VAL INT x IS 0:
+VAL INT y IS 1:
+VAL INT z IS 2:
+
+PROC main ()
+  [3]CHAN INT adc.acc:
+  [3]CHAN REAL32 facc, A, r, angle:
+  [3]CHAN SIGNAL s:
+  
+  PAR
+    PAR
+      tick (0,s[x]!)
+      tick (0,s[y]!)
+      tick (0,s[z]!)
+      adc (2, s[x]?, adc.acc[x]!)
+      adc (4, s[y]?, adc.acc[y]!)
+      adc (6, s[z]?, adc.acc[z]!)
+    PAR
+      adc.acc.conv(adc.acc[x]?, facc[x]!, 1.69)
+      --adc.acc.conv(adc.acc[y]?, facc[y]!, 1.65)
+      --adc.acc.conv(adc.acc[z]?, facc[z]!, 1.36)
+      r.calc(facc[x]?, facc[y]?, facc[z]?, A[x]!, A[y]!, A[z]!, r[x]!, r[y]!, r[z]!)
+    
+    PAR
+      angle.calc(A[x]?, r[x]?, angle[x]!)
+      angle.calc(A[y]?, r[y]?, angle[y]!)
+      angle.calc(A[z]?, r[z]?, angle[z]!)
+    PAR
+      print.angle(angle[x]?, angle[y]?, angle[z]?)
+    
+    
+:

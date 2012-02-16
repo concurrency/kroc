@@ -1,0 +1,215 @@
+
+--** Adding behaviour by adding processes.
+--  
+--  This is an exercise on modifying the way we interact with a component
+--  without modifying the component itself - i.e. treating the component
+--  as a `black box'.  In this case, the black box is the main process in
+--  the demo.occ example (in the 'examples' directory):
+--  
+--  [@text
+--  
+--                      -------------------
+--                      |                 |  keyboard
+--                      |                 --<--------
+--                      |                 |
+--                      |                 |   screen
+--                      |      demo       -->--------
+--                      |                 |
+--                      |                 |   error
+--                      |                 -->--------
+--                      |                 |
+--                      -------------------
+--  
+--  ]
+--  
+--  Now, 'demo' only uses its 'screen' channel.  We have to produce a new component
+--  whose 'screen' output is identical to that from 'demo', but which responds
+--  to keystrokes (on its standard input channel) by:
+--  
+--   [@item] freezing output if the character input was 'f' and resuming output only
+--      when another character (any character) is input;
+--   
+--   [@item] accepting, but ignoring, any other character input.
+--  
+--  To do this without modifying the internals of demo means adding something
+--  between the interface pins of 'demo' and the outside world:
+--  
+--  [@text
+--  
+--        -----------------------------------------------
+--        |                                              |
+--        |    -------------------     ---------------   |
+--        |    |                 |     |             |   |    keyboard
+--        |    |                 ---<---             ------<----------
+--        |    |                 |     |             |   |
+--        |    |                 |     |             |   |     screen
+--        |    |      demo       --->---     ???     ------>----------
+--        |    |                 |     |             |   |
+--        |    |                 |     |             |   |     error
+--        |    |                 --->---             ------>----------
+--        |    |                 |     |             |   |
+--        |    -------------------     ---------------   |
+--        | q3                                           |
+--        ------------------------------------------------
+--  
+--  ]
+--  
+--  Since 'demo' does not use *its* 'keyboard' input or 'error' output channels,
+--  we can simplify '???' above so that it only intervenes where necessary:
+--  
+--  [@text
+--  
+--        -----------------------------------------------
+--        |                                              |
+--        |    -------------------  |  ---------------   |
+--        |    |                 |  |  |             |   |    keyboard
+--        |    |                 --<-  |             ------<----------
+--        |    |                 |     |     ???     |   |
+--        |    |                 |     |             |   |    screen
+--        |    |      demo       --->---             ------>----------
+--        |    |                 |     |             |   |
+--        |    |                 |     ---------------   |    error
+--        |    |                 --->---------------------->----------
+--        |    |                 |                       |
+--        |    -------------------                       |
+--        | q3                                           |
+--        ------------------------------------------------
+--  
+--  ]
+--  
+--  The unused input channel for 'demo' still has to be declared but should not
+--  be connected to anything (other than 'demo').  The unused 'error' channel
+--  from demo might as well be connected to the external error pin (as shown).
+--  
+--  The PROC declaration for 'demo' has been included below for convenience.
+--  Please do NOT make any modifications to its body!
+--  
+--  Modify the '???' process a little further so as to see the results
+--  from some run-time errors.  Not that your systems will ever suffer such
+--  things - this is just so you have the experience, :).
+--  
+--  Here is the new specification.  If the system receives:
+--  
+--   [@item] 'f' : freeze all output, resuming output (from wherever it left off)
+--      only after receiving the next keyboard input (any character);
+--   
+--   [@item] 'd' : force the system into deadlock - the occam-pi runtime will
+--      detect this and exit your program;
+--   
+--   [@item] 'l' : force the system into livelock - the occam-pi runtime will not
+--      detect this.  Like deadlock, livelock leaves a system unresponsive
+--      to external events - it refuses all inputs and outputs nothing.
+--      Unlike deadlock, it continues to process internally and consumes
+--      as much processor time as it can grab - an even worse condition
+--      than deadlock!  [Hint: 'black.hole' the input stream 'demo'.]
+--   
+--   [@item] 'z' : attempt to divide-by-zero - the occam-pi runtime will detect
+--      the error and exit your program (unless compiled in STOP mode, in
+--      which case only the process raising the error stops ... but which,
+--      in this case, will probably cause deadlock); 
+--   
+--   [@item] 'v' : attempt to violate an array index bound - as above; 
+--   
+--   [@item] 's' or 'S' : attempt to execute a STOP - as above; 
+--   
+--   [@item] anything else : accept, but ignore.
+--  
+--  You will need to think how to force a deadlock.  Leaving a process waiting
+--  on an external channel (e.g. control waiting for keyboard input) is not
+--  deadlock - the external event will be accepted. For deadlock, all processes
+--  must be blocked waiting on internal channels.  There is a trivial solution.
+--  
+--  To see the livelock, set the 'delay' in 'print.streams' negative, key in
+--  an 'l' and watch the processor load!  Kill your system by keying <ctl>-C,
+--  from Unix, or clicking the square icon, in the "occplug" window within
+--  the Transterpreter.
+--  
+--  One last piece of low-level help: processing the character input from
+--  the keyboard channel is more neatly handled though the CASE/ELSE construct
+--  of occam-pi, rather than the IF.  The CASE/ELSE construct is described
+--  in slides 38-46 of the "shared-etc" slides.
+--  
+--  Observe the system response to your forced run-time errors when compiled
+--  with debug and STOP-mode flags set:
+--  
+--  [@text
+--    kroc q3.occ                   (normal mode)
+--    kroc -d q3.occ                (debug mode)
+--    kroc -S q3.occ                (STOP mode)
+--    kroc -d -S q3.occ             (debug and STOP mode)
+--  ]
+
+
+#INCLUDE "course.module"
+
+
+--* This pauses execution of the invoking process by delay microseconds.
+--  Other processes are unaffected.
+-- 
+-- @param delay : the length of the pause (in microseconds)
+--
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+
+--* This merges an array of INT input streams to a single text output stream.
+--  It tabulates one number from each stream across one line of output.
+--  Then, it pauses for delay microseconds.  It repeats this for ever.
+--
+-- @param col.width The field width for the tabulation
+-- @param delay The length of the pause (in microseconds) between lines
+-- @param in The array of INT input streams
+-- @param out Characters (tabulated columns of numbers) going out
+--
+PROC print.streams (VAL INT col.width, delay, []CHAN INT in?, CHAN BYTE out!)
+  INITIAL MOBILE []INT n IS MOBILE [SIZE in?]INT:
+  -- Note: above is the rather complex way we have to declare an array whose
+  -- size is not known until runtime.  This will be made simpler in future
+  -- versions of occam-pi.
+  WHILE TRUE
+    SEQ
+      PAR i = 0 FOR SIZE n
+        in[i] ? n[i]
+      SEQ i = 0 FOR SIZE n
+        out.int (n[i], col.width, out!)    -- out.int is from "course.module"
+      out.string ("*c*n", 0, out!)         -- out.string is from "course.module"
+      pause (delay)
+:
+
+
+--* The 'demo' process (from demo.occ in the 'examples' directory).
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard output channel (stderr, in Unix-speak)
+--
+PROC demo (CHAN BYTE keyboard?, screen!, error!)
+  VAL INT milliseconds IS 1000:
+  VAL INT delay IS 100*milliseconds:
+  VAL INT no.delay IS -1:
+  VAL INT col.width IS 15:
+  [4] CHAN INT c:
+  PAR
+    numbers (c[0]!)
+    squares (c[1]!)
+    fibonacci (c[2]!)
+    times (c[3]!)
+    print.streams (col.width, delay, c?, screen!)
+    --print.streams (col.width, no.delay, c?, screen!)
+:
+
+
+--* The main process.
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard output channel (stderr, in Unix-speak)
+--
+PROC q3 (CHAN BYTE keyboard?, screen!, error!)
+  SKIP  -- replace with your own code
+:

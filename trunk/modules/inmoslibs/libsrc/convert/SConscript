@@ -1,0 +1,59 @@
+Import('env')
+local = env.Clone()
+
+convert_lib_srcs = Split('''
+    hex16ta.occ
+    hex32ta.occ
+    hex64ta.occ
+    i64strta.occ
+    int16ta.occ
+    int32ta.occ
+    r32strta.occ
+    r64strta.occ
+    stri64ta.occ
+    strr32ta.occ
+    strr64ta.occ
+  ''')
+
+shared_srcs = ioconv_lib_srcs = Split('''
+    boltostr.occ
+    hextostr.occ
+    inttostr.occ
+    strtobol.occ
+    strtohex.occ
+    strtoint.occ
+  ''')
+
+shared_objs = []
+for f in shared_srcs:
+    shared_objs.append(local.OccamObject(
+        f,
+        INCPATH=['.', '../forall']))
+ioconv_objs = shared_objs    
+
+convert = local.OccamLibrary(
+      'convert.lib', 
+      convert_lib_srcs + shared_objs, 
+      INCPATH=['.', '../forall'])
+
+ioconv = local.OccamLibrary(
+      'ioconv.lib', 
+      ioconv_objs, 
+      INCPATH=['.', '../forall'])
+
+
+
+env.Depends(convert, '../forall/forall.lib')
+env.Depends(ioconv, '../forall/forall.lib')
+
+# FIXME: Autodepend
+env.Depends('hex16ta.occ', 'ioconv.lib')
+env.Depends('hex32ta.occ', 'ioconv.lib')
+env.Depends('hex64ta.occ', 'validch.occ')
+env.Depends('hex64ta.occ', 'ioconv.lib')
+env.Depends('int16ta.occ', 'ioconv.lib')
+env.Depends('int32ta.occ', 'ioconv.lib')
+env.Depends('stri64ta.occ', 'validch.occ')
+env.Depends('strtohex.occ', 'validch.occ')
+env.Depends('strtoint.occ', 'validch.occ')
+

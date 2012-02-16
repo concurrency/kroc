@@ -1,0 +1,109 @@
+--
+--	game.occ -- new game
+--	Copyright (C) 2003-2004 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#USE "course.lib"
+#INCLUDE "types.inc"
+
+#INCLUDE "file.module"
+
+#INCLUDE "config.inc"
+#USE "game-utils"
+#USE "game-room"
+#USE "game-objects"
+#USE "game-client"
+#USE "game-tty"
+#USE "game-bots"
+#USE "game-linc"
+#USE "game-control"
+#IF DEFINED (USE.IRC.IF)
+#USE "game-irc"
+#ENDIF
+#IF DEFINED (USE.TELNET.IF)
+#INCLUDE "sock.module"
+#USE "game-ttysocket"
+#ENDIF
+
+--{{{  PROC game (CHAN BYTE kyb?, scr!, err!)
+PROC game (CHAN BYTE kyb?, scr!, err!)
+  CT.GAMECTRL? game.svr:
+  SHARED CT.GAMECTRL! game.cli:
+
+  CT.ROOMLINK? constr.svr:
+  SHARED CT.ROOMLINK! constr.cli:
+
+  CT.LINCLINK? linc.svr:
+  SHARED CT.LINCLINK! linc.cli:
+
+  CT.ROOMACK! ack.cli:
+  CT.ROOMACK? ack.svr:
+  SEQ
+    game.svr, game.cli := MOBILE CT.GAMECTRL
+    constr.svr, constr.cli := MOBILE CT.ROOMLINK
+    linc.svr, linc.cli := MOBILE CT.LINCLINK
+    ack.cli, ack.svr := MOBILE CT.ROOMACK
+
+    PAR
+      game.control (game.svr, game.cli, err!)
+
+      --{{{  initial room (the construct)
+      SEQ
+        room ("construct", 0, game.cli, ack.cli)
+      --}}}
+      --{{{  LINC terminal system
+      SEQ
+        linc.system (linc.svr, game.cli)
+      --}}}
+      --{{{  script read and VT client process
+      IO.LINK! io.cli:
+      IO.LINK? io.svr:
+      [128]BYTE f.name:
+      INT f.len:
+      SHARED CT.ROOMLINK! t.roomlink:
+      INT t.roomno:
+      SEQ
+        -- wait for room
+        ack.svr[link] ? t.roomno; t.roomlink
+        CLAIM game.cli
+          game.cli[in] ! attach.room; t.roomno; t.roomlink
+
+        io.cli, io.svr := MOBILE IO.LINK
+        f.len := 0
+        buffer.set.string (f.name, f.len, ##BASEPATH)
+        buffer.set.string (f.name, f.len, "/SCRIPT")
+        process.script ([f.name FOR f.len], game.cli, linc.cli, scr!)
+
+        #IF DEFINED (USE.TELNET.IF)
+        FORK telnet.server (##LISTENHOST, ##LISTENPORT, game.cli, linc.cli)
+        #ENDIF
+        #IF DEFINED (USE.IRC.IF)
+        FORK irc.server (##IRCHOST, ##IRCPORT, game.cli, linc.cli)
+        #ENDIF
+
+        FORK tty.client.if (##OPER.NAME, io.cli, game.cli, linc.cli, TRUE)
+
+        #IF DEFINED (DYN.OBJ.CREATE)
+        FORK object.creator (game.cli)
+        #ENDIF
+        
+        -- finally plug in the local terminal
+        tty.client (io.svr, kyb?, scr!)
+      --}}}
+:
+--}}}
+

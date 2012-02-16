@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Design</TITLE>
+<META NAME="description" CONTENT="Design">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="next" HREF="node5.html">
+<LINK REL="previous" HREF="node3.html">
+<LINK REL="up" HREF="moa.html">
+<LINK REL="next" HREF="node5.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html128"
+  HREF="node5.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html124"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html118"
+  HREF="node3.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html126"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html129"
+  HREF="node5.html">Implementation</A>
+<B> Up:</B> <A NAME="tex2html125"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html119"
+  HREF="node3.html">The occam- programming language</A>
+ &nbsp; <B>  <A NAME="tex2html127"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+
+<H1><A NAME="SECTION00040000000000000000">
+Design</A>
+</H1>
+The main design criteria for the interface to MySQL is that it should be safe and easy to use. The main difficulty in the design lies in the fact that communication with the database is inherently sequential.
+
+<P>
+Safety is provided by encapsulating access to the database in a process. Communication with the database is then carried out by passing messages to and from the MySQL process. The communication will follow a request-answer model: For each message passed to the process, there will be at least one message received. For safety, there will be separate protocols for incoming and outgoing messages. 
+
+<P>
+The reason for providing access via. a process and not simply as ordinary library calls is that we want to avoid having to expose handles to the database to the application programmer. All state information should be handled internally in the process. For the same reason, each connection to the database will be a separate process. That way, we avoid handles to connections.
+
+<P>
+The standard way of retrieving data from the database is one row at a time. The basic retrieving method of MoA will work in the same way, but for convenience we will also provide a way of retrieving all rows of data with a single command. 
+
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html128"
+  HREF="node5.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html124"
+  HREF="moa.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html118"
+  HREF="node3.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html126"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html129"
+  HREF="node5.html">Implementation</A>
+<B> Up:</B> <A NAME="tex2html125"
+  HREF="moa.html">MySQL occam- API</A>
+<B> Previous:</B> <A NAME="tex2html119"
+  HREF="node3.html">The occam- programming language</A>
+ &nbsp; <B>  <A NAME="tex2html127"
+  HREF="node1.html">Contents</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

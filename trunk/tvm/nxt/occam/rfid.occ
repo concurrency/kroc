@@ -1,0 +1,79 @@
+#INCLUDE "nxt.inc"
+
+VAL BYTE RFID.I2C.ADDRESS             IS #04:
+
+VAL BYTE RFID.VERSION                 IS #00:
+VAL BYTE RFID.PRODUCT.ID              IS #08:
+VAL BYTE RFID.SENSOR.TYPE             IS #10:
+VAL BYTE RFID.STATUS                  IS #32:
+VAL BYTE RFID.COMMAND                 IS #41:
+VAL BYTE RFID.B0                      IS #42:
+VAL BYTE RFID.B1                      IS #42:
+VAL BYTE RFID.B2                      IS #42:
+VAL BYTE RFID.B3                      IS #42:
+VAL BYTE RFID.B4                      IS #42:
+
+VAL BYTE RFID.COMMAND.STOP            IS #00:
+VAL BYTE RFID.COMMAND.SINGLE          IS #01:
+VAL BYTE RFID.COMMAND.CONTINUOUS      IS #02:
+
+PROC main ()
+  [8]BYTE buffer:
+  INT interval, result:
+  SEQ
+    nx.display.clear ()
+    nx.i2c.memory.init (#3, RFID.I2C.ADDRESS, TRUE)
+    
+    INITIAL BOOL ready IS FALSE:
+    INITIAL INT i IS 0:
+    WHILE NOT ready
+      SEQ
+        nx.display.set.pos (0, 0)
+        display.hex (i /\ #FFFF)
+        i := i + 1
+        
+        SEQ i = 0 FOR SIZE buffer
+          buffer[i] := '-'
+        
+        nx.display.set.pos (0, 1)
+        nx.i2c.memory.read (#3, RFID.SENSOR.TYPE, [ buffer FOR 4 ], result)
+        IF
+          result = I2C.ERR.OK
+            SEQ
+              nx.display.string ([ buffer FOR 4 ])
+              ready := (buffer[0] = 'R') AND (buffer[1] = 'F') AND (buffer[2] = 'I') AND (buffer[3] = 'D')
+          TRUE
+            nx.display.string ("ERR")
+        delay.ms (1000)
+    
+    nx.i2c.memory.read (#0, RFID.COMMAND, [ buffer FOR 1 ], result)
+    ASSERT (result = I2C.ERR.OK)
+    delay.ms (100)
+    IF
+      buffer[0] <> RFID.COMMAND.CONTINUOUS
+        SEQ
+          buffer[0] := RFID.COMMAND.CONTINUOUS
+          nx.i2c.memory.write (#3, RFID.COMMAND, [ buffer FOR 1 ], result)
+          ASSERT (result = I2C.ERR.OK)
+          delay.ms (20)
+      TRUE
+        SKIP
+  
+    INITIAL INT i IS 0:
+    WHILE TRUE
+      SEQ
+        delay.ms (250)
+        
+        nx.display.set.pos (0, 0)
+        display.hex (i /\ #FFFF)
+        i := i + 1
+
+        nx.i2c.memory.read (#3, RFID.B0, [ buffer FOR 5 ], result)
+        nx.display.set.pos (0, 3)
+        IF
+          result = I2C.ERR.OK
+            SEQ i = 0 FOR 5
+              display.hex (INT buffer[i])
+          TRUE
+            nx.display.string ("E*n")
+:

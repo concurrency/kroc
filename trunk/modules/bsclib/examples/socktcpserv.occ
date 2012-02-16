@@ -1,0 +1,258 @@
+--
+--	socktcpserv.occ - Simple(ish) TCP server
+--	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
+--      Modification (C) 2008 Tom Carlson
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+#INCLUDE "course.module"
+#INCLUDE "sock.module"
+
+--{{{  display protocol
+PROTOCOL D.PROTO
+  CASE
+    string; INT; INT; INT::[]BYTE
+    clear.eol; INT; INT
+    clear.screen
+:
+
+--}}}  
+--{{{  config constants
+VAL INT listen.addr IS INADDR.ANY:
+VAL INT listen.port IS 6969:
+
+--}}}  
+--{{{  constants
+VAL max.num.connections IS 10:
+VAL []BYTE conn.line IS "[                                ] from":
+VAL []BYTE msg.unconnected IS "(unconnected)":
+VAL []BYTE accept.err IS "error accepting connection":
+VAL conn.x IS 2:
+VAL conn.start.y IS 2:
+VAL data.x IS 3:
+VAL hostname.x IS 42:
+VAL err.x IS 2:
+VAL err.y IS (conn.start.y + max.num.connections):
+VAL in.buffer.size IS 32:
+
+--}}} 
+
+
+PROC acceptor (SOCKET sock, CHAN SOCKET clients!, SHARED CHAN D.PROTO out!) --{{{
+  SOCKET client:
+  INT result:
+  WHILE TRUE
+    SEQ
+      socket.accept (sock, client, result)
+      IF
+        result < 0
+          CLAIM out!
+            SEQ
+              out ! clear.eol; err.x; err.y
+              out ! string; err.x; err.y; (SIZE accept.err)::accept.err
+        TRUE
+          clients ! client
+:
+--}}} 
+
+--{{{  PROC farmer (CHAN SOCKET in?, []CHAN SOCKET to.worker!, []CHAN BOOL from.worker?)
+PROC farmer (CHAN SOCKET in?, []CHAN SOCKET to.worker!, []CHAN BOOL from.worker?)
+  INITIAL INT n.spare IS max.num.connections:
+  [max.num.connections]BOOL available:
+  INITIAL INT next IS 0:
+  SEQ
+    SEQ i = 0 FOR max.num.connections
+      available[i] := TRUE
+    WHILE TRUE
+      PRI ALT
+        --{{{  acks from the workers
+        ALT i = 0 FOR (SIZE from.worker)
+          BOOL any:
+          from.worker[i] ? any
+            available[i], n.spare := TRUE, (n.spare + 1)
+        --}}}  
+        --{{{  fresh client from the acceptor
+        SOCKET in.client:
+        (n.spare > 0) & in ? in.client
+          SEQ
+            to.worker[next] ! in.client
+            n.spare := (n.spare - 1)
+            IF
+              n.spare > 0
+                IF i = (next + 1) FOR (SIZE to.worker)
+                  VAL INT j IS (i \ (SIZE to.worker)):
+                  available[j] = TRUE
+                    next := j
+              TRUE
+                SKIP
+        --}}}  
+:
+--}}}
+
+
+PROC worker (CHAN SOCKET in?, CHAN BOOL done!, VAL INT me, SHARED CHAN D.PROTO out!) --{{{
+  SOCKET sock:
+  [in.buffer.size]BYTE buffer:
+  [16]BYTE client.ip:
+  [128]BYTE client.hostname:
+  [128]BYTE client.info:
+  INT client.ip.len, client.hostname.len, client.info.len:
+  INT bytes, res, walk:
+  WHILE TRUE
+    SEQ
+      --{{{  clear buffer and relevant bit on screen
+      SEQ i = 0 FOR in.buffer.size
+        buffer[i] := ' '
+      CLAIM out!
+        SEQ
+          out ! string; data.x; (conn.start.y + me); in.buffer.size::buffer
+          out ! clear.eol; hostname.x; (conn.start.y + me)
+          out ! string; hostname.x; (conn.start.y + me); (SIZE msg.unconnected)::msg.unconnected
+      --}}}  
+      --{{{  receive client and dump info about it
+      in ? sock
+      socket.host.of.addr (sock[remote.addr], client.hostname, client.hostname.len, res)
+      IF
+        res < 0
+          [client.hostname FOR 7], client.hostname.len := "unknown", 7
+        TRUE
+          SKIP
+      socket.ip.of.addr (sock[remote.addr], client.ip, client.ip.len, res)
+      IF
+        res < 0
+          [client.ip FOR 7], client.ip.len := "?.?.?.?", 7
+        TRUE
+          SKIP
+      [client.info FOR client.hostname.len] := [client.hostname FOR client.hostname.len]
+      walk := client.hostname.len
+      [client.info FROM walk FOR 2] := " ("
+      walk := (walk + 2)
+      [client.info FROM walk FOR client.ip.len] := [client.ip FOR client.ip.len]
+      walk := (walk + client.ip.len)
+      client.info[walk] := ')'
+      client.info.len := (walk + 1)
+      CLAIM out!
+        SEQ
+          out ! clear.eol; hostname.x; (conn.start.y + me)
+          out ! string; hostname.x; (conn.start.y + me); client.info.len::client.info
+      --}}}  
+      --{{{  loop printing data received
+      bytes := 1
+      WHILE bytes > 0
+        SEQ
+          socket.read (sock, buffer, in.buffer.size, bytes)
+          IF
+            bytes > 0
+              SEQ
+                SEQ i = 0 FOR bytes
+                  IF
+                    buffer[i] < #20
+                      buffer[i] := '.'
+                    buffer[i] > #7F
+                      buffer[i] := '.'
+                    TRUE
+                      SKIP
+                SEQ i = bytes FOR (in.buffer.size - bytes)
+                  buffer[i] := ' '
+                CLAIM out!
+                  out ! string; data.x; (conn.start.y + me); in.buffer.size::buffer
+            TRUE
+              SKIP
+      --}}}  
+      --{{{  close socket and acknowledge farmer
+      socket.close (sock)
+      done ! TRUE
+      --}}}  
+:
+--}}}  
+
+
+--{{{  PROC display (CHAN D.PROTO in?, CHAN BYTE out!)
+PROC display (CHAN D.PROTO in?, CHAN BYTE out!)
+  VAL max.string.len IS 128:
+  WHILE TRUE
+    SEQ
+      in ? CASE
+        --{{{  string
+        [max.string.len]BYTE str.in:
+        INT str.x, str.y, str.len:
+        string; str.x; str.y; str.len::str.in
+          SEQ
+            cursor.x.y (BYTE str.x, BYTE str.y, out!)
+            out.string ([str.in FOR str.len], 0, out!)
+        --}}}  
+        --{{{  clear.eol
+        INT clr.x, clr.y:
+        clear.eol; clr.x; clr.y
+          SEQ
+            cursor.x.y (BYTE clr.x, BYTE clr.y, out!)
+            erase.eol (out!)
+        --}}}  
+        --{{{  clear.screen
+        clear.screen
+          erase.screen (out!)
+        --}}}  
+      out ! FLUSH
+      out ! '*n'
+:
+--}}}  
+
+
+--{{{  PROC socket.tcp.serv (CHAN BYTE kyb?, scr!, err!)
+PROC socket.tcp.serv (CHAN BYTE kyb?, scr!, err!)
+
+  --{{{  startup and process network
+  SHARED! CHAN D.PROTO disp.chan:
+  [max.num.connections]CHAN SOCKET farmer.to.worker:
+  [max.num.connections]CHAN BOOL worker.to.farmer:
+  CHAN SOCKET acceptor.to.farmer:
+  INT res:
+  SOCKET listener:
+  SEQ
+    socket.create.listen.tcp (listener, listen.addr, listen.port, res)
+    IF
+      res < 0
+        SEQ
+          out.string ("unable to create/bind/listen*n", 0, scr!)
+          STOP
+      TRUE
+        SKIP
+    CHAN INT wait:
+    PAR
+      --{{{  screen setup
+      SEQ
+        CLAIM disp.chan!
+          SEQ
+            disp.chan ! clear.screen
+            SEQ i = 0 FOR max.num.connections
+              disp.chan ! string; conn.x; (conn.start.y + i); (SIZE conn.line)::conn.line
+        wait ! 0
+      --}}}  
+      display (disp.chan?, scr!)
+      SEQ
+        INT any:
+        wait ? any
+        PAR
+          acceptor (listener, acceptor.to.farmer!, disp.chan!)
+          farmer (acceptor.to.farmer?, farmer.to.worker!, worker.to.farmer?)
+          PAR i = 0 FOR max.num.connections
+            worker (farmer.to.worker[i]?, worker.to.farmer[i]!, i, disp.chan!)
+  --}}}  
+
+:
+--}}}  
+

@@ -1,0 +1,8 @@
+
+PROC id (CHAN BYTE in?, out!)
+  WHILE TRUE
+    BYTE b:
+    SEQ
+      in ? b
+      out ! b
+:

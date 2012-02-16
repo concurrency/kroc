@@ -1,0 +1,26 @@
+-- version control marker $Id: cgtest63.occ,v 1.3 1995/10/11 10:21:29 djb1 Exp $
+
+PROC cgtest63 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  INT key :
+  BOOL x :
+  SEQ
+    init ("CG test 63", "MYTYPE: INT arithmetic, coercion")
+
+    --{{{  Parameterising for MYINT
+    DATA TYPE MYINT IS INT :
+    
+    MYINT FUNCTION id.MYINT(VAL MYINT x) IS x :
+    PROC check.MYINT(VAL MYINT x, y, VAL []BYTE str)
+      check.INT(INT x, INT y, str)
+    :
+    
+    VAL title.str IS "MYTYPE: INT arithmetic" :
+    
+    --}}}
+    #INCLUDE "cg60myi.occ"
+
+    finish ()
+:

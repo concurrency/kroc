@@ -1,0 +1,226 @@
+--
+--	testsuspend.occ -- testing suspending/saving/loading/resuming dynamic processes
+--	Copyright (C) 2001 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+#INCLUDE "dynproc.module"
+
+#INCLUDE "clockproto.inc"
+
+PROTOCOL META.CONTROL
+  CASE
+    resume
+    stop
+    write.to.file; INT::[]BYTE
+    read.from.file; INT::[]BYTE
+:
+
+PROC byte.nplexnl ([]CHAN OF BYTE in, CHAN OF BYTE out, CHAN OF BOOL term)
+  INITIAL INT f IS 0:
+  INITIAL BOOL running IS TRUE:
+  WHILE running
+    PRI ALT
+      BOOL any:
+      term ? any
+        running := FALSE
+      ALT i = f FOR SIZE in
+        VAL INT n IS (i \ (SIZE in)):
+        BYTE ch:
+        in[n] ? ch
+          SEQ
+            WHILE ch <> '*n'
+              SEQ
+                out ! ch
+                in[n] ? ch
+            out ! ch
+            f := n+1
+:
+
+
+PROC clock.manager (DPROCESS clock.p, CHAN OF CLOCK.PROTO in, CHAN OF BYTE out, CHAN OF BOOL sync.out, CHAN OF META.CONTROL control.in, CHAN OF BOOL suspend.sync)
+  INITIAL BOOL running IS TRUE:
+  INT result:
+  WHILE running
+    SEQ
+      out.string ("clock.manager: about to run process...*n", 0, out)
+      CHAN OF ANY x.in RETYPES in:
+      CHAN OF ANY x.out RETYPES out:
+      CHAN OF ANY x.out2 RETYPES sync.out:
+      ccsp.runproc (clock.p, [x.in], [x.out, x.out2], result)
+      IF
+        result = DPROCESS.FINISHED
+          running := FALSE
+        result = DPROCESS.FAULTED
+          running := FALSE
+        result = DPROCESS.SUSPENDED
+          SEQ
+            -- sync after process has suspended
+            suspend.sync ! TRUE
+            INITIAL BOOL loop IS TRUE:
+            WHILE loop
+              SEQ
+                out.string ("clock.manager: process suspended, waiting for control signal*n", 0, out)
+                control.in ? CASE
+                  resume
+                    SEQ
+                      out.string ("clock.manager: resuming suspended process.*n", 0, out)
+                      loop := FALSE
+                  stop
+                    SEQ
+                      out.string ("clock.manager: finishing.*n", 0, out)
+                      running := FALSE
+                      loop := FALSE
+                  [128]BYTE fname:
+                  INT flen:
+                  write.to.file; flen::fname
+                    INT wresult:
+                    SEQ
+                      out.string ("clock.manager: writing process to file [", 0, out)
+                      out.string ([fname FOR flen], 0, out)
+                      out.string ("]*n", 0, out)
+                      ccsp.writeproc (clock.p, [fname FOR flen], wresult)
+                      IF
+                        wresult = 0
+                          out.string ("clock.manager: should have written process to file OK.*n", 0, out)
+                        TRUE
+                          SEQ
+                            out.string ("clock.manager: ccsp.writeproc() returned ", 0, out)
+                            out.int (wresult, 0, out)
+                            out ! '*n'
+                  [128]BYTE fname:
+                  INT flen:
+                  read.from.file; flen::fname
+                    INT rresult:
+                    SEQ
+                      out.string ("clock.manager: reading process from file..*n", 0, out)
+                      ccsp.readproc (clock.p, [fname FOR flen], rresult)
+                      IF
+                        rresult = 0
+                          out.string ("clock.manager: should have read process from file OK.*n", 0, out)
+                        TRUE
+                          SEQ
+                            out.string ("clock.manager: ccsp.readproc() returned ", 0, out)
+                            out.int (rresult, 0, out)
+                            out ! '*n'
+:
+
+
+PROC kyb.control (CHAN OF BYTE in, CHAN OF CLOCK.PROTO to.clock, CHAN OF BYTE out, CHAN OF BOOL sync.in, CHAN OF META.CONTROL to.manager, CHAN OF BOOL suspend.sync)
+  SEQ
+    out.string ("kyb.control: Clock control example thingie :)*n", 0, out)
+    out.string ("kyb.control: waiting for sync with clock process.*n", 0, out)
+    BOOL any:
+    sync.in ? any
+    out.string ("kyb.control: synchronised.*n", 0, out)
+    out.string ("kyb.control: process active: *'0*'-*'9*' controls speed, *'s*' suspends, *'q*' quits*n", 0, out)
+    out.string ("kyb.control: crashing stuff: *'b*' generates array index out-of-bounds, *'o*' generates overflow.*n", 0, out)
+    INITIAL BOOL running IS TRUE:
+    BYTE ch:
+    WHILE running
+      SEQ
+        in ? ch
+        CASE ch
+          '0','1','2','3','4','5','6','7','8','9'
+            VAL INT x IS ((((INT ch) - (INT '0')) + 1) * 100000):
+            to.clock ! reset; x
+          'b'
+            to.clock ! bounds
+          'o'
+            to.clock ! overflow
+          's'
+            SEQ
+              to.clock ! suspend
+              BOOL any:
+              suspend.sync ? any
+              out.string ("kyb.control: sync received, process should be suspended...*n", 0, out)
+              INITIAL BOOL i.run IS TRUE:
+              WHILE i.run
+                SEQ
+                  out.string ("kyb.control: process suspended: *'s*' reSumes, *'a*' aborts, *'w*' write-to-file, *'r*' read-from-file.*n", 0, out)
+                  in ? ch
+                  CASE ch
+                    's'
+                      SEQ
+                        i.run := FALSE
+                        to.manager ! resume
+                        out.string ("kyb.control: waiting for sync with clock process.*n", 0, out)
+                        BOOL any:
+                        sync.in ? any
+                        out.string ("kyb.control: synchronised.*n", 0, out)
+                    'a'
+                      SEQ
+                        i.run := FALSE
+                        running := FALSE
+                        to.manager ! stop
+                    'w'
+                      [128]BYTE fname:
+                      INT flen:
+                      SEQ
+                        out.string ("kyb.control: (write) enter filename: ", 0, out)
+                        out ! #FF
+                        in.string (fname, flen, SIZE fname, in, out)
+                        out ! '*n'
+                        to.manager ! write.to.file; flen::fname
+                    'r'
+                      [128]BYTE fname:
+                      INT flen:
+                      SEQ
+                        out.string ("kyb.control: (read) enter filename: ", 0, out)
+                        out ! #FF
+                        in.string (fname, flen, SIZE fname, in, out)
+                        out ! '*n'
+                        to.manager ! read.from.file; flen::fname
+                    ELSE
+                      SKIP
+          'q'
+            SEQ
+              out.string ("kyb.control: okay, telling clock to stop now..*n", 0, out)
+              to.clock ! stop
+              running := FALSE
+          ELSE
+            SKIP
+    out.string ("kyb.control cleared main loop*n", 0, out)
+:
+
+
+PROC clock.example (CHAN OF BYTE kyb, scr, err)
+  INT libhandle:
+  DPROCESS p:
+  SEQ
+    -- open library and load process
+    ccsp.openlib ("suspendable.so", libhandle)
+    ASSERT (libhandle <> 0)
+    ccsp.loadproc (libhandle, "test.process", p)
+    ASSERT (p <> NOTPROCESS.D)
+    -- run process and control
+    CHAN OF CLOCK.PROTO c.in:
+    CHAN OF BYTE c.out, m.out:
+    CHAN OF BOOL c.sync, plex.term, sus.sync:
+    CHAN OF META.CONTROL control:
+    PAR
+      byte.nplexnl ([c.out, m.out], scr, plex.term)
+      SEQ
+        PAR
+          clock.manager (p, c.in, c.out, c.sync, control, sus.sync)
+          kyb.control (kyb, c.in, m.out, c.sync, control, sus.sync)
+        plex.term ! TRUE
+    ccsp.freeproc (p)
+:
+
+

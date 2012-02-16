@@ -1,0 +1,111 @@
+--
+--	g3dcog2.occ -- more precise cog experiment
+--	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+#INCLUDE "maths.module"
+
+PROC cog.network (G3D.RENDER.ENGINE? rlink.in, VAL INT width, height, nteeth, colour, VAL REAL32 tsize, chs, tx, ty, tz, velocity, cadj, VAL BOOL trans) --{{{
+  REAL32 i.r, o.r, i.a, o.a, t.a:
+  SEQ
+    o.r := (((REAL32 ROUND nteeth) * 3.0) * tsize) / (2.0 * PI)
+    o.a := ASIN (tsize / o.r)
+    i.r := o.r - tsize
+    i.a := ASIN ((tsize * 1.3) / i.r)
+
+    -- angle that each tooth occupies
+    t.a := (2.0 * PI) / (REAL32 ROUND nteeth)
+
+    CHAN INT trigger:
+    CHAN MOBILE []G3D.POINT3 gp1, gp2, gp3, gp4:
+    CHAN MOBILE []G3D.POINT2.3 gc1:
+    CHAN MOBILE []G3D.POLY pc1:
+    CHAN MOBILE []G3D.POLY.SCAN ps1:
+    CHAN G3D.GEN.CONTROL gen.ctl:
+    CHAN G3D.ROT.CONTROL rot1.ctl, rot2.ctl:
+    CHAN G3D.TRN.CONTROL trn.ctl:
+    CHAN G3D.PRJ.CONTROL prj.ctl:
+    CHAN G3D.PGN.CONTROL pgn.ctl:
+    CHAN G3D.PSC.CONTROL psc.ctl:
+    CHAN G3D.RDR.CONTROL rdr.ctl:
+    PAR
+      cogpoints.generator (trigger?, nteeth, i.r, o.r, i.a, o.a, gp1!, gen.ctl?)
+      points3d.rotate (gp1?, gp2!, rot1.ctl?)
+      points3d.translate (gp2?, gp3!, trn.ctl?)
+      points3d.rotate (gp3?, gp4!, rot2.ctl?)
+      points.3d.to.2d3 (gp4?, gc1!, prj.ctl?, width, height)
+      cogify.points (gc1?, nteeth, pc1!, pgn.ctl?)
+      poly.scanlines (pc1?, ps1!, psc.ctl?, width, height)
+      render.polyscans.trigger (ps1?, rlink.in?, rdr.ctl?, trigger!, width, height)
+
+      SEQ
+        gen.ctl ! set.scale; [1.0, chs, 1.0]
+        prj.ctl ! set.3dshift; [0.0, 0.0, 0.0]
+        trn.ctl ! set.3dshift; [tx, ty, tz]
+        IF
+          trans
+            rdr.ctl ! set.mode; G3D.RENDER.MODE.GLENZ
+          TRUE
+            rdr.ctl ! set.mode; G3D.RENDER.MODE.NONE
+        pgn.ctl ! set.backfaces; trans
+        psc.ctl ! set.zcolour; TRUE
+        pgn.ctl ! set.face.colours; [colour,colour,colour,colour,colour,colour,colour,colour,colour,colour]
+        rot1.ctl ! set.mode; G3D.ROTATE.MODE.Y
+        rot1.ctl ! set.angle; (t.a * cadj)
+        rot1.ctl ! add.increment; velocity
+        rot2.ctl ! set.mode; G3D.ROTATE.MODE.X
+        --rot2.ctl ! set.angle; -(PI / 4.0)
+        rot2.ctl ! add.increment; -0.01
+:
+--}}}
+PROC cog.network.spawn (VAL INT width, height, CHAN G3D.RENDER.ENGINE! new.link!, VAL INT nteeth, colour, VAL REAL32 tsize, chs, tx, ty, tz, velocity, cadj, VAL BOOL trans) --{{{
+  G3D.RENDER.ENGINE! rlink:
+  G3D.RENDER.ENGINE? rsvr:
+  SEQ
+    rsvr, rlink := MOBILE G3D.RENDER.ENGINE
+    FORK cog.network (rsvr?, width, height, nteeth, colour, tsize, chs, tx, ty, tz, velocity, cadj, trans)
+    new.link ! rlink
+:
+--}}}
+
+PROC g3dcog2 (CHAN BYTE kyb?, scr!) --{{{
+  CHAN RASTER rc1, rc2, rc3:
+  SHARED! CHAN G3D.RENDER.ENGINE! rre:
+  CHAN G3D.TMR.CONTROL tmr.ctl:
+  CHAN BOOL go:
+  PAR
+    raster.timed.buffer (rc1?, rc2!, 60, tmr.ctl?)
+    raster.display.simple ("Cog test 2", G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, 3, rc2?, rc3!)
+    raster.chain (rc3?, rc1!, rre?, FALSE)
+
+    CLAIM rre!
+      INITIAL REAL32 sratio IS (0.03 * 12.0):
+      SEQ
+        tmr.ctl ! set.fps; 5
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 8,  #00FFFF00, 1.0, 1.0, -4.0,  -3.0, 0.0, sratio / 8.0, 0.0, FALSE)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6,  #0000FFFF, 1.0, 3.0, 2.0,   -3.0, 0.0, -(sratio / 6.0), 0.0, FALSE)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 12, #000000FF, 0.7, 1.0, 2.0,   -1.0, 0.0, -(sratio / 6.0), 0.0, TRUE)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6,  #00FF0000, 0.7, 3.0, -3.2,  0.0, 2.2, sratio / 3.0, 1.0, TRUE)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 6,  #0000FF00, 0.7, 1.0, -1.2,  1.0, -1.0, -(sratio / 3.0), 0.5, FALSE)
+        cog.network.spawn (G3D.DEFAULT.WIDTH, G3D.DEFAULT.HEIGHT, rre!, 18, #00FF00FF, 0.7, 1.0, 5.1,   1.0, -5.0, sratio / 9.0, 0.0, FALSE)
+        tmr.ctl ! set.fps; 60
+:
+--}}}
+

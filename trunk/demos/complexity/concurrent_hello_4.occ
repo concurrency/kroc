@@ -1,0 +1,135 @@
+-- ==================================================================================
+--  WHAT CONCURRENT_HELLO_4 DOES
+--
+--  This program has one 'writer' process type that is instantiated several times, and one 'output.collector' process (invoked just once).
+--  The writers share a single channel of communication between them, so a client end of the channel is defined as shared, and passed to all
+--  the writers, which must claim it before they can send their data. As before, writers send a series of messages to output.collector, containing
+--  just their IDs (which are now passed to them upon instantiation). 
+--
+--  Output.collector receives data from writers along the shared channel, and prints that data to the terminal. 
+--
+--  Termination of all processes is now handelled by barriers (rather than timers). Writers sync on the barrier to indicate that they are ready to
+--  terminate. Unfortunately you cannot ALT on a SYNC <barrier> statement - this would be useful because output.collector could use an ALT
+--  statement to either receive data from a channel, or sync on the barrier and hence terminate (there are ways around this, and this program 
+--  demonstrates one such way). To get around this, another process is created, 'termination.manager', which immediately tries to sync on the 
+--  same barrier as the writers. When all these processes have synced on the barrier, the writers automatically terminate, and termination.manager
+--  sends a message down a channel to output.collector, informing it that it too may now terminate.    
+--
+--  communication between writers and output.collector is through a single shared channel that has defined (mobile) channel types. Client and server channel type
+--  ends are created and passed to processes as appropriate. 
+--
+--  In this architecture (and those that follow in other programms) the writers act as clients to output.collector, which is a server prividing
+--  a print-to-the-terminal service.
+--
+--  This program should be compiled with "kroc -d -di concurrent_hello_4.occ"
+--  and then run with ./concurrent_hello_4
+-- ==================================================================================
+
+
+-- ==================================================================================
+-- FUNCTIONALITY/FEATURES INTRODUCED
+--  1) simultaneously running several instances of the same process
+--  2) sharing a client end of a channel type between processes
+--  3) using barriers and channel to indicate when all clients have finished and a server may terminate
+-- ==================================================================================
+
+-- ==================================================================================
+-- ITEMS STILL TODO
+--  *) introduce a protocol for channel communication
+--  *) use of random number generator
+-- ==================================================================================
+
+
+--{{{ INCLUDES  
+-- this module contains utilities for pringing useful types (like strings)
+-- (like strings) to a chanel (which can be linked to the terminal screen)
+#INCLUDE "course.module" 
+--}}} 
+     
+        
+--{{{ outer most procedure, with a parameter list that corresponds to that required to run in unix
+PROC outer(CHAN BYTE in?, out!, err!)
+  
+  --{{{ declarations and types
+  CHAN TYPE COMMS         -- channel type for communication between writers and output.collector
+    MOBILE RECORD         -- the specifiers (? and !) are mandatory, and specified according to the server's point of view.
+      CHAN INT data?:     -- so, server would be receiving data.
+  : 
+    
+  BARRIER termination.barrier:    -- when all processes have finished their work then they syncronise on this barrier and terminate 
+  --}}}
+  
+  
+  --{{{ PROC writer
+  -- process writes an 'id', 'loops' number of times, out of a COMMS channel end. 
+  -- the various instantiations of this process may share the write.to.server channel end. 
+  -- when the writer has finished it's work, it syncs on the barrier to indiciate it is ready to terminate. 
+  PROC writer (VAL INT loops, VAL INT id, SHARED COMMS! write.to.server, BARRIER termination.barrier)
+    SEQ 
+      SEQ i = 0 FOR loops                           -- write the data 'loops' times
+        CLAIM write.to.server                       -- claiming necessary for shared channel
+          write.to.server[data] ! id
+      SYNC termination.barrier                      -- indicate that process is ready to terminate
+  :
+  --}}}
+  
+  
+  --{{{ PROC termination.manager
+  -- when all wriers are ready to terminate, as dicated by their synchronisations on the barrier,
+  -- this process signals output.collector to terminate through the dedicated channel. 
+  PROC termination.manager(BARRIER termination.barrier, CHAN BOOL signal.to.terminate!)
+    SEQ 
+      SYNC termination.barrier
+      signal.to.terminate ! TRUE
+  :
+  --}}}
+  
+  
+  --{{{ PROC output.collector
+  -- procedure receives data from the writers and outputs it to the terminal
+  -- procedure attempts to sync on the barrier, and when all the writers have done so, everyone can terminate
+  PROC output.collector (COMMS? input.from.writers, CHAN BOOL signal.to.terminate?)
+    INT temp:                                       -- temporarily store data to be output
+    TIMER timer:                                    -- timer used to dictate when output.collector terminates.
+    INT end.time:                                   -- used to calculate when to terminate this process
+    VAL INT running.time IS 1000:
+    INITIAL BOOL terminate IS FALSE:                -- flag used to indicate satisfaction of termination condition
+    --{{{ start receiving and outputting data        
+    SEQ
+      timer ? end.time
+      end.time := end.time + running.time           -- calculate when to terminate this process
+      WHILE NOT terminate                           -- loop until termination condition met
+        ALT                                         -- receive data, and run timeout in parallel
+          input.from.writers[data] ? temp                   -- receive data from either writer
+            SEQ
+              out.int(temp, 0, out!)
+              out.string("*n", 0, out!)
+          signal.to.terminate ? terminate                 -- receive signal to terminate, and terminate
+            out.string("*noutput.collector received signal to terminate.*n", 0, out!)       
+    --}}}
+  :
+  --}}}
+  
+  
+  --{{{ the main body of the program
+  SHARED COMMS! client:             -- channel type client and server ends for writers. writers share the channel end between them
+  COMMS? server:                    -- channel end is not shared
+  CHAN BOOL signal.to.terminate:    -- channel used to signal that writers have finished inputting
+  
+  SEQ
+    out.string("starting the writers...*n", 0, out!) 
+    client, server := MOBILE COMMS                                      -- instantiating channel ends
+    PAR                                                                 
+      output.collector (server, signal.to.terminate)                    -- this process is not enrolled on the barrier
+      PAR ENROLL termination.barrier                                    -- all these parallel processes are enrolled on the barrier  
+        termination.manager (termination.barrier, signal.to.terminate)
+        writer (4, 4, client, termination.barrier)
+        writer (10, 8, client, termination.barrier)
+      
+    out.string("writers have finished.*n", 0, out!)
+  --}}}
+:
+--}}}
+
+
+

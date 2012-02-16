@@ -1,0 +1,9 @@
+#INCLUDE "course.module"
+#INCLUDE "shared_screen.module"
+
+PROC philnick( CHAN BYTE keyboard?, screen!, error! )
+  #USE "q7-nick-1"
+  singing.philosophers( keyboard?, screen!, error! )
+:
+
+

@@ -1,0 +1,7 @@
+<ACTIONS>
+	<ACTION NAME="jeditwinsparkleplugin.checkupdate">
+		<CODE>
+			org.transterpreter.jeditwinsparkleplugin.JEditWinSparklePlugin.performUpdateCheckWithUI();
+		</CODE>
+	</ACTION>
+</ACTIONS>

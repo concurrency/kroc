@@ -1,0 +1,934 @@
+Note: This document is (as of December 2007) rather out of date. You
+should consult the documentation for occbuild before following the
+advice below on building and using libraries:
+
+  https://www.cs.kent.ac.uk/research/groups/sys/wiki/OccBuild
+
+-- The KRoC team <kroc-bugs@kent.ac.uk>
+
+
+
+                          =======================
+                          |  Essentially KRoC   |
+                          |                     |
+                          | P.H.Welch@ukc.ac.uk |
+                          =======================
+
+
+
+The Kent Retargetable occam Compiler (KRoC) provides a compiler, run-time
+system and library support for the occam multiprocessing language.  This
+version implements the full occam2.1 language as defined by Inmos:
+
+  http://www.wotug.org/parallel/occam/compilers/documentation
+
+This version also includes some experimental extensions for INITIALising
+declarations (as defined in the occam3 draft specification - see also
+the above URL) and user-defined operators (see the document `udo.ps'
+in this directory).
+
+This document describes the KRoC utilites:
+
+  kroc   (the occam compiler and linker)
+  ilibr  (for building occam libraries)
+  kmakef (for automatic makefile generation)
+
+These utilities are held in the directory:
+
+  kroc/bin
+
+[In this document, path names are from wherever your kroc has been installed.]
+
+Further information about KRoC may be found in the `about-kroc.txt' file in
+this directory.  The rest of this document has the following structure:
+
+  o KRoC Setup Procedure
+  o The Structure of a Top-Level KRoC Process
+  o Compiling a Top-Level KRoC Process
+  o Compiling a Top-Level KRoC Process that #USEs Libraries
+  o Separate Compilation
+    + An Example of Separate Compilation
+  o Libraries
+    + Building a Byte Code Library
+    + Building a Native Code Library
+    + An Example of a User-Built Library
+  o Post-Mortem Debugging
+  o Compiler #PRAGMA directives
+  o Automatic Makefile Generation
+    + What it Does
+    + A Simple Example
+    + An Example with Separate Compilation
+    + An Example with a User-Built Library
+    + Please Fix this Bug
+  o Challenges
+
+
+
+====================
+KRoC Setup Procedure
+====================
+
+Before any of the KRoC utilities can be used, one of the following commands
+(depending on which shell you are using) must be run:
+
+  % source kroc/bin/kroc-setup.sh         (for sh or bash shells)
+  % source kroc/bin/kroc-setup.csh        (for csh or tcsh shells)
+
+(where "% " is the Unix command prompt).  It may be useful to include this
+command in your shell start-up script.
+
+All the above does is extend your command search path to include the kroc/bin
+directory (to give direct access to `kroc', `ilibr' and `kmakef') and define
+the OCSEARCH environment variable used by those utilities.  It also extends
+existing LD_LIBRARY_PATH and MANPATH environments to include the run-time
+library directory (kroc/lib) and the docs directory (kroc/doc).
+
+
+=========================================
+The Structure of a Top-Level KRoC Process
+=========================================
+
+KRoC provides a simple interface to the UNIX stdin, stdout and stderr file
+descriptors.  Typically, the top-level occam process has the following form:
+
+  PROC foo (CHAN OF BYTE stdin, stdout, stderr)
+    ...  body of foo
+  :
+
+Inside the body of foo, inputs from stdin take single characters from
+`UNIX stdin'.  Outputs to stdout or stderr send single characters to
+`UNIX stdout' or `UNIX stderr' respectively.
+
+KRoC runs stdin in `raw' mode without echoing.  This means that individual
+keystrokes are supplied to the occam process immediately - not buffered up
+until a carriage-return is typed.  If echoing of keyboard input is needed,
+the occam process will have to be programmed to do that (e.g. by outputting
+the keyboard character on stdout and flushing - see below).
+
+KRoC runs stdout in its normal `line-buffered' mode.  This means that stdout
+characters are not normally delivered until a carriage-return is output (or
+the stdout buffer becomes full).  However, this buffer can be flushed early
+by sending the BYTE value 255 to stdout - for example, see:
+
+  kroc/course/examples/echoing.occ
+
+KRoC runs stderr in its normal `immediate' mode - i.e. each character is
+flushed to the Unix device as soon as the occam program outputs there.  (this
+is a feature of stderr, not KRoC).
+
+By default, KRoC will attempt to figure out the channels used in the top-level
+process and tune the run-time environment to match.  The supported interfaces
+are zero-to-three of the three standard channels (stdin, stdout and stderr) in
+that order, or two dummy SP channels with an optional memory parameter.  For
+example, the following all legal top-level PROC interfaces:
+
+  PROC thing (CHAN OF BYTE keyboard, screen)
+
+  PROC bar (CHAN OF BYTE error)
+
+  PROC foo (CHAN OF SP fs, ts, []INT free.mem)
+
+This last example, with the SP channels, is intended only for compatability
+with older occam programs which used the Inmos toolset.  The "fs" and "ts"
+channels, along with the "free.mem", are all invalid.  They may be passed
+around as parameters for compatability, but any attempt to actually use them
+will result in a run-time error.
+
+In order to differentiate between a single "stdout" or "stderr" channel, the
+names are important.  For the standard-input channel, anything starting "kyb",
+"key" or containing "in" is valid.  For the standard-output channel, anything
+starting "scr" or containing "out" is valid.  For the standard-error channel,
+anything containing "err" is valid.
+
+From version 1.3.1 onwards, usage of channel-direction specifiers is allowed,
+and the OF keyword has become optional.  Using these, a top-level process
+might be:
+
+  PROC thing (CHAN BYTE kyb?, scr!, err!)
+    ...  body of thing
+  :
+
+It is recommended that the file containing the top-level occam process should
+be named after that process - i.e. the files for the above two examples would
+be, respectively, "foo.occ" and "thing.occ".  Traditionally, occam source
+files have the ".occ" suffix.  [Exception: occam source files that are only
+going to be #INCLUDEd by other source files (and not separately compiled
+themselves) should be given the ".inc" suffix.  See the sections on Separate
+Compilation and Libraries for more information and examples on #INCLUDE.]
+
+Note: in the top-level file, there may be any number of occam declarations
+      (e.g. DATA TYPEs, PROTOCOLs, VALs, PROCs, FUNCTIONs and/or user-defined
+      operators) *before* the top-level occam PROC conforming to the above
+      signature.  However, declarations of variables, CHANnels, TIMERs and
+      PORTs are not allowed global to this top-level PROC.
+
+
+==================================
+Compiling a Top-Level KRoC Process
+==================================
+
+Suppose that the file `thing.occ' contains only the declaration of `PROC thing'
+(with the above parameter list) and its code body.  Suppose also that it does
+not #USE any separately compiled processes or libraries.  Then, it may be
+compiled with the command:
+
+  % kroc thing.occ
+
+Assuming a successful compilation, this also links in the occam run-time
+system to produce an executable file called `thing'.  To run this file,
+just issue the command:
+
+  % thing
+
+The body of `PROC thing' will start executing.  Examples of such files can be
+found in:
+
+  kroc/course/examples/hello_raw_world.occ
+  kroc/course/examples/hello_seq_world.occ
+  kroc/course/examples/echoing.occ
+
+Note: the compiler issues warnings about any declared items (such as variables
+      and parameters) that are not subsequently used.  If the top-level process
+      does not use one or more of its parameters, such warnings will be issued.
+      Since all three parameters are compulsory, warnings about their non-use
+      should (in these cases only) be ignored.  Warnings could be suppressed by
+      passing the "-w" flag to the kroc command, but this is not recommended.
+      [A summary of the flags accepted by the `kroc' command is returned by
+      invoking it with no arguments.]
+
+Note: compiler error messages are written to the Unix `stderr' descriptor.
+      If a lot of error messages are being generated, it may help to pipe the
+      `stderr' compiler output through the Unix `more' (or `less') utility.
+      Depending on which shell is being used, this can be accomplished using
+      one of the following commands:
+
+        % kroc thing.occ |& more        (for csh or tcsh)
+        % kroc thing.occ 2>&1 | more    (for bash or sh)
+
+      Of course, the error messages could also be redirected to a file for
+      later examination:
+
+        % kroc thing.occ >& error       (for csh or tcsh)
+        % kroc thing.occ 2> error       (for bash or sh)
+
+
+=======================================================
+Compiling a Top-Level KRoC Process that #USEs Libraries
+=======================================================
+
+If a program #USEs separately compiled processes or libraries, these must
+be findable by the compiler (to get information about parameter signatures,
+workspace needs and channel useage) and by the linker (to build the complete
+executable).
+
+A KRoC occam library exists in two forms - an extended transputer byte code
+(used by the compiler) and native object code (used by the linker).
+
+For example, suppose the file `thing.occ' contains sources that use one or
+more of the processes or functions provided by the standard `course' library
+- i.e. the file has the outline:
+
+  #USE "course.lib"
+
+  PROC thing (CHAN OF BYTE keyboard, screen, error)
+    ...  body of thing
+  :
+
+The file "course.lib" holds the byte code for this library.  The compiler
+will look for it in the current directory and, failing that, in the sequence
+of directories defined by the OCSEARCH environment variable.
+
+When `source' was run on "kroc/bin/kroc-setup.sh" (or
+"kroc/bin/kroc-setup.csh" - see the previous section), OCSEARCH was
+initialised to include the directories containing all the standard
+libraries provided by this KRoC release.  Since "course.lib" is one of
+those standard libraries, the compiler will be successful in its search.
+
+The linker has to find the native code version of the library.  Native code
+libraries are just Unix `archive' files.  It is traditional for such files
+to have the suffix ".so" and the prefix "lib" - hence, the name of the needed
+file, in this case, is "libcourse.so".
+
+The names of any needed native code libraries must be supplied to the linker.
+For our example, this can either be done explicitly:
+
+  % kroc thing.occ <wherever-kroc-was-installed>/kroc/lib/libcourse.so
+
+or, and much more pleasantly, by using the "-l<name>" flag:
+
+  % kroc thing.occ -lcourse
+
+Assuming a successful compilation, this instructs the linker to search through
+the current and OCSEARCH directories for the file "libcourse.so".  [This naming
+rule follows `gcc' conventions: "-l<name>" generates a search for the file
+"lib<name>.so".]
+
+In our example, the search for "libcourse.so" will be successful and all needed
+references will be found.  Hence, the final executable `thing' will be built.
+
+Examples of such files can be found in:
+
+  kroc/course/examples/hello_world.occ
+  kroc/course/examples/test_utils.occ
+  kroc/course/examples/demo.occ
+  kroc/course/examples/sort_pump.occ
+  kroc/course/examples/sort_inside.occ
+  kroc/course/examples/cast.occ
+
+Any number of libraries (or separately compiled `.o' files) can be linked in
+by a single kroc command.  Details of how to build, use and link user-defined
+libraries are given in the next section.
+
+
+====================
+Separate Compilation
+====================
+
+A KRoC occam system can be built from any number of separately compiled units.
+Optionally, these units may be combined into occam `libraries' - see later.
+
+The *general* rule for top-level kroc compilation is that the file may contain
+any sequence of occam declarations (apart from global data variables, CHANnels,
+TIMERs or PORTs), but that the final item must be a PROC that has the required
+top-level parameter signature.  However, normal engineering requirements mean
+that larger projects cannot be constructed in one file and must be composed
+from smaller compilation units.
+
+Passing the "-c" flag to kroc suppresses the final link stage.  Suppose
+"finkle.occ" contains a legal sequence of occam declarations - none of which
+need be a (kroc) top-level process.  Then, the command:
+
+  % kroc -c finkle.occ
+
+will produce, assuming successful compilation, the following two files:
+
+  finkle.tce             (extended transputer byte code)
+  finkle.o               (linkable native object code)
+
+The first file contains, in addition to byte code, information defining the
+outermost level PROC, FUNCTION and user-defined operator signatures (from
+`finkle.occ') plus their workspace/vectorspace requirements and, in the case
+of PROCs, channel useage.  That information is needed when compiling anything
+that #USEs this code.
+
+Without building any libraries, this code may be accessed in an occam source
+by saying:
+
+  #USE "finkle"
+
+When compiling such a source, the compiler will look for the file "finkle.tce"
+in the current directory and, failing that, in the sequence of directories
+defined by the OCSEARCH environment variable.  OCSEARCH is initialised by the
+"kroc/bin/kroc-setup.sh" (or "kroc/bin/kroc-setup.csh") command but can
+be extended at any time - for instance, in the shell start-up script
+just after the `source' of that `kroc-setup' command.
+
+If the source code that #USEs "finkle" is not top-level (i.e. it is compiled
+with the "-c" flag), that is the end of the story.  If it is top-level source
+code, then an executable has to be built - which means that the native code
+`finkle.o' file must be found.  As with `gcc', this can be done simply by
+passing it to the `kroc' command.  So, if `thing.occ' contains the code:
+
+  #USE "course.lib"
+  #USE "finkle"
+
+  PROC thing (CHAN OF BYTE keyboard, screen, error)
+    ...  body of thing
+  :
+
+it can be compiled and linked (producing the executable `thing') by the
+command:
+
+  % kroc thing.occ finkle.o -lcourse
+
+Note: a separate compilation unit (such as "finkle.occ") may only contain
+      `templates' at its outermost level - i.e. DATA TYPEs, PROTOCOLs, VALs,
+      PROCs, FUNCTIONs and user-defined operators.  It may not contain global
+      `data' declarations - i.e. variables, CHANnels, TIMERs or PORTs.
+
+Note: only information about PROCs, FUNCTIONs and user-defined operators is
+      stored in the `.tce' file.  This means that other forms of template
+      (e.g. DATA TYPEs, PROTOTYPES, VALs and INLINE PROCs/FUNCTIONs) are
+      allowed but not exported to #USErs.  Those other forms of template
+      can only shared by making them available in source form -
+      the sharers importing them through the #INCLUDE "<file-name>" mechanism.
+      Such files only have to be found by the compiler which searches through
+      the current directory and, failing that, those listed by OCSEARCH.
+      Traditionally, occam #INCLUDE source file names have the suffix ".inc".
+
+
+An Example of Separate Compilation
+----------------------------------
+
+The file:
+
+  kroc/syncs/examples/crew_test.occ
+
+contains a system demonstrating the CREW synchronisation primitive.  This file
+does *not* use any separate compilation ... but two DATA TYPEs, one PROTOCOL
+and four PROC declarations precede the final top-level process declaration
+(that conforms to the required parameter signature).  This system, which uses
+the standard `course.lib' (for screen control/output and random number
+generation) may be compiled as before:
+
+  % kroc crew_test.occ -lcourse
+
+However, it is ripe for breaking into separately compiled units.
+
+The directory:
+
+  kroc/doc/sc
+
+contains the source files:
+
+  kroc/doc/sc/blackboard.inc       (DATA TYPE)    (#INCLUDE file)
+  kroc/doc/sc/control_info.inc     (DATA TYPE)    (#INCLUDE file)
+  kroc/doc/sc/display.inc          (PROTOCOL)     (#INCLUDE file)
+
+  kroc/doc/sc/philosopher.occ      (PROC)         (#USE file)
+  kroc/doc/sc/controller.occ       (PROC)         (#USE file)
+  kroc/doc/sc/timekeeper.occ       (PROC)         (#USE file)
+  kroc/doc/sc/display.occ          (PROC)         (#USE file)
+
+  kroc/doc/sc/crew_test.occ        (PROC)         (top-level file)
+
+These files are just the individual components extracted from the sequential
+listing (in "kroc/syncs/examples/crew_test.occ").
+
+The ".occ" files #INCLUDE only the special synchronisation primitives being
+demonstrated ("semaphore.inc" and "crew.inc", which are in the standard
+KRoC library directory already on the OCSEARCH path) and the ".inc" files
+in their own directory.  No special action, therefore, is needed to enable
+the kroc *compiler* to find these include-files.
+
+Both "display.occ" and "philosopher.occ" #USE the course library.  The needed
+file ("course.lib") is in the KRoC library directory on the OCSEARCH path.
+The four non-top-level PROCs #USE no other files and so, assuming we are in
+the kroc/doc/sc directory, may be compiled by one command:
+
+  % kroc -c philosopher.occ controller.occ timekeeper.occ display.occ
+
+which produces the corresponding ".tce" and ".o" files.
+
+The top-level file, "crew_test.occ", #USEs "philosopher", "controller",
+"timekeeper" and "display".  Since their ".tce" files are in the current
+directory, the *compiler* will find them.  The *linker*, however, has to be
+given the matching ".o" files - as well as the "libcourse.so" library that
+two of them use.  This can be done with the command:
+
+  % kroc crew_test.occ *.o -lcourse
+
+
+=========
+Libraries
+=========
+
+Separately compiled compilation units may be bound into a single library.
+As before, two versions of this library must be built - one to hold the
+byte code and the other for native code.
+
+Suppose we have three non-top-level files "a.occ", "b.occ" and "c.occ" from
+which, by invoking "kroc -c", we have compiled the byte code files "a.tce",
+"b.tce" and "c.tce" and the Unix linkables "a.o", "b.o" and "c.o".
+
+
+Building a Byte Code Library
+----------------------------------
+
+The three ".tce" files may be combined into a single byte code library,
+"abc.lib", by the command:
+
+  % ilibr a.tce b.tce c.tce -o abc.lib
+
+Alternatively, if the list of files to be combined is long, their names
+may be listed in a single text file - one filename per line and no spaces.
+Traditionally, the name for this file is the same as the target ".lib",
+but with the suffix ".lbb" instead.  For the above example, therefore,
+we need the file "abc.lbb" to hold the three ".tce" file names.  Then,
+the command:
+
+  % ilibr -f abc.lbb -o abc.lib
+
+does the same job as the previous `ilibr' command.  [Note: this alternative
+approach is preferred, since it makes the automatic generation of makefiles
+easier - see the section on Automatic Makefile Generation.]
+
+Future occam sources that need any of the routines from the "abc.lib" need
+only say:
+
+  #USE "abc.lib"
+
+When compiling such a source, the "abc.lib" file must be either in the current
+directory or in one of the OCSEARCH directories.  Your OCSEARCH environment
+variable is freely extendable.
+
+
+Building a Native Code Library
+------------------------------
+
+Native code libraries are just Unix `shared object' library files.  It is
+traditional for such files to have the suffix ".so" and the prefix "lib".
+Hence, if "abc.lib" is the name of the byte code library, the name of the
+corresponding native code library should be "libabc.so".
+
+For the above example, the three ".o" files may be combined into a single Unix
+archive by using the Unix `ld' command:
+
+  % ld -r -o libabc.so a.o b.o c.o
+
+The native libraries are only needed for building the final executable.
+Suppose "main.occ" is a top-level occam source file containing:
+
+  #USE "abc.lib"
+
+and no other #USEs.  Suppose also that none of the components of "abc.lib"
+(i.e. the files "a.occ", "b.occ" and "c.occ") have dependencies (i.e. #USEs
+or #INCLUDEs).  Then, "main.occ" can be compiled and linked into the "main"
+executable by:
+
+  % kroc main.occ -labc
+
+The "-l<name>" argument generates a search for the file "lib<name>.so" in
+the current directory and, failing that, in the OCSEARCH directories.  So,
+the above command - assuming a successful compilation - will search for
+the file "libabc.so".  [Note that this "-labc" argument is only used for
+the linker.  As mentioned above, the compiler will find the file "abc.lib"
+by itself.]
+
+Alternatively, a path name direct to the native library would suffice:
+
+  % kroc main.occ <wherever-was-filed>/libabc.so
+
+Of course, if "libabc.so" were in the current directory, this reduces to:
+
+  % kroc main.occ libabc.so
+
+WARNING: if several libraries need to be linked in and those libraries #USE
+each other, they must be supplied to the `kroc' command in dependency order
+(with the most dependent first).  This is because `kroc' uses `gcc' (which
+uses `ld') to perform the final link stage.  Standard `ld' rules, therefore,
+apply.  Because occam does not (for the moment) support recursion, there can
+be no mutual dependencies between libraries and a linear dependency ordering
+can always be found.
+
+For example, suppose "main.occ" and/or one (or more) of the files making up
+"abc.lib" contains:
+
+  #USE "def.lib"
+
+Suppose also that "libdef.so" is the native code archive corresponding to
+"def.lib".  Then, the correct ordering for the link arguments is:
+
+  % kroc main.occ -labc -ldef
+
+If the last two arguments were switched around, the linking would fail with
+unresolved references for the names in "libdef.so".
+
+Another implication from using `ld' for linking is that there must be no PROC
+or FUNCTION name clashes between any of the components linked into the final
+executable - `ld' does not know how to resolve them.  This may be a problem
+when linking in large and independently written libraries.  C and C++ share
+this problem.  [Note: occam semantics resolve such clashes using its normal
+block structuring rules for namespaces.  This problem arises because we are
+using a standard Unix linker that is not *occam-aware*.]
+
+A better solution may lie in a formal LIBRARY mechanism for occam.  A proposal
+for one exists in the draft occam3 specification:
+
+  http://www.wotug.org/parallel/occam/compilers/documentation
+
+We look forward to a speedy resolution from the open source community ;-) ...
+
+
+An Example of a User-Built Library
+----------------------------------
+
+This example is based upon the earlier demonstration of separate compilation.
+The directory:
+
+  kroc/doc/lib
+
+contains the source files:
+
+  kroc/doc/lib/blackboard.inc      (DATA TYPE)    (#INCLUDE file)
+  kroc/doc/lib/control_info.inc    (DATA TYPE)    (#INCLUDE file)
+  kroc/doc/lib/display.inc         (PROTOCOL)     (#INCLUDE file)
+
+  kroc/doc/lib/philosopher.occ     (PROC)         (library component)
+  kroc/doc/lib/controller.occ      (PROC)         (library component)
+  kroc/doc/lib/timekeeper.occ      (PROC)         (library component)
+  kroc/doc/lib/display.occ         (PROC)         (library component)
+
+  kroc/doc/lib/crew_test.occ       (PROC)         (top-level file)
+
+The only file that is different from its namesake in kroc/doc/sc is the
+top-level file "crew_test.occ".  Instead of:
+
+  #USE "philosopher"
+  #USE "controller"
+  #USE "timekeeper"
+  #USE "display"
+
+it contains just the one:
+
+  #USE "college.lib"
+
+For this to work, the four library components must be combined into the library
+"college.lib".  First, they must be compiled as before:
+
+  % kroc -c philosopher.occ controller.occ timekeeper.occ display.occ
+
+which produces the corresponding ".tce" and ".o" files.  Then, the byte code
+library must be formed:
+
+  % ilibr -f college.lbb -o college.lib
+
+where "college.lbb" is a file containing just the names of the files to be
+combined (philosopher.tce, controller.tce, timekeeper.tce and display.tce).
+
+Finally, the native code archive must be built:
+
+  % ld -r -o libcollege.so *.o
+
+The final system may be compiled and linked with the command:
+
+  % kroc crew_test.occ libcollege.so -lcourse
+
+where the final argument is needed since two of the "college.lib" components
+#USE "course.lib".
+
+Of course, if this college library were reusable for more than one
+system, its files "college.lib" and "libcollege.so" should be put in
+a publically readable directory and that directory added to the OCSEARCH
+path.  In which case, the above command should be replaced with:
+
+  % kroc crew_test.occ -lcollege -lcourse
+
+Note that, in this case, the ordering of the last two arguments is significant.
+
+
+=====================
+Post-Mortem Debugging
+=====================
+
+Occasionally, we make mistakes in our occam coding or system design that leads
+to run-time errors.  Examples include numeric overflow, array-bounds violation,
+IFs without a TRUE condition, deliberate STOPs and deadlock.
+
+The default action upon these errors simply terminates the run with a terse
+message that gives no clue as to which part of our code was responsible.
+
+Passing the "-d" flag to the kroc command causes a very small amount of extra
+code to be generated that saves a very small amount of extra information at
+run-time.  [These overheads are very small - e.g. around 4 nanoseconds on
+top of the 153 nanosecond context switch - so there is an argument that this
+should be made the default action for kroc.]
+
+If an error occurs from a region of code compiled with this "-d" flag,
+the line number, PROC name and file name of the offending statement will
+be reported.  The line number is only approximate (but it's usually right!).
+
+If deadlock occurs, the occam workspace is searched for blocked processes.
+All processes blocked on a communication from a region of code compiled
+with the "-d" flag will be found and the line number, PROC name and file name
+where each of them are stuck will be reported.  It is possible that a false
+hit may be reported, but this will be extremely rare and we have never seen
+it in practice.
+
+At present, only processes blocked on a channel communication (including
+an ALT) will be reported after a deadlock.  Future releases of KRoC may
+also hunt down processes blocked on the additional synchronisation primitives
+provided (SEMAPHOREs, BARRIERs, BUCKETs, CREWs, ...).
+
+
+=============================
+Automatic Makefile Generation
+=============================
+
+NOTE (July 2004): the kmakef utility is no longer properly maintained.
+                  A new tool (mkoccdeps) will generate dependency information,
+		  that can be included in a Makefile.
+
+
+The `kmakef' utility constructs Unix `make' files for building and maintaining
+KRoC occam libraries and executables.  It is *not* guaranteed to do a complete
+job - the makefile it produces should be viewed as providing a useful starting
+point.  Mostly, it will be complete but we do admit to some omissions that
+will need hand editing.
+
+Either of the commands:
+
+  % kmakef <target>
+  % kmakef <target>.lib
+
+produces a file "<target>.kmf".  In the first case, this makefile is for
+the executable file "<target>".  In the second case, it is for the library
+files "<target>.lib" and "lib<target>.so".
+
+The makefile can then be used:
+
+  % make -f <target>.kmf
+
+to re-compile, link and/or build as necessary.
+
+Several arguments may be passed to `kmakef' and a makefile for all will be
+built.  Its name will be taken from the first argument (although that name
+can be overridden by a "-o<name>" flag).  See the Examples below.
+
+This directory contains a `man' page for `kmakef'.
+
+
+What it Does
+------------
+
+In the first case, the <target> should be a command name (with no suffix).
+For example:
+
+  % kmakef foo
+
+It will be assumed that the top-level file is "foo.occ".  `kmakef' searches
+only through source files looking for dependencies - i.e. #USEs and #INCLUDEs.
+It assumes the naming conventions described in this document have been kept.
+
+If it finds in this source:
+
+  #USE "finkle"
+  #INCLUDE "barrier.inc"
+
+it will recursively search through the files "finkle.occ" and "barrier.inc",
+looking for them in the current directory and, failing that, the OCSEARCH
+directories. If it fails to find a file, any dependencies that may have been
+present in the file will be missed.
+
+If it finds:
+
+  #USE "abc.lib"
+
+it will search for the text file "abc.lbb" - see the section on `Building the
+Byte Code Library'.  That file should contain the list of ".tce" files
+making up that library and the search will continue through the corresponding
+".occ" files.
+
+To build a makefile just for a library, the target should be a library name
+(with the suffix ".lib).  For example:
+
+  % kmakef abc.lib
+
+will start `kmakef' searching for "abc.lbb" and continues as above.
+
+
+A Simple Example
+----------------
+
+Change to the directory:
+
+  kroc/syncs/examples
+
+and run the command:
+
+  % kmakef -oMakefile semaphore_test crew_test bucket_test barrier_test
+
+where the "-o<name>" flag has been used to generate the default `make' file
+name - "Makefile".  Each of the corresponding ".occ" files is self-contained
+(apart from #USE "course.lib") and, so, this "Makefile" is very simple.  Then,
+
+  % make clean
+
+will remove any compiled codes previously made (e.g. when KRoC was originally
+built).  To reconstruct one of them - for example, "crew_test":
+
+  % make crew_test
+
+To make them all:
+
+  % make
+
+
+An Example with Separate Compilation
+------------------------------------
+
+Try the directory:
+
+  kroc/doc/sc
+
+and run:
+
+  % kmakef crew_test
+
+This will produce the makefile "crew_test.kmf".  The top-level "crew_test.occ"
+has numerous direct dependencies and one indirect dependency (#USE "course.lib"
+again).  To remove existing compiled codes:
+
+  % make clean -f crew_test.kmf
+
+and to rebuild:
+
+  % make -f crew_test.kmf
+
+
+An Example with a User-Built Library
+------------------------------------
+
+Finally, try out:
+
+  kroc/doc/lib
+
+This directory builds the same final executable ("crew_test") - but constructs
+a library on the way.  To build a makefile just for the library:
+
+  % kmakef college.lib
+
+Then, to build this library:
+
+  % make -f college.kmf
+
+which will yield the files "college.lib" and "libcollege.so".
+
+To build the makefile for the "crew_test" executable:
+
+  % kmakef crew_test
+
+and to build the executable:
+
+  % make -f crew_test.kmf
+
+This time, unfortunately, the "crew_test.kmf" makefile is incomplete and
+the above command fails to link everything into the final executable.  Since
+the "college.lib" and "libcollege.so" files have already been built, the above
+command triggers only one command:
+
+  kroc crew_test.occ -o crew_test -lcollege
+
+This command is incomplete since two of the components of the "college" #USE
+"course.lib".  The command should have been:
+
+  kroc crew_test.occ -o crew_test -lcollege -lcourse
+
+To correct this, the "crew_test.kmf" needs editing.  The simplest correction
+is to extend the build command associated with "crew_test" - currently:
+
+        $(KROC) crew_test.occ -o crew_test -lcollege
+
+to:
+
+        $(KROC) crew_test.occ -o crew_test -lcollege -lcourse
+
+For completeness, the "crew_test" dependency list also needs extending
+to include the "<wherever-kroc-was-installed>/kroc/lib/libcourse.so" and
+"<wherever-kroc-was-installed>/kroc/lib/inc/consts.inc" files.
+
+
+Please Fix this Bug
+-------------------
+
+`kmakef' should not make the above mistake.  The dependency information is
+built correctly for the "college" library, but this is not passed on to any
+compilation unit (e.g. "crew_test.occ") that uses it.
+
+`kmakef' is written in Perl under the Gnu GPL.  We would be very grateful
+for it to be corrected ...
+
+
+==========
+Challenges
+==========
+
+This is the first source release of the KRoC occam system.  It is for Linux
+PCs, but source releases for SPARC, DEC Alpha, PowerPC, MIPS, M68K and HC11
+microprocessors will follow (if/when we get the time - anyone wanting to help
+preparing these releases, please get in touch!).
+
+occam was originally designed to run on and/or design bare metal.  Running
+on top of an operating system is a little unnatural as the latter, with its
+own ideas for concurrency, does keep getting in the way.  KRoC has always
+taken care to ensure that waiting for some fundamental OS-provided services
+(such as the keyboard and timers) does not block its own operation.
+
+This release (KRoC 1.3.x) goes further by providing support for an occam process
+to make *any* blocking system call without blocking occam processes running
+in parallel with it.  The process making the blocking call will block and will
+be securely rescheduled when the call eventually completes.  The blocking call
+may safely read/write the occam data structures it is passed - since the
+general parallel useage rules still apply and will have been checked by the
+occam compiler.  See the `blocking-native.ps' file in the kroc/doc directory.
+
+This opens the door for KRoC applications to control and respond to general
+OS-services - for example (Internet) sockets and GUI callbacks.  We look
+forward to a new generation of web products and interactive graphics systems.
+
+We hope that this open (Gnu GPL) source for KRoC will encourage many things
+to happen that would not otherwise be possible.  Apart from its applications,
+occam is a simple and elegant powerhouse for concurrency research and
+education.  Its ultra-lightweight kernel (153 nanoseconds context switch for
+a 500 MHz Pentium III), compositional semantics (what-you-see-is-what-you-get),
+rigorously policed data and algorithm encapsulation (eliminating race hazards),
+channel primitives, messaging protocols and process orientation lead to very
+natural and efficient concurrency designs that are usually much simpler to
+create and maintain than their serial equivalents.
+
+A new challenge is to relax some of its constraints (such as statically
+allocated workspaces and no recursion - desirable for hardware design and
+embedded application) *without* damaging the above benefits.
+
+Some other things to do:
+
+  o move KRoC to a pure byte code system with just-in-time translation
+    to native code;  [note: the JIT translators exist -- but extra information
+    about external dependencies needs to be built into the byte code file in
+    order for them to be applied dynamically ...]
+
+  o the (extended transputer) byte code is an architecturally neutral
+    representation of a concurrent system -- extend it further to include
+    the type, aliasing and parallel usage information known to the occam
+    compiler so that strong security checks can be made before execution;
+    [compare and contrast the security of such an extended transputer byte
+    code with Java byte code ...]
+
+  o add some standard code optimisation techniques;  [note: currently,
+    the occam-to-byte-code compiler (occ21) and the native code generator
+    (tranpc) perform some clever - but only modest - code optimisations.
+    Despite this modesty, the generated code is pleasingly quick.  A lot
+    of mileage, probably, could be gained by even a simple `basic block'
+    optimiser ...]
+
+  o debate the existing proposal for occam3, agree a new one if necessary
+    and implement;  [e.g. the extra synchronisation primitives introduced
+    in KRoC 0.9beta - and included in ths release - need binding into the
+    language for full security and efficiency.]
+
+  o spin off a dozen or so derivatives of occam - e.g. for mobile computation,
+    hardware design, real-time, distributed systems, super-computing, ...
+
+  o provide full support for SMP architectures;  [note: this has already been
+    done for KRoC/Solaris/SPARC systems ...]
+
+  o provide language (as opposed to library) support for distributed-memory
+    multiprocessing -- unless work on virtual shared-memory architectures
+    renders this unnecessary ...
+
+  o work on virtual shared-memory architectures (e.g. the ParaPC);
+
+  o design and develop the next-but-one generation of multi-threaded multi-
+    processor architecture that exploits the good behaviour of occam-like
+    systems;  [note: occam's guarantee of non-interference between multiple
+    threads enables cache coherency and flushing to be managed at compile-time
+    - thus eliminating the need for run-time cache coherency logic.  Further,
+    code sequences from separate threads can be arbitrarilly interleaved for
+    stuffing down a processor pipeline (so as to keep it full) - again with
+    no run-time data-dependancy analysis ...]
+
+  o have breakfast;
+
+  o etc.
+
+
+==================================
+Peter Welch, (P.H.Welch@ukc.ac.uk)
+University of Kent at Canterbury
+February, 2000.
+==================================
+
+Modified March 2002, Fred Barnes, updates for KRoC/Linux 1.3.2
+Modified July 2004, Fred Barnes, updates for KRoC/Linux 1.3.3
+Modified September 2007, Adam Sampson, updates for KRoC 1.5.0
+

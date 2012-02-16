@@ -1,0 +1,76 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module convert
+
+-- (c) Copyright INMOS Limited 1988, 1993
+
+--{{{  ValidDigit
+INT, BOOL INLINE FUNCTION ValidDigit (VAL BYTE ch)
+
+  -- Purpose:  To convert digit as character (ASCII
+  --           value in BYTE) to digit as decimal value.
+  -- In:       ch - the character to be converted
+  -- Returned: digit - if valid is TRUE, the decimal value
+  --           of ch; undefined otherwise
+  -- Returned: valid - TRUE if ch was a valid value for
+  --           conversion; FALSE otherwise
+
+  INT digit :
+  BOOL valid :
+  VALOF
+    IF
+      ('0' <= ch) AND (ch <= '9')
+        SEQ
+          digit := ((INT ch) - (INT '0'))
+          valid := TRUE
+      TRUE
+        valid := FALSE
+    RESULT digit, valid
+:
+--}}}
+
+--{{{  ValidHexDigit
+INT, BOOL INLINE FUNCTION ValidHexDigit (VAL BYTE ch)
+
+  -- Purpose:  To convert hex digit as character (ASCII
+  --           value in BYTE) to digit as decimal value.
+  -- In:       ch - the character to be converted
+  -- Returned: digit - if valid is TRUE, the decimal value
+  --           of ch; undefined otherwise
+  -- Returned: valid - TRUE if ch was a valid value for
+  --           conversion; FALSE otherwise
+
+  INT digit :
+  BOOL valid :
+  VALOF
+    IF
+      ('0' <= ch) AND (ch <= '9')
+        SEQ
+          digit := ((INT ch) - (INT '0'))
+          valid := TRUE
+      ('A' <= ch) AND (ch <= 'F')
+        SEQ
+          digit := ((INT ch) - ((INT 'A') - 10))
+          valid := TRUE
+      TRUE
+        valid := FALSE
+    RESULT digit, valid
+:
+--}}}

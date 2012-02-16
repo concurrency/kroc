@@ -1,0 +1,766 @@
+-- version control marker $Id: cgtest57.occ,v 1.3 1995/10/11 10:21:29 djb1 Exp $
+
+PROC cgtest57 (CHAN OF BYTE keyb, scr, err)
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  SEQ
+    init ("CG test 57", "FUNCTIONS returning arrays and RECORDs")
+    --{{{  scalars
+    PROC scalars()
+      SEQ
+        --{{{  parameterisations of 'type' as INT
+        VAL type.string IS "INT" :
+        DATA TYPE type IS INT :
+        VAL minus.value  IS -8(type) :
+        VAL zero.value   IS  0(type) :
+        VAL half.value   IS  4(type) :
+        VAL init.value   IS  8(type) :
+        VAL double.value IS 16(type) :
+        VAL treble.value IS 24(type) :
+        VAL quad.value   IS 32(type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.INT(INT x, INT y, msg)
+        :
+        type FUNCTION double(VAL type x) IS x * 2(type) :
+        type FUNCTION add(VAL type x, y) IS x + y :
+        type FUNCTION negate(VAL type x) IS -x :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        
+        --{{{  parameterisations of 'type' as INT16
+        VAL type.string IS "INT16" :
+        DATA TYPE type IS INT16 :
+        VAL minus.value  IS -8(type) :
+        VAL zero.value   IS  0(type) :
+        VAL half.value   IS  4(type) :
+        VAL init.value   IS  8(type) :
+        VAL double.value IS 16(type) :
+        VAL treble.value IS 24(type) :
+        VAL quad.value   IS 32(type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.INT16(INT16 x, INT16 y, msg)
+        :
+        type FUNCTION double(VAL type x) IS x * 2(type) :
+        type FUNCTION add(VAL type x, y) IS x + y :
+        type FUNCTION negate(VAL type x) IS -x :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        
+        --{{{  parameterisations of 'type' as INT32
+        VAL type.string IS "INT32" :
+        DATA TYPE type IS INT32 :
+        VAL minus.value  IS -8(type) :
+        VAL zero.value   IS  0(type) :
+        VAL half.value   IS  4(type) :
+        VAL init.value   IS  8(type) :
+        VAL double.value IS 16(type) :
+        VAL treble.value IS 24(type) :
+        VAL quad.value   IS 32(type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.INT32(INT32 x, INT32 y, msg)
+        :
+        type FUNCTION double(VAL type x) IS x * 2(type) :
+        type FUNCTION add(VAL type x, y) IS x + y :
+        type FUNCTION negate(VAL type x) IS -x :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        
+        --{{{  parameterisations of 'type' as INT64
+        VAL type.string IS "INT64" :
+        DATA TYPE type IS INT64 :
+        VAL minus.value  IS -8(type) :
+        VAL zero.value   IS  0(type) :
+        VAL half.value   IS  4(type) :
+        VAL init.value   IS  8(type) :
+        VAL double.value IS 16(type) :
+        VAL treble.value IS 24(type) :
+        VAL quad.value   IS 32(type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.INT64(INT64 x, INT64 y, msg)
+        :
+        type FUNCTION double(VAL type x) IS x * 2(type) :
+        type FUNCTION add(VAL type x, y) IS x + y :
+        type FUNCTION negate(VAL type x) IS -x :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        
+        --{{{  parameterisations of 'type' as REAL32
+        VAL type.string IS "REAL32" :
+        DATA TYPE type IS REAL32 :
+        VAL minus.value  IS -8.0(type) :
+        VAL zero.value   IS  0.0(type) :
+        VAL half.value   IS  4.0(type) :
+        VAL init.value   IS  8.0(type) :
+        VAL double.value IS 16.0(type) :
+        VAL treble.value IS 24.0(type) :
+        VAL quad.value   IS 32.0(type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.REAL32(REAL32 x, REAL32 y, msg)
+        :
+        type FUNCTION double(VAL type x) IS x * 2.0(type) :
+        type FUNCTION add(VAL type x, y) IS x + y :
+        type FUNCTION negate(VAL type x) IS -x :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        
+        --{{{  parameterisations of 'type' as REAL64
+        VAL type.string IS "REAL64" :
+        DATA TYPE type IS REAL64 :
+        VAL minus.value  IS -8.0(type) :
+        VAL zero.value   IS  0.0(type) :
+        VAL half.value   IS  4.0(type) :
+        VAL init.value   IS  8.0(type) :
+        VAL double.value IS 16.0(type) :
+        VAL treble.value IS 24.0(type) :
+        VAL quad.value   IS 32.0(type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.REAL64(REAL64 x, REAL64 y, msg)
+        :
+        type FUNCTION double(VAL type x) IS x * 2.0(type) :
+        type FUNCTION add(VAL type x, y) IS x + y :
+        type FUNCTION negate(VAL type x) IS -x :
+        --}}}
+        #INCLUDE "cg57type.occ"
+    :
+    scalars()
+    --}}}
+
+    --{{{  arrays
+    PROC arrays()
+      SEQ
+        --{{{  parameterisations of 'type' as [n]INT
+        --{{{  n = 1
+        VAL type.string IS "[1]INT" :
+        VAL n IS 1 :
+        DATA TYPE type IS [n]INT :
+        VAL minus.value  IS [-8](type) :
+        VAL zero.value   IS [ 0](type) :
+        VAL half.value   IS [ 4](type) :
+        VAL init.value   IS [ 8](type) :
+        VAL double.value IS [16](type) :
+        VAL treble.value IS [24](type) :
+        VAL quad.value   IS [32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.INT(x[0], y[0], msg)
+        :
+        type FUNCTION double(VAL type x) IS [x[0] * 2](type) :
+        type FUNCTION add(VAL type x, y) IS [x[0] + y[0]](type) :
+        type FUNCTION negate(VAL type x) IS [-x[0]](type) :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 2, zero following
+        VAL type.string IS "[2]INT, zeroed" :
+        VAL n IS 2 :
+        DATA TYPE type IS [n]INT :
+        VAL minus.value  IS [-8, 0](type) :
+        VAL zero.value   IS [ 0, 0](type) :
+        VAL half.value   IS [ 4, 0](type) :
+        VAL init.value   IS [ 8, 0](type) :
+        VAL double.value IS [16, 0](type) :
+        VAL treble.value IS [24, 0](type) :
+        VAL quad.value   IS [32, 0](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          check.INT(x[0], y[0], msg)
+        :
+        type FUNCTION double(VAL type x) IS [x[0] * 2, 0](type) :
+        type FUNCTION add(VAL type x, y) IS [x[0] + y[0], 0](type) :
+        type FUNCTION negate(VAL type x) IS [-x[0], 0](type) :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 2, using both
+        VAL type.string IS "[2]INT, both" :
+        VAL n IS 2 :
+        DATA TYPE type IS [n]INT :
+        VAL minus.value  IS [-8, -8](type) :
+        VAL zero.value   IS [ 0,  0](type) :
+        VAL half.value   IS [ 4,  4](type) :
+        VAL init.value   IS [ 8,  8](type) :
+        VAL double.value IS [16, 16](type) :
+        VAL treble.value IS [24, 24](type) :
+        VAL quad.value   IS [32, 32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT(x[0], y[0], msg)
+            check.INT(x[1], y[1], msg)
+        :
+        type FUNCTION double(VAL type x) IS [x[0] * 2, x[1] * 2](type) :
+        type FUNCTION add(VAL type x, y) IS [x[0] + y[0], x[1] + y[1]](type) :
+        type FUNCTION negate(VAL type x) IS [-x[0], -x[1]](type) :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 2, using both, with complicated fns
+        VAL type.string IS "[2]INT, complicated" :
+        VAL n IS 2 :
+        DATA TYPE type IS [n]INT :
+        VAL minus.value  IS [-8, -8](type) :
+        VAL zero.value   IS [ 0,  0](type) :
+        VAL half.value   IS [ 4,  4](type) :
+        VAL init.value   IS [ 8,  8](type) :
+        VAL double.value IS [16, 16](type) :
+        VAL treble.value IS [24, 24](type) :
+        VAL quad.value   IS [32, 32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT(x[0], y[0], msg)
+            check.INT(x[1], y[1], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            res[0], res[1] := x[0] * 2, x[1] * 2
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            res[0], res[1] := x[0] + y[0], x[1] + y[1]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            res[0], res[1] := -x[0], -x[1]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 2, using both, with loops
+        VAL type.string IS "[2]INT, loops" :
+        VAL n IS 2 :
+        DATA TYPE type IS [n]INT :
+        VAL minus.value  IS [-8, -8](type) :
+        VAL zero.value   IS [ 0,  0](type) :
+        VAL half.value   IS [ 4,  4](type) :
+        VAL init.value   IS [ 8,  8](type) :
+        VAL double.value IS [16, 16](type) :
+        VAL treble.value IS [24, 24](type) :
+        VAL quad.value   IS [32, 32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.INT(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := x[i] * 2
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := x[i] + y[i]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := -x[i]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 5, using both, with loops
+        VAL type.string IS "[5]INT, loops" :
+        VAL n IS 5 :
+        DATA TYPE type IS [n]INT :
+        VAL minus.value  IS [-8, -8, -8, -8, -8](type) :
+        VAL zero.value   IS [ 0,  0,  0,  0,  0](type) :
+        VAL half.value   IS [ 4,  4,  4,  4,  4](type) :
+        VAL init.value   IS [ 8,  8,  8,  8,  8](type) :
+        VAL double.value IS [16, 16, 16, 16, 16](type) :
+        VAL treble.value IS [24, 24, 24, 24, 24](type) :
+        VAL quad.value   IS [32, 32, 32, 32, 32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.INT(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := x[i] * 2
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := x[i] + y[i]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := -x[i]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --}}}
+        --{{{  parameterisations of 'type' as [n]BYTE
+        --{{{  n = 1
+        VAL type.string IS "[1]BYTE, loops" :
+        VAL n IS 1 :
+        DATA TYPE type IS [n]BYTE :
+        VAL minus.value  IS [248(BYTE)](type) :
+        VAL zero.value   IS [ 0(BYTE)](type) :
+        VAL half.value   IS [ 4(BYTE)](type) :
+        VAL init.value   IS [ 8(BYTE)](type) :
+        VAL double.value IS [16(BYTE)](type) :
+        VAL treble.value IS [24(BYTE)](type) :
+        VAL quad.value   IS [32(BYTE)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.BYTE(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE (((INT x[i]) * 2) \ 256)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE (((INT x[i]) + (INT y[i])) \ 256)
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE ((256 - (INT x[i])) \ 256)
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 2, using both, with loops
+        VAL type.string IS "[2]BYTE, loops" :
+        VAL n IS 2 :
+        DATA TYPE type IS [n]BYTE :
+        VAL minus.value  IS [248(BYTE), 248(BYTE)](type) :
+        VAL zero.value   IS [ 0(BYTE),  0(BYTE)](type) :
+        VAL half.value   IS [ 4(BYTE),  4(BYTE)](type) :
+        VAL init.value   IS [ 8(BYTE),  8(BYTE)](type) :
+        VAL double.value IS [16(BYTE), 16(BYTE)](type) :
+        VAL treble.value IS [24(BYTE), 24(BYTE)](type) :
+        VAL quad.value   IS [32(BYTE), 32(BYTE)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.BYTE(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE (((INT x[i]) * 2) \ 256)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE (((INT x[i]) + (INT y[i])) \ 256)
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE ((256 - (INT x[i])) \ 256)
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  n = 5, using both, with loops
+        VAL type.string IS "[5]BYTE, loops" :
+        VAL n IS 5 :
+        DATA TYPE type IS [n]BYTE :
+        VAL minus.value  IS [248(BYTE), 248(BYTE), 248(BYTE), 248(BYTE), 248(BYTE)](type) :
+        VAL zero.value   IS [ 0(BYTE),   0(BYTE),   0(BYTE),   0(BYTE),  0(BYTE)](type) :
+        VAL half.value   IS [ 4(BYTE),   4(BYTE),   4(BYTE),   4(BYTE),  4(BYTE)](type) :
+        VAL init.value   IS [ 8(BYTE),   8(BYTE),   8(BYTE),   8(BYTE),  8(BYTE)](type) :
+        VAL double.value IS [16(BYTE), 16(BYTE), 16(BYTE), 16(BYTE), 16(BYTE)](type) :
+        VAL treble.value IS [24(BYTE), 24(BYTE), 24(BYTE), 24(BYTE), 24(BYTE)](type) :
+        VAL quad.value   IS [32(BYTE), 32(BYTE), 32(BYTE), 32(BYTE), 32(BYTE)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ i = 0 FOR SIZE x
+            check.BYTE(x[i], y[i], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE (((INT x[i]) * 2) \ 256)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE (((INT x[i]) + (INT y[i])) \ 256)
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ i = 0 FOR SIZE x
+              res[i] := BYTE ((256 - (INT x[i])) \ 256)
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        
+        --}}}
+    :
+    arrays()
+    --}}}
+
+    --{{{  records
+    PROC records()
+      SEQ
+        --{{{  int-complex data type
+        VAL type.string IS "int-complex" :
+        DATA TYPE type
+          RECORD
+            INT re, im :
+        :
+        VAL minus.value  IS [-8, -8](type) :
+        VAL zero.value   IS [ 0,  0](type) :
+        VAL half.value   IS [ 4,  4](type) :
+        VAL init.value   IS [ 8,  8](type) :
+        VAL double.value IS [16, 16](type) :
+        VAL treble.value IS [24, 24](type) :
+        VAL quad.value   IS [32, 32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT(x[re], y[re], msg)
+            check.INT(x[im], y[im], msg)
+        :
+        type FUNCTION double(VAL type x) IS [x[re] * 2, x[im] * 2](type) :
+        type FUNCTION add(VAL type x, y) IS [x[re] + y[re], x[im] + y[im]](type) :
+        type FUNCTION negate(VAL type x) IS [-x[re], -x[im]](type) :
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  int-complex data type, complicated fns
+        VAL type.string IS "int-complex, complicated" :
+        DATA TYPE type
+          RECORD
+            INT re, im :
+        :
+        VAL minus.value  IS [-8, -8](type) :
+        VAL zero.value   IS [ 0,  0](type) :
+        VAL half.value   IS [ 4,  4](type) :
+        VAL init.value   IS [ 8,  8](type) :
+        VAL double.value IS [16, 16](type) :
+        VAL treble.value IS [24, 24](type) :
+        VAL quad.value   IS [32, 32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT(x[re], y[re], msg)
+            check.INT(x[im], y[im], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            res[re], res[im] := x[re] * 2, x[im] * 2
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            res[re], res[im] := x[re] + y[re], x[im] + y[im]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            res[re], res[im] := -x[re], -x[im]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  fancy record, containing lots
+        VAL type.string IS "fancy record" :
+        DATA TYPE type
+          RECORD
+            INT    i   :
+            INT64  i64 :
+            REAL32 r32 :
+            REAL64 r64 :
+            BYTE   b   :
+            INT16  i16 :
+        :
+        VAL minus.value  IS [-8, -8(INT64), -8.0(REAL32), -8.0(REAL64), 248(BYTE), -8(INT16)](type) :
+        VAL zero.value   IS [ 0,  0(INT64),  0.0(REAL32),  0.0(REAL64),   0(BYTE),  0(INT16)](type) :
+        VAL half.value   IS [ 4,  4(INT64),  4.0(REAL32),  4.0(REAL64),   4(BYTE),  4(INT16)](type) :
+        VAL init.value   IS [ 8,  8(INT64),  8.0(REAL32),  8.0(REAL64),   8(BYTE),  8(INT16)](type) :
+        VAL double.value IS [16, 16(INT64), 16.0(REAL32), 16.0(REAL64),  16(BYTE), 16(INT16)](type) :
+        VAL treble.value IS [24, 24(INT64), 24.0(REAL32), 24.0(REAL64),  24(BYTE), 24(INT16)](type) :
+        VAL quad.value   IS [32, 32(INT64), 32.0(REAL32), 32.0(REAL64),  32(BYTE), 32(INT16)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT   (x[i],   y[i],   msg)
+            check.INT64 (x[i64], y[i64], msg)
+            check.REAL32(x[r32], y[r32], msg)
+            check.REAL64(x[r64], y[r64], msg)
+            check.BYTE  (x[b],   y[b],   msg)
+            check.INT16 (x[i16], y[i16], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[i]   := x[i]   * 2
+              res[i64] := x[i64] * 2(INT64)
+              res[r32] := x[r32] * 2.0(REAL32)
+              res[r64] := x[r64] * 2.0(REAL64)
+              res[b]   := BYTE (((INT x[b]) * 2) \ 256)
+              res[i16] := x[i16] * 2(INT16)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ
+              res[i]   := x[i]   + y[i]
+              res[i64] := x[i64] + y[i64]
+              res[r32] := x[r32] + y[r32]
+              res[r64] := x[r64] + y[r64]
+              res[b]   := BYTE (((INT x[b]) PLUS (INT y[b])) \ 256)
+              res[i16] := x[i16] + y[i16]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[i]   := -x[i]
+              res[i64] := -x[i64]
+              res[r32] := -x[r32]
+              res[r64] := -x[r64]
+              res[b]   := BYTE ((256 - (INT x[b])) \ 256)
+              res[i16] := -x[i16]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  single BYTE
+        VAL type.string IS "single BYTE" :
+        DATA TYPE type
+          RECORD
+            BYTE   b   :
+        :
+        VAL minus.value  IS [248(BYTE)](type) :
+        VAL zero.value   IS [  0(BYTE)](type) :
+        VAL half.value   IS [  4(BYTE)](type) :
+        VAL init.value   IS [  8(BYTE)](type) :
+        VAL double.value IS [ 16(BYTE)](type) :
+        VAL treble.value IS [ 24(BYTE)](type) :
+        VAL quad.value   IS [ 32(BYTE)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.BYTE  (x[b],   y[b],   msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[b]   := BYTE (((INT x[b]) * 2) \ 256)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ
+              res[b]   := BYTE (((INT x[b]) PLUS (INT y[b])) \ 256)
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[b]   := BYTE ((256 - (INT x[b])) \ 256)
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  single INT
+        VAL type.string IS "single INT" :
+        DATA TYPE type
+          RECORD
+            INT    i   :
+        :
+        VAL minus.value  IS [-8](type) :
+        VAL zero.value   IS [ 0](type) :
+        VAL half.value   IS [ 4](type) :
+        VAL init.value   IS [ 8](type) :
+        VAL double.value IS [16](type) :
+        VAL treble.value IS [24](type) :
+        VAL quad.value   IS [32](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.INT   (x[i],   y[i],   msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[i]   := x[i]   * 2
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ
+              res[i]   := x[i]   + y[i]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[i]   := -x[i]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  single REAL32
+        VAL type.string IS "single REAL32" :
+        DATA TYPE type
+          RECORD
+            REAL32 r32 :
+        :
+        VAL minus.value  IS [-8.0(REAL32)](type) :
+        VAL zero.value   IS [ 0.0(REAL32)](type) :
+        VAL half.value   IS [ 4.0(REAL32)](type) :
+        VAL init.value   IS [ 8.0(REAL32)](type) :
+        VAL double.value IS [16.0(REAL32)](type) :
+        VAL treble.value IS [24.0(REAL32)](type) :
+        VAL quad.value   IS [32.0(REAL32)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.REAL32(x[r32], y[r32], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[r32] := x[r32] * 2.0(REAL32)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ
+              res[r32] := x[r32] + y[r32]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[r32] := -x[r32]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+        --{{{  single REAL64
+        VAL type.string IS "single REAL64" :
+        DATA TYPE type
+          RECORD
+            REAL64 r64 :
+        :
+        VAL minus.value  IS [-8.0(REAL64)](type) :
+        VAL zero.value   IS [ 0.0(REAL64)](type) :
+        VAL half.value   IS [ 4.0(REAL64)](type) :
+        VAL init.value   IS [ 8.0(REAL64)](type) :
+        VAL double.value IS [16.0(REAL64)](type) :
+        VAL treble.value IS [24.0(REAL64)](type) :
+        VAL quad.value   IS [32.0(REAL64)](type) :
+        
+        PROC check.type(VAL type x, y, VAL []BYTE msg)
+          SEQ
+            check.REAL64(x[r64], y[r64], msg)
+        :
+        type FUNCTION double(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[r64] := x[r64] * 2.0(REAL64)
+            RESULT res
+        :
+        type FUNCTION add(VAL type x, y)
+          type res :
+          VALOF
+            SEQ
+              res[r64] := x[r64] + y[r64]
+            RESULT res
+        :
+        
+        type FUNCTION negate(VAL type x)
+          type res :
+          VALOF
+            SEQ
+              res[r64] := -x[r64]
+            RESULT res
+        :
+        
+        --}}}
+        #INCLUDE "cg57type.occ"
+    :
+    records()
+    --}}}
+
+    finish ()
+:

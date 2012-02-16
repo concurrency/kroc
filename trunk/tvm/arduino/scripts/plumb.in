@@ -1,0 +1,139 @@
+#!/bin/bash 
+# An auto-version tag here would be good.
+
+# App name
+PLUMB="plumb"
+TVM_INST_ROOT=@DESTDIR,final@
+
+usage()
+{
+	echo
+	echo "Usage: $PLUMB <platform> <port> <file>"
+	echo
+}
+
+# Source in everything we need--both the KRoC env and 
+source avr-kroc-setup.sh
+
+if [ "$1" == "" ]; then
+	usage
+	echo "Choose a platform:"
+	for P in $PLATFORMS
+	do
+		echo "  " $P
+	done
+	exit
+fi	
+
+PLATFORM=$1
+SHARE=@DESTDIR,share@
+source $SHARE/conf/$PLATFORM.conf
+
+# Sanity check
+if [ "$2" == "" ]; then
+  # Print reasonable documentation for the students
+  usage
+  echo "No port provided. On Ubuntu Linux, this is probably '/dev/ttyUSB0'."
+  echo
+  exit
+fi
+
+UPLOAD_PORT=$2
+
+if [ "$3" == "firmware" ]; then
+  echo "Uploading firmware version [$TVM_ARDUINO_FIRMWARE]."
+  #avrdude -C $TVM_AVRDUDE_CONF \
+  avrdude \
+     $TVM_AVRDUDE_FIRMWARE_FLAGS \
+    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c $PROGRAMMER \
+    -U flash:w:$SHARE/firmware/$TVM_ARDUINO_FIRMWARE
+  exit
+fi
+
+if [ "$3" == "" ]; then
+  # Print that they need the filename
+  usage
+  echo "You need to provide an occam program after the port."
+  echo "For example:"
+  echo
+  echo "  $PLUMB arduino /dev/ttyUSB0 blink.occ"
+  echo
+  echo "occam programs always end with a .occ extension."
+  echo
+  exit
+fi
+
+FILENAME=$3
+
+PROGBASE=`basename $FILENAME .occ`
+PROGDIR=`dirname $FILENAME`
+OCC="$PROGDIR/$PROGBASE.occ"
+TBC="$PROGBASE.tbc"
+HEX="$PROGBASE.hex"
+
+# Another sanity check
+if [ ! -f $OCC ]; then
+  echo "Given: $OCC"
+  echo "You did not provide an occam file for us to work with."
+  exit
+fi
+
+AVRDUDE_FLAGS="$TVM_AVRDUDE_CODE_FLAGS -P $UPLOAD_PORT"
+AVRDUDE_WRITE_OCCAM="-D -U flash:w:$HEX"
+
+if [ -f $TBC ]; then
+  echo "Removing old TBC file..."
+  rm $TBC
+fi
+
+
+echo "Compiling..."
+#echo "Compiling for $PLATFORM with a $TVM_MCU"
+
+# These values come in from arduiniocc-enironment.sh
+# I think ISEARCH, being set in the .conf, should do
+# the work of finding the platform-specific libraries...
+avr-occbuild \
+  --search @DESTDIR,share@/tvm/avr-vtinclude \
+  --search @DESTDIR,share@/tvm/avr-vtlib \
+  --search @DESTDIR,include@ \
+  --search @DESTDIR,include@/arch/common \
+  --search @DESTDIR,include@/arch/$TVM_MCU \
+	--search @DESTDIR,include@/platforms/$PLATFORM \
+  -DF.CPU=$TVM_F_CPU --program $FILENAME
+
+if [ $? -eq 0 ]; then
+
+  if [ -f $HEX ]; then
+    echo "Removing old HEX file..."
+    rm $HEX
+  fi
+
+  if [ $? -eq 0 ]; then
+    if [ -f $TBC ]; then
+      echo "Converting to .hex..."
+      binary-to-ihex $TVM_BYTECODE_ADDR $TBC $HEX
+    else
+      echo ".tbc file not generated or not found."
+      exit
+    fi
+  fi
+
+
+  if [ $? -eq 0 ]; then
+    if [ -f $HEX ]; then
+      echo "Uploading..."
+      #avrdude -C $TVM_AVRDUDE_CONF $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+      echo "avrdude $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM"
+      avrdude $AVRDUDE_FLAGS $AVRDUDE_WRITE_OCCAM
+    else
+      echo ".hex file not generated or not found."
+      exit
+    fi
+  fi
+
+  if [ $? -eq 0 ]; then
+    echo "Reading..."
+    read-arduino $UPLOAD_PORT
+  fi
+fi

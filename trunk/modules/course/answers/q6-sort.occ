@@ -1,0 +1,7 @@
+#INCLUDE "course.module"
+
+PROC q6 (CHAN BYTE keyboard?, screen!, error!)
+  #USE "q6-sort-1"
+  real.q6 (keyboard?, screen!, error!)
+:
+

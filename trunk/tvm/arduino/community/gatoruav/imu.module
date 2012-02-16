@@ -1,0 +1,182 @@
+--** A library of code for crunching numbers from an IMU connected to a 10-bit adc
+-- @maintainer Ian Armstrong armstri@allegheny.edu
+-- @maintainer Anthony Smith smitha7@allegheny.edu
+
+#IF NOT (DEFINED (IMU.MODULE))
+#DEFINE IMU.MODULE
+
+--* This is a complementary filter. It makes sure the data from an imu is good.
+-- @param gyro The angular velocity from the gyro
+-- @param accelerometer The angle from the accelerometer
+-- @param theta The filtered angle
+-- @param gain The weight of the gyroscope on theta
+-- @param dt The change in time between readings from the imu
+PROC comp.filter (CHAN INT gyro?, accelerometer?,theta!, VAL INT gain, dt)
+  INT gyr, accel:
+  INITIAL INT angle IS 0:
+  WHILE TRUE
+    SEQ
+      gyro ? gyr
+      accelerometer ? accel
+    
+      accel := accel * (-1) --This is because our IMU was mounted upside down
+
+      angle := (((gain * (angle + (gyr * dt))) + (( 100 - gain) * accel))/100)
+
+      theta ! angle
+:
+
+--* Converts raw adc values to degrees/seconds
+-- @param input The raw adc values
+-- @param output The processed values, in degrees/seconds
+PROC gyro.to.degrees (CHAN INT input?, CHAN INT output!)
+  INITIAL INT counter, shift, n IS 0, 0, 0:
+  SEQ
+    SEQ
+      SEQ i = 0 FOR 11
+        SEQ
+          input ? n
+          shift := n  
+          --IF statement used to initially zero the reading to whatever the first value is
+          
+    WHILE TRUE
+      SEQ
+        input ? n
+        --                was -1.26
+        n := (((((n-33)/10230)-13)/30) * 1000)/10
+         
+        n := n - shift
+                -- in milliseconds
+        output ! n
+:
+
+--* A simple filter for a jittery gyroscope
+-- @param input The gyroscope data. Must be in degrees/seconds
+-- @param rate The filtered gyroscope rate in degrees/second
+PROC gyro.filter (CHAN INT input?, rate!)
+  [4]INT filter.arr:
+  INT filtered:
+  INITIAL INT current.rate IS 0:
+  
+  -- Following SEQs are for initialization
+  SEQ
+    SEQ i=0 FOR 4  
+      SEQ  
+        input ? filter.arr[i]
+    SEQ
+      input ? current.rate
+    
+    -- Now filtering begins
+    WHILE TRUE
+      SEQ 
+        current.rate := ((current.rate) + ((((filter.arr[1] + filter.arr[3]) + (filter.arr[2] *2))/4)))/2
+        rate ! current.rate
+        
+        --Cycles old values through temporary variables and holding the last four values
+        filter.arr [0] := filter.arr [1]
+        filter.arr [1] := filter.arr [2]
+        filter.arr [2] := filter.arr [3]
+        filter.arr [3] := current.rate
+        
+        input ? current.rate
+:
+
+PROC gyro.drift (CHAN INT drift!)
+  WHILE TRUE  
+    SEQ
+      drift ! 0
+:
+
+--* Converts raw adc values from an imu to angles. This process is
+--  for the y axis(roll)
+-- @param in The incoming raw data
+-- @param out The outgoing angular values
+PROC accel.conv.y (CHAN INT in?, out!)
+  WHILE TRUE
+    INITIAL INT i IS 0:
+    INT reading, theta:
+    SEQ
+      in ? reading
+      IF
+        (reading <= 536) AND (reading >= 468)
+          SEQ
+            theta := (((reading * 10) - 5029) / 17) * (-1) 
+            out ! theta
+        (reading >= 536) AND (reading <= 567)
+          SEQ
+            theta := (((reading * 10) - 5064) / 15) * (-1) 
+            out ! theta
+        (reading <= 468 ) AND (reading >= 438)
+          SEQ
+            theta := (((reading * 10) - 4993) / 15) * (-1) 
+            out ! theta
+        (reading >= 567) AND (reading <= 588)
+          SEQ
+            theta := (((reading * 10) - 5223) / 11) * (-1) 
+            out ! theta
+        (reading <= 438) AND (reading >= 416)
+          SEQ
+            theta := (((reading * 10) - 4768) / 10) * (-1) 
+            out ! theta
+        (reading >= 588) AND (reading <= 603)
+          SEQ
+            theta := (((reading * 10) - 5546) / 6) * (-1) 
+            out ! theta
+        (reading <= 416) AND (reading >= 398)
+          SEQ
+            theta := (((reading * 10) - 4441) / 5) * (-1) 
+            out ! theta
+        TRUE
+          SKIP
+:
+
+--* Converts raw adc values from an imu to angles. This process is
+--  for the x axis(pitch)
+-- @param in The incoming raw data
+-- @param out The outgoing angular values
+PROC accel.conv.x (CHAN INT in?, out!)
+  WHILE TRUE
+    INITIAL INT i IS 0:
+    INT reading, theta:
+    SEQ
+      in ? reading
+      IF
+        (reading <= 542) AND (reading >= 478)
+          SEQ
+            theta := (((reading * 10) - 5102) / 16) 
+            out ! theta
+        (reading >= 448) AND (reading <= 478)
+          SEQ
+            theta := (((reading * 10) - 5083) / 15) 
+            out ! theta
+        (reading <= 573) AND (reading >= 542)
+          SEQ
+            theta := (((reading * 10) - 5139) / 15) 
+            out ! theta
+        (reading >= 427) AND (reading <= 448)
+          SEQ
+            theta := (((reading * 10) - 4934) / 11) 
+            out ! theta
+        (reading <= 598) AND (reading >= 573)
+          SEQ
+            theta := (((reading * 10) - 5299) / 11) 
+            out ! theta
+        (reading >= 410) AND (reading <= 427)
+          SEQ
+            theta := (((reading * 10) - 4650) / 7) 
+            out ! theta
+        (reading <= 616) AND (reading >= 598)
+          SEQ
+            theta := (((reading * 10) - 5699) / 5)  
+            out ! theta
+        TRUE
+          SKIP
+:
+
+PROC ping (CHAN SIGNAL s!)
+  WHILE TRUE 
+    SEQ
+      s ! SIGNAL
+:
+
+#ENDIF

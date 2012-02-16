@@ -1,0 +1,14 @@
+Import('env')
+local = env.Clone()
+
+# @KROC_TARGET_@CPU, @KROC_TARGET_OS@, @prefix@
+# @KROC_ARCHBINDIR@, @KROC_ARCHLIBDIR@,
+# @KROC_KROCDIR@, @KROC_EXAMPLESDIR@
+
+# @TVM_BINDIR@, @TVM_LIBDIR@, @TVM_EXAMPLESDIR@
+
+occbuild = local.Substitute(
+    'occbuild', 'occbuild.in', SUBST=dict(TVM_LIBDIR='moo'))
+local.AddPostAction(occbuild, Chmod('$TARGET', 0755))
+
+env['OCCBUILD'] = occbuild

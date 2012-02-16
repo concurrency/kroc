@@ -1,0 +1,140 @@
+
+--** Integrate and Differentiate.
+--  
+--  The 'integrate' process:
+--  
+--  [@text
+--  
+--                 ---------------
+--                 |             |
+--            in   |             |   out
+--           ---->--  integrate  -->-----
+--                 |             |
+--                 |             |
+--                 ---------------
+-- 
+--  ]
+--  
+--  transforms the input data stream [a, b, c, ...] into the output data
+--  stream [a, a+b, a+b+c, ...].
+--  
+--  The 'differentiate' process is defined to be such that it undoes the work
+--  of 'integrate' when placed in series with it -- i.e. that the network:
+--  
+--  [@text
+--  
+--                 ---------------       -------------------
+--                 |             |       |                 |
+--            in   |             |       |                 |   out
+--           ---->--  integrate  ---->----  differentiate  -->-----
+--                 |             |       |                 |
+--                 |             |       |                 |
+--                 ---------------       -------------------
+--  
+--  ]
+--  
+--  transforms the input data stream [a, b, c, ...] into the output data
+--  stream [a, b, c, ...].  Your task is to implement 'differentiate' in the
+--  same style as the implementation of 'integrate' -- i.e. as a network of
+--  simple components of the level of those in the `Legoland' section of
+--  the course slides (in basics.ppt).  [Note: these components are in the
+--  course module (file demo_cycles.occ) and have been imported by the first
+--  line of this file - i.e. you don't have to re-type them here!]
+--  
+--  Hint: you may need a 'minus' process that is similar in nature to the
+--  'plus' process in course module.  Another hint: 'differentiate' can be
+--  built from one instance of this 'minus' and two other processes already
+--  in demo_cycles.occ.
+--  
+--  A test-rig that demonstrates correct functioning for your differentiate
+--  can be built by piping the output from 'numbers' (from demo_cycles.occ)
+--  into 'integrate' and then into your 'differentiate'.  The output from this
+--  should be the same as the output from 'numbers' alone -- i.e. the natural
+--  numbers (make sure you haven't lost the first zero).  This output needs
+--  to be piped into something like 'print.stream' (see below) which turns
+--  the INT stream into a readable BYTE stream, connected to the external
+--  screen channel of 'q2'.
+--  
+--  So, implement the body of 'q2' by connecting up instances of 'numbers',
+--  'integrate', 'differentiate' and 'print.stream' as described.
+--  
+--  Reminder: do not retype declarations for any of the processes defined
+--  in the course module (e.g. the `Legoland' components 'numbers', 'integrate',
+--  'plus').  This program already has access to them courtesy of the
+--  [@code #INCLUDE] directive at the start of this file.
+--  
+--  However, 'print.stream' (should you wish to use it) is not part of this
+--  course module and is therefore included below for convenience.
+
+
+#INCLUDE "course.module"
+
+
+--* This pauses execution of the invoking process by delay microseconds.
+--
+-- @param delay The length of the pause (in microseconds)
+--
+PROC pause (VAL INT delay)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS delay
+:
+
+
+--* This inputs numbers and tabulates them into lines of text output.
+--  It pauses for 'delay' microseconds after each line.
+--
+-- @param delay The length of the pause (in microseconds) between lines
+-- @param in Numbers coming in
+-- @param out Characters going out
+--
+PROC print.stream (VAL INT delay, CHAN INT in?, CHAN BYTE out!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out.int (n, 10, out!)             -- out.int is from "course.module"
+      out.string ("*c*n", 0, out!)      -- out.string is from "course.module"
+      pause (delay)
+:
+
+
+--* The main process.
+--
+-- @param keyboard The standard input channel (stdin, in Unix-speak)
+-- @param screen The standard output channel (stdout, in Unix-speak)
+-- @param error The standard error channel (stderr, in Unix-speak)
+--
+PROC q2 (CHAN BYTE keyboard?, screen!, error!)
+
+  --{{{  COMMENT picture
+  --
+  -->         -----------------------------------------------------
+  -->         |                                                   | keyboard
+  -->         |  q2                                              ---<---------
+  -->         |                                                   |
+  -->         |    -----------------           ---------------    |
+  -->         |    |               |           |             |    |
+  -->         |    |   integrate   |-----<-----|   numbers   |    |
+  -->         |    |               |           |             |    |
+  -->         |    -----------------           ---------------    |
+  -->         |            |                                      |
+  -->         |            v                                      |
+  -->         |            |                                      |
+  -->         |    -----------------           ----------------   |
+  -->         |    |               |           |              |   | screen
+  -->         |    | differentiate |----->-----| print.stream |----->---------
+  -->         |    |               |           |              |   |
+  -->         |    -----------------           ----------------   |
+  -->         |                                                   | error
+  -->         |                                                  --->---------
+  -->         |                                                   |
+  -->         -----------------------------------------------------
+  --
+  --}}}
+
+  SKIP  -- replace with your own code
+
+:

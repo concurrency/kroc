@@ -1,0 +1,338 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V1.1, 11/02/91"
+#COMMENT "(c) Copyright INMOS Limited, 1990"
+#INCLUDE "streamio.inc"
+
+--* Multiplex up to 256 screen stream channels onto a single such
+-- channel.
+--
+-- It is an error if there are more than 256 channels in screen.in. It
+-- is permissible for screen.in to be a null array. Each change of
+-- input channel directs output to the next line of the screen, and
+-- each such line is annotated at the left with the array index of the
+-- channel used followed by '>'. The tag st.endstream is ignored. To
+-- attempt some degree of fairness, let the implementation give
+-- priority in a heirarchy from screen.in with index i for SIZE
+-- screen.in, using modulo SIZE screen.in on the indexes; starting from
+-- 0 and incrementing it by one after each input accepted.
+--
+-- @param screen.in an array of input channels
+-- @param screen.out the single output channel
+-- @param stopper input to this routine; any integer received on this
+--   channel will terminate this routine; this channel has highest
+--   priority
+PROC ss.scrstream.multiplexor ([]CHAN OF SS screen.in,
+                                 CHAN OF SS screen.out,
+                                 CHAN OF INT stopper)
+  --{{{  history
+  -- Created from the TDS2 source; the fairness is new; V1.0 5-July-90 SRH
+  -- Improved efficiency of the fair ALT by removing REMs, with thanks
+  -- to R Peel for the suggestion; V1.1 11-Feb-91 SRH
+  --}}}
+
+  --{{{  check.current.source
+  PROC check.current.source (INT prev, VAL INT new)
+    -- sends *c*n to screen.out if new <> prev, resets prev to be new
+    IF
+      new = prev
+        SKIP
+      TRUE
+        --{{{  move to new line with channel index prefix
+        [ 4 ]BYTE annotate.string :
+        SEQ
+          [annotate.string FROM 0 FOR 4] := "*c*n >"
+          annotate.string[ 2 ] := BYTE ( (INT '0') + new )
+          screen.out ! st.out.string; 4( INT32 ) :: annotate.string
+          prev := new
+        --}}}
+  :
+  --}}}
+
+  IF
+    (SIZE screen.in) > 256
+      STOP
+    (SIZE screen.in) = 0
+      INT any :
+      stopper ? any
+    TRUE
+      --{{{  multiplex
+      BOOL going :
+      INT current.source, split :
+      SEQ
+        going := TRUE
+        current.source := -1
+        split := 0
+        WHILE going
+          VAL INT modulus IS (SIZE screen.in) :
+          VAL INT modulus.minus.1 IS (modulus - 1) :
+          SEQ
+            --{{{  ALT
+            PRI ALT
+              INT any :
+              stopper ? any
+                SEQ
+                  screen.out ! st.out.string; 2( INT32 ) :: "*c*n"
+                  going := FALSE
+              PRI ALT index = split FOR ( modulus - split )
+                --{{{  receive input and pass it on
+                screen.in[ index ] ? CASE
+                  --{{{  st.out.string
+                  [st.max.string.size]BYTE str :
+                  INT32 len:
+                  st.out.string; len :: str
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.out.string; len :: str
+                  --}}}
+                  --{{{  st.out.byte
+                  BYTE ch :
+                  st.out.byte; ch
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.out.byte; ch
+                  --}}}
+                  --{{{  st.ins.char
+                  BYTE ch :
+                  st.ins.char; ch
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.ins.char; ch
+                  --}}}
+                  --{{{  st.out.int
+                  INT32 x :
+                  st.out.int; x
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.out.int; x
+                  --}}}
+                  --{{{  st.goto
+                  INT32 x, y :
+                  st.goto; x; y
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.goto; x; y
+                  --}}}
+                  --{{{  st.reset
+                  st.reset
+                    screen.out ! st.reset
+                  --}}}
+                  --{{{  st.up
+                  st.up
+                    screen.out ! st.up
+                  --}}}
+                  --{{{  st.down
+                  st.down
+                    screen.out ! st.down
+                  --}}}
+                  --{{{  st.left
+                  st.left
+                    screen.out ! st.left
+                  --}}}
+                  --{{{  st.right
+                  st.right
+                    screen.out ! st.right
+                  --}}}
+                  --{{{  st.del.char
+                  st.del.char
+                    screen.out ! st.del.char
+                  --}}}
+                  --{{{  st.clear.eol
+                  st.clear.eol
+                    screen.out ! st.clear.eol
+                  --}}}
+                  --{{{  st.clear.eos
+                  st.clear.eos
+                    screen.out ! st.clear.eos
+                  --}}}
+                  --{{{  st.ins.line
+                  st.ins.line
+                    screen.out ! st.ins.line
+                  --}}}
+                  --{{{  st.del.line
+                  st.del.line
+                    screen.out ! st.del.line
+                  --}}}
+                  --{{{  st.beep
+                  st.beep
+                    screen.out ! st.beep
+                  --}}}
+                  --{{{  st.terminate
+                  st.terminate
+                    screen.out ! st.terminate
+                  --}}}
+                  --{{{  st.help
+                  st.help
+                    screen.out ! st.help
+                  --}}}
+                  --{{{  st.initialise
+                  st.initialise
+                    screen.out ! st.initialise
+                  --}}}
+                  --{{{  st.key.raw
+                  st.key.raw
+                    screen.out ! st.key.raw
+                  --}}}
+                  --{{{  st.key.cooked
+                  st.key.cooked
+                    screen.out ! st.key.cooked
+                  --}}}
+                  --{{{  st.release
+                  st.release
+                    screen.out ! st.release
+                  --}}}
+                  --{{{  st.claim
+                  st.claim
+                    screen.out ! st.claim
+                  --}}}
+                  --{{{  st.endstream
+                  st.endstream
+                    SKIP
+                  --}}}
+                  -- if st.spare then something is wrong => STOP
+                --}}}
+              PRI ALT index = 0 FOR split
+                --{{{  receive input and pass it on
+                screen.in[ index ] ? CASE
+                  --{{{  st.out.string
+                  [st.max.string.size]BYTE str :
+                  INT32 len:
+                  st.out.string; len :: str
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.out.string; len :: str
+                  --}}}
+                  --{{{  st.out.byte
+                  BYTE ch :
+                  st.out.byte; ch
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.out.byte; ch
+                  --}}}
+                  --{{{  st.ins.char
+                  BYTE ch :
+                  st.ins.char; ch
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.ins.char; ch
+                  --}}}
+                  --{{{  st.out.int
+                  INT32 x :
+                  st.out.int; x
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.out.int; x
+                  --}}}
+                  --{{{  st.goto
+                  INT32 x, y :
+                  st.goto; x; y
+                    SEQ
+                      check.current.source( current.source, index )
+                      screen.out ! st.goto; x; y
+                  --}}}
+                  --{{{  st.reset
+                  st.reset
+                    screen.out ! st.reset
+                  --}}}
+                  --{{{  st.up
+                  st.up
+                    screen.out ! st.up
+                  --}}}
+                  --{{{  st.down
+                  st.down
+                    screen.out ! st.down
+                  --}}}
+                  --{{{  st.left
+                  st.left
+                    screen.out ! st.left
+                  --}}}
+                  --{{{  st.right
+                  st.right
+                    screen.out ! st.right
+                  --}}}
+                  --{{{  st.del.char
+                  st.del.char
+                    screen.out ! st.del.char
+                  --}}}
+                  --{{{  st.clear.eol
+                  st.clear.eol
+                    screen.out ! st.clear.eol
+                  --}}}
+                  --{{{  st.clear.eos
+                  st.clear.eos
+                    screen.out ! st.clear.eos
+                  --}}}
+                  --{{{  st.ins.line
+                  st.ins.line
+                    screen.out ! st.ins.line
+                  --}}}
+                  --{{{  st.del.line
+                  st.del.line
+                    screen.out ! st.del.line
+                  --}}}
+                  --{{{  st.beep
+                  st.beep
+                    screen.out ! st.beep
+                  --}}}
+                  --{{{  st.terminate
+                  st.terminate
+                    screen.out ! st.terminate
+                  --}}}
+                  --{{{  st.help
+                  st.help
+                    screen.out ! st.help
+                  --}}}
+                  --{{{  st.initialise
+                  st.initialise
+                    screen.out ! st.initialise
+                  --}}}
+                  --{{{  st.key.raw
+                  st.key.raw
+                    screen.out ! st.key.raw
+                  --}}}
+                  --{{{  st.key.cooked
+                  st.key.cooked
+                    screen.out ! st.key.cooked
+                  --}}}
+                  --{{{  st.release
+                  st.release
+                    screen.out ! st.release
+                  --}}}
+                  --{{{  st.claim
+                  st.claim
+                    screen.out ! st.claim
+                  --}}}
+                  --{{{  st.endstream
+                  st.endstream
+                    SKIP
+                  --}}}
+                  -- if st.spare then something is wrong => STOP
+                --}}}
+            --}}}
+            IF
+              split = modulus.minus.1
+                split := 0
+              TRUE
+                split := split + 1
+      --}}}
+:

@@ -1,0 +1,25 @@
+-- version control marker $Id: cgtest20.occ,v 1.4 1995/10/10 12:58:36 djb1 Exp $
+
+PROC cgtest20 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  INT key :
+  BOOL x :
+  SEQ
+    init ("CG test 20", "INT16 arithmetic")
+
+    --#INCLUDE "cg10misc.occ"
+    --#INCLUDE "cg10r64.occ"
+    --#INCLUDE "cg10r32.occ"
+
+    --#INCLUDE "cg10i64.occ"
+    --#INCLUDE "cg10i32.occ"
+    #INCLUDE "cg10i16.occ"
+    --#INCLUDE "cg10int.occ"
+    --#INCLUDE "cg10byte.occ"
+    --#INCLUDE "cg10long.occ"
+
+    finish ()
+:

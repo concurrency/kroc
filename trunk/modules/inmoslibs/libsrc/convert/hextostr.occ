@@ -1,0 +1,57 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module convert
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.1 22/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+PROC HEXTOSTRING (INT len, []BYTE string, VAL INT n)
+
+  --{{{  history
+  -- Beta-2 (27feb87)
+  -- V1.0, 1-Jul-88
+  -- Added V to the OPTIONs; V1.1, 22-Mar-90 SRH
+  --}}}
+
+  INT nibbles.per.word:
+  INT W, C:
+  --{{{  hex.digit
+  PROC hex.digit (BYTE byte, VAL INT digit)
+    SEQ
+      IF
+        digit < 10
+          byte := (BYTE (digit + (INT '0')))
+        digit < 16
+          byte := (BYTE (digit + ((INT 'A') - 10)))
+  :
+  --}}}
+  SEQ
+    IF
+      (MOSTNEG INT) = #8000
+        nibbles.per.word := 4
+      TRUE
+        nibbles.per.word := 8
+    W := n
+    SEQ i = 0 FOR nibbles.per.word
+      SEQ
+        C, W := SHIFTLEFT (0, W, 4)
+        hex.digit (string[i], C)
+    len := nibbles.per.word
+:

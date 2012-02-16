@@ -1,0 +1,8 @@
+#INCLUDE "course.module"
+
+PROC philfred( CHAN BYTE keyboard?, screen!, error! )
+  #USE "q7-fred-1"
+  dining.philosophers( keyboard?, screen!, error! )
+:
+
+

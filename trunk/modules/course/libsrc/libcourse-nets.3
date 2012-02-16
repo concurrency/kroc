@@ -1,0 +1,69 @@
+.\" KRoC course library manual page.  Last updated 30/12/2005 Fred Barnes  <frmb@kent.ac.uk>
+.TH LIBCOURSE-NETS "3" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+numbers, integrate, pairs, squares, fibonacci
+\- KRoC course library demo networks
+.SH SYNOPSIS
+.B #USE \fB"course.lib\fB"\fR
+.br
+.B kroc -lcourse
+.PP
+.BI "PROC numbers (CHAN INT " out "!)"
+.br
+.BI "PROC integrate (CHAN INT " in "?, " out "!)"
+.br
+.BI "PROC pairs (CHAN INT " in "?, " out "!)"
+.br
+.BI "PROC squares (CHAN INT " out "!)"
+.br
+.BI "PROC fibonacci (CHAN INT " out "!)"
+
+.SH DESCRIPTION
+.PP
+These PROCs provide the demo-networks.  They are implemented as networks of sub-processes.
+.PP
+\fBnumbers\fR outputs the natural numbers, starting at 0 and incrementing by 1.  e.g. 0, 1, 2, 3, 4, ...
+.PP
+\fBintegrate\fR implements a simple integrator, with the internal sum initially 0.  If the sequence \fIa\fR, \fIb\fR, \fIc\fR
+is input, then the output will be \fIa\fR, \fIa\fR+\fIb\fR, \fIa\fR+\fIb\fR+\fIc\fR.
+.PP
+\fBpairs\fR adds adjacent pairs of numbers.  If the sequence \fIa\fR, \fIb\fR, \fIc\fR is input, then the output
+will be \fIa\fR+\fIb\fR, \fIb\fR+\fIc\fR.
+.PP
+\fBsquares\fR generates a sequence of square numbers, starting from 1.  e.g. 1, 4, 9, 16, 25, ...   \fBintegrate\fR and \fBpairs\fR
+are used to produce the sequence.
+.PP
+\fBfibonacci\fR generates the fibonacci sequence, starting from 0.  e.g. 0, 1, 1, 2, 3, 5, 8, ...
+
+.SH NOTES
+These processes are sensitive to arithmetic overflow.
+
+.SH AUTHOR
+This manual page is maintained by Fred Barnes <frmb@kent.ac.uk>.  The documentation
+itself was largely extracted from the library sources.
+.SH "SEE ALSO"
+kroc(1)
+.br
+course/libsrc/demo_nets.occ  in the KRoC distribution
+
+.SH "REPORTING BUGS"
+Please report bugs to <ofa-bugs@kent.ac.uk>
+
+.SH COPYRIGHT
+Copyright \(co 1984 P.H.Welch
+.PP
+This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
+.PP
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.
+.PP
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+.PP
+

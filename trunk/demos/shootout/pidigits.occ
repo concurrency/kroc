@@ -1,0 +1,84 @@
+-- The Great Computer Language Shootout
+-- http://shootout.alioth.debian.org/
+--
+-- contributed by Adam Sampson <ats@offog.org>
+
+#INCLUDE "course.module"
+
+-- This does not work (past the first few digits) -- it needs a big integer
+-- library. It does turn out to be a reasonably nice way of implementing to
+-- algorithm, though.
+
+DATA TYPE LFT IS [4]INT:
+
+PROC gen (CHAN LFT out!)
+  INITIAL INT k IS 1:
+  WHILE TRUE
+    SEQ
+      out ! [k, (4 * k) + 2, 0, (2 * k) + 1](LFT)
+      k := k + 1
+:
+
+INT FUNCTION floor (VAL REAL64 r)
+  INT n:
+  VALOF
+    IF
+      r < 0.0
+        n := (INT TRUNC r) - 1
+      TRUE
+        n := INT TRUNC r
+    RESULT n
+:
+
+REAL64 FUNCTION extr (VAL LFT lft, VAL INT x) IS (REAL64 ROUND ((lft[0] * x) + lft[1])) / (REAL64 ROUND ((lft[2] * x) + lft[3])):
+
+LFT FUNCTION comp (VAL LFT a, b) IS [(a[0] * b[0]) + (a[1] * b[2]),
+                                     (a[0] * b[1]) + (a[1] * b[3]),
+                                     (a[2] * b[0]) + (a[3] * b[2]),
+                                     (a[2] * b[1]) + (a[3] * b[3])](LFT):
+
+INT FUNCTION next (VAL LFT z) IS floor (extr (z, 3)):
+
+BOOL FUNCTION safe (VAL LFT z, VAL INT n) IS n = floor (extr (z, 4)):
+
+LFT FUNCTION prod (VAL LFT z, VAL INT n) IS comp ([10, (-10) * n, 0, 1](LFT), z):
+
+LFT FUNCTION cons (VAL LFT z, VAL LFT zp) IS comp (z, zp):
+
+PROC stream (CHAN LFT in?, CHAN INT out!, VAL LFT init.state, SHARED CHAN BYTE scr!)
+  INITIAL LFT z IS init.state:
+  WHILE TRUE
+    INT y:
+    SEQ
+      y := next (z)
+      IF
+        safe (z, y)
+          SEQ
+            out ! y
+            z := prod (z, y)
+        TRUE
+          LFT x:
+          SEQ
+            in ? x
+            z := cons (z, x)
+:
+
+PROC print (CHAN INT in?, SHARED CHAN BYTE out!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      CLAIM out!
+        SEQ
+          out.int (n, 0, out!)
+          out ! '*n'
+:
+
+PROC main (SHARED CHAN BYTE out!)
+  CHAN LFT a:
+  CHAN INT c:
+  PAR
+    gen (a!)
+    stream (a?, c!, [1, 0, 0, 1](LFT), out!)
+    print (c?, out!)
+:

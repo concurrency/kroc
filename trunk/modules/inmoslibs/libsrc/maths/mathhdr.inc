@@ -1,0 +1,128 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** Mathematical functions and constants.
+--
+-- @module maths
+
+--{{{  REALxxOP, IEEExxOP codes
+
+VAL Add IS 0 :
+VAL Sub IS 1 :
+VAL Mul IS 2 :
+VAL Div IS 3 :
+--}}}
+
+--{{{  IEEECOMPARE values
+
+VAL less.than    IS -1 :
+VAL equal.to     IS  0 :
+VAL greater.than IS  1 :
+VAL is.nan       IS  2 :
+--}}}
+
+--{{{  single constants
+
+--{{{  NaNs and Inf
+
+VAL REAL32 undefined.NaN RETYPES #7F800010(INT32) :
+VAL REAL32 unstable.NaN  RETYPES #7F800008(INT32) :
+VAL REAL32 inexact.NaN   RETYPES #7F800004(INT32) :
+VAL REAL32 RInf          RETYPES #7F800000(INT32) :
+--}}}
+
+--{{{  small constants
+
+VAL Zero IS 0.0(REAL32) :
+VAL Half IS 0.5(REAL32) :
+VAL One  IS 1.0(REAL32) :
+VAL Two  IS 2.0(REAL32) :
+VAL one  IS 1(INT32) :
+--}}}
+
+--{{{  limiting values
+
+VAL REAL32 Eps  RETYPES #39800000(INT32) :
+-- 2 ** (-Manbits/2) = 0.0002441406250
+VAL REAL32 SMax RETYPES #48490FDB(INT32) :
+-- Pi*(2^16) = 205887.4218750
+VAL REAL32 TMax RETYPES #47C90FDB(INT32) :
+-- Pi/2*(2^16) = 102943.71093750
+--}}}
+
+--{{{  transcendental constants
+
+VAL REAL32 Pi           RETYPES #40490FDB(INT32) :
+--  3.14159274101257324218750
+VAL REAL32 Pi.err       RETYPES #B3BBBD2E(INT32) :
+-- -8.742277657347585773095488548278808593750E-08
+VAL REAL32 Nearly.PiBy2 RETYPES #3FC907DB(INT32) :
+--  PiBy2 - Eps = 1.570552229881286621093750
+VAL REAL32 PiBy2        RETYPES #3FC90FDB(INT32) :
+--  1.570796370506286621093750
+VAL REAL32 PiBy2.err    RETYPES #B33BBD2E(INT32) :
+-- -4.3711388286737928865477442741394042968750E-08
+VAL REAL32 PiBy4        RETYPES #3F490FDB(INT32) :
+--  0.7853981852531433105468750
+VAL REAL32 InvPi        RETYPES #3EA2F983(INT32) :
+--  0.31830987334251403808593750
+--}}}
+--}}}
+
+--{{{  double constants
+
+--{{{  NaNs and Inf
+
+VAL REAL64 Dundefined.NaN RETYPES #7FF0000200000000(INT64) :
+VAL REAL64 Dunstable.NaN  RETYPES #7FF0000100000000(INT64) :
+VAL REAL64 Dinexact.NaN   RETYPES #7FF0000080000000(INT64) :
+VAL REAL64 DRInf          RETYPES #7FF0000000000000(INT64) :
+--}}}
+
+--{{{  small constants
+
+VAL DZero IS 0.0(REAL64) :
+VAL DHalf IS 0.5(REAL64) :
+VAL DOne  IS 1.0(REAL64) :
+VAL DTwo  IS 2.0(REAL64) :
+--}}}
+
+--{{{  trigonometric constants
+
+VAL REAL64 DPi           RETYPES #400921FB54442D18(INT64) :
+-- 3.1415926535897931159979634685441851615905761718750
+VAL REAL64 DPi.err       RETYPES #3CA1A62633145C07(INT64) :
+-- 1.22464679914735320717376402945839660462569212467758E-16
+VAL REAL64 Nearly.DPiBy2 RETYPES #3FF921FB50442D18(INT64) :
+-- DPiBy2 - Eps = 1.57079631189373536415132548427209258079528808593750
+VAL REAL64 DPiBy2        RETYPES #3FF921FB54442D18(INT64) :
+-- 1.57079632679489655799898173427209258079528808593750
+VAL REAL64 DPiBy2.err    RETYPES #3C91A62633145C07(INT64) :
+-- 6.1232339957367660358688201472919830231284606233879E-17
+VAL REAL64 DPiBy4        RETYPES #3FE921FB54442D18(INT64) :
+-- 0.785398163397448278999490867136046290397644042968750
+VAL REAL64 DInvPi        RETYPES #3FD45F306DC9C883(INT64) :
+-- 1/pi = 0.3183098861837906912164442019275156781077384948730468750
+VAL REAL64 DLn2          RETYPES #3FE62E42FEFA39EF(INT64) :
+-- 0.693147180559945286226763982995180413126945495605468750
+--}}}
+
+VAL REAL64 DEps RETYPES #3E50000000000000(INT64) :
+-- 1.4901161193847656250E-8
+--}}}

@@ -1,0 +1,12 @@
+-- This shouldn't compile.
+
+CHAN TYPE MY.CT
+  MOBILE RECORD
+    CHAN INT c?:
+:
+
+PROTOCOL MY.PROTO IS MOBILE MY.CT:   -- error here
+
+PROC main ()
+  SKIP
+:

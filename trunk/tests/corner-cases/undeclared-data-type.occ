@@ -1,0 +1,11 @@
+-- This should fail to compile, with the only error being that VECTOR2 isn't
+-- declared.
+
+DATA TYPE DT
+  RECORD
+    VECTOR2 x:
+:
+
+PROC main ()
+  SKIP
+:

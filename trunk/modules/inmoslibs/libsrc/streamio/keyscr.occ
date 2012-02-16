@@ -1,0 +1,90 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V0.01 23/12/88"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "streamio.inc"
+--* Convert keystream protocol into screen stream protocol.
+--
+-- This procedure is terminated by the receipt of ft.terminated from
+-- the keyboard stream. For keystream values above ft.tag, only ft.tag
+-- + 1 to ft.tag + 8 are dealt with, values above ft.tag + 8, and
+-- ft.tag itself are translated into st.beep. Keystream values which
+-- are negative, other than ft.terminated, are ignored. Keystream
+-- values in the range [0, ft.tag) are passed straight through, other
+-- than '*c' which is translated into '*c' followed by '*n'.
+--
+-- @param keyboard for input
+-- @param scrn for output
+PROC ks.keystream.to.scrstream (CHAN OF KS keyboard, CHAN OF SS scrn)
+  VAL ft.tag        IS 200 :
+  VAL ft.up         IS ft.tag + 1 :
+  VAL ft.down       IS ft.tag + 2 :
+  VAL ft.left       IS ft.tag + 3 :
+  VAL ft.right      IS ft.tag + 4 :
+  VAL ft.del.chl    IS ft.tag + 5 :
+  VAL ft.del.chr    IS ft.tag + 6 :
+  VAL ft.del.line   IS ft.tag + 7 :
+  VAL ft.undel.line IS ft.tag + 8 :
+  BOOL going:
+  SEQ
+    going := TRUE
+    WHILE going
+      INT key:
+      SEQ
+        keyboard ? key
+        IF
+          key = ft.terminated
+            going := FALSE
+          key < 0
+            SKIP
+          key >= ft.tag
+            CASE key
+              ft.del.chl
+                VAL BS IS 8(BYTE): -- backspace
+                SEQ
+                  scrn ! st.out.byte ; BS
+                  scrn ! st.out.byte ; ' '
+                  scrn ! st.out.byte ; BS
+              ft.up
+                scrn ! st.up
+              ft.down
+                scrn ! st.down
+              ft.left
+                scrn ! st.left
+              ft.right
+                scrn ! st.right
+              ft.del.chr
+                scrn ! st.del.char
+              ft.del.line
+                scrn ! st.del.line
+              ft.undel.line
+                scrn ! st.ins.line
+              ELSE
+                scrn ! st.beep
+          key = (INT '*c')
+            SEQ
+              scrn ! st.out.byte; '*c'
+              scrn ! st.out.byte; '*n'
+          TRUE
+            scrn ! st.out.int; INT32 key
+:

@@ -1,0 +1,48 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module convert
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.1 22/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#USE "ioconv.lib"
+--{{{  history
+-- V1.0, 1-Jul-88
+-- Added V to OPTIONs; V1.1, 22-Mar-90 SRH
+--}}}
+--{{{  STRINGTOINT32 TA
+PROC STRINGTOINT32 (BOOL Error, INT32 n, VAL []BYTE string)
+  #IF TARGET.BITS.PER.WORD = 32
+  INT n RETYPES n:
+  STRINGTOINT (Error, n, string)
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
+:
+--}}}
+--{{{  INT32TOSTRING TA
+PROC INT32TOSTRING (INT len, []BYTE string, VAL INT32 n)
+  #IF TARGET.BITS.PER.WORD = 32
+  INTTOSTRING (len, string, INT n)
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
+:
+--}}}

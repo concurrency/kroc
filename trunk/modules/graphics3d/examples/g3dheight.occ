@@ -1,0 +1,118 @@
+--
+--	g3dheight.occ -- height-field test program
+--	Copyright (C) 2011 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "graphics3d.module"
+
+
+--{{{  PROC main (...)
+--* Top-level process.
+--
+-- @param kyb Keyboard.
+-- @param scr Screen.
+-- @private
+--
+PROC main (CHAN BYTE kyb?, SHARED CHAN BYTE scr!)
+
+  PROC id.dump (CHAN INT in?, SHARED CHAN BYTE out!) --{{{
+    WHILE TRUE
+      INT i:
+      SEQ
+        in ? i
+        CLAIM out!
+          SEQ
+            out.string ("poly.id click: ", 0, out!)
+            out.int (i, 0, out!)
+            out.string ("*n", 0, out!)
+  :
+  --}}}
+  
+  VAL INT SCR.WIDTH IS G3D.DEFAULT.WIDTH:
+  VAL INT SCR.HEIGHT IS G3D.DEFAULT.HEIGHT:
+
+  VAL [][]REAL32 hf.init.map IS [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]:
+  SEQ
+
+    CHAN RASTER rc1, rc2, rc3, rc4:
+    SHARED! CHAN G3D.RENDER.ENGINE! rre:
+    CHAN G3D.TMR.CONTROL tmr.ctl:
+    CHAN RASTER.EVENT events, events.in:
+    CHAN G3D.SCENE.TRANS! sclink:
+    CHAN INT poly.id:
+    G3D.HEIGHTFIELD.CONTROL! hf.ctl:
+    PAR
+      raster.timed.buffer (rc1?, rc2!, 20, tmr.ctl?)
+      raster.display ("Height-field test", SCR.WIDTH, SCR.HEIGHT, 3, rc2?, rc3!, events!)
+      raster.chain (rc3?, rc4!, rre?, FALSE)
+      raster.polyidclick (rc4?, rc1!, events?, events.in!, poly.id!, 250000)
+
+      id.dump (poly.id?, scr!)
+
+      G3D.SCENE.TRANS! sc.ctl:
+      SEQ
+        g3d.scene.spawn (sc.ctl)
+        sc.ctl[link] ! set.pre.3dshift; [0.0, 0.0, 0.0]
+        sc.ctl[link] ! set.post.3dshift; [0.0, 1.0, -5.0]
+        sc.ctl[link] ! set.xyscale; [4.0, 4.0]
+        sc.ctl[link] ! set.rot.angles; [0.5, 1.0, 0.0]
+
+        g3d.scene.camera (events.in?, sclink?, sc.ctl!)
+
+      G3D.SCENE.TRANS! sc.tmp:
+      SEQ
+        CLAIM rre!
+          heightfield.network.spawn (SCR.WIDTH, SCR.HEIGHT, hf.ctl, hf.init.map, rre!, sc.tmp)
+        sclink ! sc.tmp
+
+        -- then do some pretty modifications to the field
+        TIMER tim:
+        INT t:
+        SEQ
+          tim ? t
+
+          INITIAL REAL32 v IS 0.0:
+          WHILE TRUE
+            MOBILE []G3D.POINT2.3R upd:
+            SEQ
+              t := t PLUS 40000
+              tim ? AFTER t
+
+              upd := MOBILE [20]G3D.POINT2.3R
+              SEQ n = 0 FOR 10
+                INITIAL REAL32 rv IS v + (0.3 * (REAL32 TRUNC n)):
+                SEQ
+                  upd[n] := [5, n, (0.5 * (SIN (rv)))]
+                  upd[n+10] := [n, 5, (0.5 * (SIN (rv)))]
+
+              v := v + 0.1
+
+              hf.ctl[adjust] ! upd
+:
+--}}}
+

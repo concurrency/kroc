@@ -1,0 +1,147 @@
+--
+--      Inmos Libraries
+--      Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--      This library is free software; you can redistribute it and/or
+--      modify it under the terms of the GNU Lesser General Public
+--      License as published by the Free Software Foundation; either
+--      version 2 of the License, or (at your option) any later version.
+--
+--      This library is distributed in the hope that it will be useful,
+--      but WITHOUT ANY WARRANTY; without even the implied warranty of
+--      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--      Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU Lesser General Public
+--      License along with this library; if not, write to the Free Software
+--      Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.3 06/04/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL64TOINT16 "REAL64TOINT16%CHK"
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  
+INT16 FUNCTION REAL64TOINT16 (VAL INT Mode, VAL REAL64 X)
+
+  -- Round real value to nearest integer or to zero, returns an integer
+  -- result. Error flag is set if overflow occurs.
+  --   Mode      : Truncate or Nearest (rounding mode)
+  --   X         : source real
+  --{{{  history
+  -- Function version (10 Jun 87)
+  -- V1.1, 21-Feb-89
+  -- Changed the result type from INT to INT16; V1.2, 16-Nov-89 SRH
+  -- V1.3, 6-Apr-90 SRH
+  --}}}
+
+  INT N :
+  VALOF
+    --{{{  #USEs
+    #PRAGMA TRANSLATE QUADSHIFTLEFT "QUADSHIFTLEFT%CHK"
+    #USE "qshiftl"
+    --}}}
+    VAL [4]INT X RETYPES X :
+    INT Dump, Guard, Xexp :
+    [4] INT Xfrac :
+    PLACE Xfrac IN WORKSPACE :
+    INT Sign :
+    SEQ
+      Sign := SignBit
+      --{{{  unpack X
+      Xexp,  Dump := SHIFTLEFT ( 0,  X[3] /\ (~Sign),  DRealShift + 1)
+      Xfrac[3],  Dump := SHIFTLEFT ( X[3],  X[2],  DRealShift + 1)
+      Xfrac[2],  Dump := SHIFTLEFT ( X[2],  X[1],  DRealShift + 1)
+      Xfrac[1],  Xfrac[0] := SHIFTLEFT ( X[1],  X[0],  DRealShift + 1)
+      --}}}
+      IF
+        --{{{  Not vaild -- inf or NaN
+        Xexp = DRealExp
+          CAUSEERROR()
+        --}}}
+        --{{{  0   <= |X| < 0.5
+        Xexp < (DRealXcess - 1)
+          N := 0
+        --}}}
+        --{{{  0.5 <= |X| < 1
+        Xexp < DRealXcess
+          IF
+            --round to zero
+            (Mode = Truncate) OR ((((Xfrac[3] \/ Xfrac[2]) \/ Xfrac[1]) \/ Xfrac[0]) = 0)
+              N := 0
+            (X[3] /\ Sign) = 0             --round up
+              N := 1
+            TRUE
+              N := -1
+        --}}}
+        --{{{  Most negative integer
+        (Xexp = (DRealXcess + (BitsPerWord - 1))) AND ((X[3] /\ Sign) <> 0) AND
+         ((Xfrac[3] = 0) OR ((Mode = Truncate) AND (Xfrac[3] = 1)))
+          N := Sign    -- most negative integer
+        --}}}
+        --{{{  Proper Case
+        TRUE
+          SEQ
+            Xexp := Xexp - DRealXcess
+            Guard := 1                     --set top bit
+            --{{{  Shift and check for error
+            IF
+              Xexp > (BitsPerWord - 2)  --losing bits
+                CAUSEERROR()
+              TRUE
+                SKIP
+            Guard := Xfrac[0]
+            Xfrac[0] := Xfrac[1]
+            Xfrac[1] := Xfrac[2]
+            Xfrac[2] := Xfrac[3]
+            Xfrac[3] := 1
+            
+            [4]INT temp.Xfrac :
+            INT    temp.Guard :
+            SEQ
+              temp.Xfrac := Xfrac
+              temp.Guard := Guard
+              QUADSHIFTLEFT (Xfrac, Guard, temp.Xfrac, temp.Guard, Xexp)
+            --}}}
+            --{{{  Round result
+            IF
+              (Mode = Truncate) OR ((Xfrac[2] /\ Sign) = 0)--round to zero
+                SKIP
+              (((((Xfrac[2] /\ (~Sign)) \/ Xfrac[1]) \/ Xfrac[0]) \/ Guard) \/
+                (Xfrac[3] /\ 1)) = 0                  --round down
+                SKIP
+              TRUE                         --round up/even
+                SEQ
+                  Xfrac[3] := Xfrac[3] + 1
+                  IF
+                    Xfrac[3] < 0
+                      CAUSEERROR()
+                    TRUE
+                      SKIP
+            --}}}
+            N := Xfrac[3] /\ (~Sign)          --dump excess top bits
+            --{{{  set sign
+            IF
+              (X[3] /\ Sign) = 0           --positive
+                SKIP
+              TRUE
+                N := -N
+            --}}}
+        --}}}
+    RESULT ( INT16 N )
+:
+--}}}
+
+#ENDIF

@@ -1,0 +1,20 @@
+
+This directory contains the following sub-directories:
+
+  examples/
+
+    Sources of example programs demonstrating dynamic
+    occam processes
+
+  libsrc/
+
+    occam interface code for dynamic processes
+
+
+Note: for suspended/saved processes, the extension .sop is preferred.
+(Suspended occam Process).  To get the UNIX `file' command to recognise
+them place the following in /etc/magic:
+    0       string          \033SOPv0.9     suspended occam process
+    >36     string          >0              '%s'
+
+

@@ -1,0 +1,146 @@
+--
+--	sockstreamserv.occ - TCP stream server
+--	Copyright (C) 2000-2008 Fred Barnes <frmb@kent.ac.uk>
+--      Modifications (C) 2008 Tom Carlson
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "sock.module"
+#INCLUDE "course.module"
+
+--{{{  constants
+VAL listen.addr IS INADDR.ANY:
+VAL listen.port IS 7979:
+VAL max.buffer.size IS 1500:
+--}}}  
+--{{{  STAT protocol
+PROTOCOL STAT IS INT; INT:
+--}}}
+
+--{{{  PROC stream.service (SOCKET sock, CHAN INT bytes.recv)
+PROC stream.service (SOCKET sock, CHAN INT bytes.recv!)
+  INT res:
+  [max.buffer.size]BYTE buffer:
+  SEQ
+    res := 1
+    WHILE res > 0
+      SEQ
+        socket.read (sock, buffer, max.buffer.size, res)
+        IF
+          res > 0
+            bytes.recv ! res
+          TRUE
+            SKIP
+:
+--}}}  
+
+--{{{  PROC accumulator (CHAN INT in?, CHAN STAT out!)
+PROC accumulator (CHAN INT in?, CHAN STAT out!)
+  INT t.bytes:
+  INT t.packets:
+  INT t, bytes:
+  TIMER tim:
+  BOOL enough:
+  WHILE TRUE
+    SEQ
+      t.bytes := 0
+      t.packets := 0
+      enough := FALSE
+      tim ? t
+      t := (t PLUS 1000000)
+      WHILE NOT enough
+        PRI ALT
+          tim ? AFTER t
+            enough := TRUE
+          in ? bytes
+            SEQ
+              t.bytes := (t.bytes + bytes)
+              t.packets := (t.packets + 1)
+      out ! t.bytes; t.packets
+:
+--}}} 
+
+--{{{  PROC display (CHAN STAT in?, CHAN BYTE out!)
+PROC display (CHAN STAT in?, CHAN BYTE out!)
+  INT bytes, packets:
+  WHILE TRUE
+    SEQ
+      in ? bytes; packets
+      cursor.x.y (2, 2, out!)
+      out.string ("bytes / second   : ", 0, out!)
+      out.int (bytes, 0, out!)
+      out.string ("             *n", 0, out!)
+      out.string (" packets / second : ", 0, out!)
+      out.int (packets, 0, out!)
+      out.string ("             *n", 0, out!)
+      out.string (" avg. bytes/packet: ", 0, out!)
+      IF
+        packets = 0
+          out.string ("NaN", 0, out!)
+        TRUE
+          out.int ((bytes / packets), 0, out!)
+      out.string ("             *n", 0, out!)
+:
+--}}} 
+
+
+--{{{  PROC sock.stream.serv (CHAN BYTE kyb?, scr!, err!)
+PROC sock.stream.serv (CHAN BYTE kyb?, scr!, err!) 
+  --{{{  start here
+  SOCKET sock:
+  INT res:
+  SEQ
+    --{{{  setup socket
+    socket.create.listen.tcp (sock, listen.addr, listen.port, res)
+    IF
+      res < 0
+        SEQ
+          out.string ("unable to create/bind/listen*n", 0, err!)
+          STOP
+      TRUE
+        SKIP
+    --}}}  
+    --{{{  go parallel
+    CHAN STAT s.chan:
+    CHAN INT to.accum:
+    PAR
+      --{{{  connection acceot
+      WHILE TRUE
+        SOCKET client:
+        SEQ
+          socket.accept (sock, client, res)
+          IF
+            res < 0
+              SEQ
+                out.string ("error accepting client*n", 0, err!)
+                STOP
+            TRUE
+              SKIP
+          stream.service (client, to.accum!)
+          socket.close (client)
+      --}}}  
+      accumulator (to.accum?, s.chan!)
+      --{{{  clear screen then go display
+      SEQ
+        erase.screen (scr!)
+        display (s.chan?, scr!)
+      --}}}  
+    --}}}  
+
+  --}}}  
+
+:
+--}}}  

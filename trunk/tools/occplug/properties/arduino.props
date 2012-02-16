@@ -1,0 +1,16 @@
+plugin.OccPlugPlugin.arduino.devices=concurrency,arduino,arduinouno,arduinomega,seeedmega
+
+plugin.OccPlugPlugin.arduino.device.concurrency.name=Concurrency Board
+plugin.OccPlugPlugin.arduino.device.concurrency.conf=arduino.conf
+
+plugin.OccPlugPlugin.arduino.device.arduino.name=Arduino
+plugin.OccPlugPlugin.arduino.device.arduino.conf=arduino.conf
+
+plugin.OccPlugPlugin.arduino.device.arduinouno.name=Arduino Uno
+plugin.OccPlugPlugin.arduino.device.arduinouno.conf=arduinouno.conf
+
+plugin.OccPlugPlugin.arduino.device.arduinomega.name=Arduino Mega
+plugin.OccPlugPlugin.arduino.device.arduinomega.conf=arduinomega.conf
+
+plugin.OccPlugPlugin.arduino.device.seeedmega.name=Seeeduino Mega
+plugin.OccPlugPlugin.arduino.device.seeedmega.conf=seeedmega.conf

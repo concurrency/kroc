@@ -1,0 +1,119 @@
+#INCLUDE "occSDL.module"
+#INCLUDE "course.module"
+
+PROTOCOL STICK 
+  CASE
+    axes; MOBILE []INT16
+    buttons; MOBILE []BYTE
+    quit
+:
+
+PROC stickmonitor(CHAN STICK stick!, CHAN BYTE kyb?,  err!)
+  SDL.Joystick stick.pointer:
+  INITIAL INT stick.index IS 0:
+  INT nr.of.axes, nr.of.buttons, hats, balls, result:
+  INITIAL BOOL run IS TRUE:
+  SEQ
+    -- Set joystick event queue update manaually
+    SDL.JoystickEventState(SDL.IGNORE, result)
+    ASSERT(result = SDL.IGNORE)
+    -- Open Joystick
+    SDL.JoystickOpen(stick.index, stick.pointer)
+    ASSERT(stick.pointer <> 0)
+    SDL.JoystickNumAxes(stick.pointer, nr.of.axes)
+    SDL.JoystickNumButtons(stick.pointer, nr.of.buttons)
+    SDL.JoystickNumHats(stick.pointer, hats)
+    SDL.JoystickNumBalls(stick.pointer, balls)
+    out.string("Nr of axes, buttons, hats, balls on joystick ", 0, err!)
+    out.int(stick.index, 0, err!)
+    out.string(" is ", 0, err!)
+    out.int(nr.of.axes, 0, err!)
+    out.string(", ", 0, err!)
+    out.int(nr.of.buttons, 0, err!)
+    out.string(", ", 0, err!)
+    out.int(hats, 0, err!)
+    out.string(", ", 0, err!)
+    out.int(balls, 0, err!)
+    out.string("*n", 0, err!)
+    WHILE run
+      MOBILE []INT16 axis.values:
+      MOBILE []BYTE button.values:
+      TIMER t:
+      INT time:
+      SEQ
+        t ? time
+        SDL.JoystickUpdate()
+        axis.values := MOBILE[nr.of.axes]INT16
+        button.values := MOBILE[nr.of.buttons]BYTE
+        INT16 tmp:
+        SEQ i = 0 FOR nr.of.axes
+          SEQ 
+            SDL.JoystickGetAxis(stick.pointer, i, tmp)
+            axis.values[i] := tmp
+        stick ! axes; axis.values
+        BYTE tmp:
+        SEQ i = 0 FOR nr.of.buttons 
+          SEQ 
+            SDL.JoystickGetButton(stick.pointer, i, tmp)
+            button.values[i] := tmp
+            --out.int((INT button.values[i]), 0, err!)
+            --out.string(", ",0,err!) 
+        -- out.string("*n ",0,err!) 
+        stick ! buttons; button.values
+        ALT
+          BYTE tmp:
+          kyb ? tmp
+            IF
+              tmp = 'q'
+                run := FALSE
+              TRUE
+                SKIP
+          t ? AFTER time PLUS 1000
+            SKIP
+    stick ! quit
+    SDL.JoystickClose(stick.pointer)
+:
+
+PROC stickprinter(CHAN STICK stick?, CHAN BYTE scr!)
+  INT button:
+  MOBILE []INT16 axis.values:
+  MOBILE []BYTE button.values:
+  INITIAL BOOL run IS TRUE:
+  WHILE run
+    stick ? CASE
+      axes; axis.values
+        SEQ
+          out.string("axes are ", 0, scr!) 
+          SEQ i = 0 FOR SIZE(axis.values)
+            SEQ
+              out.int((INT axis.values[i]), 6, scr!)
+              out.string(", ",0,scr!) 
+      buttons; button.values
+        SEQ
+          out.string(" buttons are ", 0, scr!) 
+          SEQ i = 0 FOR SIZE(button.values)
+            SEQ
+              out.int((INT button.values[i]), 0, scr!)
+              out.string(", ",0,scr!) 
+          out.string("*c",0,scr!) 
+      quit
+        run := FALSE
+:
+
+PROC main(CHAN BYTE kyb?, scr!, err!)
+  INT num.joysticks:
+  INT result:
+  CHAN STICK stick:
+  SEQ
+    SDL.Init(SDL.INIT.JOYSTICK, result)
+    ASSERT(result = 0)
+    SDL.NumJoysticks(num.joysticks)
+    IF 
+      num.joysticks = 0
+        out.string("No joysticks found*n", 0, scr!)
+      TRUE
+        PAR
+          stickmonitor(stick!, kyb?, err!)
+          stickprinter(stick?, scr!)
+:
+

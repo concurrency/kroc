@@ -1,0 +1,97 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "uavConfig.module"
+#INCLUDE "servo.module"
+#INCLUDE "control.module"
+#INCLUDE "gps.module"
+#INCLUDE "uavsensors.module"
+
+PROC av (CHAN INT input?, output!)
+  [NUM.READINGS.TO.AVERAGE]INT readings:
+  INT  sum:
+  INITIAL INT ndx IS 0:
+  SEQ
+    -- Preload array
+    SEQ i = 0 FOR (SIZE readings)
+      input ? readings[i]      
+    WHILE TRUE
+      SEQ
+        -- Read in a new value
+        input ? readings[ndx]
+        -- Sum up the current array of readings
+        sum := 0
+        SEQ i = 0 FOR (SIZE readings)
+          sum := sum + readings[i]
+        output ! (sum / (SIZE readings))
+        ndx := (ndx + 1) REM (SIZE readings)
+:
+
+--* This is our brain.  It tells the plane what is up.
+PROC brain (CHAN SIGNAL level.signal!, turn.signal!)
+  TIMER time:
+  INT t:
+  WHILE TRUE
+    SEQ
+      time ? t
+      IF 
+        t < 0
+          t := t * (-1)
+        TRUE
+          SKIP
+      IF
+        FALSE --((t < 12000) AND (t > 10000)) OR  (t > 31000) OR (t < 1000)
+          turn.signal ! SIGNAL
+        TRUE
+          level.signal ! SIGNAL
+:
+ 
+
+PROC mux (CHAN IMU.DATA orientation?, level!, turning!, CHAN SIGNAL level.signal?, turn.signal?) -- This proc chooses whether to be pushing the data from the IMU filter to the turn or level flight procs based on a timer.
+  IMU.DATA pos:
+  WHILE  TRUE
+    ALT
+      turn.signal ? SIGNAL   
+        SEQ
+          orientation ? pos
+          turning ! pos      
+
+      level.signal ? SIGNAL
+        SEQ  
+          orientation ? pos
+          level ! pos
+:
+
+PROC main ()
+  CHAN SERVO s, s2, s3, s4:
+  CHAN INT roll, pitch, filtered.x, filtered.y, course:
+  CHAN IMU.DATA orientation, level, turning:
+  CHAN SIGNAL level.signal, turn.signal:
+  SEQ
+    digital.mode (ELEVATOR.SERVO.PIN, OUTPUT)
+    digital.mode (AILERON.SERVO.PIN, OUTPUT)
+    
+    PAR
+      nav.lights()
+
+      servo (ELEVATOR.SERVO.PIN, s)
+      servo (AILERON.SERVO.PIN, s2)
+      servo (ELEVATOR.SERVO.PIN, s3)
+      servo (AILERON.SERVO.PIN, s4)
+      
+      SEQ
+        servo.setup(s, AILERON.START)
+        servo.setup(s2, ELEVATOR.START)
+        servo.setup(s3, AILERON.START)
+        servo.setup(s4, ELEVATOR.START)
+        delay (2000)
+
+        PAR
+          level.flight (level?, s, s2)
+          turn (turning?, TURN.BANK.ANGLE, s3, s4)
+          mux (orientation?, level!, turning!,level.signal?, turn.signal?)
+          brain (level.signal!, turn.signal!)
+
+      angles(GYRO.X.PIN, GYRO.Y.PIN, ACCELEROMETER.X.PIN, ACCELEROMETER.Y.PIN, pitch!, roll!)
+      packer(pitch?, roll?, orientation!)
+      --get.heading(course!)
+
+:

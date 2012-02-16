@@ -1,0 +1,780 @@
+-- version control marker $Id: cg10misc.occ,v 1.1 1995/10/10 13:03:26 djb1 Exp $
+--{{{  p1
+PROC p1 ()
+  SEQ
+    --{{{  vars
+    BOOL a :
+    BYTE b :
+    INT16 c :
+    INT d :
+    INT32 h :
+    INT64 e :
+    REAL32 f :
+    REAL64 g :
+    --}}}
+    SEQ
+      --{{{  init
+      a := BOOL 0
+      b := 0 (BYTE)
+      c := 0 (INT16)
+      d := 0
+      h := 0 (INT32)
+      e := 0 (INT64)
+      f := 0.0 (REAL32)
+      g := 0.0 (REAL64)
+      --}}}
+      --{{{  convert to BOOL
+      a := BOOL a
+      a := BOOL b
+      a := BOOL c
+      a := BOOL d
+      a := BOOL h
+      a := BOOL e
+      a := BOOL (INT TRUNC f)
+      a := BOOL (INT ROUND g)
+      --}}}
+      --{{{  convert to BYTE
+      b := BYTE a
+      b := BYTE b
+      b := BYTE c
+      b := BYTE d
+      b := BYTE h
+      b := BYTE e
+      b := BYTE (INT TRUNC f)
+      b := BYTE (INT ROUND g)
+      --}}}
+      --{{{  convert to INT16
+      c := INT16 a
+      c := INT16 b
+      c := INT16 c
+      c := INT16 d
+      c := INT16 h
+      c := INT16 e
+      c := INT16 TRUNC f
+      c := INT16 ROUND g
+      --}}}
+      --{{{  convert to INT
+      d := INT a
+      d := INT b
+      d := INT c
+      d := INT d
+      d := INT h
+      d := INT e
+      d := INT TRUNC f
+      d := INT ROUND g
+      --}}}
+      --{{{  convert to INT32
+      h := INT32 a
+      h := INT32 b
+      h := INT32 c
+      h := INT32 d
+      h := INT32 h
+      h := INT32 e
+      h := INT32 TRUNC f
+      h := INT32 ROUND g
+      --}}}
+      --{{{  convert to INT64
+      e := INT64 a
+      e := INT64 b
+      e := INT64 c
+      e := INT64 d
+      e := INT64 h
+      e := INT64 e
+      e := INT64 TRUNC f
+      e := INT64 ROUND g
+      --}}}
+      --{{{  convert to REAL32
+      f := REAL32 TRUNC (INT a)
+      f := REAL32 ROUND (INT b)
+      f := REAL32 TRUNC c
+      f := REAL32 ROUND d
+      f := REAL32 ROUND h
+      f := REAL32 TRUNC e
+      f := REAL32 f
+      f := REAL32 TRUNC g
+      --}}}
+      --{{{  convert to REAL64
+      g := REAL64 ROUND (INT a)
+      g := REAL64 TRUNC (INT b)
+      g := REAL64 ROUND c
+      g := REAL64 TRUNC d
+      g := REAL64 TRUNC h
+      g := REAL64 ROUND e
+      g := REAL64 f
+      g := REAL64 g
+      --}}}
+    --{{{  test shifts
+    INT a, i :
+    INT16 b :
+    INT64 c :
+    INT32 d :
+    SEQ
+      a, i, b, c := 10, 10, 10(INT16), 10(INT64)
+      d := 10(INT32)
+      a := a << i
+      a := a >> i
+      b := b << i
+      b := b >> i
+      c := c << i
+      c := c >> i
+      d := d << i
+      d := d >> i
+    --}}}
+:
+--}}}
+--{{{  p2
+PROC p2 ()
+  SEQ
+    --{{{  INT
+    INT a, b :
+    SEQ
+      a, b := 10, 10
+      --{{{  +
+      a := 2 + b
+      a := 1 + b
+      a := 0 + b
+      a := (-1) + b
+      a := (-2) + b
+      a := b + 2
+      a := b + 1
+      a := b + 0
+      a := b + (-1)
+      a := b + (-2)
+      --}}}
+      --{{{  -
+      a := 2 - b
+      a := 1 - b
+      a := 0 - b
+      a := (-1) - b
+      a := (-2) - b
+      a := b - 2
+      a := b - 1
+      a := b - 0
+      a := b - (-1)
+      a := b - (-2)
+      --}}}
+      --{{{  *
+      a := 2 * b
+      a := 1 * b
+      a := 0 * b
+      a := (-1) * b
+      a := (-2) * b
+      a := b * 2
+      a := b * 1
+      a := b * 0
+      a := b * (-1)
+      a := b * (-2)
+      --}}}
+      --{{{  /
+      a := 2 / b
+      a := 1 / b
+      a := 0 / b
+      a := (-1) / b
+      a := (-2) / b
+      a := b / 2
+      a := b / 1
+      --a := b / 0  --should give error
+      a := b / (-1)
+      a := b / (-2)
+      --}}}
+      --{{{  \
+      a := 2 \ b
+      a := 1 \ b
+      a := 0 \ b
+      a := (-1) \ b
+      a := (-2) \ b
+      a := b \ 2
+      a := b \ 1
+      --a := b \ 0  --should give error
+      a := b \ (-1)
+      a := b \ (-2)
+      --}}}
+      --{{{  PLUS
+      a := 2 PLUS b
+      a := 1 PLUS b
+      a := 0 PLUS b
+      a := (-1) PLUS b
+      a := (-2) PLUS b
+      a := b PLUS 2
+      a := b PLUS 1
+      a := b PLUS 0
+      a := b PLUS (-1)
+      a := b PLUS (-2)
+      --}}}
+      --{{{  MINUS
+      a := 2 MINUS b
+      a := 1 MINUS b
+      a := 0 MINUS b
+      a := (-1) MINUS b
+      a := (-2) MINUS b
+      a := b MINUS 2
+      a := b MINUS 1
+      a := b MINUS 0
+      a := b MINUS (-1)
+      a := b MINUS (-2)
+      --}}}
+      --{{{  TIMES
+      a := 2 TIMES b
+      a := 1 TIMES b
+      a := 0 TIMES b
+      a := (-1) TIMES b
+      a := (-2) TIMES b
+      a := b TIMES 2
+      a := b TIMES 1
+      a := b TIMES 0
+      a := b TIMES (-1)
+      a := b TIMES (-2)
+      --}}}
+      --{{{  /\
+      a := 2 /\ b
+      a := 1 /\ b
+      a := 0 /\ b
+      a := (-1) /\ b
+      a := (-2) /\ b
+      a := b /\ 2
+      a := b /\ 1
+      a := b /\ 0
+      a := b /\ (-1)
+      a := b /\ (-2)
+      --}}}
+      --{{{  \/
+      a := 2 \/ b
+      a := 1 \/ b
+      a := 0 \/ b
+      a := (-1) \/ b
+      a := (-2) \/ b
+      a := b \/ 2
+      a := b \/ 1
+      a := b \/ 0
+      a := b \/ (-1)
+      a := b \/ (-2)
+      --}}}
+      --{{{  ><
+      a := 2 >< b
+      a := 1 >< b
+      a := 0 >< b
+      a := (-1) >< b
+      a := (-2) >< b
+      a := b >< 2
+      a := b >< 1
+      a := b >< 0
+      a := b >< (-1)
+      a := b >< (-2)
+      --}}}
+      --{{{  <<
+      a := 32 << b
+      a := 16 << b
+      a := 0 << b
+      a := (-32) << b
+      a := (-16) << b
+      --a := b << 32  -- error on 16-bit machine
+      a := b << 16
+      a := b << 0
+      --a := b << (-32) --should give error
+      --a := b << (-16) --should give error
+      --}}}
+      --{{{  >>
+      a := 32 >> b
+      a := 16 >> b
+      a := 0 >> b
+      a := (-32) >> b
+      a := (-16) >> b
+      --a := b >> 32  -- error on 16-bit machine
+      a := b >> 16
+      a := b >> 0
+      --a := b >> (-32) --should give error
+      --a := b >> (-16) --should give error
+      --}}}
+    --}}}
+    --{{{  INT16 
+    INT16 a, b :
+    INT c :
+    SEQ
+      a, b, c := 10(INT16), 10(INT16), 10
+      --{{{  +
+      a := 2 (INT16) + b
+      a := 1 (INT16) + b
+      a := 0 (INT16) + b
+      a := (-1 (INT16)) + b
+      a := (-2 (INT16)) + b
+      a := b + 2 (INT16)
+      a := b + 1 (INT16)
+      a := b + 0 (INT16)
+      a := b + (-1 (INT16))
+      a := b + (-2 (INT16))
+      --}}}
+      --{{{  -
+      a := 2 (INT16) - b
+      a := 1 (INT16) - b
+      a := 0 (INT16) - b
+      a := (-1 (INT16)) - b
+      a := (-2 (INT16)) - b
+      a := b - 2 (INT16)
+      a := b - 1 (INT16)
+      a := b - 0 (INT16)
+      a := b - (-1 (INT16))
+      a := b - (-2 (INT16))
+      --}}}
+      --{{{  *
+      a := 2 (INT16) * b
+      a := 1 (INT16) * b
+      a := 0 (INT16) * b
+      a := (-1 (INT16)) * b
+      a := (-2 (INT16)) * b
+      a := b * 2 (INT16)
+      a := b * 1 (INT16)
+      a := b * 0 (INT16)
+      a := b * (-1 (INT16))
+      a := b * (-2 (INT16))
+      --}}}
+      --{{{  /
+      a := 2 (INT16) / b
+      a := 1 (INT16) / b
+      a := 0 (INT16) / b
+      a := (-1 (INT16)) / b
+      a := (-2 (INT16)) / b
+      a := b / 2 (INT16)
+      a := b / 1 (INT16)
+      --a := b / 0 (INT16)  --should give error
+      a := b / (-1 (INT16))
+      a := b / (-2 (INT16))
+      --}}}
+      --{{{  \
+      a := 2 (INT16) \ b
+      a := 1 (INT16) \ b
+      a := 0 (INT16) \ b
+      a := (-1 (INT16)) \ b
+      a := (-2 (INT16)) \ b
+      a := b \ 2 (INT16)
+      a := b \ 1 (INT16)
+      --a := b \ 0 (INT16)  --should give error
+      a := b \ (-1 (INT16))
+      a := b \ (-2 (INT16))
+      --}}}
+      --{{{  PLUS
+      a := 2 (INT16) PLUS b
+      a := 1 (INT16) PLUS b
+      a := 0 (INT16) PLUS b
+      a := (-1 (INT16)) PLUS b
+      a := (-2 (INT16)) PLUS b
+      a := b PLUS 2 (INT16)
+      a := b PLUS 1 (INT16)
+      a := b PLUS 0 (INT16)
+      a := b PLUS (-1 (INT16))
+      a := b PLUS (-2 (INT16))
+      --}}}
+      --{{{  MINUS
+      a := 2 (INT16) MINUS b
+      a := 1 (INT16) MINUS b
+      a := 0 (INT16) MINUS b
+      a := (-1 (INT16)) MINUS b
+      a := (-2 (INT16)) MINUS b
+      a := b MINUS 2 (INT16)
+      a := b MINUS 1 (INT16)
+      a := b MINUS 0 (INT16)
+      a := b MINUS (-1 (INT16))
+      a := b MINUS (-2 (INT16))
+      --}}}
+      --{{{  TIMES
+      a := 2 (INT16) TIMES b
+      a := 1 (INT16) TIMES b
+      a := 0 (INT16) TIMES b
+      a := (-1 (INT16)) TIMES b
+      a := (-2 (INT16)) TIMES b
+      a := b TIMES 2 (INT16)
+      a := b TIMES 1 (INT16)
+      a := b TIMES 0 (INT16)
+      a := b TIMES (-1 (INT16))
+      a := b TIMES (-2 (INT16))
+      --}}}
+      --{{{  /\
+      a := 2 (INT16) /\ b
+      a := 1 (INT16) /\ b
+      a := 0 (INT16) /\ b
+      a := (-1 (INT16)) /\ b
+      a := (-2 (INT16)) /\ b
+      a := b /\ 2 (INT16)
+      a := b /\ 1 (INT16)
+      a := b /\ 0 (INT16)
+      a := b /\ (-1 (INT16))
+      a := b /\ (-2 (INT16))
+      --}}}
+      --{{{  \/
+      a := 2 (INT16) \/ b
+      a := 1 (INT16) \/ b
+      a := 0 (INT16) \/ b
+      a := (-1 (INT16)) \/ b
+      a := (-2 (INT16)) \/ b
+      a := b \/ 2 (INT16)
+      a := b \/ 1 (INT16)
+      a := b \/ 0 (INT16)
+      a := b \/ (-1 (INT16))
+      a := b \/ (-2 (INT16))
+      --}}}
+      --{{{  ><
+      a := 2 (INT16) >< b
+      a := 1 (INT16) >< b
+      a := 0 (INT16) >< b
+      a := (-1 (INT16)) >< b
+      a := (-2 (INT16)) >< b
+      a := b >< 2 (INT16)
+      a := b >< 1 (INT16)
+      a := b >< 0 (INT16)
+      a := b >< (-1 (INT16))
+      a := b >< (-2 (INT16))
+      --}}}
+      --{{{  <<
+      a := 16 (INT16) << c
+      a := 8 (INT16) << c
+      a := 0 (INT16) << c
+      a := (-16 (INT16)) << c
+      a := (-8 (INT16)) << c
+      a := b << 16
+      a := b << 8
+      a := b << 0
+      --a := b << (-16) --should give error
+      --a := b << (-8) --should give error
+      --}}}
+      --{{{  >>
+      a := 16 (INT16) >> c
+      a := 8 (INT16) >> c
+      a := 0 (INT16) >> c
+      a := (-16 (INT16)) >> c
+      a := (-8 (INT16)) >> c
+      a := b >> 16
+      a := b >> 8
+      a := b >> 0
+      --a := b >> (-16) --should give error
+      --a := b >> (-8) --should give error
+      --}}}
+    --}}}
+    --{{{  INT32 
+    INT32 a, b :
+    INT c :
+    SEQ
+      a, b, c := 10(INT32), 10(INT32), 10
+      --{{{  +
+      a := 2 (INT32) + b
+      a := 1 (INT32) + b
+      a := 0 (INT32) + b
+      a := (-1 (INT32)) + b
+      a := (-2 (INT32)) + b
+      a := b + 2 (INT32)
+      a := b + 1 (INT32)
+      a := b + 0 (INT32)
+      a := b + (-1 (INT32))
+      a := b + (-2 (INT32))
+      --}}}
+      --{{{  -
+      a := 2 (INT32) - b
+      a := 1 (INT32) - b
+      a := 0 (INT32) - b
+      a := (-1 (INT32)) - b
+      a := (-2 (INT32)) - b
+      a := b - 2 (INT32)
+      a := b - 1 (INT32)
+      a := b - 0 (INT32)
+      a := b - (-1 (INT32))
+      a := b - (-2 (INT32))
+      --}}}
+      --{{{  *
+      a := 2 (INT32) * b
+      a := 1 (INT32) * b
+      a := 0 (INT32) * b
+      a := (-1 (INT32)) * b
+      a := (-2 (INT32)) * b
+      a := b * 2 (INT32)
+      a := b * 1 (INT32)
+      a := b * 0 (INT32)
+      a := b * (-1 (INT32))
+      a := b * (-2 (INT32))
+      --}}}
+      --{{{  /
+      a := 2 (INT32) / b
+      a := 1 (INT32) / b
+      a := 0 (INT32) / b
+      a := (-1 (INT32)) / b
+      a := (-2 (INT32)) / b
+      a := b / 2 (INT32)
+      a := b / 1 (INT32)
+      --a := b / 0 (INT32)  --should give error
+      a := b / (-1 (INT32))
+      a := b / (-2 (INT32))
+      --}}}
+      --{{{  \
+      a := 2 (INT32) \ b
+      a := 1 (INT32) \ b
+      a := 0 (INT32) \ b
+      a := (-1 (INT32)) \ b
+      a := (-2 (INT32)) \ b
+      a := b \ 2 (INT32)
+      a := b \ 1 (INT32)
+      --a := b \ 0 (INT32)  --should give error
+      a := b \ (-1 (INT32))
+      a := b \ (-2 (INT32))
+      --}}}
+      --{{{  PLUS
+      a := 2 (INT32) PLUS b
+      a := 1 (INT32) PLUS b
+      a := 0 (INT32) PLUS b
+      a := (-1 (INT32)) PLUS b
+      a := (-2 (INT32)) PLUS b
+      a := b PLUS 2 (INT32)
+      a := b PLUS 1 (INT32)
+      a := b PLUS 0 (INT32)
+      a := b PLUS (-1 (INT32))
+      a := b PLUS (-2 (INT32))
+      --}}}
+      --{{{  MINUS
+      a := 2 (INT32) MINUS b
+      a := 1 (INT32) MINUS b
+      a := 0 (INT32) MINUS b
+      a := (-1 (INT32)) MINUS b
+      a := (-2 (INT32)) MINUS b
+      a := b MINUS 2 (INT32)
+      a := b MINUS 1 (INT32)
+      a := b MINUS 0 (INT32)
+      a := b MINUS (-1 (INT32))
+      a := b MINUS (-2 (INT32))
+      --}}}
+      --{{{  TIMES
+      a := 2 (INT32) TIMES b
+      a := 1 (INT32) TIMES b
+      a := 0 (INT32) TIMES b
+      a := (-1 (INT32)) TIMES b
+      a := (-2 (INT32)) TIMES b
+      a := b TIMES 2 (INT32)
+      a := b TIMES 1 (INT32)
+      a := b TIMES 0 (INT32)
+      a := b TIMES (-1 (INT32))
+      a := b TIMES (-2 (INT32))
+      --}}}
+      --{{{  /\
+      a := 2 (INT32) /\ b
+      a := 1 (INT32) /\ b
+      a := 0 (INT32) /\ b
+      a := (-1 (INT32)) /\ b
+      a := (-2 (INT32)) /\ b
+      a := b /\ 2 (INT32)
+      a := b /\ 1 (INT32)
+      a := b /\ 0 (INT32)
+      a := b /\ (-1 (INT32))
+      a := b /\ (-2 (INT32))
+      --}}}
+      --{{{  \/
+      a := 2 (INT32) \/ b
+      a := 1 (INT32) \/ b
+      a := 0 (INT32) \/ b
+      a := (-1 (INT32)) \/ b
+      a := (-2 (INT32)) \/ b
+      a := b \/ 2 (INT32)
+      a := b \/ 1 (INT32)
+      a := b \/ 0 (INT32)
+      a := b \/ (-1 (INT32))
+      a := b \/ (-2 (INT32))
+      --}}}
+      --{{{  ><
+      a := 2 (INT32) >< b
+      a := 1 (INT32) >< b
+      a := 0 (INT32) >< b
+      a := (-1 (INT32)) >< b
+      a := (-2 (INT32)) >< b
+      a := b >< 2 (INT32)
+      a := b >< 1 (INT32)
+      a := b >< 0 (INT32)
+      a := b >< (-1 (INT32))
+      a := b >< (-2 (INT32))
+      --}}}
+      --{{{  <<
+      a := 16 (INT32) << c
+      a := 8 (INT32) << c
+      a := 0 (INT32) << c
+      a := (-16 (INT32)) << c
+      a := (-8 (INT32)) << c
+      a := b << 16
+      a := b << 8
+      a := b << 0
+      --a := b << (-16) --should give error
+      --a := b << (-8) --should give error
+      --}}}
+      --{{{  >>
+      a := 16 (INT32) >> c
+      a := 8 (INT32) >> c
+      a := 0 (INT32) >> c
+      a := (-16 (INT32)) >> c
+      a := (-8 (INT32)) >> c
+      a := b >> 16
+      a := b >> 8
+      a := b >> 0
+      --a := b >> (-16) --should give error
+      --a := b >> (-8) --should give error
+      --}}}
+    --}}}
+    --{{{  INT64 
+    INT64 a, b :
+    INT c :
+    SEQ
+      a, b, c := 10(INT64), 10(INT64), 10
+      --{{{  +
+      a := 2 (INT64) + b
+      a := 1 (INT64) + b
+      a := 0 (INT64) + b
+      a := (-1 (INT64)) + b
+      a := (-2 (INT64)) + b
+      a := b + 2 (INT64)
+      a := b + 1 (INT64)
+      a := b + 0 (INT64)
+      a := b + (-1 (INT64))
+      a := b + (-2 (INT64))
+      --}}}
+      --{{{  -
+      a := 2 (INT64) - b
+      a := 1 (INT64) - b
+      a := 0 (INT64) - b
+      a := (-1 (INT64)) - b
+      a := (-2 (INT64)) - b
+      a := b - 2 (INT64)
+      a := b - 1 (INT64)
+      a := b - 0 (INT64)
+      a := b - (-1 (INT64))
+      a := b - (-2 (INT64))
+      --}}}
+      --{{{  *
+      a := 2 (INT64) * b
+      a := 1 (INT64) * b
+      a := 0 (INT64) * b
+      a := (-1 (INT64)) * b
+      a := (-2 (INT64)) * b
+      a := b * 2 (INT64)
+      a := b * 1 (INT64)
+      a := b * 0 (INT64)
+      a := b * (-1 (INT64))
+      a := b * (-2 (INT64))
+      --}}}
+      --{{{  /
+      a := 2 (INT64) / b
+      a := 1 (INT64) / b
+      a := 0 (INT64) / b
+      a := (-1 (INT64)) / b
+      a := (-2 (INT64)) / b
+      a := b / 2 (INT64)
+      a := b / 1 (INT64)
+      --a := b / 0 (INT64)  --should give error
+      a := b / (-1 (INT64))
+      a := b / (-2 (INT64))
+      --}}}
+      --{{{  \
+      a := 2 (INT64) \ b
+      a := 1 (INT64) \ b
+      a := 0 (INT64) \ b
+      a := (-1 (INT64)) \ b
+      a := (-2 (INT64)) \ b
+      a := b \ 2 (INT64)
+      a := b \ 1 (INT64)
+      --a := b \ 0 (INT64)  --should give error
+      a := b \ (-1 (INT64))
+      a := b \ (-2 (INT64))
+      --}}}
+      --{{{  PLUS
+      a := 2 (INT64) PLUS b
+      a := 1 (INT64) PLUS b
+      a := 0 (INT64) PLUS b
+      a := (-1 (INT64)) PLUS b
+      a := (-2 (INT64)) PLUS b
+      a := b PLUS 2 (INT64)
+      a := b PLUS 1 (INT64)
+      a := b PLUS 0 (INT64)
+      a := b PLUS (-1 (INT64))
+      a := b PLUS (-2 (INT64))
+      --}}}
+      --{{{  MINUS
+      a := 2 (INT64) MINUS b
+      a := 1 (INT64) MINUS b
+      a := 0 (INT64) MINUS b
+      a := (-1 (INT64)) MINUS b
+      a := (-2 (INT64)) MINUS b
+      a := b MINUS 2 (INT64)
+      a := b MINUS 1 (INT64)
+      a := b MINUS 0 (INT64)
+      a := b MINUS (-1 (INT64))
+      a := b MINUS (-2 (INT64))
+      --}}}
+      --{{{  TIMES
+      a := 2 (INT64) TIMES b
+      a := 1 (INT64) TIMES b
+      a := 0 (INT64) TIMES b
+      a := (-1 (INT64)) TIMES b
+      a := (-2 (INT64)) TIMES b
+      a := b TIMES 2 (INT64)
+      a := b TIMES 1 (INT64)
+      a := b TIMES 0 (INT64)
+      a := b TIMES (-1 (INT64))
+      a := b TIMES (-2 (INT64))
+      --}}}
+      --{{{  /\
+      a := 2 (INT64) /\ b
+      a := 1 (INT64) /\ b
+      a := 0 (INT64) /\ b
+      a := (-1 (INT64)) /\ b
+      a := (-2 (INT64)) /\ b
+      a := b /\ 2 (INT64)
+      a := b /\ 1 (INT64)
+      a := b /\ 0 (INT64)
+      a := b /\ (-1 (INT64))
+      a := b /\ (-2 (INT64))
+      --}}}
+      --{{{  \/
+      a := 2 (INT64) \/ b
+      a := 1 (INT64) \/ b
+      a := 0 (INT64) \/ b
+      a := (-1 (INT64)) \/ b
+      a := (-2 (INT64)) \/ b
+      a := b \/ 2 (INT64)
+      a := b \/ 1 (INT64)
+      a := b \/ 0 (INT64)
+      a := b \/ (-1 (INT64))
+      a := b \/ (-2 (INT64))
+      --}}}
+      --{{{  ><
+      a := 2 (INT64) >< b
+      a := 1 (INT64) >< b
+      a := 0 (INT64) >< b
+      a := (-1 (INT64)) >< b
+      a := (-2 (INT64)) >< b
+      a := b >< 2 (INT64)
+      a := b >< 1 (INT64)
+      a := b >< 0 (INT64)
+      a := b >< (-1 (INT64))
+      a := b >< (-2 (INT64))
+      --}}}
+      --{{{  <<
+      a := 16 (INT64) << c
+      a := 8 (INT64) << c
+      a := 0 (INT64) << c
+      a := (-16 (INT64)) << c
+      a := (-8 (INT64)) << c
+      a := b << 16
+      a := b << 8
+      a := b << 0
+      --a := b << (-16) --should give error
+      --a := b << (-8) --should give error
+      --}}}
+      --{{{  >>
+      a := 16 (INT64) >> c
+      a := 8 (INT64) >> c
+      a := 0 (INT64) >> c
+      a := (-16 (INT64)) >> c
+      a := (-8 (INT64)) >> c
+      a := b >> 16
+      a := b >> 8
+      a := b >> 0
+      --a := b >> (-16) --should give error
+      --a := b >> (-8) --should give error
+      --}}}
+    --}}}
+:
+--}}}
+SEQ
+  title ("Miscellaneous bits:")
+  p1 ()
+  p2 ()

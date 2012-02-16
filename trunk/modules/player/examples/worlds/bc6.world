@@ -1,0 +1,95 @@
+# Six robots in an arena.
+# World: bc6
+
+# defines Pioneer-like robots
+include "pioneer.inc"
+
+# defines 'map' object used for floorplans
+include "map.inc"
+
+# defines sick laser
+include "sick.inc"
+
+# size of the world in meters
+size [32 32]
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.02
+
+# configure the GUI window
+window
+(
+  size [ 520.000 520.000 ]
+  center [0 0]
+  scale 0.070
+)
+
+# load an environment bitmap
+map
+(
+  bitmap "big-circle.png"
+  size [32 32]
+)
+
+# Define a blobfinder with a channel for each robot.
+define blob blobfinder
+(
+  channel_count 6
+  channels ["red" "green" "blue" "cyan" "yellow" "magenta"]
+  range_max 8.0
+)
+
+pioneer2dx
+(
+  name "Johnny0"
+  color "red"
+  pose [-15.0 0.0 0.0]
+  sick_laser( )
+  ptz ( blob ( ) )
+)
+
+pioneer2dx
+(
+  name "Johnny1"
+  color "green"
+  pose [-10.0 0.0 40.0]
+  sick_laser( )
+  ptz ( blob ( ) )
+)
+
+pioneer2dx
+(
+  name "Johnny2"
+  color "blue"
+  pose [-5.0 0.0 60.0]
+  sick_laser( )
+  ptz ( blob ( ) )
+)
+
+pioneer2dx
+(
+  name "Johnny3"
+  color "cyan"
+  pose [5.0 0.0 80.0]
+  sick_laser( )
+  ptz ( blob ( ) )
+)
+
+pioneer2dx
+(
+  name "Johnny4"
+  color "yellow"
+  pose [10.0 0.0 100.0]
+  sick_laser( )
+  ptz ( blob ( ) )
+)
+
+pioneer2dx
+(
+  name "Johnny5"
+  color "magenta"
+  pose [15.0 0.0 120.0]
+  sick_laser( )
+  ptz ( blob ( ) )
+)
+

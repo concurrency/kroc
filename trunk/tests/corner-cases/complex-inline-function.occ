@@ -1,0 +1,34 @@
+#INCLUDE "maths.module"
+
+PROC P ()
+  REAL32 mx, my:
+
+  REAL32, REAL32 FUNCTION port.pos (VAL INT x) IS 42.0, 42.0:
+
+  BOOL FUNCTION between (VAL REAL32 l, x, r) IS ((l <= x) AND (x <= r)) OR ((l >= x) AND (x >= r)):
+
+  BOOL FUNCTION in.wire (VAL INT a, b)
+    REAL32 x1, y1, x2, y2, l, d:
+    BOOL in:
+    VALOF
+      IF
+        (a = (-1)) OR (b = (-1))
+          in := FALSE
+        TRUE
+          SEQ
+            x1, y1 := port.pos (a)
+            x2, y2 := port.pos (b)
+            l := ((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1))
+            d := (((x2 - x1) * (y1 - my)) - ((x1 - mx) * (y2 - y1))) / SQRT (l)
+            in := (ABS (d) < 0.02) AND between (x1, mx, x2) AND between (y1, my, y2)
+      RESULT in
+  :
+
+  SEQ
+    mx, my := 42.0, 42.0
+    IF
+      in.wire (1, 2)
+        SKIP
+      TRUE
+        SKIP
+:

@@ -1,0 +1,17 @@
+VAL INT MILLIS          IS 1000:
+VAL INT SECONDS         IS (1000 * MILLIS):
+
+PROC main (CHAN BYTE in?, out!)
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    tim ? AFTER t PLUS (2 * SECONDS)
+    
+    out ! 'H'
+    out ! 'e'
+    out ! 'l'
+    out ! 'l'
+    out ! 'o'
+    out ! '*n'
+:

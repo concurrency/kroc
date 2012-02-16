@@ -1,0 +1,862 @@
+-- Copyright: Mario Schweigler (C) 2005-2006
+-- Institution: Computing Laboratory, University of Kent, Canterbury, UK
+-- Description: pony TCP/IP Application Name Server code file
+
+-- This program is free software; you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation; either version 2 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program; if not, write to the Free Software
+-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+-- MA 02110-1301, USA.
+
+--** @module pony
+
+--{{{  Compiler declarations
+#INCLUDE "course.module"
+#INCLUDE "sock.module"
+#INCLUDE "file.module"
+#INCLUDE "proc.module"
+#INCLUDE "ponylib.inc"
+#USE "ponyintaux.tce"
+#INCLUDE "ponyinttcpip.inc"
+#USE "ponyinttcpipsock.tce"
+--}}}
+
+----------------------------------------------------------------------
+
+--{{{  PROC pony.ans.tcpip
+PROC pony.ans.tcpip (CHAN BYTE key?, scr!, err!)
+  --{{{  DATA TYPE APP.DATA
+  DATA TYPE APP.DATA
+    RECORD
+      INT app.code, state, num.slaves, master.ip, master.port:
+  :
+  --}}}
+  --{{{  Constants
+  -- Application-states
+  VAL INT APPSTATE.NONE IS 0:
+  VAL INT APPSTATE.ACTIVE IS 1:
+  VAL INT APPSTATE.PENDING IS 2:
+  --}}}
+  --{{{  Application-relevant variables
+  -- Application-data-array
+  INITIAL MOBILE []APP.DATA app.data.array IS MOBILE [500]APP.DATA:
+  -- Application-name-array
+  INITIAL MOBILE []MOBILE []BYTE app.name.array IS MOBILE [500]MOBILE []BYTE:
+  -- Arrays of arrays of pending slaves
+  --   ATTENTION: These are actually containing integers!
+  --              Nested MOBILE arrays of INTs are currently broken in KRoC,
+  --              therefore I'm using these arrays as a temporary solution.
+  --              Every group of four BYTEs in these arrays is equivalent to one INT.
+  INITIAL MOBILE []MOBILE []BYTE pending.slave.ip.array IS MOBILE [500]MOBILE []BYTE:
+  INITIAL MOBILE []MOBILE []BYTE pending.slave.port.array IS MOBILE [500]MOBILE []BYTE:
+  -- Next free index in application-arrays (at the end)
+  INITIAL INT next.app.index IS 0:
+  -- Free-list (contains free indices below `next.app.index')
+  INITIAL MOBILE []INT free.list IS MOBILE [500]INT:
+  -- Number of elements in free-list (free-list maintained as LIFO stack)
+  INITIAL INT num.elem.in.free.list IS 0:
+  -- Next application-code number
+  INITIAL INT next.app.code IS 0:
+  -- Total number of active applications
+  INITIAL INT num.active.apps IS 0:
+  -- Total number of pending applications
+  INITIAL INT num.pending.apps IS 0:
+  --}}}
+  --{{{  Other variables
+  MOBILE []BYTE conf.file.name:
+  INT conf.file.fd, conf.file.size, ans.port:
+  SOCKET listen.socket:
+  INITIAL BOOL no.error IS TRUE:
+  --}}}
+  SEQ
+    out.string ("pony TCP/IP Application Name Server*n", 0, scr!)
+    out.string ("----------------------------------------------------------------------*n", 0, scr!)
+    --{{{  Try to open ANS-config-file
+    IF
+      no.error
+        SEQ
+          -- Get name of ANS-config-file
+          conf.file.name := PONYC.INT.TCPIP.FNAME.ANSCONF
+          -- Open ANS-config-file
+          file.open (conf.file.name, O.RDONLY, conf.file.fd)
+          IF
+            -- ANS-config-file could be opened in current directory
+            conf.file.fd <> (-1)
+              --{{{  Get size of (open) ANS-config-file
+              STAT stat:
+              INT file.result:
+              SEQ
+                file.fstat (conf.file.fd, stat, file.result)
+                IF
+                  file.result <> (-1)
+                    IF
+                      stat[size] > #100000
+                        -- Restrict file size to 1MByte
+                        conf.file.size := #100000
+                      TRUE
+                        conf.file.size := INT stat[size]
+                  TRUE
+                    SEQ
+                      no.error := FALSE
+                      out.string ("ERROR: Cannot access config file.*n", 0, err!)
+              --}}}
+            TRUE
+              SEQ
+                -- Get size of (non-open) ANS-config-file
+                file.size (conf.file.name, conf.file.size)
+                IF
+                  -- ANS-config-file exists in current directory
+                  conf.file.size <> (-1)
+                    SEQ
+                      no.error := FALSE
+                      out.string ("ERROR: Cannot access config file.*n", 0, err!)
+                  TRUE
+                    ENVIRONMENT env:
+                    SEQ
+                      -- Get home directory
+                      proc.os.getenv (env, PONYC.INT.TCPIP.ENV.HOME)
+                      IF
+                        env[value.size] = 0
+                          SEQ
+                            no.error := FALSE
+                            out.string ("ERROR: $HOME environment variable not set.*n", 0, err!)
+                        --{{{  Home directory found in environment
+                        TRUE
+                          SEQ
+                            -- Change path of ANS-config-file
+                            pony.int.prepend.str (conf.file.name, "/")
+                            pony.int.prepend.str (conf.file.name, [env[value] FOR env[value.size]])
+                            -- Open ANS-config-file
+                            file.open (conf.file.name, O.RDONLY, conf.file.fd)
+                            IF
+                              -- ANS-config-file could be opened in current directory
+                              conf.file.fd <> (-1)
+                                --{{{  Get size of (open) ANS-config-file
+                                STAT stat:
+                                INT file.result:
+                                SEQ
+                                  file.fstat (conf.file.fd, stat, file.result)
+                                  IF
+                                    file.result <> (-1)
+                                      IF
+                                        stat[size] > #100000
+                                          -- Restrict file size to 1MByte
+                                          conf.file.size := #100000
+                                        TRUE
+                                          conf.file.size := INT stat[size]
+                                    TRUE
+                                      SEQ
+                                        no.error := FALSE
+                                        out.string ("ERROR: Cannot access config file.*n", 0, err!)
+                                --}}}
+                              TRUE
+                                SEQ
+                                  -- Get size of (non-open) ANS-config-file
+                                  file.size (conf.file.name, conf.file.size)
+                                  IF
+                                    -- ANS-config-file exists in current directory
+                                    conf.file.size <> (-1)
+                                      SEQ
+                                        no.error := FALSE
+                                        out.string ("ERROR: Cannot access config file.*n", 0, err!)
+                                    TRUE
+                                      SKIP
+                        --}}}
+      TRUE
+        SKIP
+    --}}}
+    --{{{  Get ANS port
+    IF
+      no.error
+        INITIAL BOOL port.done IS FALSE:
+        SEQ
+          --{{{  Check ANS-config-file for port number
+          IF
+            conf.file.fd = (-1)
+              SKIP
+            --{{{  ANS-config-file is open
+            TRUE
+              MOBILE []BYTE buffer:
+              INT file.result:
+              SEQ
+                -- Allocate buffer
+                buffer := MOBILE [conf.file.size]BYTE
+                -- Read buffer from file
+                file.read (conf.file.fd, buffer, file.result)
+                -- Close file
+                INT r:
+                file.close (conf.file.fd, r)
+                IF
+                  file.result <> conf.file.size
+                    SEQ
+                      no.error := FALSE
+                      out.string ("ERROR: Cannot access config file.*n", 0, err!)
+                  --{{{  Buffer successfully read
+                  TRUE
+                    INITIAL BOOL port.found IS FALSE:
+                    MOBILE []BYTE port.string:
+                    INITIAL INT pos IS 0:
+                    SEQ
+                      -- Get port strings
+                      WHILE (NOT port.found) AND (pos < conf.file.size)
+                        INITIAL INT next.pos IS pos:
+                        SEQ
+                          -- Find next newline or end-of-buffer
+                          WHILE (next.pos < conf.file.size) AND (buffer[next.pos] <> '*n')
+                            next.pos := next.pos + 1
+                          IF
+                            (NOT port.found) AND (((next.pos - pos) > (SIZE PONYC.INT.TCPIP.PREF.PORT)) AND
+                                pony.int.equal.str([buffer FROM pos FOR (SIZE PONYC.INT.TCPIP.PREF.PORT)],
+                                PONYC.INT.TCPIP.PREF.PORT))
+                              SEQ
+                                port.found := TRUE
+                                port.string := [buffer FROM (pos + (SIZE PONYC.INT.TCPIP.PREF.PORT)) FOR
+                                  (next.pos - (pos + (SIZE PONYC.INT.TCPIP.PREF.PORT)))]
+                            TRUE
+                              SKIP
+                          pos := next.pos + 1
+                      IF
+                        -- Port string was found in ANS-config-file
+                        port.found
+                          INITIAL BOOL non.digit.found IS FALSE:
+                          SEQ
+                            -- Check whether port is a positive integer
+                            SEQ i = 0 FOR (SIZE port.string)
+                              IF
+                                (port.string[i] < '0') OR (port.string[i] > '9')
+                                  non.digit.found := TRUE
+                                TRUE
+                                  SKIP
+                            IF
+                              non.digit.found
+                                SEQ
+                                  no.error := FALSE
+                                  out.string ("ERROR: Config file contains invalid settings.*n", 0, err!)
+                              --{{{  Port string contains only digits
+                              TRUE
+                                SEQ
+                                  -- Get port number
+                                  ans.port := 0
+                                  SEQ i = 0 FOR (SIZE port.string)
+                                    ans.port := (ans.port * 10) + (INT (port.string[i] - '0'))
+                                  port.done := TRUE
+                              --}}}
+                        TRUE
+                          SKIP
+                  --}}}
+            --}}}
+          --}}}
+          --{{{  Use default port number if port not found in ANS-config-file
+          IF
+            NOT no.error
+              SKIP
+            NOT port.done
+              SEQ
+                ans.port := PONYC.INT.TCPIP.DEFAULTPORT.ANS
+                out.string ("Listening on port: ", 0, scr!)
+                out.int (ans.port, 0, scr!)
+                out.string (" (default).*n", 0, scr!)
+            TRUE
+              SEQ
+                out.string ("Listening on port: ", 0, scr!)
+                out.int (ans.port, 0, scr!)
+                out.string (".*n", 0, scr!)
+          --}}}
+      TRUE
+        SKIP
+    --}}}
+    --{{{  Create listening socket
+    IF
+      no.error
+        INT sock.result:
+        SEQ
+          -- Create socket
+          pony.int.tcpip.socket.clt.reuse (listen.socket, INADDR.ANY, ans.port, sock.result)
+          IF
+            sock.result = (-1)
+              SEQ
+                no.error := FALSE
+                out.string ("ERROR: Cannot create listening socket.*n", 0, err!)
+            TRUE
+              out.string ("Listening socket created.*n", 0, scr!)
+      TRUE
+        SKIP
+    --}}}
+    INITIAL BOOL running IS TRUE:
+    WHILE no.error AND running
+      INITIAL BOOL got.socket IS FALSE:
+      SOCKET socket:
+      INT sock.result:
+      SEQ
+        --{{{  Accept incoming connection or quit signal from keyboard
+        CHAN BOOL kill:
+        CHAN INT kill.response:
+        PAR
+          socket.altable.accept (kill, kill.response, listen.socket, socket, sock.result)
+          INITIAL BOOL print.screen IS TRUE:
+          INITIAL BOOL inner.running IS TRUE:
+          WHILE inner.running
+            SEQ
+              --{{{  Print screen
+              IF
+                print.screen
+                  SEQ
+                    out.string ("----------------------------------------------------------------------*n", 0, scr!)
+                    out.int (num.active.apps, 0, scr!)
+                    out.string (" active application", 0, scr!)
+                    IF
+                      num.active.apps <> 1
+                        scr ! 's'
+                      TRUE
+                        SKIP
+                    out.string (".*n", 0, scr!)
+                    out.int (num.pending.apps, 0, scr!)
+                    out.string (" pending application", 0, scr!)
+                    IF
+                      num.pending.apps <> 1
+                        scr ! 's'
+                      TRUE
+                        SKIP
+                    out.string (" (slaves waiting for master).*n", 0, scr!)
+                    out.string ("----------------------------------------------------------------------*n", 0, scr!)
+                    out.string ("Accepting incoming connections. Press `q*' to quit.*n", 0, scr!)
+                    print.screen := FALSE
+                TRUE
+                  SKIP
+              --}}}
+              PRI ALT
+                --{{{  accept has terminated
+                INT n:
+                kill.response ? n
+                  SEQ
+                    kill ! TRUE
+                    inner.running := FALSE
+                    got.socket := TRUE
+                --}}}
+                --{{{  Get keyboard signal
+                BYTE char:
+                key ? char
+                  SEQ
+                    --{{{  Double-check if there are applications
+                    IF
+                      (char = 'q') AND ((num.active.apps + num.pending.apps) > 0)
+                        SEQ
+                          out.string ("ATTENTION: There are active or pending applications!*n", 0, scr!)
+                          out.string ("Press `q*' again to confirm. Press other key to cancel.*n", 0, scr!)
+                          key ? char
+                          print.screen := TRUE
+                      TRUE
+                        SKIP
+                    --}}}
+                    --{{{  Kill `BX.sl.accept'
+                    IF
+                      char = 'q'
+                        INT kill.result:
+                        SEQ
+                          inner.running := FALSE
+                          running := FALSE
+                          kill ! TRUE
+                          kill.response ? kill.result
+                          CASE kill.result
+                            -- `BX.sl.accept' has terminated normally
+                            1, 2
+                              got.socket := TRUE
+                            ELSE
+                              SKIP
+                      TRUE
+                        SKIP
+                    --}}}
+                --}}}
+        --}}}
+        IF
+          --{{{  No socket, this mean that quit signal was received
+          NOT got.socket
+            SKIP
+          --}}}
+          --{{{  accept terminated, but error occured
+          sock.result = (-1)
+            SEQ
+              no.error := FALSE
+              out.string ("ERROR: Accepting new connection failed.*n", 0, err!)
+          --}}}
+          --{{{  New socket is valid
+          TRUE
+            -- Error-flag for this particular operation
+            --   (error does not cause the entire loop to
+            --   finish but prints inconsistency warning)
+            INITIAL BOOL no.op.error IS TRUE:
+            SEQ
+              out.string ("New connection accepted.*n", 0, scr!)
+              -- Force immediate socket writes
+              socket.setsockopt (socket, SOL.TCP, TCP.NODELAY, OPTION.ON, sock.result)
+              IF
+                sock.result = (-1)
+                  SEQ
+                    no.op.error := FALSE
+                    out.string ("ERROR: Setting no-delay option failed.*n", 0, err!)
+                --{{{  No-delay successfully set, can start operation
+                TRUE
+                  INITIAL MOBILE []BYTE header IS MOBILE [1 + (4 * BYTESIN (INT))]BYTE:
+                  MOBILE []BYTE app.name:
+                  MOBILE []INT size.array:
+                  SEQ
+                    -- Get request
+                    pony.int.tcpip.socket.fullread.multi (socket, header, app.name, size.array, sock.result)
+                    IF
+                      sock.result = (-1)
+                        SEQ
+                          no.op.error := FALSE
+                          out.string ("ERROR: Read operation failed.*n", 0, err!)
+                      TRUE
+                        SEQ
+                          IF
+                            --{{{  Shutdown request from master
+                            header[0] = PONYC.INT.TCPIP.ANSHEADER.MASTERSHUTDOWN
+                              INITIAL [BYTESIN (INT)]BYTE app.index.array IS [header FROM 1 FOR BYTESIN (INT)]:
+                              INT app.index RETYPES app.index.array:
+                              INITIAL [BYTESIN (INT)]BYTE app.code.array IS [header FROM (1 + BYTESIN (INT)) FOR BYTESIN (INT)]:
+                              INT app.code RETYPES app.code.array:
+                              INT return.num.slaves:
+                              SEQ
+                                --{{{  Print message
+                                out.string ("Shutdown request received:*n", 0, scr!)
+                                out.string ("    Application-name: ", 0, scr!)
+                                out.string (app.name.array[app.index], 0, scr!)
+                                out.string ("*n", 0, scr!)
+                                --}}}
+                                IF
+                                  app.code = app.data.array[app.index][app.code]
+                                    SEQ
+                                      out.string ("Removing application from database.*n", 0, scr!)
+                                      app.data.array[app.index][state] := APPSTATE.NONE
+                                      free.list[num.elem.in.free.list] := app.index
+                                      num.elem.in.free.list := num.elem.in.free.list + 1
+                                      num.active.apps := num.active.apps - 1
+                                      out.string ("Sending confirmation to requesting master.*n", 0, scr!)
+                                      return.num.slaves := app.data.array[app.index][num.slaves]
+                                  TRUE
+                                    SEQ
+                                      out.string ("Invalid application-code.*n", 0, scr!)
+                                      out.string ("Returning error to requesting master.*n", 0, scr!)
+                                      return.num.slaves := -1
+                                header := MOBILE [BYTESIN (INT)]BYTE
+                                []BYTE num.slaves.array RETYPES return.num.slaves:
+                                [header FOR BYTESIN (INT)] := num.slaves.array
+                            --}}}
+                            --{{{  Node request
+                            TRUE
+                              INITIAL INT node.type IS INT header[0]:
+                              INITIAL [BYTESIN (INT)]BYTE node.ip.array IS [header FROM 1 FOR BYTESIN (INT)]:
+                              INT node.ip RETYPES node.ip.array:
+                              INITIAL [BYTESIN (INT)]BYTE node.port.array IS [header FROM (1 + BYTESIN (INT)) FOR BYTESIN (INT)]:
+                              INT node.port RETYPES node.port.array:
+                              INITIAL INT app.index IS -1:
+                              SEQ
+                                header := MOBILE [1 + (2 * BYTESIN (INT))]BYTE
+                                --{{{  Print message
+                                out.string ("Node request received:*n", 0, scr!)
+                                out.string ("    Application-name: ", 0, scr!)
+                                out.string (app.name, 0, scr!)
+                                out.string ("*n    Node-type: ", 0, scr!)
+                                CASE node.type
+                                  PONYC.NODETYPE.MASTER
+                                    out.string ("master", 0, scr!)
+                                  PONYC.NODETYPE.MASTERRESET
+                                    out.string ("master/reset", 0, scr!)
+                                  PONYC.NODETYPE.SLAVE
+                                    out.string ("slave", 0, scr!)
+                                  ELSE
+                                    out.string ("slave/wait", 0, scr!)
+                                out.string ("*n    IP address: ", 0, scr!)
+                                [15]BYTE ip.string:
+                                INT ip.string.len:
+                                SEQ
+                                  socket.ip.of.addr (node.ip, ip.string, ip.string.len, sock.result)
+                                  out.string ([ip.string FOR ip.string.len], 0, scr!)
+                                out.string ("*n    Port number: ", 0, scr!)
+                                out.int (node.port, 0, scr!)
+                                out.string ("*n", 0, scr!)
+                                --}}}
+                                --{{{  Try to find application in database
+                                INITIAL INT i IS 0:
+                                WHILE (app.index = (-1)) AND (i < next.app.index)
+                                  SEQ
+                                    IF
+                                      app.data.array[i][state] = APPSTATE.NONE
+                                        SKIP
+                                      pony.int.equal.str (app.name.array[i], app.name)
+                                        app.index := i
+                                      TRUE
+                                        SKIP
+                                    i := i + 1
+                                --}}}
+                                IF
+                                  --{{{  New application
+                                  app.index = (-1)
+                                    SEQ
+                                      out.string ("Application is new.*n", 0, scr!)
+                                      IF
+                                        --{{{  Slave
+                                        node.type = PONYC.NODETYPE.SLAVE
+                                          SEQ
+                                            out.string ("Returning error to requesting slave.*n", 0, scr!)
+                                            header[0] := PONYC.INT.TCPIP.ANSHEADER.NOTDONE
+                                        --}}}
+                                        TRUE
+                                          SEQ
+                                            out.string ("Storing application in database.*n", 0, scr!)
+                                            --{{{  Get new index
+                                            IF
+                                              num.elem.in.free.list = 0
+                                                SEQ
+                                                  --{{{  Double arrays if full
+                                                  IF
+                                                    next.app.index = (SIZE app.data.array)
+                                                      -- New arrays
+                                                      INITIAL MOBILE []APP.DATA new.app.data.array IS MOBILE [2 * next.app.index]APP.DATA:
+                                                      INITIAL MOBILE []MOBILE []BYTE new.app.name.array IS MOBILE [2 * next.app.index]MOBILE []BYTE:
+                                                      INITIAL MOBILE []MOBILE []BYTE new.pending.slave.ip.array IS MOBILE [2 * next.app.index]MOBILE []BYTE:
+                                                      INITIAL MOBILE []MOBILE []BYTE new.pending.slave.port.array IS MOBILE [2 * next.app.index]MOBILE []BYTE:
+                                                      SEQ
+                                                        -- Set existing elements in new arrays
+                                                        SEQ i = 0 FOR next.app.index
+                                                          SEQ
+                                                            IF
+                                                              app.data.array[i][state] <> APPSTATE.NONE
+                                                                new.app.name.array[i] := app.name.array[i]
+                                                              TRUE
+                                                                SKIP
+                                                            IF
+                                                              app.data.array[i][state] = APPSTATE.PENDING
+                                                                SEQ
+                                                                  new.pending.slave.ip.array[i] := pending.slave.ip.array[i]
+                                                                  new.pending.slave.port.array[i] := pending.slave.port.array[i]
+                                                              TRUE
+                                                                SKIP
+                                                        [new.app.data.array FOR next.app.index] := app.data.array
+                                                        -- Use new arrays
+                                                        app.data.array := new.app.data.array
+                                                        app.name.array := new.app.name.array
+                                                        pending.slave.ip.array := new.pending.slave.ip.array
+                                                        pending.slave.port.array := new.pending.slave.port.array
+                                                        free.list := MOBILE [2 * next.app.index]INT
+                                                    TRUE
+                                                      SKIP
+                                                  --}}}
+                                                  app.index := next.app.index
+                                                  next.app.index := next.app.index + 1
+                                              TRUE
+                                                SEQ
+                                                  app.index := free.list[num.elem.in.free.list - 1]
+                                                  num.elem.in.free.list := num.elem.in.free.list - 1
+                                            --}}}
+                                            CASE node.type
+                                              --{{{  Master or master/reset
+                                              PONYC.NODETYPE.MASTER, PONYC.NODETYPE.MASTERRESET
+                                                SEQ
+                                                  app.data.array[app.index][app.code] := next.app.code
+                                                  next.app.code := next.app.code + 1
+                                                  app.data.array[app.index][state] := APPSTATE.ACTIVE
+                                                  app.data.array[app.index][num.slaves] := 0
+                                                  app.data.array[app.index][master.ip] := node.ip
+                                                  app.data.array[app.index][master.port] := node.port
+                                                  app.name.array[app.index] := app.name
+                                                  num.active.apps := num.active.apps + 1
+                                                  out.string ("Returning OK to requesting master.*n", 0, scr!)
+                                                  header[0] := PONYC.INT.TCPIP.ANSHEADER.DONE
+                                                  []BYTE app.index.array RETYPES app.index:
+                                                  [header FROM 1 FOR BYTESIN (INT)] := app.index.array
+                                                  []BYTE app.code.array RETYPES app.data.array[app.index][app.code]:
+                                                  [header FROM (1 + BYTESIN (INT)) FOR BYTESIN (INT)] := app.code.array
+                                              --}}}
+                                              --{{{  Slave/wait
+                                              ELSE
+                                                SEQ
+                                                  app.data.array[app.index][app.code] := next.app.code
+                                                  next.app.code := next.app.code + 1
+                                                  app.data.array[app.index][state] := APPSTATE.PENDING
+                                                  app.data.array[app.index][num.slaves] := 1
+                                                  app.name.array[app.index] := app.name
+                                                  pending.slave.ip.array[app.index] := MOBILE [500 * BYTESIN (INT)]BYTE
+                                                  []BYTE node.ip.array RETYPES node.ip:
+                                                  [pending.slave.ip.array[app.index] FOR BYTESIN (INT)] := node.ip.array
+                                                  pending.slave.port.array[app.index] := MOBILE [500 * BYTESIN (INT)]BYTE
+                                                  []BYTE node.port.array RETYPES node.port:
+                                                  [pending.slave.port.array[app.index] FOR BYTESIN (INT)] := node.port.array
+                                                  num.pending.apps := num.pending.apps + 1
+                                                  out.string ("Returning wait signal to requesting slave.*n", 0, scr!)
+                                                  header[0] := PONYC.INT.TCPIP.ANSHEADER.NOTDONE
+                                              --}}}
+                                  --}}}
+                                  --{{{  Active application
+                                  app.data.array[app.index][state] = APPSTATE.ACTIVE
+                                    SEQ
+                                      out.string ("Application is active.*n", 0, scr!)
+                                      CASE node.type
+                                        --{{{  Master
+                                        PONYC.NODETYPE.MASTER
+                                          SEQ
+                                            out.string ("Returning error to requesting master.*n", 0, scr!)
+                                            header[0] := PONYC.INT.TCPIP.ANSHEADER.NOTDONE
+                                        --}}}
+                                        --{{{  Master/reset
+                                        PONYC.NODETYPE.MASTERRESET
+                                          SEQ
+                                            out.string ("Resetting application in database.*n", 0, scr!)
+                                            app.data.array[app.index][app.code] := next.app.code
+                                            next.app.code := next.app.code + 1
+                                            app.data.array[app.index][num.slaves] := 0
+                                            app.data.array[app.index][master.ip] := node.ip
+                                            app.data.array[app.index][master.port] := node.port
+                                            out.string ("Returning OK to requesting master.*n", 0, scr!)
+                                            header[0] := PONYC.INT.TCPIP.ANSHEADER.DONE
+                                            []BYTE app.index.array RETYPES app.index:
+                                            [header FROM 1 FOR BYTESIN (INT)] := app.index.array
+                                            []BYTE app.code.array RETYPES app.data.array[app.index][app.code]:
+                                            [header FROM (1 + BYTESIN (INT)) FOR BYTESIN (INT)] := app.code.array
+                                        --}}}
+                                        --{{{  Slave or slave/wait
+                                        ELSE
+                                          IF
+                                            --{{{  Duplicate of master location
+                                            (node.ip = app.data.array[app.index][master.ip]) AND
+                                                (node.port = app.data.array[app.index][master.port])
+                                              SEQ
+                                                out.string ("Location is duplicate of master location.*n", 0, scr!)
+                                                out.string ("Returning error to requesting slave.*n", 0, scr!)
+                                                header[0] := PONYC.INT.TCPIP.ANSHEADER.DUPLICATEMASTER
+                                            --}}}
+                                            TRUE
+                                              SEQ
+                                                app.data.array[app.index][num.slaves] := app.data.array[app.index][num.slaves] + 1
+                                                out.string ("Returning location of master to requesting slave.*n", 0, scr!)
+                                                header[0] := PONYC.INT.TCPIP.ANSHEADER.DONE
+                                                []BYTE master.ip.array RETYPES app.data.array[app.index][master.ip]:
+                                                [header FROM 1 FOR BYTESIN (INT)] := master.ip.array
+                                                []BYTE master.port.array RETYPES app.data.array[app.index][master.port]:
+                                                [header FROM (1 + BYTESIN (INT)) FOR BYTESIN (INT)] := master.port.array
+                                        --}}}
+                                  --}}}
+                                  --{{{  Pending application
+                                  TRUE
+                                    INITIAL BOOL found.dup.loc IS FALSE:
+                                    SEQ
+                                      out.string ("Application is pending.*n", 0, scr!)
+                                      --{{{  Check for duplicate locations
+                                      IF
+                                        node.type <> PONYC.NODETYPE.SLAVE
+                                          INITIAL INT i IS 0:
+                                          WHILE (NOT found.dup.loc) AND (i < app.data.array[app.index][num.slaves])
+                                            INITIAL [BYTESIN (INT)]BYTE slave.ip.array IS [pending.slave.ip.array[app.index] FROM
+                                              (i * BYTESIN (INT)) FOR BYTESIN (INT)]:
+                                            INT slave.ip RETYPES slave.ip.array:
+                                            INITIAL [BYTESIN (INT)]BYTE slave.port.array IS [pending.slave.port.array[app.index] FROM
+                                              (i * BYTESIN (INT)) FOR BYTESIN (INT)]:
+                                            INT slave.port RETYPES slave.port.array:
+                                            SEQ
+                                              IF
+                                                (node.ip = slave.ip) AND (node.port = slave.port)
+                                                  found.dup.loc := TRUE
+                                                TRUE
+                                                  SKIP
+                                              i := i + 1
+                                        TRUE
+                                          SKIP
+                                      --}}}
+                                      CASE node.type
+                                        --{{{  Master or master/reset
+                                        PONYC.NODETYPE.MASTER, PONYC.NODETYPE.MASTERRESET
+                                          IF
+                                            --{{{  Duplicate of a pending slave's location
+                                            found.dup.loc
+                                              SEQ
+                                                out.string ("Location is duplicate of a pending slave*'s location.*n", 0, scr!)
+                                                out.string ("Returning error to requesting master.*n", 0, scr!)
+                                                header[0] := PONYC.INT.TCPIP.ANSHEADER.DUPLICATESLAVE
+                                            --}}}
+                                            TRUE
+                                              SEQ
+                                                out.string ("Changing state of application to active.*n", 0, scr!)
+                                                app.data.array[app.index][state] := APPSTATE.ACTIVE
+                                                app.data.array[app.index][master.ip] := node.ip
+                                                app.data.array[app.index][master.port] := node.port
+                                                num.active.apps := num.active.apps + 1
+                                                num.pending.apps := num.pending.apps - 1
+                                                --{{{  Notify waiting slaves
+                                                out.string ("Notifying ", 0, scr!)
+                                                out.int (app.data.array[app.index][num.slaves], 0, scr!)
+                                                out.string (" slave", 0, scr!)
+                                                IF
+                                                  app.data.array[app.index][num.slaves] <> 1
+                                                    out.string ("s", 0, scr!)
+                                                  TRUE
+                                                    SKIP
+                                                out.string (" about location of master.*n", 0, scr!)
+                                                header := MOBILE [2 * BYTESIN (INT)]BYTE
+                                                SEQ i = 0 FOR app.data.array[app.index][num.slaves]
+                                                  SOCKET slave.socket:
+                                                  INITIAL [BYTESIN (INT)]BYTE slave.ip.array IS [pending.slave.ip.array[app.index] FROM
+                                                    (i * BYTESIN (INT)) FOR BYTESIN (INT)]:
+                                                  INT slave.ip RETYPES slave.ip.array:
+                                                  INITIAL [BYTESIN (INT)]BYTE slave.port.array IS [pending.slave.port.array[app.index] FROM
+                                                    (i * BYTESIN (INT)) FOR BYTESIN (INT)]:
+                                                  INT slave.port RETYPES slave.port.array:
+                                                  SEQ
+                                                    --{{{  Print message
+                                                    out.string ("Connecting to slave ", 0, scr!)
+                                                    out.int (i + 1, 0, scr!)
+                                                    out.string (" of ", 0, scr!)
+                                                    out.int (app.data.array[app.index][num.slaves], 0, scr!)
+                                                    out.string (".*n    IP address: ", 0, scr!)
+                                                    [15]BYTE ip.string:
+                                                    INT ip.string.len:
+                                                    SEQ
+                                                      socket.ip.of.addr (slave.ip, ip.string, ip.string.len, sock.result)
+                                                      out.string ([ip.string FOR ip.string.len], 0, scr!)
+                                                    out.string ("*n    Port number: ", 0, scr!)
+                                                    out.int (slave.port, 0, scr!)
+                                                    out.string ("*n", 0, scr!)
+                                                    --}}}
+                                                    -- Connect to slave
+                                                    socket.create.connect.tcp (slave.socket, slave.ip, slave.port, sock.result)
+                                                    IF
+                                                      sock.result = (-1)
+                                                        SEQ
+                                                          no.op.error := FALSE
+                                                          out.string ("ERROR: Could not connect to slave.*n", 0, err!)
+                                                      --{{{  Could connect to slave
+                                                      TRUE
+                                                        SEQ
+                                                          -- Force immediate socket writes
+                                                          socket.setsockopt (slave.socket, SOL.TCP, TCP.NODELAY, OPTION.ON, sock.result)
+                                                          IF
+                                                            sock.result = (-1)
+                                                              SEQ
+                                                                no.op.error := FALSE
+                                                                out.string ("ERROR: Setting no-delay option failed.*n", 0, err!)
+                                                            --{{{  No-delay successfully set, can output location of master
+                                                            TRUE
+                                                              SEQ
+                                                                out.string ("Sending location of master to slave.*n", 0, scr!)
+                                                                []BYTE master.ip.array RETYPES node.ip:
+                                                                [header FOR BYTESIN (INT)] := master.ip.array
+                                                                []BYTE master.port.array RETYPES node.port:
+                                                                [header FROM BYTESIN (INT) FOR BYTESIN (INT)] := master.port.array
+                                                                socket.fullwrite (slave.socket, header, sock.result)
+                                                                IF
+                                                                  sock.result <> (SIZE header)
+                                                                    SEQ
+                                                                      no.op.error := FALSE
+                                                                      out.string ("ERROR: Write operation failed.*n", 0, err!)
+                                                                  TRUE
+                                                                    SKIP
+                                                            --}}}
+                                                          -- Close slave-socket
+                                                          socket.close (slave.socket)
+                                                          out.string ("Slave socket closed.*n", 0, scr!)
+                                                      --}}}
+                                                header := MOBILE [1 + (2 * BYTESIN (INT))]BYTE
+                                                --}}}
+                                                out.string ("Returning OK to requesting master.*n", 0, scr!)
+                                                header[0] := PONYC.INT.TCPIP.ANSHEADER.DONE
+                                                []BYTE app.index.array RETYPES app.index:
+                                                [header FROM 1 FOR BYTESIN (INT)] := app.index.array
+                                                []BYTE app.code.array RETYPES app.data.array[app.index][app.code]:
+                                                [header FROM (1 + BYTESIN (INT)) FOR BYTESIN (INT)] := app.code.array
+                                        --}}}
+                                        --{{{  Slave
+                                        PONYC.NODETYPE.SLAVE
+                                          SEQ
+                                            out.string ("Returning error to requesting slave.*n", 0, scr!)
+                                            header[0] := PONYC.INT.TCPIP.ANSHEADER.NOTDONE
+                                        --}}}
+                                        --{{{  Slave/wait
+                                        ELSE
+                                          IF
+                                            --{{{  Duplicate of a pending slave's location
+                                            found.dup.loc
+                                              SEQ
+                                                out.string ("Location is duplicate of a pending slave*'s location.*n", 0, scr!)
+                                                out.string ("Returning error to requesting slave.*n", 0, scr!)
+                                                header[0] := PONYC.INT.TCPIP.ANSHEADER.DUPLICATESLAVE
+                                            --}}}
+                                            TRUE
+                                              SEQ
+                                                out.string ("Adding slave to queue.*n", 0, scr!)
+                                                --{{{  Double pending-slaves-arrays if full
+                                                IF
+                                                  (app.data.array[app.index][num.slaves] * BYTESIN (INT)) = (SIZE pending.slave.ip.array[app.index])
+                                                    -- New arrays
+                                                    INITIAL MOBILE []BYTE new.pending.slave.ip.array IS MOBILE [2 * (app.data.array[app.index][num.slaves] * BYTESIN (INT))]BYTE:
+                                                    INITIAL MOBILE []BYTE new.pending.slave.port.array IS MOBILE [2 * (app.data.array[app.index][num.slaves] * BYTESIN (INT))]BYTE:
+                                                    SEQ
+                                                      -- Set existing elements in new arrays
+                                                      SEQ i = 0 FOR (app.data.array[app.index][num.slaves] * BYTESIN (INT))
+                                                        SEQ
+                                                          new.pending.slave.ip.array[i] := pending.slave.ip.array[app.index][i]
+                                                          new.pending.slave.port.array[i] := pending.slave.port.array[app.index][i]
+                                                      -- Use new arrays
+                                                      pending.slave.ip.array[app.index] := new.pending.slave.ip.array
+                                                      pending.slave.port.array[app.index] := new.pending.slave.port.array
+                                                  TRUE
+                                                    SKIP
+                                                --}}}
+                                                []BYTE node.ip.array RETYPES node.ip:
+                                                [pending.slave.ip.array[app.index] FROM
+                                                  (app.data.array[app.index][num.slaves] * BYTESIN (INT)) FOR BYTESIN (INT)] :=
+                                                  node.ip.array
+                                                []BYTE node.port.array RETYPES node.port:
+                                                [pending.slave.port.array[app.index] FROM
+                                                  (app.data.array[app.index][num.slaves] * BYTESIN (INT)) FOR BYTESIN (INT)] :=
+                                                  node.port.array
+                                                app.data.array[app.index][num.slaves] := app.data.array[app.index][num.slaves] + 1
+                                                out.string ("Returning wait signal to requesting slave.*n", 0, scr!)
+                                                header[0] := PONYC.INT.TCPIP.ANSHEADER.NOTDONE
+                                        --}}}
+                                  --}}}
+                            --}}}
+                          -- Send reply to requesting node
+                          socket.fullwrite (socket, header, sock.result)
+                          IF
+                            sock.result <> (SIZE header)
+                              SEQ
+                                no.op.error := FALSE
+                                out.string ("ERROR: Write operation failed.*n", 0, err!)
+                            TRUE
+                              SKIP
+                --}}}
+              --{{{  Inconsistency warning
+              IF
+                NOT no.op.error
+                  SEQ
+                    out.string ("WARNING: There was a network error during this operation.*n", 0, scr!)
+                    out.string ("         The state of the ANS might be inconsistent.*n", 0, scr!)
+                TRUE
+                  SKIP
+              --}}}
+              -- Close socket
+              socket.close (socket)
+              out.string ("Socket closed.*n", 0, scr!)
+          --}}}
+        --{{{  Close listening socket if we are about to leave the main loop
+        IF
+          NOT (no.error AND running)
+            SEQ
+              -- Close listening socket
+              socket.close (listen.socket)
+              out.string ("Listening socket closed.*n", 0, scr!)
+          TRUE
+            SKIP
+        --}}}
+:
+--}}}
+

@@ -1,0 +1,80 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--      Modifications Copyright (C) 2004  Fred Barnes
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC simplified version 1995"
+
+#INCLUDE "hostio.inc"
+#USE "conv"
+
+--{{{  OC.frename
+VAL unix.max.openname.size IS (sp.max.openname.size/4) + 1:
+#PRAGMA EXTERNAL "PROC C.frename (INT result, VAL[unix.max.openname.size]INT oldname, VAL[unix.max.openname.size]INT newname)  = 0 "
+-- #PRAGMA EXTERNAL "PROC bytes.to.chars (VAL []BYTE from, []INT to) = 4"
+PROC OC.frename (INT result, VAL[]BYTE oldname, VAL[]BYTE newname)
+  [unix.max.openname.size]INT unixoldname, unixnewname:
+  SEQ
+    bytes.to.chars (oldname, unixoldname)
+    bytes.to.chars (newname, unixnewname)
+    C.frename (result, unixoldname, unixnewname)
+:
+--}}}  
+--{{{  sp.rename
+--* Rename the specified file.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param oldfname the present name of the file to be renamed
+-- @param newfname the desired name of the file to be renamed
+-- @param result equals spr.ok if the renaming was successful;
+--   otherwise takes on a value indicating what went wrong:
+--   spr.bad.packet.size   the combined lengths of oldname and newname
+--   is too large - it must be less than sp.max.renamename.size
+--   spr.bad.name          either or both of the filenames are null
+--   >=spr.operation.failed  the renaming failed - see hostio.inc or
+--   iserver documentation for further details
+PROC sp.rename (CHAN OF SP fs, ts, VAL []BYTE oldfname, newfname, BYTE result)
+  IF
+    (((SIZE oldfname) + (SIZE newfname)) > sp.max.renamename.size)
+      result := spr.bad.packet.size
+    ((SIZE oldfname) = 0) OR ((SIZE newfname) = 0)
+      result := spr.bad.name
+    TRUE
+      --{{{  Call Unix
+      INT res:
+      SEQ
+        OC.frename (res, oldfname, newfname)
+        IF
+          res = 0
+            result := spr.ok
+          TRUE  -- FILE/PATH.NOT.FOUND, ACCESS.DENIED, NOT.SAME.DEVICE
+            result := spr.operation.failed
+      --}}}  
+:
+--}}}  sp.rename
+--{{{  so.rename
+PROC so.rename (CHAN OF SP fs, ts, VAL []BYTE oldname, newname, BYTE result)
+
+  sp.rename (fs, ts, oldname, newname, result)
+:
+--}}}  so.rename

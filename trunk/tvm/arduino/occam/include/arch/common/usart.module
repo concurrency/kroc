@@ -1,0 +1,147 @@
+--
+--	Copyright (C) 2009-2010   Christian Jacobsen
+--      Copyright (C) 2009-2010   Matt Jadud
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--      Copyright (C) 2009-2010   Adam Sampson
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** USART/serial routines for the ATmega1280
+--
+-- @module usart
+
+#IF NOT (DEFINED (USART.MODULE))
+#DEFINE USART.MODULE
+
+--{{{ PROC serial.start
+--* Initialize serial IO. (Interrupt-driven)
+--
+-- @param serial The serial port to activate (eg. 0, 1, 2, or 3).
+-- @param baud The baud rate at which to transmit information.
+PROC serial.start (VAL INT serial, VAL INT32 baud)
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[UBRRH[serial]] := factor.bytes[1]
+    ports[UBRRL[serial]] := factor.bytes[0]
+    -- I'm really not sure what this does, actually...
+    -- I was wrong at first. I'm pretty sure this is == to UPMn0
+    ports[UCSRC[serial]] := 3 << UCSZN0[serial]
+    ports[UCSRB[serial]] := BV (TXEN[serial]) \/ BV (RXEN[serial])
+:
+--}}}
+
+--{{{ PROC serial.byte.out
+--* Write a BYTE to the serial port. (Interrupt-driven)
+--
+-- @param serial The serial port to write to (eg. 0, 1, 2, or 3).
+-- @param b The BYTE to write.
+PROC serial.byte.out (VAL INT serial, VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSRA[serial]] /\ BV (UDRE[serial])) = 0
+        --{{{  transmit buffer full; wait for it to empty
+        SEQ
+          -- Enable the interrupt; UDRIE0 will be cleared by the (C-side)
+          -- interrupt handler.
+          ports[UCSRB[serial]] := ports[UCSRB[serial]] \/ BV (UDRIE[serial])
+          INT dummy:
+          wait.for.interrupt (VINTR.UDRE[serial], dummy)
+        --}}}
+      TRUE
+        SKIP
+    ports[UDR[serial]] := b
+:
+--}}}
+
+
+--{{{ PROC serial.byte.in.blocking
+--* Read a byte from the serial port. (Blocks.)
+--
+-- @param serial The serial port to read from (eg. 0, 1, 2, or 3).
+-- @param b The BYTE to be read.
+PROC serial.byte.in.blocking (VAL INT serial, RESULT BYTE b)  
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    WHILE ((ports[UCSRA[serial]] /\ BV (RXC[serial])) = 0)
+      SKIP
+    b := ports[UDR[serial]]
+:
+--}}}
+
+--{{{ PROC serial.byte.in
+--* Read a byte from the serial port. (Interrupt-driven)
+--
+-- @param serial The serial port to read from (eg. 0, 1, 2, or 3).
+-- @param b The BYTE to be read.
+PROC serial.byte.in (VAL INT serial, RESULT BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    IF
+      (ports[UCSRA[serial]] /\ BV (RXC[serial])) = 0
+        --{{{  receive buffer empty; wait for something to come in
+        SEQ
+          -- Enable the interrupt; RXCIE0 will be cleared by the (C-side)
+          ports[UCSRB[serial]] := ports[UCSRB[serial]] \/ BV (RXCIE[serial])
+          INT dummy:
+          wait.for.interrupt (VINTR.RX[serial], dummy)
+        --}}}
+      TRUE
+        SKIP
+    b := ports[UDR[serial]]
+:
+--}}}
+
+--{{{ PROC serial.start.blocking
+--* Initialize the serial port (blocking).
+--
+-- @param serial The serial port to activate (eg. 0, 1, 2, or 3).
+-- @param baud The baud rate at which to transmit information.
+PROC serial.start.blocking (VAL INT serial, VAL INT32 baud) 
+  VAL INT32 factor IS (((F.CPU / 16) + (baud / 2)) / baud) - 1:
+  VAL [4]BYTE factor.bytes RETYPES factor:
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    ports[UBRRH[serial]] := factor.bytes[1]
+    ports[UBRRL[serial]] := factor.bytes[0]
+    -- WARNING: Should we replace this, then? Is one "more correct" than the other?
+    -- (3 << UCSZN0[serial]) is the same as (UCSZN0[serial] \/ UCSZN1[serial])
+    ports[UCSRC[serial]] := 3 << UCSZ00
+    ports[UCSRB[serial]] := BV (TXEN[serial])
+:
+--}}}
+
+--{{{ PROC serial.byte.out.blocking
+--* Write a byte to the serial port (blocking).
+--
+-- @param serial The serial port to write to (eg. 0, 1, 2, or 3).
+-- @param b BYTE The BYTE to write.
+PROC serial.byte.out.blocking (VAL INT serial, VAL BYTE b)
+  PLACED [MAX.PORT]BYTE ports 0:
+  #PRAGMA DEFINED ports
+  SEQ
+    WHILE (ports[UCSRA[serial]] /\ BV (UDRE[serial])) = 0
+      SKIP
+    ports[UDR[serial]] := b
+:
+--}}}
+
+#ENDIF

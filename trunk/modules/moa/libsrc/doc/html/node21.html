@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+
+<!--Converted with LaTeX2HTML 2002-2-1 (1.71)
+original version by:  Nikos Drakos, CBLU, University of Leeds
+* revised and updated by:  Marcus Hennecke, Ross Moore, Herb Swan
+* with significant contributions from:
+  Jens Lippmann, Marek Rouchal, Martin Wilck and others -->
+<HTML>
+<HEAD>
+<TITLE>Usage</TITLE>
+<META NAME="description" CONTENT="Usage">
+<META NAME="keywords" CONTENT="moa">
+<META NAME="resource-type" CONTENT="document">
+<META NAME="distribution" CONTENT="global">
+
+<META NAME="Generator" CONTENT="LaTeX2HTML v2002-2-1">
+<META HTTP-EQUIV="Content-Style-Type" CONTENT="text/css">
+
+<LINK REL="STYLESHEET" HREF="moa.css">
+
+<LINK REL="previous" HREF="node20.html">
+<LINK REL="up" HREF="node19.html">
+<LINK REL="next" HREF="node22.html">
+</HEAD>
+
+<BODY >
+<!--Navigation Panel-->
+<A NAME="tex2html384"
+  HREF="node22.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html380"
+  HREF="node19.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html376"
+  HREF="node20.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html382"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html385"
+  HREF="node22.html">Communication with the MySQL</A>
+<B> Up:</B> <A NAME="tex2html381"
+  HREF="node19.html">The MySQL process</A>
+<B> Previous:</B> <A NAME="tex2html377"
+  HREF="node20.html">Signature</A>
+ &nbsp; <B>  <A NAME="tex2html383"
+  HREF="node1.html">Contents</A></B> 
+<BR>
+<BR>
+<!--End of Navigation Panel-->
+<!--Table of Child-Links-->
+<A NAME="CHILD_LINKS"><STRONG>Subsections</STRONG></A>
+
+<UL>
+<LI><A NAME="tex2html386"
+  HREF="node21.html#SECTION00096210000000000000">Answer</A>
+<LI><A NAME="tex2html387"
+  HREF="node21.html#SECTION00096220000000000000">Errors</A>
+</UL>
+<!--End of Table of Child-Links-->
+<HR>
+
+<H3><A NAME="SECTION00096200000000000000">
+Usage</A>
+</H3><FONT SIZE="-1">
+This call will make a process for connecting with a MySQL server.
+</FONT>
+<P>
+
+<UL>
+<LI>The value of host may be either a hostname or an IP address. If host is <TT>""</TT> or the string <TT>"localhost"</TT>, a connection to the local host is assumed. If the OS supports sockets, they are used instead of TCP/IP to connect to the server.
+
+<P>
+</LI>
+<LI>The <TT>user</TT> parameter contains the user's MySQL login ID. If <TT>user</TT> is the empty string <TT>""</TT>, the current user is assumed. Under Unix, this is the current login name.
+
+<P>
+</LI>
+<LI>The <TT>passwd</TT> parameter contains the password for user. If <TT>passwd</TT> is <TT>""</TT>, only entries in the user table for the user that have a blank (empty) password field are checked for a match. This allows the database administrator to set up the MySQL privilege system in such a way that users get different privileges depending on whether they have specified a password.
+Do not attempt to encrypt the password. Password encryption is handled automatically by the C client API.
+
+<P>
+</LI>
+<LI><TT>db</TT> is the database name. If <TT>db</TT> is not <TT>""</TT>, the connection sets the default database to this value.
+
+<P>
+</LI>
+<LI>If <TT>port</TT> is not 0, the value is used as the port number for the TCP/IP connection. Note that the host parameter determines the type of the connection.
+
+<P>
+</LI>
+<LI>If <TT>socket</TT> is not <TT>""</TT>, the string specifies the socket or named pipe that should be used. Note that the host parameter determines the type of the connection.
+</LI>
+</UL>
+<P>
+<FONT SIZE="-1">Once the process is created it will try to make a connection to the server. It will then send a message to the <TT>out</TT> channel indicating that it is ready to accept commands (see below). Subsequent communication with the process will be done by issuing commands on the <TT>in</TT> channel. Every command will cause one or more answers to be sent on the <TT>out</TT> channel. The process will not terminate until it receives a <TT>quit</TT> message, the only exception to this is noted below under "Errors".
+</FONT>
+<P>
+<FONT SIZE="-1">Once the process is created, it is not possible to change the connection, user etc. unless it can be done via. SQL queries.
+</FONT>
+<P>
+
+<H4><A NAME="SECTION00096210000000000000">
+Answer</A>
+</H4><FONT SIZE="-1">
+If the process successfully connects to the server it will send the message <TT>connected</TT> to the <TT>out</TT> channel.
+</FONT>
+<P>
+
+<H4><A NAME="SECTION00096220000000000000">
+Errors</A>
+</H4>
+<UL>
+<LI>If the C client API fails to allocate memory for the connection, the process will send the message <TT>initialisation.error</TT> to the <TT>out</TT> channel. Following this, it will send the message <TT>quit</TT> and then terminate. In all other cases the process must be explicitly killed with the <TT>quit</TT> command. This error should rarely occur.
+</LI>
+<LI>If the process fails to connect to the MySQL server, it will send a <TT>mysql.error; INT; MOBILE []BYTE</TT> message containing the error number and description (for information on how to interpret the error numbers, see the MySQL documentation). It will remain alive, but every other commmand than <TT>reconnect</TT> and <TT>quit</TT> will result in an error message.
+</LI>
+</UL>
+<P>
+<HR>
+<!--Navigation Panel-->
+<A NAME="tex2html384"
+  HREF="node22.html">
+<IMG WIDTH="37" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="next"
+ SRC="file:/usr/lib/latex2html/icons/next.png"></A> 
+<A NAME="tex2html380"
+  HREF="node19.html">
+<IMG WIDTH="26" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="up"
+ SRC="file:/usr/lib/latex2html/icons/up.png"></A> 
+<A NAME="tex2html376"
+  HREF="node20.html">
+<IMG WIDTH="63" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="previous"
+ SRC="file:/usr/lib/latex2html/icons/prev.png"></A> 
+<A NAME="tex2html382"
+  HREF="node1.html">
+<IMG WIDTH="65" HEIGHT="24" ALIGN="BOTTOM" BORDER="0" ALT="contents"
+ SRC="file:/usr/lib/latex2html/icons/contents.png"></A>  
+<BR>
+<B> Next:</B> <A NAME="tex2html385"
+  HREF="node22.html">Communication with the MySQL</A>
+<B> Up:</B> <A NAME="tex2html381"
+  HREF="node19.html">The MySQL process</A>
+<B> Previous:</B> <A NAME="tex2html377"
+  HREF="node20.html">Signature</A>
+ &nbsp; <B>  <A NAME="tex2html383"
+  HREF="node1.html">Contents</A></B> 
+<!--End of Navigation Panel-->
+<ADDRESS>
+Espen Suenson
+2006-07-07
+</ADDRESS>
+</BODY>
+</HTML>

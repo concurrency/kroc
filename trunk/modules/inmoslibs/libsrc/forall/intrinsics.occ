@@ -1,0 +1,449 @@
+--
+--	intrinsics.occ -- occ21 instrinsics documentation
+--	Copyright (C) 2008  University of Kent
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+-- This file is not intended to compile; it's here to provide OccamDoc with
+-- definitions of the compiler intrinsics.
+
+--** Definitions available to all occam-pi programs.
+--
+-- The definitions in this module are provided by the compiler or the support
+-- library, and are automatically made available for all programs. It is not
+-- necessary to explicitly include [@text forall.module].
+--
+-- @module forall
+
+--{{{  dummy definitions
+VAL INT X IS MOSTNEG INT:
+--}}}
+--{{{  FUNCTION LONGADD
+--* Signed addition with a carry in.
+--
+-- (a + b) + carry
+--
+-- Overflow is an error.
+--
+-- @param a, b Integers to add.
+-- @param carry Carry flag.
+-- @return Addition of a and b.
+INT FUNCTION LONGADD (VAL INT a, b, carry) IS X:
+--}}}
+--{{{  FUNCTION LONGSUM
+--* Unsigned addition with a carry in and carry out.
+--
+-- (a + b) + carry
+--
+-- @param a, b Integers to add.
+-- @param carry Carry in flag.
+-- @return The resulting carry out flag.
+-- @return The sum of a and b.
+INT, INT FUNCTION LONGSUM (VAL INT a, b, carry) IS X, X:
+--}}}
+--{{{  FUNCTION LONGSUB
+--* Signed subtraction with a borrow in.
+--
+-- (b - a) - borrow
+--
+-- Overflow is an error.
+--
+-- @param a, b Integers to subtract.
+-- @param borrow Borrow flag.
+-- @return Subtraction of a and borrow from b.
+INT FUNCTION LONGSUB (VAL INT a, b, borrow) IS X:
+--}}}
+--{{{  FUNCTION LONGDIFF
+--* Unsigned subtraction with a borrow in and a borrow out.
+--
+-- (b - a) - borrow
+--
+-- @param a, b Integers to subtract.
+-- @param borrow Borrow in flag.
+-- @return Borrow out flag.
+-- @return Subtraction of a and borrow from b.
+INT, INT FUNCTION LONGDIFF (VAL INT a, b, borrow) IS X, X:
+--}}}
+--{{{  FUNCTION LONGPROD
+--* Unsigned multiplication with a carry in, producing a double length result.
+--
+-- (a * b) + carry
+--
+-- @param a, b Integers to multiply.
+-- @param carry Carry in flag.
+-- @return High order word of result.
+-- @return Low order word of result.
+INT, INT FUNCTION LONGPROD (VAL INT a, b, carry) IS X, X:
+--}}}
+--{{{  FUNCTION LONGDIV
+--* Unsigned division of a double length number, producing a single length result.
+--
+-- [u1, u0] / v
+--
+-- Overflow is an error.
+--
+-- @param u1 High order word of quantity being divided.
+-- @param u0 Low order word of quantity being divided.
+-- @param v Divisor.
+-- @return High order word of result.
+-- @return Low order word of result.
+INT, INT FUNCTION LONGDIV (VAL INT u1, u0, v) IS X, X:
+--}}}
+--{{{  FUNCTION SHIFTRIGHT
+--* Right shift on a double length quantity.
+--
+-- [a1, a0] >> shift
+--
+-- @param a1 High order word of quantity being shifted.
+-- @param a0 Low order word of quantity being shifted.
+-- @param shift Number of bit places to shift right.
+-- @return High order word of result.
+-- @return Low order word of result.
+INT, INT FUNCTION SHIFTRIGHT (VAL INT a1, a0, shift) IS X, X:
+--}}}
+--{{{  FUNCTION SHIFTLEFT
+--* Left shift on a double length quantity.
+--
+-- [a1, a0] << shift
+--
+-- @param a1 High order word of quantity being shifted.
+-- @param a0 Low order word of quantity being shifted.
+-- @param shift Number of bit places to shift left.
+-- @return High order word of result.
+-- @return Low order word of result.
+INT, INT FUNCTION SHIFTLEFT (VAL INT a1, a0, shift) IS X, X:
+--}}}
+--{{{  FUNCTION NORMALISE
+--* Normalise a double length quantity.
+--
+-- Shift the double word quantity left until the most
+-- significant bit is one.
+--
+-- @param a1 High order word of quantity being normalised.
+-- @param a0 Low order word of quantity being normalised.
+-- @return Number of places shifted.
+-- @return High order word of result.
+-- @return Low order word of result.
+INT, INT, INT FUNCTION NORMALISE (VAL INT a1, a0) IS X, X, X:
+--}}}
+--{{{  FUNCTION ASHIFTRIGHT
+--* Arithmetic right shift on a double length quantity.
+--
+-- The operand is expanded to a double length quantity,
+-- then arithmetically shifted right, and the low order
+-- word returned.
+--
+-- @param a The integer being shifted.
+-- @param shift Number of bit places to shift right.
+INT FUNCTION ASHIFTRIGHT (VAL INT a, shift) IS X, X:
+--}}}
+--{{{  FUNCTION ASHIFTLEFT
+--* Arithmetic left shift on a double length quantity.
+--
+-- The operand is expanded to a double length quantity,
+-- then arithmetically shifted left, and the low order
+-- word returned.
+--
+-- @param a The integer being shifted.
+-- @param shift Number of bit places to shift left.
+INT FUNCTION ASHIFTLEFT (VAL INT a, shift) IS X, X:
+--}}}
+--{{{  FUNCTION ROTATERIGHT
+--* Rotate a word right.
+--
+-- @param val The integer being rotated.
+-- @param shift Number of bit places to rotate right.
+-- @return val rotated shift places to the right.
+INT FUNCTION ROTATERIGHT (VAL INT val, shift) IS X:
+--}}}
+--{{{  FUNCTION ROTATELEFT
+--* Rotate a word left.
+--
+-- @param val The integer being rotated.
+-- @param shift Number of bit places to rotate left.
+-- @return val rotated shift places to the left.
+INT FUNCTION ROTATELEFT (VAL INT val, shift) IS X:
+--}}}
+--{{{  PROC CAUSEERROR
+--* Set the error flag.
+--
+-- Sets the runtime error flag, causing either the runtime to
+-- error out or the current process to stop, depending on
+-- compile-time flags and runtime settings.
+PROC CAUSEERROR ()
+  SKIP
+:
+--}}}
+--{{{  PROC RESCHEDULE
+--* Force rescheduling.
+--
+-- This gives the scheduler an opportunity to switch to another process.  It
+-- may simply return control to the caller if no other process needs to run.
+PROC RESCHEDULE ()
+  SKIP
+:
+--}}}
+--{{{  PROC ASSERT
+--* Causes an error if a condition is false.
+--
+-- Asserts that a given condition is true.  If the condition
+-- is false then the behaviour is that of [@ref CAUSEERROR].
+--
+-- The compiler may detect false assertions at compile time through static
+-- analysis.
+--
+-- @param condition The condition to test.
+PROC ASSERT (VAL BOOL condition)
+  SKIP
+:
+--}}}
+--{{{  FUNCTION WSSIZEOF
+--* Calculate the workspace size (in words) of a process.
+--
+-- @param process Process for which the workspace size is
+--                to be calculated.
+-- @return Number of workspace words required by process.
+INT FUNCTION WSSIZEOF (PROC process) IS X:
+--}}}
+--{{{  FUNCTION VSSIZEOF
+--* Calculate the vectorspace size (in words) of a process.
+--
+-- @param process Process for which the vectorspace size is
+--                to be calculated.
+-- @return Number of vectorspace words required by process.
+INT FUNCTION VSSIZEOF (PROC process) IS X:
+--}}}
+--{{{  PROC DECODE.DATA
+--* Decode mobile data.
+--
+-- Move a mobile into an integer.
+-- Please never, ever, ever use this PROC.
+--
+-- @param mobile The mobile being moved, is undefined post this PROC
+-- @param addr Receives the address of the mobile.
+-- @param size Receives the size of the mobile.
+-- @private
+PROC DECODE.DATA (MOBILE.ANY mobile, addr, size)
+  SKIP
+:
+--}}}
+--{{{  PROC GETPRI
+--* Get the priority level of the current process.
+--
+-- Priority 0 is the highest priority available, and priority 31 is the lowest
+-- priority. Priorities are only hints to the scheduler; you must not assume
+-- that high-priority processes will always run before low-priority processes.
+--
+-- @param pri The priority of the calling process.
+PROC GETPRI (RESULT INT pri)
+  SKIP
+:
+--}}}
+--{{{  PROC SETPRI
+--* Set the priority level of the current process.
+--
+-- See [@ref GETPRI] for the meanings of priority levels.
+--
+-- @param pri The requested priority for the calling process.
+--            Invalid values will be ignored.
+PROC SETPRI (VAL INT pri)
+  SKIP
+:
+--}}}
+--{{{  PROC INCPRI
+--* Obsolete synonym for [@ref RAISE.PRIORITY].
+--
+-- @deprecated
+PROC INCPRI ()
+  SKIP
+:
+--}}}
+--{{{  PROC DECPRI
+--* Obsolete synonym for [@ref LOWER.PRIORITY].
+--
+-- @deprecated
+PROC DECPRI ()
+  SKIP
+:
+--}}}
+--{{{  PROC RAISE.PRIORITY
+--* Raise the priority of the current process by one level.
+--
+-- See [@ref GETPRI] for the meanings of priority levels.
+PROC RAISE.PRIORITY ()
+  SKIP
+:
+--}}}
+--{{{  PROC LOWER.PRIORITY
+--* Lower the priority of the current process by one level.
+--
+-- See [@ref GETPRI] for the meanings of priority levels.
+PROC LOWER.PRIORITY ()
+  SKIP
+:
+--}}}
+--{{{  PROC GETAFF
+--* Get the affinity of the current process.
+--
+-- The affinity is a bitmap of logical execution units on which this process
+-- may run. The value [@code -1] means that the process may run on any
+-- execution unit.
+--
+-- @param aff The affinity of the calling process.
+PROC GETAFF (RESULT INT aff)
+  SKIP
+:
+--}}}
+--{{{  PROC SETAFF
+--* Set the affinity of the current process.
+--
+-- See [@ref GETAFF] for the meanings of affinity values.
+--
+-- @param aff The requested affinity for the calling process.
+--            Invalid values will be ignored.
+PROC SETAFF (VAL INT aff)
+  SKIP
+:
+--}}}
+--{{{  PROC KILLCALL
+--* Kill a blocking FFI call.
+--
+-- Kill a [@code BX.] blocking foreign-function-interface call associated with
+-- a channel.
+--
+-- @param chan The channel passed when making the blocking call.
+-- @param res [@code 0] if termination was successfully initiated; [@code -1]
+--   if the call has not yet started; [@code 1] if the call has already
+--   terminated.
+PROC KILLCALL (CHAN OF ANY chan, INT res)
+  SKIP
+:
+--}}}
+--{{{  PROC WAIT.FOR.INTERRUPT
+--* Wait for a hardware interrupt.
+--
+-- This call is specific to RMoX, and will not be useful for most occam-pi
+-- programs.
+--
+-- @param n The number of the interrupt to wait for.
+-- @param mask CPU or interrupt mask, implementation dependent.
+-- @param count The number of missed interrupts.
+PROC WAIT.FOR.INTERRUPT (VAL INT n, mask, RESULT INT count)
+  SKIP
+:
+--}}}
+--{{{  PROC BIND.MOBILE
+--* Bind a piece of (virtual) memory to a mobile.
+--
+-- Associates a piece of memory with a mobile.  The memory at the given address
+-- becomes the backing store for the mobile.  This is intended for use with
+-- [@code EMPTY] mobiles.
+--
+-- For example, to associate a mobile with memory address [@code #1000]:
+-- [@code
+--    MOBILE []BYTE x:
+--    SEQ
+--      x := MOBILE EMPTY [1024]BYTE
+--      BIND.MOBILE (x, #1000)
+-- ]
+--
+-- @param mobile The mobile to bind.
+-- @param addr The address of the memory.
+PROC BIND.MOBILE (MOBILE.ANY mobile, VAL INT addr)
+  SKIP
+:
+--}}}
+--{{{  PROC BIND.MOBILE.HW
+--* Bind a piece of physical memory to a mobile.
+--
+-- Acts as [@ref BIND.MOBILE], except a physical address is used.
+-- This may be converted to a virtual address by the runtime system.
+--
+-- @param mobile The mobile to bind.
+-- @param hw.addr Hardware address of the memory.
+PROC BIND.MOBILE.HW (MOBILE.ANY mobile, VAL INT hw.addr)
+  SKIP
+:
+--}}}
+--{{{  FUNCTION DMA.CAPABLE
+--* Test whether a mobile is DMA capable.
+--
+-- Test to see if a mobile is backed by DMA-accessible memory.
+-- The [@code HWADDROF] operator is only valid on DMA-capable mobiles.
+--
+-- @param mobile The mobile to test.
+-- @return Whether the mobile is DMA accessible by hardware.
+BOOL FUNCTION DMA.CAPABLE (MOBILE.ANY mobile) IS FALSE:
+--}}}
+--{{{  PROC MAKE.DMA.CAPABLE
+--* Move a mobile to DMA capable memory.
+--
+-- Make a mobile DMA-capable. If necessary, this will reallocate the mobile in
+-- DMA-accessible memory and copy the contents over. If the mobile is already
+-- DMA-capable, this is has no effect.
+--
+-- @param mobile The mobile to upgrade.
+PROC MAKE.DMA.CAPABLE (MOBILE.ANY mobile)
+  SKIP
+:
+--}}}
+--{{{  PROC RESIZE.MOBILE.ARRAY.1D
+--* Resize a 1D mobile array.
+--
+-- Change the size of a one-dimensional mobile array.
+-- The memory associated with the mobile may or may not be
+-- reallocated by the runtime system depending on its
+-- memory allocator.
+--
+-- All data within the bounds of the new size of the array,
+-- and present in the old bounds of the array will be preserved.
+--
+-- @param mobile Mobile array to resize.
+-- @param count The new element count.
+PROC RESIZE.MOBILE.ARRAY.1D (MOBILE.ANY mobile, VAL INT count)
+  SKIP
+:
+--}}}
+--{{{  PROC MEMORY.BARRIER
+--* Generate a read-write memory barrier.
+--
+-- A memory barrier is unrelated to occam-pi [@code BARRIER]s; it is a
+-- synchronisation point for memory operations within a computer system.
+-- After the completion of a memory barrier instruction, the affected memory
+-- operations are guaranteed to be visible to peripherals and other processors.
+--
+-- This is equivalent to executing both [@ref READ.MEMORY.BARRIER] and
+-- [@ref WRITE.MEMORY.BARRIER].
+PROC MEMORY.BARRIER ()
+  SKIP
+:
+--}}}
+--{{{  PROC READ.MEMORY.BARRIER
+--* Generate a read memory barrier.
+--
+-- See [@ref MEMORY.BARRIER] for the semantics of memory barriers.
+PROC READ.MEMORY.BARRIER ()
+  SKIP
+:
+--}}}
+--{{{  PROC WRITE.MEMORY.BARRIER
+--* Generate a write memory barrier.
+--
+-- See [@ref MEMORY.BARRIER] for the semantics of memory barriers.
+PROC WRITE.MEMORY.BARRIER ()
+  SKIP
+:
+--}}}

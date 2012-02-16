@@ -1,0 +1,1338 @@
+-- version control marker $Id: cg10i16.occ,v 1.1 1995/10/10 13:02:48 djb1 Exp $
+PROC do.INT16 ()
+  INT16 a, b, c :
+  SEQ
+    b := id.INT16(85 (INT16))
+    --{{{  output message
+    title ("INT16 arithmetic")
+    --}}} 
+    --{{{  check arithmetic and logical operators  (I16-000 to 099)
+    a := b + 23 (INT16)
+    check.INT16 (a, 85(INT16) + 23(INT16), "I16-001")
+    a := b PLUS 23 (INT16)
+    check.INT16 (a, 85(INT16) PLUS 23(INT16), "I16-002")
+    a := b - 23 (INT16)
+    check.INT16 (a, 85(INT16) - 23(INT16), "I16-003")
+    a := b MINUS 23 (INT16)
+    check.INT16 (a, 85(INT16) MINUS 23(INT16), "I16-004")
+    a := b * 23 (INT16)
+    check.INT16 (a, 85(INT16) * 23(INT16), "I16-005")
+    a := b TIMES 23 (INT16)
+    check.INT16 (a, 85(INT16) TIMES 23(INT16), "I16-006")
+    a := b / 23 (INT16)
+    check.INT16 (a, 85(INT16) / 23(INT16), "I16-007")
+    a := b \ 23 (INT16)
+    check.INT16 (a, 85(INT16) \ 23(INT16), "I16-008")
+    --{{{  check logical operators                 (I16-009 to 014)
+    a := b << 3
+    check.INT16 (a, 85(INT16) << 3, "I16-009")
+    a := b >> 3
+    check.INT16 (a, 85(INT16) >> 3, "I16-010")
+    a := b /\ 23 (INT16)
+    check.INT16 (a, 85(INT16) /\ 23(INT16), "I16-011")
+    a := b \/ 23 (INT16)
+    check.INT16 (a, 85(INT16) \/ 23(INT16), "I16-012")
+    a := b >< 23 (INT16)
+    check.INT16 (a, 85(INT16) >< 23(INT16), "I16-013")
+    a := ~b
+    check.INT16 (a, ~85(INT16), "I16-014")
+    --}}} 
+    --{{{  unary minus                             (I16-015 to 018)
+    a := (- b)
+    check.INT16 (a, -85(INT16), "I16-015")
+    a := (MINUS b)
+    check.INT16 (a, MINUS 85(INT16), "I16-016")
+    a := MINUS (MOSTNEG INT16)
+    check.INT16 (a, MOSTNEG INT16, "I16-017")
+    c := MOSTNEG INT16
+    a := MINUS c
+    check.INT16 (a, c, "I16-018")
+    --}}} 
+    --{{{  sign extension                          (I16-019 to 029)
+    PROC extension()
+      PROC local(VAL INT16 w, x, y, z, INT i)
+        i := ((INT w) + (INT x)) + ((INT y) + (INT z))
+      :
+      INT i :
+      SEQ
+        local(-1(INT16), -1(INT16), -1(INT16), -1(INT16), i)
+        check(i, -4, "I16-019")
+        local(1(INT16), 1(INT16), 1(INT16), 1(INT16), i)
+        check(i, 4, "I16-020")
+    :
+    extension()
+    --}}}
+    --{{{  overflow checks on logical operators    (I16-030 to 039)
+    INT16 p, q, r :
+    SEQ
+      p := id.INT16(MOSTPOS INT16)
+      q := p PLUS 256(INT16)
+      check.INT16(q, (MOSTNEG INT16) + 255(INT16), "I16-030")
+    
+      p := id.INT16(MOSTNEG INT16)
+      q := p PLUS (-256(INT16))
+      check.INT16(q, (MOSTPOS INT16) - 255(INT16), "I16-031")
+    
+      p := id.INT16(MOSTPOS INT16)
+      q := p MINUS (-256(INT16))
+      check.INT16(q, (MOSTNEG INT16) + 255(INT16), "I16-032")
+    
+      p := id.INT16(MOSTNEG INT16)
+      q := p MINUS 256(INT16)
+      check.INT16(q, (MOSTPOS INT16) - 255(INT16), "I16-033")
+    
+      p := id.INT16(MOSTPOS INT16)
+      q := p TIMES 2(INT16)
+      check.INT16(q, (MOSTPOS INT16) TIMES 2(INT16), "I16-034")
+      check.INT16(q, (MOSTPOS INT16) << 1,           "I16-035")
+    
+      p := id.INT16(MOSTPOS INT16)
+      q := MINUS p
+      check.INT16(q, 0(INT16) MINUS (MOSTPOS INT16), "I16-036")
+      check.INT16(q, (MOSTNEG INT16) + 1(INT16),     "I16-037")
+    
+      r := id.INT16(0(INT16))
+      p := id.INT16(MOSTPOS INT16)
+      q := (p PLUS 256(INT16)) + r
+      check.INT16(q, (MOSTNEG INT16) + 255(INT16), "I16-038")
+    
+    --}}}
+    
+    --}}} 
+    --{{{  check constant folding                  (I16-100 to 199)
+    INT16 a, b :
+    INT c :
+    SEQ
+      b := id.INT16(5 (INT16))
+      c := 3
+      --{{{  +        (I16-100)
+      a := 2 (INT16) + b               -- 7
+      a := (1 (INT16) + b    ) + a     -- 6
+      a := (0 (INT16) + b    ) + a     -- 5
+      a := ((-1 (INT16)) + b ) + a     -- 4
+      a := ((-2 (INT16)) + b ) + a     -- 3
+      a := (b + 2 (INT16)    ) + a     -- 7
+      a := (b + 1 (INT16)    ) + a     -- 6
+      a := (b + 0 (INT16)    ) + a     -- 5
+      a := (b + (-1 (INT16)) ) + a     -- 4
+      a := (b + (-2 (INT16)) ) + a     -- 3
+      check.INT16 (a, 50 (INT16), "I16-100")
+      --}}} 
+      --{{{  -        (I16-101)
+      a := 2 (INT16) - b               --  -3
+      a := (1 (INT16) - b    ) + a     --  -4
+      a := (0 (INT16) - b    ) + a     --  -5
+      a := ((-1 (INT16)) - b ) + a     --  -6
+      a := ((-2 (INT16)) - b ) + a     --  -7
+      a := (b - 2 (INT16)    ) + a     --   3
+      a := (b - 1 (INT16)    ) + a     --   4
+      a := (b - 0 (INT16)    ) + a     --   5
+      a := (b - (-1 (INT16)) ) + a     --   6
+      a := (b - (-2 (INT16)) ) + a     --   7
+      check.INT16 (a, 0 (INT16), "I16-101")
+      --}}} 
+      --{{{  *        (I16-102)
+      a := 2 (INT16) * b                 --  10
+      a := (1 (INT16) * b      ) + a     --   5
+      a := (0 (INT16) * b      ) + a     --   0
+      a := ((-1 (INT16)) * b   ) + a     --  -5
+      a := ((-2 (INT16)) * b   ) + a     -- -10
+      a := (b * 2 (INT16)      ) + a     --  10
+      a := (b * 1 (INT16)      ) + a     --   5
+      a := (b * 0 (INT16)      ) + a     --   0
+      a := (b * (-1 (INT16))   ) + a     --  -5
+      a := (b * (-2 (INT16))   ) + a     -- -10
+      check.INT16 (a, 0 (INT16), "I16-102")
+      --}}} 
+      --{{{  /        (I16-103)
+      a := 2 (INT16) / b                 -- 0
+      a := (1 (INT16) / b      ) + a     -- 0
+      a := (0 (INT16) / b      ) + a     -- 0
+      a := ((-1 (INT16)) / b   ) + a     -- 0
+      a := ((-2 (INT16)) / b   ) + a     -- 0
+      a := (b / 2 (INT16)      ) + a     -- 2
+      a := (b / 1 (INT16)      ) + a     -- 5
+      --a := b / 0 (INT16)  --should give error
+      a := (b / (-1 (INT16))   ) + a     -- -5
+      a := (b / (-2 (INT16))   ) + a     -- -2
+      check.INT16 (a, 0 (INT16), "I16-103")
+      --}}} 
+      --{{{  \        (I16-104)
+      a := 2 (INT16) \ b                 --  2
+      a := (1 (INT16) \ b      ) + a     --  1
+      a := (0 (INT16) \ b      ) + a     --  0
+      a := ((-1 (INT16)) \ b   ) + a     -- -1
+      a := ((-2 (INT16)) \ b   ) + a     -- -2
+      a := (b \ 2 (INT16)      ) + a     --  1
+      a := (b \ 1 (INT16)      ) + a     --  0
+      --a := b \ 0 (INT16)  --should give error
+      a := (b \ (-1 (INT16))   ) + a     --  0
+      a := (b \ (-2 (INT16))   ) + a     --  1
+      check.INT16 (a, 2 (INT16), "I16-104")
+      --}}} 
+      --{{{  PLUS     (I16-105)
+      a := 2 (INT16) PLUS b                 -- 7
+      a := (1 (INT16) PLUS b      ) + a     -- 6
+      a := (0 (INT16) PLUS b      ) + a     -- 5
+      a := ((-1 (INT16)) PLUS b   ) + a     -- 4
+      a := ((-2 (INT16)) PLUS b   ) + a     -- 3
+      a := (b PLUS 2 (INT16)      ) + a     -- 7
+      a := (b PLUS 1 (INT16)      ) + a     -- 6
+      a := (b PLUS 0 (INT16)      ) + a     -- 5
+      a := (b PLUS (-1 (INT16))   ) + a     -- 4
+      a := (b PLUS (-2 (INT16))   ) + a     -- 3
+      check.INT16 (a, 50 (INT16), "I16-105")
+      --}}} 
+      --{{{  MINUS    (I16-106)
+      a := 2 (INT16) MINUS b                  --  -3
+      a := (1 (INT16) MINUS b       ) + a     --  -4
+      a := (0 (INT16) MINUS b       ) + a     --  -5
+      a := ((-1 (INT16)) MINUS b    ) + a     --  -6
+      a := ((-2 (INT16)) MINUS b    ) + a     --  -7
+      a := (b MINUS 2 (INT16)       ) + a     --   3
+      a := (b MINUS 1 (INT16)       ) + a     --   4
+      a := (b MINUS 0 (INT16)       ) + a     --   5
+      a := (b MINUS (-1 (INT16))    ) + a     --   6
+      a := (b MINUS (-2 (INT16))    ) + a     --   7
+      check.INT16 (a, 0 (INT16), "I16-106")
+      --}}} 
+      --{{{  TIMES    (I16-107)
+      a := 2 (INT16) TIMES b                --  10
+      a := (1 (INT16) TIMES b     ) + a     --   5
+      a := (0 (INT16) TIMES b     ) + a     --   0
+      a := ((-1 (INT16)) TIMES b  ) + a     --  -5
+      a := ((-2 (INT16)) TIMES b  ) + a     -- -10
+      a := (b TIMES 2 (INT16)     ) + a     --  10
+      a := (b TIMES 1 (INT16)     ) + a     --   5
+      a := (b TIMES 0 (INT16)     ) + a     --   0
+      a := (b TIMES (-1 (INT16))  ) + a     --  -5
+      a := (b TIMES (-2 (INT16))  ) + a     -- -10
+      check.INT16 (a, 0 (INT16), "I16-107")
+      --}}} 
+      --{{{  /\       (I16-108)
+      a := 2 (INT16) /\ b                   -- 0
+      a := (1 (INT16) /\ b        ) + a     -- 1
+      a := (0 (INT16) /\ b        ) + a     -- 0
+      a := ((-1 (INT16)) /\ b     ) + a     -- 5
+      a := ((-2 (INT16)) /\ b     ) + a     -- 4
+      a := (b /\ 2 (INT16)        ) + a     -- 0
+      a := (b /\ 1 (INT16)        ) + a     -- 1
+      a := (b /\ 0 (INT16)        ) + a     -- 0
+      a := (b /\ (-1 (INT16))     ) + a     -- 5
+      a := (b /\ (-2 (INT16))     ) + a     -- 4
+      check.INT16 (a, 20 (INT16), "I16-108")
+      a := b /\ 0(INT16)
+      check.INT16 (a, 0(INT16), "I16-108a")
+      a := b /\ (-1(INT16))
+      check.INT16 (a, 5(INT16), "I16-108b")
+      a := b /\ b
+      check.INT16 (a, 5(INT16), "I16-108c")
+      INT16 bb :
+      SEQ
+        bb := id.INT16(#11F5(INT16))
+        a := bb /\ 0(INT16)
+        check.INT16 (a, 0(INT16), "I16-108d")
+        a := bb /\ (-1(INT16))
+        check.INT16 (a, #11F5(INT16), "I16-108e")
+        a := bb /\ #11F5(INT16)
+        check.INT16 (a, #11F5(INT16), "I16-108f")
+        a := bb /\ #00FF(INT16)
+        check.INT16 (a, #00F5(INT16), "I16-108g")
+        a := bb /\ #FF00(INT16)
+        check.INT16 (a, #1100(INT16), "I16-108h")
+      
+      --}}} 
+      --{{{  \/       (I16-109)
+      a := 2 (INT16) \/ b                 --  7
+      a := (1 (INT16) \/ b      ) + a     --  5
+      a := (0 (INT16) \/ b      ) + a     --  5
+      a := ((-1 (INT16)) \/ b   ) + a     -- -1
+      a := ((-2 (INT16)) \/ b   ) + a     -- -1
+      a := (b \/ 2 (INT16)      ) + a     --  7
+      a := (b \/ 1 (INT16)      ) + a     --  5
+      a := (b \/ 0 (INT16)      ) + a     --  5
+      a := (b \/ (-1 (INT16))   ) + a     -- -1
+      a := (b \/ (-2 (INT16))   ) + a     -- -1
+      check.INT16 (a, 30 (INT16), "I16-109")
+      a := b \/ 0(INT16)
+      check.INT16 (a, 5(INT16), "I16-109a")
+      a := b \/ (-1(INT16))
+      check.INT16 (a, -1(INT16), "I16-109b")
+      a := b \/ b
+      check.INT16 (a, 5(INT16), "I16-109c")
+      INT16 bb :
+      SEQ
+        bb := id.INT16(#11F5(INT16))
+        a := bb \/ 0(INT16)
+        check.INT16 (a, #11F5(INT16), "I16-109d")
+        a := bb \/ (-1(INT16))
+        check.INT16 (a, -1(INT16), "I16-109e")
+        a := bb \/ #11F5(INT16)
+        check.INT16 (a, #11F5(INT16), "I16-109f")
+        a := bb \/ #00FF(INT16)
+        check.INT16 (a, #11FF(INT16), "I16-109g")
+        a := bb \/ #FF00(INT16)
+        check.INT16 (a, #FFF5(INT16), "I16-109h")
+      
+      --}}} 
+      --{{{  ><       (I16-110)
+      a := 2 (INT16) >< b                  --  7
+      a := (1 (INT16) >< b       ) + a     --  4
+      a := (0 (INT16) >< b       ) + a     --  5
+      a := ((-1 (INT16)) >< b    ) + a     -- -6
+      a := ((-2 (INT16)) >< b    ) + a     -- -5
+      a := (b >< 2 (INT16)       ) + a     --  7
+      a := (b >< 1 (INT16)       ) + a     --  4
+      a := (b >< 0 (INT16)       ) + a     --  5
+      a := (b >< (-1 (INT16))    ) + a     -- -6
+      a := (b >< (-2 (INT16))    ) + a     -- -5
+      check.INT16 (a, 10 (INT16), "I16-110")
+      a := b >< 0(INT16)
+      check.INT16 (a, 5(INT16), "I16-110a")
+      a := b >< (-1(INT16))
+      check.INT16 (a, -6(INT16), "I16-110b")
+      a := b >< b
+      check.INT16 (a, 0(INT16), "I16-110c")
+      INT16 bb :
+      SEQ
+        bb := id.INT16(#11F5(INT16))
+        a := bb >< 0(INT16)
+        check.INT16 (a, #11F5(INT16), "I16-110d")
+        a := bb >< (-1(INT16))
+        check.INT16 (a, #EE0A(INT16), "I16-110e")
+        a := bb >< #11F5(INT16)
+        check.INT16 (a, 0(INT16), "I16-110f")
+        a := bb >< #00FF(INT16)
+        check.INT16 (a, #110A(INT16), "I16-110g")
+        a := bb >< #FF00(INT16)
+        check.INT16 (a, #EEF5(INT16), "I16-110h")
+      
+      --}}} 
+      --{{{  <<       (I16-111)
+      a := 64 (INT16) << c                 --  512
+      a := (32 (INT16) << c      ) + a     --  256
+      a := (0 (INT16) << c       ) + a     --    0
+      a := ((-64 (INT16)) << c   ) + a     -- -256
+      a := ((-32 (INT16)) << c   ) + a     -- -512
+      --a := (b << 64              ) + a     --    0
+      --a := (b << 32              ) + a     --    0
+      a := (b << 16              ) + a     --   0
+      a := (b << 8               ) + a     --   (5 << 8)
+      a := (b << 0               ) + a     --    5
+      --a := b << (-64) --should give error
+      --a := b << (-32) --should give error
+      check.INT16 (a, 5(INT16) + (5(INT16) << 8), "I16-111")
+      --}}} 
+      --{{{  >>       (I16-112)
+      a := 64 (INT16) >> c                --  8
+      a := (32 (INT16) >> c     ) + a     --  4
+      a := (0 (INT16) >> c      ) + a     --  0
+      a := ((-64 (INT16)) >> c  ) + a     --  (-64 >> 3)
+      a := ((-32 (INT16)) >> c  ) + a     --  (-32 >> 3)
+      --a := (b >> 64             ) + a     --  0
+      --a := (b >> 32             ) + a     --  0
+      a := (b >> 16             ) + a     --  0
+      a := (b >> 8              ) + a     --  0
+      a := (b >> 0              ) + a     --  5
+      --a := b >> (-64) --should give error
+      --a := b >> (-32) --should give error
+      VAL correct.result IS 17 (INT16) +
+                 ( ( (-64(INT16)) >> 3) + ( (-32(INT16)) >> 3) ) :
+      check.INT16 (a, correct.result, "I16-112")
+      --}}} 
+    --}}} 
+    --{{{  check comparison operators              (I16-200 to 299)
+    a := id.INT16(47(INT16))
+    x := a = b
+    check.BOOL (x, FALSE, "I16-205")
+    x := a > b
+    check.BOOL (x, FALSE, "I16-206")
+    x := a >= b
+    check.BOOL (x, FALSE, "I16-207")
+    x := a < b
+    check.BOOL (x, TRUE, "I16-208")
+    x := a <= b
+    check.BOOL (x, TRUE, "I16-209")
+    x := a <> b
+    check.BOOL (x, TRUE, "I16-210")
+    x := a AFTER b
+    check.BOOL (x, FALSE, "I16-211")
+    
+    --}}} 
+    --{{{  check conversions                       (I16-300 to 399)
+    --{{{  variables for conversion tests
+    REAL64 r64 :
+    REAL32 r32 :
+    INT64 i64 :
+    INT32 i32 :
+    INT16 i16 :
+    BYTE byte :
+    BOOL bool :
+    --}}} 
+    SEQ
+      r64 := REAL64 TRUNC b
+      check.REAL64 (r64, REAL64 TRUNC 85(INT16), "I16-301")
+      r64 := REAL64 TRUNC (b + 1(INT16))
+      check.REAL64 (r64, REAL64 TRUNC 86(INT16), "I16-301a")
+      r64 := REAL64 TRUNC (b+b)
+      check.REAL64 (r64, REAL64 TRUNC 170(INT16), "I16-301b")
+      r64 := REAL64 ROUND b
+      check.REAL64 (r64, REAL64 ROUND 85(INT16), "I16-302")
+      r64 := REAL64 ROUND (b + 1(INT16))
+      check.REAL64 (r64, REAL64 ROUND 86(INT16), "I16-302a")
+      r64 := REAL64 ROUND (b+b)
+      check.REAL64 (r64, REAL64 ROUND 170(INT16), "I16-302b")
+      r32 := REAL32 TRUNC b
+      check.REAL32 (r32, REAL32 TRUNC 85(INT16), "I16-303")
+      r32 := REAL32 TRUNC (b + 1(INT16))
+      check.REAL32 (r32, REAL32 TRUNC 86(INT16), "I16-303a")
+      r32 := REAL32 TRUNC (b+b)
+      check.REAL32 (r32, REAL32 TRUNC 170(INT16), "I16-303b")
+      r32 := REAL32 ROUND b
+      check.REAL32 (r32, REAL32 ROUND 85(INT16), "I16-304")
+      r32 := REAL32 ROUND (b + 1(INT16))
+      check.REAL32 (r32, REAL32 ROUND 86(INT16), "I16-304a")
+      r32 := REAL32 ROUND (b+b)
+      check.REAL32 (r32, REAL32 ROUND 170(INT16), "I16-304b")
+      i64 := INT64 b
+      check.INT64 (i64, INT64 85(INT16), "I16-305")
+      i32 := INT32 b
+      check.INT32 (i32, INT32 85(INT16), "I16-306")
+      i16 := INT16 b
+      check.INT16 (i16, INT16 85(INT16), "I16-307")
+      byte := BYTE b
+      check.BYTE (byte, BYTE 85(INT16), "I16-308")
+      c := 1(INT16)
+      bool := BOOL c
+      check.BOOL (bool, BOOL 1(INT16), "I16-309")
+    --}}} 
+    --{{{  check 'remainder identity'              (I16-400 to 499)
+    a := ( 23(INT16) * ( b / 23(INT16) ) ) + ( b \ 23(INT16) )
+    check.INT16 (a,
+      ( 23(INT16) * ( 85(INT16) / 23(INT16) ) ) + ( 85(INT16) \ 23(INT16) ),
+      "I16-400")
+    check.INT16 (a, b, "I16-401")
+    --}}} 
+    --{{{  hefty calculations                      (I16-500 to 599)
+    --{{{  declarations
+    INT16 x, y, z, a, b, c, d :
+    VAL n1 IS 1(INT16) :
+    VAL n2 IS 2(INT16) :
+    VAL n3 IS 3(INT16) :
+    VAL n4 IS 1(INT16) / 3(INT16) :
+    VAL twice.eight.four IS 8192(INT16) : -- twice 8 to the power 4 (= 2 to the 13)
+    --}}} 
+    SEQ
+      --{{{  initialisation
+      x := 8(INT16)
+      y := x + x
+      z := y - x
+      a := 11111(INT16)
+      b := 22222(INT16)
+      c := a * 2(INT16)
+      --}}} 
+      check.INT16 (y, 16(INT16), "I16-500")
+      check.INT16 (z,  8(INT16), "I16-501")
+      check.INT16 (c,  b, "I16-502")
+    
+      check.INT16 (((x + y) + (n3 * z)) + ((n2 * a) - b), 48(INT16), "I16-503")
+      check.INT16 (((x PLUS y) PLUS (n3 TIMES z)) PLUS ((n2 TIMES a) MINUS b), 48(INT16), "I16-503a")
+      check.INT16 (x + (x + (x + (x + (x + (x + x))))), 56(INT16), "I16-504")
+      check.INT16 (x PLUS (x PLUS (x PLUS (x PLUS (x PLUS (x PLUS x))))), 56(INT16), "I16-504a")
+      check.INT16 ((x * (x * (x * x))) + (x * (x * (x * x))),
+                   twice.eight.four, "I16-505")
+      check.INT16 ((x TIMES (x TIMES (x TIMES x))) PLUS (x TIMES (x TIMES (x TIMES x))),
+                   twice.eight.four, "I16-505a")
+      check.INT16 ((n2 * (y * (y * x))) + (n2 * (y * (y * x))),
+                   twice.eight.four, "I16-506")
+      check.INT16 ((n2 TIMES (y TIMES (y TIMES x))) PLUS (n2 TIMES (y TIMES (y TIMES x))),
+                   twice.eight.four, "I16-506a")
+      x := 1 (INT16)
+      y := 3 (INT16)
+      d := 2 (INT16)
+      check.INT16 (x / y, n4, "I16-507")
+      c := ((d * y) * (d * y)) * ((d * y) * (d * y))
+      check.INT16 (c, 1296 (INT16), "I16-509")
+      c := ((d TIMES y) TIMES (d TIMES y)) TIMES ((d TIMES y) TIMES (d TIMES y))
+      check.INT16 (c, 1296 (INT16), "I16-509a")
+      c := ((((d * y) * (d * y)) * (d * y)) * (d * y)) * (d * y)
+      check.INT16 (c, 7776 (INT16), "I16-510")
+      c := ((((d TIMES y) TIMES (d TIMES y)) TIMES (d TIMES y)) TIMES (d TIMES y)) TIMES (d TIMES y)
+      check.INT16 (c, 7776 (INT16), "I16-510a")
+    
+    
+    --}}} 
+    --{{{  passing as parameters                   (I16-600 to 699)
+    --{{{  copy.int16 and add.int16
+    PROC copy.int16 (VAL INT16 x, INT16 y)
+      y := x
+    :
+    PROC add.int16 (VAL INT16 x, y, INT16 z)
+      z := x + y
+    :
+    --}}} 
+    INT16 x, y, z :
+    VAL n1 IS 2(INT16) :
+    VAL n2 IS 5000(INT16) :
+    SEQ
+      copy.int16 (n1, x)
+      check.INT16 (x, 2(INT16), "I16-600")
+      copy.int16 (n2, x)
+      check.INT16 (x, 5000(INT16), "I16-601")
+      y := 57 (INT16)
+      copy.int16 (y, x)
+      check.INT16 (x, 57(INT16), "I16-602")
+      add.int16 (n1, n2, x)
+      check.INT16 (x, 5002(INT16), "I16-603")
+      y := n1
+      z := n2
+      add.int16 (y, z, x)
+      check.INT16 (x, 5002(INT16), "I16-604")
+      check.INT16 (z, 5000(INT16), "I16-605")
+    --}}} 
+    --{{{  arrays                                  (I16-700 to 799)
+    VAL n IS 1(INT16) :
+    VAL m IS 2(INT16) :
+    VAL t1 IS [n, n, n, n, m] :
+    VAL t2 IS [t1, t1, t1, t1 ] :
+    VAL t3 IS [t2, t2, t2 ] :
+    BOOL b :
+    INT x :
+    INT16 tot :
+    SEQ
+      check.INT16 (t1 [0], n,         "I16-700")
+      check.INT16 (t1 [4], m,         "I16-701")
+      check.INT16 (t2 [2] [4], m,     "I16-702")
+      check.INT16 (t3 [1] [2] [4], m, "I16-703")
+      --{{{  test individual access
+      b := TRUE
+      x := 4
+      tot := 0(INT16)
+      SEQ i = 0 FOR SIZE t3
+        SEQ j = 0 FOR SIZE t2
+          SEQ k = 0 FOR SIZE t1
+            SEQ
+              IF
+                (k = 4) AND (t3 [i] [j] [k] = m)
+                  SKIP
+                (k < 4) AND (t3 [i] [j] [k] = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + t3 [i] [j] [k]
+              x := INT t3 [i] [j] [x]      -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "I16-704")
+      VAL correct.value IS (48(INT16) * n) + (12(INT16) * m) :
+      check.INT16 (tot, correct.value, "I16-705")
+      --}}} 
+      --{{{  test nested array access
+      INT a, b, c :
+      SEQ
+        a := 2
+        b := 1
+        c := 3
+        tot := t3[a][b][c] + ( t3[b][a][c] + ( t3[0][1][4] + ( t3[b][a+b][b+(a+b)] +
+               t1[(a+b)+b] ) ) )
+        VAL correct.value IS (2(INT16) * n) + (3(INT16) * m) :
+        check.INT16 (tot, correct.value, "I16-706")
+        tot := t3 [a] [ INT t3 [a] [b] [INT t3 [b + b] [a +
+                        b] [b + (a + b)] ] ] [(INT t3 [a] [c] [c +
+                        (b - a)]) +(3 * (INT t3 [a] [c] [b])) ]
+        check.INT16 (tot, m, "I16-707")
+      --}}} 
+      --{{{  test individual access using abbreviations
+      b := TRUE
+      x := 4
+      tot := 0(INT16)
+      SEQ i = 0 FOR SIZE t3
+        VAL a2 IS t3 [i] :
+        SEQ j = 0 FOR SIZE t2
+          VAL a1 IS a2 [j] :
+          SEQ k = 0 FOR SIZE t1
+            VAL a0 IS a1 [k] :
+            SEQ
+              IF
+                (k = 4) AND (a0 = m)
+                  SKIP
+                (k < 4) AND (a0 = n)
+                  SKIP
+                TRUE
+                  b := FALSE
+              tot := tot + a0
+              x := INT a1 [x]              -- sets it to 1
+              x := 4                       -- resets it again
+      check.BOOL (b, TRUE, "I16-708")
+      VAL correct.value IS (48(INT16) * n) + (12(INT16) * m) :
+      check.INT16 (tot, correct.value, "I16-709")
+      --}}} 
+      --{{{  test livermore loop                   (I16-710 to 711)
+      PROC livermore()
+        VAL n IS 10 :
+        VAL r IS 7(INT16) :
+        VAL t IS 13(INT16) :
+        [n + 6] INT16 u :
+        [n] INT16 x, y, z :
+        SEQ
+          SEQ k = 0 FOR n + 6
+            u [k] := 3(INT16)
+          SEQ k = 0 FOR n
+            SEQ
+              y [k] := 11(INT16)
+              z [k] :=  5(INT16)
+        
+          SEQ k = 0 FOR n
+            x [k] := u[k] + ((( r * (z[k] + (r * y[k]))) +
+                              (t * ((u[k+3] + (r * (u[k+2] + (r * u[k+1]))))))) +
+                              (t * ((u[k+6] + (r * (u[k+5] + (r * u[k+4])))))))
+        
+          check.INT16 (x[0],     5023(INT16), "I16-710")
+          check.INT16 (x[n - 1], 5023(INT16), "I16-711")
+      :
+      livermore()
+      --}}} 
+      --{{{  test some bugs that were found        (I16-712 to 717)
+      PROC bug.tests()
+        SEQ
+          --{{{  bug1                                  (I16-712)
+          [2][2]INT16 arr :
+          INT16 A :
+          INT i :
+          SEQ
+            i := 0
+            arr[i][i] := 0(INT16)
+            A := ((arr[i][i]+arr[i][i]) + (arr[i][i]+arr[i][i])) / 4(INT16)
+            check.INT16 (A, 0(INT16), "I16-712")
+          --}}} 
+          --{{{  bug3                                  (I16-713 to 714)
+          PROC Complex.Subst ([]INT16 a, b)
+            SEQ
+              check.INT16 (a[0], 2(INT16), "I16-713")
+              check.INT16 (b[1], 4(INT16), "I16-714")
+          :
+          
+          [2][2][2]INT16 g.plus, g.minus :
+          INT16 i, j :
+          SEQ
+            i := 1(INT16)
+            j := 0(INT16)
+            g.plus [INT i][INT j][0] := 2(INT16)
+            g.minus[INT i][INT j][1] := 4(INT16)
+            Complex.Subst (g.plus[INT i][INT j],
+                           g.minus[INT i][INT j])
+          --}}} 
+          --{{{  bug4                                  (I16-715)
+          [10][10]INT16 c, b :
+          INT i :
+          INT16 A:
+          SEQ
+            i := 1
+            SEQ i = 0 FOR 10
+              SEQ j = 0 FOR 10
+                VAL tmp IS INT16 j :
+                c [i][j] := tmp
+            A := ((c[i][i] * c [i*i][i+2])) / (c[(i*i)+i][(i*i)+i] + c[i][i])
+            check.INT16 (A, 1(INT16), "I16-715")
+          
+            A := ((c[i][i] TIMES c [i*i][i+2])) / (c[(i*i)+i][(i*i)+i] PLUS c[i][i])
+            check.INT16 (A, 1(INT16), "I16-715a")
+          
+          --}}} 
+          --{{{  test2                                 (I16-716 to 717)
+          INT16 u :
+          [4] INT16 ai :
+          [3] [4] INT16 x, Gb :
+          INT i, j, k :
+          SEQ
+            SEQ i = 0 FOR 4
+              SEQ
+                ai [i] := 5(INT16)
+                SEQ j = 0 FOR 3
+                  SEQ
+                    x [j] [i] := 2(INT16)
+                    Gb[j] [i] := 24(INT16)
+            i := 1
+            j := 2
+            k := 3
+            u := 4(INT16)
+            u := u + (ai [j] * x [j][k])
+            x [i][k] := (Gb [i][k] - u) / ai[i]
+            check.INT16 (x [i][k], 2(INT16), "I16-716")
+          
+            u := 4(INT16)
+            u := u PLUS (ai [j] TIMES x [j][k])
+            x [i][k] := (Gb [i][k] MINUS u) / ai[i]
+            check.INT16 (x [i][k], 2(INT16), "I16-717")
+          
+          --}}} 
+      :
+      bug.tests()
+      --}}} 
+    --}}} 
+    --{{{  miscellaneous bug checks                (I16-800 to 899)
+    VAL x IS #8000 (INT16) :
+    INT16 y :
+    SEQ
+      y := x >> 1
+      check.INT16 (y, #4000(INT16), "I16-800")
+    
+    [10]BYTE b :
+    INT16 x :
+    INT i :
+    SEQ
+      b := ['a', 'b', 'c', '*#01', '*#02', 'd', 'e', 'f', 'g', 'h']
+      i := 3
+    
+      []BYTE b.x RETYPES x :
+      b.x := [b FROM i FOR 2]
+        
+      #IF DEFINED(TARGET.BIGENDIAN)
+      check.INT16(x, #0102(INT16), "I16-800a")
+      #ELSE
+      check.INT16(x, #0201(INT16), "I16-800a")
+      #ENDIF
+    
+    --}}} 
+    --{{{  more conversion tests
+    INT FUNCTION id(VAL INT i) IS i :
+    VAL n IS 5 :
+    VAL m IS 7 :
+    [n][m]INT64 i64arr :
+    [n][m]INT32 i32arr :
+    [n][m]INT16 i16arr :
+    [n][m]INT   iarr :
+    [n][m]REAL32 r32arr :
+    [n][m]REAL64 r64arr :
+    INT i, j :
+    VAL ans IS (n / 2) + (m / 2) :
+    SEQ
+      i, j := n / 2, m / 2
+      SEQ k = 0 FOR n
+        SEQ l = 0 FOR m
+          i16arr[k][l] := INT16(k + l)
+    
+      r64arr[i][j] := REAL64 ROUND i16arr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "I16-R64-1")
+      r64arr[id(i)][j] := REAL64 ROUND i16arr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 ROUND ans, "I16-R64-2")
+      r64arr[i][j] := REAL64 TRUNC i16arr[i][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "I16-R64-3")
+      r64arr[id(i)][j] := REAL64 TRUNC i16arr[id(i)][j]
+      check.REAL64(r64arr[i][j], REAL64 TRUNC ans, "I16-R64-4")
+    
+      r32arr[i][j] := REAL32 ROUND i16arr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "I16-R32-1")
+      r32arr[id(i)][j] := REAL32 ROUND i16arr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 ROUND ans, "I16-R32-2")
+      r32arr[i][j] := REAL32 TRUNC i16arr[i][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "I16-R32-3")
+      r32arr[id(i)][j] := REAL32 TRUNC i16arr[id(i)][j]
+      check.REAL32(r32arr[i][j], REAL32 TRUNC ans, "I16-R32-4")
+    
+      i64arr[i][j] := INT64 i16arr[i][j]
+      check.INT64(i64arr[i][j], INT64 ans, "I16-I64-1")
+      i64arr[id(i)][j] := INT64 i16arr[id(i)][j]
+      check.INT64(i64arr[i][j], INT64 ans, "I16-I64-2")
+    
+      i32arr[i][j] := INT32 i16arr[i][j]
+      check.INT32(i32arr[i][j], INT32 ans, "I16-I32-1")
+      i32arr[id(i)][j] := INT32 i16arr[id(i)][j]
+      check.INT32(i32arr[i][j], INT32 ans, "I16-I32-2")
+    
+      i16arr[i][j] := INT16 i16arr[i][j]
+      check.INT16(i16arr[i][j], INT16 ans, "I16-I16-1")
+      i16arr[id(i)][j] := INT16 i16arr[id(i)][j]
+      check.INT16(i16arr[i][j], INT16 ans, "I16-I16-2")
+    
+      iarr[i][j] := INT i16arr[i][j]
+      check.INT(iarr[i][j], INT ans, "I16-INT-1")
+      iarr[id(i)][j] := INT i16arr[id(i)][j]
+      check.INT(iarr[i][j], INT ans, "I16-INT-2")
+    --}}}
+    --{{{  more constant folding (bug INSdi02215, INSdi01895)
+    PROC constant.TIMES(VAL INT16 y)
+    
+      VAL zero.zero IS          0(INT16) :
+      VAL zero.one  IS          1(INT16) :
+      VAL zero.any  IS          2(INT16) :
+      VAL one.zero  IS #100(INT16) :
+      VAL one.one   IS #101(INT16) :
+      VAL one.any   IS #102(INT16) :
+      VAL any.zero  IS #200(INT16) :
+      VAL any.one   IS #201(INT16) :
+      VAL any.any   IS #202(INT16) :
+      VAL table IS [0(INT16), 1(INT16), 2(INT16), -1(INT16), -2(INT16),
+                    MOSTNEG INT16, MOSTPOS INT16, 10(INT16),
+                    zero.any,
+                    one.zero, one.one, one.any,
+                    any.zero, any.one, any.any,
+                    -zero.any,
+                    -one.zero, -one.one, -one.any,
+                    -any.zero, -any.one, -any.any ] :
+      SEQ
+        SEQ z = 0 FOR SIZE table
+          PROC local.check(VAL INT16 x, y, VAL []BYTE msg)
+            check.INT16(x, y TIMES table[z], msg)
+          :
+          INT16 res, x :
+          SEQ
+            x := id.INT16(table[z])
+    
+            res := x TIMES zero.zero
+            local.check(res, zero.zero, "INT16-a")
+            res := x TIMES zero.one
+            local.check(res, zero.one, "INT16-b")
+            res := x TIMES zero.any
+            local.check(res, zero.any, "INT16-c")
+          
+            res := x TIMES one.zero
+            local.check(res, one.zero, "INT16-d")
+            res := x TIMES one.one
+            local.check(res, one.one, "INT16-e")
+            res := x TIMES one.any
+            local.check(res, one.any, "INT16-f")
+          
+            res := x TIMES any.zero
+            local.check(res, any.zero, "INT16-g")
+            res := x TIMES any.one
+            local.check(res, any.one, "INT16-h")
+            res := x TIMES any.any
+            local.check(res, any.any, "INT16-i")
+          
+            res := zero.zero TIMES x
+            local.check(res, zero.zero, "INT16-j")
+            res := zero.one  TIMES x
+            local.check(res, zero.one, "INT16-k")
+            res := zero.any  TIMES x
+            local.check(res, zero.any, "INT16-l")
+          
+            res := one.zero  TIMES x
+            local.check(res, one.zero, "INT16-m")
+            res := one.one   TIMES x
+            local.check(res, one.one, "INT16-n")
+            res := one.any   TIMES x
+            local.check(res, one.any, "INT16-o")
+          
+            res := any.zero  TIMES x
+            local.check(res, any.zero, "INT16-p")
+            res := any.one   TIMES x
+            local.check(res, any.one, "INT16-q")
+            res := any.any   TIMES x
+            local.check(res, any.any, "INT16-r")
+    
+            res := y         TIMES x
+            local.check(res, y, "INT16-s")
+    :
+    constant.TIMES(27(INT16))
+    --}}}
+    --{{{  bug 337
+    PROC bug.337()
+      INT16 a :
+      SEQ
+        a := 99(INT16)
+        VAL x IS [1(INT16), a] :
+        SEQ
+          check.INT16(x[0],  1(INT16), "B337a")
+          check.INT16(x[1], 99(INT16), "B337b")
+        [2]INT16 x :
+        SEQ
+          x := [1(INT16), a]
+          check.INT16(x[0],  1(INT16), "B337c")
+          check.INT16(x[1], 99(INT16), "B337d")
+        VAL []BYTE b RETYPES [1(INT16), a] :
+        SEQ
+          VAL []BYTE c RETYPES [1(INT16), 99(INT16)] :
+          SEQ i = 0 FOR SIZE c
+            check.BYTE(b[i], c[i], "B337e")
+          VAL [2]INT16 b.x RETYPES b :
+          SEQ
+            check.INT16(b.x[0],  1(INT16), "B337f")
+            check.INT16(b.x[1], 99(INT16), "B337g")
+    :
+    bug.337()
+    --}}}
+    --{{{  bug 670
+    PROC bug.670()
+      INT16 a,b :
+      SEQ
+        a := 2(INT16)
+        b := (a + 3(INT16)) TIMES 3(INT16)
+        check.INT16(b, 15(INT16), "B670a")
+    :
+    bug.670()
+    --}}}
+    --{{{  bug 1000
+    PROC bug.1000()
+      PROC q (VAL INT16 a0, a1, a2, a3, a4, INT16 b0, b1, b2, b3, b4)
+        b0, b1, b2, b3, b4 := a0, a1, a2, a3, a4
+      :
+      [5]INT16 z0, z1 :
+      SEQ
+        SEQ i = 0 FOR SIZE z0
+          z0[i], z1[i] := INT16 (-i), INT16 0
+        q(z0[0],z0[1],z0[2],z0[3],z0[4],z1[0],z1[1],z1[2],z1[3],z1[4])
+        SEQ i = 0 FOR SIZE z1
+          check(INT z1[i], -i, "B1000a")
+    :
+    bug.1000()
+    --}}}
+    --{{{  bug 1150
+    PROC bug.1150()
+      INT16 x, y :
+      VAL INT16 c IS   1(INT16) :
+      VAL INT16 d IS 100(INT16) :
+      SEQ
+        x, y := c, d
+        x := (x + x) + (y + y)
+        check.INT16(x, (c+c)+(d+d), "B1150a")
+        x, y := c, d
+        x := (x + x) - (y + y)
+        check.INT16(x, (c+c)-(d+d), "B1150b")
+        x, y := c, d
+        x := (x + x) + (x + x)
+        check.INT16(x, (c+c)+(c+c), "B1150c")
+        x, y := c, d
+        x := (x + x) - (x + x)
+        check.INT16(x, (c+c)-(c+c), "B1150d")
+        x, y := c, d
+        x := (y + y) + (x + x)
+        check.INT16(x, (d+d)+(c+c), "B1150e")
+        x, y := c, d
+        x := (y + y) - (x + x)
+        check.INT16(x, (d+d)-(c+c), "B1150f")
+        x := #1234(INT16)
+        y := 1(INT16)
+        x := (x /\ #0FFF(INT16))\/(((x>>12)+(y+1(INT16)))<<12)
+        check.INT16(x, #3234(INT16), "B1150g")
+    :
+    bug.1150()
+    --}}}
+    --{{{  bug 1274
+    PROC bug.1274()
+      INT16 x, y :
+      VAL c IS 10(INT16) :
+      VAL d IS 20(INT16) :
+      SEQ
+        y := c
+    
+        VAL a IS (c * c) + (c * d) :
+        SEQ
+          x := c
+          x := (y * c) + (y * d)
+          check.INT16(x, a, "B1274-1a+")
+          x := c
+          x := (x * c) + (y * d)
+          check.INT16(x, a, "B1274-1b+")
+          x := c
+          x := (y * c) + (x * d)
+          check.INT16(x, a, "B1274-1c+")
+          x := c
+          x := (x * c) + (x * d)
+          check.INT16(x, a, "B1274-1d+")
+    
+        VAL a IS (c * c) PLUS (c * d) :
+        SEQ
+          x := c
+          x := (y * c) PLUS (y * d)
+          check.INT16(x, a, "B1274-1aP")
+          x := c
+          x := (x * c) PLUS (y * d)
+          check.INT16(x, a, "B1274-1bP")
+          x := c
+          x := (y * c) PLUS (x * d)
+          check.INT16(x, a, "B1274-1cP")
+          x := c
+          x := (x * c) PLUS (x * d)
+          check.INT16(x, a, "B1274-1dP")
+    
+        VAL a IS (c * c) * (c * d) :
+        SEQ
+          x := c
+          x := (y * c) * (y * d)
+          check.INT16(x, a, "B1274-1a**")
+          x := c
+          x := (x * c) * (y * d)
+          check.INT16(x, a, "B1274-1b**")
+          x := c
+          x := (y * c) * (x * d)
+          check.INT16(x, a, "B1274-1c**")
+          x := c
+          x := (x * c) * (x * d)
+          check.INT16(x, a, "B1274-1d**")
+    
+        VAL a IS (c * c) TIMES (c * d) :
+        SEQ
+          x := c
+          x := (y * c) TIMES (y * d)
+          check.INT16(x, a, "B1274-1aT")
+          x := c
+          x := (x * c) TIMES (y * d)
+          check.INT16(x, a, "B1274-1bT")
+          x := c
+          x := (y * c) TIMES (x * d)
+          check.INT16(x, a, "B1274-1cT")
+          x := c
+          x := (x * c) TIMES (x * d)
+          check.INT16(x, a, "B1274-1dT")
+    
+    :
+    bug.1274()
+    --}}}
+    --{{{  bug 1340
+    PROC bug.1340()
+      [3][3]INT16 i16arr :
+      INT i, j :
+      SEQ
+        SEQ i = 0 FOR SIZE i16arr
+          SEQ j = 0 FOR SIZE i16arr[0]
+            i16arr[i][j] := INT16((i*10)+j)
+        i, j := 0, 2
+        i16arr[i][j] := i16arr[j][i]
+        check.INT16(i16arr[i][j], 20(INT16), "B1340a")
+    :
+    bug.1340()
+    --}}}
+    --{{{  bug 1345
+    PROC bug.1345()
+      INT16 x0, x1, x2, x3, x4, x5, x6, x7 :
+      INT16 xx :
+      VAL x IS 0(INT16) :
+      VAL ii IS -5(INT16) :
+      PROC init(INT16 x)
+        x := ii
+      :
+      SEQ
+        x0, x1, x2, x3, x4, x5, x6, x7 := x,x,x,x,x,x,x,x
+        init(x0)
+        init(x1)
+        init(x2)
+        init(x3)
+        init(x4)
+        init(x5)
+        init(x6)
+        init(x7)
+        -- These all now have incorrect sign extension
+        xx := ((x0 PLUS x1) PLUS (x2 PLUS x3)) + ((x4 PLUS x5) PLUS (x6 PLUS x7))
+        check.INT16(xx, ii * 8(INT16), "B1345a")
+    
+        xx := ((x0 + x1) + (x2 + x3)) + ((x4 + x5) + (x6 + x7))
+        check.INT16(xx, ii * 8(INT16), "B1345b")
+    
+        xx := ((x0 + x1) + (x2 + x3)) PLUS ((x4 + x5) + (x6 + x7))
+        check.INT16(xx, ii * 8(INT16), "B1345c")
+    :
+    bug.1345()
+    --}}}
+    --{{{  bug 1546
+    PROC bug.1546b()
+      INT16 x, y :
+      INT places :
+      SEQ
+        x, places := ~#F(INT16), 2
+        y := (x >> places) \/ ((- (INT16 (x < 0(INT16)))) << (16-places))
+        check.INT16(y, ~#3(INT16), "B1546b")
+    :
+    bug.1546b()
+    --}}}
+    --{{{  bug TS/2020
+    PROC bug.TS.2020()
+      INT16 i16, mostneg, mostpos :
+      SEQ
+        i16 := (MOSTNEG INT16) REM (-1(INT16))
+        check.INT16(i16, 0(INT16), "B2020aa")
+        i16 := (MOSTNEG INT16) REM ( 1(INT16))
+        check.INT16(i16, 0(INT16), "B2020ab")
+        i16 := (MOSTPOS INT16) REM (-1(INT16))
+        check.INT16(i16, 0(INT16), "B2020ac")
+        i16 := (MOSTPOS INT16) REM ( 1(INT16))
+        check.INT16(i16, 0(INT16), "B2020ad")
+        i16 := (MOSTNEG INT16) /   ( 1(INT16))
+        check.INT16(i16, MOSTNEG INT16, "B2020ae")
+        i16 := (MOSTPOS INT16) /   (-1(INT16))
+        check.INT16(i16, (MOSTNEG INT16) + 1(INT16), "B2020af")
+        i16 := (MOSTPOS INT16) /   ( 1(INT16))
+        check.INT16(i16, MOSTPOS INT16, "B2020ag")
+    
+        mostneg, mostpos := MOSTNEG INT16, MOSTPOS INT16
+    
+        i16 := (mostneg) REM (-1(INT16))
+        check.INT16(i16, 0(INT16), "B2020ah")
+        i16 := (mostneg) REM ( 1(INT16))
+        check.INT16(i16, 0(INT16), "B2020ai")
+        i16 := (mostpos) REM (-1(INT16))
+        check.INT16(i16, 0(INT16), "B2020aj")
+        i16 := (mostpos) REM ( 1(INT16))
+        check.INT16(i16, 0(INT16), "B2020ak")
+        i16 := (mostneg) /   ( 1(INT16))
+        check.INT16(i16, MOSTNEG INT16, "B2020al")
+        i16 := (mostpos) /   (-1(INT16))
+        check.INT16(i16, (MOSTNEG INT16) + 1(INT16), "B2020am")
+        i16 := (mostpos) /   ( 1(INT16))
+        check.INT16(i16, MOSTPOS INT16, "B2020an")
+    :
+    bug.TS.2020()
+    --}}}
+    --{{{  bug INSdi02195
+    PROC bug.INSdi02195()
+      --{{{  functions
+      BOOL   FUNCTION BOOL.fn   (VAL INT x) IS BOOL  x :
+      BYTE   FUNCTION BYTE.fn   (VAL INT x) IS BYTE  x :
+      INT16  FUNCTION INT16.fn  (VAL INT x) IS INT16 x :
+      INT    FUNCTION INT.fn    (VAL INT x) IS x :
+      INT32  FUNCTION INT32.fn  (VAL INT x) IS INT32 x :
+      INT64  FUNCTION INT64.fn  (VAL INT x) IS INT64 x :
+      REAL32 FUNCTION REAL32.fn (VAL INT x) IS REAL32 ROUND x :
+      REAL64 FUNCTION REAL64.fn (VAL INT x) IS REAL64 ROUND x :
+      --}}}
+      --{{{  variables
+      BOOL bool.var :
+      BYTE byte.var :
+      INT16 local.i.var :
+      INT32 i32.var :
+      INT64 i64.var :
+      INT   int.var :
+      REAL32 r32.var :
+      REAL64 r64.var :
+      INT zero, int :
+      --}}}
+      INT16 local.i, local.j, local.k :
+      SEQ
+        zero := id(0)
+        int := id(77)
+        --{{{  INT16 var -> type -> INT16         00 - 09
+        local.j := id.INT16(1(INT16))
+        
+        local.i := INT16 (BOOL local.j)
+        check.INT16(local.i, 1(INT16), "INT16-00")
+        
+        local.j := id.INT16(77(INT16))
+        
+        local.i := INT16 (BYTE local.j)
+        check.INT16(local.i, 77(INT16), "INT16-01")
+        local.i := INT16 (INT local.j)
+        check.INT16(local.i, 77(INT16), "INT16-02")
+        local.i := INT16 (INT16 local.j)
+        check.INT16(local.i, 77(INT16), "INT16-03")
+        local.i := INT16 (INT32 local.j)
+        check.INT16(local.i, 77(INT16), "INT16-04")
+        local.i := INT16 (INT64 local.j)
+        check.INT16(local.i, 77(INT16), "INT16-05")
+        local.i := INT16 ROUND (REAL32 ROUND local.j)
+        check.INT16(local.i, 77(INT16), "INT16-06")
+        local.i := INT16 ROUND (REAL64 ROUND local.j)
+        check.INT16(local.i, 77(INT16), "INT16-07")
+        --}}}
+        --{{{  INT16 FUNCTION -> type -> INT16    10 - 19
+        local.j := id.INT16(1(INT16))
+        
+        local.i := INT16 (BOOL INT16.fn(INT local.j))
+        check.INT16(local.i, 1(INT16), "INT16-10")
+        
+        local.j := id.INT16(77(INT16))
+        
+        local.i := INT16 (BYTE INT16.fn(INT local.j))
+        check.INT16(local.i, 77(INT16), "INT16-11")
+        local.i := INT16 (INT INT16.fn(INT local.j))
+        check.INT16(local.i, 77(INT16), "INT16-12")
+        local.i := INT16 (INT16 INT16.fn(INT local.j))
+        check.INT16(local.i, 77(INT16), "INT16-13")
+        local.i := INT16 (INT32 INT16.fn(INT local.j))
+        check.INT16(local.i, 77(INT16), "INT16-14")
+        local.i := INT16 (INT64 INT16.fn(INT local.j))
+        check.INT16(local.i, 77(INT16), "INT16-15")
+        local.i := INT16 ROUND (REAL32 ROUND (INT16.fn(INT local.j)))
+        check.INT16(local.i, 77(INT16), "INT16-16")
+        local.i := INT16 ROUND (REAL64 ROUND (INT16.fn(INT local.j)))
+        check.INT16(local.i, 77(INT16), "INT16-17")
+        --}}}
+        --{{{  INT16 exp -> type -> INT16         20 - 29
+        local.k := id.INT16(0(INT16))
+        
+        local.j := id.INT16(1(INT16))
+        
+        local.i := INT16 (BOOL (local.j + local.k))
+        check.INT16(local.i, 1(INT16), "INT16-20")
+        
+        local.j := id.INT16(77(INT16))
+        
+        local.i := INT16 (BYTE (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-21")
+        local.i := INT16 (INT (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-22")
+        local.i := INT16 (INT16 (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-23")
+        local.i := INT16 (INT32 (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-24")
+        local.i := INT16 (INT64 (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-25")
+        local.i := INT16 ROUND (REAL32 ROUND (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-26")
+        local.i := INT16 ROUND (REAL64 ROUND (local.j + local.k))
+        check.INT16(local.i, 77(INT16), "INT16-27")
+        --}}}
+        --{{{  type var -> INT16                  30 - 39
+        bool.var := BOOL id(1)
+        local.i := INT16 bool.var
+        check.INT16(local.i, 1(INT16), "INT16-30")
+        byte.var := BYTE id(77)
+        local.i := INT16 byte.var
+        check.INT16(local.i, 77(INT16), "INT16-31")
+        int.var := id.INT(77(INT))
+        local.i := INT16 int.var
+        check.INT16(local.i, 77(INT16), "INT16-32")
+        local.i.var := id.INT16(77(INT16))
+        local.i := INT16 local.i.var
+        check.INT16(local.i, 77(INT16), "INT16-33")
+        i32.var := id.INT32(77(INT32))
+        local.i := INT16 i32.var
+        check.INT16(local.i, 77(INT16), "INT16-34")
+        i64.var := id.INT64(77(INT64))
+        local.i := INT16 i64.var
+        check.INT16(local.i, 77(INT16), "INT16-35")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := INT16 ROUND r32.var
+        check.INT16(local.i, 77(INT16), "INT16-36")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := INT16 ROUND r64.var
+        check.INT16(local.i, 77(INT16), "INT16-37")
+        --}}}
+        --{{{  type FUNCTION -> INT16             40 - 49
+        local.i := INT16 BOOL.fn(zero)
+        check.INT16(local.i, 0(INT16), "INT16-40")
+        local.i := INT16 BYTE.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-41")
+        local.i := INT16 INT.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-42")
+        local.i := INT16 INT16.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-43")
+        local.i := INT16 INT32.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-44")
+        local.i := INT16 INT64.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-45")
+        local.i := INT16 ROUND REAL32.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-46")
+        local.i := INT16 ROUND REAL64.fn(int)
+        check.INT16(local.i, 77(INT16), "INT16-47")
+        --}}}
+        --{{{  type exp -> INT16                  50 - 59
+        bool.var := BOOL id(1)
+        local.i := INT16 (bool.var = bool.var)
+        check.INT16(local.i, 1(INT16), "INT16-50")
+        byte.var := BYTE id(77)
+        local.i := INT16 byte.var
+        check.INT16(local.i, 77(INT16), "INT16-51")
+        int.var := id.INT(77(INT))
+        local.i := INT16 (int.var + (INT   zero))
+        check.INT16(local.i, 77(INT16), "INT16-52")
+        local.i.var := id.INT16(77(INT16))
+        local.i := INT16 (local.i.var + (INT16 zero))
+        check.INT16(local.i, 77(INT16), "INT16-53")
+        i32.var := id.INT32(77(INT32))
+        local.i := INT16 (i32.var + (INT32 zero))
+        check.INT16(local.i, 77(INT16), "INT16-54")
+        i64.var := id.INT64(77(INT64))
+        local.i := INT16 (i64.var + (INT64 zero))
+        check.INT16(local.i, 77(INT16), "INT16-55")
+        r32.var := id.REAL32(77.0(REAL32))
+        local.i := INT16 ROUND (r32.var + (REAL32 ROUND zero))
+        check.INT16(local.i, 77(INT16), "INT16-56")
+        r64.var := id.REAL64(77.0(REAL64))
+        local.i := INT16 ROUND (r64.var + (REAL64 ROUND zero))
+        check.INT16(local.i, 77(INT16), "INT16-57")
+        --}}}
+    :
+    bug.INSdi02195()
+    --}}}
+    --{{{  bug INSdi02423
+    PROC bug.INSdi02423()
+    
+      PROC CheckOverflow ( VAL INT16 address, INT16 result)
+        result := address
+      :  
+    
+      PROC local(VAL INT Areg, Breg, VAL INT16 expected0, expected1, VAL []BYTE msg)
+        INT16 XBreg, XAreg, Xtimes :
+        INT16 result0, result1 :
+        SEQ
+          CheckOverflow ( (INT16 Breg)TIMES(INT16 Areg), result0 )
+          XBreg := (INT16 Breg)
+          XAreg := (INT16 Areg)
+          Xtimes := XAreg TIMES XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT16(result0, expected0, msg)
+          check.INT16(result1, expected0, msg)
+    
+          CheckOverflow ( (INT16 Breg)*(INT16 Areg), result0 )
+          Xtimes := XAreg * XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT16(result0, expected0, msg)
+          check.INT16(result1, expected0, msg)
+    
+          CheckOverflow ( (INT16 Breg)+(INT16 Areg), result0 )
+          Xtimes := XAreg + XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT16(result0, expected1, msg)
+          check.INT16(result1, expected1, msg)
+    
+          CheckOverflow ( (INT16 Breg)PLUS(INT16 Areg), result0 )
+          Xtimes := XAreg PLUS XBreg
+          CheckOverflow (Xtimes, result1)
+          check.INT16(result0, expected1, msg)
+          check.INT16(result1, expected1, msg)
+      :
+      SEQ
+        local(    1,     2,     2(INT16),  3(INT16), "di2423a")
+        local(    2,     1,     2(INT16),  3(INT16), "di2423b")
+        local(   -1,     2,    -2(INT16),  1(INT16), "di2423c")
+        local(    1,    -2,    -2(INT16), -1(INT16), "di2423d")
+        local(   -1,     1,    -1(INT16),  0(INT16), "di2423e")
+        local(    1,    -1,    -1(INT16),  0(INT16), "di2423f")
+        local(    1,     0,     0(INT16),  1(INT16), "di2423g")
+        local(    0,     1,     0(INT16),  1(INT16), "di2423h")
+        local(    0,    -1,     0(INT16), -1(INT16), "di2423i")
+        local(   -1,     0,     0(INT16), -1(INT16), "di2423j")
+    :
+    bug.INSdi02423()
+    --}}}
+    --{{{  bug INSdi02439
+    PROC bug.INSdi02439()
+      SEQ
+        PROTOCOL CONTROL  IS  INT; INT16 :
+        CHAN OF CONTROL ControlToMonitor:
+        PAR
+          SEQ
+            SEQ i = 0 FOR 4
+              INT   ii :
+              INT16 j :
+              SEQ
+                ControlToMonitor ? ii; j
+                check(i, INT j, "di2439a")
+                check(i, ii,    "di2439b")
+          SEQ i = 0 FOR 4
+            ControlToMonitor ! i; INT16 i
+    :
+    bug.INSdi02439()
+    --}}}
+    --{{{  bug INSdi03354
+    PROC bug.INSdi03354()
+      INT v1a, v1b :
+      INT16 v2, v3 :
+      SEQ
+        v1a := id(83)
+        v2 := (INT16 v1a) TIMES 100(INT16)
+        check.INT16(v2, 8300(INT16), "di03354a")
+    
+        v1b := id(v1a)
+        v3 := (INT16 v1b) * 100(INT16)
+        check.INT16(v3, 8300(INT16), "di03354b")
+    
+        v2 := id.INT16(83(INT16)) TIMES 100(INT16)
+        check.INT16(v2, 8300(INT16), "di03354c")
+    
+        v3 := id.INT16(83(INT16)) * 100(INT16)
+        check.INT16(v3, 8300(INT16), "di03354d")
+    :
+    bug.INSdi03354()
+    --}}}
+:
+do.INT16 ()

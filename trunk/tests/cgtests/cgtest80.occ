@@ -1,0 +1,306 @@
+--
+--	cgtest80.occ -- testing fixed-size array constructors
+--	Copyright (C) 2001-2002 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+PROC cgtest80 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  --{{{  basic-type tests
+  PROC test0 ()
+    [10]INT array:
+    [10]INT16 array.i16:
+    [10]INT32 array.i32:
+    [10]INT64 array.i64:
+    SEQ
+      array := [i = 0 FOR SIZE array | i * 2]
+      check.INT (array[5], 10, "test0.0")
+      array := [i = 0 FOR SIZE array STEP 2 | i]
+      check.INT (array[5], 10, "test0.1")
+      check.INT (SIZE array, 10, "test0.2")
+
+      array.i16 := [i = 2 FOR SIZE array.i16 | (INT16 i) - 2]
+      check.INT16 (array.i16[4], 4, "test0.3")
+      check.INT (SIZE array.i16, 10, "test0.4")
+
+      array.i32 := [i = 1 FOR SIZE array.i32 | (INT32 i) + 1]
+      check.INT32 (array.i32[0], 2, "test0.5")
+      check.INT (SIZE array.i32, 10, "test0.6")
+
+      array.i64 := [i = 0 FOR SIZE array.i64 STEP 4 | (INT64 i) / 4]
+      check.INT64 (array.i64[8], 8, "test0.7")
+      check.INT (SIZE array.i64, 10, "test0.7")
+  :
+
+  PROC test1 ()
+    [20]BYTE array:
+    SEQ
+      array := [i = 0 FOR SIZE array | ('a' + (BYTE i))]
+      check.BYTE (array[0], 'a', "test1.0")
+      check.BYTE (array[6], 'g', "test1.1")
+      check.INT (SIZE array, 20, "test1.2")
+  :
+
+  PROC test2 ()
+    [1]BOOL array:
+    SEQ
+      array := [i = 0 FOR SIZE array | FALSE]
+      check.BOOL (array[0], FALSE, "test2.0")
+      check.INT (SIZE array, 1, "test2.1")
+  :
+
+  PROC test3 ()
+    [5]REAL32 array.r32:
+    [5]REAL64 array.r64:
+    SEQ
+      array.r32 := [i = 0 FOR SIZE array.r32 STEP -1 | (REAL32 TRUNC i) * 52.125]
+      array.r64 := [i = (-(SIZE array.r64)) FOR SIZE array.r64 | (REAL64 TRUNC i) * 2.0]
+      check.REAL32 (array.r32[2], -104.25, "test3.0")
+      check.REAL64 (array.r64[4], -2.0, "test3.1")
+      check.BOOL ((SIZE array.r32) = (SIZE array.r64), TRUE, "test3.2")
+  :
+  --}}}  
+  --{{{  array-type tests
+  PROC test4 ()
+    [4][4]REAL64 array:
+    SEQ
+      array := [i = 0 FOR SIZE array | [(REAL64 TRUNC i) * 2.0, 3.0, 4.0, 5.0]]
+      check.REAL64 (array[0][0], 0.0, "test4.0")
+      check.REAL64 (array[2][3], 5.0, "test4.1")
+      check.REAL64 (array[3][1], 3.0, "test4.2")
+      check.INT (SIZE array, 4, "test4.3")
+      check.INT (SIZE array[(SIZE array) - 1], 4, "test4.4")
+  :
+  PROC test5 ()
+    [2][8]INT array:
+    SEQ
+      array := [i = 2 FOR SIZE array STEP 3 | [j = 3 FOR SIZE array[i] STEP 2 | i * j]]
+      check.INT (array[0][0], 6, "test5.0")
+      check.INT (array[0][1], 10, "test5.1")
+      check.INT (array[1][0], 15, "test5.2")
+      check.INT (array[1][1], 25, "test5.3")
+      check.INT (array[1][7], 85, "test5.4")
+  :
+  --}}}  
+  --{{{  record-type tests
+  PROC test6 ()
+    DATA TYPE MTYPE
+      RECORD
+        INT x, y:
+        REAL64 rval:
+    :
+
+    [10]MTYPE array:
+    SEQ
+      array := [i = 0 FOR SIZE array | [i, i, 42.0] (MTYPE)]
+      check.INT (array[3][x], 3, "test6.0")
+      check.REAL64 (array[5][rval], 42.0, "test6.1")
+  :
+  --}}}  
+  --{{{  FUNCTIONs and VALOFs
+  PROC test7 ()
+    INT16 FUNCTION lowpart.0 (VAL INT v) IS INT16 (v /\ #FFFF):
+    [4]INT16 array:
+    SEQ
+      array := [i = 0 FOR 4 | lowpart.0 (id.INT (i) + 5)]
+      check.INT16 (array[2], 7, "test7.0")
+      array := [i = 0 FOR 4 | id.INT16 (INT16 i)]
+      SEQ i = 0 FOR 4
+        check.INT16 (array[i], INT16 i, "test7.1x")
+  :
+  PROC test8 ()
+    INT FUNCTION wibble (VAL INT x, y)
+      INT r:
+      VALOF
+        SEQ
+          r := (x * y)
+        RESULT r
+    :
+
+    [8]INT array:
+    SEQ
+      [array FOR (SIZE array) / 2] := [i = 0 FOR (SIZE array) / 2 | wibble (i, 1)]
+      [array FROM (SIZE array) / 2] := [i = 0 FOR (SIZE array) / 2 | wibble (i, 2)]
+      check.INT (array[1], 1, "test8.0")
+      check.INT (array[7], 6, "test8.1")
+  :
+  PROC test9 ()
+    [3][3]REAL64 array:
+    SEQ
+      #IF NOT DEFINED (COMPILER.TOCK)
+      array := [i = 0 FOR SIZE array | ([3]REAL64 tmp:
+                                        VALOF
+                                          SEQ
+                                            tmp[0] := (REAL64 TRUNC i)
+                                            tmp[1] := 3.5
+                                            tmp[2] := tmp[0] * tmp[1]
+                                          RESULT tmp
+                                        )]
+      check.REAL64 (array[0][0], 0.0, "test9.0")
+      check.REAL64 (array[2][2], 7.0, "test9.1")
+      check.REAL64 (array[2][0], 2.0, "test9.2")
+      #ENDIF
+  :
+  --}}}  
+  --{{{  as parameters / abbreviations
+  PROC test10 ()
+    PROC select (VAL []INT data, VAL INT index, INT r)
+      r := data[index]
+    :
+
+    INT FUNCTION sum (VAL []INT values)
+      INT r:
+      VALOF
+        SEQ
+          r := 0
+          SEQ count = 0 FOR SIZE values
+            r := (r + values[count])
+        RESULT r
+    :
+
+    INT FUNCTION sizeof (VAL []INT data) IS SIZE data:
+
+    INT v:
+    SEQ
+      select ([i = 0 FOR 2 | id.INT (i)], 1, v)
+      check.INT (v, 1, "test10.0")
+      check.INT (sum ([i = 0 FOR 5 | id.INT (i + 1)]), 15, "test10.1")
+      check.INT (sizeof ([i = 0 FOR 10 | id.INT (INT ROUND ((REAL64 TRUNC i) * 4.4))]), 10, "test10.2")
+  :
+  PROC test11 ()
+    INT FUNCTION sizeof (VAL []INT data) IS SIZE data:
+    VAL []INT stuff IS [i = 0 FOR 10 | (i * 2)]:
+    SEQ
+      check.INT (stuff[0], 0, "test11.0")
+      check.INT (stuff[9], 18, "test11.1")
+      check.INT (sizeof (stuff), 10, "test11.2")
+  :
+  --}}}  
+  --{{{  subscriptions
+  PROC test12 ()
+    INT v:
+    [4]INT lemon:
+    SEQ
+      v := [i = 0 FOR 4 | i][2]
+      check.INT (v, 2, "test12.0")
+      v := [i = 2 FOR 4 | (i * 2)][2]
+      check.INT (v, 8, "test12.1")
+      lemon := [i = 1 FOR SIZE lemon | [j = 1 FOR 5 | (i * j)][(SIZE lemon) - i]]
+      check.INT (lemon[0], 4, "test12.2")
+      check.INT (lemon[3], 4, "test12.3")
+      v := [i = 1 FOR 4 | [j = 1 FOR 4 | (i * j)][4-i]][2]
+      check.INT (v, 6, "test12.4")
+      v := [i = [n = 0 FOR 2 | n][1] FOR 4 | (i - 1)][3]
+      check.INT (v, 3, "test12.5")
+      v := [i = 2 FOR 2 | (i + 4)][0]
+      check.INT (v, 6, "test12.6")
+      v := [i = 2 FOR 2 | (i + 4)][1]
+      check.INT (v, 7, "test12.7")
+  :
+  --}}}  
+  --{{{  slices
+  PROC test13 ()
+    [4]INT lemon:
+    SEQ
+      [lemon FOR 2] := [[i = 0 FOR 4 | i] FOR 2]
+      check.INT (lemon[0], 0, "test13.0")
+      check.INT (lemon[1], 1, "test13.1")
+      [lemon FROM 2] := [[i = 0 FOR 4 | (2 * i)] FROM 2]
+      check.INT (lemon[2], 4, "test13.2")
+      check.INT (lemon[3], 6, "test13.3")
+      lemon := [[i = 0 FOR 8 STEP 2 | (i / 2)] FROM 2 FOR 4]
+      VAL [4]INT expected IS [2,3,4,5]:
+      SEQ i = 0 FOR 4
+        check.INT (lemon[i], expected[i], "test13.4x")
+      [lemon FROM 2 FOR 2] := [i = 0 FOR 2 | (i + 10)]
+      check.INT (lemon[2], 10, "test13.5")
+      check.INT (lemon[3], 11, "test13.6")
+  :
+  PROC test14 ()
+    [8]REAL64 stuff:
+    INT32 v:
+    SEQ
+      stuff := [[i = 15 FOR 16 STEP -1 | (REAL64 TRUNC i)] FROM [j = 0 FOR 8 | j][4] FOR 8]
+      check.INT (INT TRUNC stuff[0], 11, "test14.0")
+      check.INT (INT ROUND stuff[7], 4, "test14.1")
+      v := [[i = 0 FOR 4 | INT32 (i + 4)] FOR 2][0]
+      check.INT32 (v, 4, "test14.2")
+  :
+  --}}}  
+  --{{{  parallel usage
+  PROC test15 ()
+    PROC sub.test (VAL INT n, []INT data)
+      SEQ
+        data := [i = 0 FOR 4 | n]
+    :
+
+    [8]INT thing:
+    SEQ
+      PAR i = 0 FOR 2
+        sub.test (i, [thing FROM i * 4 FOR 4])
+      check.INT (id.INT (thing[0]), 0, "test15.0")
+      check.INT (id.INT (thing[4]), 1, "test15.1")
+  :
+  PROC test16 ()
+    PROC sub.test (VAL INT n)
+      [8]INT local:
+      SEQ
+        local := [i = 0 FOR SIZE local | n]
+    :
+
+    PAR i = 0 FOR 2
+      sub.test (i)
+  :
+  --}}}  
+  --{{{  code and stuff
+  SEQ
+    init ("CG test 80", "Fixed size array constructors")
+    title ("array construction - basic types")
+    test0 ()
+    test1 ()
+    test2 ()
+    test3 ()
+    title ("array construction - array types")
+    test4 ()
+    test5 ()
+    title ("array construction - record types")
+    test6 ()
+    title ("array construction - involving VALOFs and FUNCTIONs")
+    test7 ()
+    test8 ()
+    test9 ()
+    title ("array construction - as parameters / abbreviations")
+    test10 ()
+    test11 ()
+    title ("array construction - subscriptions")
+    test12 ()
+    title ("array construction - slices")
+    test13 ()
+    test14 ()
+    title ("array construction - other cases")
+    test15 ()
+    test16 ()
+
+    finish ()
+  --}}}  
+:
+
+

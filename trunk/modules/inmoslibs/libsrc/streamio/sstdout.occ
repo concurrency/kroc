@@ -1,0 +1,120 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V1.1, 13/06/90"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "hostio.inc"
+#INCLUDE "streamio.inc"
+#USE "hostio.lib"
+--* Write the data sent on the given screen stream to standard out.
+--
+-- This routine terminates on receipt of st.endstream on scrn. What is
+-- written to the file is the bytes that follow tags ( for those tags
+-- that have them ), with the exception that the st.out.int tag has its
+-- following INT32 truncated to a BYTE, and that the st.beep tag is
+-- transformed into '*#07'.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param scrn for input
+-- @param result spr.ok if the data sent on scrn was successfully
+--   written to standard out; otherwise is >= spr.operation.failed in
+--   which case see hostio.inc or iserver documentation for further
+--   details
+PROC so.scrstream.to.stdout (CHAN OF SP fs, ts, CHAN OF SS scrn, BYTE result)
+  --{{{  history
+  -- Inserted the tags st.help and st.initialise into the CASE
+  -- input, for completeness.  New version is 1.1 ( old version
+  -- was 0.01, 23-Dec-88 ); 13-June-90 SRH
+  --}}}
+
+  BOOL running :
+  VAL streamid IS spid.stdout :
+  SEQ
+    result  := spr.ok
+    running := TRUE
+    WHILE running AND (result = spr.ok)
+      SEQ
+        scrn ? CASE
+          INT32 len:
+          [st.max.string.size]BYTE string :
+          st.out.string; len::string
+            INT len.written :
+            SEQ
+              sp.write (fs, ts, streamid, [string FROM 0 FOR INT len],
+                        len.written, result)
+          BYTE ch :
+          st.out.byte; ch
+            INT len.written :
+            sp.write (fs, ts, streamid, [ch], len.written, result)
+          BYTE ch:
+          st.ins.char; ch
+            INT len.written :
+            sp.write (fs, ts, streamid, [ch], len.written, result)
+          st.beep
+            INT len.written :
+            sp.write (fs, ts, streamid, "*#07", len.written, result)
+          INT32 ch:
+          st.out.int; ch
+            INT len.written :
+            sp.write (fs, ts, streamid, [BYTE ((INT ch) /\ #FF)], len.written, result)
+          INT32 x, y :
+          st.goto; x; y
+            SKIP
+          st.reset
+            SKIP
+          st.up
+            SKIP
+          st.down
+            SKIP
+          st.left
+            SKIP
+          st.right
+            SKIP
+          st.del.char
+            SKIP
+          st.clear.eol
+            SKIP
+          st.clear.eos
+            SKIP
+          st.ins.line
+            SKIP
+          st.del.line
+            SKIP
+          st.terminate
+            SKIP
+          st.help
+            SKIP
+          st.initialise
+            SKIP
+          st.key.raw
+            SKIP
+          st.key.cooked
+            SKIP
+          st.release
+            SKIP
+          st.claim
+            SKIP
+          st.endstream
+            running := FALSE
+          -- if st.spare is seen then something is wrong => STOP
+:

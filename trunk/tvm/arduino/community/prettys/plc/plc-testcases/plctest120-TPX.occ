@@ -1,0 +1,43 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "plcBasic.module"
+#INCLUDE "plcTiming.module"
+
+-- Test case 11
+-- Tests plcing.LD, TP and OUT
+-- Testing the first implemented timer function, TP, the pulse timer.
+
+PROC main ()
+  CHAN LEVEL a, b, x, y:
+  CHAN INT pt, et:
+  INT etin:
+  LEVEL ain, bin:
+  
+  PAR
+  
+    plc.TPX (pt?, x?, y!, et!)
+  
+    plc.LD (2, x!)
+    plc.OUT (13, y?) 
+    
+    plc.LD (4, a!)
+    plc.LD (5, b!)
+    
+    WHILE TRUE
+      ALT
+        et ? etin
+          SEQ
+            serial.write.int(TX0, etin)
+            serial.write.newline(TX0)
+        a ? ain
+          IF
+            ain = HIGH
+              pt ! 10
+            TRUE
+              SKIP
+        b ? bin
+          IF
+            bin = HIGH
+              pt ! 50
+            TRUE
+              SKIP       
+:

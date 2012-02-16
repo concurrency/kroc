@@ -1,0 +1,490 @@
+--
+--	game-utils.occ -- various utilities
+--	Copyright (C) 2004 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+#INCLUDE "types.inc"
+#INCLUDE "course.module"
+
+#INCLUDE "file.module"
+
+#INCLUDE "config.inc"
+
+--{{{  PROC args.start.end (VAL []BYTE cmdline, MOBILE []ARG.POS arg.pos)
+PROC args.start.end(VAL []BYTE cmdline, MOBILE []ARG.POS arg.pos)
+  INT no.args:
+  SEQ
+    --{{{ Find the amount of arguments in the commandline
+    no.args := 0
+    INITIAL BOOL last.was.space IS TRUE:
+    SEQ i = 0 FOR (SIZE cmdline)
+      SEQ
+        IF
+          ((NOT last.was.space) OR (last.was.space AND (cmdline[i] <> ' '))) AND (i = ((SIZE cmdline) - 1))
+            no.args := no.args + 1
+          last.was.space AND (cmdline[i] <> ' ')
+            last.was.space := FALSE
+          (NOT last.was.space) AND (cmdline[i] = ' ')
+            SEQ
+              last.was.space := TRUE
+              no.args := no.args + 1
+          TRUE
+            SKIP
+    --}}}
+    --{{{ Find the start and end position of all args
+    arg.pos := MOBILE [no.args]ARG.POS
+    -- This is surely the most complicated and obscure algorithm
+    -- to do this kind of stuff which can be concevied... I should 
+    -- try to look at this at some pint...
+    IF
+      no.args = 0
+        SKIP
+      TRUE
+        SEQ
+          arg.pos[0][start] := 0
+          INITIAL BOOL last.was.space IS TRUE:
+          INITIAL INT count IS 0:
+          SEQ i = 0 FOR (SIZE cmdline)
+            SEQ
+              IF
+                (last.was.space AND (cmdline[i] <>  ' ')) AND (i = ((SIZE cmdline) - 1))
+                  SEQ
+                    arg.pos[count][start] := i
+                    arg.pos[count][len] := 1
+                (NOT last.was.space) AND (i = ((SIZE cmdline) - 1))
+                  arg.pos[count][len] := ((i - arg.pos[count][start]) + 1)
+                last.was.space AND (cmdline[i] <> ' ')
+                  SEQ
+                    arg.pos[count][start] := i
+                    last.was.space := FALSE
+                (NOT last.was.space) AND (cmdline[i] = ' ')
+                  SEQ
+                    arg.pos[count][len] := (i - arg.pos[count][start])
+                    count := count + 1
+                    last.was.space := TRUE
+                TRUE
+                  SKIP
+    --}}}
+:
+--}}}
+--{{{  BOOL FUNCTION "=" (VAL []BYTE s1, s2)
+BOOL FUNCTION "=" (VAL []BYTE s1, s2)
+  BOOL r:
+  VALOF
+    IF
+      (SIZE s1) <> (SIZE s2)
+        r := FALSE
+      IF i = 0 FOR SIZE s1
+        s1[i] <> s2[i]
+	  r := FALSE
+      TRUE
+        r := TRUE
+    RESULT r
+:
+--}}}  
+--{{{  PROC num.to.bytes (VAL INT n, []BYTE buffer, INT len)
+--     Taken from utils.occ in the course library
+PROC num.to.bytes (VAL INT n, []BYTE buffer, INT len)
+  IF
+    n = (MOSTNEG INT)
+      [buffer FOR 11], len := "-2147483648", 11
+    n = 0
+      buffer[0], len := '0', 1
+    TRUE
+      INT x, i:
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      SEQ
+        IF
+          n < 0
+            x := (-n)
+          TRUE
+            x := n
+        i := 0
+        WHILE x > 0
+          SEQ
+            D[i] := (x \ 10)
+            x := (x / 10)
+            i := (i + 1)
+        IF
+          n < 0
+            buffer[0], len := '-', 1
+          TRUE
+            len := 0
+        WHILE i > 0
+          #PRAGMA DEFINED D
+          SEQ
+            i := (i - 1)
+            buffer[len] := BYTE (D[i] + (INT '0'))
+            len := (len + 1)
+:
+--}}}  
+--{{{  PROC buffer.set.string ([]BYTE buffer, INT buf.len, VAL []BYTE str)
+PROC buffer.set.string ([]BYTE buffer, INT buf.len, VAL []BYTE str)
+  SEQ
+    [buffer FROM buf.len FOR (SIZE str)] := str
+    buf.len := (buf.len + (SIZE str))
+:
+--}}}  
+--{{{  PROC buffer.set.number ([]BYTE buffer, INT buf.len, VAL INT n)
+PROC buffer.set.number ([]BYTE buffer, INT buf.len, VAL INT n)
+  INT amt:
+  SEQ
+    num.to.bytes (n, [buffer FROM buf.len], amt)
+    buf.len := (buf.len + amt)
+:
+--}}}  
+--{{{  PROC buffer.set.exit ([]BYTE buffer, INT buf.len, VAL INT idx)
+PROC buffer.set.exit ([]BYTE buffer, INT buf.len, VAL INT idx)
+  VAL [][]BYTE names IS ["north","east.","south","west."]:
+  VAL []INT lens IS [5,4,5,4]:
+  IF
+    (idx >= 0) AND (idx <= 3)
+      buffer.set.string (buffer, buf.len, [names[idx] FOR lens[idx]])
+    TRUE
+      buffer.set.string (buffer, buf.len, "??")
+:
+--}}}
+--{{{  PROC buffer.set.exits ([]BYTE buffer, INT buf.len, VAL []BOOL exits)
+PROC buffer.set.exits ([]BYTE buffer, INT buf.len, VAL []BOOL exits)
+  INITIAL INT out IS 0:
+  SEQ i = 0 FOR SIZE exits
+    IF
+      exits[i]
+        SEQ
+          IF
+            out > 0
+              buffer.set.string (buffer, buf.len, ", ")
+            TRUE
+              out := 1
+          buffer.set.exit (buffer, buf.len, i)
+      TRUE
+        SKIP
+:
+--}}}
+--{{{  PROC buffer.set.tty ([]BYTE buffer, INT buf.len, VAL INT code)
+PROC buffer.set.tty ([]BYTE buffer, INT buf.len, VAL INT code)
+  VAL [][]BYTE codestrs IS ["0;37", "1;32", "0;32", "1;35", "0;35", "1;33", "0;36", "1;36"]:
+  VAL []INT codelens IS [4,4,4,4,4,4,4,4]:
+  SEQ
+    buffer.set.string (buffer, buf.len, "*#1B[")
+    buffer.set.string (buffer, buf.len, [codestrs[code] FOR codelens[code]])
+    buffer.set.string (buffer, buf.len, "m")
+:
+--}}}
+--{{{  INT, BOOL FUNCTION parse.int (VAL []BYTE str)
+INT, BOOL FUNCTION parse.int (VAL []BYTE str)
+  BOOL ok:
+  BOOL neg:
+  INT v:
+  INT negadj:
+  VALOF
+    SEQ
+      ok := TRUE
+      neg := FALSE
+      v := 0
+      negadj := 0
+      IF
+        (SIZE str) > 0
+          IF
+            str[0] = '-'
+              neg, negadj := TRUE, 1
+            TRUE
+              SKIP
+        TRUE
+          SKIP
+      SEQ i = negadj FOR (SIZE str) - negadj
+        IF
+          (str[i] >= '0') AND (str[i] <= '9')
+            v := (v TIMES 10) PLUS (INT (str[i] - '0'))
+          TRUE
+            ok := FALSE
+      IF
+        neg
+          v := -v
+        TRUE
+          SKIP
+    RESULT v, ok
+:
+--}}}
+
+--{{{  PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []GSTR lines)
+PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []GSTR lines)
+
+  PROTOCOL LOCAL
+    CASE
+      nlines; INT
+      string; MOBILE []BYTE
+      done
+  :
+
+  CHAN LOCAL c:
+  PAR
+    --{{{  buffer build
+    INITIAL BOOL ok IS TRUE:
+    INITIAL INT line IS 0:
+    #PRAGMA DEFINED lines
+    WHILE ok
+      c ? CASE
+        INT n:
+        nlines; n
+          SEQ
+            lines := MOBILE [n]GSTR
+            SEQ m = 0 FOR n
+              lines[m][slen] := 0
+        MOBILE []BYTE str:
+        string; str
+          IF
+            line >= (SIZE lines)
+              SKIP
+            TRUE
+              INITIAL INT slen IS SIZE str:
+              SEQ
+                [lines[line][str] FOR slen] := [str FOR slen]
+                lines[line][slen] := slen
+                line := line + 1
+        done
+          ok := FALSE
+    --}}}
+    --{{{  file read
+    INT fd:
+    SEQ
+      file.open (fname, O.RDONLY, fd)
+      IF
+        fd < 0
+          ok := FALSE
+        TRUE
+          [2048]BYTE f.buf:
+          INT f.len, nlines:
+          SEQ
+            ok := TRUE
+            file.read (fd, f.buf, f.len)
+            IF
+              f.len <= 0
+                ok := FALSE
+              TRUE
+                INT start, stop:
+                SEQ
+                  nlines := 0
+                  --{{{  count number of lines (newline chars)
+                  start := 0
+                  stop := 0
+                  WHILE stop < f.len
+                    SEQ
+                      IF
+                        f.buf[stop] = #0A
+                          SEQ
+                            nlines := nlines + 1
+                            -- got line from start to stop
+                            start := stop + 1
+                        TRUE
+                          SKIP
+                      stop := stop + 1
+                  --}}}
+                  c ! nlines; nlines
+                  --{{{  get lines
+                  start := 0
+                  WHILE start < f.len
+                    SEQ
+                      stop := start
+                      WHILE (stop < f.len) AND (f.buf[stop] <> #0A)
+                        stop := stop + 1
+                      IF
+                        start = stop
+                          c ! string; ""
+                        TRUE
+                          c ! string; [f.buf FROM start FOR (stop - start)]
+                      start := stop + 1
+                  --}}}
+            INT r:
+            file.close (fd, r)
+      c ! done
+    --}}}
+:
+--}}}
+--{{{  PROC file.readline (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []BYTE line)
+PROC file.readline (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []BYTE line)
+  INT fd:
+  SEQ
+    file.open (fname, O.RDONLY, fd)
+    IF
+      fd < 0
+        ok := FALSE
+      TRUE
+        [2048]BYTE f.buf:
+        INT f.len, r:
+        SEQ
+          ok := TRUE
+          file.read (fd, f.buf, f.len)
+          IF
+            f.len <= 0
+              ok := FALSE
+            TRUE
+              INT stop:
+              SEQ
+                stop := 0
+                WHILE (stop < f.len) AND (f.buf[stop] <> #0A)
+                  stop := stop + 1
+                line := [f.buf FOR stop]
+          INT r:
+          file.close (fd, r)
+:
+--}}}
+--{{{  PROC file.rdescline (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []BYTE line)
+PROC file.rdescline (VAL []BYTE fname, suffix, RESULT BOOL ok, RESULT MOBILE []BYTE line)
+  [256]BYTE f.buf:
+  INT f.len:
+  SEQ
+    f.len := 0
+    buffer.set.string (f.buf, f.len, ##BASEPATH)
+    buffer.set.string (f.buf, f.len, "/")
+    buffer.set.string (f.buf, f.len, fname)
+    buffer.set.string (f.buf, f.len, suffix)
+    file.readline ([f.buf FOR f.len], ok, line)
+:
+--}}}
+
+--{{{  PROC forked.inobj (SHARED CT.ROOMLINK! to.room, MOBILE []BYTE name, CT.OBJECT! obj)
+PROC forked.inobj (SHARED CT.ROOMLINK! to.room, MOBILE []BYTE name, CT.OBJECT! obj)
+  CLAIM to.room
+    to.room[in] ! new.object; name; obj
+:
+--}}}
+--{{{  PROC util.getroom (VAL INT retries, locn, SHARED CT.GAMECTRL! to.game, RESULT SHARED CT.ROOMLINK! room, RESULT BOOL ok)
+PROC util.getroom (VAL INT retries, locn, SHARED CT.GAMECTRL! to.game, CHAN SHARED CT.ROOMLINK! room.out!, RESULT BOOL ok)
+  INITIAL INT retries IS retries:
+  SEQ
+    ok := FALSE
+    WHILE (NOT ok) AND (retries >= 0)
+      SEQ
+        CLAIM to.game
+          SEQ
+            to.game[in] ! get.room; locn
+            to.game[out] ? CASE
+              MOBILE []BYTE msg:
+              error; msg
+                retries := retries - 1
+              SHARED CT.ROOMLINK! ctr:
+              room; ctr
+                SEQ
+                  ok := TRUE
+                  room.out ! ctr
+        IF
+          NOT ok
+            TIMER tim:
+            INT t:
+            SEQ
+              tim ? t
+              tim ? AFTER (t PLUS 200000)
+          TRUE
+            SKIP
+:
+--}}}
+
+--{{{  PROC gen.strings.read (CHAN P.CLIENT.IN in?, CHAN S.CLIENT.IN out!)
+PROC gen.strings.read (CHAN P.CLIENT.IN in?, CHAN S.CLIENT.IN out!)
+  INITIAL BOOL done IS FALSE:
+  WHILE NOT done
+    MOBILE []BYTE str:
+    in ? CASE
+      string; str
+        out ! genmsg; str
+      end.of.list
+        done := TRUE
+:
+--}}}
+--{{{  PROC gen.strings.read.format (CHAN P.CLIENT.IN in?, CHAN S.CLIENT.IN out!, VAL []BYTE prefix, default)
+PROC gen.strings.read.format (CHAN P.CLIENT.IN in?, CHAN S.CLIENT.IN out!, VAL []BYTE prefix, default)
+  [128]BYTE t.buf:
+  INT t.len:
+  INT n:
+  SEQ
+    n := 0
+    t.len := 0
+    INITIAL BOOL done IS FALSE:
+    WHILE NOT done
+      MOBILE []BYTE str:
+      in ? CASE
+        string; str
+          SEQ
+            IF
+              n = 0
+                buffer.set.string (t.buf, t.len, prefix)
+              TRUE
+                buffer.set.string (t.buf, t.len, ", ")
+            IF
+              t.len > 60
+                SEQ
+                  out ! genmsg; [t.buf FOR t.len]
+                  t.len := 0
+              TRUE
+                SKIP
+            buffer.set.string (t.buf, t.len, str)
+            n := n + 1
+        end.of.list
+          done := TRUE
+    IF
+      t.len > 0
+        out ! genmsg; [t.buf FOR t.len]
+      n = 0
+        IF
+          default = ""
+            SKIP
+          TRUE
+            out ! genmsg; default
+      TRUE
+        SKIP
+:
+--}}}
+--{{{  PROC gen.strings.read.exits (CHAN P.CLIENT.IN in?, CHAN S.CLIENT.IN out!, VAL []BYTE oneexit, manyexits, noexits)
+PROC gen.strings.read.exits (CHAN P.CLIENT.IN in?, CHAN S.CLIENT.IN out!, VAL []BYTE oneexit, manyexits, noexits)
+  [4]BOOL exits:
+  INT roomno:
+  INT n.exits:
+  INT t.len:
+  [128]BYTE t.buf:
+  SEQ
+    n.exits := 0
+    in ? CASE exits; roomno; exits
+    SEQ i = 0 FOR SIZE exits
+      IF
+        exits[i]
+          n.exits := n.exits + 1
+        TRUE
+          SKIP
+    IF
+      n.exits = 0
+        out ! genmsg; noexits
+      n.exits = 1
+        SEQ
+          t.len := 0
+          buffer.set.string (t.buf, t.len, oneexit)
+          IF i = 0 FOR SIZE exits
+            exits[i]
+              buffer.set.exit (t.buf, t.len, i)
+          out ! genmsg; [t.buf FOR t.len]
+      TRUE
+        SEQ
+          t.len := 0
+          buffer.set.string (t.buf, t.len, manyexits)
+          buffer.set.exits (t.buf, t.len, exits)
+          out ! genmsg; [t.buf FOR t.len]
+
+:
+--}}}
+
+

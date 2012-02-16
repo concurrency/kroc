@@ -1,0 +1,61 @@
+--
+--	rastergraphics: raster graphics primitives
+--	Copyright (C) 2007  David Wood <dcw@kent.ac.uk>
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module rastergraphics
+
+--* Does circle hit anything?
+--
+--  @param X, Y Centre of circle
+--  @param radius Radius
+--  @param colour Colour of target
+--  @param raster Raster
+
+BOOL FUNCTION circle.hits (VAL INT X, Y, radius, colour, VAL [][]INT raster)
+
+  INT INLINE FUNCTION "%>" (VAL INT X, Y) IS ASHIFTRIGHT (X, Y):
+
+  VAL INT FUDGE IS 4:
+
+  BOOL hit:
+  VALOF
+    SEQ
+      VAL INT W IS SIZE raster[0]:
+      VAL INT D IS SIZE raster:
+      IF
+        (X < radius) OR (Y < radius) OR ((X + radius) >= W) OR ((Y + radius) >= D)
+          hit := TRUE
+        TRUE
+          SEQ
+            hit := FALSE
+            INITIAL INT i IS radius << FUDGE:
+            INITIAL INT j IS 0:
+            INITIAL INT x IS 0:
+            INITIAL INT y IS Y:
+            VAL INT SHIFT IS 3:
+            SEQ k = 0 FOR 50			-- 2 pi << SHIFT
+              SEQ
+                i := i - (j %> SHIFT)
+                x := X + (i %> FUDGE)
+                hit := hit OR (raster[y][x] = colour)
+                j := j + (i %> SHIFT)
+                y := Y + (j %> FUDGE)
+                hit := hit OR (raster[y][x] = colour)
+    RESULT hit
+:
+

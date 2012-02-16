@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+from __future__ import division
+import sys
+import os.path
+import struct
+import time
+
+nxt_path = os.path.join(
+    os.path.split(os.path.abspath(__file__))[0], 'nxos', 'pynxt')
+sys.path = [nxt_path]+sys.path
+
+NXOS_INTERFACE = 0
+LEGO_VENDOR_ID = 0x0694
+NXOS_PRODUCT_ID = 0xff00
+
+from nxt.lowlevel import get_device
+
+class Error(Exception):
+    """Exception base class for this program."""
+
+class FileNotFound(Error):
+    """File not found"""
+
+class FileTooSmall(Error):
+    """File is too small to be a firmware"""
+
+class InvalidHeader(Error):
+    """Firmware has invalid header"""
+
+class BrickNotFound(Error):
+    """NXT was not found"""
+
+class TBC(object):
+    HEADER_SIZE = 4
+
+    def __init__(self, file):
+        self.path = file
+
+        if not os.path.isfile(file):
+            raise FileNotFound('No file named "%s" was found.' % file)
+
+        f = open(file)
+        fw_and_header = f.read()
+        f.close()
+
+        header = fw_and_header[0:self.HEADER_SIZE]
+        self.firmware = fw_and_header
+
+        if header != "TEnc":
+            raise InvalidHeader('Bad magic on header')
+
+def upload(tbc):
+    brick = get_device(LEGO_VENDOR_ID, NXOS_PRODUCT_ID, timeout=60)
+    if not brick:
+        raise BrickNotFound('USB timed out')
+    brick.open(NXOS_INTERFACE)
+    pos = 0
+    while pos < len(tbc.firmware):
+    	if (len(tbc.firmware) - pos) > 16:
+    		siz = 16
+	else:
+		siz = len(tbc.firmware) - pos
+	brick.write(tbc.firmware[pos:(pos+siz)])
+	pos = pos + siz
+	if pos <= 16:
+		time.sleep(1.5)
+	else:
+		time.sleep(0.05)
+    brick.close()
+
+
+def main():
+    if len(sys.argv) == 2:
+        f = TBC(sys.argv[1])
+    else:
+        print "send_tbc <path>"
+        return 2
+
+    print 'Uploading TBC...'
+    upload(f)
+    print 'Done.'
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

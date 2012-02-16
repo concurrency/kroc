@@ -1,0 +1,79 @@
+--
+--	Trap latency benchmark
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+--
+--	This program is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this program.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** Measure the round-trip time for Trap communications.
+
+#INCLUDE "trap.module"
+#INCLUDE "course.module"
+#INCLUDE "useful.module"
+
+PROC main (SHARED CHAN BYTE out!)
+  VAL INT cycles IS 20000:
+  VAL INT src.node IS 0:
+  VAL INT src.port IS 0:
+  VAL INT dest.node IS 1:
+  VAL INT dest.port IS 0:
+
+  --{{{  PROC bounce
+  PROC bounce (SHARED TRAP.CT! trap, TRAP.CHANNEL.CT? chan,
+               VAL INT node, port, cycles)
+    MOBILE []BYTE data:
+    SEQ i = 0 FOR cycles
+      SEQ
+        chan[msg] ? data
+        trap.send (trap, node, port, data)
+  :
+  --}}}
+
+  PAR
+    --{{{  source
+    SHARED TRAP.CT! trap:
+    TRAP.CHANNEL.CT? chan:
+    MOBILE []BYTE data:
+    TIMER tim:
+    INT start, end:
+    SEQ
+      trace.sn ("source starting")
+      trap.start (src.node, trap)
+      trap.open (trap, src.port, chan)
+      trace.sn ("source benchmark running...")
+
+      tim ? start
+
+      data := "x"
+      trap.send (trap, dest.node, dest.port, data)
+      bounce (trap, chan, dest.node, dest.port, cycles - 1)
+      chan[msg] ? data
+
+      tim ? end
+
+      trace.sn ("done")
+      trace.sin ("number of cycles = ", cycles)
+      trace.sisn ("total time = ", end - start, " us")
+      trace.sisn ("time per communication = ", (end - start) / (cycles * 2), " us")
+    --}}}
+    --{{{  destination
+    SHARED TRAP.CT! trap:
+    TRAP.CHANNEL.CT? chan:
+    SEQ
+      trap.start (dest.node, trap)
+      trap.open (trap, dest.port, chan)
+      bounce (trap, chan, src.node, src.port, cycles)
+    --}}}
+:

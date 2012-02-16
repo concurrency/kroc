@@ -1,0 +1,376 @@
+-- version control marker $Id: cg10long.occ,v 1.1 1995/10/10 13:03:18 djb1 Exp $
+PROC do.other ()
+  SEQ
+    --{{{  output message
+    title ("Other tests")
+    --}}} 
+    --{{{  protocol testing                (P000 - P999)
+    --{{{  INT64                           (P000 - P009)
+    CHAN OF INT64 c :
+    INT64 x, y :
+    SEQ
+      PAR
+        c ! 722 (INT64)
+        c ? x
+      PAR
+        c ! 0 (INT64)
+        c ? y
+      check.INT64 (x, 722(INT64), "P001")
+      check.INT64 (y,   0(INT64), "P002")
+    --}}} 
+    --}}} 
+    --{{{  long constants                  (L000 - L999)
+    --{{{  plain INT32 long constants      (L001 - L099)
+    VAL l1 IS #10000000(INT32) :
+    VAL l2 IS #20000000(INT32) :
+    VAL l3 IS #12345678(INT32) :
+    VAL l4 IS #ABCDEF(INT32)   :
+    INT32 x1, x2, x3, x4 :
+    SEQ
+      x1 := l1
+      x2 := l2
+      x3 := l3
+      x4 := l4
+      check.INT32  (l1, #10000000(INT32), "L001")
+      check.INT32  (l2, #20000000(INT32), "L002")
+      check.INT32  (l3, #12345678(INT32), "L003")
+      check.INT32  (l4,   #ABCDEF(INT32), "L004")
+      check.INT32  (x1, #10000000(INT32), "L011")
+      check.INT32  (x2, #20000000(INT32), "L012")
+      check.INT32  (x3, #12345678(INT32), "L013")
+      check.INT32  (x4,   #ABCDEF(INT32), "L014")
+      check.INT32  (l1 + l1, l2, "L021")
+      check.INT32  (l1 + l1, #20000000(INT32), "L022")
+      check.INT32  (x1 - x1, 0(INT32), "L023")
+      check.INT32  (x2 - x2, 0(INT32), "L024")
+      check.INT32  (x3 - x3, 0(INT32), "L025")
+      check.INT32  (x4 - x4, 0(INT32), "L026")
+      check.INT32  (x2 - x1, l1, "L027")
+    --}}} 
+    --{{{  INT32 inside procedures         (L100 - L299)
+    VAL ext IS #10000000(INT32) :
+    INT32 x, y, z :
+    SEQ
+      --{{{  none  (L100 - 109)
+      PROC none (INT32 x)
+        x := ext
+      :
+      SEQ
+        x := 0(INT32)
+        check.INT32  (x, 0(INT32), "L100")
+        none (x)
+        check.INT32  (x, #10000000(INT32), "L101")
+      --}}} 
+      --{{{  one   (L110 - 119)
+      PROC one (INT32 x)
+        VAL n IS #20000000(INT32) :
+        x := n
+      :
+      SEQ
+        x := 2(INT32)
+        check.INT32  (x, 2(INT32), "L110")
+        one (x)
+        check.INT32  (x, #20000000(INT32), "L111")
+        one (y)
+        check.INT32  (y, #20000000(INT32), "L112")
+      --}}} 
+      --{{{  one.a (L120 - 129)
+      PROC one.a (INT32 x)
+        x := #30000000(INT32)
+      :
+      SEQ
+        z := 13(INT32)
+        check.INT32  (z, 13(INT32), "L120")
+        one.a (z)
+        check.INT32  (z, #30000000(INT32), "L121")
+      --}}} 
+      --{{{  one.b (L130 - 139)
+      PROC one.b (INT32 x)
+        VAL n IS #20000000(INT32) :
+        x := ext
+      :
+      SEQ
+        y := 42(INT32)
+        check.INT32  (y, 42(INT32), "L130")
+        one.b (y)
+        check.INT32  (y, #10000000(INT32), "L131")
+      --}}} 
+      --{{{  two   (L140 - 149)
+      PROC two (INT32 x, y)
+        VAL n IS #12345678(INT32) :
+        VAL m IS #87654321(INT32) :
+        SEQ
+          x := n
+          y := m
+          check.INT32  (n, #12345678(INT32), "L142")
+          check.INT32  (m, #87654321(INT32), "L143")
+          check.INT32  (ext, #10000000(INT32), "L144")
+      :
+      SEQ
+        x := 42(INT32)
+        y := 13(INT32)
+        check.INT32  (x, 42(INT32), "L140")
+        check.INT32  (y, 13(INT32), "L141")
+        two (x, y)
+        check.INT32  (x, #12345678(INT32), "L145")
+        check.INT32  (y, #87654321(INT32), "L146")
+      --}}} 
+      --{{{  two.a (L150 - 159)
+      PROC two.a (INT32 x, y)
+        SEQ
+          x := #12345678(INT32)
+          y := #87654321(INT32)
+      :
+      SEQ
+        x := 67(INT32)
+        z := 65(INT32)
+        check.INT32  (x, 67(INT32), "L150")
+        check.INT32  (z, 65(INT32), "L151")
+        two.a (x, z)
+        check.INT32  (x, #12345678(INT32), "L152")
+        check.INT32  (z, #87654321(INT32), "L153")
+      --}}} 
+      --{{{  two.b (L160 - 169)
+      PROC two.b (INT32 x, y)
+        SEQ
+          x := ext
+          y := ext
+      :
+      SEQ
+        x := 0(INT32)
+        y := x
+        check.INT32  (x, 0(INT32), "L160")
+        check.INT32  (y, 0(INT32), "L161")
+        two.b (x, y)
+        check.INT32  (x, #10000000(INT32), "L162")
+        check.INT32  (y, #10000000(INT32), "L163")
+        check.INT32  (x, ext, "L164")
+        check.INT32  (y, ext, "L165")
+      --}}} 
+      --{{{  lots  (L200 - 299)
+      PROC lots (INT32 x, y, z)
+        --{{{  declarations
+        VAL n1 IS #12345678(INT32) :
+        VAL n2 IS #98765432(INT32) :
+        VAL n3 IS #555555(INT32) :
+        VAL n4 IS #0(INT32) :
+        VAL n5 IS #AAAAAAAA(INT32) :
+        VAL n6 IS #FFFFFFFF(INT32) :
+        VAL nn IS [#12345678(INT32),#87654321(INT32),
+                   #FFFFFFFF(INT32),#00000000(INT32)] :
+        VAL n7 IS #56789ABC(INT32) :
+        INT32 a,b,c,d,e :
+        --}}} 
+        SEQ
+          a := n1
+          b := n2
+          c := n3
+          d := n4
+          x := n5
+          e := n6
+          y := nn [1]
+          z := n7
+          --{{{  checking
+          check.INT32  (a,  #12345678(INT32), "L200")
+          check.INT32  (n1, #12345678(INT32), "L201")
+          check.INT32  (b,  #98765432(INT32), "L202")
+          check.INT32  (n2, #98765432(INT32), "L203")
+          check.INT32  (c,    #555555(INT32), "L204")
+          check.INT32  (n3,   #555555(INT32), "L205")
+          check.INT32  (d,          0(INT32), "L206")
+          check.INT32  (n4,         0(INT32), "L207")
+          check.INT32  (x,  #AAAAAAAA(INT32), "L208")
+          check.INT32  (n5, #AAAAAAAA(INT32), "L209")
+          check.INT32  (e,  #FFFFFFFF(INT32), "L210")
+          check.INT32  (n6, #FFFFFFFF(INT32), "L211")
+          check.INT32  (y,  #87654321(INT32), "L212")
+          check.INT32  (z,  #56789ABC(INT32), "L213")
+          check.INT32  (n7, #56789ABC(INT32), "L214")
+          check.INT32  (nn [1], #87654321(INT32), "L215")
+          --}}} 
+      :
+      SEQ
+        lots (z, y, x)
+        check.INT32  (x, #56789ABC(INT32), "L230")
+        check.INT32  (y, #87654321(INT32), "L231")
+        check.INT32  (z, #AAAAAAAA(INT32), "L232")
+      --}}} 
+    --}}} 
+    --{{{  plain INT64 long constants      (L601 - L699)
+    VAL l1 IS #1000000087654321(INT64) :
+    VAL l2 IS #2000000087654321(INT64) :
+    VAL l3 IS #1234567887654321(INT64) :
+    VAL l4 IS #ABCDEF87654321(INT64)   :
+    INT64 x1, x2, x3, x4 :
+    SEQ
+      x1 := l1
+      x2 := l2
+      x3 := l3
+      x4 := l4
+      check.INT64  (l1,      #1000000087654321(INT64), "L601")
+      check.INT64  (l2,      #2000000087654321(INT64), "L602")
+      check.INT64  (l3,      #1234567887654321(INT64), "L603")
+      check.INT64  (l4,        #ABCDEF87654321(INT64), "L604")
+      check.INT64  (x1,      #1000000087654321(INT64), "L611")
+      check.INT64  (x2,      #2000000087654321(INT64), "L612")
+      check.INT64  (x3,      #1234567887654321(INT64), "L613")
+      check.INT64  (x4,        #ABCDEF87654321(INT64), "L614")
+      check.INT64  (l1 + l1, #200000010ECA8642(INT64), "L622")
+      check.INT64  (x1 - x1, 0(INT64), "L623")
+      check.INT64  (x2 - x2, 0(INT64), "L624")
+      check.INT64  (x3 - x3, 0(INT64), "L625")
+      check.INT64  (x4 - x4, 0(INT64), "L626")
+      check.INT64  (x2 - x1, #1000000000000000(INT64), "L627")
+    --}}} 
+    --{{{  INT64 inside procedures         (L700 - L899)
+    VAL ext IS #1000000087654321(INT64) :
+    INT64 x, y, z :
+    SEQ
+      --{{{  none  (L700 - 109)
+      PROC none (INT64 x)
+        x := ext
+      :
+      SEQ
+        x := 087654321(INT64)
+        check.INT64  (x, 087654321(INT64), "L700")
+        none (x)
+        check.INT64  (x, #1000000087654321(INT64), "L701")
+      --}}} 
+      --{{{  one   (L710 - 119)
+      PROC one (INT64 x)
+        VAL n IS #2000000087654321(INT64) :
+        x := n
+      :
+      SEQ
+        x := 287654321(INT64)
+        check.INT64  (x, 287654321(INT64), "L710")
+        one (x)
+        check.INT64  (x, #2000000087654321(INT64), "L711")
+        one (y)
+        check.INT64  (y, #2000000087654321(INT64), "L712")
+      --}}} 
+      --{{{  one.a (L720 - 129)
+      PROC one.a (INT64 x)
+        x := #3000000087654321(INT64)
+      :
+      SEQ
+        z := 1387654321(INT64)
+        check.INT64  (z, 1387654321(INT64), "L720")
+        one.a (z)
+        check.INT64  (z, #3000000087654321(INT64), "L721")
+      --}}} 
+      --{{{  one.b (L730 - 139)
+      PROC one.b (INT64 x)
+        VAL n IS #2000000087654321(INT64) :
+        x := ext
+      :
+      SEQ
+        y := 4287654321(INT64)
+        check.INT64  (y, 4287654321(INT64), "L730")
+        one.b (y)
+        check.INT64  (y, #1000000087654321(INT64), "L731")
+      --}}} 
+      --{{{  two   (L740 - 149)
+      PROC two (INT64 x, y)
+        VAL n IS #1234567887654321(INT64) :
+        VAL m IS #8765432187654321(INT64) :
+        SEQ
+          x := n
+          y := m
+          check.INT64  (n, #1234567887654321(INT64), "L742")
+          check.INT64  (m, #8765432187654321(INT64), "L743")
+          check.INT64  (ext, #1000000087654321(INT64), "L744")
+      :
+      SEQ
+        x := 4287654321(INT64)
+        y := 1387654321(INT64)
+        check.INT64  (x, 4287654321(INT64), "L740")
+        check.INT64  (y, 1387654321(INT64), "L741")
+        two (x, y)
+        check.INT64  (x, #1234567887654321(INT64), "L745")
+        check.INT64  (y, #8765432187654321(INT64), "L746")
+      --}}} 
+      --{{{  two.a (L750 - 159)
+      PROC two.a (INT64 x, y)
+        SEQ
+          x := #1234567887654321(INT64)
+          y := #8765432187654321(INT64)
+      :
+      SEQ
+        x := 6787654321(INT64)
+        z := 6587654321(INT64)
+        check.INT64  (x, 6787654321(INT64), "L750")
+        check.INT64  (z, 6587654321(INT64), "L751")
+        two.a (x, z)
+        check.INT64  (x, #1234567887654321(INT64), "L752")
+        check.INT64  (z, #8765432187654321(INT64), "L753")
+      --}}} 
+      --{{{  two.b (L760 - 169)
+      PROC two.b (INT64 x, y)
+        SEQ
+          x := ext
+          y := ext
+      :
+      SEQ
+        x := 087654321(INT64)
+        y := x
+        check.INT64  (x, 087654321(INT64), "L760")
+        check.INT64  (y, 087654321(INT64), "L761")
+        two.b (x, y)
+        check.INT64  (x, #1000000087654321(INT64), "L762")
+        check.INT64  (y, #1000000087654321(INT64), "L763")
+        check.INT64  (x, ext, "L764")
+        check.INT64  (y, ext, "L765")
+      --}}} 
+      --{{{  lots  (L800 - 299)
+      PROC lots (INT64 x, y, z)
+        --{{{  declarations
+        VAL n1 IS #1234567887654321(INT64) :
+        VAL n2 IS #9876543287654321(INT64) :
+        VAL n3 IS   #55555587654321(INT64) :
+        VAL n4 IS        #087654321(INT64) :
+        VAL n5 IS #AAAAAAAA87654321(INT64) :
+        VAL n6 IS #FFFFFFFF87654321(INT64) :
+        VAL nn IS [#1234567887654321(INT64),#8765432187654321(INT64),
+                   #FFFFFFFF87654321(INT64),#0000000087654321(INT64)] :
+        VAL n7 IS #56789ABC87654321(INT64) :
+        INT64 a,b,c,d,e :
+        --}}} 
+        SEQ
+          a := n1
+          b := n2
+          c := n3
+          d := n4
+          x := n5
+          e := n6
+          y := nn [1]
+          z := n7
+          --{{{  checking
+          check.INT64  (a,  #1234567887654321(INT64), "L800")
+          check.INT64  (n1, #1234567887654321(INT64), "L801")
+          check.INT64  (b,  #9876543287654321(INT64), "L802")
+          check.INT64  (n2, #9876543287654321(INT64), "L803")
+          check.INT64  (c,    #55555587654321(INT64), "L804")
+          check.INT64  (n3,   #55555587654321(INT64), "L805")
+          check.INT64  (d,         #087654321(INT64), "L806")
+          check.INT64  (n4,        #087654321(INT64), "L807")
+          check.INT64  (x,  #AAAAAAAA87654321(INT64), "L808")
+          check.INT64  (n5, #AAAAAAAA87654321(INT64), "L809")
+          check.INT64  (e,  #FFFFFFFF87654321(INT64), "L810")
+          check.INT64  (n6, #FFFFFFFF87654321(INT64), "L811")
+          check.INT64  (y,  #8765432187654321(INT64), "L812")
+          check.INT64  (z,  #56789ABC87654321(INT64), "L813")
+          check.INT64  (n7, #56789ABC87654321(INT64), "L814")
+          check.INT64  (nn [1], #8765432187654321(INT64), "L815")
+          --}}} 
+      :
+      SEQ
+        lots (z, y, x)
+        check.INT64  (x, #56789ABC87654321(INT64), "L830")
+        check.INT64  (y, #8765432187654321(INT64), "L831")
+        check.INT64  (z, #AAAAAAAA87654321(INT64), "L832")
+      --}}} 
+    --}}} 
+    --}}} 
+:
+do.other ()

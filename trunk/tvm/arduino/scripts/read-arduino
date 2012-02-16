@@ -1,0 +1,48 @@
+#!/usr/bin/python
+# Read the debugging output from an Arduino board.
+# Usage: read-arduino -h
+
+import sys, serial, getopt
+from datetime import datetime
+
+def usage ():
+	print "read-arduino -b <baud-rate> <port>"
+	print "Baud rate is optional, and defaults to 57600."
+
+BAUDRATE = 57600
+
+def serialRead (port, rate):
+	print "Using port %s at %s" % (port, rate)
+	ser = serial.Serial(port, baudrate = BAUDRATE)
+	while True:
+		ch = ser.read(1)
+		sys.stdout.write(ch)
+		sys.stdout.flush()
+
+def main(argv):                          
+	global BAUDRATE
+	try:                                
+		opts, args = getopt.getopt(argv, "hb:", ["help", "baud="])
+		for opt, arg in opts:                
+			if opt in ("-h", "--help"):
+				usage()                     
+				sys.exit()                  
+			elif opt in ("-b", "--baud"):
+				BAUDRATE = arg
+	except getopt.GetoptError:
+		usage()
+		sys.exit()
+	
+	port = None
+
+	if len(argv) > 0:
+		port = argv[len(argv) - 1]
+	elif len(argv) == 0:
+		print "No Arduino port specified."
+		sys.exit()
+
+	serialRead (port, BAUDRATE)
+
+if __name__ == "__main__":
+	main(sys.argv[1:])
+

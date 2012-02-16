@@ -1,0 +1,444 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module string
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "String library V1.1 06/06/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+
+--{{{  history
+-- V1.0 1-Jul-88
+-- Simply made the code a bit more readable; V1.1 1-Jun-90 SRH
+--}}}
+
+--{{{  FUNC compare.strings
+--* Determine the lexicographical ordering of two strings.
+--
+-- Lexicographical ordering is that which uses the ordinal values of
+-- the characters for comparison in sequence along the strings. Here
+-- the ordinal values are the ASCII values.
+--
+-- @return 0 for exact equality ( of both length and content ) 1 for
+--   str2 is leading substring of str1 -1 for str1 is leading substring
+--   of str2 2 for str1 "later" than str2 -2 for str2 "later" than str1
+-- @param str1, str2 the strings to be compared
+INT FUNCTION compare.strings (VAL []BYTE str1, str2)
+  INT order:
+  VALOF
+    --{{{  compare the strings
+    VAL len1 IS SIZE str1:
+    VAL len2 IS SIZE str2:
+    INT len:
+    SEQ
+      IF
+        len1 > len2
+          len := len2
+        TRUE
+          len := len1
+      IF
+        IF j = 0 FOR len
+          str1[j] <> str2[j]
+            --{{{  differ at j return 2 or -2
+            IF
+              str1[j] > str2[j]
+                order := 2
+              TRUE
+                order := -2
+            --}}}
+        len1 > len2
+          order := 1   -- str2 is leading substring of str1
+        len2 > len1
+          order := -1  -- str1 is leading substring of str2
+        TRUE
+          order := 0
+    --}}}
+    RESULT order
+:
+--}}}
+--{{{  FUNC eqstr
+--* Determine if two strings are identical or not.
+--
+-- @return TRUE if the two strings are identical in length and content;
+--   FALSE otherwise
+-- @param s1, s2 the strings to be compared
+BOOL FUNCTION eqstr (VAL []BYTE s1, s2)
+  BOOL eq:
+  VALOF
+    VAL ls1 IS SIZE s1:
+    VAL ls2 IS SIZE s2:
+    IF
+      ls1 <> ls2
+        eq := FALSE
+      IF i = 0 FOR ls1
+        s1[i] <> s2[i]
+          eq := FALSE
+      TRUE
+        eq := TRUE
+    RESULT eq
+:
+--}}}
+
+--{{{  PROC str.shift
+--* Shift a substring.
+--
+-- @param str on entry: a string containing the substring to be shifted
+--   in positions [str FROM start FOR len]; on exit: the string once
+--   the substring has been shifted, the only bytes of string that have
+--   changed being those that the substring was shifted into
+-- @param start the index of str of the first character of the
+--   substring to be shifted
+-- @param len the number of characters in the substring to be shifted
+-- @param shift the number of places to the right to move the substring
+--   by, so that a negative number for shift will move the substring
+--   left
+-- @param not.done TRUE if any elements of the substring are shifted
+--   off either end of str ( though no access is made to invalid
+--   locations of str ); FALSE if the shifted substring is entirely
+--   within str
+PROC str.shift ([]BYTE str, VAL INT start, len, shift, BOOL not.done)
+  VAL maxlen IS SIZE str:
+  SEQ
+    not.done := FALSE
+    IF
+      (shift = 0) OR (len = 0)
+        SKIP
+      shift < 0
+        --{{{  leftward shift from left hand end
+        INT from, to, fromend, toend, length:
+        SEQ
+          to := start + shift
+          from := start
+          toend := to + len
+          fromend := from + len
+          IF
+            to < 0
+              SEQ
+                from := from - to
+                to := 0
+                not.done := TRUE
+            TRUE
+              SKIP
+          IF
+            fromend > maxlen
+              SEQ
+                toend := toend - (fromend - maxlen)
+                fromend := maxlen
+                not.done := TRUE
+            TRUE
+              SKIP
+          length := fromend - from
+          IF
+            length <= 0
+              SKIP
+            toend > from
+              --{{{  byte by byte move because old and new positions overlap
+              SEQ i = 0 FOR length
+                str[to + i] := str[from + i]
+              --}}}
+            TRUE
+              --{{{  block move because old and new positions are disjoint
+              [str FROM to FOR length] := [str FROM from FOR length]
+              --}}}
+        --}}}
+      TRUE
+        --{{{  rightward shift from right hand end
+        INT from, to, fromend, toend, length:
+        SEQ
+          to := start + shift
+          toend := to + len
+          from := start
+          fromend := from + len
+          IF
+            from < 0
+              SEQ
+                to := to - from
+                from := 0
+                not.done := TRUE
+            TRUE
+              SKIP
+          IF
+            toend > maxlen
+              SEQ
+                fromend := fromend - (toend - maxlen)
+                toend := maxlen
+                not.done := TRUE
+            TRUE
+              SKIP
+          length := fromend - from
+          IF
+            length <= 0
+              SKIP
+            fromend > to
+              --{{{  byte by byte move because old and new positions overlap
+              SEQ i = 1 FOR length
+                str[toend - i] := str[fromend - i]
+              --}}}
+            TRUE
+              --{{{  block move because old and new positions are disjoint
+              [str FROM to FOR length] := [str FROM from FOR length]
+              --}}}
+        
+        --}}}
+:
+--}}}
+--{{{  PROC delete.string
+--* Remove a substring from a string.
+--
+-- @param len on entry: the number of significant characters in str; on
+--   exit: if not.done is FALSE, the number of significant characters
+--   in str, being size subtracted from the entry value of len;
+--   otherwise the same as it was on entry
+-- @param str on entry: the string from which it is desired to delete a
+--   substring; on exit: if not.done is FALSE, the original string with
+--   substring deleted, where deleted means that the gap created by the
+--   deletion is filled from the left with those significant characters
+--   left in str that were originally after the end of the deleted
+--   substring, and so that the number of significant characters
+--   remaining in str is len on exit; otherwise the same as it was on
+--   entry
+-- @param start the index of str of the first character of the
+--   substring to be deleted
+-- @param size the number of characters in the substring to be deleted
+-- @param not.done TRUE if size is less than zero, start is less than
+--   zero, or (start + size) is greater than the entry value of len;
+--   FALSE otherwise. If TRUE then len and str are unchanged from their
+--   original values.
+PROC delete.string (INT len, []BYTE str, VAL INT start, size, BOOL not.done)
+  IF
+    (size < 0) OR (start < 0) OR ((start + size) > len)
+      not.done := TRUE
+    TRUE
+      BOOL shift.err:  -- dummy, since will always be set to FALSE
+      SEQ
+        str.shift(str, start + size, len - (start + size), - size, shift.err)
+        len := len - size
+        not.done := FALSE
+:
+--}}}
+--{{{  PROC insert.string
+--* Insert a string into another string.
+--
+-- If new.str can be fully inserted from the desired starting position,
+-- then any significant characters in str that were originally after
+-- str[ start ] are moved to the right by SIZE new.str, with not.done
+-- being set to TRUE if any of these characters are moved off the end
+-- of str ( though no invalid accesses are made ), FALSE otherwise
+--
+-- @param new.str the string to be inserted
+-- @param len on entry: the number of significant characters in str; on
+--   exit: the number of significant characters in str
+-- @param str on entry: the string into which new.str is to be
+--   inserted; on exit: the original str with new.str inserted, where
+--   any overflow of str at the high index results in truncation at the
+--   high index
+-- @param start the index of str at which the first character of
+--   new.str should go
+-- @param not.done TRUE if start < 0, start > len, len < 0, new.str had
+--   to be truncated to fit, or if any significant characters of the
+--   original str could not be retained within str after the insertion;
+--   otherwise FALSE
+PROC insert.string (VAL []BYTE new.str, INT len,
+                    []BYTE str, VAL INT start,
+                    BOOL not.done)
+  --{{{  more information
+  --           This procedure may be used for simple concatenation on the
+  --           right by setting start = len, or on the left by setting
+  --           start = 0.  This method of concatenation differs from that
+  --           using the append. procedures in that it can never act as
+  --           an invalid process.
+  --}}}
+
+  VAL maxlen IS SIZE str:
+  VAL extralen IS SIZE new.str:
+  IF
+    (start < 0) OR (start > len) OR (len < 0)
+      not.done := TRUE
+    (start + extralen) > maxlen    -- need to truncate the insert
+      VAL len1 IS maxlen - start:
+      SEQ
+        [str FROM start FOR len1] := [new.str FROM 0 FOR len1]
+        len := maxlen
+        not.done := TRUE
+    TRUE -- there is room for all the insert and maybe some of the old tail
+      BOOL shift.err:
+      SEQ
+        str.shift (str, start, len - start, extralen,
+                   shift.err)   -- looks after overflow
+        [str FROM start FOR extralen] := new.str  -- put in the insert
+        IF
+          (len + extralen) > maxlen
+            SEQ
+              len := maxlen
+              not.done := TRUE
+          TRUE
+            SEQ
+              len := len + extralen
+              not.done := shift.err
+:
+--}}}
+
+--{{{  FUNC string.pos
+--* Determine where the first occurrence is of a string within another
+-- string.
+--
+-- The searching is case sensitive.
+--
+-- @return the lowest index of str at which begins a substring exactly
+--   matching the string search was found, or -1 if no such substring
+--   found
+-- @param search the string to search for in the string str
+-- @param str the string in which to search for the string search
+INT FUNCTION string.pos (VAL []BYTE search, str)
+  INT pos:
+  VALOF
+    --{{{  find string
+    VAL bytes IS (SIZE search) - 1:
+    VAL len IS SIZE str:
+    IF
+      --{{{  more than one character in search, look for match
+      bytes > 0
+        VAL times IS len - bytes:
+        INT n:
+        BOOL looking:
+        SEQ
+          n := 0
+          looking := TRUE
+          WHILE looking
+            SEQ
+              --{{{  look for matching first char of search
+              WHILE (n < times) AND (str[n] <> search[0])
+                n := n + 1
+              --}}}
+              IF
+                --{{{  no match
+                n >= times
+                  SEQ
+                    looking := FALSE
+                    pos := -1
+                --}}}
+                --{{{  see if rest of chars match
+                IF i = 1 FOR bytes
+                  str[n + i] <>  search[i]
+                    n := n + 1
+                TRUE
+                  SEQ
+                    looking := FALSE
+                    pos := n
+                --}}}
+      --}}}
+      --{{{  only one character in search string
+      bytes = 0
+        IF
+          IF i = 0 FOR len
+            str[i] = search[0]
+              pos := i
+          TRUE
+            pos := -1
+      --}}}
+      --{{{  none
+      TRUE
+        pos := -1
+      --}}}
+    --}}}
+    RESULT pos
+:
+--}}}
+--{{{  FUNC char.pos
+--* Determine where the first occurrence of a character is in a given
+-- string.
+--
+-- The searching is case sensitive.
+--
+-- @return the lowest index of str at which a byte exactly matching
+--   search was found, or -1 if no such byte found
+-- @param search the character to search for in the string str
+-- @param str the string in which to search for the character search
+INT FUNCTION char.pos (VAL BYTE search, VAL []BYTE str)
+  INT pos:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE str
+        str[i] = search
+          pos := i
+      TRUE
+        pos := -1
+    RESULT pos
+:
+--}}}
+--{{{  FUNC search.match
+--* Search a string for the first occurrence of any one of a given
+-- number of characters.
+--
+-- @return if a match found, this gives the lowest index of str at
+--   which the match occurs; otherwise -1
+-- @return if a match found, this gives the byte of possibles which was
+--   found; otherwise 255( BYTE )
+-- @param possibles a string each byte of which is to be individually
+--   checked for in str
+-- @param str the string in which to search for any of the various
+--   bytes contained in possibles
+INT, BYTE FUNCTION search.match (VAL []BYTE possibles, str)
+  INT pos:
+  BYTE char:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE str
+        IF j = 0 FOR SIZE possibles
+          str[i] = possibles[j]
+            SEQ
+              char := possibles[j]  -- or equivalently str[i]
+              pos := i
+      TRUE
+        SEQ
+          char := 255 (BYTE)
+          pos := -1
+    RESULT pos, char
+:
+--}}}
+--{{{  FUNC search.no.match
+--* Search a string for the first occurrence of a character which does
+-- not match any of a given number of characters.
+--
+-- @return if no match found, this gives the lowest index of str at
+--   which the lack of a match occurs; otherwise -1
+-- @return if no match found, this gives the byte of str which was
+--   found not to match; otherwise 255( BYTE )
+-- @param possibles a string each byte of which is to be individually
+--   checked for non-existence in str
+-- @param str the string in which to search for a byte which is not
+--   identical to any of the various bytes contained in possibles
+INT, BYTE FUNCTION search.no.match (VAL []BYTE possibles, str)
+  INT pos:
+  BYTE char:
+  VALOF
+    IF
+      IF i = 0 FOR SIZE str
+        IF
+          char.pos (str[i], possibles) < 0  -- it does not match any
+            SEQ
+              char := str[i]
+              pos := i
+      TRUE
+        SEQ
+          char := 255 (BYTE)
+          pos := -1
+    RESULT pos, char
+:
+--}}}

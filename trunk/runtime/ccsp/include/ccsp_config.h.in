@@ -1,0 +1,61 @@
+/* Externally visible CCSP configuration. */
+
+/* define to use per-CPU block allocator */
+#undef ALLOC_BLOCK
+
+/* define to use system malloc */
+#undef ALLOC_MALLOC
+
+/* define to use shared block allocator */
+#undef ALLOC_SBLOCK
+
+/* define to support blocking syscalls */
+#undef BLOCKING_SYSCALLS
+
+/* define to enable dynamic processes */
+#undef DYNAMIC_PROCS
+
+/* define to support CPU timers */
+#undef ENABLE_CPU_TIMERS
+
+/* define to enable multi-processor support */
+#undef ENABLE_MP
+
+/* define to enable the extended rendezvous */
+#undef EXTENDED_RENDEZVOUS
+
+/* define number of runtime threads */
+#undef MAX_RUNTIME_THREADS
+
+/* define if building for RMoX */
+#undef OOS_BUILD
+
+/* define to enable output ALT support */
+#undef OUTPUT_ALTS
+
+/* define if big-endian target */
+#undef TARGET_BIGENDIAN
+
+/* define if i386 or greater target */
+#undef TARGET_CPU_386
+
+/* define if MIPS target */
+#undef TARGET_CPU_MIPS
+
+/* define if PowerPC-64 target */
+#undef TARGET_CPU_PPC64
+
+/* define if SPARC target */
+#undef TARGET_CPU_SPARC
+
+/* define if using cygwin */
+#undef TARGET_OS_CYGWIN
+
+/* define if using darwin */
+#undef TARGET_OS_DARWIN
+
+/* define to use POSIX threads for blocking syscalls and multi-processor */
+#undef USE_PTHREADS
+
+/* define to enable use of thread-local-storage */
+#undef USE_TLS

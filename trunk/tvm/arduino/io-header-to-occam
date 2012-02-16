@@ -1,0 +1,127 @@
+#!/usr/bin/python
+# Convert one of the ioXXX.h headers that describes the features of an
+# AVR chip into an equivalent set of occam definitions.
+# Usage: io-header-to-occam ioXXX.h ioXXX.inc
+
+import sys, re
+
+def warn(*args):
+	sys.stderr.write("Warning: " + "".join(map(str, args)) + "\n")
+
+fi = open(sys.argv[1], "r")
+fo = open(sys.argv[2], "w")
+
+prev_line = None
+def write(s):
+	"""Print a line to the output file, discarding duplicate blank
+	lines."""
+	global prev_line
+	if not (prev_line == "\n" and s == "\n"):
+		fo.write(s)
+	prev_line = s
+
+write("-- Converted automatically from %s\n\n" % sys.argv[1])
+
+def convert_value(value):
+	"""Parse a C constant value in decimal or hex.
+	Return None if the input isn't a constant."""
+
+	# print "Attempting to match value: %s" % value
+
+	m = re.match('^(0(x|X)[0-9a-fA-F]+|[0-9]+)$', value)
+	if m is None:
+		return None
+
+	value = m.group(1)
+	if value.startswith("0x") or value.startswith("0X"):
+		return int(value[2:], 16)
+	else:
+		return int(value)
+
+def occamify_name(name):
+	"""Convert a C identifier to be a valid occam identifer."""
+
+	name = name.replace("_", ".")
+	if name[0] == ".":
+		name = "X" + name
+	if name[-1] == ".":
+		name += "X"
+	return name
+
+# For each macro we handle, a function that maps the macro's single argument to
+# the value we want to use in occam.
+def map_io(addr):
+	# An IO address mapped into data memory; add __SFR_OFFSET.
+	return addr + 0x20
+def map_mem(addr):
+	return addr
+macro_funcs = {
+	"_SFR_MEM8": map_mem,
+	"_SFR_MEM16": map_mem,
+	"_SFR_MEM32": map_mem,
+	"_SFR_IO8": map_io,
+	"_SFR_IO16": map_io,
+	"_VECTOR": lambda n: n,
+	}
+
+def convert_define(name, value):
+	name = occamify_name(name)
+
+	# Defined to a macro call.
+	m = re.match('^(\S+)\((\S+)\)$', value)
+	if m is not None:
+		macro, arg = m.group(1, 2)
+		func = macro_funcs.get(macro)
+		if func is None:
+			warn("Unknown macro name: ", macro)
+			return
+		conv = convert_value(arg)
+		if conv is None:
+			warn("Unhandled macro argument: ", arg)
+			warn("Name|Value: [%s | %s]" % (name, value))
+			return
+		write("VAL INT %s IS %d:\n" % (name, func(conv)))
+		return
+
+	# Defined to a value directly.
+	conv = convert_value(value)
+	if conv is not None:
+		write("VAL INT %s IS %d:\n" % (name, conv))
+		return
+
+	warn("Unhandled definition: ", value)
+
+while True:
+	l = fi.readline()
+	if l == "":
+		break
+
+	if l.startswith("/*") and l.find("*/") == -1:
+		# Start of a multiline comment -- copy it.
+		# (This is so we copy over the license header at the top of the
+		# file, since the output of this script is pretty obviously a
+		# derivative work of the original header!)
+		lines = [l]
+		while True:
+			l = fi.readline()
+			lines.append(l)
+			if l == "" or l.find("*/") != -1:
+				break
+		for l in lines:
+			write("-- %s\n" % l.strip())
+		write("\n")
+		continue
+
+	l = re.sub(r'/\*.*\*/', '', l)
+	l = re.sub(r'\s+', ' ', l)
+	l = l.strip()
+
+	if l == "":
+		write("\n")
+
+	m = re.match(r'^#define (\S+) (.*)$', l)
+	if m is not None:
+		convert_define(m.group(1), m.group(2))
+
+fi.close()
+fo.close()

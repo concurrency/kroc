@@ -1,0 +1,2269 @@
+--
+--	Type conversion library
+--	Copyright (C) 1988, 1990  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module course
+
+--{{{  #'s
+-- #OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.6 4/12/90"
+#COMMENT "(C) Copyright INMOS limited 1988, 1990"
+--}}}
+
+--{{{  REAL32TOSTRING
+--* Format a [@code REAL32] number as a decimal string.
+--
+-- [@code Ip] and [@code Dp] control how the number is formatted.
+-- If [@code Ip > 0] and [@code Dp > 0], fixed-point format will be used with
+-- [@code Ip] digits before the point and [@code Dp] digits after the point.
+-- If [@code Ip = 0] and [@code Dp > 0], exponential format will be used with
+-- [@code Dp] digits in the fraction.
+-- If [@code Ip = 0] and [@code Dp = 0], a "reasonable" format will be chosen
+-- automatically.
+--
+-- @param len The number of characters ([@code BYTE]s) of string occupied by
+--   the formatted decimal representation of the real number
+-- @param string An array containing the formatted decimal representation of
+--   the real number in the first [@code len] bytes, the remaining bytes being
+--   undefined
+-- @param X The real number, in IEEE format, to be converted
+-- @param Ip The first of two formatting values
+-- @param Dp The second of two formatting values
+PROC course.REAL32TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL32 X, VAL INT Ip, Dp)
+
+  --{{{  specification
+  --{{{  Notes
+  -- Notes:    Rounding mode is round to nearest.
+  --           Which format is used depends on the combination of values
+  --           of Ip, Dp and X.  In all cases, any digits beyond the 9th
+  --           significant digit for single precision or 17th significant
+  --           digit for double precision will be given as 0 and cannot
+  --           be considered accurate.
+  --           If string overflows this routine acts as an invalid process.
+  --{{{  Case i
+  -- Case (i):    Ip = 0, Dp = 0  => free format
+  --           Where possible a fixed point representation is used.  If
+  --           it is not used then exponential form is used.  It is not
+  --           used if more than 9 | 17 significant digits of accuracy
+  --           ( single | double ) would be required before the decimal
+  --           point, or if there are more than 3 zeroes after the decimal
+  --           point before the first significant digit.  In any case, the
+  --           maximum number of characters returned in string is 15 for a
+  --           single precision X, and 24 for a double precision X.
+  --           string is left justified.
+  --           If X is infinity or a NaN, then the string will contain one
+  --           of "Inf", "-Inf" or "NaN", but not the quotes.
+  --}}}
+  --{{{  Case ii
+  -- Case (ii):   Ip = 0, Dp > 0  => exponential format
+  --           The form of exponential format is, firstly either a minus
+  --           sign or a space ( this latter instead of an explicit plus
+  --           sign ), a fraction in the form <digit>.<digits>, the
+  --           exponential symbol ( E ), the sign of the exponent ( + or
+  --           - ), then the exponent, which is two digits for a single
+  --           precision X, three digits for a double precision X.  Dp
+  --           gives the number of digits in the fraction ( 1 before the
+  --           point, and the others after, but not counting the point ).
+  --           The total number of characters in string is ( Dp + 6 )
+  --           for a single precision X, and ( Dp + 7 ) for a double
+  --           precision X.
+  --           If Dp = 1 then the fraction is of the form <space>digit
+  --           ( which, note, will not result in occam syntax for the
+  --           real ).
+  --           If X is infinity or a NaN, then the string will contain one
+  --           of " Inf", "-Inf" or " NaN", but not the quotes, padded on
+  --           the right to fill the field width.
+  --}}}
+  --{{{  Case iii
+  -- Case (iii):  Ip > 0, Dp > 0  => fixed point if possible
+  --           Ip gives the number of places before the point, not
+  --           counting the sign place; Dp the number of places after
+  --           the point.  Padding spaces are added on the left as
+  --           necessary.  If the number will not fit the format,
+  --           then an exponential format is used with the same field
+  --           width as the fixed point representation would have had.
+  --           If Ip and Dp are very small then an exponential
+  --           representation may not fit in the field width so the
+  --           special value "Ov" with a sign is returned.
+  --           There are always ( Ip + Dp + 2 ) characters in string,
+  --           the 2 being the decimal point and the sign ( - or space ).
+  --           If X is infinity or a NaN, then the string will contain one
+  --           of " Inf", "-Inf" or " NaN", but not the quotes, padded on
+  --           the right to fill the field width.
+  --}}}
+  -- All other combinations of Ip and Dp are meaningless and will cause
+  --           an error.
+  --}}}
+  --}}}
+  --{{{  history
+  -- V1.0, 1-Jul-88
+  -- Added V to the OPTIONs; V1.1, 22-Mar-90 SRH
+  -- Formatting completely revamped; bug report number TS/37; V1.2,
+  -- 26-Apr-90 SRH
+  -- Added more comments; 5-Oct-90 SRH
+  -- Removed the test ( Xexp >= BitsPerWord ) from Round because
+  -- redundant; V1.3, 11-Oct-90 SRH
+  -- Altered to take account of rounding done to numbers almost half
+  -- way between two other numbers - round.direction introduced; bug
+  -- report number TS/789; V1.4, 1-Nov-90 SRH
+  -- Removed a bit of redundant code ( that which used to display Un );
+  -- V1.5, 15-Nov-90 SRH
+  -- Changed the names of some variables in QuickLog to make code
+  -- clearer; 28-Nov-90 SRH
+  -- Added assignment to zero of Carry in ScaleX when overflow to
+  -- infinity; this prevents possible addition of 1 to infinity to
+  -- make a NaN; V1.6, 4-Dec-90 SRH
+  --}}}
+  --{{{  more information
+  -- To help understand the binary to character conversion see "Contributions
+  -- to a Proposed Standard for Binary Floating-Point Arithmetic" by J T Coonen,
+  -- PhD thesis, 1984, University of California, Berkeley.
+  --}}}
+
+  #IF (TARGET.BITS.PER.WORD = 32)
+  VAL INT X RETYPES X :
+
+  --{{{  Definitions
+  --{{{  Word length specific values for 32 bit machine
+  VAL SignBit      IS #80000000 :
+  VAL BitsPerWord  IS        32 :
+  VAL MaxInt       IS #FFFFFFFF :
+  VAL BytesPerWord IS         4 :
+  --}}}
+  --{{{  IEEE Single length constants for 32 bit implementation
+  VAL RealShift  IS         8 :
+  VAL BitsInFrac IS        24 :
+  VAL RealExpSh  IS        23 :
+  VAL RealExp    IS       255 :
+  VAL RealXcess  IS       127 :
+  VAL RealRBit   IS       128 :
+  VAL RealInf    IS #7F800000 :
+  --}}}
+  --{{{  read/write constants
+  -- write number constants
+  VAL Table10 IS    13 :  --exact power of ten in word
+  VAL Bias10  IS     3 :  --extras for full power ten range
+  VAL MaxDecN IS     9 :  --maximum dec digits; IEEE sec. 5.6
+  VAL R2L     IS #4D10 :  --Log10(2) = 0.3010299956639811952 in low half word
+  
+  -- The table PowerTenFrac contains the fraction with implicit bit
+  -- explicit and then normalized so that there is a one bit in bit 31
+  -- of powers of 10 from 10^0 to 10^13.  For example,
+  -- 10^3 = 1111101000 in binary, which is 1.111101 * 2^9; so the fraction
+  -- bits, with implicit bit explicit ( ie the 1 before the point kept ) is
+  -- 1111101, and the actual exponent is 9.  This latter ( the actual
+  -- exponent ) is what is in the corresponding table PowerTenExp.
+  -- The index of an entry is the same as the power of 10; hence
+  -- PowerTenFrac[ 3 ] = #FA000000, and PowerTenExp[ 3 ] = 9.
+  -- No bits are lost in the PowerTenFrac table; even the largest value,
+  -- 10^13, is exact.
+  -- These two tables of constants are simply set up in advance for
+  -- efficiency.
+  
+  VAL PowerTenFrac IS [#80000000, #A0000000, #C8000000, #FA000000,
+                       #9C400000, #C3500000, #F4240000, #98968000,
+                       #BEBC2000, #EE6B2800, #9502F900, #BA43B740,
+                       #E8D4A510, #9184E72A] :
+  
+  VAL PowerTenExp IS [0, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36, 39, 43] :
+  
+  VAL BiasTenFrac IS [#9184E72A, #CECB8F28, #EB194F8E] : --P13, P27, P40
+  
+  VAL BiasTenExp IS [43, 89, 132] :
+  
+  VAL BiasTen IS [14, 28, 41, 54] : --bias changeover points
+  --}}}
+  --{{{  rounding constants
+  VAL INT rounded.down IS -1 :
+  VAL INT exact        IS  0 :
+  VAL INT rounded.up   IS  1 :
+  --}}}
+  --}}}
+  --{{{  ScaleX
+  PROC ScaleX (INT Xexp, Xfrac, VAL INT Scale, INT direction)
+  
+    -- Scale X by value of 10^Scale
+  
+    INT Carry, Places, Sb, St, Zexp, Zfrac :
+    SEQ
+      --{{{  get abs value of Scale
+      IF
+        Scale < 0
+          St := -Scale
+        TRUE
+          St := Scale
+      --}}}
+      --{{{  set Zexp and Zfrac
+      IF
+        St <= Table10
+          --{{{  easy case, 10 in table
+          SEQ
+            Zexp := PowerTenExp[St]
+            Zfrac := PowerTenFrac[St]
+          --}}}
+        St = (BiasTen[1] - 1)
+          --{{{  special case
+          SEQ
+            Zexp := BiasTenExp[1]
+            Zfrac := BiasTenFrac[1]
+          --}}}
+        TRUE
+          --{{{  apply bias
+          SEQ
+            IF                                          --get power ten bias
+              IF i = 0 FOR Bias10
+                St < BiasTen[i + 1]
+                  Sb := i
+              TRUE                                      --too big
+                Sb := -1
+            IF
+              Sb < 0                                    --too large
+                Zexp := -1
+              TRUE
+                --{{{  valid power
+                SEQ
+                  St := (St - BiasTen[Sb]) + 1
+                  Zexp := (PowerTenExp[St] + BiasTenExp[Sb]) + 1
+                  Zfrac, Carry := LONGPROD (PowerTenFrac[St],
+                                            BiasTenFrac[Sb], 0)
+                  Places, Zfrac, Carry := NORMALISE (Zfrac, Carry)
+                  Zexp := Zexp - Places
+                --}}}
+          --}}}
+      --}}}
+      --{{{  set Xexp, Xfrac and Carry
+      IF
+        Zexp < 0
+          --{{{  out of range
+          SEQ
+            IF
+              Scale < 0                                 --set to big number
+                Xexp := -RealExp
+              TRUE
+                Xexp := RealExp
+            Xfrac := SignBit                            --prevent normalisation
+            Carry := 0
+          --}}}
+        Scale < 0
+          --{{{  scale down
+          SEQ
+            Xexp := Xexp - Zexp
+            -- least significant bit of Xfrac is not set, so Xfrac >> 1 does not loose
+            -- information
+            #PRAGMA DEFINED Zfrac
+            Xfrac, Carry := LONGDIV (Xfrac >> 1, 0, Zfrac)
+            -- Zfrac always has top bit set; Xfrac >> 1 always has top bit clear and,
+            -- because it is passed as a normalised number, has the second top bit
+            -- set.  This means that the smallest that Xfrac as answer to the LONGDIV
+            -- can be is #40000000, and so when it comes to normalising it later, only
+            -- the top bit of Carry will matter.
+          
+            -- original code to assign Carry:
+            --INT dummy :
+            --Borrow, dummy := LONGDIFF (Carry, Zfrac >> 1, 0) --see if over half left
+            --IF
+            --  Borrow <> 0                               --less than half
+            --    Carry := 0
+            --  TRUE                                      --note sticky bit
+            --    Carry := SignBit
+          
+            --{{{  obtain more accurate Carry - matters in assignment of direction later
+            IF
+              Carry = 0
+                SKIP                                    --divided exactly
+              TRUE
+                INT remainder :
+                Carry, remainder := LONGDIV( Carry, 0, Zfrac )
+                -- Carry is not zero now if this branch of the IF taken
+            --}}}
+          --}}}
+        TRUE
+          --{{{  scale up
+          SEQ
+            Xexp := (Xexp + Zexp) + 1
+            #PRAGMA DEFINED Zfrac
+            Xfrac, Carry := LONGPROD (Xfrac, Zfrac, 0)
+          --}}}
+      --}}}
+      --{{{  normalise
+      Places, Xfrac, Carry := NORMALISE (Xfrac, Carry)
+      Xexp := Xexp - Places
+      --}}}
+      --{{{  round and set direction
+      IF
+        Carry = 0
+          direction := exact
+        (Carry /\ SignBit) = 0
+          direction := rounded.down
+        TRUE
+          SEQ
+            direction := rounded.up
+            Carry, Xfrac := LONGSUM (Xfrac, 1, 0)
+            IF
+              Carry <> 0
+                SEQ
+                  Xexp := Xexp + 1
+                  Xfrac := SignBit
+              TRUE
+                SKIP
+      --}}}
+  :
+  --}}}
+  --{{{  QuickLog
+  PROC QuickLog (INT LogX, VAL INT Xexp, Xfrac)
+  
+    -- Purpose: To be a cheap approximation of floor( Log10( X ) ), so
+    --          cheap that it may be 1 too small.
+    -- Out:     LogX - either floor( log10( X ) ) or floor( log10( X ) ) - 1
+    -- In:      Xexp - actual exponent, i.e. biased exponent - RealXcess
+    -- In:      Xfrac - fractional part with the implicit bit explicit
+    --          ( and normalised if from a denormal ) so that bit 31
+    --          is 1
+    -- Notes:   If Xexp = 0 = Xfrac, then LogX is returned as 0.
+  
+    INT X, dummy :
+    SEQ
+      -- Use approximation of Log2( 1.f * 2^e ) as e.f, due to
+      -- 0.f <= log2( 1.f ), with a maximum deviation of about 0.086
+      dummy, X := SHIFTRIGHT (Xexp, Xfrac << 1, BitsPerWord / 2)
+      IF
+        X < 0                                       --log2 may be small
+          INT low.word, Borrow :
+          SEQ
+            X, low.word   := LONGPROD (-X, R2L + 1, 0)
+            Borrow, dummy := LONGDIFF (0, low.word, 0)
+            Borrow, LogX  := LONGDIFF (0, X, Borrow)
+        TRUE                                        --log2 about right
+          LogX, dummy := LONGPROD (X, R2L, 0)       --mul by Log10(2)
+  :
+  --}}}
+  --{{{  Round
+  PROC Round (INT Xexp, Xfrac, Xint, direction)
+  
+    --{{{  specification
+    -- Purpose: To round a real number to the nearest integer.
+    -- In/Out:  Xexp - actual exponent, not biased one: on entry, of the
+    --          number to round; on exit, of the rounded number
+    -- In/Out:  Xfrac - the fractional part of the real with implicit bit
+    --          explicit: on entry, of the number to round; on exit, of the
+    --          rounded number
+    -- Out:     Xint - the nearest integer that the combination of Xexp
+    --          and Xfrac on entry give
+    -- In/Out:  direction - this parameter is applicable only for numbers
+    --          ending in 5: equal to -1 if the exact value was
+    --          rounded down; equal to 0 if the value on entry is
+    --          exact; equal to +1 if the exact value was rounded up
+    -- Notes:   ( Xexp on entry ) < ( number of bits per word ) is assumed.
+    --          This procedure only caters for non-negative numbers.
+    --}}}
+  
+    INT Places, Guard, ExpExtra :
+    SEQ
+      --{{{  do the work
+      Places := BitsPerWord - (Xexp + 1) --Places will be >= 0
+      Xint, Guard := SHIFTRIGHT (Xfrac, 0, Places)
+      IF
+        Guard = 0                        --no rounding to do
+          SKIP                           --leave direction as is
+        (Guard /\ SignBit) = 0           --do not round
+          direction := rounded.down      --no matter what direction was on entry
+        (Guard /\ (~SignBit)) = 0        --exactly half, since we already know that
+                                         --(Guard /\ SignBit) <> 0
+          IF
+            direction = exact
+              IF                         --make sure that the lsb of Xint is zero
+                ( Xint /\ 1 ) = 0        --lsb of Xint is already zero
+                  direction := rounded.down
+                TRUE
+                  SEQ
+                    Xint := Xint + 1     --round up integer
+                    direction := rounded.up
+            direction = rounded.up
+              direction := rounded.down
+            TRUE                         --direction = rounded.down
+              SEQ
+                Xint := Xint + 1         --round up integer
+                direction := rounded.up
+        TRUE                             --Guard > #80000000
+          SEQ
+            Xint := Xint + 1             --round up integer
+            direction := rounded.up
+      -- Now obtain the Xexp and Xfrac appropriate to Xint: they are not
+      -- necessarily as before because of the possible rounding up that
+      -- was performed on Xint
+      ExpExtra, Xfrac := SHIFTLEFT (0, Xint, Places)
+      Xexp := Xexp + ExpExtra
+      --}}}
+  :
+  --}}}
+  --{{{  WriteDec
+  PROC WriteDec ([]BYTE Buf, INT Length, VAL INT Num )
+  
+    --{{{  specification
+    -- Purpose: To take an unsigned integer and convert it to the
+    --          corresponding ASCII string, with the caveat that
+    --          trailing zeros are not written.
+    -- Out:     Buf - contains the ASCII string representing the
+    --          integer ( Num ) ( apart from trailing zeros ); the
+    --          string is [ Buf FROM 0 FOR Length ]
+    -- Out:     Length - the number of meaningful characters in Buf
+    -- In:      Num - the integer to be converted, assumed unsigned:
+    --          numbers from 0 to 4,294,967,295 inclusive, for 32-bit
+    --          processors, or 0 to 65535 inclusive, for 16-bit
+    --          processors
+    -- Notes:   An example of what is meant by not writing trailing
+    --          zeros to Buf: if Num = 30, Length will be 1 and
+    --          Buf[ 0 ] = '3' will be the only defined character
+    --          in Buf.
+    --}}}
+  
+    INT N, ix, iy, T :
+    SEQ
+      N := Num                       --Num is VAL, use N as variable
+      ix := 0                        --build in reverse order
+      WHILE N <> 0
+        SEQ
+          N, T := LONGDIV (0, N, 10) --effects N := N / 10 ; T := N REM 10
+          IF
+            (ix \/ T) = 0            --dump trailing zeros
+              SKIP
+            TRUE
+              SEQ
+                Buf[ix] := (BYTE (T + (INT '0'))) --convert from integer to ASCII equivalent
+                ix := ix + 1
+      Length := ix
+      --{{{  Reverse the list of digits
+      ix := ix - 1                   --index of last digit
+      iy := 0                        --index of first digit
+      WHILE iy < ix
+        BYTE b:
+        SEQ                          --swap two elements
+          #PRAGMA DEFINED Buf
+          b := Buf[ix]
+          Buf[ix] := Buf[iy]
+          Buf[iy] := b
+          iy := iy + 1
+          ix := ix - 1
+      --}}}
+  :
+  --}}}
+  --{{{  restrict
+  PROC restrict ([]BYTE Buf, INT Places, LogX, VAL INT digits, INT direction)
+  
+    --{{{  specification
+    -- Purpose: To round a number that is given in the form of a character
+    --          string.
+    -- In/Out:  Buf - the character string holding the number, assumed not to
+    --          have trailing zeroes
+    -- In/Out:  Places - the actual number of characters in the string
+    -- In/Out:  LogX - floor( log10( number in Buf ) )
+    -- In:      digits - the number of digits wanted in the rounded number;
+    --          assumed greater than or equal to zero
+    -- In/Out:  direction - this parameter is applicable only for numbers
+    --          in Buf ending in 5: equal to -1 if the exact value was
+    --          rounded down; equal to 0 if the value in Buf is
+    --          exact; equal to +1 if the exact value was rounded up
+    -- Notes:   "... if the two nearest representable values are equally near,
+    --          the one with its least significant bit zero shall be delivered."
+    --          IEEE 754-1985, Sec 4.1.  LSB zero <=> last digit is even.
+    --          Any resultant trailing zeroes in Buf are elided.
+    --}}}
+  
+    SEQ
+      IF
+        digits >= Places
+          SKIP                              --nothing to do
+        TRUE
+          INT pos, carry :
+          BOOL exactly.half, round.up :
+          --{{{  check for rounding, and do if necessary
+          SEQ
+            #PRAGMA DEFINED Buf
+            --{{{  set exactly.half
+            IF
+              Buf[digits] = '5'   --then we must check for 0.50000....
+                SEQ
+                  exactly.half := TRUE
+                  SEQ i = 1 FOR ( ( Places - digits ) - 1 )  --Places - digits - 1 >= 0
+                    IF
+                      exactly.half
+                        exactly.half := ( Buf[digits + i] = '0' )
+                      TRUE
+                        SKIP
+              TRUE
+                exactly.half := FALSE
+            --}}}
+            --{{{  set round.up
+            IF
+              exactly.half
+                -- round up if direction = rounded.down; round up if direction = exact
+                -- and digit before 5 is odd; else leave as is
+                IF
+                  digits = 0
+                    round.up := FALSE
+                  direction = rounded.down
+                    round.up := TRUE
+                  TRUE
+                    round.up :=  ( direction = exact ) AND
+                                 ( ( Buf[digits - 1] = '1' ) OR
+                                   ( Buf[digits - 1] = '3' ) OR
+                                   ( Buf[digits - 1] = '5' ) OR
+                                   ( Buf[digits - 1] = '7' ) OR
+                                   ( Buf[digits - 1] = '9' ) )
+              TRUE
+                round.up := Buf[digits] >= '5'
+            --}}}
+            IF
+              round.up
+                --{{{  round up
+                SEQ
+                  direction := rounded.up
+                  pos := digits - 1         --index of first digit to increment
+                  carry := 1
+                  WHILE (pos >= 0) AND (carry = 1)
+                    SEQ
+                      carry := (INT Buf[pos]) + carry
+                      IF
+                        carry > (INT '9')
+                          SEQ
+                            Buf[pos] := (BYTE (carry - 10))
+                            carry := 1
+                        TRUE
+                          SEQ
+                            Buf[pos] := (BYTE carry)
+                            carry := 0
+                      pos := pos - 1
+                  --{{{  check for overflow on increment
+                  IF
+                    carry = 1
+                      SEQ
+                        Buf[0] := '1'
+                        Places := 1
+                        LogX := LogX + 1    --overflowed into extra digit
+                    TRUE
+                      Places := digits
+                  --}}}
+                --}}}
+              TRUE
+                SEQ
+                  direction := rounded.down --cannot be exact because no trailing zeroes in Buf
+                  Places := digits          --no rounding up to do
+          --}}}
+      #PRAGMA DEFINED Buf
+      WHILE (Places > 1) AND (Buf[Places - 1] = '0')
+        Places := Places - 1                --drop trailing zeroes
+  :
+  --}}}
+  --{{{  put.byte
+  PROC put.byte (VAL BYTE byte)
+    SEQ
+      string[len] := byte
+      len := len + 1
+  :
+  --}}}
+
+  --{{{  declarations
+  [MaxDecN] BYTE Buf :
+  INT Carry, LogX, N, M, Places, Scale :
+  [MaxDecN] BYTE Buf.1 :
+  INT LogX.1, Places.1 :
+  INT Xexp, Xfrac, Xint, Yexp, Yfrac :
+  INT round.direction :
+  VAL INT max.no.of.zeroes.before.first.significant.digit IS 3 :
+  VAL BYTE decimal.point IS '.' :
+  --}}}
+
+  --{{{  main body
+  #PRAGMA DEFINED len
+  #PRAGMA DEFINED string
+  IF
+    ( Ip < 0 ) OR ( Dp < 0 ) OR ( ( Ip > 0 ) AND ( Dp = 0 ) ) --meaningless combinations
+      STOP
+    TRUE
+      SEQ
+        --{{{  carry on
+        len := 0
+        Xexp, Xfrac := SHIFTLEFT (0, X /\ (~SignBit), RealShift + 1)
+        IF
+          Xexp = RealExp
+            --{{{  infinity or NaN
+            SEQ
+              --{{{  sign and number
+              IF
+                ((X /\ SignBit) <> 0) AND ((X /\ (~SignBit)) = RealInf) --infs are signed
+                  put.byte ('-')
+                (Dp <> 0)                               --leave sign space where appropriate; not free format
+                  put.byte (' ')
+                TRUE                                    --free format
+                  SKIP
+              IF
+                (X /\ (~SignBit)) = RealInf
+                  [string FROM len FOR 3] := "Inf"
+                TRUE
+                  [string FROM len FOR 3] := "NaN"
+              len := len + 3
+              --}}}
+              --{{{  space fill
+              IF
+                Ip <> 0                                 --pad with spaces
+                  SEQ i = 0 FOR (Ip + Dp) - 2           --so that there is a total of Ip + Dp + 2
+                    put.byte (' ')
+                Dp <> 0
+                  SEQ i = 0 FOR Dp + 2                  --include E+ee; total of Dp + 6
+                    put.byte (' ')
+                TRUE                                    --Ip = 0, Dp = 0  => free format
+                  SKIP
+              --}}}
+            --}}}
+          (Xexp \/ Xfrac) = 0
+            --{{{  zero
+            SEQ
+              --{{{  pad on left with spaces if fixed point
+              IF
+                Ip = 0
+                  SKIP
+                TRUE                                    --fixed point
+                  SEQ i = 0 FOR Ip - 1
+                    put.byte (' ')
+              --}}}
+              --{{{  deal with sign
+              IF
+                (X /\ SignBit) <> 0
+                  put.byte ('-')
+                (Dp <> 0)                               --not free format
+                  put.byte (' ')
+                TRUE                                    --free format
+                  SKIP
+              --}}}
+              IF
+                Dp = 0
+                  --{{{  free format
+                  SEQ
+                    put.byte('0')
+                    put.byte(decimal.point)
+                    put.byte('0')
+                  --}}}
+                Ip <> 0
+                  --{{{  fixed point
+                  SEQ
+                    put.byte('0')
+                    put.byte(decimal.point)
+                    SEQ j = 1 FOR Dp
+                      put.byte ('0')
+                  --}}}
+                TRUE
+                  --{{{  exponential format
+                  SEQ
+                    IF
+                      Dp = 1
+                        put.byte(' ')
+                      TRUE
+                        SKIP
+                    put.byte('0')
+                    IF
+                      Dp = 1
+                        SKIP
+                      TRUE
+                        SEQ
+                          put.byte(decimal.point)
+                          SEQ i = 1 FOR Dp - 1
+                            put.byte('0')
+                    put.byte('E')
+                    put.byte('+')
+                    put.byte('0')
+                    put.byte('0')
+                  --}}}
+            --}}}
+          TRUE
+            --{{{  proper value
+            SEQ
+              --{{{  get proper number and LOG
+              IF
+                Xexp = 0                                --ensure normal
+                  --{{{
+                  SEQ
+                    Places, Xfrac, Carry := NORMALISE (Xfrac, 0)
+                    Xexp := -(Places + RealXcess)
+                  --}}}
+                TRUE                                    --set top bit
+                  --{{{
+                  SEQ
+                    Xfrac := (Xfrac >> 1) \/ SignBit
+                    Xexp := Xexp - RealXcess
+                  --}}}
+              Yexp := Xexp                              --save extended X
+              Yfrac := Xfrac
+              QuickLog (LogX, Xexp, Xfrac)              --get log
+              -- the value of LogX is the number of decimal places to left that decimal
+              -- point must be moved in order to give a number [ 1, 10 )
+              --}}}
+              --{{{  get field width
+              IF
+                Dp <> 0                                 --field width
+                  --{{{
+                  SEQ
+                    N := Ip + Dp                        --significant digits ( Ip = 0 for exponential format )
+                    IF
+                      N > MaxDecN                       --don't print too many
+                        N := MaxDecN
+                      TRUE
+                        SKIP
+                  --}}}
+                TRUE                                    --free format
+                  N := MaxDecN                          --default
+              --}}}
+              --{{{  scale fraction
+              Scale := (N - 1) - LogX
+              ScaleX (Xexp, Xfrac, Scale, round.direction)--get X in form a.b where there
+              -- are N digits in 'a'.  As 2^29 < 10^9 < 2^30, then Xexp < BitsPerWord
+              Round (Xexp, Xfrac, Xint, round.direction)--now as integer
+              -- now check that the rounding or too small a value of LogX has not
+              -- given us more digits than we originally asked for, and take
+              -- appropriate action if it did
+              Carry, M := LONGDIFF (Xfrac, PowerTenFrac[N], 0)
+              IF
+                (Xexp > PowerTenExp[N]) OR ((Xexp = PowerTenExp[N]) AND (Carry = 0))
+                  SEQ
+                    LogX := LogX + 1                    --new scale
+                    Xexp := Yexp                        --reset X
+                    Xfrac := Yfrac                      --reset X
+                    ScaleX (Xexp, Xfrac, Scale - 1, round.direction)
+                    Round (Xexp, Xfrac, Xint, round.direction)
+                TRUE                                    --X in correct range
+                  SKIP
+              --}}}
+              WriteDec (Buf, Places, Xint)              --get number string
+              --{{{  output the string in the correct format
+              --{{{  fractional mode
+              IF
+                ( (Ip <> 0) AND (LogX < Ip) ) OR
+                  ((Dp = 0) AND
+                   (((-max.no.of.zeroes.before.first.significant.digit) - 1) <= LogX) AND
+                   (LogX < N))
+                  --{{{  try to output in mmm.nnnn form
+                  SEQ
+                    --{{{  possibly restrict
+                    M := (Dp + LogX) + 1                --current estimate at actual field width
+                    IF
+                      M < 0                             --must ensure that M >= 0
+                        M := 0
+                      TRUE
+                        SKIP
+                    #PRAGMA DEFINED Buf
+                    SEQ i = 0 FOR Places
+                      Buf.1[i] := Buf[i]
+                    Places.1 := Places
+                    LogX.1 := LogX
+                    IF
+                      Dp <> 0                           --fixed point if possible
+                        restrict (Buf.1, Places.1, LogX.1, M, round.direction)
+                      TRUE                              --free format
+                        SKIP
+                    --}}}
+                    IF
+                      ( (Ip <> 0) AND (LogX.1 < Ip) ) OR
+                        ((Dp = 0) AND
+                         (((-max.no.of.zeroes.before.first.significant.digit) - 1) <= LogX.1) AND
+                         (LogX.1 < N))
+                        --{{{  output in mmm.nnnn form
+                        SEQ
+                          --{{{  set Scale
+                          IF
+                            LogX.1 < 0                  --always 0decimal.point
+                              Scale := 1
+                            TRUE
+                              Scale := LogX.1 + 1       --the value of Scale is the number of digits
+                                                        --that there will be before decimal.point
+                          --}}}
+                          --{{{  pad with leading spaces to make up desired field width
+                          IF
+                            (Ip - Scale) > 0
+                              SEQ i = 0 FOR Ip - Scale
+                                put.byte (' ')
+                            TRUE
+                              SKIP
+                          --}}}
+                          N := Scale + Dp               --reduce remaining field width
+                          --{{{  deal with sign
+                          IF
+                            (X /\ SignBit) = 0          --positive sign
+                              IF
+                                Dp = 0                  --free format
+                                  SKIP
+                                TRUE
+                                  put.byte (' ')
+                            TRUE
+                              put.byte ('-')
+                          --}}}
+                          --{{{  output 0decimal.point for a number less than 1
+                          IF
+                            LogX.1 < 0                  --less than 1
+                              SEQ
+                                put.byte ('0')
+                                put.byte (decimal.point)
+                                N := N - 1              --1 accounts for 0 ( decimal.point taken account of elsewhere )
+                            TRUE
+                              SKIP
+                          --}}}
+                          Scale := LogX.1 + 1           --check if < 0
+                          --{{{  insert zeroes after decimal point but before first significant digit ( if there is one )
+                          IF
+                            Dp = 0                      --free format
+                              WHILE Scale < 0
+                                SEQ
+                                  put.byte ('0')
+                                  Scale := Scale + 1
+                            TRUE                        --fixed point
+                              WHILE ( Scale < 0 ) AND ( N > 0 )
+                                SEQ
+                                  put.byte ('0')
+                                  Scale := Scale + 1
+                                  N := N - 1            --a digit has been output
+                          --}}}
+                          Scale := 0                    --places after point
+                          IF
+                            Dp <> 0                     --fixed point
+                              SKIP
+                            TRUE
+                              N := MaxDecN              --free format: use as many digits as possible
+                          restrict (Buf.1, Places.1, LogX.1, N, round.direction)
+                          --{{{  output significant digits and trailing zeroes
+                          SEQ i = 0 FOR N               --number of valid digits
+                            SEQ
+                              IF
+                                i < Places.1            --in buffer
+                                  put.byte (Buf.1[i])
+                                i <= (LogX.1 + 1)       --integer part (or 0 after point)
+                                  put.byte ('0')
+                                Dp > 0                  --use trailing zeroes; IEEE 5.6 says we can
+                                  put.byte ('0')
+                                TRUE
+                                  SKIP
+                              IF
+                                i = LogX.1              --decimal point
+                                  put.byte (decimal.point)
+                                TRUE
+                                  SKIP
+                          --}}}
+                          --{{{  deal with situation if ended with decimal point
+                          IF
+                            (LogX.1 + 1) = N            --ended with dec point
+                              SEQ
+                                put.byte ('0')
+                                Scale := Scale + 1
+                            TRUE
+                              SKIP
+                          --}}}
+                          Places := 0                   -- set flag: number already output
+                        --}}}
+                      TRUE
+                        SKIP                            --has overflowed into exponential form
+                  --}}}
+                TRUE
+                  SKIP
+              --}}}
+              --{{{  exponential - output sign and check forced exponential field width
+              IF
+                Places = 0                              --number already output
+                  SKIP
+                TRUE
+                  --{{{  show sign and adjust field width for forced exponent
+                  SEQ
+                    --{{{  deal with sign
+                    IF
+                      (X /\ SignBit) <> 0
+                        put.byte ('-')
+                      (Dp <> 0)
+                        put.byte (' ')
+                      TRUE                              --free format
+                        SKIP
+                    --}}}
+                    IF
+                      Ip <> 0                           --exp form has been forced, so make new mantissa width
+                        --{{{
+                        SEQ
+                          N := (Ip + Dp) - 4 --N is here the number of digits in exponential format;
+                                             --total field width is number of digits(N) + 6, but this
+                                             --must also equal Ip+Dp+2. Hence N must be Ip+Dp+2-6.
+                          IF
+                            N < 0
+                              --{{{  display overflow
+                              SEQ
+                                put.byte ('O')
+                                put.byte ('v')
+                                SEQ i = 0 FOR (Ip + Dp) - 1 -- 3 chars of field already output
+                                  put.byte (' ')
+                                Places := 0             --set finished flag
+                              --}}}
+                            TRUE
+                              SEQ
+                                IF
+                                  N = 1
+                                    put.byte (' ')      --fix when not enough space for any decimals
+                                  N = 0
+                                    N := 1              --ditto
+                                  TRUE
+                                    SKIP
+                                restrict (Buf, Places, LogX, N, round.direction)
+                        --}}}
+                      TRUE
+                        --{{{  set N
+                        SEQ
+                          N := Dp                       --free or fixed mantissa size exponent form
+                          IF
+                            N = 1
+                              put.byte (' ')            --extra space to replace missing decimal.point
+                            TRUE
+                              SKIP
+                        --}}}
+                  --}}}
+              --}}}
+              --{{{  exponential form of output
+              #PRAGMA DEFINED Buf
+              IF
+                Places = 0                              --number already output
+                  SKIP
+                TRUE
+                  --{{{  output in exponential form
+                  SEQ
+                    put.byte (Buf[0])
+                    IF
+                      N <> 1
+                        put.byte (decimal.point)       --more digits to come so output the decimal.point
+                      TRUE
+                        SKIP
+                    IF
+                      N <> 0                           --exp form requested
+                        --{{{  output digits
+                        SEQ
+                          SEQ i = 1 FOR N - 1
+                            IF
+                              i < Places
+                                put.byte (Buf[i])
+                              i = 1                    --only one digit
+                                put.byte ('0')
+                              TRUE                     --zero fill field
+                                put.byte ('0')
+                        --}}}
+                      Places <= 1                      --only one digit
+                        put.byte ('0')
+                      TRUE                             --output all digits
+                        SEQ i = 1 FOR Places - 1
+                          put.byte (Buf[i])
+                    --{{{  E+/-ee
+                    put.byte ('E')
+                    IF
+                      LogX < 0
+                        SEQ
+                          put.byte ('-')
+                          LogX := -LogX
+                      TRUE
+                        put.byte ('+')
+                    --now for the two digit exponent
+                    put.byte (BYTE (((LogX / 10) \ 10) + (INT '0')))
+                    put.byte (BYTE ((LogX \ 10) + (INT '0')))
+                    --}}}
+                  --}}}
+              --}}}
+              --}}}
+            --}}}
+        --}}}
+  --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
+:
+--}}}
+
+--{{{  REAL64TOSTRING
+--{{{  all sorts of #'s
+-- #OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.5 4/12/90"
+#COMMENT "(c) Copyright INMOS Limited 1988, 1990"
+-- #PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
+-- #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
+-- #USE "occamutl.lib"
+--}}}
+--* Format a [@code REAL64] number as a decimal string.
+--
+-- [@code Ip] and [@code Dp] are interpreted as for
+-- [@ref course.REAL32TOSTRING].
+--
+-- @param len The number of characters ([@code BYTE]s) of string occupied by
+--   the formatted decimal representation of the real number
+-- @param string An array containing the formatted decimal representation of
+--   the real number in the first [@code len] bytes, the remaining bytes being
+--   undefined
+-- @param X The real number, in IEEE format, to be converted
+-- @param Ip The first of two formatting values
+-- @param Dp The second of two formatting values
+PROC course.REAL64TOSTRING (RESULT INT len, RESULT []BYTE string, VAL REAL64 X, VAL INT Ip, Dp)
+
+  --{{{  specification
+  --{{{  Notes
+  -- Notes:    Rounding mode is round to nearest.
+  --           Which format is used depends on the combination of values
+  --           of Ip, Dp and X.  In all cases, any digits beyond the 9th
+  --           significant digit for single precision or 17th significant
+  --           digit for double precision will be given as 0 and cannot
+  --           be considered accurate.
+  --           If string overflows this routine acts as an invalid process.
+  --{{{  Case i
+  -- Case (i):    Ip = 0, Dp = 0  => free format
+  --           Where possible a fixed point representation is used.  If
+  --           it is not used then exponential form is used.  It is not
+  --           used if more than 9 | 17 significant digits of accuracy
+  --           ( single | double ) would be required before the decimal
+  --           point, or if there are more than 3 zeroes after the decimal
+  --           point before the first significant digit.  In any case, the
+  --           maximum number of characters returned in string is 15 for a
+  --           single precision X, and 24 for a double precision X.
+  --           string is left justified.
+  --           If X is infinity or a NaN, then the string will contain one
+  --           of "Inf", "-Inf" or "NaN", but not the quotes.
+  --}}}
+  --{{{  Case ii
+  -- Case (ii):   Ip = 0, Dp > 0  => exponential format
+  --           The form of exponential format is, firstly either a minus
+  --           sign or a space ( this latter instead of an explicit plus
+  --           sign ), a fraction in the form <digit>.<digits>, the
+  --           exponential symbol ( E ), the sign of the exponent ( + or
+  --           - ), then the exponent, which is two digits for a single
+  --           precision X, three digits for a double precision X.  Dp
+  --           gives the number of digits in the fraction ( 1 before the
+  --           point, and the others after, but not counting the point ).
+  --           The total number of characters in string is ( Dp + 6 )
+  --           for a single precision X, and ( Dp + 7 ) for a double
+  --           precision X.
+  --           If Dp = 1 then the fraction is of the form <space>digit
+  --           ( which, note, will not result in occam syntax for the
+  --           real ).
+  --           If X is infinity or a NaN, then the string will contain one
+  --           of " Inf", "-Inf" or " NaN", but not the quotes, padded on
+  --           the right to fill the field width.
+  --}}}
+  --{{{  Case iii
+  -- Case (iii):  Ip > 0, Dp > 0  => fixed point if possible
+  --           Ip gives the number of places before the point, not
+  --           counting the sign place; Dp the number of places after
+  --           the point.  Padding spaces are added on the left as
+  --           necessary.  If the number will not fit the format,
+  --           then an exponential format is used with the same field
+  --           width as the fixed point representation would have had.
+  --           If Ip and Dp are very small then an exponential
+  --           representation may not fit in the field width so the
+  --           special value "Ov" with a sign is returned.
+  --           There are always ( Ip + Dp + 2 ) characters in string,
+  --           the 2 being the decimal point and the sign ( - or space ).
+  --           If X is infinity or a NaN, then the string will contain one
+  --           of " Inf", "-Inf" or " NaN", but not the quotes, padded on
+  --           the right to fill the field width.
+  --}}}
+  -- All other combinations of Ip and Dp are meaningless and will cause
+  --           an error.
+  --}}}
+  --}}}
+  --{{{  history
+  -- V1.0, 1-Jul-88
+  -- Added V to the OPTIONs; V1.1, 22-Mar-90 SRH
+  -- Formatting completely revamped; bug report number TS/37; V1.2,
+  -- 26-Apr-90 SRH
+  -- Added more comments; 5-Oct-90 SRH
+  -- Removed the test Xexp >= ( 2 * BitsPerWord ) from Round because
+  -- redundant; V1.3, 11-Oct-90 SRH
+  -- Removed redundant bit of code ( that which used to output Un ); also
+  -- corrected the rounding of numbers almost midway between two other
+  -- numbers - round.direction introduced; bug report number TS/789; also
+  -- made various variable name changes to improve readability of code; V1.4,
+  -- 28-Nov-90 SRH
+  -- Added assignment to zero of Guard in DScaleX when overflow to
+  -- infinity; this prevents possible addition of 1 to infinity to
+  -- make a NaN; V1.5, 4-Dec-90 SRH
+  --}}}
+  --{{{  more information
+  -- To help understand the binary to character conversion see "Contributions
+  -- to a Proposed Standard for Binary Floating-Point Arithmetic" by J T Coonen,
+  -- PhD thesis, 1984, University of California, Berkeley.
+  --}}}
+
+  #IF (TARGET.BITS.PER.WORD = 32)
+  VAL [2]INT X RETYPES X :
+
+  --{{{  Definitions
+  --{{{  Word length specific values for 32 bit machine
+  VAL SignBit        IS #80000000 :
+  VAL BitsPerWord    IS        32 :
+  VAL MaxUnsignedInt IS #FFFFFFFF :
+  VAL BytesPerWord   IS         4 :
+  --}}}
+  --{{{  IEEE Double length constants for 32 bit implementation
+  VAL DRealShift  IS        11 :
+  VAL DBitsInFrac IS        53 :
+  VAL DRealExpSh  IS        20 :
+  VAL DRealExp    IS      #7FF :
+  VAL DRealXcess  IS      1023 :
+  VAL DRealRBit   IS      #400 :
+  VAL DRealInf    IS #7FF00000 :
+  --}}}
+  --{{{  read/write constants
+  -- write number constants
+  VAL Table10 IS    27 :  --exact power of ten in word
+  VAL Bias10  IS     4 :  --extras for full power ten range
+  VAL MaxDecN IS    17 :  --maximum dec digits; IEEE 754-1985, Sec 5.6
+  VAL R2L     IS #4D10 :  --Log10(2) = 0.3010299956639811952 in low half word
+  
+  -- The table PowerTenFrac contains the fraction with implicit bit
+  -- explicit and then normalized so that there is a one bit in bit 31
+  -- of powers of 10 from 10^0 to 10^27.  For example,
+  -- 10^3 = 1111101000 in binary, which is 1.111101 * 2^9; so the fraction
+  -- bits, with implicit bit explicit ( ie the 1 before the point kept ) is
+  -- 1111101, and the actual exponent is 9.  This latter ( the actual
+  -- exponent ) is what is in the corresponding table PowerTenExp.
+  -- The index of an entry is the same as the power of 10 in
+  -- PowerTenExp; hence PowerTenExp[ 3 ] = 9.  For PowerTenFrac twice
+  -- the power of 10 gives the index of the lower word of the fraction,
+  -- the upper word being in the next element; hence
+  -- PowerTenFrac[ 2 * 3 ] = #00000000 and
+  -- PowerTenFrac[ 2 * 3 + 1 ] = #FA000000.
+  -- These two tables of constants are simply set up in advance for
+  -- efficiency.
+  VAL PowerTenFrac IS [#00000000, #80000000, #00000000, #A0000000,
+   #00000000, #C8000000, #00000000, #FA000000, #00000000, #9C400000,
+   #00000000, #C3500000, #00000000, #F4240000, #00000000, #98968000,
+   #00000000, #BEBC2000, #00000000, #EE6B2800, #00000000, #9502F900,
+   #00000000, #BA43B740, #00000000, #E8D4A510, #00000000, #9184E72A,
+   #80000000, #B5E620F4, #A0000000, #E35FA931, #04000000, #8E1BC9BF,
+   #C5000000, #B1A2BC2E, #76400000, #DE0B6B3A, #89E80000, #8AC72304,
+   #AC620000, #AD78EBC5, #177A8000, #D8D726B7, #6EAC9000, #87867832,
+   #0A57B400, #A968163F, #CCEDA100, #D3C21BCE, #401484A0, #84595161,
+   #9019A5C8, #A56FA5B9, #F4200F3A, #CECB8F27] :
+  
+  VAL PowerTenExp IS [0, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36,
+   39, 43, 46, 49, 53, 56, 59, 63, 66, 69, 73, 76, 79, 83, 86, 89] :
+  
+  VAL BiasTenFrac IS [0, 0, #F4200F3A, #CECB8F27, #CFE20766, #D0CF4B50,
+   #1A708DEA, #DA01EE64, #BD203E41, #9F79A169] : --P27, P55, P108, P206
+  
+  VAL BiasTenExp IS [0, 89, 182, 358, 684] :
+  
+  VAL BiasTen IS [0, 27, 55, 108, 206] :
+  --}}}
+  --{{{  rounding constants
+  VAL INT rounded.down IS -1 :
+  VAL INT exact        IS  0 :
+  VAL INT rounded.up   IS  1 :
+  --}}}
+  --}}}
+  --{{{  INT, INT, INT FUNCTION RealIMul (VAL [2]INT X, Y)
+  --{{{  #options and #comments
+  -- #OPTION "E V"  -- no compiler libs, no vector space
+  #COMMENT "Support routines library, V1.2, 10/03/90"
+  #COMMENT "(c) Copyright INMOS Limited 1988"
+  --}}}
+  --{{{  COMMENT PRAGMAs
+  --#ifdef OCCAM
+  --#PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
+  --#else
+  --#ifdef C
+  --#PRAGMA TRANSLATE RealIMul "RealIMul%"
+  --#else
+  --#ifdef FORTRAN
+  --#PRAGMA TRANSLATE RealIMul "RealIMul%"
+  --#endif
+  --#endif
+  --#endif
+  --}}}
+  --{{{  INT, INT, INT FUNCTION RealIMul (VAL [2]INT X, Y)
+  INT, INT, INT FUNCTION RealIMul (VAL [2]INT X, Y)
+  
+    --{{{  history
+    -- V1.1, 21-Feb-89
+    -- Amalgamated T2 and TB/T8 code; V1.2, 10-Mar-90 SRH
+    --}}}
+  
+    --{{{  real stuff
+    INT R.hi, R.lo, Guard :
+    VALOF
+      INT Carry :
+      [4]INT D  :
+      -- PLACE D IN WORKSPACE :
+      --{{{
+      SEQ
+        Carry,  D[0] := LONGPROD ( X[0],  Y[0],  0)
+        Carry,  D[1] := LONGPROD ( X[0],  Y[1],  Carry)
+        D[3],   D[2] := LONGPROD ( X[1],  Y[0],  0)
+        R.hi,   R.lo := LONGPROD ( X[1],  Y[1],  Carry)
+        Carry, Guard := LONGSUM ( D[2],  D[1],  0)
+        Carry,  R.lo := LONGSUM ( R.lo,  D[3],  Carry)
+        Carry,  R.hi := LONGSUM ( R.hi,  0,  Carry)
+        IF
+          D[0] = 0        -- no sticky bits
+            SKIP
+          TRUE            -- set sticky bit
+            Guard := Guard \/ 1
+      --}}}
+      RESULT R.hi, R.lo, Guard
+    --}}}
+    --{{{  COMMENT dummy stuff
+    --VALOF
+      --SKIP
+      --RESULT 1, 1, 1
+    --}}}
+  :
+  --}}}
+  --}}}
+  --{{{  INT, INT, INT FUNCTION RealIDiv
+  --{{{  #options and #comments
+  -- #OPTION "E V"  -- no compiler libs, no vector space
+  #COMMENT "Support routines library, V1.2, 10/03/90"
+  #COMMENT "(c) Copyright INMOS Limited 1988"
+  --}}}
+  --{{{  COMMENT PRAGMAs
+  --#ifdef OCCAM
+  --#PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
+  --#else
+  --#ifdef C
+  --#PRAGMA TRANSLATE RealIDiv "RealIDiv%"
+  --#else
+  --#ifdef FORTRAN
+  --#PRAGMA TRANSLATE RealIDiv "RealIDiv%"
+  --#endif
+  --#endif
+  --#endif
+  --}}}
+  --{{{  INT, INT, INT FUNCTION RealIDiv
+  INT, INT, INT FUNCTION RealIDiv (VAL INT Hi, Lo, Guard, VAL [2]INT Yfrac)
+  
+    --{{{  specification
+    -- Purpose:  To perform an unsigned part divide operation.
+    -- Returned: The quotient, the most significant word of the remainder;
+    --           the least significant word of the remainder
+    -- In:       Hi - the most significant word of the dividend
+    -- In:       Lo - the middle word of the dividend
+    -- In:       Guard - the least significant word of the dividend
+    -- In:       Yfrac - the two words of the divisor
+    --}}}
+    --{{{  history
+    -- V1.1, 21-Feb-89
+    -- Amalgamated the T2 and TB/T8 code; V1.2, 10-Mar-90; SRH
+    --}}}
+  
+    --{{{  real stuff
+    INT Quot, Rem.Hi, Rem.Lo :
+    
+    VALOF
+      INT Carry, Borrow :
+      [3]INT W :
+      -- PLACE W IN WORKSPACE :
+      --{{{
+      SEQ
+        IF
+          Yfrac[1] = Hi
+            Quot := (~0)
+          TRUE
+            Quot,  Carry := LONGDIV ( Hi,  Lo,  Yfrac[1] )
+        IF
+          Quot <> 0   -- ensure not to big
+            SEQ
+              W[1],  W[0] := LONGPROD ( Quot,  Yfrac[0],  0 )
+              W[2],  W[1] := LONGPROD ( Quot,  Yfrac[1],  W[1] )
+              Carry,  Rem.Lo := LONGDIFF ( Guard,  W[0],  0 )
+              Carry,  Rem.Hi := LONGDIFF ( Lo,  W[1],  Carry )
+              Carry,  Borrow := LONGDIFF ( Hi,  W[2],  Carry )
+              WHILE ( Borrow /\ (MOSTNEG INT) ) <> 0   -- too big, add back
+                SEQ
+                  Quot := Quot MINUS 1
+                  Carry,  Rem.Lo := LONGSUM ( Rem.Lo,  Yfrac[0],  0 )
+                  Carry,  Rem.Hi := LONGSUM ( Rem.Hi,  Yfrac[1],  Carry )
+                  Carry,  Borrow := LONGSUM ( Borrow,  0,  Carry )
+          TRUE
+            SEQ
+              Rem.Hi := Lo
+              Rem.Lo := Guard
+      --}}}
+      RESULT Quot, Rem.Hi, Rem.Lo
+    --}}}
+    --{{{  COMMENT dummy stuff
+    --VALOF
+      --SKIP
+      --RESULT 1, 1, 1
+    --}}}
+  :
+  --}}}
+  --}}}
+  --{{{  DScaleX
+  PROC DScaleX (INT Xexp, [2]INT Xfrac, VAL INT Scale, INT direction)
+  
+    -- Scale X by value of 10^Scale
+  
+    INT Carry, Guard, N, Places, S, Zexp, dummy :
+    [2]INT Zfrac :
+    SEQ
+      --{{{  get abs value of Scale
+      IF
+        Scale < 0
+          S := -Scale
+        TRUE
+          S := Scale
+      --}}}
+      --{{{  set Z to 1
+      Zexp := 0
+      Zfrac[1] := SignBit
+      Zfrac[0] := 0
+      --}}}
+      --{{{  set Zexp and Zfrac - evaluate 10^S
+      N := Bias10
+      WHILE N >= 0
+        IF
+          (N > 0) AND (S < BiasTen[N])
+            N := N - 1                      --don't need this power
+          TRUE
+            SEQ
+              IF
+                (N = 0) AND (S <= Table10)  --final scale factor
+                  SEQ
+                    Zfrac[1], Zfrac[0], Guard :=
+                      RealIMul (Zfrac, [PowerTenFrac FROM (S + S) FOR 2])
+                    Zexp := (Zexp + PowerTenExp[S]) + 1
+                TRUE
+                  SEQ
+                    Zfrac[1], Zfrac[0], Guard :=
+                      RealIMul (Zfrac, [BiasTenFrac FROM (N + N) FOR 2])
+                    S := S - BiasTen[N]
+                    Zexp := (Zexp + BiasTenExp[N]) + 1
+              --{{{  Normalise and round Z
+              Places, Zfrac[1], dummy := NORMALISE (Zfrac[1], Zfrac[0])
+              Zfrac[0], Guard         := SHIFTLEFT (Zfrac[0], Guard, Places)
+              Zexp := Zexp - Places
+              IF
+                (Guard /\ SignBit) = 0      --no need to round up
+                  SKIP
+                TRUE
+                  SEQ
+                    Carry, Zfrac[0] := LONGSUM (Zfrac[0], 1, 0)
+                    Carry, Zfrac[1] := LONGSUM (Zfrac[1], 0, Carry)
+                    IF
+                      Carry = 0
+                        SKIP
+                      TRUE                  --carry out to exp
+                        SEQ
+                          Zexp := Zexp + 1
+                          Zfrac[1] := SignBit--"Shift" carry back into fractional part
+              --}}}
+              N := N - 1                    --go down for next exponent
+      --}}}
+      --{{{  set Xexp, Xfrac and Guard
+      IF
+        --{{{  Scale was out of range so return a very big/small number
+        S > Table10
+          SEQ
+            IF
+              Scale > 0
+                Xexp := DRealExp
+              TRUE
+                Xexp := -DRealExp
+            Xfrac[1] := SignBit               --prevent normalisation
+            Xfrac[0] := 0
+            Guard := 0
+        --}}}
+        --{{{  scale down - divide X by Z
+        Scale < 0
+          SEQ
+            Xexp := Xexp - Zexp
+            -- least significant bit of Xfrac[0] is not set,
+            -- so the SHIFTRIGHT by l will not loose information
+            Xfrac[1], Xfrac[0] := SHIFTRIGHT (Xfrac[1], Xfrac[0], 1)
+            Xfrac[1], Xfrac[0], Guard := RealIDiv (Xfrac[1], Xfrac[0],
+                                                   0, Zfrac)
+            Xfrac[0], Guard, Carry := RealIDiv (Xfrac[0], Guard, 0, Zfrac)
+        
+            -- original code ( V1.3 ) to assign Guard:
+            --INT Borrow :
+            --SEQ                               --now see if over half lef
+            --  Zfrac[1], Zfrac[0] := SHIFTRIGHT (Zfrac[1], Zfrac[0], 1)
+            --  Borrow, dummy := LONGDIFF (Carry, Zfrac[0], 0)
+            --  Borrow, dummy := LONGDIFF (Guard, Zfrac[1], Borrow)
+            --  IF
+            --    Borrow = 0                       --over half left
+            --      Guard := SignBit
+            --    TRUE
+            --      Guard := 0
+            --{{{  obtain more accurate value of Guard ( V1.4 ) - matters in assignment of direction
+            IF
+              ( Guard = 0 ) AND ( Carry = 0 )
+                SKIP                            --divided exactly
+              TRUE
+                INT Rem.hi, Rem.lo :
+                Guard, Rem.hi, Rem.lo := RealIDiv( Guard, Carry, 0, Zfrac )
+                -- Guard is not zero now if this branch of the IF taken
+            --}}}
+        --}}}
+        --{{{  scale up - multiply X by Z
+        TRUE
+          SEQ
+            Xexp := (Xexp + Zexp) + 1
+            Xfrac[1], Xfrac[0], Guard := RealIMul (Xfrac, Zfrac)
+        --}}}
+      --}}}
+      --{{{  normalise result
+      Places, Xfrac[1], dummy := NORMALISE (Xfrac[1], Xfrac[0])
+      Xfrac[0], Guard         := SHIFTLEFT (Xfrac[0], Guard, Places)
+      Xexp := Xexp - Places
+      --}}}
+      --{{{  round and set direction
+      IF
+        Guard = 0
+          direction := exact
+        (Guard /\ SignBit) = 0
+          direction := rounded.down
+        TRUE
+          SEQ
+            direction := rounded.up
+            Carry, Xfrac[0] := LONGSUM (Xfrac[0], 1, 0)
+            Carry, Xfrac[1] := LONGSUM (Xfrac[1], 0, Carry)
+            IF
+              Carry <> 0
+                SEQ
+                  Xexp := Xexp + 1
+                  Xfrac[1] := SignBit
+              TRUE                      --no overflow to exp
+                SKIP
+      --}}}
+  :
+  --}}}
+  --{{{  QuickLog
+  PROC QuickLog (INT LogX, VAL INT Xexp, VAL [2]INT Xfrac)
+  
+    -- Purpose: To be a cheap approximation of floor( Log10( X ) ), so
+    --          cheap that it may be 1 too small.
+    -- Out:     LogX - either floor( log10( X ) ) or floor( log10( X ) ) - 1
+    -- In:      Xexp - actual exponent, i.e. biased exponent - RealXcess
+    -- In:      Xfrac - fractional part with the implicit bit explicit
+    --          ( and normalised if from a denormal ) so that bit 31
+    --          is 1
+    -- Notes:   If Xexp = 0 = Xfrac, then LogX is returned as 0.
+  
+    INT X, dummy :
+    SEQ
+      -- Use approximation of Log2( 1.f * 2^e ) as e.f, due to
+      -- 0.f <= log2( 1.f ), with a maximum deviation of about 0.086
+      dummy, X := SHIFTRIGHT (Xexp, Xfrac[1] << 1, BitsPerWord / 2)
+      IF
+        X < 0                                     --log2 may be small
+          INT low.word, Borrow :
+          SEQ
+            X, low.word   := LONGPROD (-X, R2L + 1, 0)
+            Borrow, dummy := LONGDIFF (0, low.word, 0)
+            Borrow, LogX  := LONGDIFF (0, X, Borrow)
+        TRUE                                      --log2 about right
+          LogX, dummy := LONGPROD (X, R2L, 0)     --mul by Log10(2)
+  :
+  --}}}
+  --{{{  Round
+  PROC Round (INT Xexp, [2]INT Xfrac, Xint, INT direction)
+  
+    --{{{  specification
+    -- Purpose: To round a real number to the nearest integer.
+    -- In/Out:  Xexp - actual exponent, not biased one: on entry, of the
+    --          number to round; on exit, of the rounded number
+    -- In/Out:  Xfrac - the fractional part of the real with implicit bit
+    --          explicit: on entry, of the number to round; on exit, of the
+    --          rounded number
+    -- Out:     Xint - the nearest integer that the combination of Xexp
+    --          and Xfrac on entry give
+    -- In/Out:  direction - this parameter is applicable only for numbers
+    --          ending in 5: equal to -1 if the exact value was
+    --          rounded down; equal to 0 if the value on entry is
+    --          exact; equal to +1 if the exact value was rounded up
+    -- Notes:   ( Xexp on entry ) < ( 2 * the number of bits per word ) is
+    --          assumed.
+    --          This procedure only caters for non-negative numbers.
+    --}}}
+  
+    INT Carry, Places, Guard, dummy :
+    IF
+      Xexp >= BitsPerWord
+        SEQ
+          --{{{  in word shift
+          Places := (BitsPerWord * 2) - (Xexp + 1)
+          Xint[1], Xint[0] := SHIFTRIGHT (Xfrac[1], Xfrac[0], Places)
+          dummy, Guard     := SHIFTRIGHT (Xfrac[0], 0, Places)
+          IF
+            Guard = 0                    --no rounding to do
+              SKIP                       --leave direction as is
+            (Guard /\ SignBit) = 0       --do not round
+              direction := rounded.down  --no matter what direction was on entry
+            (Guard /\ (~SignBit)) = 0    --exactly half, since we already know that
+                                         --(Guard /\ SignBit) <> 0
+              IF
+                direction = exact
+                  IF                     --make sure that the lsb of Xint is zero
+                    (Xint[0] /\ 1) = 0   --lsb of Xint is already zero
+                      direction := rounded.down
+                    TRUE
+                      SEQ                --round up integer
+                        direction := rounded.up
+                        Carry, Xint[0] := LONGSUM (Xint[0], 1, 0)
+                        Carry, Xint[1] := LONGSUM (Xint[1], 0, Carry)
+                direction = rounded.up
+                  direction := rounded.down
+                TRUE                     --direction = rounded.down
+                  SEQ                    --round up integer
+                    direction := rounded.up
+                    Carry, Xint[0] := LONGSUM (Xint[0], 1, 0)
+                    Carry, Xint[1] := LONGSUM (Xint[1], 0, Carry)
+            TRUE                         --Guard > #80000000
+              SEQ                        --round up integer
+                direction := rounded.up
+                Carry, Xint[0] := LONGSUM (Xint[0], 1, 0)
+                Carry, Xint[1] := LONGSUM (Xint[1], 0, Carry)
+          -- Now obtain the Xexp and Xfrac appropriate to Xint: they are not
+          -- necessarily as on entry because of the possible rounding up that
+          -- was performed on Xint.
+          Xfrac[1], Xfrac[0] := SHIFTLEFT (Xint[1], Xint[0], Places)
+          Carry, dummy := SHIFTLEFT (0, Xint[1], Places) --see if carry to exp
+          Xexp := Xexp + Carry
+          --}}}
+      TRUE
+        SEQ
+          --{{{  past word shift
+          Places := BitsPerWord - (Xexp + 1)
+          Xint[1] := 0
+          Xint[0], Guard := SHIFTRIGHT (Xfrac[1], Xfrac[0], Places)
+          -- make sure that Guard reflects the situation; the SHIFTRIGHT may
+          -- have lost bits of Xfrac[ 0 ]
+          IF
+            ( Xfrac[0] = 0 ) OR          --no sticky bits
+            ( Places = 0 )               --Guard = Xfrac[0]
+              SKIP
+            TRUE
+              Guard := Guard \/ 1
+          IF
+            Guard = 0                    --no rounding to do
+              SKIP                       --leave direction as is
+            (Guard /\ SignBit) = 0       --do not round
+              direction := rounded.down  --no matter what direction was on entry
+            (Guard /\ (~SignBit)) = 0    --exactly half
+              IF
+                direction = exact
+                  IF                     --make sure that the lsb of Xint is zero
+                    (Xint[0] /\ 1) = 0   --lsb of Xint is already zero
+                      direction := rounded.down
+                    TRUE
+                      SEQ                --round up integer
+                        direction := rounded.up
+                        Carry, Xint[0] := LONGSUM (Xint[0], 1, 0)
+                        Carry, Xint[1] := LONGSUM (Xint[1], 0, Carry)
+                direction = rounded.up
+                  direction := rounded.down
+                TRUE                     --direction = rounded.down
+                  SEQ
+                    direction := rounded.up
+                    Carry, Xint[0] := LONGSUM (Xint[0], 1, 0)
+                    Carry, Xint[1] := LONGSUM (Xint[1], 0, Carry)
+            TRUE                         --Guard > #80000000
+              SEQ                        --round up integer
+                direction := rounded.up
+                Carry, Xint[0] := LONGSUM (Xint[0], 1, 0)
+                Carry, Xint[1] := LONGSUM (Xint[1], 0, Carry)
+          --
+          Carry, Xfrac[1] := SHIFTLEFT (Xint[1], Xint[0], Places)
+          Xfrac[0] := 0
+          IF
+            Carry <> 0
+              SEQ
+                Xexp := Xexp + Carry
+                Xfrac[1] := SignBit
+            TRUE
+              SKIP
+          --}}}
+  :
+  --}}}
+  --{{{  WriteDec
+  PROC WriteDec ([]BYTE Buf, INT Length, VAL []INT Num)
+  
+    --{{{  specification
+    -- Purpose: To take an unsigned integer and convert it to the
+    --          corresponding ASCII string, with the caveat that
+    --          trailing zeros are not written.
+    -- Out:     Buf - contains the ASCII string representing the
+    --          integer ( Num ) ( apart from trailing zeros ); the
+    --          string is [ Buf FROM 0 FOR Length ]
+    -- Out:     Length - the number of meaningful characters in Buf
+    -- In:      Num - the integer to be converted, assumed unsigned:
+    --          numbers from 0 to 4,294,967,295 inclusive, for 32-bit
+    --          processors, or 0 to 65535 inclusive, for 16-bit
+    --          processors
+    -- Notes:   An example of what is meant by not writing trailing
+    --          zeros to Buf: if Num = 30, Length will be 1 and
+    --          Buf[ 0 ] = '3' will be the only defined character
+    --          in Buf.
+    --}}}
+  
+    [2]INT N :
+    INT ix, iy, T :
+    SEQ
+      N[0] := Num[0]
+      N[1] := Num[1]
+      ix := 0                           --build in reverse order
+      WHILE (N[1] \/ N[0]) <> 0
+        SEQ
+          --{{{  effect N := N / 10; T := N REM 10
+          N[1], T := LONGDIV (0, N[1], 10)
+          N[0], T := LONGDIV (T, N[0], 10)
+          --}}}
+          IF
+            (ix \/ T) = 0               --dump trailing zeros
+              SKIP
+            TRUE
+              SEQ
+                Buf[ix] := (BYTE (T + (INT '0'))) --convert from integer to ASCII equivalent
+                ix := ix + 1
+      Length := ix
+      --{{{  reverse the list of digits
+      ix := ix - 1                      --index of last digit
+      iy := 0                           --index of first digit
+      WHILE iy < ix
+        BYTE b :
+        SEQ                             --swap two elements
+          #PRAGMA DEFINED Buf
+          b := Buf[ix]
+          Buf[ix] := Buf[iy]
+          Buf[iy] := b
+          iy := iy + 1
+          ix := ix - 1
+      --}}}
+  :
+  --}}}
+  --{{{  restrict
+  PROC restrict ([]BYTE Buf, INT Places, LogX, VAL INT digits, INT direction)
+  
+    --{{{  specification
+    -- Purpose: To round a number that is given in the form of a character
+    --          string.
+    -- In/Out:  Buf - the character string holding the number, assumed not to
+    --          have trailing zeroes
+    -- In/Out:  Places - the actual number of characters in the string
+    -- In/Out:  LogX - floor( log10( number in Buf ) )
+    -- In:      digits - the number of digits wanted in the rounded number;
+    --          assumed greater than or equal to zero
+    -- In/Out:  direction - this parameter is applicable only for numbers
+    --          in Buf ending in 5: equal to -1 if the exact value was
+    --          rounded down; equal to 0 if the value in Buf is
+    --          exact; equal to +1 if the exact value was rounded up
+    -- Notes:   "... if the two nearest representable values are equally near,
+    --          the one with its least significant bit zero shall be delivered."
+    --          IEEE 754-1985, Sec 4.1.  LSB zero <=> last digit is even.
+    --          Any resultant trailing zeroes in Buf are elided.
+    --}}}
+  
+    SEQ
+      #PRAGMA DEFINED Buf
+      IF
+        digits >= Places
+          SKIP                              --nothing to do
+        TRUE
+          INT pos, carry :
+          BOOL exactly.half, round.up :
+          --{{{  check for rounding, and do if necessary
+          SEQ
+            --{{{  set exactly.half
+            IF
+              Buf[digits] = '5'   --then we must check for 0.50000....
+                SEQ
+                  exactly.half := TRUE
+                  SEQ i = 1 FOR ( ( Places - digits ) - 1 )  --Places - digits - 1 >= 0
+                    IF
+                      exactly.half
+                        exactly.half := ( Buf[digits + i] = '0' )
+                      TRUE
+                        SKIP
+              TRUE
+                exactly.half := FALSE
+            --}}}
+            --{{{  set round.up
+            IF
+              exactly.half
+                -- round up if direction = rounded.down; round up if direction = exact
+                -- and digit before 5 is odd; else leave as is
+                IF
+                  digits = 0
+                    round.up := FALSE
+                  direction = rounded.down
+                    round.up := TRUE
+                  TRUE
+                    round.up :=  ( direction = exact ) AND
+                                 ( ( Buf[digits - 1] = '1' ) OR
+                                   ( Buf[digits - 1] = '3' ) OR
+                                   ( Buf[digits - 1] = '5' ) OR
+                                   ( Buf[digits - 1] = '7' ) OR
+                                   ( Buf[digits - 1] = '9' ) )
+              TRUE
+                round.up := Buf[digits] >= '5'
+            --}}}
+            IF
+              round.up
+                --{{{  round up
+                SEQ
+                  direction := rounded.up
+                  pos := digits - 1         --index of first digit to increment
+                  carry := 1
+                  WHILE (pos >= 0) AND (carry = 1)
+                    SEQ
+                      carry := (INT Buf[pos]) + carry
+                      IF
+                        carry > (INT '9')
+                          SEQ
+                            Buf[pos] := (BYTE (carry - 10))
+                            carry := 1
+                        TRUE
+                          SEQ
+                            Buf[pos] := (BYTE carry)
+                            carry := 0
+                      pos := pos - 1
+                  --{{{  check for overflow on increment
+                  IF
+                    carry = 1
+                      SEQ
+                        Buf[0] := '1'
+                        Places := 1
+                        LogX := LogX + 1    --overflowed into extra digit
+                    TRUE
+                      Places := digits
+                  --}}}
+                --}}}
+              TRUE
+                SEQ
+                  direction := rounded.down --cannot be exact because no trailing zeroes in Buf
+                  Places := digits          --no rounding up to do
+          --}}}
+      WHILE (Places > 1) AND (Buf[Places - 1] = '0')
+        Places := Places - 1                --drop trailing zeroes
+  :
+  --}}}
+  --{{{  put.byte
+  PROC put.byte (VAL BYTE byte)
+    SEQ
+      string[len] := byte
+      len := len + 1
+  :
+  --}}}
+
+  --{{{  declarations
+  [ MaxDecN ]BYTE Buf, Buf.1 :
+  INT Carry, LogX, N, Y, Places, Scale, LogX.1, Places.1, dummy :
+  INT Xexp, Yexp :
+  [ 2 ]INT Xfrac, Yfrac, Xint :
+  INT round.direction :
+  VAL INT max.no.of.zeroes.before.first.significant.digit IS 3 :
+  VAL BYTE decimal.point IS '.' :
+  --}}}
+
+  --{{{  main body
+  #PRAGMA DEFINED len, string
+  IF
+    ( Ip < 0 ) OR ( Dp < 0 ) OR ( ( Ip > 0 ) AND ( Dp = 0 ) )
+      STOP
+    TRUE
+      SEQ
+        --{{{  working body
+        len := 0
+        Xexp, Xfrac[1] := SHIFTLEFT (0, X[1] /\ (~SignBit), DRealShift + 1)
+        IF
+          Xexp = DRealExp
+            --{{{  inf or NaN
+            SEQ
+              --{{{  output sign
+              IF                                  --output sign
+                ((X[1] /\ SignBit) = 0) OR ((Xfrac[1] \/ X[0]) <> 0) -- +ve or NaN
+                  IF
+                    Dp = 0                        --free format
+                      SKIP
+                    TRUE
+                      put.byte (' ')
+                TRUE
+                  put.byte ('-')
+              --}}}
+              IF
+                (Xfrac[1] = 0) AND (X[0] = 0)
+                  [string FROM len FOR 3] := "Inf"
+                TRUE
+                  [string FROM len FOR 3] := "NaN"
+              len := len + 3
+              --{{{  space fill
+              IF
+                Ip <> 0                        --pad with spaces
+                  SEQ i = 0 FOR (Ip + Dp) - 2  --so that there is a total of Ip + Dp + 2
+                    put.byte (' ')
+                Dp <> 0
+                  SEQ i = 0 FOR Dp + 3         --include E+nnn; total of Dp + 7
+                    put.byte (' ')
+                TRUE                           --Ip=0, Dp=0  =>  free format
+                  SKIP
+              --}}}
+            --}}}
+          ((Xexp \/ Xfrac[1]) \/ X[0]) = 0
+            --{{{  zero
+            SEQ
+              --{{{  pad on left with spaces if fixed point
+              IF
+                Ip = 0
+                  SKIP
+                TRUE                             --fixed point
+                  SEQ i = 0 FOR Ip - 1
+                    put.byte (' ')
+              --}}}
+              --{{{  output sign
+              IF
+                ((X[1] /\ SignBit) = 0)
+                  IF
+                    Dp = 0                        --free format
+                      SKIP
+                    TRUE
+                      put.byte (' ')
+                TRUE
+                  put.byte ('-')
+              --}}}
+              IF
+                Dp = 0
+                  --{{{  free format
+                  SEQ
+                    put.byte('0')
+                    put.byte(decimal.point)
+                    put.byte('0')
+                  --}}}
+                Ip <> 0
+                  --{{{  fixed point
+                  SEQ
+                    put.byte('0')
+                    put.byte(decimal.point)
+                    SEQ j = 1 FOR Dp
+                      put.byte('0')
+                  --}}}
+                TRUE
+                  --{{{  exponential format
+                  SEQ
+                    IF
+                      Dp = 1
+                        put.byte(' ')
+                      TRUE
+                        SKIP
+                    put.byte('0')
+                    IF
+                      Dp = 1
+                        SKIP
+                      TRUE
+                        SEQ
+                          put.byte(decimal.point)
+                          SEQ i = 1 FOR Dp - 1
+                            put.byte('0')
+                    put.byte('E')
+                    put.byte('+')
+                    put.byte('0')
+                    put.byte('0')
+                    put.byte('0')
+                  --}}}
+            --}}}
+          TRUE
+            --{{{  proper value
+            SEQ
+              --{{{  Split exponent and mantissa
+              IF
+                Xexp = 0                    --ensure normal
+                  SEQ
+                    Xfrac[1], Xfrac[0] := SHIFTLEFT (X[1], X[0], DRealShift + 1)
+                    Places, Xfrac[1], Xfrac[0] := NORMALISE (Xfrac[1], Xfrac[0])
+                    Xexp := -(Places + DRealXcess)
+                TRUE                        --get correct fraction
+                  SEQ
+                    Xfrac[1], Xfrac[0] := SHIFTLEFT (X[1], X[0], DRealShift)
+                    Xfrac[1] := Xfrac[1] \/ SignBit
+                    Xexp := Xexp - DRealXcess
+              --}}}
+              --{{{  produce the numbers string representation
+              --{{{  get field width
+              IF
+                Dp <> 0
+                  SEQ
+                    N := Ip + Dp            --significant digits
+                    IF
+                      N > MaxDecN           --don't print too many
+                        N := MaxDecN
+                      TRUE
+                        SKIP
+                TRUE
+                  N := MaxDecN              --default
+              --}}}
+              --{{{
+              Yexp := Xexp                  --save extended X
+              Yfrac[1] := Xfrac[1]
+              Yfrac[0] := Xfrac[0]
+              QuickLog (LogX, Xexp, Xfrac)  --get log
+              Scale := (N - 1) - LogX
+              DScaleX (Xexp, Xfrac, Scale, round.direction) --get X in range
+              Round (Xexp, Xfrac, Xint, round.direction)    --now as integer
+              -- now check that the rounding or too small a value of LogX has not
+              -- given us more digits than we originally asked for, and take
+              -- appropriate action if it did
+              Carry, dummy := LONGDIFF (Xfrac[0], PowerTenFrac[N + N], 0)
+              Carry, dummy := LONGDIFF (Xfrac[1], PowerTenFrac[(N + N) + 1], Carry)
+              --}}}
+              --{{{
+              IF
+                (Xexp > PowerTenExp[N]) OR ((Xexp = PowerTenExp[N]) AND (Carry = 0))
+                  SEQ
+                    LogX := LogX + 1        --new scale
+                    Xexp := Yexp            --reset X
+                    Xfrac[1] := Yfrac[1]
+                    Xfrac[0] := Yfrac[0]
+                    DScaleX (Xexp, Xfrac, Scale - 1, round.direction)
+                    Round (Xexp, Xfrac, Xint, round.direction)
+                TRUE                        --X in correct range
+                  SKIP
+              --}}}
+              Carry, dummy := LONGDIFF (Xfrac[0], PowerTenFrac[(N + N) - 2], 0)
+              Carry, dummy := LONGDIFF (Xfrac[1], PowerTenFrac[(N + N) - 1], Carry)
+              --{{{
+              IF
+                (Xexp < PowerTenExp[N - 1]) OR
+                ((Xexp = PowerTenExp[N - 1]) AND (Carry <> 0))
+                  SEQ                       --underflow power ten
+                    Xexp := PowerTenExp[N - 1]
+                    Xfrac[1] := PowerTenFrac[(N + N) - 1]
+                    Xfrac[0] := PowerTenFrac[(N + N) - 2]
+                    Round (Xexp, Xfrac, Xint, round.direction)
+                    LogX := LogX - 1
+                TRUE
+                  SKIP
+              --}}}
+              WriteDec (Buf, Places, Xint)  --get number string
+              --}}}
+              --{{{  output the string in the correct format
+              --{{{  fractional mode
+              #PRAGMA DEFINED Buf
+              IF
+                ( (Ip <> 0) AND (LogX < Ip) ) OR
+                  ( (Dp = 0) AND (LogX < N) AND
+                    (((-max.no.of.zeroes.before.first.significant.digit) - 1 ) <= LogX) )
+                  --{{{  try to output in mmm.nnnn form
+                  SEQ
+                    Y := (Dp + LogX) + 1      --current estimate at actual field width
+                    IF
+                      Y < 0                   --must ensure that Y >= 0
+                        Y := 0
+                      TRUE
+                        SKIP
+                    SEQ i = 0 FOR Places
+                      Buf.1[i] := Buf[i]
+                    Places.1 := Places
+                    LogX.1 := LogX
+                    IF
+                      Dp <> 0
+                        restrict (Buf.1, Places.1, LogX.1, Y, round.direction)
+                      TRUE
+                        SKIP
+                    IF
+                      ( (Ip <> 0) AND (LogX.1 < Ip) ) OR
+                        ( (Dp = 0) AND (LogX.1 < N) AND
+                          (((-max.no.of.zeroes.before.first.significant.digit) - 1 ) <= LogX) )
+                        --{{{  output in mmm.nnnn form
+                        SEQ
+                          --{{{  set Scale
+                          IF
+                            LogX.1 < 0                    --always 0decimal.point
+                              Scale := 1
+                            TRUE
+                              Scale := LogX.1 + 1
+                          --}}}
+                          --the value of Scale is the number of digits that there will be before decimal.point
+                          --{{{  pad with leading spaces to make up desired field width
+                          IF
+                            Ip < Scale
+                              SKIP
+                            TRUE
+                              SEQ i = 0 FOR Ip - Scale
+                                put.byte (' ')
+                          --}}}
+                          N := Scale + Dp                 --reduce remaining field width
+                          --{{{  deal with sign
+                          IF
+                            (X[1] /\ SignBit) = 0         --positive sign
+                              IF
+                                Dp = 0                    --free format
+                                  SKIP
+                                TRUE
+                                  put.byte (' ')
+                            TRUE
+                              put.byte ('-')
+                          --}}}
+                          --{{{  output 0decimal.point for a number < 1
+                          IF
+                            LogX.1 < 0                    --less than 1
+                              SEQ
+                                put.byte ('0')
+                                put.byte (decimal.point)
+                                N := N - 1                -- 1 accounts for 0; decimal.point is taken account of elsewhere
+                            TRUE
+                              SKIP
+                          --}}}
+                          Scale := LogX.1 + 1             --check if < 0
+                          --{{{  insert zeroes after decimal point but before first significant digit ( if there is one )
+                          IF
+                            Dp = 0                        --free format
+                              WHILE Scale < 0
+                                SEQ
+                                  put.byte ('0')
+                                  Scale := Scale + 1
+                            TRUE
+                              WHILE ( Scale < 0 ) AND ( N > 0 )
+                                SEQ
+                                  put.byte ('0')
+                                  Scale := Scale + 1
+                                  N := N - 1                  --a digit has been output
+                          --}}}
+                          Scale := 0                      --places after point
+                          IF
+                            Dp <> 0                       --fixed point
+                              SKIP
+                            TRUE
+                              N := MaxDecN                --free format: use as many digits as possible
+                          restrict (Buf.1, Places.1, LogX.1, N, round.direction)
+                          --{{{  output significant digits and trailing zeroes
+                          SEQ i = 0 FOR N                 --number of valid digits
+                            SEQ
+                              IF
+                                i < Places.1              --in buffer
+                                  put.byte (Buf.1[i])
+                                i <= (LogX.1 + 1)         --integer part (or 0 after point)
+                                  put.byte ('0')
+                                Dp > 0                    --use trailing zeroes; IEEE 754, Sec. 5.6, says we can
+                                  put.byte ('0')
+                                TRUE
+                                  SKIP
+                              IF
+                                i = LogX.1                --decimal point
+                                  put.byte (decimal.point)
+                                TRUE
+                                  SKIP
+                          --}}}
+                          --{{{  deal with situation if ended with decimal point
+                          IF
+                            (LogX.1 + 1) = N              --ended with dec point
+                              put.byte ('0')
+                            TRUE
+                              SKIP
+                          --}}}
+                          Places := 0                     --set flag: number already output
+                        --}}}
+                      TRUE
+                        SKIP  -- has overflowed into exponential form
+                  --}}}
+                TRUE
+                  SKIP
+              --}}}
+              --{{{  exponential - output sign and check forced exponential field width
+              IF
+                Places = 0                  --number already output
+                  SKIP
+                TRUE
+                  --{{{  show sign and adjust field width for forced exponent
+                  SEQ
+                    --{{{  deal with sign
+                    IF
+                      (X[1] /\ SignBit) <> 0
+                        put.byte ('-')
+                      (Dp <> 0)
+                        put.byte (' ')
+                      TRUE
+                        SKIP
+                    --}}}
+                    IF
+                      Ip <> 0                         --exp form forced so make new mantissa width
+                        --{{{
+                        SEQ
+                          N := (Ip + Dp) - 5 --N is here the number of digits in exponential format;
+                                             --total field width is number of digits(N) + 7, but this
+                                             --must also equal Ip+Dp+2. Hence N must be Ip+Dp+2-7.
+                          IF
+                            N < 0
+                              --{{{  display overflow
+                              SEQ
+                                put.byte ('O')
+                                put.byte ('v')
+                                SEQ i = 0 FOR (Ip + Dp) - 1  -- 3 chars of field already output
+                                  put.byte (' ')
+                                Places := 0                  --set finished flag
+                              --}}}
+                            TRUE
+                              SEQ
+                                IF
+                                  N = 1
+                                    put.byte (' ')    --fix when not enough space for any decimals
+                                  N = 0
+                                    N := 1            --ditto
+                                  TRUE
+                                    SKIP
+                                restrict (Buf, Places, LogX, N, round.direction)
+                        --}}}
+                      TRUE
+                        --{{{  set N
+                        SEQ
+                          N := Dp                     -- free or fixed mantissa size exponent form
+                          IF
+                            N = 1
+                              put.byte (' ')          -- extra space to replace missing decimal.point
+                            TRUE
+                              SKIP
+                        --}}}
+                  --}}}
+              --}}}
+              --{{{  exponential form of output
+              IF
+                Places = 0                          --number already output
+                  SKIP
+                TRUE
+                  --{{{  output in exponential form
+                  SEQ
+                    put.byte (Buf[0])
+                    IF
+                      N <> 1
+                        put.byte (decimal.point)    --more digits to come so output the decimal.point
+                      TRUE
+                        SKIP
+                    IF
+                      N <> 0                        --exp form requested
+                        --{{{
+                        SEQ
+                          SEQ i = 1 FOR N - 1
+                            IF
+                              i < Places
+                                put.byte (Buf[i])
+                              i = 1                 --only one digit
+                                put.byte ('0')
+                              TRUE                  --zero fill field
+                                put.byte ('0')
+                        --}}}
+                      Places <= 1                   --only one digit
+                        put.byte ('0')
+                      TRUE                          --output all digits
+                        SEQ i = 1 FOR Places - 1
+                          put.byte (Buf[i])
+                    --{{{  E+/-eee
+                    put.byte ('E')
+                    IF
+                      LogX < 0
+                        SEQ
+                          put.byte ('-')
+                          LogX := -LogX
+                      TRUE
+                        put.byte ('+')
+                    --now for the three digit exponent
+                    put.byte (BYTE (((LogX / 100) \ 10) + (INT '0')))
+                    put.byte (BYTE (((LogX / 10) \ 10) + (INT '0')))
+                    put.byte (BYTE ((LogX \ 10) + (INT '0')))
+                    --}}}
+                  --}}}
+              --}}}
+              --}}}
+            --}}}
+        --}}}
+  --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
+:
+--}}}
+
+--{{{  HEXTOSTRING
+-- #OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.1 22/03/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--* Format an [@code INT] as a hexadecimal string.
+-- @param len The number of characters written
+-- @param string Buffer to write into
+-- @param n The number to write
+PROC course.HEXTOSTRING (INT len, []BYTE string, VAL INT n)
+
+  --{{{  history
+  -- Beta-2 (27feb87)
+  -- V1.0, 1-Jul-88
+  -- Added V to the OPTIONs; V1.1, 22-Mar-90 SRH
+  --}}}
+
+  INT nibbles.per.word:
+  INT W, C:
+  --{{{  hex.digit
+  PROC hex.digit (BYTE byte, VAL INT digit)
+    SEQ
+      IF
+        digit < 10
+          byte := (BYTE (digit + (INT '0')))
+        digit < 16
+          byte := (BYTE (digit + ((INT 'A') - 10)))
+  :
+  --}}}
+  SEQ
+    IF
+      (MOSTNEG INT) = #8000
+        nibbles.per.word := 4
+      TRUE
+        nibbles.per.word := 8
+    W := n
+    SEQ i = 0 FOR nibbles.per.word
+      SEQ
+        C, W := SHIFTLEFT (0, W, 4)
+        -- C := W /\ 15
+        -- W := W >> 4
+        hex.digit (string[i], C)
+    len := nibbles.per.word
+:
+--}}}
+
+--{{{  out.real32 / out.real64
+--* Write a [@code REAL32] to a channel.
+-- For the meaning of [@code ip] and [@code dp], see
+-- [@ref course.REAL32TOSTRING].
+-- @param num The number to write
+-- @param ip First formatting parameter
+-- @param dp Second formatting parameter
+-- @param out The channel to write to
+PROC out.real32 (VAL REAL32 num, VAL INT ip, dp, CHAN BYTE out!)
+  [64]BYTE buffer:
+  INT len:
+  SEQ
+    course.REAL32TOSTRING (len, buffer, num, ip, dp)
+    SEQ i = 0 FOR len
+      out ! buffer[i]
+:
+--* Write a [@code REAL64] to a channel.
+-- For the meaning of [@code ip] and [@code dp], see
+-- [@ref course.REAL32TOSTRING].
+-- @param num The number to write
+-- @param ip First formatting parameter
+-- @param dp Second formatting parameter
+-- @param out The channel to write to
+PROC out.real64 (VAL REAL64 num, VAL INT ip, dp, CHAN BYTE out!)
+  [64]BYTE buffer:
+  INT len:
+  SEQ
+    course.REAL64TOSTRING (len, buffer, num, ip, dp)
+    SEQ i = 0 FOR len
+      out ! buffer[i]
+:
+--}}}  
+

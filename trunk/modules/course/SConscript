@@ -1,0 +1,6 @@
+import os
+
+dirs = Split('libsrc answers examples')
+
+for d in dirs: 
+    SConscript(os.path.join(d, 'SConscript'))

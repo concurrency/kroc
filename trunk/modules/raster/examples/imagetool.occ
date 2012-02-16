@@ -1,0 +1,62 @@
+--
+--	imagetool: convert images between different formats
+--	Copyright (C) 2007  Adam Sampson <ats@offog.org>
+--
+--	This program is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU General Public License as
+--	published by the Free Software Foundation, either version 2 of the
+--	License, or (at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+#INCLUDE "course.module"
+#INCLUDE "file.module"
+#INCLUDE "rasterio.module"
+
+PROC main (CHAN BYTE err!)
+  INITIAL INT n IS 0:
+  MOBILE []BYTE src, dest:
+  RASTER r:
+  SEQ
+    --{{{  parse args
+    PROC usage ()
+      SEQ
+        out.string ("Usage: imagetool SRC DEST*n", 0, err!)
+        CAUSEERROR ()
+    :
+    CHAN GETOPT opts:
+    PAR
+      file.get.options ("", opts!)
+      INITIAL BOOL running IS TRUE:
+      WHILE running
+        BYTE o:
+        MOBILE []BYTE a:
+        opts ? CASE
+          arg; a
+            CASE n
+              0
+                src, n := a, n + 1
+              1
+                dest, n := a, n + 1
+              ELSE
+                usage ()
+          bad; o
+            usage ()
+          done
+            IF
+              n <> 2
+                usage ()
+              TRUE
+                running := FALSE
+    --}}}
+    read.raster (src, r)
+    write.raster (dest, r)
+:

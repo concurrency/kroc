@@ -1,0 +1,455 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module convert
+
+#OPTION "E V" -- no compiler libraries, no vector space
+#COMMENT "Type conversion library V1.4 4/12/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--* Converts BYTE array string into a REAL32 number X
+--
+-- If the value represented by string overflows the REAL32 range then
+-- an appropriately signed infinity is returned in X. If the absolute
+-- value represented by string is in the range 2^-149 to just less than
+-- 2^-126, then a denormalised number is returned. If the absolute
+-- value represented by string is less than 2^-149 then zero is
+-- returned. If the syntax of string is incorrect then not only is
+-- Error set to TRUE, but a Not-a-Number ( NaN ) is returned for X. If
+-- there remain characters after the end of the longest correct string,
+-- although Error is set to TRUE, X is returned with the value of the
+-- correct part of string
+--
+-- @param Error TRUE if the syntax of string is not correct occam, or
+--   if there are any characters after the end of the longest correct
+--   string; otherwise it is FALSE
+-- @param X the binary representation in IEEE single precision format
+--   of the real decimal in string
+-- @param string a sequence of ASCII characters
+PROC STRINGTOREAL32 (BOOL Error, REAL32 X, VAL []BYTE string)
+  --{{{  more information
+  -- For a detailed description of the algorithm used see Ch 7 of
+  -- "Contributions to a Proposed Standard for Binary
+  -- Floating-Point Arithmetic" by J T Coonen
+  -- PhD thesis, University of California, Berkeley. 1984.
+  --}}}
+  --{{{  history
+  -- V1.0 1-Jul-88
+  -- Overflow is now checked for in the integer which forms the exponent
+  -- of the string; V1.1 18-Jan-90 SRH
+  -- Ensured that no vector space is used by adding 'V' to the #OPTION
+  -- line; V1.2 22-Mar-90 SRH
+  -- Altered some comments and changed lonesome SEQs to SKIPs - in older
+  -- occam SKIP did not exist so a SEQ with nothing after it was used
+  -- instead; V1.3 2-Nov-90 SRH
+  -- Cleaned up code to make it more readable and improved ScaleX by being
+  -- careful with Carry; V1.4 4-Dec-90 SRH
+  --}}}
+
+  #IF TARGET.BITS.PER.WORD = 32
+  INT X RETYPES X :
+
+  --{{{  Definitions
+  --{{{  Word length specific values for 32 bit machine
+  VAL SignBit      IS #80000000 :
+  VAL BitsPerWord  IS        32 :
+  VAL MaxInt       IS #FFFFFFFF :
+  VAL BytesPerWord IS         4 :
+  VAL IntegerLimit IS 214748363 : -- #0CCCCCCB = ( MaxSignedInt DIV 10 ) - 1
+  --}}}
+  --{{{  IEEE Single length constants for 32 bit implementation
+  VAL RealShift  IS         8 :
+  VAL BitsInFrac IS        24 :
+  VAL RealExpSh  IS        23 :
+  VAL RealExp    IS       255 :
+  VAL RealXcess  IS       127 :
+  VAL RealRBit   IS       128 :
+  VAL RealInf    IS #7F800000 :
+  VAL RealNaN    IS #7F800001 :
+  --}}}
+  --{{{  read/write constants
+  -- write number constants
+  VAL Table10 IS    13 : --exact power of ten in word
+  VAL Bias10  IS     3 : --extras for full power ten range
+  VAL MaxDecN IS     9 : --maximum dec digits; IEEE 754-1985, Sec 5.6
+  VAL R2L     IS #4D10 : --Log10(2) = 0.3010299956639811952 in low half word
+  
+  -- The table PowerTenFrac contains the fraction with implicit bit
+  -- explicit and then normalized so that there is a one bit in bit 31
+  -- of powers of 10 from 10^0 to 10^13.  For example,
+  -- 10^3 = 1111101000 in binary, which is 1.111101 * 2^9; so the fraction
+  -- bits, with implicit bit explicit ( ie the 1 before the point kept ) is
+  -- 1111101, and the actual exponent is 9.  This latter ( the actual
+  -- exponent ) is what is in the corresponding table PowerTenExp.
+  -- The index of an entry is the same as the power of 10; hence
+  -- PowerTenFrac[ 3 ] = #FA000000, and PowerTenExp[ 3 ] = 9.
+  -- No bits are lost in the PowerTenFrac table; even the largest value,
+  -- 10^13, is exact.
+  -- These two tables of constants are simply set up in advance for
+  -- efficiency.
+  VAL PowerTenFrac IS [#80000000, #A0000000, #C8000000, #FA000000,
+                       #9C400000, #C3500000, #F4240000, #98968000,
+                       #BEBC2000, #EE6B2800, #9502F900, #BA43B740,
+                       #E8D4A510, #9184E72A] :
+  
+  VAL PowerTenExp IS [0, 3, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36, 39, 43] :
+  
+  VAL BiasTenFrac IS [#9184E72A, #CECB8F28, #EB194F8E] : --P13, P27, P40
+  
+  VAL BiasTenExp IS [43, 89, 132] :
+  
+  VAL BiasTen IS [14, 28, 41, 54] :           --bias changeover points
+  --}}}
+  --}}}
+  --{{{  ScaleX
+  PROC ScaleX (INT Xexp, Xfrac, VAL INT Scale)
+  
+    -- Scale X by value of 10^Scale
+  
+    INT Carry, Places, Sb, St, Zexp, Zfrac :
+    SEQ
+      --{{{  get abs value of Scale
+      IF
+        Scale < 0
+          St := -Scale
+        TRUE
+          St := Scale
+      --}}}
+      --{{{  set Zexp and Zfrac
+      IF
+        St <= Table10
+          --{{{  easy case, 10 in table
+          SEQ
+            Zexp := PowerTenExp[St]
+            Zfrac := PowerTenFrac[St]
+          --}}}
+        St = (BiasTen[1] - 1)
+          --{{{  special case
+          SEQ
+            Zexp := BiasTenExp[1]
+            Zfrac := BiasTenFrac[1]
+          --}}}
+        TRUE
+          --{{{  apply bias
+          SEQ
+            IF                                --get power ten bias
+              IF i = 0 FOR Bias10
+                St < BiasTen[i + 1]
+                  Sb := i
+              TRUE                            --too big
+                Sb := -1
+            IF
+              Sb < 0                          --too large
+                Zexp := -1
+              TRUE
+                --{{{  valid power
+                SEQ
+                  St := (St - BiasTen[Sb]) + 1
+                  Zexp := (PowerTenExp[St] + BiasTenExp[Sb]) + 1
+                  Zfrac, Carry := LONGPROD (PowerTenFrac[St],
+                                            BiasTenFrac[Sb], 0)
+                  Places, Zfrac, Carry := NORMALISE (Zfrac, Carry)
+                  Zexp := Zexp - Places
+                --}}}
+          --}}}
+      --}}}
+      --{{{  set Xexp, Xfrac and Carry
+      IF
+        Zexp < 0
+          --{{{  out of range
+          SEQ
+            IF
+              Scale < 0                       --set to big number
+                Xexp := -RealExp
+              TRUE
+                Xexp := RealExp
+            Xfrac := SignBit                  --prevent normalisation
+            Carry := 0
+          --}}}
+        Scale < 0
+          --{{{  scale down
+          SEQ
+            Xexp := Xexp - Zexp
+            #PRAGMA DEFINED Zfrac
+            Xfrac, Carry := LONGDIV (Xfrac >> 1, 0, Zfrac)
+          
+            -- Original code to assign to Carry ( V1.3 ):
+            --INT Borrow, dummy :
+            --SEQ
+            --  Borrow, dummy := LONGDIFF (Carry, Zfrac >> 1, 0) --see if over half left
+            --  IF
+            --    Borrow <> 0                     --less than half
+            --      Carry := 0
+            --    TRUE                            --note sticky bit
+            --      Carry := SignBit
+          
+            --{{{  obtain more accurate Carry ( V1.4 )
+            IF
+              Carry = 0
+                SKIP                                    --divided exactly
+              TRUE
+                INT remainder :
+                Carry, remainder := LONGDIV( Carry, 0, Zfrac )
+                -- Carry is not zero now if this branch of the IF taken
+            --}}}
+          --}}}
+        TRUE
+          --{{{  scale up
+          SEQ
+            Xexp := (Xexp + Zexp) + 1
+            #PRAGMA DEFINED Zfrac
+            Xfrac, Carry := LONGPROD (Xfrac, Zfrac, 0)
+          --}}}
+      --}}}
+      --{{{  normalise
+      Places, Xfrac, Carry := NORMALISE (Xfrac, Carry)
+      Xexp := Xexp - Places
+      --}}}
+      --{{{  round
+      IF
+        (Carry /\ SignBit) = 0
+          SKIP
+        TRUE
+          SEQ
+            Carry, Xfrac := LONGSUM (Xfrac, 1, 0)
+            IF
+              Carry <> 0
+                SEQ
+                  Xexp := Xexp + 1
+                  Xfrac := SignBit
+              TRUE
+                SKIP
+      --}}}
+  :
+  --}}}
+  --{{{  ValidDigit
+  PROC ValidDigit (INT digit, BOOL valid)
+  
+    -- Purpose:  Convert char to decimal digit and set valid flag.
+  
+    IF
+      ((INT '0') <= digit) AND (digit <= (INT '9'))
+        SEQ
+          digit:= (digit - (INT '0'))
+          valid := TRUE
+      TRUE
+        valid := FALSE
+  :
+  --}}}
+
+  INT chars.scanned :
+  --{{{  get.byte
+  PROC get.byte (INT digit)
+  
+    -- Return next byte ( converted to INT ) from the parameter string
+  
+    SEQ
+      IF
+        chars.scanned >= (SIZE string)
+          digit := (INT ' ')
+        TRUE
+          digit := (INT string [chars.scanned])
+      chars.scanned := chars.scanned + 1
+  :
+  --}}}
+
+  --{{{  declarations
+  INT Ch, Carry, Lost, M, N, Scale, Xexp, Xfrac :
+  BOOL More, NegNumber, PosExponent :
+  --}}}
+  SEQ
+    --{{{  main body
+    Error     := FALSE
+    NegNumber := FALSE
+    chars.scanned := 0
+    get.byte (Ch)
+    --{{{  check for sign
+    IF
+      (Ch = (INT '-')) OR (Ch = (INT '+'))
+        SEQ
+          NegNumber := (Ch = (INT '-'))   --set negative
+          get.byte (Ch)
+      TRUE
+        SKIP
+    --}}}
+    
+    Scale := 0
+    N     := 0
+    Carry := 0                            --no number overflow
+    Lost  := 0                            --no extra bits so far
+    ValidDigit (Ch, More)                 --first digit
+    SEQ i = -1 FOR 2
+      --{{{  read int and fraction
+      SEQ
+        IF
+          (i = 0) AND (Ch = (INT '.'))    --read integer, now fraction
+            SEQ
+              get.byte (Ch)               --skip point
+              ValidDigit (Ch, More)
+          TRUE
+            SKIP
+        Error := Error OR (NOT More)      --if not a digit then error
+        WHILE More
+          --{{{  
+          SEQ
+            IF
+              i = 0                       --count frac places
+                Scale := Scale - 1
+              TRUE
+                SKIP
+            IF
+              Carry = 0
+                --{{{  no overflow yet
+                SEQ
+                  Carry, M := LONGPROD (N, 10, 0)
+                  IF
+                    Carry = 0             --still in range
+                      Carry, M := LONGSUM (M, Ch, 0)
+                    TRUE
+                      SKIP
+                  IF
+                    Carry = 0             --still no overflow
+                      N := M
+                    TRUE                  --set sticky bit
+                      SEQ
+                        Lost := Lost \/ Ch
+                        Scale := Scale + 1
+                --}}}
+              TRUE
+                --{{{  has overflow
+                SEQ
+                  Lost := Lost \/ Ch
+                  Scale := Scale + 1
+                --}}}
+            get.byte (Ch)
+            ValidDigit (Ch, More)
+          --}}}
+      --}}}
+    --{{{  Look for exponent
+    IF
+      (Ch = (INT 'E'))                    --exponent bias
+        --{{{  
+        SEQ
+          PosExponent := TRUE
+          get.byte (Ch)
+          IF
+            (Ch = (INT '+')) OR (Ch = (INT '-'))
+              SEQ
+                PosExponent := (Ch = (INT '+'))
+                get.byte( Ch )
+            TRUE
+              Error := TRUE               --must have sign
+          Xexp := 0                       --set exponent bias
+          ValidDigit (Ch, More)
+          Error := Error OR (NOT More)    --must have digit
+          WHILE More
+            --{{{  now checks for overflow 18-Jan-90 SRH
+            SEQ
+              IF
+                IntegerLimit >= Xexp
+                  -- do not use ((MaxSignedInt - Ch) / 10) >= Xexp due to divide
+                  SEQ
+                    Xexp := (Xexp * 10) + Ch
+                    get.byte (Ch)
+                    ValidDigit (Ch, More)
+                TRUE
+                  BOOL still.checking :
+                  SEQ  -- integer overflow would occur
+                    More := FALSE
+                    Scale := 0 -- this will be added to Xexp in a moment
+                    Xexp := ( MOSTPOS INT ) -- to act as signal, but be sure
+                    --                         not to add 1 to it!
+                    -- now check rest of string so that Error can be correctly
+                    -- assigned
+                    still.checking := TRUE
+                    WHILE still.checking
+                      SEQ
+                        get.byte( Ch )
+                        ValidDigit( Ch, still.checking )
+            --}}}
+          IF
+            PosExponent                   --positive exponent
+              Scale := Scale + Xexp
+            TRUE                          --negative exponent
+              Scale := Scale - Xexp
+        --}}}
+      TRUE
+        SKIP
+    --}}}
+    --{{{  Normalise
+    Xexp := 0
+    IF
+      N = 0                               --special case
+        SKIP
+      TRUE
+        --{{{  
+        SEQ
+          Carry, Xfrac, N := NORMALISE (N, 0)    --left justify fraction
+          Xexp := Xexp + (BitsPerWord - (Carry + 1))
+          IF
+            Scale <> 0                    --must adjust
+              ScaleX (Xexp, Xfrac, Scale)
+            TRUE
+              SKIP
+          Xexp := Xexp + RealXcess
+          IF
+            Xexp >= RealExp               --overflow
+              N := RealInf
+            TRUE
+              SEQ
+                IF
+                  Xexp <= 0               --check underflow
+                    SEQ
+                      Xfrac, N := SHIFTRIGHT (Xfrac, 0, 1 - Xexp)
+                      Xexp := 0           --allow for denormalised numbers
+                      Lost := Lost \/ N
+                  TRUE
+                    SKIP
+                IF
+                  Lost = 0                --no lost data
+                    SKIP
+                  TRUE
+                    Xfrac := Xfrac \/ 1
+                Carry, N := SHIFTRIGHT (Xexp, Xfrac << 1, RealShift + 1)
+                IF
+                  (Xfrac /\ RealRBit) = 0 --no round bit
+                    SKIP
+                  (Xfrac /\ ((RealRBit << 1) \/ RealXcess)) = 0--round down/even
+                    SKIP
+                  TRUE                    --round up
+                    N := N + 1
+        --}}}
+    --}}}
+    --{{{  Fix sign
+    IF
+      NegNumber
+        X := N \/ SignBit
+      TRUE
+        X := N
+    --}}}
+    IF
+      Error
+        X := RealNaN
+      TRUE
+        SKIP
+    Error := Error OR (chars.scanned <= (SIZE string))
+    --}}}
+  #ELSE
+  CAUSEERROR ()
+  #ENDIF
+:

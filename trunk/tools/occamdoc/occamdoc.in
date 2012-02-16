@@ -1,0 +1,1195 @@
+#!/usr/bin/env python
+# occamdoc: extract OccamDoc documentation from occam-pi source files.
+#
+# Copyright (C) 2006, 2007 University of Kent, Canterbury, UK
+# Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+# MA 02110-1301, USA.
+
+import re, sys, xml.dom.minidom, codecs, StringIO, getopt, os
+
+VERSION = "$Revision$"[11:-2]
+CONTACT = "kroc-bugs@kent.ac.uk"
+if hasattr(sys, "frozen") and sys.frozen == "console_exe":
+	DATADIR = sys.path[0]
+	XSLTPROC = os.path.join(DATADIR, "xsltproc")
+else:
+	DATADIR = "@OCCAMDOCDATA@"
+	XSLTPROC = "@XSLTPROC@"
+
+def run_command(cmd):
+	"""Run a program with arguments and return the exit code.
+	Equivalent to subprocess.call, but works on Python 2.3 when os.spawnvp
+	is available."""
+	try:
+		import subprocess
+		return subprocess.call(cmd)
+	except ImportError:
+		return os.spawnvp(os.P_WAIT, cmd[0], cmd)
+
+class OccamDocException(Exception):
+	"""Problem found while parsing occam-pi source."""
+	pass
+
+class InputFile:
+	"""Class wrapping a file that is being read a line at a time."""
+
+	def __init__(self, filename):
+		self.filename = filename
+		try:
+			self.f = open(filename)
+		except IOError:
+			raise OccamDocException("File cannot be opened: " + filename)
+		self.line = 0
+		self.ungot = []
+
+	def getline(self):
+		"""Read a line from the file, stripping the newline from the
+		end.  Return None if at EOF."""
+
+		if self.ungot != []:
+			self.line += 1
+			return self.ungot.pop()
+
+		l = self.f.readline()
+		if l == "":
+			return None
+		self.line += 1
+		if l.endswith("\r\n"):
+			return l[:-2]
+		elif l.endswith("\n"):
+			return l[:-1]
+		else:
+			return l
+
+	def ungetline(self, l):
+		"""Put back a line that was previously read by getline.
+		Lines must be returned in the reverse order they were
+		read."""
+		self.line -= 1
+		self.ungot.append(l)
+
+	def ungetlines(self, lines):
+		"""Put back several lines (in the order they were read)."""
+		ls = lines[:]
+		ls.reverse()
+		for l in ls:
+			self.ungetline(l)
+
+	def pos(self):
+		"""Return the pair (filename, line number) for the last line
+		read."""
+		return (self.filename, self.line)
+
+	def pos_str(self):
+		"""Return a string representation of the position of the
+		file (that is, the filename and number of the last line
+		read)."""
+		return "%s:%d" % (self.filename, self.line)
+
+	def close(self):
+		"""Close the file."""
+		self.f.close()
+
+def detab(s, tab_width = 8):
+	"""Expand tabs to spaces in s."""
+
+	out = ""
+	for c in s:
+		if c == "\t":
+			while 1:
+				out += " "
+				if len(out) % tab_width == 0:
+					break
+		else:
+			out += c
+	return out
+
+def get_occam_line(f):
+	"""Read a series of lines from the file, following occam's rules for
+	continuation lines."""
+
+	# Things a line can be broken after, according to the manual.
+	continuation_re = re.compile(r'.*(-|~|\+|-|\*|/|\\|/\\|\\/|><|=|<>|<|>|>=|<=|,|;|:=|<<|>>|(\s(MINUS|BITNOT|NOT|SIZE|REM|PLUS|MINUS|TIMES|BITAND|BITOR|AND|OR|AFTER|FROM|FOR|IS|RETYPES|RESHAPES)))\s*$')
+
+	only_comment_re = re.compile(r'^\s*--')
+
+	# Preprocessor directives. We can't just match ^# -- that would also
+	# catch a hex constant at the start of a continuation line.
+	preprocessor_re = re.compile(r'^\s*#(DEFINE|UNDEF|IF|ENDIF|ELIF|ELSE|INCLUDE|USE|PRAGMA|EXTERNAL|IMPORT|SC|COMMENT|RELAX|WARNING|ERROR|OPTION)')
+
+	lines = []
+	in_string = None
+	first_line = True
+	pos = None
+	joined = ""
+	while 1:
+		l = f.getline()
+		if l is None:
+			break
+		l = detab(l.rstrip())
+		if first_line:
+			pos = f.pos()
+		else:
+			l = l.lstrip()
+
+		lines.append(l)
+
+		if preprocessor_re.match(l) is not None:
+			continue
+
+		if l == "" or (only_comment_re.match(l) is not None):
+			if first_line:
+				# Comments (and blank lines!) can't have
+				# continuations in them -- so just return it.
+				joined = l
+				break
+			else:
+				# Ignore it.
+				continue
+
+		last = None
+		rest = ""
+		in_star = False
+		for i in range(len(l)):
+			c = l[i]
+			if in_star:
+				in_star = False
+			if in_string is not None:
+				if c == "*":
+					in_star = True
+				elif c == in_string:
+					in_string = None
+			else:
+				if c in "'\"":
+					in_string = c
+				elif c == "-" and last == "-":
+					joined = joined[:-1].rstrip()
+					rest = l[i - 2:]
+					break
+			joined += c
+			last = c
+
+		if (continuation_re.match(joined) is None
+		    and not in_string):
+			joined += rest
+			break
+		joined += " "
+		first_line = False
+	return lines, joined, pos
+
+def measure_indent(s):
+	"""Measure the indentation level of a line of occam-pi code."""
+	indent_re = re.compile(r'^((?:  )*)[^ ]')
+	m = indent_re.match(s)
+	if not m:
+		raise OccamDocException("Invalid indentation at start of line '" + s + "'")
+	return len(m.group(1)) / 2
+
+def split_comment(s):
+	"""Split a line into pre-comment and comment parts, removing trailing
+	whitespace from both."""
+
+	# Find the start of a comment marker, if there is one.
+	comment_start = None
+	in_string = False
+	in_star = False
+	last = None
+	for i in range(len(s)):
+		c = s[i]
+		if in_star:
+			in_star = False
+		if in_string:
+			if c == "*":
+				in_star = True
+			elif c == '"':
+				in_string = False
+		else:
+			if c == '"':
+				in_string = True
+			elif c == "-" and last == "-":
+				comment_start = i - 1
+				break
+		last = c
+
+	if comment_start is None:
+		comment_start = len(s)
+	return (s[:comment_start].rstrip(), s[comment_start:].rstrip())
+
+def trim_line(s):
+	"""Strip trailing whitespace and comments from a string."""
+
+	return split_comment(s)[0]
+
+def trim_comment(s):
+	"""Retrieve the comment part of a string."""
+
+	return split_comment(s)[1]
+
+def clean_ident(s):
+	"""Replace special characters in an XML identifier with dashes."""
+
+	return re.sub(r'[^A-Za-z0-9.-]', '-', s)
+
+class Declaration:
+	def __init__(self, ident, name, dtype, code = None, args = None, returns = None):
+		self.set_ident(ident)
+		self.module = None
+		self.name = name
+		self.type = dtype
+		self.code = code
+		self.args = args
+		self.returns = returns
+		self.error_pos = "unknown"
+		self.pos = None
+		self.description = None
+		self.tags = []
+		self.children = []
+
+	def __str__(self):
+		return "[%s %s]" % (self.type, self.name)
+	def __repr__(self):
+		return self.__str__()
+
+	def set_ident(self, s):
+		self.ident = clean_ident(s)
+
+def parse_decl(f):
+	"""Parse an occam-pi declaration."""
+
+	while 1:
+		ls, init, pos = get_occam_line(f)
+		if ls == []:
+			raise OccamDocException("EOF while parsing declaration after line '" + s + "'")
+		s = trim_line(init)
+		if s != "":
+			break
+
+	def parse_args(s):
+		"""Parse PROC or FUNCTION arguments."""
+		s = s.strip()
+		if s == "":
+			return []
+
+		arg_re = re.compile(r'^(.* )?(\S+)$')
+		args = []
+		last_type = None
+		for a in s.split(","):
+			a = a.strip()
+			m = arg_re.match(a)
+			if m is None:
+				raise OccamDocException("Unable to parse argument '" + a + "'")
+
+			# Reuse the previous type if not specified.
+			this_type = m.group(1)
+			if this_type is None:
+				this_type = last_type
+				if last_type is None:
+					raise OccamDocException("No type specified for argument '" + a + "'")
+
+			# Strip direction specifiers.
+			name = m.group(2)
+			if name[-1] in ("!", "?"):
+				name = name[:-1]
+
+			args.append((name, this_type.strip()))
+			last_type = this_type
+		return args
+
+	def parse_returns(s):
+		"""Parse FUNCTION return types."""
+		s = s.strip()
+		if s == "":
+			raise OccamDocException("Function with no return types")
+
+		returns = []
+		for a in s.split(","):
+			a = a.strip()
+			returns.append((None, a))
+		return returns
+
+	def parse_protocol(s):
+		"""Parse a sequential protocol."""
+		s = s.strip()
+		if s == "":
+			return []
+
+		items = []
+		for a in s.split(";"):
+			a = a.strip()
+			items.append((None, a))
+		return items
+
+	def get_type(s):
+		s = re.sub(r'\s+', ' ', s.strip())
+		s = s.replace(" ,", ",")
+
+		proctype_re = re.compile(r'^PROC TYPE (\S+) IS \(([^\)]*)\):$')
+		m = proctype_re.match(s)
+		if m is not None:
+			return ('proctype', m.group(1), s, parse_args(m.group(2)))
+
+		# Turn EXTERNALs into regular PROCs
+		external_re = re.compile(r'^#PRAGMA EXTERNAL "(PROC.*) ?= ?\d+"$')
+		m = external_re.match(s)
+		if m is not None:
+			s = m.group(1)
+
+		proc_re = re.compile(r'^(?:REC |RECURSIVE |INLINE )*PROC (\S+)\s*\(([^\)]*)\)')
+		m = proc_re.match(s)
+		if m is not None:
+			return ("proc", m.group(1), s, parse_args(m.group(2)))
+
+		protocol_re = re.compile(r'PROTOCOL (\S+)( IS (.*):)?')
+		m = protocol_re.match(s)
+		if m is not None:
+			if m.group(3) is not None:
+				items = parse_protocol(m.group(3))
+			else:
+				items = None
+			return ("protocol", m.group(1), s, items)
+
+		function_re = re.compile(r'^((.*?) (?:REC |RECURSIVE |INLINE )*FUNCTION (\S+)\s*\(([^\)]*)\))')
+		m = function_re.match(s)
+		if m is not None:
+			returns = parse_returns(m.group(2))
+			args = parse_args(m.group(4))
+			name = m.group(3)
+			if name[0] == '"' and name[-1] == '"':
+				# User-defined operator; need to embed the
+				# types in the name.
+				arg_types = [a[1].replace("VAL ", "") for a in args]
+				return_types = [r[1] for r in returns]
+				name = name[1:-1].replace("**", "*")
+				ident = ("operator"
+				         + "".join(["%02x" % (ord(c),) for c in name])
+				         + "." + ".".join(arg_types + return_types))
+				name += " (" + ", ".join(arg_types) + ")"
+				t = "operator"
+			else:
+				ident = None
+				t = "function"
+			return (t, name, m.group(1), args, returns, ident)
+
+		record_re = re.compile(r'^(?:REC |RECURSIVE )*(DATA|CHAN) TYPE (\S+)$')
+		m = record_re.match(s)
+		if m is not None:
+			t = "record"
+			if m.group(1) == "CHAN":
+				t = "chantype"
+			return (t, m.group(2), s)
+
+		datatype_re = re.compile(r'^(DATA TYPE (\S+)) IS .*:$')
+		m = datatype_re.match(s)
+		if m is not None:
+			return ("datatype", m.group(2), m.group(1))
+
+		abbreviation_re = re.compile(r'^(((?:INITIAL|VAL)\s+)?(?:.* )?(\S+)) (?:IS|RESHAPES|RETYPES) .*:$')
+		m = abbreviation_re.match(s)
+		if m is not None:
+			t = "abbreviation"
+			if m.group(2) is not None:
+				t = "constant"
+			return (t, m.group(3), m.group(1))
+
+		tag_re = re.compile(r'^([^: ]+)(\s*=\s*[0-9]+)?(\s*;(.*))?$')
+		m = tag_re.match(s)
+		if m is not None:
+			if m.group(4) is not None:
+				items = parse_protocol(m.group(4))
+			else:
+				items = None
+			return ("tag", m.group(1), s, items)
+
+		var_re = re.compile(r'(.+ .+) *:$')
+		var_name_re = re.compile(r'^(.*?)([^, ]+)$')
+		m = var_re.match(s)
+		if m is not None:
+			s = m.group(1).rstrip()
+			names = []
+			while 1:
+				m = var_name_re.match(s)
+				s, name = m.group(1, 2)
+				names.append(name)
+				s = s.rstrip()
+				if s[-1] == ",":
+					s = s[:-1].rstrip()
+				else:
+					vartype = s
+					break
+			names.reverse()
+			return ("variable", names, vartype)
+
+		raise OccamDocException("Unrecognised declaration type in line '" + s + "'")
+
+	level = measure_indent(init)
+	s = trim_line(init)
+	if s.endswith(":") or s.startswith("#PRAGMA"):
+		# Not a multiline declaration.
+		level = None
+	ts = get_type(s)
+	defaults = (None,) * 6
+	if len(ts) < len(defaults):
+		ts = (ts + defaults)[:len(defaults)]
+	(decl_type, name, code, args, returns, ident) = ts
+	if ident is None:
+		if type(name) == list:
+			ident = name[0]
+		else:
+			ident = name
+	if decl_type == "tag":
+		# Not a multiline declaration either.
+		level = None
+	decl = Declaration(ident, name, decl_type, code, args, returns)
+	return level, pos, decl
+
+def parse_comment(lines):
+	"""Parse an OccamDoc comment."""
+
+	# Split the lines up into tag sections, keeping track of the nesting
+	# level of square brackets.
+	level = 0
+	tag_re = re.compile(r'^\s*@(.*)$')
+	parts = [""]
+	for l in lines:
+		m = tag_re.match(l)
+		if m is not None:
+			# Found a tag.
+			parts.append("")
+			l = m.group(1)
+		for c in l:
+			if c == "[":
+				level += 1
+			elif c == "]":
+				level -= 1
+		parts[-1] += l + "\n"
+
+	parts = map(lambda s: s.strip(), parts)
+
+	if parts[0] == "":
+		parts[0] = None
+	return parts[0], parts[1:]
+
+def parse_file(f, include_private = False, include_undocumented = False):
+	"""Extract OccamDoc comments from an occam-pi source file."""
+
+	comment_start_re = re.compile(r'^\s*--\*(.*)$')
+	header_start_re = re.compile(r'^\s*--\*\*(.*)$')
+	comment_cont_re = re.compile(r'^\s*--(.*)$')
+	eol_comment_re = re.compile(r'^(.*)\s*--\*(.*)$')
+	group_start_re = re.compile(r'^\s*--\*{+\s+(\S+)\s+(.*)$')
+	group_end_re = re.compile(r'^\s*--\*}+')
+	# This only finds top-level declarations, and won't find tags or other
+	# hard-to-identify things.
+	likely_def_re = re.compile(r'^(?:PROC TYPE|[^ -].* (?:REC | RECURSIVE| INLINE )*FUNCTION|(?:REC |RECURSIVE |INLINE )*(?:PROC|(?:CHAN|DATA) TYPE)|PROTOCOL) ')
+
+	# Mangle the filename into a reasonable ID for the file.
+	basename = re.sub(r'^.*/', '', f.filename)
+	ident = re.sub(r'[^a-zA-Z0-9]+', '-', basename)
+
+	top_decl = Declaration(ident, basename, "module")
+	top_decl.module = basename
+	level_stack = [(-1, "__dummy_top_level__", top_decl, False)]
+	seen_comments = [False]
+
+	def handle_decl(init, lines, start_pos, decl_type = None, decl_name = None):
+		f.ungetlines(init)
+		pos = f.pos_str()
+		if decl_type is not None:
+			level, decl = None, Declaration(decl_name, decl_name, decl_type)
+		else:
+			level, start_pos, decl = parse_decl(f)
+
+		decl.pos = start_pos
+		decl.error_pos = pos
+		decl.description, decl.tags = parse_comment(lines)
+
+		this_private = False
+		keep_tags = []
+		for tag in decl.tags:
+			if tag.startswith("private"):
+				this_private = True
+
+			if tag.startswith("module"):
+				fields = tag.split(None, 1)
+				if len(fields) != 2:
+					raise OccamDocException("@module tag must give module name")
+				decl.module = fields[1]
+			else:
+				keep_tags.append(tag)
+		decl.tags = keep_tags
+
+		for (s_level, s_pos, s_decl, s_private) in level_stack:
+			this_private |= s_private
+
+		(old_level, old_pos, old_decl, old_private) = level_stack[-1]
+		if decl_type == "header":
+			# Copy the description (etc.) up to the Declaration
+			# that represents the file.
+			if top_decl.description is not None:
+				raise OccamDocException("Found duplicate file header comment")
+			top_decl.description = decl.description
+			top_decl.tags = decl.tags
+			if decl.module is not None:
+				top_decl.module = decl.module
+				top_decl.name = decl.module
+				top_decl.set_ident(decl.module)
+		elif include_private or not this_private:
+			old_decl.children.append(decl)
+
+		if level is not None or decl_type == "group":
+			level_stack.append((level, pos, decl, this_private))
+
+		seen_comments[0] = True
+
+	while 1:
+		# Scan until we find the start of an OccamDoc comment
+		ls, l, start_pos = get_occam_line(f)
+		if ls == []:
+			break
+
+		# Maintain the level stack
+		if group_end_re.match(l):
+			(old_level, pos, old_decl, old_private) = level_stack[-1]
+			if old_level is not None:
+				raise OccamDocException("Found unexpected group end: '" + l + "'")
+			level_stack.pop()
+			continue
+		s = trim_line(l).lstrip()
+		if s != "":
+			(old_level, pos, old_decl, old_private) = level_stack[-1]
+			level = measure_indent(l)
+			if level < old_level:
+				raise OccamDocException("Missed end of declaration -- started at " + pos)
+			elif level == old_level:
+				if s != ":":
+					raise OccamDocException("Expected ':' at end of declaration -- started at " + pos)
+				level_stack.pop()
+				continue
+
+		mg = group_start_re.match(l)
+		mh = header_start_re.match(l)
+		m = comment_start_re.match(l)
+		mec = eol_comment_re.match(trim_comment(l))
+		ml = likely_def_re.match(ls[0])
+		if mg is not None or mh is not None or m is not None:
+			if mg is not None:
+				decl_type = "group"
+				decl_name = mg.group(1)
+				s = mg.group(2)
+			elif mh is not None:
+				decl_type = "header"
+				decl_name = "__header__"
+				s = mh.group(1)
+			else:
+				decl_type = None
+				decl_name = None
+				s = m.group(1)
+			lines = [s]
+
+			# Read the rest of the comment
+			while 1:
+				ls, l, pos = get_occam_line(f)
+				if ls == []:
+					break
+				m = comment_cont_re.match(l)
+				if m is None:
+					break
+				lines.append(m.group(1))
+			handle_decl(ls, lines, start_pos, decl_type, decl_name)
+		elif mec is not None:
+			# Look for an end-of-line comment
+			handle_decl(ls, [mec.group(2)], start_pos)
+		elif include_undocumented and ml is not None:
+			# Looks like a declaration, and we're trying to find
+			# undocumented decls.
+			handle_decl(ls, [], start_pos, None, None)
+
+	return top_decl, seen_comments[0]
+
+def generic_tag_to_xml(doc, text, tags, text_handler):
+	"""Generic converter from tagged text to a DOM node."""
+
+	fields = re.split(r'\s+', text, 1)
+	if len(fields) == 0:
+		raise OccamDocException("Expected tag in '[@" + text + "]'")
+	tagname = fields[0]
+
+	if not tagname in tags:
+		raise OccamDocException("Unrecognised tag in '[@" + text + "]'")
+	args = tags[tagname]
+
+	el = doc.createElement(tagname)
+
+	if args == [] and len(fields) > 1:
+		raise OccamDocException("Unexpected argument to tag in '[@" + text + "]'")
+	for arg in args:
+		if len(fields) != 2:
+			raise OccamDocException("Too few arguments to tag in '[@" + text + "]'")
+		rest = fields[1]
+		fields = re.split(r'\s', rest, 1)
+		if arg is None:
+			text_handler(doc, rest, el)
+		elif type(arg) is type(generic_tag_to_xml):  # i.e. a function
+			arg(doc, rest, el)
+		else:
+			el.setAttribute(arg, fields[0])
+
+	return el
+
+def free_text_to_xml(doc, descr, parent):
+	"""Convert OccamDoc free text to children of a DOM node."""
+
+	def do_tag(text):
+		def do_text(doc, descr, parent):
+			descr = re.sub(r'^\n*', '', descr)
+			descr = descr.rstrip()
+			parent.appendChild(doc.createTextNode(descr))
+
+		# @ref links to an identifier, so we have to mangle it in the
+		# appropriate way to get rid of special characters.
+		def do_ref(doc, s, el):
+			el.setAttribute("href", clean_ident(s))
+
+		tags = {
+			"code": [None],
+			"link": ["href", None],
+			"ref": [do_ref],
+			"em": [None],
+			"text": [None],
+			"item": [],
+		}
+
+		return generic_tag_to_xml(doc, text, tags, do_text)
+
+	# Remove whitespace on blank lines, to make paragraph breaks easy to
+	# detect.
+	descr = re.sub(r'\n\s*\n', '\n\n', descr)
+
+	# Split the text into paragraphs.
+	paras = []
+	para = []
+	paras.append(para)
+	f = StringIO.StringIO(descr)
+	accum = [""]
+	def dump_accum():
+		if accum[0] != "":
+			s = re.sub(r'\s+', ' ', accum[0])
+			para.append(doc.createTextNode(s))
+		accum[0] = ""
+	while 1:
+		c = f.read(1)
+		if c == "":
+			break
+		handled = False
+		if c == "[":
+			c = f.read(1)
+			if c == "@":
+				# Found a tag.
+				dump_accum()
+				s = ""
+				level = 0
+				while 1:
+					c = f.read(1)
+					if c == "":
+						break
+					elif c == "]" and level == 0:
+						break
+					elif c == "[":
+						level += 1
+					elif c == "]":
+						level -= 1
+					s += c
+				para.append(do_tag(s))
+				handled = True
+			else:
+				c = "[" + c
+		if c == "\n":
+			c = f.read(1)
+			if c == "\n":
+				# Found a paragraph break.
+				dump_accum()
+				para = []
+				paras.append(para)
+				handled = True
+			else:
+				c = "\n" + c
+		if not handled:
+			accum[0] += c
+	dump_accum()
+	f.close()
+
+	# Turn the split paragraphs into paras and lists.
+	for els in paras:
+		def is_item(el):
+			return (el.nodeType == el.ELEMENT_NODE
+			        and el.tagName == "item")
+		def is_empty(el):
+			for child in el.childNodes:
+				if child.nodeType == child.ELEMENT_NODE:
+					return False
+				if (child.nodeType == child.TEXT_NODE
+				    and child.data.strip() != ""):
+					return False
+			return True
+
+		# Turn anything before the start of an item into a paragraph.
+		para = doc.createElement("para")
+		while els != []:
+			el = els.pop(0)
+			if is_item(el):
+				break
+			para.appendChild(el)
+		if not is_empty(para):
+			parent.appendChild(para)
+
+		# Make the rest into a list of items.
+		list = doc.createElement("list")
+		while els != []:
+			item = doc.createElement("listitem")
+			while els != []:
+				el = els.pop(0)
+				if is_item(el):
+					break
+				item.appendChild(el)
+			if not is_empty(item):
+				list.appendChild(item)
+		if list.childNodes != []:
+			parent.appendChild(list)
+
+def descr_to_xml(doc, descr):
+	"""Build a DOM node representing an OccamDoc description."""
+
+	el = doc.createElement("description")
+	free_text_to_xml(doc, descr, el)
+	return el
+
+def xml_to_summary(descr):
+	"""Generate a brief text-only summary of the description."""
+	def get_text(el):
+		if el.nodeType == el.TEXT_NODE:
+			return el.data
+		else:
+			return " ".join([get_text(c) for c in el.childNodes])
+	paras = descr.getElementsByTagName("para")
+	if len(paras) == 0:
+		return ""
+	s = get_text(paras[0])
+	i = s.find(". ")
+	if i == -1 and s[-1:] == ".":
+		i = len(s) - 1
+	if i == -1:
+		return s
+	else:
+		return s[:i]
+
+def tag_to_xml(doc, text):
+	"""Build a DOM node representing an OccamDoc tag."""
+
+	param_entry_re = re.compile(r'^([^\s,]+\s*,?)\s*(.*)$', re.DOTALL)
+	def parse_name_list(doc, rest, el):
+		looking = True
+		i = 0
+		while looking:
+			m = param_entry_re.match(rest)
+			if m is None:
+				raise OccamDocException("Cannot parse parameter/return list '" + rest + "'")
+			name, rest = m.group(1, 2)
+			if name[-1] == ",":
+				name = name[:-1]
+			else:
+				looking = False
+			name = name.rstrip()
+
+			# Stash some information in the node so we know where
+			# to put it later (it gets turned into a description in
+			# the thing that contains it).
+			el.setAttribute("name%d" % (i,), name)
+			i += 1
+			el.setAttribute("numNames", "%d" % (i,))
+		if el.tagName == "returns":
+			el.tagName = "return"
+		free_text_to_xml(doc, rest, el)
+
+	tags = {
+		"deprecated": [],
+		"maintainer": [None],
+		"private": [],
+		"since": [None],
+		"param": [parse_name_list],
+		"return": [None],
+		"returns": [parse_name_list],
+		"item": [parse_name_list],
+	}
+
+	return generic_tag_to_xml(doc, text, tags, free_text_to_xml)
+
+def add_text_node(doc, name, text, parent):
+	el = doc.createElement(name)
+	el.appendChild(doc.createTextNode(text))
+	parent.appendChild(el)
+
+def decl_to_xml(doc, decl, errors):
+	"""Build a DOM node representing an OccamDoc declaration."""
+
+	el = doc.createElement("declaration")
+	el.setAttribute("name", decl.ident)
+	if type(decl.name) == list:
+		for name in decl.name:
+			add_text_node(doc, "name", name, el)
+	else:
+		add_text_node(doc, "name", decl.name, el)
+	el.setAttribute("type", decl.type)
+	try:
+		decl_to_xml_body(doc, decl, el, errors)
+	except OccamDocException, e:
+		errors.append("Error: In comment starting at " + decl.error_pos + ": " + str(e))
+		errors.append("  Skipping rest of " + decl.ident)
+	return el
+
+def decl_to_xml_body(doc, decl, el, errors):
+
+	near = decl.name
+	if decl.pos is not None:
+		fn = decl.pos[0]
+		i = fn.rfind("/")
+		if i != -1:
+			fn = fn[i + 1:]
+		add_text_node(doc, "filename", fn, el)
+		add_text_node(doc, "lineNumber", str(decl.pos[1]), el)
+		near += " at %s:%d" % (fn, decl.pos[1])
+
+	if decl.description is not None:
+		descr = descr_to_xml(doc, decl.description)
+		el.appendChild(descr)
+		add_text_node(doc, "summary", xml_to_summary(descr), el)
+
+	param_tags = {}
+	for tag in decl.tags:
+		child = tag_to_xml(doc, tag)
+		if child.tagName in ("param", "item", "return"):
+			param_tags.setdefault(child.tagName, []).append(child)
+		else:
+			el.appendChild(child)
+
+	def handle_params(tag_type, output_type, params):
+		"""Build DOM nodes to represent params, items or return
+		values."""
+
+		if params is None:
+			return
+
+		names = []
+		tags = param_tags.get(tag_type)
+		if tags is not None:
+			total_names = 0
+			for tag in tags:
+				num_names_v = tag.getAttribute("numNames")
+				if num_names_v == "":
+					num_names = 1
+					names.append(["-"])
+				else:
+					num_names = int(num_names_v)
+					tag.removeAttribute("numNames")
+					names.append([])
+					for i in range(num_names):
+						names[-1].append(tag.getAttribute("name%d" % (i,)))
+						tag.removeAttribute("name%d" % (i,))
+				total_names += num_names
+			if len(params) != total_names:
+				raise OccamDocException("Wrong number of @%s tags in %s" % (tag_type, near))
+		else:
+			names = [[None]] * len(params)
+
+		ii = 0
+		for i in range(len(names)):
+			child = doc.createElement(output_type)
+			if tags is not None:
+				tag = tags[i]
+			else:
+				tag = None
+
+			definition = None
+			for j in range(len(names[i])):
+				(name, code) = params[ii]
+				ii += 1
+
+				if names[i] is not None and names[i][j] != "-":
+					doc_name = names[i][j]
+				else:
+					doc_name = None
+
+				iel = doc.createElement("item")
+				child.appendChild(iel)
+				if name is not None:
+					iel.setAttribute("name", name)
+				elif doc_name is not None:
+					iel.setAttribute("name", doc_name)
+				if name is not None and doc_name is not None and name != doc_name:
+					raise OccamDocException("Name mismatch in @%s tag in %s: code has %s, documentation has %s" % (tag_type, near, name, doc_name))
+
+				if j == 0:
+					definition = code
+				else:
+					if code != definition:
+						raise OccamDocException("Parameters sharing documentation have different types (%s) in %s" % (", ".join([p[1] for p in params[ii - j - 1:ii]]), near))
+			add_text_node(doc, "definition", definition, child)
+
+			if tag is not None:
+				tag.tagName = "description"
+				child.appendChild(tag)
+
+			el.appendChild(child)
+
+	if decl.type == "protocol" or decl.type == "tag":
+		param_type, wrong_type = "item", "param"
+	else:
+		param_type, wrong_type = "param", "item"
+	handle_params(param_type, param_type + "s", decl.args)
+	if wrong_type in param_tags:
+		raise OccamDocException("Found unexpected @%s tag in %s" % (wrong_type, near))
+	handle_params("return", "returns", decl.returns)
+
+	if decl.code is not None:
+		add_text_node(doc, "definition", decl.code, el)
+
+	if decl.children != []:
+		children = doc.createElement("children")
+		for d in decl.children:
+			children.appendChild(decl_to_xml(doc, d, errors))
+		el.appendChild(children)
+
+	return el
+
+def write_xml(decls, f, errors, encoding = "UTF-8"):
+	"""Write OccamDoc declarations as XML."""
+
+	doc = xml.dom.minidom.Document()
+	od = doc.createElement("occamDoc")
+	doc.appendChild(od)
+
+	for d in decls:
+		od.appendChild(decl_to_xml(doc, d, errors))
+
+	# minidom is rather simplistic, and won't maintain spacing
+	# around tags correctly if you give it spacing arguments; if you
+	# want nicer-to-read XML, pipe the output through xml_pp.
+	doc.writexml(codecs.getwriter(encoding)(f))
+	doc.unlink()
+
+def do_xslt(input, output, xslt, params = {}):
+	"""Do an XSLT transformation by invoking xsltproc."""
+
+	args = [
+		XSLTPROC,
+		"-o", output,
+	]
+	for (k, v) in params.items():
+		args += ["--stringparam", k, v]
+	args += [
+		DATADIR + "/" + xslt,
+		input
+	]
+
+	rc = run_command(args)
+	if rc != 0:
+		raise OccamDocException("xsltproc failed, return code " + str(rc))
+
+def copy_file(filename, output_dir):
+	"""Copy a provided file into the output directory."""
+
+	fo = open(output_dir + "/" + filename, "w")
+	fi = open(DATADIR + "/" + filename)
+	fo.write(fi.read())
+	fi.close()
+	fo.close()
+
+def usage():
+	print """occamdoc, version """ + VERSION + """
+Usage: occamdoc [OPTION]... FILE [FILE]...
+
+Read occam-pi source files and extract documentation.
+
+-d DIRECTORY                 Write output to directory DIRECTORY
+                             (default "doc")
+-f FORMAT                    Write output in format FORMAT
+                             (xml, html; default html)
+--stdout                     Write XML output to stdout; don't write files
+-p                           Include declarations tagged @private
+-a                           Try to include undocumented declarations
+                             (this won't find all declarations)
+-v                           Be verbose: say what's being done
+--help                       Display this help and exit
+
+Report bugs to <""" + CONTACT + """>."""
+
+def main(args):
+	try:
+		opts, args = getopt.getopt(args, 'd:f:pav', ["help", "in-tree=", "stdout"])
+	except getopt.GetoptError:
+		usage()
+		return 1
+
+	output_format = "html"
+	output_dir = "doc"
+	include_private = False
+	include_undocumented = False
+	verbose = False
+	for o, a in opts:
+		if o == "-d":
+			output_dir = a
+		elif o == "-f":
+			output_format = a
+		elif o == "-p":
+			include_private = True
+		elif o == "-a":
+			include_undocumented = True
+		elif o == "-v":
+			verbose = True
+		elif o == "--help":
+			usage()
+			return 0
+		elif o == "--in-tree":
+			global DATADIR
+			DATADIR = a + "/tools/occamdoc"
+		elif o == "--stdout":
+			output_dir = None
+
+	if args == [] or not (output_format in ("xml", "html")):
+		usage()
+		return 1
+	if output_dir is None:
+		output_format = "xml"
+
+	def status(s):
+		if verbose:
+			sys.stderr.write(s)
+			sys.stderr.flush()
+
+	failed = False
+
+	decls = {}
+	scanned = {}
+	for file in args:
+		if file in scanned:
+			continue
+		scanned[file] = True
+
+		status("Scanning %s... " % file)
+		f = InputFile(file)
+		try:
+			decl, seen = parse_file(f, include_private, include_undocumented)
+			if seen:
+				ident = decl.ident
+				if ident in decls:
+					# We've seen this module already; merge
+					# in the new entries.
+					dest = decls[ident]
+					dest.children += decl.children
+					if decl.description is not None:
+						if dest.description is not None:
+							raise OccamDocException("Module '" + ident + "' has more than one description; one is here")
+						dest.description = decl.description
+					if decl.tags != []:
+						if dest.tags != []:
+							raise OccamDocException("Module '" + ident + "' has more than one set of tags; one is here")
+						dest.tags = decl.tags
+				else:
+					decls[ident] = decl
+			status("%d definitions\n" % len(decl.children))
+		except OccamDocException, e:
+			status("failed\n")
+			print >>sys.stderr, "Error: At " + f.pos_str() + ": " + str(e)
+			print >>sys.stderr, "  Skipping rest of " + file
+			failed = True
+		f.close()
+
+	try:
+		if output_dir is not None:
+			os.makedirs(output_dir)
+	except OSError:
+		# The directory probably already exists; if something
+		# else went wrong, it'll cause an error in the next
+		# stanza.
+		pass
+
+	if output_dir is None:
+		xml_file = "stdout"
+	else:
+		xml_file = output_dir + "/docs.xml"
+	status("Writing XML to %s... " % xml_file)
+	errors = []
+	try:
+		if output_dir is None:
+			f = sys.stdout
+		else:
+			f = open(xml_file, "w")
+		write_xml(decls.values(), f, errors)
+		if output_dir is not None:
+			f.close()
+		status("done\n")
+	except OccamDocException, e:
+		status("failed\n")
+		print >>sys.stderr, "Error: During output: " + str(e)
+		return 1
+	except IOError, e:
+		status("failed\n")
+		print >>sys.stderr, "Error writing XML file: " + str(e)
+		return 1
+	if errors != []:
+		for l in errors:
+			print >>sys.stderr, l
+		failed = True
+
+	try:
+		if output_format == "html":
+			status("Writing output to %s... " % output_dir)
+			html_file = output_dir + "/index.html"
+			do_xslt(xml_file, html_file, "to-html.xsl",
+			        {"mode": "index"})
+
+			copy_file("frames.html", output_dir)
+
+			html_file = output_dir + "/frames-index.html"
+			do_xslt(xml_file, html_file, "to-html.xsl",
+			        {"mode": "frames-index"})
+
+			for moduleid in decls.keys():
+				html_file = output_dir + "/" + moduleid + ".html"
+				do_xslt(xml_file, html_file, "to-html.xsl",
+				        {"moduleid": moduleid, "mode": "page"})
+
+			copy_file("occamdoc.css", output_dir)
+
+			status("done\n")
+	except OccamDocException, e:
+		status("failed\n")
+		print >>sys.stderr, "Error: During conversion: " + str(e)
+		return 1
+	except IOError, e:
+		status("failed\n")
+		print >>sys.stderr, "Error: While writing output files: " + str(e)
+		return 1
+
+	if failed:
+		print >>sys.stderr, "Errors were found; output will be incomplete"
+		return 1
+	else:
+		return 0
+
+if __name__ == "__main__":
+	sys.exit(main(sys.argv[1:]))
+

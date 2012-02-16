@@ -1,0 +1,107 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL64EQERR "REAL64EQERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL64EQERR (VAL REAL64 X, Y)
+
+  -- Beta-2 (27feb87)
+  -- Changed to ...ERR versions in stop only 15sep87
+
+  BOOL bool:
+  VALOF
+    VAL [2]INT X RETYPES X :
+    VAL [2]INT Y RETYPES Y :
+    VAL high IS 1 :
+    VAL low  IS 0 :
+    INT MagX, MagY :
+    SEQ
+      VAL DRealInf.high IS #7FF00000 :
+      IF
+        ((X [high] /\ DRealInf.high) = DRealInf.high) OR
+           ((Y [high] /\ DRealInf.high) = DRealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      MagX := X [high] /\ #7FFFFFFF
+      MagY := Y [high] /\ #7FFFFFFF
+      --Either the same or both +/- 0
+      bool := ((X [high] = Y [high]) AND (X [low] = Y [low])) OR
+                ((((MagX PLUS MagY) \/ X [low]) \/ Y [low]) = 0)
+    RESULT bool
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE REAL64EQERR "REAL64EQERR%CHK"
+
+--{{{  
+BOOL FUNCTION REAL64EQERR (VAL REAL64 X, Y)
+
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+
+  BOOL bool :
+  VALOF
+    VAL [4]INT X RETYPES X :
+    VAL [4]INT Y RETYPES Y :
+    SEQ
+      VAL INT DRealInf.high IS #7FF0 :
+      IF
+        ((X[3] /\ DRealInf.high) = DRealInf.high) OR
+            ((Y[3] /\ DRealInf.high) = DRealInf.high)
+          CAUSEERROR()
+        TRUE
+          SKIP
+      bool := (((X [3] = Y [3]) AND (X [2] = Y [2])) AND
+               ((X [1] = Y [1]) AND (X [0] = Y [0])))
+      IF
+        bool
+          SKIP
+        TRUE
+          INT MagX, MagY :
+          SEQ
+            MagX := X [3] /\ #7FFF
+            MagY := Y [3] /\ #7FFF
+            --Either the same or both +/- 0
+            bool := (((MagX PLUS MagY) \/ (((X [2] \/ X [1]) \/ X [0]) \/
+                           ((Y [2] \/ Y [1]) \/ Y [0]))) = 0)
+    RESULT bool
+:
+--}}}
+
+#ENDIF

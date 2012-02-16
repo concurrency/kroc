@@ -1,0 +1,281 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module maths
+
+#OPTION "V"  -- no vector space
+#COMMENT "Floating point maths library, V1.2 13/07/90"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+#INCLUDE "mathhdr.inc"
+
+--* Double-precision power.
+--
+-- @param Base.r Base
+-- @param Expn.r Exponent
+-- @return Base.r raised to the power Expn.r
+REAL64 FUNCTION DPOWER (VAL REAL64 Base.r, Expn.r)
+
+  --{{{  history
+  -- V1.0 1-Jul-88
+  -- Added OPTION "V"; V1.1 27-Mar-90 SRH
+  -- Altered BMax from 16367 to 16382; V1.2, 13-July-90 SRH
+  --}}}
+
+  REAL64 Result :
+  VALOF
+    --{{{  definitions and variables
+    VAL BMax IS 16382 :        -- 16*log2(Inf-1) - 1, where Inf - 1 is MaxReal
+    VAL sixteen IS 16.0(REAL64) :
+    VAL one.over.sixteen IS 0.0625(REAL64) :
+    --{{{  A1 and A2
+    VAL Ao IS [#3FF0000000000000(INT64),
+               #3FEEA4AFA2A490DA(INT64),
+               #3FED5818DCFBA487(INT64),
+               #3FEC199BDD85529C(INT64),
+               #3FEAE89F995AD3AD(INT64),
+               #3FE9C49182A3F090(INT64),
+               #3FE8ACE5422AA0DB(INT64),
+               #3FE7A11473EB0187(INT64),
+               #3FE6A09E667F3BCD(INT64),
+               #3FE5AB07DD485429(INT64),
+               #3FE4BFDAD5362A27(INT64),
+               #3FE3DEA64C123422(INT64),
+               #3FE306FE0A31B715(INT64),
+               #3FE2387A6E756238(INT64),
+               #3FE172B83C7D517B(INT64),
+               #3FE0B5586CF9890F(INT64),
+               #3FE0000000000000(INT64)] :
+    
+    VAL A2 IS [#BC8E9C23179C2893(INT64),
+               #3C711065895048DD(INT64),
+               #3C6C7C46B071F2BE(INT64),
+               #BC741577EE04992F(INT64),
+               #3C86324C054647AD(INT64),
+               #3C7ADA0911F09EBC(INT64),
+               #3C89B07EB6C70573(INT64),
+               #3C88A62E4ADC610B(INT64)] :
+    VAL [17] REAL64 A1 RETYPES Ao :
+    VAL [8]  REAL64 A2 RETYPES A2 :
+    --}}}
+    VAL ExpnNotFinite IS DNOTFINITE (Expn.r) :
+    VAL base.compared.with.zero IS DIEEECOMPARE (Base.r, DZero) :
+    VAL expn.compared.with.zero IS DIEEECOMPARE (Expn.r, DZero) :
+    VAL base.compared.with.one  IS DIEEECOMPARE (Base.r, DOne) :
+    VAL expn.compared.with.one  IS DIEEECOMPARE (Expn.r, DOne) :
+    --}}}
+    SEQ
+      IF
+        --{{{  special cases
+        --{{{  NaNs
+        (base.compared.with.zero = is.nan) OR (expn.compared.with.zero = is.nan)
+          -- incorporates precedence rule for NaNs
+          Result := REAL64OP (Base.r, Add, Expn.r)
+        --}}}
+        --{{{  Base.r < Zero
+        base.compared.with.zero = less.than
+          Result := Dundefined.NaN
+        --}}}
+        --{{{  Base.r = Zero
+        base.compared.with.zero = equal.to
+          IF
+            expn.compared.with.zero <= equal.to
+              Result := Dundefined.NaN
+            ExpnNotFinite
+              Result := Dunstable.NaN
+            TRUE
+              Result := Base.r
+        --}}}
+        --{{{  Zero < Base.r < 1 and Expn.r = +/- Inf
+        ExpnNotFinite AND (base.compared.with.one = less.than)
+          IF
+            expn.compared.with.zero = greater.than -- Expn.r = +Inf
+              Result := DZero
+            TRUE       -- Expn.r = -Inf
+              Result := DRInf
+        --}}}
+        --{{{  Base.r = 1
+        base.compared.with.one = equal.to
+          IF
+            ExpnNotFinite
+              Result := Dunstable.NaN
+            TRUE
+              Result := DOne
+        --}}}
+        --{{{  Base.r = Inf
+        DNOTFINITE (Base.r)
+          IF
+            expn.compared.with.one >= equal.to
+              Result := DRInf
+            DIEEECOMPARE (Expn.r, -DOne) <= equal.to
+              Result := DZero
+            TRUE
+              Result := Dundefined.NaN
+        --}}}
+        --{{{  Expn.r = 1
+        expn.compared.with.one = equal.to
+          Result := Base.r
+        -- case Expn.r = 0 comes out exactly in any case
+        --}}}
+        --{{{  Expn.r = +/- Inf
+        ExpnNotFinite -- if true, must have 1 < Base.r < Inf
+          IF
+            expn.compared.with.zero = greater.than -- Expn.r = +Inf
+              Result := DRInf
+            TRUE  -- case expn = -Inf
+              SEQ
+                Result := DZero
+        --}}}
+        --}}}
+        TRUE
+          --{{{  variables
+          INT P, M, IW1 :
+          REAL64 G, U1, U2, W, W2 :
+          --}}}
+          SEQ
+            --{{{  determine M and G
+            M, G := DFLOATING.UNPACK (Base.r)
+            G := DDIVBY2 (G)  -- to map G into the range [0.5, 1.0)
+            M := M + 1        -- to ensure M still corresponds
+            --}}}
+            --{{{  find P by binary chop
+            IF
+              G <= A1 [8]
+                P := 8
+              TRUE
+                P := 0
+            IF
+              G <= A1 [P + 4]
+                P := P + 4
+              TRUE
+                SKIP
+            IF
+              G <= A1 [P + 2]
+                P := P + 3
+              TRUE
+                P := P + 1
+            --}}}
+            --{{{  compute U1 and U2
+            
+            U1 := (REAL64 ROUND ((M * 16) - P)) * one.over.sixteen
+            
+            VAL P1 IS 8.3333333333333211405E-002(REAL64) :
+            VAL P2 IS 1.2500000000503799174E-002(REAL64) :
+            VAL P3 IS 2.2321421285924258967E-003(REAL64) :
+            VAL P4 IS 4.3445775672163119635E-004(REAL64) :
+            VAL K  IS 4.4269504088896340736E-001(REAL64) :
+            VAL A IS A1[P] :
+            VAL a IS A2[P/2] :
+            REAL64 Z :
+            SEQ
+              Z := DMULBY2 ((G - A) - a)/(G + A)
+              VAL V IS Z * Z :
+              VAL R IS (((((((P4*V)+P3)*V)+P2)*V)+P1)*V)*Z :
+              U2 := ((R + (K * R)) + (Z * K)) + Z
+            --}}}
+            --{{{  estimate result
+            VAL REAL32 MAXREAL  RETYPES #7F7FFFFF(INT32) :
+            VAL INVMAXREAL IS One/MAXREAL :
+            VAL REAL64 DMAXREAL RETYPES #7FEFFFFFFFFFFFFF(INT64) :
+            VAL L IS (REAL32 ROUND U1) + (REAL32 ROUND U2) : -- can't overflow
+            VAL Limit IS 1076.0(REAL32) :
+            IF
+              ABS(L) < (Limit * INVMAXREAL)
+                W := DMAXREAL
+              TRUE
+                SEQ  -- all underflows and most overflows detected here
+                  W2 := REAL64 ROUND (Limit/L)
+                  W := DABS (W2)
+            --}}}
+            #PRAGMA DEFINED W2
+            IF
+              --{{{  under/overflow
+              DABS (Expn.r) > W  -- under or over flow
+                IF
+                  Expn.r > DZero
+                    IF
+                      W2 > DZero  -- both positive
+                        Result := DRInf
+                      TRUE
+                        -- Result := Dinexact.NaN -- alternative response
+                        Result := DZero
+                  W2 > DZero
+                    SEQ
+                      -- Result := Dinexact.NaN -- alternative response
+                      Result := DZero
+                  TRUE        -- both negative
+                    Result := DRInf
+              --}}}
+              TRUE
+                SEQ
+                  --{{{  pseudo-extended product U*Y using DFPINT
+                  REAL64 W1 :
+                  SEQ
+                    REAL64 Y1, Y2 :
+                    SEQ
+                      Y1 := one.over.sixteen * DFPINT(Expn.r * sixteen)
+                      Y2 := Expn.r - Y1
+                      W := (U1 * Y2) + (U2 * Expn.r)
+                      W1 := one.over.sixteen * DFPINT(W * sixteen)
+                      W2 := W - W1
+                      W := W1 + (U1 * Y1)
+                    W1 := one.over.sixteen * DFPINT(W * sixteen)
+                    W2 := W2 + (W - W1)
+                    W := one.over.sixteen * DFPINT(W2 * sixteen)
+                    W2 := W2 - W
+                    IW1 := INT TRUNC ((W1 + W) * sixteen)
+                  --}}}
+                  IF
+                    --{{{  overflow
+                    IW1 > BMax -- detects remaining overflow cases; we trade a small
+                               -- loss in range for increased efficiency
+                      Result := DRInf
+                    --}}}
+                    TRUE
+                      SEQ
+                        --{{{  adjust W
+                        IF
+                          W2 > DZero
+                            SEQ
+                              IW1 := IW1 + 1
+                              W2 := W2 - one.over.sixteen
+                          TRUE
+                            SKIP
+                        --}}}
+                        --{{{  extract P and M
+                        IF
+                          IW1 < 0
+                            M := IW1 / 16
+                          TRUE
+                            M := (IW1 / 16) + 1
+                        P := (M * 16) - IW1
+                        --}}}
+                        --{{{  construct result
+                        VAL Q0 IS 0.69314718055994529629(REAL64) :
+                        VAL Q1 IS 0.24022650695909537056(REAL64) :
+                        VAL Q2 IS 5.5504108664085595326E-2(REAL64) :
+                        VAL Q3 IS 9.6181290595172416964E-3(REAL64) :
+                        VAL Q4 IS 1.3333541313585784703E-3(REAL64) :
+                        VAL Q5 IS 1.5400290440989764601E-4(REAL64) :
+                        VAL Q6 IS 1.4928852680595608186E-5(REAL64) :
+                        VAL A IS A1 [P] :
+                        Result := DSCALEB (A+(A*(((((((((((((W2*Q6)+Q5)*
+                                  W2)+Q4)*W2)+Q3)*W2)+Q2)*W2)+Q1)*W2)+Q0)*W2)), M)
+                        --}}}
+    RESULT Result
+:

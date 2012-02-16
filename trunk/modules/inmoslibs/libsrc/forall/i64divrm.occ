@@ -1,0 +1,677 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module forall
+
+#IF (TARGET.BITS.PER.WORD = 32)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.2 11/01/93"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT64DIVREM "INT64DIVREM%CHK"
+#PRAGMA TRANSLATE INT64DIV "INT64DIV%CHK"
+#PRAGMA TRANSLATE INT64REM "INT64REM%CHK"
+
+--{{{  INT64DIVREM
+--{{{  INT64DIVREM -- TA, T8, T9000
+INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, VAL INT64 Dvsr)
+
+  --{{{  comments
+  -- Calculates the quotient and remainder from Dvd and Dvsr.  Note
+  -- that Dvd is the dividend and Dvsr is the divisor, and in a fraction
+  -- it is the dividend that is the numerator and the divisor that is the
+  -- denominator.
+  
+  -- NOTE:  Because (MOSTNEG INT64) REM (-1(INT64)) is valid (and equal to 0),
+  -- but (MOSTNEG INT64) / (-1(INT64)) is invalid, this routine, as it is
+  -- asked for both quotient and remainder, must leave it to the caller to
+  -- fault the division: if given the arguments MOSTNEG INT64 and -1, then
+  -- this routine will give the correct answer for the remainder, but rubbish
+  -- for the quotient.
+  --}}}
+
+  --{{{  history
+  -- Integer Arithmetic (9oct86) DES
+  -- Converted to functions (26jan87) PWT
+  -- V1.1 21/02/89
+  -- V1.2 11/01/93 SRH: bug fix TS/2020 - moved check for
+  -- (MOSTNEG INT64) / (-1(INT64)) from INT64DIVREM into INT64DIV so that
+  -- remainder can be calculated correctly.
+  --}}}
+
+  -- Signed divide from Knuth (algorithm D, section 4.3.1 - vol 2, pp 257).
+
+  INT64 Quot, Rem :
+
+  -- From here to end of routine is same as the idebug version except for
+  -- the lines marked "-- idebug".  A change in one should be reflected in
+  -- the other.
+
+  VALOF
+    --{{{  DEFs
+    VAL MaxInt  IS #FFFFFFFF :
+    VAL SignBit IS #80000000 :
+    --}}}
+    --{{{  PROC INT64UnsDiv
+    PROC INT64UnsDiv ([2]INT Quot, Rem, VAL [2]INT Dvd, Dvsr)
+      --Unsigned divide primitive implemeted using Knuth's divide
+      --algorithm, with error checking.
+      INT Count, X :
+      [3] INT U :
+      PLACE U IN WORKSPACE :
+      [3] INT W :
+      PLACE W IN WORKSPACE :
+      [2] INT V :
+      PLACE V IN WORKSPACE :
+      IF
+        --{{{  Dvsr = 0
+        (Dvsr [0] = 0) AND (Dvsr [1] = 0) --divide by zero
+          --{{{  Handle error
+          CAUSEERROR()
+          --}}}
+        --}}}
+        --{{{  Dvsr [1] = 0
+        Dvsr [1] = 0                      --do double by single
+          SEQ
+            Quot [1], U [1] := LONGDIV (0, Dvd [1], Dvsr [0])
+            Quot [0], Rem [0] := LONGDIV (U [1], Dvd [0], Dvsr [0])
+            Rem [1] := 0
+        --}}}
+        --{{{  TRUE
+        TRUE                              --double by double
+          SEQ
+            Count, V [1], V [0] := NORMALISE (Dvsr [1], Dvsr [0])
+            IF
+              --{{{  Count = 0
+              Count = 0                   --already normalised
+                SEQ
+                  U [2] := 0
+                  U [1] := Dvd [1]
+                  U [0] := Dvd [0]
+              --}}}
+              --{{{  TRUE
+              TRUE                        --shift dividend too
+                SEQ
+                  U [2], X := SHIFTLEFT (0, Dvd [1], Count)
+                  U [1], U [0] := SHIFTLEFT (Dvd [1], Dvd [0], Count)
+              --}}}
+            Quot [1] := 0
+            IF                            --last digit place
+              --{{{  U[2] = V[1]
+              U [2] = V [1]
+                Quot [0] := MaxInt
+              --}}}
+              --{{{  TRUE
+              TRUE
+                Quot [0], X := LONGDIV (U [2], U [1], V [1])
+              --}}}
+            IF
+              --{{{  Quot [0] <> 0
+              Quot [0] <> 0
+                SEQ                       --evaluate in case overflow
+                  W [1], W [0] := LONGPROD (Quot [0], V [0], 0)--muliply up
+                  W [2], W [1] := LONGPROD (Quot [0], V [1], W [1])
+                  X, U [0] := LONGDIFF (U [0], W [0], 0)   --subtract from dividend
+                  X, U [1] := LONGDIFF (U [1], W [1], X)
+                  X, U [2] := LONGDIFF (U [2], W [2], X)
+                  WHILE (U [2] /\ SignBit) <> 0         --add back as required
+                    SEQ
+                      Quot [0] := Quot [0] - 1
+                      X, U [0] := LONGSUM (U [0], V [0], 0)
+                      X, U [1] := LONGSUM (U [1], V [1], X)
+                      X, U [2] := LONGSUM (U [2], 0, X)
+              --}}}
+              --{{{  TRUE
+              TRUE
+                SKIP
+              --}}}
+            IF
+              --{{{  Count = 0
+              Count = 0
+                SEQ
+                  Rem [0] := U [0]
+                  Rem [1] := U [1]
+              --}}}
+              --{{{  TRUE
+              TRUE
+                Rem [1], Rem [0] := SHIFTRIGHT (U [1], U [0], Count)
+              --}}}
+        --}}}
+    :
+    --}}}
+    [2]INT Quot RETYPES Quot :
+    [2]INT Rem RETYPES Rem :
+    VAL [2]INT Dvd RETYPES Dvd :
+    VAL [2]INT Dvsr RETYPES Dvsr :
+    INT Borrow :
+    BOOL NegRem, NegQuot :
+    [2] INT U :
+    PLACE U IN WORKSPACE :
+    [2] INT V :
+    PLACE V IN WORKSPACE :
+    SEQ
+      --{{{  Test Dvd negative
+      IF
+        --{{{  Dvd negative
+        (Dvd [1] /\ SignBit) <> 0          --sort out signs
+          SEQ
+            NegRem := TRUE
+            Borrow, U [0] := LONGDIFF (0, Dvd [0], 0)
+            Borrow, U [1] := LONGDIFF (0, Dvd [1], Borrow)
+        --}}}
+        --{{{  Dvd zero or positive
+        TRUE
+          SEQ
+            NegRem := FALSE
+            U [0] := Dvd [0]
+            U [1] := Dvd [1]
+        --}}}
+      --}}}
+      --{{{  Test Dvsr negative
+      IF
+        --{{{  Dvsr negative
+        (Dvsr [1] /\ SignBit) <> 0
+          SEQ
+            NegQuot := NOT NegRem
+            Borrow, V [0] := LONGDIFF (0, Dvsr [0], 0)
+            Borrow, V [1] := LONGDIFF (0, Dvsr [1], Borrow)
+        --}}}
+        --{{{  Dvsr is zero or positive
+        TRUE
+          SEQ
+            NegQuot := NegRem
+            V [0] := Dvsr [0]
+            V [1] := Dvsr [1]
+        --}}}
+      --}}}
+      INT64UnsDiv (Quot, Rem, U, V)
+      --{{{  Check if result has negative quotient
+      IF
+        --{{{  NegQuot
+        NegQuot
+          SEQ
+            Borrow, Quot [0] := LONGDIFF (0, Quot [0], 0)
+            Borrow, Quot [1] := LONGDIFF (0, Quot [1], Borrow)
+        --}}}
+        --{{{  TRUE
+        TRUE
+          SKIP
+        --}}}
+      --}}}
+      --{{{  Check if result has negative remainder
+      IF
+        --{{{  NegRem
+        NegRem
+          SEQ
+            Borrow, Rem [0] := LONGDIFF (0, Rem [0], 0)
+            Borrow, Rem [1] := LONGDIFF (0, Rem [1], Borrow)
+        --}}}
+        --{{{  TRUE
+        TRUE
+          SKIP
+        --}}}
+      --}}}
+    RESULT Quot, Rem
+:
+--}}}
+--}}}
+
+--{{{  INT64DIV & INT64REM
+--{{{  INT64DIV
+INT64 FUNCTION INT64DIV (VAL INT64 Dvd, VAL INT64 Dvsr)
+
+  -- Function version (10 Jun 87)
+
+  INT64 Quot :
+  VALOF
+    SEQ
+      --{{{  CAUSEERROR if overflow (MinInt/-1)
+      IF
+        --{{{  CAUSEERROR if overflow: (MOSTNEG INT64) / -1
+        (Dvd = (MOSTNEG INT64)) AND (Dvsr = (-1(INT64)))
+          CAUSEERROR() -- answer not expressible in two's complement
+        --}}}
+        --{{{  TRUE
+        TRUE
+          SKIP
+        --}}}
+      --}}}
+      INT64 Dummy :
+      Quot, Dummy := INT64DIVREM (Dvd, Dvsr)
+    RESULT Quot
+:
+--}}}
+--{{{  INT64REM
+INT64 FUNCTION INT64REM (VAL INT64 Dvd, VAL INT64 Dvsr)
+
+  INT64 Rem :
+  VALOF
+    INT64 Dummy :
+    Dummy, Rem := INT64DIVREM (Dvd, Dvsr)
+    RESULT Rem
+:
+--}}}
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "T2 compiler library, V1.3 11/01/93"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE INT64DIVREM "INT64DIVREM%CHK"
+#PRAGMA TRANSLATE INT64DIV "INT64DIV%CHK"
+#PRAGMA TRANSLATE INT64REM "INT64REM%CHK"
+
+--{{{  INT64DIVREM
+--{{{  INT64DIVREM -- T2
+INT64, INT64 FUNCTION INT64DIVREM (VAL INT64 Dvd, Dvsr)
+
+  --{{{  comments
+  -- Calculates the quotient and remainder from Dvd and Dvsr.  Note
+  -- that Dvd is the dividend and Dvsr is the divisor, and in a fraction
+  -- it is the dividend that is the numerator and the divisor that is the
+  -- denominator.
+  
+  -- NOTE:  Because (MOSTNEG INT64) REM (-1(INT64)) is valid (and equal to 0),
+  -- but (MOSTNEG INT64) / (-1(INT64)) is invalid, this routine, as it is
+  -- asked for both quotient and remainder, must leave it to the caller to
+  -- fault the division: if given the arguments MOSTNEG INT64 and -1, then
+  -- this routine will give the correct answer for the remainder, but rubbish
+  -- for the quotient.
+  --}}}
+
+  --{{{  history
+  -- Function version (10 Jun 87)
+  -- V1.1 21/02/89
+  -- V1.2 24/11/92 SRH: bug fix for TS/1970: overflow check for MinInt/-1
+  -- was ANDing NegRem rather than (NOT NegQuot) - fine for overflow check,
+  -- but was trapping valid div/rem too: MinInt/1 and MinInt\1.
+  -- V1.3 11/01/93 SRH: bug fix TS/2020 - moved check for
+  -- (MOSTNEG INT64) / (-1(INT64)) from INT64DIVREM into INT64DIV so that
+  -- remainder can be calculated correctly.
+  --}}}
+
+  INT64 Quot, Rem :
+  VALOF
+    --{{{  16 Bit Constants
+    VAL INT MaxInt  IS  #FFFF :
+    VAL INT SignBit IS  #8000 :
+    VAL INT BitsPerWord IS 16 :
+    --}}}
+    [4]INT Quot RETYPES Quot :
+    [4]INT Rem  RETYPES Rem  :
+    VAL [4]INT Dvd  RETYPES Dvd  :
+    VAL [4]INT Dvsr RETYPES Dvsr :
+    --Signed quad length divide.
+    --Always called from Int64Div or Int64Rem with distinct parameters
+
+    --{{{  QuadUnsDiv
+    PROC QuadUnsDiv ([4]INT Quot, Rem, VAL [4]INT Dvd, Dvsr)
+      --Unsigned divide primitive implemented using Knuth's divide
+      --algorithm (section 4.3.1 - vol 2, pp257).
+    
+      INT Count, X :
+      [5]INT U :
+      PLACE U IN WORKSPACE :
+      [5]INT W :
+      PLACE W IN WORKSPACE :
+      [4]INT V :
+      PLACE V IN WORKSPACE :
+    
+      SEQ
+        U[4] := 0                               --common requirements
+        U[3] := Dvd[3]
+        U[2] := Dvd[2]
+        U[1] := Dvd[1]
+        U[0] := Dvd[0]
+        IF
+          Dvsr[3] <> 0                          --quad into quad
+            --{{{  
+            SEQ
+              Count,  V[3],  V[2] := NORMALISE ( Dvsr[3],  Dvsr[2])
+              IF
+                Count <> 0                  --not already normalised
+                  SEQ
+                    V[2],  X := SHIFTLEFT ( Dvsr[2],  Dvsr[1],  Count)
+                    V[1],  V[0] := SHIFTLEFT ( Dvsr[1],  Dvsr[0],  Count)
+                    U[4],  X := SHIFTLEFT ( 0,  Dvd[3],  Count)
+                    U[3],  X := SHIFTLEFT ( Dvd[3],  Dvd[2],  Count)
+                    U[2],  X := SHIFTLEFT ( Dvd[2],  Dvd[1],  Count)
+                    U[1],  U[0] := SHIFTLEFT ( Dvd[1],  Dvd[0],  Count)
+                TRUE
+                  SEQ
+                    V[1] := Dvsr[1]
+                    V[0] := Dvsr[0]
+              Quot[3] := 0
+              Quot[2] := 0
+              Quot[1] := 0
+              -- No need to check V[3] = U[4] as this can't happen.
+              Quot[0],  X := LONGDIV ( U[4],  U[3],  V[3])
+              IF
+                Quot[0] <> 0
+                  SEQ                       --evaluate in case overflow
+                    W[1],  W[0] := LONGPROD ( Quot[0],  V[0],  0)
+                    W[2],  W[1] := LONGPROD ( Quot[0],  V[1],  W[1])
+                    W[3],  W[2] := LONGPROD ( Quot[0],  V[2],  W[2])
+                    W[4],  W[3] := LONGPROD ( Quot[0],  V[3],  W[3])
+                    X,  U[0] := LONGDIFF ( U[0],  W[0],  0)
+                    X,  U[1] := LONGDIFF ( U[1],  W[1],  X)
+                    X,  U[2] := LONGDIFF ( U[2],  W[2],  X)
+                    X,  U[3] := LONGDIFF ( U[3],  W[3],  X)
+                    X,  U[4] := LONGDIFF ( U[4],  W[4],  X)
+                    WHILE (U[4] /\ SignBit) <> 0        --add back as required
+                      SEQ
+                        Quot[0] := Quot[0] - 1
+                        X,  U[0] := LONGSUM ( U[0],  V[0],  0)
+                        X,  U[1] := LONGSUM ( U[1],  V[1],  X)
+                        X,  U[2] := LONGSUM ( U[2],  V[2],  X)
+                        X,  U[3] := LONGSUM ( U[3],  V[3],  X)
+                        X,  U[4] := LONGSUM ( U[4],  0,  X)
+                TRUE
+                  SKIP
+            --}}}
+          TRUE                                  --not full case
+            --{{{  
+            IF
+              Dvsr[2] = 0
+                --{{{  
+                IF
+                  Dvsr[1] = 0
+                    --{{{  
+                    SEQ
+                      Count := 0
+                      U[1] := 0
+                      U[2] := 0
+                      U[3] := 0
+                      IF
+                        Dvsr[0] <> 0
+                          SEQ
+                            Quot[3],  X := LONGDIV ( 0,  Dvd[3],  Dvsr[0])
+                            Quot[2],  X := LONGDIV ( X,  Dvd[2],  Dvsr[0])
+                            Quot[1],  X := LONGDIV ( X,  Dvd[1],  Dvsr[0])
+                            Quot[0],  U[0] := LONGDIV ( X,  Dvd[0],  Dvsr[0])
+                        TRUE                     --divide by zero
+                          SEQ
+                            CAUSEERROR()
+                            Quot[0] := MaxInt   --safe answer
+                            Quot[1] := MaxInt
+                            Quot[2] := MaxInt
+                            Quot[3] := MaxInt>>1--approx infinity
+                            U[0] := 0           --set remainder
+                    --}}}
+                  TRUE                        --quad by double
+                    SEQ
+                      Count,  V[1],  V[0] := NORMALISE ( Dvsr[1],  Dvsr[0])
+                      IF
+                        Count <> 0            --not normalised
+                          SEQ
+                            U[4],  X := SHIFTLEFT ( 0,  Dvd[3],  Count)
+                            U[3],  X := SHIFTLEFT ( Dvd[3],  Dvd[2],  Count)
+                            U[2],  X := SHIFTLEFT ( Dvd[2],  Dvd[1],  Count)
+                            U[1],  U[0] := SHIFTLEFT ( Dvd[1],  Dvd[0],  Count)
+                        TRUE
+                          SKIP
+                      Quot[3] := 0
+                      --U[4] = V[1] cannot hold so no need to test
+                      Quot[2],  X := LONGDIV ( U[4],  U[3],  V[1])
+                      IF
+                        Quot[2] <> 0
+                          SEQ                   --evaluate in case overflow
+                            W[1],  W[0] := LONGPROD ( Quot[2],  V[0],  0)
+                            W[2],  W[1] := LONGPROD ( Quot[2],  V[1],  W[1])
+                            X,  U[2] := LONGDIFF ( U[2],  W[0],  0)
+                            X,  U[3] := LONGDIFF ( U[3],  W[1],  X)
+                            X,  U[4] := LONGDIFF ( U[4],  W[2],  X)
+                            WHILE (U[4] /\ SignBit) <> 0    --add back as required
+                              SEQ
+                                Quot[2] := Quot[2] - 1
+                                X,  U[2] := LONGSUM ( U[2],  V[0],  0)
+                                X,  U[3] := LONGSUM ( U[3],  V[1],  X)
+                                X,  U[4] := LONGSUM ( U[4],  0,  X)
+                        TRUE
+                          SKIP
+                      IF                        --last digit place
+                        U[3] = V[1]             --this is possible
+                          Quot[1] := MaxInt
+                        TRUE
+                          Quot[1],  X := LONGDIV ( U[3],  U[2],  V[1])
+                      IF
+                        Quot[1] <> 0
+                          SEQ                   --evaluate in case overflow
+                            W[1],  W[0] := LONGPROD ( Quot[1],  V[0],  0)
+                            W[2],  W[1] := LONGPROD ( Quot[1],  V[1],  W[1])
+                            X,  U[1] := LONGDIFF ( U[1],  W[0],  0)
+                            X,  U[2] := LONGDIFF ( U[2],  W[1],  X)
+                            X,  U[3] := LONGDIFF ( U[3],  W[2],  X)
+                            WHILE (U[3] /\ SignBit) <> 0    --add back as required
+                              SEQ
+                                Quot[1] := Quot[1] - 1
+                                X,  U[1] := LONGSUM ( U[1],  V[0],  0)
+                                X,  U[2] := LONGSUM ( U[2],  V[1],  X)
+                                X,  U[3] := LONGSUM ( U[3],  0,  X)
+                        TRUE
+                          SKIP
+                      IF                        --last digit place
+                        U[2] = V[1]
+                          Quot[0] := MaxInt
+                        TRUE
+                          Quot[0],  X := LONGDIV ( U[2],  U[1],  V[1])
+                      IF
+                        Quot[0] <> 0
+                          SEQ                   --evaluate in case overflow
+                            W[1],  W[0] := LONGPROD ( Quot[0],  V[0],  0)
+                            W[2],  W[1] := LONGPROD ( Quot[0],  V[1],  W[1])
+                            X,  U[0] := LONGDIFF ( U[0],  W[0],  0)
+                            X,  U[1] := LONGDIFF ( U[1],  W[1],  X)
+                            X,  U[2] := LONGDIFF ( U[2],  W[2],  X)
+                            WHILE (U[2] /\ SignBit) <> 0    --add back as required
+                              SEQ
+                                Quot[0] := Quot[0] - 1
+                                X,  U[0] := LONGSUM ( U[0],  V[0],  0)
+                                X,  U[1] := LONGSUM ( U[1],  V[1],  X)
+                                X,  U[2] := LONGSUM ( U[2],  0,  X)
+                        TRUE
+                          SKIP
+                --}}}
+              TRUE                              --quad by triple
+                SEQ
+                  Count,  V[2],  V[1] := NORMALISE ( Dvsr[2],  Dvsr[1])
+                  IF
+                    Count <> 0                  --need to shift
+                      SEQ
+                        V[1],  V[0] := SHIFTLEFT ( Dvsr[1],  Dvsr[0],  Count)
+                        U[4],  X := SHIFTLEFT ( 0,  Dvd[3],  Count)
+                        U[3],  X := SHIFTLEFT ( Dvd[3],  Dvd[2],  Count)
+                        U[2],  X := SHIFTLEFT ( Dvd[2],  Dvd[1],  Count)
+                        U[1],  U[0] := SHIFTLEFT ( Dvd[1],  Dvd[0],  Count)
+                    TRUE
+                      V[0] := Dvsr[0]
+                  Quot[3] := 0
+                  Quot[2] := 0
+                  -- no need to check U[4] = V[2] as the top bit of U[4] cannot be set
+                  Quot[1],  X := LONGDIV ( U[4],  U[3],  V[2])
+                  IF
+                    Quot[1] <> 0
+                      SEQ                   --evaluate in case overflow
+                        W[1],  W[0] := LONGPROD ( Quot[1],  V[0],  0)
+                        W[2],  W[1] := LONGPROD ( Quot[1],  V[1],  W[1])
+                        W[3],  W[2] := LONGPROD ( Quot[1],  V[2],  W[2])
+                        X,  U[1] := LONGDIFF ( U[1],  W[0],  0)
+                        X,  U[2] := LONGDIFF ( U[2],  W[1],  X)
+                        X,  U[3] := LONGDIFF ( U[3],  W[2],  X)
+                        X,  U[4] := LONGDIFF ( U[4],  W[3],  X)
+                        WHILE (U[4] /\ SignBit) <> 0    --add back as required
+                          SEQ
+                            Quot[1] := Quot[1] - 1
+                            X,  U[1] := LONGSUM ( U[1],  V[0],  0)
+                            X,  U[2] := LONGSUM ( U[2],  V[1],  X)
+                            X,  U[3] := LONGSUM ( U[3],  V[2],  X)
+                            X,  U[4] := LONGSUM ( U[4],  0,  X)
+                    TRUE
+                      SKIP
+                  IF                        --last digit place
+                    U[3] = V[2]             --this is needed at this stage
+                      Quot[0] := MaxInt
+                    TRUE
+                      Quot[0],  X := LONGDIV ( U[3],  U[2],  V[2])
+                  IF
+                    Quot[0] <> 0
+                      SEQ                   --evaluate in case overflow
+                        W[1],  W[0] := LONGPROD ( Quot[0],  V[0],  0)
+                        W[2],  W[1] := LONGPROD ( Quot[0],  V[1],  W[1])
+                        W[3],  W[2] := LONGPROD ( Quot[0],  V[2],  W[2])
+                        X,  U[0] := LONGDIFF ( U[0],  W[0],  0)
+                        X,  U[1] := LONGDIFF ( U[1],  W[1],  X)
+                        X,  U[2] := LONGDIFF ( U[2],  W[2],  X)
+                        X,  U[3] := LONGDIFF ( U[3],  W[3],  X)
+                        WHILE (U[3] /\ SignBit) <> 0    --add back as required
+                          SEQ
+                            Quot[0] := Quot[0] - 1
+                            X,  U[0] := LONGSUM ( U[0],  V[0],  0)
+                            X,  U[1] := LONGSUM ( U[1],  V[1],  X)
+                            X,  U[2] := LONGSUM ( U[2],  V[2],  X)
+                            X,  U[3] := LONGSUM ( U[3],  0,  X)
+                    TRUE
+                      SKIP
+            --}}}
+        IF
+          Count = 0
+            SEQ
+              Rem[0] := U[0]
+              Rem[1] := U[1]
+              Rem[2] := U[2]
+              Rem[3] := U[3]
+          TRUE
+            SEQ
+              Rem[3],  Rem[2] := SHIFTRIGHT ( U[3],  U[2],  Count)
+              X,  Rem[1] := SHIFTRIGHT ( U[2],  U[1],  Count)
+              X,  Rem[0] := SHIFTRIGHT ( U[1],  U[0],  Count)
+    :
+    --}}}
+
+    INT Carry :
+    BOOL NegQuot, NegRem :
+    [4] INT U :
+    PLACE U IN WORKSPACE :
+    [4] INT V :
+    PLACE V IN WORKSPACE :
+    SEQ
+      --{{{  remove sign of Dvd
+      IF
+        (Dvd[3] /\ SignBit) <> 0           --sort out signs
+          SEQ
+            NegRem := TRUE
+            U[1],  U[0] := LONGDIFF ( 0,  Dvd[0],  0)
+            U[2],  U[1] := LONGDIFF ( 0,  Dvd[1],  U[1])
+            U[3],  U[2] := LONGDIFF ( 0,  Dvd[2],  U[2])
+            Carry, U[3] := LONGDIFF ( 0,  Dvd[3],  U[3])
+        TRUE
+          SEQ
+            NegRem := FALSE
+            U := Dvd
+      --}}}
+      --{{{  remove sign of Dvsr
+      IF
+        (Dvsr[3] /\ SignBit) <> 0
+          SEQ
+            NegQuot := NOT NegRem
+            V[1],  V[0] := LONGDIFF ( 0,  Dvsr[0],  0)
+            V[2],  V[1] := LONGDIFF ( 0,  Dvsr[1],  V[1])
+            V[3],  V[2] := LONGDIFF ( 0,  Dvsr[2],  V[2])
+            Carry, V[3] := LONGDIFF ( 0,  Dvsr[3],  V[3])
+        TRUE
+          SEQ
+            NegQuot := NegRem
+            V := Dvsr
+      --}}}
+      QuadUnsDiv (Quot, Rem, U, V)
+      --{{{  compensate for sign of Dvd
+      IF
+        NegQuot
+          SEQ
+            Carry,  Quot[0] := LONGDIFF ( 0,  Quot[0],  0)
+            Carry,  Quot[1] := LONGDIFF ( 0,  Quot[1],  Carry)
+            Carry,  Quot[2] := LONGDIFF ( 0,  Quot[2],  Carry)
+            Carry,  Quot[3] := LONGDIFF ( 0,  Quot[3],  Carry)
+        TRUE
+          SKIP
+      --}}}
+      --{{{  compensate for sign of Dvsr
+      IF
+        NegRem
+          SEQ
+            Carry,  Rem[0] := LONGDIFF ( 0,  Rem[0],  0)
+            Carry,  Rem[1] := LONGDIFF ( 0,  Rem[1],  Carry)
+            Carry,  Rem[2] := LONGDIFF ( 0,  Rem[2],  Carry)
+            Carry,  Rem[3] := LONGDIFF ( 0,  Rem[3],  Carry)
+        TRUE
+          SKIP
+      --}}}
+    RESULT Quot, Rem
+:
+--}}}
+--}}}
+
+--{{{  INT64DIV & INT64REM
+--{{{  INT64DIV
+INT64 FUNCTION INT64DIV (VAL INT64 Dvd, VAL INT64 Dvsr)
+
+  -- Function version (10 Jun 87)
+
+  INT64 Quot :
+  VALOF
+    SEQ
+      --{{{  CAUSEERROR if overflow (MinInt/-1)
+      IF
+        --{{{  CAUSEERROR if overflow: (MOSTNEG INT64) / -1
+        (Dvd = (MOSTNEG INT64)) AND (Dvsr = (-1(INT64)))
+          CAUSEERROR() -- answer not expressible in two's complement
+        --}}}
+        --{{{  TRUE
+        TRUE
+          SKIP
+        --}}}
+      --}}}
+      INT64 Dummy :
+      Quot, Dummy := INT64DIVREM (Dvd, Dvsr)
+    RESULT Quot
+:
+--}}}
+--{{{  INT64REM
+INT64 FUNCTION INT64REM (VAL INT64 Dvd, VAL INT64 Dvsr)
+
+  INT64 Rem :
+  VALOF
+    INT64 Dummy :
+    Dummy, Rem := INT64DIVREM (Dvd, Dvsr)
+    RESULT Rem
+:
+--}}}
+--}}}
+
+#ENDIF

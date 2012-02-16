@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE ACTIONS SYSTEM "actions.dtd">
+
+<ACTIONS>
+    <ACTION NAME="occPlug.occdoc">
+			<CODE>
+					view.getDockableWindowManager().addDockableWindow("occPlug");
+					view.getDockableWindowManager().getDockable(
+						org.transterpreter.occPlug.OccPlugPlugin.NAME).occdoc();
+        </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.occdocview">
+        <CODE>
+					org.transterpreter.occPlug.OccPlug.occdocView(view);
+        </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.firmdl">
+        <CODE>
+            view.getDockableWindowManager().addDockableWindow("occPlug");
+            view.getDockableWindowManager()
+              .getDockable(
+							org.transterpreter.occPlug.OccPlugPlugin.NAME).firmdl(false);
+        </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.firmdlfast">
+        <CODE>
+            view.getDockableWindowManager().addDockableWindow("occPlug");
+            view.getDockableWindowManager()
+              .getDockable(
+							org.transterpreter.occPlug.OccPlugPlugin.NAME).firmdl(true);
+        </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.tvmdl">
+        <CODE>
+            view.getDockableWindowManager().addDockableWindow("occPlug");
+            view.getDockableWindowManager()
+              .getDockable(
+							org.transterpreter.occPlug.OccPlugPlugin.NAME).legodl(jEdit.getProperty(OccPlugPlugin.OPTION_PREFIX + "legotvm"), null, 1);
+        </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.versions">
+			<CODE>
+				new org.transterpreter.occPlug.AboutDialog(view);
+      </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.help">
+			<CODE>
+				org.transterpreter.occPlug.OccPlugUtil.openWebBrowser(
+					jEdit.getProperty(org.transterpreter.occPlug.OccPlugPlugin.OPTION_PREFIX + "helpIndex"));
+      </CODE>
+    </ACTION>
+    <ACTION NAME="occPlug.firmware">
+    	<CODE>
+		view.getDockableWindowManager().addDockableWindow("occPlug");
+		view.getDockableWindowManager().getDockable(
+			org.transterpreter.occPlug.OccPlugPlugin.NAME).showFirmwareDownload();
+	</CODE>
+    </ACTION>
+</ACTIONS>

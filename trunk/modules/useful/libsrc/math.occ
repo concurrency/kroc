@@ -1,0 +1,173 @@
+--
+--	Mathematical utilities
+--	Copyright (C) 2008, 2009 Adam Sampson <ats@offog.org>
+--	Copyright (C) 2009 Teodor Ghetiu
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation, either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library.  If not, see
+--	<http://www.gnu.org/licenses/>.
+--
+
+--** @module useful
+
+#INCLUDE "maths.module"
+
+--{{{  FUNCTION abs.int
+--* Remove the sign from an integer.
+-- @param n Input value
+-- @return [@code -n] if [@code n] is negative, else [@code n]
+INT FUNCTION abs.int (VAL INT n)
+  INT result:
+  VALOF
+    IF
+      n < 0
+        result := -n
+      TRUE
+        result := n
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION min.int
+--* Find the lesser of two integers.
+-- @param a, b Integers to compare
+-- @return The lesser of [@code a] and [@code b]
+INT FUNCTION min.int (VAL INT a, b)
+  INT result:
+  VALOF
+    IF
+      a < b
+        result := a
+      TRUE
+        result := b
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION max.int
+--* Find the greater of two integers.
+-- @param a, b Integers to compare
+-- @return The greater of [@code a] and [@code b]
+INT FUNCTION max.int (VAL INT a, b)
+  INT result:
+  VALOF
+    IF
+      a > b
+        result := a
+      TRUE
+        result := b
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION abs.real32
+--* Remove the sign from a real.
+-- @param n Input value
+-- @return [@code -n] if [@code n] is negative, else [@code n]
+REAL32 FUNCTION abs.real32 (VAL REAL32 n)
+  REAL32 result:
+  VALOF
+    IF
+      n < 0.0
+        result := -n
+      TRUE
+        result := n
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION min.real32
+--* Find the lesser of two reals.
+-- @param a, b Reals to compare
+-- @return The lesser of [@code a] and [@code b]
+REAL32 FUNCTION min.real32 (VAL REAL32 a, b)
+  REAL32 result:
+  VALOF
+    IF
+      a < b
+        result := a
+      TRUE
+        result := b
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION max.real32
+--* Find the greater of two reals.
+-- @param a, b Reals to compare
+-- @return The greater of [@code a] and [@code b]
+REAL32 FUNCTION max.real32 (VAL REAL32 a, b)
+  REAL32 result:
+  VALOF
+    IF
+      a > b
+        result := a
+      TRUE
+        result := b
+    RESULT result
+:
+--}}}
+--{{{  PROC update.max.int
+--* Update a running maximum value.
+-- If [@code value] is greater than [@code max], [@code max] will be set to
+-- [@code value].
+-- @param max The running maximum
+-- @param value The input value
+PROC update.max.int (INT max, VAL INT value)
+  IF
+    value > max
+      max := value
+    TRUE
+      SKIP
+:
+--}}}
+--{{{  FUNCTION clamp.int
+--* Limit an integer to a particular range.
+-- For example, if you call this with [@code left = 3] and [@code width = 3],
+-- then the output value will be in the range [@code 3 .. 5].
+-- @param in Input value
+-- @param left The lowest value in the range
+-- @param width The width of the range
+-- @return A value in the range [@code left .. (left + width - 1)]
+INT FUNCTION clamp.int (VAL INT in, left, width)
+  INT result:
+  VALOF
+    IF
+      in < left
+        result := left
+      VAL INT max IS (left + width) - 1:
+      in > max
+        result := max
+      TRUE
+        result := in
+    RESULT result
+:
+--}}}
+--{{{  FUNCTION wrap.int
+--* Wrap array indexes around.
+-- If given [@code -1], this will return [@code max - 1]; if given [@code max
+-- + 1], this will return [@code 1]. This is not quite the same thing as
+-- [@code \ max], since that doesn't do the right thing for negative numbers.
+INT FUNCTION wrap.int (VAL INT i, max)
+  INT n:
+  VALOF
+    SEQ
+      n := i
+      WHILE n < 0
+        n := n + max
+    RESULT n \ max
+:
+--}}}
+--{{{  FUNCTION deg.to.rad
+--* Convert an angle in degrees into radians.
+REAL32 FUNCTION deg.to.rad (VAL REAL32 deg) IS (deg * PI) / 180.0:
+--}}}
+--{{{  FUNCTION rad.to.deg
+--* Convert an angle in radians into degrees.
+REAL32 FUNCTION rad.to.deg (VAL REAL32 rad) IS (rad * 180.0) / PI:
+--}}}

@@ -1,0 +1,242 @@
+--
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** Occam header for Arduino Mega specific pin mappings.
+--
+-- @module boardmap.arduionmega
+
+#IF NOT (DEFINED (BOARDMAP.MODULE))
+#DEFINE BOARDMAP.MODULE
+
+#INCLUDE "constants.module"
+#INCLUDE "base.module"
+
+--{{{Board to Architecture Layout
+-- Board to Architecture layout w/ register names.
+--
+--B.pin   A.pin *REG  --B.pin A.pin *REG
+-- 0(RX0) 02    PE0   -- 8      17    PH5
+-- 1(TX0) 03    PE1   -- 9      18    PH6 
+-- 2      06    PE4   --10      23    PB4
+-- 3      07    PE5   --11      24    PB5
+-- 4      01    PG5   --12      25    PB6
+-- 5      05    PE3   --13      26    PB7
+-- 6      15    PH3   --AREF
+-- 7      16    PH4   --GND
+--
+--14(TX3) 64    PJ1   --22      78    PA0
+--15(RX3) 63    PJ0   --23      77    PA1
+--16(TX2) 13    PH1   --24      76    PA2
+--17(RX2) 12    PH0   --25      75    PA3
+--18(TX1) 46    PD3   --26      74    PA4
+--19(RX1) 45    PD2   --27      73    PA5
+--20(SDA) 44    PD1   --28      72    PA6
+--21(SCL) 43    PD0   --29      71    PA7
+--
+--30      60    PC7   --38      50    PD7
+--31      59    PC6   --39      70    PG2
+--32      58    PC5   --40      52    PG1
+--33      57    PC4   --41      51    PG0
+--34      56    PC3   --42      42    PL7
+--35      55    PC2   --43      41    PL6
+--36      54    PC1   --44      40    PL5
+--37      53    PC0   --45      39    PL4
+--
+--46      38    PL3   --54(A0)  97    PF7
+--47      37    PL2   --55(A1)  96    PF6
+--48      36    PL1   --56(A2)  95    PF5
+--49      35    PL0   --57(A3)  94    PF4
+--50(MISO)22    PB3   --58(A4)  93    PF3
+--51(MOSI)21    PB2   --59(A5)  92    PF2
+--52(SCK) 20    PB1   --60(A6)  91    PF1
+--53(SS)  19    PB0   --61(A7)  90    PF0
+--
+--62(A8)  89    PK7
+--63(A9)  88    PK6
+--64(A10) 87    PK5
+--65(A11) 86    PK4
+--66(A12) 85    PK3
+--67(A13) 84    PK2
+--68(A14) 83    PK1
+--69(A15) 82    PK0
+--}}}
+
+--{{{Symbolic Constants
+--* Symbolic constant for accessing the first analog pin.
+VAL INT A0  IS 54:
+VAL INT A1  IS 55:
+VAL INT A2  IS 56:
+VAL INT A3  IS 57:
+VAL INT A4  IS 58:
+VAL INT A5  IS 59:
+VAL INT A6  IS 60:
+VAL INT A7  IS 61:
+VAL INT A8  IS 62:
+VAL INT A9  IS 63:
+VAL INT A10 IS 64:
+VAL INT A11 IS 65:
+VAL INT A12 IS 66:
+VAL INT A13 IS 67:
+VAL INT A14 IS 68:
+--* Symbolic constant for accessing the last analog pin.
+--
+-- Constants A1:14 do exist, they are simply not documented here for the
+-- sake of saving space.
+VAL INT A15 IS 69:
+
+
+--* Symbolic constant for accessing the first read port.
+VAL INT RX0 IS 0:
+--* Symbolic constant for accessing the first transmit port.
+VAL INT TX0 IS 1:
+VAL INT RX1 IS 19:
+VAL INT TX1 IS 18:
+VAL INT RX2 IS 17:
+VAL INT TX2 IS 16:
+--* Symbolic constant for accessing the last read port.
+--
+-- Constants RX1:2 do exist, they are simply not documented here for the
+-- sake of saving space.
+VAL INT RX3 IS 15:
+--* Symbolic constant for accessing the last transmit port.
+--
+-- Constants TX1:2 do exist, they are simply not documented here for the
+-- sake of saving space.
+VAL INT TX3 IS 14:
+
+
+--* Symbolic constant for accessing the Serial DAta register.
+VAL INT SDA IS 20:
+--* Symbolic constant for accessing the Serial CLock register.
+VAL INT SCL IS 21:
+
+--* Symbolic constant for accessing the Master data Input, Slave Output
+-- register (for use with SPI communication).
+VAL INT MISO IS 50:
+--* Symbolic constant for accessing the Master data Output, Slave Input
+-- register (for use with SPI communication).
+VAL INT MOSI IS 51:
+--* Symbolic constant for accessing the bus Serial ClocK
+-- register (for use with SPI communication).
+VAL INT SCK  IS 52:
+--* Symbolic constant for accessing the Slave Select input
+-- register (for use with SPI communication).
+VAL INT SS   IS 53:
+
+--* Symbolic constant to signify a lack of on-board LED pin.
+-- Apparently, there is an LED pin on the Mega. Committed for 
+-- further testing.
+VAL INT LED.PIN IS 13:
+--}}}
+
+--{{{Board to Architecture array map
+-- Array (hand written) to convert Arduino Mega pins to ATmega1280 Pins.
+VAL []INT MAP IS [ 2,  3,  6,  7,  1,  5, 15, 16,
+------------------ 0                           7
+                  17, 18, 23, 24, 25, 26,
+------------------ 8                  13
+                  64, 63, 13, 12, 46, 45, 44, 43,
+------------------14                          21
+                  78, 77, 76, 75, 74, 73, 72, 71,
+------------------22                          29
+                  60, 59, 58, 57, 56, 55, 54, 53,
+------------------30                          37
+                  50, 70, 52, 51, 42, 41, 40, 39,
+------------------38                          45
+                  38, 37, 36, 35, 22, 21, 20, 19,
+------------------46                          53
+                  97, 96, 95, 94, 93, 92, 91, 90,
+------------------54                          61
+                  89, 88, 87, 86, 85, 84, 83, 82]:
+------------------62                          69
+--}}}
+
+--{{{FUNCTION board.to.chip
+--* Arduino Mega specific conversion function for finding
+-- chip-specific pins from board-specific pin.
+--
+-- @param board.pin The board pin to be mapped to an AVR pin.
+-- @return The AVR pin connected to the given board pin.
+INT INLINE FUNCTION board.to.chip (VAL INT board.pin) IS MAP[board.pin]:
+--}}}
+
+--{{{FUNCTION board.analog.to.chip
+--* Arduino Mega specific conversion function for finding
+-- chip-specific pins [@em specifically for analog pins].
+--
+-- If the user inputs 0-15, the appropriate analog pin number is substituted.
+-- For example, if '11' is passed in as [@code board.analog.pin], A11 is
+-- is substituted in before the lookup call. 
+--
+-- @param board.analog.pin The board pin to be mapped to an AVR pin.
+-- @return The AVR pin connected to the given board pin.
+INT INLINE FUNCTION board.analog.to.chip (VAL INT board.analog.pin)
+  INT avr.pin:
+  VALOF
+    SEQ
+      IF 
+        board.analog.pin < 16
+          avr.pin := board.to.chip (board.analog.pin + 54)
+        TRUE
+          avr.pin := board.to.chip (board.analog.pin)
+    RESULT avr.pin
+:    
+--}}}
+
+--{{{FUNCTION board.to.serial.port
+--* Arduino Mega specific conversion function for finding
+-- chip-specific pins [@em specifically for serial operations].
+--
+-- Each serial read/transmit pair is organized into a single 'port' for use
+-- with /arch/common/usart.moduel. RX2 and TX2 are pins 17 and 16, but they --
+-- being part of the same port -- are both mapped to '2'.
+--
+-- @param board.pin The board pin to be mapped to a serial port.
+-- @return The serial port corresponding to the given board pin.
+INT INLINE FUNCTION board.to.serial.port (VAL INT board.pin)
+  INT serial.port:
+  VALOF
+    SEQ
+      IF
+        (board.pin =  TX0) OR (board.pin = RX0)
+          serial.port := 0
+        (board.pin = TX1) OR (board.pin = RX1)
+          serial.port := 1
+        (board.pin = TX2) OR (board.pin = RX2)
+          serial.port := 2
+        (board.pin = TX3) OR (board.pin = RX3)
+          serial.port := 3
+        TRUE
+          die ("The given Board Pin is not connected to any Serial Ports.")
+    RESULT serial.port
+:
+--}}}
+
+--{{{FIXME: Random Misc
+--      IF
+--        (board.pin =  0) OR (board.pin = 1)
+--          serial.port := 0
+--        (board.pin = 18) OR (board.pin = 19)
+--          serial.port := 1
+--        (board.pin = 16) OR (board.pin = 17)
+--          serial.port := 2
+--        (board.pin = 14) OR (board.pin = 15)
+--          serial.port := 3
+--        TRUE
+--          die ("The given Board Pin is not connected to any Serial Ports.")
+--}}}
+
+#ENDIF

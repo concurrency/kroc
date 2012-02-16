@@ -1,0 +1,763 @@
+--** Robot simulation
+--
+--   @module Robot2
+--   @maintainer David Wood <D.C.Wood@kent.ac.uk>
+--
+--  [@text
+--      +-------------------------------------------------<----------------------------+
+--      |                                                                              |
+--      |                                +----------------<-----------------+          |
+--      |                                |                                  |          |
+--      v                                v                                  |          |
+--  +-------+             +-------+  +-------+  +-------+    +-------+  +-------+      |
+--  |       |             |       |  |       |  |       |    |       |  |       |      |
+--  | SDL   |------------>| Scene |->| Head  |->| Drone |..>.| Drone |->| Tail  |------+
+--  | Raster|             |       |  |       |  |       |    |       |  |       |
+--  +-------+             +-------+  +-------+  +-------+    +-------+  +-------+
+--    |   ^                                       ^   |        ^   |
+--    |   |                                       |   |        |   |
+--    |   |                                       |   v        |   v
+--    |   |    +-------+                        +-------+    +-------+
+--    |   +----|       |                        |       |    |       |
+--    |        | Event |----------->----------->|Manual |    | Auto  |
+--    +------>-|       |                        |       |    |       |
+--             +-------+                        +-------+    +-------+
+--  ]
+
+--  To do:
+--  * Scale angles etc. to reduce quantization errors
+--  * More/different commands for Manual driver
+--  * Different Auto algorithms
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "occSDL.module"
+#INCLUDE "rastergraphics.module"
+#INCLUDE "rasterio.module"
+#INCLUDE "maths.module"
+
+--*{{{ BUTTON Mouse buttons
+
+VAL INT BUTTON.LEFT     IS 1:
+VAL INT BUTTON.MIDDLE   IS 2:
+VAL INT BUTTON.RIGHT    IS 3:
+VAL INT BUTTON.FOREWARD IS 4:
+VAL INT BUTTON.BACKWARD IS 5:
+
+--*}}}
+
+VAL INT BACKGROUND IS COLOUR.BLACK:
+VAL INT FOREGROUND IS COLOUR.WHITE:
+
+VAL INT WIDTH   IS 1001:		--* Width of raster
+VAL INT DEPTH   IS  651:		--* Depth of raster
+VAL INT RASTERS IS    3:		--* Number of rasters
+VAL INT RANGE   IS  256:		--* Range of laser/radar/sonar
+VAL INT RADIUS  IS    8:		--* Size of robot
+VAL INT MID     IS   16:		--* index of middle ray
+VAL INT RAYS    IS (MID * 2) + 1:	--* number of rays
+VAL ANGLE SCAN  IS 120 * ANGLE.DEGREE:  --* laser scan sweep
+
+DATA TYPE RANGES IS MOBILE []INT:	--* array of ranges
+
+--* Information returned from drone
+
+PROTOCOL INFO IS RANGES:		--* and/or Hit?
+
+--* State of robot
+
+DATA TYPE STATE
+  RECORD
+    INT X, Y:                           --* Position
+    INT V:                              --* Linear velocity
+    ANGLE Theta:                        --* Direction
+    ANGLE W:                            --* Angular velocity
+    INT Colour:
+:
+
+--* Update state or motion
+
+PROTOCOL UPDATE
+  CASE
+    State; STATE			--* Set state
+    Position; INT; INT                  --* Change position
+    Motion; INT; ANGLE                  --* Change motion
+:
+
+--* Commands to drone
+
+PROTOCOL COMMANDS
+  CASE
+    Position; INT; INT
+    Faster
+    Slower
+    Clockwise
+    Anticlockwise
+    Halt
+    Freeze
+:
+
+--* Set scene
+--
+--  @param raster Draws the scene here
+
+PROC Set.scene (RASTER raster)
+
+  SEQ
+
+    clear.raster (raster, COLOUR.BLACK)
+
+    fill.circle (200, 200, 150, FOREGROUND, raster)
+    fill.circle (200, 200, 100, BACKGROUND, raster)
+    fill.rectangle (175, 200, 50, 200, BACKGROUND, raster)
+
+    fill.rectangle (500, 200, 400, 300, FOREGROUND, raster)
+    fill.rectangle (550, 200, 100, 250, BACKGROUND, raster)
+    fill.rectangle (600, 350, 200, 100, BACKGROUND, raster)
+    fill.rectangle (800, 250,  50, 200, BACKGROUND, raster)
+    fill.rectangle (700, 250, 100,  50, BACKGROUND, raster)
+    fill.rectangle (700, 200,  50,  50, BACKGROUND, raster)
+
+    fill.rectangle (  0, 450, 350,  50, FOREGROUND, raster)
+    fill.circle (350, 475, 50, FOREGROUND, raster)
+
+    fill.circle (WIDTH, 0, 150, FOREGROUND, raster)
+    fill.circle (WIDTH, 0, 100, BACKGROUND, raster)
+
+:
+
+--* Set scene
+--
+--  @param in Receive blank raster
+--  @param out Send raster with scene
+
+PROC Scene (CHAN RASTER in?, out!)
+
+  RASTER raster:
+  WHILE TRUE
+    SEQ
+      in ? raster
+      Set.scene (raster)
+      out ! raster
+:
+
+--* Minimum range
+
+--  @param ranges Array of ranges
+--  @return Minimum range
+
+INT FUNCTION Min (VAL []INT ranges)
+
+  INT result:
+  VALOF
+    SEQ
+      result := ranges[0]
+      SEQ i = 0 FOR SIZE ranges
+        IF
+          ranges[i] < result
+            result := ranges[i]
+          TRUE
+            SKIP
+    RESULT result
+:
+
+--* Draw a fan of lines radiating from a point.
+--
+--  Stop when they reach a distance of [@code r.max],
+--  or hit something of colour [@code c.0]
+--  or the edge of the raster.
+--
+--  Number of rays = [@code SIZE ranges]
+--
+--  @param x.0, y.0 Centre
+--  @param r.max Maximum range
+--  @param theta Central direction
+--  @param phi Half-angle
+--  @param c.0 Stop when it hits this colour
+--  @param c.1 Colour of fan
+--  @param ranges Return ranges of rays
+--  @param raster Reaster
+
+PROC fan (VAL INT x.0, y.0, r.max, VAL ANGLE theta, phi, VAL INT c.0, c.1,
+          RESULT RANGES ranges, RASTER raster)
+
+  VAL INT n IS SIZE ranges:
+  VAL INT n1 IS n MINUS 1:					-- can't do this in one go
+  VAL ANGLE delta IS 2 * (phi / n1):
+
+  INT x, y, d.x, d.y:
+  SEQ
+    INITIAL ANGLE psi IS theta - phi:
+    SEQ k = 0 FOR n
+      SEQ
+        x, y := x.0, y.0
+        d.x, d.y := CORDIC (r.max, 0, psi)
+        draw.line (x, y, d.x, d.y, c.0, c.1, raster)
+        psi := psi + delta
+        ANGLE junk:
+        ranges[k], junk := CIDROC (x MINUS x.0, y MINUS y.0)	-- we know the angles!
+    x, y := x.0, y.0
+    d.x, d.y := CORDIC (r.max, 0, theta)
+    draw.line (x, y, d.x, d.y, c.0, COLOUR.RED, raster)		-- show which way we're going
+:
+
+--* Draw robot.
+--
+--  Pass 1: Draw robot in [@code FOREGROUND] colour;
+--  Pass 2: Delete robot (so it won't see itself);
+--          Detect ranges, including other robots;
+--          Re-draw in [@code FOREGROUND] colour (so others can see it);
+--  Pass 3: Re-draw in own colour.
+--
+--  @param update Receive updated state
+--  @param info Signal hit
+--  @param in Receive raster
+--  @param out Send raster
+--  @param debug Debug messages
+
+PROC Drone (CHAN UPDATE update?, CHAN INFO info!, CHAN RASTER in?, out!, SHARED CHAN BYTE debug!)
+
+  STATE s:
+  --RANGES ranges:			-- mobile
+
+  SEQ
+
+    update ? CASE			-- initialize
+      State; s
+        SKIP
+
+    --ranges := MOBILE [RAYS]INT
+
+    --CLAIM debug!
+      --SEQ
+        --out.string ("Drone: ", 0, debug!)
+        --out.int (SIZE ranges, 0, debug!)
+        --out.string ("*c*n", 0, debug!)
+
+    INT x IS s[X]:
+    INT y IS s[Y]:
+    INT v IS s[V]:
+    ANGLE theta IS s[Theta]:
+    ANGLE w     IS s[W]:
+    INT colour IS s[Colour]:
+
+    WHILE TRUE
+      RASTER raster:
+      RANGES ranges:			                -- mobile
+      SEQ
+
+        ranges := MOBILE [RAYS]INT
+
+        INT d.x, d.y:
+        BOOL hit:
+        SEQ
+
+          IF                                            -- attempt move
+            v < 0
+              v, theta := -v, ~theta
+            TRUE
+              SKIP
+          theta := theta PLUS w
+          d.x, d.y := CORDIC (v, 0, theta)
+          x, y := x + d.x, y + d.y
+
+          in ? raster
+          fill.circle (x, y, RADIUS, FOREGROUND, raster)	-- mark as target
+          out ! raster
+
+          in ? raster
+          fill.circle (x, y, RADIUS, BACKGROUND, raster)	-- unmark self
+
+          --hit := Hit (x, y, RADIUS, FOREGROUND, raster)
+          --IF
+            --hit
+              --x, y := x - d.x, y - d.y                -- undo move
+            --TRUE
+              --SKIP
+
+          fan (x, y, RANGE, theta, SCAN/2,
+               FOREGROUND, COLOUR.YELLOW, ranges, raster)
+          info ! ranges
+
+          fill.circle (x, y, RADIUS, FOREGROUND, raster)	-- mark again
+          out ! raster
+
+          in ? raster
+          fill.circle (x, y, RADIUS, colour, raster)
+          hit := circle.hits (x, y, RADIUS, FOREGROUND, raster)
+          IF
+            hit
+              SEQ
+                fill.circle (x, y, RADIUS - 3, COLOUR.BLACK, raster)
+                fill.circle (x, y, RADIUS - 6, COLOUR.WHITE, raster)
+            TRUE
+              SKIP
+          out ! raster
+
+        update ? CASE
+          --State; s
+            --SKIP
+          Position; x; y
+            SKIP
+          Motion; v; w
+            SKIP
+:
+
+--* Speed as a function of distance.
+--
+--  Proportional to [@code log (distance)]
+--
+--  @param range Distance
+--  @return Speed
+
+INT FUNCTION Speed (VAL INT range)
+
+  INT result:
+  VALOF
+    IF i = 0 FOR 7
+      range <= (RADIUS << i)
+        result := i
+    RESULT result
+:
+
+--* Drive robot automatically.
+--
+--  Slow down as minimum range approaches [@code RADIUS];
+--  Reverse direction on contact.
+--
+--  @param s Initial state
+--  @param update Send update to state
+--  @param info Receive info
+
+PROC Auto.1 (VAL STATE s, CHAN UPDATE update!, CHAN INFO info?)
+
+  SEQ
+    update ! State; s			-- initialize drone
+    INITIAL INT   v IS s[V]:		-- only needs to know these
+    INITIAL ANGLE w IS s[W]:
+    WHILE TRUE
+      RANGES ranges:
+      SEQ
+        info ? ranges
+        VAL INT speed IS Speed (Min (ranges)):
+        IF
+          speed = 0
+            v := -v
+          TRUE
+            v := speed
+        update ! Motion; v; w
+:
+
+--* Drive robot automatically.
+--
+--  Turn towards best heading;
+--  Turn away if too close.
+--
+--  @param id Robot ID
+--  @param s Initial state
+--  @param update Send update to state
+--  @param info Receive info
+--  @param debug Debug messages
+
+PROC Auto.2 (VAL INT id, VAL STATE s, CHAN UPDATE update!, CHAN INFO info?,
+             SHARED CHAN BYTE debug!)
+
+  Auto.1 (s, update!, info?)   -- you can do better than this!
+
+:
+
+ANGLE INLINE FUNCTION ABS (VAL ANGLE w)
+
+  ANGLE result:
+  VALOF
+    IF
+      w < 0
+        result := -w
+      TRUE
+        result := w
+    RESULT result
+:
+
+--* Drive robot manually.
+--
+--  @param s Initial state
+--  @param commands Receive commands
+--  @param update Send update to state
+--  @param info Receive info
+--  @param screen frame rate messages
+
+PROC Manual (VAL STATE s, CHAN COMMANDS commands?, CHAN UPDATE update!, CHAN INFO info?,
+             SHARED CHAN BYTE screen!)
+
+  TIMER tim:
+  INT t.0, t.1:
+
+  VAL INT TIME.COUNT IS 100:
+  INITIAL INT count IS 0:
+  
+  VAL ANGLE D.W IS ANGLE.DEGREE / 2:
+
+  SEQ
+    update ! State; s			-- initialize drone
+    tim ? t.0
+    INITIAL INT   v IS s[V]:		-- only needs to know these
+    INITIAL ANGLE w IS s[W]:
+    WHILE TRUE
+      RANGES ranges:
+      INITIAL BOOL flag IS FALSE:
+      INT x, y:
+      SEQ
+        info ? ranges
+        PRI ALT
+          commands ? CASE
+            Position; x; y
+              flag := TRUE
+            Faster
+              w := w + D.W
+            Slower
+              w := w - D.W
+            Clockwise
+              w :=  ABS (w)
+            Anticlockwise
+              w := -ABS (w)
+            Halt
+              v, w := 0, 0
+            Freeze
+              commands ? CASE Freeze
+          SKIP
+            VAL INT speed IS Speed (Min (ranges)):
+            IF
+              speed = 0
+                v, w := 0, 0
+              TRUE
+                v := speed
+        IF
+          flag
+            update ! Position; x; y
+          TRUE
+            update ! Motion; v; w
+
+        count := count + 1
+        IF
+          count = TIME.COUNT
+            INT time.difference:
+            SEQ
+              tim ? t.1
+              VAL INT time.difference IS t.1 MINUS t.0:
+              VAL INT frame.time IS time.difference / (TIME.COUNT*1000):
+              CLAIM screen!
+                SEQ
+                  out.string ("+++ Frame time = ", 0, screen!)
+                  out.int (frame.time, 0, screen!)
+                  out.string (" ms*c*n", 0, screen!)
+              count := 0
+              tim ? t.0
+          TRUE
+            SKIP
+              
+:
+
+--* Handle SDL events
+--
+--  @param events Receive SDL events
+--  @param commands Send commands to robot driver
+
+--  Not realistic, but demonstrates mouse clicks, contol characters,
+--  and ordinary characters.
+
+PROC Events (CHAN RASTER.EVENT events?, CHAN COMMANDS commands!)
+
+  RASTER.EVENT event:
+  WHILE TRUE
+    SEQ
+      events ? event
+      CASE event[type]
+        RASTER.ET.KEYDOWN			-- normal keys
+          CASE event[id]
+            'q', 'x'
+              STOP
+            'a'
+              commands ! Anticlockwise
+            'c'
+              commands ! Clockwise
+            'f'
+              commands ! Faster
+            's'
+              commands ! Slower
+            'h'
+              commands ! Halt
+            ' '
+              SEQ
+                commands ! Freeze
+                RASTER.EVENT any:
+                SEQ
+                  events ? any
+                  WHILE any[type] <> RASTER.ET.KEYDOWN
+                    events ? any
+                commands ! Freeze
+            INT SDLK.LEFT
+              commands ! Anticlockwise
+            INT SDLK.RIGHT
+              commands ! Clockwise
+            INT SDLK.UP
+              commands ! Faster
+            INT SDLK.DOWN
+              commands ! Slower
+            ELSE
+              SKIP
+
+        RASTER.ET.MOUSEBUTTONDOWN		-- mouse buttons
+          SEQ
+            CASE event[id]
+              BUTTON.LEFT
+                SKIP
+              BUTTON.MIDDLE
+                commands ! Position; INT event[x]; INT event[y]
+              BUTTON.RIGHT
+                SKIP
+              BUTTON.FOREWARD
+                commands ! Faster
+              BUTTON.BACKWARD
+                commands ! Slower
+              ELSE
+                SKIP
+
+        RASTER.ET.QUIT			-- click on [X]
+          STOP
+
+        ELSE				-- anything else?
+          SKIP
+:
+
+--* Head of pipeline
+
+--  @param in.1 Receive new raster
+--  @param in.2 Receive raster for next phase
+--  @param out Send raster
+
+PROC Head (CHAN RASTER in.1?, in.2?, out!)
+
+  WHILE TRUE
+    RASTER raster:
+    SEQ
+      in.1 ? raster
+      out ! raster
+      SEQ i = 0 FOR 2
+        SEQ
+          in.2 ? raster
+          out ! raster
+:
+
+--* Tail of pipeline
+
+--  @param in Receive raster
+--  @param out.1 Send raster for next phase
+--  @param out.2 Send raster completed raster
+
+PROC Tail (CHAN RASTER in?, out.1!, out.2!)
+
+  WHILE TRUE
+    RASTER raster:
+    SEQ
+      SEQ i = 0 FOR 2
+        SEQ
+          in ? raster
+          out.1 ! raster
+      in ? raster
+      out.2 ! raster
+:
+
+--* Clear raster
+--
+--  @param in Receive raster
+--  @param out Send cleaned raster
+
+PROC Clean (CHAN RASTER in?, out!)
+
+  WHILE TRUE
+    RASTER raster:
+    SEQ
+      in ? raster
+      out ! raster
+:
+
+VAL []INT CLUT IS [COLOUR.RED, COLOUR.GREEN, COLOUR.BLUE,
+                   COLOUR.MAGENTA, COLOUR.CYAN, COLOUR.ORANGE, COLOUR.PURPLE,
+                   COLOUR.PINK, COLOUR.SKY, COLOUR.NAVY, COLOUR.MAROON,
+                   COLOUR.VIOLET, COLOUR.BROWN, COLOUR.GREY]:
+                   
+--INT, INT, INT FUNCTION Place (VAL [][]INT raster, VAL INT seed)
+  --INT x, y, my.seed:
+  --VALOF
+    --VAL INT D IS SIZE raster[0]:                   -- PHW: worried
+    --VAL INT W IS SIZE raster:                      -- PHW: worried
+    --INITIAL BOOL looking IS TRUE:
+    --SEQ
+      --my.seed := seed
+      --WHILE looking
+        --SEQ
+          --x, my.seed := random (W, my.seed)
+          --y, my.seed := random (D, my.seed)
+          --looking := Hit (x, y, RADIUS, FOREGROUND, raster)
+    --RESULT x, y, my.seed
+--:
+
+PROC Place (INT x, y, [][]INT raster, INT seed, SHARED CHAN BYTE debug!)
+  SEQ
+    VAL INT W IS SIZE raster[0]:
+    VAL INT D IS SIZE raster:
+    INITIAL BOOL looking IS TRUE:
+    WHILE looking
+      SEQ
+        x, seed := random (W, seed)
+        y, seed := random (D, seed)
+        looking := circle.hits (x, y, RADIUS, FOREGROUND, raster)
+        --CLAIM debug!
+          --SEQ
+            --out.string ("Place: ", 0, debug!)
+            --out.int (W, 0, debug!)
+            --out.string (", ", 0, debug!)
+            --out.int (x, 0, debug!)
+            --out.string (", ", 0, debug!)
+            --out.int (D, 0, debug!)
+            --out.string (", ", 0, debug!)
+            --out.int (y, 0, debug!)
+            --out.string (", ", 0, debug!)
+            --out.bool (looking, 0, debug!)
+            --out.string ("*c*n", 0, debug!)
+    fill.circle (x, y, RADIUS, FOREGROUND, raster)
+:
+
+PROC main (CHAN BYTE keyboard?, SHARED CHAN BYTE screen!)
+
+  VAL INT SECOND IS 1000000:
+  VAL INT DELAY IS SECOND / 40:
+
+  ----                      X    Y   V Theta W  Colour
+  --VAL []STATE state IS [[950,  50, 0,  0, 20, COLOUR.WHITE  ],
+                        --[200, 250, 1,  0,  0, COLOUR.RED    ],
+                        --[900, 550, 1,  0,  0, COLOUR.GREEN  ],
+                        --[650,  50, 1,  0,  0, COLOUR.BLUE   ],
+                        --[750, 100, 1,  0,  0, COLOUR.MAGENTA],
+                        --[ 50,  50, 1,  0,  0, COLOUR.BLUE   ],
+                        --[775, 275, 1,  0,  0, COLOUR.CYAN   ],
+                        --[575, 425, 1,  0,  0, COLOUR.ORANGE ],
+                        --[100, 550, 1,  0,  0, COLOUR.PURPLE ],
+                        --[150, 550, 1,  0,  0, COLOUR.PINK   ],
+                        --[200, 550, 1,  0,  0, COLOUR.SKY    ],
+                        --[250, 550, 1,  0,  0, COLOUR.NAVY   ],
+                        --[300, 550, 1,  0,  0, COLOUR.MAROON ],
+                        --[350, 550, 1,  0,  0, COLOUR.VIOLET ],
+                        --[400, 550, 1,  0,  0, COLOUR.BROWN  ],
+                        --[450, 550, 1,  0,  0, COLOUR.GREY   ]]:
+  --VAL INT ROBOTS IS SIZE state:
+
+  VAL INT ROBOTS IS 32:
+  [ROBOTS]STATE s:
+  --INITIAL [ROBOTS]STATE s IS state:
+
+  TIMER tim:
+  INT rand, seed:
+
+  INITIAL BOOL mixed IS FALSE:
+  INITIAL INT version IS 0:
+  
+  SEQ
+
+    CLAIM screen!
+      SEQ
+        out.string ("Robot (v3), copyleft (2007) D.C.Wood and P.H.Welch*c*n",
+                    0, screen!)
+        out.string ("==================================================*c*n*n",
+                    0, screen!)
+        ask.bool ("Two types of robot? ", mixed, keyboard?, screen!)
+        IF
+          NOT mixed
+            WHILE NOT ((version = 1) OR (version = 2))
+              ask.int ("Version number (1 or 2)? ", version, 1, keyboard?, screen!)
+          TRUE
+            SKIP
+
+    RASTER raster:
+    SEQ
+    
+      raster := MOBILE [DEPTH][WIDTH]INT
+      clear.raster (raster, COLOUR.BLACK)
+      Set.scene (raster)
+      --CLAIM screen!
+        --out.string ("scene set*c*n", 0, screen!)
+
+      tim ? seed
+      seed := (seed >> 2) + 1
+
+      SEQ i = 0 FOR SIZE s
+
+        STATE s.i IS s[i]:
+        SEQ
+
+          --s.i[X], s.i[Y], seed := Place (raster, seed)
+          Place (s.i[X], s.i[Y], raster, seed, screen!)
+          --CLAIM screen!
+            --SEQ
+              --out.string ("robot ", 0, screen!)
+              --out.int (i, 0, screen!)
+              --out.string (" placed at ", 0, screen!)
+              --out.int (s.i[X], 0, screen!)
+              --out.string (", ", 0, screen!)
+              --out.int (s.i[Y], 0, screen!)
+              --out.string ("*c*n", 0, screen!)
+          --BYTE any:
+          --keyboard ? any
+
+          s.i[V] := 1
+          rand, seed := random (INT ANGLE.RIGHT, seed)
+          s.i[Theta] := ANGLE (2 * rand)
+          rand, seed := random (6, seed)
+          rand := ((rand - 3) * 2) + 1	-- odd (zero is bad)
+          s.i[W] := rand * ANGLE.DEGREE
+
+          IF
+            mixed
+              IF
+                (i /\ 1) = 0
+                  s.i[Colour] := COLOUR.RED
+                TRUE
+                  s.i[Colour] := COLOUR.GREEN
+            TRUE
+              SEQ
+                rand, seed := random (SIZE CLUT, seed)
+                s.i[Colour] := CLUT[rand]
+
+      s[0] := [s[0][X], s[0][Y], 0, 0, 20, COLOUR.WHITE]
+
+    CHAN RASTER source, return:
+    CHAN RASTER.EVENT events:
+    CHAN COMMANDS commands:
+    CHAN RASTER b, c, e:
+    [ROBOTS]CHAN RASTER d:
+    [ROBOTS]CHAN UPDATE h:
+    [ROBOTS]CHAN INFO j:
+    PAR
+      raster.display ("Robots", WIDTH, DEPTH, RASTERS, return?, source!, events!)
+      Scene (source?, b!)
+      Head (b?, e?, c!)
+      Drone (h[0]?, j[0]!, c?, d[0]!, screen!)
+      -- Auto (s[0], h[0]!, j[0]?)
+      Manual (s[0], commands?, h[0]!, j[0]?, screen!)
+      Events (events?, commands!)
+      PAR i = 1 FOR ROBOTS - 1
+        PAR
+          Drone (h[i]?, j[i]!, d[i - 1]?, d[i]!, screen!)
+          IF
+            mixed
+              IF
+                (i /\ 1) = 0
+                  Auto.1 (s[i], h[i]!, j[i]?)
+                TRUE
+                  Auto.2 (i, s[i], h[i]!, j[i]?, screen!)
+            version = 1
+              Auto.1 (s[i], h[i]!, j[i]?)
+            version = 2
+              Auto.2 (i, s[i], h[i]!, j[i]?, screen!)
+      Tail (d[ROBOTS - 1]?, e!, return!)
+:

@@ -1,0 +1,73 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF NOT DEFINED(TARGET.HAS.FPU)
+
+--{{{  #options and #comments
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.1 21/02/89"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE ISNAN "ISNAN%O"
+#PRAGMA TRANSLATE ORDERED "ORDERED%O"
+
+#INCLUDE "realvals.inc"
+
+#IF (TARGET.BITS.PER.WORD = 32)
+--{{{  ISNAN
+--{{{  
+BOOL FUNCTION ISNAN (VAL REAL32 X)
+
+  -- Beta-2 (27feb87)
+
+  VAL INT X RETYPES X:
+  INT exp, frac :
+  VALOF
+    exp,  frac := SHIFTLEFT ( 0,  X<<1,  RealShift)
+    RESULT (exp = RealExp) AND (frac <> 0)
+:
+--}}}
+--}}}
+#ENDIF -- TARGET.BITS.PER.WORD = 32
+#IF (TARGET.BITS.PER.WORD = 16)
+--{{{  ISNAN
+--{{{  
+BOOL FUNCTION ISNAN (VAL REAL32 X)
+
+  -- Function version (10 Jun 87)
+
+  VAL [2]INT X RETYPES X:
+  INT exp, frac :
+  VALOF
+    exp,  frac := SHIFTLEFT ( 0,  X[1]<<1,  RealShift)
+    RESULT (exp = RealExp) AND ((frac <> 0) OR (X [0] <> 0))
+:
+--}}}
+--}}}
+#ENDIF -- TARGET.BITS.PER.WORD = 16
+
+--{{{  ORDERED
+--{{{  T2 and TA code is the same
+BOOL FUNCTION ORDERED (VAL REAL32 X, Y) IS NOT (ISNAN(X) OR ISNAN(Y)) :
+-- Function version (10 Jun 87)
+--}}}
+--}}}
+
+#ENDIF

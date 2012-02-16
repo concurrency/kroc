@@ -1,0 +1,102 @@
+--
+--	Demo networks
+--	Copyright (C) 1984 P.H. Welch
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** Demonstration networks.
+--
+-- This is part of the course library. To use this library:
+--
+-- [@code
+-- #INCLUDE "course.module"]
+--
+-- @module course.networks
+
+-- COPYRIGHT : P.H.Welch, 1984
+
+#USE "demo_cycles"
+
+--{{{  demonstration networks
+--* Generate a stream of integers from 0 upwards.
+PROC numbers (CHAN INT out!)
+  --{{{
+  CHAN INT a, b, c:
+  PAR
+    delta (a?, out!, b!)
+    succ (b?, c!)
+    prefix (0, c?, a!)
+  --}}}
+:
+
+--* Integrate a stream of numbers.
+PROC integrate (CHAN INT in?, out!)
+  --{{{
+  CHAN INT a, b, c:
+  PAR
+    delta (a?, out!, b!)
+    prefix (0, b?, c!)
+    plus (in?, c?, a!)
+  --}}}
+:
+
+--* Add pairs of numbers in a stream.
+PROC pairs (CHAN INT in?, out!)
+-- That is: given input "A, B, C, ..." output "A + B, B + C, ...".
+  --{{{
+  CHAN INT a, b, c:
+  PAR
+    delta (in?, a!, c!)
+    tail (a?, b!)
+    plus (b?, c?, out!)
+  --}}}
+:
+
+--* Generate the square numbers from 1 upwards.
+PROC squares (CHAN INT out!)
+  --{{{
+  CHAN INT a, b:
+  PAR
+    numbers (a!)
+    integrate (a?, b!)
+    pairs (b?, out!)
+  --}}}
+:
+
+--* Generate the Fibonacci sequence.
+PROC fibonacci (CHAN INT out!)
+  --{{{
+  CHAN INT a, b, c, d:
+  PAR
+    delta (a?, out!, b!)
+    pairs (b?, c!)
+    prefix (1, c?, d!)
+    prefix (0, d?, a!)
+  --}}}
+:
+
+--* Generate a stream of output times in microseconds.
+PROC times (CHAN INT out!)
+  --{{{
+  TIMER tim:
+  WHILE TRUE
+    INT t:
+    SEQ
+      tim ? t
+      out ! t
+  --}}}
+:
+--}}}

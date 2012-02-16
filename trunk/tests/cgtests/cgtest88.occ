@@ -1,0 +1,229 @@
+--
+--	cgtest88.occ -- FORKs/FORKING and recursion
+--	Copyright (C) 2002 Fred Barnes <frmb2@ukc.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+
+PROC cgtest88 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+  #INCLUDE "cgreal.occ"
+
+  --{{{  tests
+  --{{{  test0 -- basic FORKs
+  PROC test0 ()
+
+    PROC thing0 ()
+      SEQ
+        RESCHEDULE ()
+        RESCHEDULE ()
+    :
+
+    PROC thing1 (VAL INT x)
+      SEQ i = 0 FOR x
+        RESCHEDULE ()
+    :
+
+    PROC thing2.0 (VAL INT x, y)
+      SEQ i = x FOR y
+        RESCHEDULE ()
+    :
+
+    PROC thing2.1 (VAL []BYTE str)
+      SEQ i = 0 FOR SIZE str
+        VAL BYTE b IS str[i]:
+        RESCHEDULE ()
+    :
+
+    SEQ
+      FORKING
+        SEQ i = 0 FOR 4
+          FORK thing0 ()
+      FORKING
+        SEQ i = 0 FOR 4
+          FORK thing1 (4)
+      FORKING
+        SEQ i = 0 FOR 4
+          FORK thing2.0 (i, 3)
+      FORKING
+        SEQ i = 0 FOR 4
+          FORK thing2.1 ("hello, world!*n")
+  :
+  --}}}
+  --{{{  test1 -- forks with reference parameters
+  PROC test1 ()
+
+    PROC thing2 (VAL INT x, RESULT INT r)
+      IF
+        x = 0
+          r := 42
+        TRUE
+          SEQ i = 0 FOR x
+            RESCHEDULE ()
+    :
+
+    PROC thing4 (VAL []BYTE s1, []BYTE s2)
+      SEQ i = 0 FOR SIZE s1
+        VAL BYTE b IS s1[i]:
+        IF
+          i < (SIZE s2)
+            s2[i] := b
+          TRUE
+            SKIP
+    :
+
+    PROC thing5.0 (CHAN INT out!)
+      out ! 99
+    :
+
+    PROC thing5.1 (CHAN INT in?, INT r)
+      in ? r
+    :
+
+    PROC thing5.2 (CHAN INT out!)
+      SEQ
+        RESCHEDULE ()
+        out ! 666
+    :
+
+    PROC thing5.3 (CHAN INT in?, INT r)
+      in ?? r
+        RESCHEDULE ()
+        r := r / 2
+    :
+
+    INT res:
+    #PRAGMA SHARED res
+    [12]BYTE str:
+    #PRAGMA SHARED str
+    SEQ
+      FORKING
+        SEQ i = 3 FOR 4 STEP -1
+          FORK thing2 (i, res)
+      check.INT (id.INT (res), 42, "test1.0")
+      FORKING
+        SEQ i = 0 FOR 4
+          FORK thing2 (i, res)
+      check.INT (id.INT (res), 42, "test1.1")
+      FORKING
+        FORK thing4 ("hello, world!*n", str)
+      check.BYTE (id.BYTE (str[0]), 'h', "test1.2")
+      check.BYTE (str[4], 'o', "test1.3")
+      check.BYTE (str[11], id.BYTE ('d'), "test1.4")
+
+      CHAN INT c:
+      #PRAGMA SHARED c
+      FORKING
+        SEQ
+          FORK thing5.0 (c!)
+          FORK thing5.1 (c?, res)
+      check.INT (id.INT (res), 99, "test1.5")
+
+      CHAN INT c:
+      #PRAGMA SHARED c
+      FORKING
+        SEQ
+          FORK thing5.2 (c!)
+          FORK thing5.3 (c?, res)
+      check.INT (id.INT (res), 333, "test1.6")
+
+  :
+  --}}}
+  --{{{  test2 -- forks with staticlink
+  PROC test2 ()
+    INT res:
+    #PRAGMA SHARED res
+
+    PROC thing0 ()
+      res := 99
+    :
+
+    PROC thing1 (VAL INT x)
+      res := x
+    :
+
+    PROC thing2 (VAL INT x, VAL BOOL set)
+      IF
+        set
+          res := x
+        INT i:
+        TRUE
+          i := res
+    :
+
+    SEQ
+
+      FORKING
+        SEQ
+          FORK thing0 ()
+          FORK thing0 ()
+      check.INT (res, 99, "test2.0")
+
+      FORKING
+        FORK thing1 (29)
+      check.INT (res, 29, "test2.1")
+
+      FORKING
+        VAL [8]INT nums IS [1,2,4,8,16,32,64,128]:
+        VAL [8]BOOL sets IS [FALSE,FALSE,FALSE,FALSE,TRUE,FALSE,FALSE,FALSE]:
+        SEQ i = 0 FOR SIZE nums
+          FORK thing2 (nums[i], sets[i])
+      check.INT (id.INT (res), 16, "test2.2")
+
+  :
+  --}}}
+  --{{{  test3 -- nested FORKs
+  PROC test3 ()
+    INT res:
+    #PRAGMA SHARED res
+
+    PROC test3.1 (VAL INT i)
+      #PRAGMA SHARED i
+
+      PROC test3.2 (VAL INT j)
+        IF
+          j = 0
+            res := i
+          TRUE
+            RESCHEDULE ()
+      :
+
+      FORKING
+        SEQ v = (i-1) FOR i STEP -1
+          FORK test3.2 (v)
+    :
+
+    SEQ
+      res := 42
+      FORKING
+        FORK test3.1 (6)
+      check.INT (res, 6, "test3")
+
+  :
+  --}}}
+  --}}}
+
+  SEQ
+    init ("CG test 88", "FORK/FORKING and recursion")
+    title ("simple FORKs")
+    test0 ()
+    test1 ()
+    test2 ()
+    test3 ()
+    finish ()
+:

@@ -1,0 +1,101 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module streamio
+
+#OPTION "E"  -- no compliler libs
+#COMMENT "Stream i/o library, V1.1, 14/06/90"
+#COMMENT "(c) Copyright INMOS Limited, 1988"
+#INCLUDE "streamio.inc"
+--* Copy the output of one screen stream to the input of another.
+--
+-- Receipt of st.endstream on scrn.in will terminate this procedure,
+-- without the stream terminator being passed on.
+--
+-- @param scrn.in for input
+-- @param scrn.out for output
+PROC ss.scrstream.copy (CHAN OF SS scrn.in, scrn.out)
+  --{{{  history
+  -- Introduced the tags st.help and st.initialise into the CASE
+  -- input.  New version is 1.1 ( old version was 0.01, 23-Dec-88 )
+  -- 14-June-90 SRH
+  --}}}
+
+  BOOL going:
+  SEQ
+    going := TRUE
+    WHILE going
+      SEQ
+        scrn.in ? CASE
+          [st.max.string.size]BYTE buffer:
+          INT32 len:
+          st.out.string; len::buffer
+            scrn.out ! st.out.string; len :: buffer
+          BYTE st.char :
+          st.out.byte; st.char
+            scrn.out ! st.out.byte; st.char
+          BYTE st.char :
+          st.ins.char; st.char
+            scrn.out ! st.ins.char; st.char
+          INT32 x :
+          st.out.int; x
+            scrn.out ! st.out.int; x
+          INT32 x,y:
+          st.goto; x; y
+            scrn.out ! st.goto; x; y
+          st.reset
+            scrn.out ! st.reset
+          st.up
+            scrn.out ! st.up
+          st.down
+            scrn.out ! st.down
+          st.left
+            scrn.out ! st.left
+          st.right
+            scrn.out ! st.right
+          st.del.char
+            scrn.out ! st.del.char
+          st.clear.eol
+            scrn.out ! st.clear.eol
+          st.clear.eos
+            scrn.out ! st.clear.eos
+          st.ins.line
+            scrn.out ! st.ins.line
+          st.del.line
+            scrn.out ! st.del.line
+          st.beep
+            scrn.out ! st.beep
+          st.terminate
+            scrn.out ! st.terminate
+          st.help
+            scrn.out ! st.help
+          st.initialise
+            scrn.out ! st.initialise
+          st.key.raw
+            scrn.out ! st.key.raw
+          st.key.cooked
+            scrn.out ! st.key.cooked
+          st.release
+            scrn.out ! st.release
+          st.claim
+            scrn.out ! st.claim
+          st.endstream
+            going := FALSE
+          -- if st.spare is received then something is wrong => STOP
+:

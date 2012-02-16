@@ -1,0 +1,75 @@
+.\" kmakef command man page, last updated 05/12/2005 by Fred Barnes
+.TH KMAKEF "1" "December 2005" "kroc 1.4.0" KRoC
+.SH NAME
+kmakef \- OFA KRoC makefile builder
+.SH SYNOPSIS
+.B kmakef
+[options]
+executables or libraries
+.SH DESCRIPTION
+.PP
+\fBkmakef\fR is a makefile-builder program for the occam For All
+(oFA) project's KRoC compilation system.  It scans given
+source files or libraries and creates a prototype makefile
+which can be used to build the system, understanding
+KRoC's dependencies.
+.PP
+If a library is being constructed e.g. foo.lib, a library
+intermediate file is required to list the modules inside
+it.  This is given in either a foo.lbb or foo.liu file and
+contains just a list of filenames, one per line.
+.PP
+.SH OPTIONS
+.TP
+\-o\fIFILE\fR
+output the makefile to \fIFILE\fR (default is \fIexecutable\fR\.kmf).
+.TP
+\-p, \-\-print
+print the resulting makefile rather than store it in a file.
+.TP
+\-I\fIDIRECTORY\fR
+add directory \fIDIRECTORY\fR to the list of directories to search for occam #INCLUDEs.
+.TP
+\-L\fIDIRECTORY\fR
+add directory \fIDIRECTORY\fR to the list of directories to search for occam and C libraries.
+.TP
+\-n, \-\-dryrun
+don't build a makefile but show what would be done.
+.TP
+\-v, \-\-verbose
+show status and debugging information during the program run.
+.TP
+\-h, \-\-help
+print a help message and exit.
+.PP
+.SH AUTHOR
+\fBkmakef\fR was written by Dave Beckett.  This manual page was written by Fred Barnes <frmb@kent.ac.uk>,
+based on Dave Beckett's existing manpage.
+This manual page is maintained by Fred Barnes <F.R.M.Barnes@kent.ac.uk>
+.SH "SEE ALSO"
+.BR kroc (1)
+.SH "BUGS"
+This utility is unsupported and may be removed in future versions of KRoC (when a suitable replacement is ready).
+Bugs (and patches) can be reported to <kroc-bugs@kent.ac.uk>
+.PP
+This program is unable to handle inter-library dependancies.
+.SH COPYRIGHT
+Copyright \(co 1996,1997 Dave Beckett
+.PP
+This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation;
+either version 2 of the License, or (at your option) any
+later version.
+.PP
+This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more
+details.
+.PP
+You should have received a copy of the GNU General Public
+License along with this program; if not, write to the Free
+Software Foundation, Inc., 675 Mass Ave, Cambridge, MA
+02139, USA.
+

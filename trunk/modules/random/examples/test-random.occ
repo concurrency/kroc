@@ -1,0 +1,99 @@
+#INCLUDE "useful.module"
+#INCLUDE "random.module"
+
+PROC main ()
+  VAL INT NUM.ITERATIONS IS 10000:
+  VAL INT NUM.BINS IS 20:
+  [NUM.BINS]INT bins:
+  INT outside:
+
+  --{{{  PROC reset.bins
+  PROC reset.bins ()
+    SEQ
+      SEQ i = 0 FOR SIZE bins
+        bins[i] := 0
+      outside := 0
+  :
+  --}}}
+  --{{{  PROC bin.int
+  PROC bin.int (VAL INT bin)
+    IF
+      (bin >= 0) AND (bin < NUM.BINS)
+        bins[bin] := bins[bin] + 1
+      TRUE
+        outside := outside + 1
+  :
+  --}}}
+  --{{{  PROC bin.real32
+  PROC bin.real32 (VAL REAL32 n)
+    bin.int (INT TRUNC n)
+  :
+  --}}}
+  --{{{  PROC show.bins
+  PROC show.bins ()
+    INT max:
+    SEQ
+      max := 1
+      SEQ i = 0 FOR SIZE bins
+        max := max.int (max, bins[i])
+      VAL REAL32 scale IS 60.0 / (REAL32 ROUND max):
+      SEQ i = 0 FOR SIZE bins
+        SEQ
+          trace.s ("|")
+          VAL REAL32 n IS (REAL32 ROUND bins[i]) * scale:
+          SEQ j = 0 FOR INT TRUNC n
+            trace.s ("=")
+          trace.sin (" ", bins[i])
+      trace.sin ("Outside: ", outside)
+  :
+  --}}}
+
+  RANDOM.STATE rand, rand2:
+  SEQ
+    random.init.from.time (rand)
+    trace.sn ("Uniform ints from time:")
+    SEQ i = 0 FOR 10
+      INT n:
+      SEQ
+        n, rand := random.int (1000, rand)
+        trace.sin ("  ", n)
+
+    rand := random.init (42)
+
+    trace.sn ("Uniform ints:")
+    reset.bins ()
+    SEQ i = 0 FOR NUM.ITERATIONS
+      INT n:
+      SEQ
+        n, rand := random.int (NUM.BINS, rand)
+        bin.int (n)
+    show.bins ()
+
+    trace.sn ("Uniform reals:")
+    reset.bins ()
+    SEQ i = 0 FOR NUM.ITERATIONS
+      REAL32 n:
+      SEQ
+        n, rand := random.real32 (REAL32 ROUND NUM.BINS, rand)
+        bin.real32 (n)
+    show.bins ()
+
+    trace.sn ("Gaussian reals:")
+    reset.bins ()
+    SEQ i = 0 FOR NUM.ITERATIONS
+      REAL32 n:
+      SEQ
+        n, rand := random.gaussian.real32 (rand)
+        n := n + ((REAL32 ROUND NUM.BINS) / 2.0)
+        bin.real32 (n)
+    show.bins ()
+
+    trace.sn ("Random ints from split generator:")
+    rand, rand2 := random.split (rand)
+    SEQ i = 0 FOR 10
+      INT n, n2:
+      SEQ
+        n, rand := random.int (1000, rand)
+        n2, rand2 := random.int (1000, rand2)
+        trace.sisin ("  ", n, " ", n2)
+:

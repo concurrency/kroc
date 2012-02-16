@@ -1,0 +1,601 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF (TARGET.BITS.PER.WORD = 32) AND (NOT DEFINED(TARGET.HAS.FPU))
+
+--{{{  #comments and #options
+#OPTION "V"  -- no vector space
+#COMMENT "TA compiler library, V1.1 29/01/90"
+#COMMENT "(c) Copyright INMOS Limited 1990"
+--}}}
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32OPERR "REAL32OPERR%CHK"
+--}}}
+
+--{{{  comments
+--
+-- This function evaluates X Op Y using occam error checking rather than the
+-- IEEE method of using infinities and Not-a-Numbers.  The various operations
+-- are coded in Op where
+--   Op  =  0  +
+--       =  1  -
+--       =  2  *
+--       =  3  /
+--
+--}}}
+
+#INCLUDE "realvals.inc"
+
+--{{{  REAL32OPERR    TA
+REAL32 FUNCTION REAL32OPERR (VAL REAL32 X, VAL INT Op, VAL REAL32 Yp )
+
+  -- unoptimised version for TA compiler libraries; V1.0, 29-Jan-90 SRH
+  -- The routine IEEE32OP should range check Op.
+
+  REAL32 answer :
+  VALOF
+    BOOL error :
+    SEQ
+      error, answer := IEEE32OP( X, RN, Op, Yp )
+      IF
+        error
+          CAUSEERROR()
+        TRUE
+          SKIP
+    RESULT answer
+:
+--}}}
+
+#ENDIF
+
+
+#IF (TARGET.BITS.PER.WORD = 16)
+
+--{{{  #comments and #options
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "T2 compiler library, V1.3 07/12/92"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}  
+
+--{{{  #PRAGMA TRANSLATE
+#PRAGMA TRANSLATE REAL32OPERR "REAL32OPERR%CHK"
+--}}}  
+
+--{{{  comments
+--
+-- This function evaluates X Op Y using occam error checking rather than the
+-- IEEE method of using infinities and Not-a-Numbers.  The various operations
+-- are coded in Op where
+--   Op  =  0  +
+--       =  1  -
+--       =  2  *
+--       =  3  /
+--
+--}}}  
+
+#INCLUDE "realvals.inc"
+
+--{{{  REAL32OPERR    T2
+REAL32 FUNCTION REAL32OPERR (VAL REAL32 X, VAL INT Op, VAL REAL32 Yp)
+
+  --{{{  history
+  -- Beta-3 (11may87)  Function version (10 Jun 87)
+  -- V1.1, 21-Feb-89
+  -- V1.2, 6-Apr-90 SRH
+  -- Moved position of CAUSEERRORs to the beginning of branches to allow
+  -- compiler to do dead code elimination; V1.3, 7-Dec-92 SRH
+  --}}}  
+
+  REAL32 Result :
+  VALOF
+    #INCLUDE "nan16.inc"
+    --{{{  #USEs
+    #PRAGMA TRANSLATE RealIMul "RealIMul%CHK"
+    #PRAGMA TRANSLATE RealIDiv "RealIDiv%CHK"
+    #USE "rimul"
+    #USE "ridiv"
+    --}}}  
+    --{{{  IEEE Single length constants for 16 bit implementation
+    VAL RealExpSh  IS     7 :
+    VAL RealInf    IS #7F80 :
+    --}}}  
+    [2]INT Result RETYPES Result :
+    VAL [2]INT X  RETYPES X :
+    VAL [2]INT Yp RETYPES Yp :
+    INT Xexp :
+    [2] INT Xfrac :
+    PLACE Xfrac IN WORKSPACE :
+    INT Yexp :
+    [2] INT Yfrac :
+    PLACE Yfrac IN WORKSPACE :
+    INT Carry, Guard, Places :
+    [2] INT Ans :
+    PLACE Ans IN WORKSPACE :
+    [2] INT Y :
+    PLACE Y IN WORKSPACE :
+    VAL INT Sign IS SignBit :
+    SEQ
+      --{{{  Unpack operands
+      --{{{  Separate mantissa and exponents
+      IF
+        Op = Sub              --get minus Y
+          Y[1] := Yp[1] >< Sign
+        TRUE                  --use plus Y
+          Y[1] := Yp[1]
+      Y[0] := Yp[0]
+
+      Xfrac[1],  Xfrac[0] := SHIFTLEFT ( X[1],  X[0],  RealShift)
+      Yfrac[1],  Yfrac[0] := SHIFTLEFT ( Y[1],  Y[0],  RealShift)
+
+      Xexp := (X[1] >> RealExpSh) /\ RealExp
+      Yexp := (Y[1] >> RealExpSh) /\ RealExp
+      --}}}  
+
+      Ans[0] := 0
+      Carry := 0                          --assume not normal case
+      IF
+        (Xexp <> RealExp) AND (Yexp <> RealExp)
+          --{{{  zeros or real nos
+          IF
+            (Xexp <> 0) AND (Yexp <> 0)
+              --{{{  both normal nos
+              SEQ                                  --normal case
+                Carry := 1
+                Xfrac[1] := Xfrac[1] \/ Sign
+                Yfrac[1] := Yfrac[1] \/ Sign
+              --}}}  
+            ((Xexp \/ Xfrac[1]) \/ Xfrac[0]) = 0
+              --{{{  X is zero
+              IF
+                ((Yexp \/ Yfrac[1]) \/ Yfrac[0]) = 0--both zero
+                  IF
+                    Op < Mul                       --add/sub
+                      SEQ
+                        Ans [0] := 0
+                        Ans [1] := X [1] /\ Y [1]
+                    Op = Mul
+                      Ans[1] := X[1] >< Y[1]       --signed zero
+                    TRUE                           --div
+                      SEQ
+                        CAUSEERROR()
+                        --Ans := ZeroZeroDivNaN.32
+                Op < Mul                           --result is Y
+                  SEQ
+                    Ans[1] := Y[1]
+                    Ans[0] := Y[0]
+                TRUE                               --mul or div
+                  Ans[1] := (X[1] >< Y[1]) /\ Sign --zero
+              --}}}  
+            ((Yexp \/ Yfrac[1]) \/ Yfrac[0]) = 0
+              --{{{  Y is zero
+              IF
+                Op < Mul                           --add/sub
+                  SEQ
+                    Ans[1] := X[1]
+                    Ans[0] := X[0]
+                Op = Mul
+                  Ans[1] := (X[1] >< Y[1]) /\ Sign --zero
+                TRUE                               --div by zero
+                  SEQ
+                    CAUSEERROR()
+                    --Ans[1] := ((X[1] >< Y[1]) /\ Sign) \/ RealInf--infinity
+              --}}}  
+            TRUE
+              --{{{  one or both are denormalised
+              -- Put in implicit MSB
+              -- Normalise any denormaliseds and correct their exponents if op is
+              -- multiply or divide leave unormal for add and sub
+              SEQ
+                Carry := 1                         --work to do
+                IF
+                  Xexp <> 0                        --set leading bit
+                    Xfrac[1] := Xfrac[1] \/ Sign
+                  TRUE                             --set correct exponent
+                    IF
+                      Op > Sub
+                        SEQ
+                          Places,  Xfrac[1],  Xfrac[0] := NORMALISE ( Xfrac[1],  Xfrac[0])
+                          Xexp := 1 - Places
+                      TRUE
+                        Xexp := 1
+                IF
+                  Yexp <> 0
+                    Yfrac[1] := Yfrac[1] \/ Sign
+                  TRUE
+                    IF
+                      Op > Sub
+                        SEQ
+                          Places,  Yfrac[1],  Yfrac[0] := NORMALISE ( Yfrac[1],  Yfrac[0])
+                          Yexp := 1 - Places
+                      TRUE
+                        Yexp := 1
+              --}}}  
+          --}}}  
+        TRUE
+          --{{{  one or other inf/NaN
+          SEQ
+            CAUSEERROR()
+            --Xfrac[1] := Xfrac[1] /\ (~Sign)        --clear top bit
+            --Yfrac[1] := Yfrac[1] /\ (~Sign)
+            --IF
+              --(Xexp = RealExp) AND (Yexp = RealExp)
+                --{{{  both inf/NaN
+                --IF
+                  --(((Xfrac[1] \/ Xfrac[0]) \/ Yfrac[1]) \/ Yfrac[0]) <> 0
+                    --SEQ                            --one or other NaN
+                      --Guard, Places := LONGDIFF (Xfrac[0], Yfrac[0], 0)
+                      --Guard, Places := LONGDIFF (Xfrac[1], Yfrac[1], Guard)
+                      --IF
+                        --Places < 0    -- remember top bits of frac [1] not set !
+                          --Ans := Y
+                        --TRUE
+                          --Ans := X
+                      --IF
+                        --Op < Mul
+                          --SKIP
+                        --TRUE
+                          --Ans [1] := (Ans [1] /\ (~Sign)) \/ ((X [1] >< Y [1]) /\ Sign)
+                  --(Op < Mul) AND (((X[1] >< Y[1]) /\ Sign) = 0)--add/sub same inf
+                    --Ans[1] := X[1]
+                  --Op = Mul
+                    --Ans[1] := ((X [1] >< Y [1]) /\ Sign) \/ RealInf  --infinity
+                  --TRUE                             --add/sub/div
+                    --IF
+                      --Op = Div
+                        --Ans := InfInfDivNaN.32
+                      --TRUE
+                        --Ans := AddSubInfInfNaN.32
+                --}}}  
+              --Xexp = RealExp
+                --{{{  X is inf/NaN
+                --IF
+                  --(Op < Mul)--X  add sub inf  or nan
+
+                    --SEQ
+                      --Ans[1] := X[1]
+                      --Ans[0] := X[0]
+                  --((Xfrac[1] \/ Xfrac[0]) <> 0) -- mul div nan
+                    --SEQ
+                      --Ans [1] := X [1] >< (Y [1] /\ Sign)
+                      --Ans [0] := X [0]
+                  --Op = Mul
+                    --IF
+                      --((Yexp \/ Yfrac[1]) \/ Yfrac[0]) = 0--mul by zero
+                        --Ans := ZeroInfMulNaN.32
+                      --TRUE                        --inf times normal
+                        --Ans[1] := ((X[1] >< Y[1]) /\ Sign) \/ RealInf--infinity
+                  --TRUE
+                    --Ans[1] := ((X[1] >< Y[1]) /\ Sign) \/ RealInf  --infinity
+                --}}}  
+              --(Yfrac[1] \/ Yfrac[0]) <> 0
+                --{{{  Y is NaN
+                --IF
+                  --Op < Mul
+                    --Ans := Y                 --keep NaN
+                  --TRUE
+                    --SEQ
+                      --Ans [0] := Y [0]
+                      --Ans [1] := Y [1] >< (X [1] /\ Sign)
+                --}}}  
+              --TRUE
+                --{{{  Y is inf
+                --IF
+                  --Op < Mul                        --add/sub
+                    --SEQ
+                      --Ans[1] := Y[1]
+                      --Ans[0] := Y[0]
+                  --Op = Mul
+                    --IF
+                      --((Xexp \/ Xfrac[1]) \/ Xfrac[0]) = 0--mul by zero
+                        --Ans := ZeroInfMulNaN.32
+                      --TRUE                        --inf times normal
+                        --Ans[1] := ((X[1] >< Y[1]) /\ Sign) \/ RealInf--infinity
+                  --TRUE                            --div
+                    --Ans[1] := (X[1] >< Y[1]) /\ Sign
+                --}}}  
+          --}}}  
+      --}}}  
+      --{{{  evaluate
+      IF
+        Carry = 0
+          --{{{  Answer is set up
+          SEQ
+            Result[1] := Ans[1]
+            Result[0] := Ans[0]
+          --}}}  
+        TRUE
+          --{{{  Do an operation
+          SEQ
+            IF
+              --{{{  add or subtract
+              Op < Mul                          --add/sub to do
+                SEQ
+                  Places := Xexp - Yexp
+                  --{{{  Align Mantissas
+                  IF
+                    Places = 0
+                      Guard := 0                -- correctly aligned
+                    Places > 0
+                      --{{{  shift Y
+                      IF
+                        Places > ((3 * BitsPerWord) - (BitsInFrac + 1))
+                          --{{{  shift Y over a long distance
+                          IF
+                            Places > (BitsInFrac + 1)
+                              --{{{  Total loss of significance
+                              SEQ
+                                Yfrac[1] := 0
+                                Yfrac[0] := 0
+                                Guard := 1    -- some bits were set as wasn't 0
+                              --}}}  
+                            TRUE
+                              --{{{  Save some significance
+                              -- Some of the bits will be shifted out of the register triplet
+                              -- and so need to be ORed into the guard/sticky register it is
+                              -- safe to use the whole of the lower part of the fraction and
+                              -- OR it if for a particular length machine, the above conditional
+                              -- is true and
+                              -- 2*BitsPerWord > BitsInFrac ie 2*16 > 24 and 2*32 > 52,
+                              SEQ
+                                Carry := Yfrac[0]       -- Bits that might be lost
+                                Yfrac[0],  Guard := SHIFTRIGHT ( Yfrac[1],  Yfrac[0], Places - BitsPerWord)
+                                Guard := Guard \/ Carry
+                                Yfrac[1] := 0
+                              --}}}  
+                          --}}}  
+                        TRUE
+                          --{{{  shift Y
+                          SEQ
+                            Carry,  Guard := SHIFTRIGHT ( Yfrac[0],  0,  Places)
+                            IF
+                              Places > BitsPerWord
+                                SEQ
+                                  Yexp,  Carry := SHIFTRIGHT ( Yfrac[1],  0,  Places - BitsPerWord)
+                                  Guard := Guard \/ Carry
+                              TRUE
+                                SKIP
+                            Yfrac[1],  Yfrac[0] := SHIFTRIGHT (Yfrac[1],  Yfrac[0],  Places)
+                          --}}}  
+                      --}}}  
+                    TRUE
+                      --{{{  shift X
+                      IF
+                        Places < (-((3 * BitsPerWord) - (BitsInFrac + 1)))
+                          --{{{  shift X over a long distance
+                          SEQ
+                            IF
+                              Places < (-(BitsInFrac + 1))
+                                --{{{  Total loss of significance
+                                SEQ
+                                  Xfrac[1] := 0
+                                  Xfrac[0] := 0
+                                  Guard := 1     -- some bits weree set as wasn't 0
+                                  Xexp := Yexp
+                                --}}}  
+                              TRUE
+                                --{{{  Save some significance
+                                SEQ
+                                  Carry := Xfrac[0]        -- Bits that might be lost
+                                  Xfrac[0],  Guard := SHIFTRIGHT ( Xfrac[1],  Carry,  (-Places) - BitsPerWord)
+                                  Guard := Guard \/ Carry
+                                  Xfrac[1] := 0
+                                  Xexp := Yexp
+                                --}}}  
+                          --}}}  
+                        TRUE
+                          --{{{  shift X
+                          SEQ
+                            Xexp := Yexp            --set largest exp
+                            Carry,  Guard := SHIFTRIGHT ( Xfrac[0],  0,  -Places)
+                            IF
+                              Places < (-BitsPerWord)
+                                SEQ
+                                  Yexp,  Carry := SHIFTRIGHT ( Xfrac[1],  0,  (-Places) - BitsPerWord)
+                                  Guard := Guard \/ Carry
+                              TRUE
+                                SKIP
+                            Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  -Places)
+                          --}}}  
+                      --}}}  
+                  --}}}  
+                  IF
+                    ((X[1] >< Y[1]) /\ Sign) = 0
+                      --{{{  add magnitudes
+                      SEQ
+                        -- Answer is always same sign as X and Y
+                        Ans[1] := X[1] /\ Sign
+                        Carry,  Xfrac[0] := LONGSUM ( Xfrac[0],  Yfrac[0],  0)
+                        Carry,  Xfrac[1] := LONGSUM ( Xfrac[1],  Yfrac[1],  Carry)
+                        IF
+                          Carry <> 0                 --inc exponent
+                            SEQ
+                              Xexp := Xexp + 1       -- Overflow deals with itself
+                              Carry,  Guard := SHIFTRIGHT (Xfrac[0],  Guard,  1)
+                              Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  1)
+                          Xexp = 1              --check normalisation
+                            IF
+                              (Xfrac[1] /\ Sign) = 0
+                                Xexp := 0       --still denormalised
+                              TRUE
+                                SKIP            --not denormalised
+                          TRUE
+                            SKIP
+                      --}}}  
+                    TRUE
+                      --{{{  sub magnitudes
+                      SEQ
+                        Carry,  Guard := LONGDIFF ( 0,  Guard,  0)
+                        Places,  Ans[0] := LONGDIFF ( Xfrac[0],  Yfrac[0],  Carry)
+                        Places,  Ans[1] := LONGDIFF ( Xfrac[1],  Yfrac[1],  Places)
+                        -- Answer may have sign of either X or Y
+                        -- dependant on their magnitudes
+                        --{{{  Has sign change occured ?
+                        IF
+                          Places = 0                   --correct
+                            SEQ
+                              Xfrac[1] := Ans[1]
+                              Xfrac[0] := Ans[0]
+                              Ans[1] := X[1] /\ Sign   -- Positive
+                          TRUE                         --must negate
+                            SEQ
+                              Ans[1] := Y[1] /\ Sign   --flip sign of answer
+                              -- if sign is flipped we know they were almost aligned
+                              -- so no borrow involved
+                              Carry,  Xfrac[0] := LONGDIFF ( Yfrac[0],  Xfrac[0],  Carry)
+                              Carry,  Xfrac[1] := LONGDIFF ( Yfrac[1],  Xfrac[1],  Carry)
+                        --}}}  
+                        IF
+                          (Xfrac[1] /\ Sign) <> 0      --normalised
+                            SKIP
+                          ((Xfrac[1] \/ Xfrac[0]) \/ Guard) = 0--result is zero
+                            SEQ
+                              Xexp := 0
+                              Ans [1] := 0    -- +0
+                          Xexp > 1
+                            --{{{  not yet denormalised
+                            SEQ
+                              Places,  Xfrac[1],  Carry := NORMALISE (Xfrac[1],  Xfrac[0])
+                              Xexp := Xexp - Places
+                              IF
+                                Xexp > 0            --still normal
+                                  Xfrac[0],  Guard := SHIFTLEFT (Xfrac[0],  Guard,  Places)
+                                TRUE                --gone denormalised
+                                  SEQ
+                                    Xfrac[1],  Carry := SHIFTRIGHT (Xfrac[1],  0,  1 - Xexp)
+                                    Xfrac[0],  Guard := SHIFTLEFT (Xfrac[0],  Guard,  Places - (1 - Xexp))
+                                    Xexp := 0
+                            --}}}  
+                          TRUE                     --already denormalised
+                            Xexp := 0
+                      --}}}  
+              --}}}  
+              --{{{  multiply or division
+              TRUE                                 --is mul/div
+                SEQ
+                  Ans[1] := (X[1] >< Y[1]) /\ Sign --get sign of answer
+                  IF
+                    --{{{  Mulitiply
+                    Op = Mul                       --do multiply
+                      SEQ
+                        Xexp := (Xexp + Yexp) + (1 - RealXcess)
+                        --RealIMul (Xfrac, Guard, Yfrac[1], Yfrac[0])
+                        Xfrac [1], Xfrac [0], Guard := RealIMul (Xfrac, Yfrac)
+                    --}}}  
+                    --{{{  Division
+                    TRUE                           --do divide
+                      SEQ
+                        -- Now always normalised
+                        Xexp := (Xexp - Yexp) + RealXcess
+                        Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  1)
+                        Xfrac[1], Xfrac[0], Guard := RealIDiv (Xfrac[1], Xfrac[0], 0, Yfrac)
+                        Xfrac[0], Guard, Carry := RealIDiv (Xfrac[0], Guard, 0, Yfrac)
+                        IF
+                          Carry = 0
+                            SKIP
+                          TRUE                   --set sticky bits
+                            Guard := Guard \/ 1
+                    --}}}  
+                  --{{{  Normalise
+                  Places,  Xfrac[1],  Carry := NORMALISE ( Xfrac[1],  Xfrac[0])
+                  IF
+                    Places > BitsPerWord
+                      Xfrac[1] := Xfrac[1] \/ (Guard >> ((2 * BitsPerWord) - Places))
+                    TRUE
+                      SKIP
+                  Xfrac[0],  Guard := SHIFTLEFT ( Xfrac[0],  Guard,  Places)
+                  Xexp := Xexp - Places
+                  --}}}  
+                  --{{{  Correct after normalisation
+                  IF
+                    --{{{  Overflow
+                    Xexp >= RealExp                --overflow
+                      Xexp := RealExp
+                    --}}}  
+                    --{{{  Correct range
+                    Xexp > 0                       --correct range
+                      SKIP
+                    --}}}  
+                    --{{{  Denormalised to insignificance
+                    Xexp < (-(BitsInFrac - 1))
+                      SEQ
+                        Xfrac[0] := 0
+                        Xfrac[1] := 0
+                        Guard := 1   -- wasn't 0
+                        Xexp := 0
+                    --}}}  
+                    --{{{  Denormalised
+                    TRUE                           --denormalised
+                      SEQ
+                        Places := (Xfrac[0] /\ (RealRBit \/ RealXcess)) \/ Guard
+                        IF
+                          Xexp < (-(BitsPerWord - 2))
+                            SEQ
+                              Places := Places \/ Xfrac[0]
+                              Xfrac[0],  Guard := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  (-Xexp) - (BitsPerWord - 1))
+                              Xfrac[1] := 0
+                          TRUE
+                            SEQ
+                              Carry,  Guard := SHIFTRIGHT ( Xfrac[0],  Guard,  1 - Xexp)
+                              Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1],  Xfrac[0],  1 - Xexp)
+                        Xexp := 0
+                        Guard := Guard \/ Places
+                    --}}}  
+                  --}}}  
+              --}}}  
+            --{{{  round & pack result
+            IF
+              Xexp < RealExp                      --still in range
+                SEQ
+                  Places := Xfrac[0]              --save round bits
+                  Xfrac[1],  Xfrac[0] := SHIFTRIGHT (Xfrac[1] /\ (~Sign),
+                                                     Xfrac[0],  RealShift)
+                  Carry,  Xexp := SHIFTRIGHT ( Xexp,  0,  RealShift + 1)
+                  Xfrac[1] := Xfrac[1] \/ Xexp
+                  IF
+                    (Places /\ RealRBit) = 0      --round bit not set
+                      SKIP
+                    ((Guard \/ (Places /\ RealXcess)) \/ (Xfrac[0] /\ 1)) = 0--round down
+
+                      SKIP
+                    TRUE                           --round up/even
+                      SEQ
+                        Carry,  Xfrac[0] := LONGSUM ( Xfrac[0],  1,  0)
+                        -- Overflow deals with itself
+                        Carry,  Xfrac[1] := LONGSUM ( Xfrac[1],  0,  Carry)
+                  IF
+                    (Xfrac [1] = RealInf) -- Overflow
+                      CAUSEERROR()
+                    TRUE
+                      SKIP
+                  Result[1] := Ans[1] \/ Xfrac[1]
+                  Result[0] := Xfrac[0]
+              TRUE                                 --OVERFLOW to infinity
+                SEQ
+                  CAUSEERROR()
+                  --Result[1] := Ans[1] \/ RealInf
+                  --Result[0] := 0
+            --}}}  
+          --}}}  
+      --}}}  
+    RESULT Result
+:
+--}}}  
+
+#ENDIF

@@ -1,0 +1,50 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+#IF NOT DEFINED(TARGET.HAS.FPU)
+
+--{{{  #options and #comments
+#OPTION "E V"  -- no compiler libs, no vector space
+#COMMENT "TA compiler library, V1.1 21/02/89 1988"
+#COMMENT "(c) Copyright INMOS Limited 1988"
+--}}}
+
+#PRAGMA TRANSLATE DRAW2D "DRAW2D%O"
+
+--{{{  DRAW2D -- T2 & TA
+PROC DRAW2D (VAL [][]BYTE Source, VAL INT sx, sy,
+                 [][]BYTE Dest,   VAL INT dx, dy,
+             VAL INT width, length)
+
+  -- Move a block of size width (x), length (y) which starts at byte
+  -- Source [sy][sx] to the block starting at byte Dest [dy][dx].
+  -- Only non-zero bytes in the source are transferred to the destination.
+
+  SEQ line = 0 FOR length
+    SEQ point = 0 FOR width
+      VAL ThisByte IS Source [line+sy][point+sx] :
+      IF
+        ThisByte <> 0(BYTE)
+          Dest [line+dy][point+dx] := ThisByte
+        TRUE
+          SKIP
+:
+--}}}
+
+#ENDIF

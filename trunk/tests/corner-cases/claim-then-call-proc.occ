@@ -1,0 +1,12 @@
+#INCLUDE "course.module"
+
+PROC main (SHARED CHAN BYTE out!)
+  SEQ
+    CLAIM out!
+      out ! 'x'
+
+    INITIAL INT n IS 42:
+    SEQ i = 0 FOR n
+      CLAIM out!
+        out.string ("Test", 0, out!)
+:

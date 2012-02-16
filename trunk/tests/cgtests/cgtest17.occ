@@ -1,0 +1,2008 @@
+-- version control marker $Id: cgtest17.occ,v 1.5 1995/10/11 14:20:30 djb1 Exp $
+#OPTION "W" -- Full ASM
+
+PROC cgtest17 (CHAN OF BYTE keyb, scr, err)
+
+  #INCLUDE "cgmain.occ"
+
+  VAL bpw IS 2 + ((INT ((MOSTNEG INT) <> #8000)) * 2) :
+  SEQ
+    init ("CG test 17", "Miscellaneous, RETYPES, and GUY/ASM")
+    --{{{  Static link tests      SL2 - SL4
+    PROC static.link()
+      SEQ
+        title("Static link tests")
+        --{{{  SL2
+        PROC P ()
+          [4]INT a :
+          #PRAGMA SHARED a
+          PROC Q (VAL INT i)
+            a[i] := 1
+          :
+          SEQ
+            SEQ i = 0 FOR 4
+              a[i] := 0
+            PAR
+              SKIP
+              PAR i = 0 FOR 4
+                -- Static link passed to Q needs normalising, so that it points
+                -- to P's normalised workspace
+                Q(i)
+            SEQ i = 0 FOR 4
+              check(a[i], 1, "SL2")
+        :
+        SEQ
+          P()
+        --}}}
+        --{{{  SL3
+        PROC P ()
+          [4]INT a :
+          #PRAGMA SHARED a
+          SEQ
+            SEQ i = 0 FOR 4
+              a[i] := 0
+            PAR
+              SKIP
+              PROC Q (VAL INT i)
+                a[i] := 1
+              :
+              PAR i = 0 FOR 4
+                -- Static link passed to Q needs normalising, so that it points
+                -- to P's normalised workspace
+                Q(i)
+            SEQ i = 0 FOR 4
+              check(a[i], 1, "SL3")
+        :
+        SEQ
+          P()
+        --}}}
+        --{{{  SL4
+        [4]INT a :
+        #PRAGMA SHARED a
+        PROC Q (VAL INT i)
+          a[i] := 1
+        :
+        PROC P ()
+          SEQ
+            SEQ i = 0 FOR 4
+              a[i] := 0
+            PAR
+              SKIP
+              PAR i = 0 FOR 4
+                -- Static link passed to Q should be static link passed to P
+                Q(i)
+            SEQ i = 0 FOR 4
+              check(a[i], 1, "SL4")
+        :
+        SEQ
+          P()
+        --}}}
+    :
+    static.link()
+    --}}}
+    --{{{  Nexted PAR tests       NP1 - NP27
+    PROC nested.PAR()
+      SEQ
+        title("Nested PAR tests")
+        INT v1, v2, v3, v4, v5, v6, v7, v8, v9, v10 :
+        SEQ
+          v1, v2, v3, v4, v5, v6, v7, v8, v9, v10 := 10, 11, 12, 13, 14, 15,
+                                                     16, 17, 18, 19
+          INT u, v, w :
+          SEQ
+            PAR
+              u, v, w := 1, 2, 3
+              INT a, b, c, d, e, f :
+              SEQ
+                PAR
+                  a, b, c, d, e, f := -1, -2, -3, -4, -5, -6
+                  INT g, h, i, j :
+                  SEQ
+                    PAR
+                      g, h, i, j := 20, 21, 22, 23
+                      INT k, l, m, n :
+                      SEQ
+                        PAR
+                          k, l, m, n := 30, 31, 32, 33
+                          SKIP
+                        check(k, 30, "NP1")
+                        check(l, 31, "NP2")
+                        check(m, 32, "NP3")
+                        check(n, 33, "NP4")
+                    check(g, 20, "NP5")
+                    check(h, 21, "NP6")
+                    check(i, 22, "NP7")
+                    check(j, 23, "NP8")
+                check(a, -1, "NP9")
+                check(b, -2, "NP10")
+                check(c, -3, "NP11")
+                check(d, -4, "NP12")
+                check(e, -5, "NP13")
+                check(f, -6, "NP14")
+            check(u, 1, "NP15")
+            check(v, 2, "NP16")
+            check(w, 3, "NP17")
+          check(v1, 10, "NP18")
+          check(v2, 11, "NP19")
+          check(v3, 12, "NP20")
+          check(v4, 13, "NP21")
+          check(v5, 14, "NP22")
+          check(v6, 15, "NP23")
+          check(v7, 16, "NP24")
+          check(v8, 17, "NP25")
+          check(v9, 18, "NP26")
+          check(v10, 19, "NP27")
+    :
+    nested.PAR()
+    --}}}
+    --{{{  Bug tests
+    title ("Bug tests")
+    PROC misc.bug.tests()
+      SEQ
+        --{{{  Bug 237
+        -- Bug 237 from buglist
+        [5]INT x :
+        INT a, b, c, d, e :
+        SEQ
+          SEQ i = 0 FOR 5
+            x[i] := 7777
+          a, b, c, d, e := 1, 2, 3, 4, 5
+          x := [a, b, c, d, e]
+          check(x[0], 1, "B237a")
+          check(x[1], 2, "B237b")
+          check(x[2], 3, "B237c")
+          check(x[3], 4, "B237d")
+          check(x[4], 5, "B237e")
+        --}}}
+        --{{{  Bug 217
+        -- Bug 217 from buglist
+        [3][3]INT c :
+        INT b :
+        SEQ
+          SEQ i = 0 FOR 3
+            SEQ j = 0 FOR 3
+              c[i][j] := (i * 100) + j
+          b := 2
+          d IS c[b][0] :
+          e IS c[b][1] :
+          f IS c[b][2] :
+          SEQ
+            check (d, 200, "B217a")
+            check (e, 201, "B217b")
+            check (f, 202, "B217c")
+        --}}}
+        --{{{  Bug 197
+        -- Bug 197 from buglist
+        PROTOCOL UNKNOWN IS ANY:
+        CHAN OF UNKNOWN c1, c2, c3 :
+        PAR
+          c1 ! 1818
+          c2 ! 477
+          c3 ! 4574
+          c IS [c1, c2, c3] :
+          INT x, y, z :
+          SEQ
+            c[0] ? x
+            c[1] ? y
+            c[2] ? z
+            check (x, 1818, "B197a")
+            check (y,  477, "B197b")
+            check (z, 4574, "B197c")
+        PROTOCOL any IS ANY :
+        CHAN OF any c1, c2, c3 :
+        PAR
+          c1 ! 1818
+          c2 ! 477
+          c3 ! 4574
+          c IS [c1, c2, c3] :
+          INT x, y, z :
+          SEQ
+            c[0] ? x
+            c[1] ? y
+            c[2] ? z
+            check (x, 1818, "B197aa")
+            check (y,  477, "B197ab")
+            check (z, 4574, "B197ac")
+        CHAN OF INT c1, c2, c3 :
+        PAR
+          c1 ! 1818
+          c2 ! 477
+          c3 ! 4574
+          c IS [c1, c2, c3] :
+          INT x, y, z :
+          SEQ
+            c[0] ? x
+            c[1] ? y
+            c[2] ? z
+            check (x, 1818, "B197ba")
+            check (y,  477, "B197bb")
+            check (z, 4574, "B197bc")
+        
+        --}}}
+        --{{{  Bug 97
+        -- Bug 97 from buglist
+        PROC F (VAL REAL32 r)
+          check (INT ROUND r, 99, "B097a")
+        :
+        REAL32 r :
+        SEQ
+          r := -99.0(REAL32)
+          F(-r)
+        
+        --}}}
+        --{{{  Bug 94
+        -- Bug 94 from buglist
+        INT a, b, c :
+        PROC acs ()
+          INT i :
+          VAL foo IS [a, b, c] [2] :
+          SEQ
+            i := foo
+            check (i, 127, "B094a")
+        :
+        SEQ
+          a, b, c := -127, 252, 127
+          acs ()
+        
+        --}}}
+        --{{{  Bug 88
+        -- Bug 88 from buglist
+        VAL One IS 1 :
+        PROTOCOL p
+          CASE
+            pkt ; [One + 1]INT
+        :
+        CHAN OF p c :
+        PAR
+          c ! pkt ; [5454, 272]
+          [2]INT x :
+          SEQ
+            c ? CASE pkt ; x
+            check (x[0], 5454, "B088a")
+            check (x[1],  272, "B088b")
+        
+        --}}}
+        --{{{  Bug 87
+        -- Bug 87 from buglist
+        VAL One IS 1 :
+        PROTOCOL q
+          CASE
+            tag ; INT :: []INT
+        :
+        PROC test (CHAN OF q c)
+          ALT
+            INT len :
+            [4]INT buf :
+            c ? CASE tag; len :: buf
+              SEQ
+                check (buf[0], 626, "B087a")
+                check (buf[1], 623, "B087b")
+                check (buf[2], 99, "B087c")
+                check (buf[3], 1, "B087d")
+        :
+        CHAN OF q c :
+        PAR
+          [4]INT x :
+          SEQ
+            x := [626, 623, 99, 1]
+            c ! tag ; 4 :: x
+          test (c)
+        --}}}
+    :
+    misc.bug.tests()
+    --{{{  Bug 321
+    PROC bug.321()
+      PROC bug.321a(VAL []BYTE b, VAL []BYTE c, VAL [10]BYTE d)
+        INT x, y, z :
+        SEQ
+          VAL INT16 i16 RETYPES [b FROM 1 FOR 2] :
+          VAL INT16 j16 RETYPES [c FROM 2 FOR 2] :
+          VAL INT16 k16 RETYPES [d FROM 2 FOR 2] :
+          INT16 ii16, jj16, kk16 :
+          SEQ
+            ii16, jj16, kk16 := i16, j16, k16
+            check(INT  i16, #0302, "B321aa")
+            check(INT ii16, #0302, "B321ab")
+            check(INT  j16, #0403, "B321ac")
+            check(INT jj16, #0403, "B321ad")
+            check(INT  k16, #0504, "B321ae")
+            check(INT kk16, #0504, "B321af")
+          x, y, z := 1, 2, 2
+          VAL INT16 i16 RETYPES [b FROM x FOR z] :
+          VAL INT16 j16 RETYPES [c FROM y FOR z] :
+          VAL INT16 k16 RETYPES [d FROM y FOR z] :
+          INT16 ii16, jj16, kk16 :
+          SEQ
+            ii16, jj16, kk16 := i16, j16, k16
+            check(INT  i16, #0302, "B321as")
+            check(INT ii16, #0302, "B321at")
+            check(INT  j16, #0403, "B321au")
+            check(INT jj16, #0403, "B321av")
+            check(INT  k16, #0504, "B321aw")
+            check(INT kk16, #0504, "B321ax")
+      :
+      PROC bug.321b([]BYTE b, []BYTE c, [10]BYTE d)
+        INT x, y, z :
+        SEQ
+          INT16 i16 RETYPES [b FROM 1 FOR 2] :
+          INT16 j16 RETYPES [c FROM 2 FOR 2] :
+          INT16 k16 RETYPES [d FROM 2 FOR 2] :
+          INT16 ii16, jj16, kk16 :
+          SEQ
+            ii16, jj16, kk16 := i16, j16, k16
+            check(INT  i16, #0302, "B321ba")
+            check(INT ii16, #0302, "B321bb")
+            check(INT  j16, #0403, "B321bc")
+            check(INT jj16, #0403, "B321bd")
+            check(INT  k16, #0504, "B321be")
+            check(INT kk16, #0504, "B321bf")
+          x, y, z := 1, 2, 2
+          INT16 i16 RETYPES [b FROM x FOR z] :
+          INT16 j16 RETYPES [c FROM y FOR z] :
+          INT16 k16 RETYPES [d FROM y FOR z] :
+          INT16 ii16, jj16, kk16 :
+          SEQ
+            ii16, jj16, kk16 := i16, j16, k16
+            check(INT  i16, #0302, "B321bs")
+            check(INT ii16, #0302, "B321bt")
+            check(INT  j16, #0403, "B321bu")
+            check(INT jj16, #0403, "B321bv")
+            check(INT  k16, #0504, "B321bw")
+            check(INT kk16, #0504, "B321bx")
+      :
+      [10]BYTE b, c, d :
+      INT x, y :
+      SEQ
+        SEQ i = 0 FOR 10
+          b[i], c[i], d[i] := BYTE i, BYTE (i+1), BYTE (i+2)
+        VAL INT16 i16 RETYPES [b FROM 2 FOR 2] :
+        VAL INT16 j16 RETYPES [c FROM 2 FOR 2] :
+        VAL INT16 k16 RETYPES [d FROM 2 FOR 2] :
+        INT16 ii16, jj16, kk16 :
+        SEQ
+          ii16, jj16, kk16 := i16, j16, k16
+          check(INT  i16, #0302, "B321a")
+          check(INT ii16, #0302, "B321b")
+          check(INT  j16, #0403, "B321c")
+          check(INT jj16, #0403, "B321d")
+          check(INT  k16, #0504, "B321e")
+          check(INT kk16, #0504, "B321f")
+        x, y := 2, 2
+        VAL INT16 i16 RETYPES [b FROM x FOR y] :
+        VAL INT16 j16 RETYPES [c FROM x FOR y] :
+        VAL INT16 k16 RETYPES [d FROM x FOR y] :
+        INT16 ii16, jj16, kk16 :
+        SEQ
+          ii16, jj16, kk16 := i16, j16, k16
+          check(INT  i16, #0302, "B321g")
+          check(INT ii16, #0302, "B321h")
+          check(INT  j16, #0403, "B321i")
+          check(INT jj16, #0403, "B321j")
+          check(INT  k16, #0504, "B321k")
+          check(INT kk16, #0504, "B321l")
+        INT16 i16 RETYPES [b FROM 2 FOR 2] :
+        INT16 j16 RETYPES [c FROM 2 FOR 2] :
+        INT16 k16 RETYPES [d FROM 2 FOR 2] :
+        INT16 ii16, jj16, kk16 :
+        SEQ
+          ii16, jj16, kk16 := i16, j16, k16
+          check(INT  i16, #0302, "B321m")
+          check(INT ii16, #0302, "B321n")
+          check(INT  j16, #0403, "B321o")
+          check(INT jj16, #0403, "B321p")
+          check(INT  k16, #0504, "B321q")
+          check(INT kk16, #0504, "B321r")
+        x, y := 2, 2
+        INT16 i16 RETYPES [b FROM x FOR y] :
+        INT16 j16 RETYPES [c FROM x FOR y] :
+        INT16 k16 RETYPES [d FROM x FOR y] :
+        INT16 ii16, jj16, kk16 :
+        SEQ
+          ii16, jj16, kk16 := i16, j16, k16
+          check(INT  i16, #0302, "B321s")
+          check(INT ii16, #0302, "B321t")
+          check(INT  j16, #0403, "B321u")
+          check(INT jj16, #0403, "B321v")
+          check(INT  k16, #0504, "B321w")
+          check(INT kk16, #0504, "B321x")
+        bug.321a([b FROM 1 FOR 9], c, d)
+        bug.321b([b FROM 1 FOR 9], c, d)
+    :
+    bug.321()        
+    --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    --{{{  Bug 338
+    PROC bug.338()
+      SEQ
+        ASM
+          :fred
+        check(1, 1, "B338a")
+    :
+    bug.338()
+    --}}}
+    #ENDIF
+    --{{{  Bug 476
+    PROC bug.476()
+      INLINE PROC q (INT z)
+        PROC r (VAL INT x, INT y)
+          SEQ
+            check(x, 76, "B476A")
+            check(y, 77, "B476B")
+            y := 78
+            check(x, 76, "B476C")
+            check(y, 78, "B476D")
+        :
+        INT a :
+        SEQ
+          a := 77
+          r (z, a)
+      :
+      INT b :
+      SEQ
+        b := 76
+        q (b)
+    :
+    bug.476()
+    --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    --{{{  Bug 178
+    PROC bug.178()
+      VAL name IS "byte string" :
+      INT x, y, z, a, b, c, d, e, f, g, h, i, j :
+      SEQ
+        x, y, z := 1, 2, 3
+        a, b, c, d, e, f, g, h, i := 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ASM
+          LDABC x, y, z
+          STABC a, b, c
+          LDAB  x, y
+          STAB  d, e
+          LD    x
+          ST    f
+          LD    x + (y + z)
+          ST    g
+          LD    ADDRESSOF x
+          LDNL  0
+          ST    h
+          LDL   x
+          ST    i
+          LDL   x
+          STL   j   
+          LDLP  .WSSIZE
+          J     :label
+          :bytelabel
+          BYTE  "a*#63"
+          BYTE  "fred"
+          BYTE name
+    
+          WORD 88, 99
+          :label
+          --CJ    :label2
+          :label2
+        check(a, 1, "B178a")
+        check(b, 2, "B178b")
+        check(c, 3, "B178c")
+        check(d, 1, "B178d")
+        check(e, 2, "B178e")
+        check(f, 1, "B178f")
+        check(g, 6, "B178g")
+        check(h, 1, "B178h")
+        check(i, 1, "B178i")
+        check(j, 1, "B178j")
+        ASM
+          LD ADDRESSOF [1,2,3]
+          LDNL 2
+          ST a
+          LDLABELDIFF :bytelabel - :here1
+          LDPI
+          :here1
+          LB
+          ST b
+          LDLABELDIFF :bytelabel - :here2
+          LDPI
+          :here2
+          ADC 1
+          LB
+          ST c
+        check(a, 3, "B178k")
+        check(b, INT 'a', "B178l")
+        check(c, 99, "B178m")
+    :
+    bug.178()
+    --}}}
+    --{{{  Bug 494
+    PROC bug.494()
+      CHAN OF INT c1, c2, c3, c4 :
+      PAR
+        SEQ
+          c1 ! 88
+          ASM
+            LDAB 99, c2
+            OUTWORD
+          VAL INT x RETYPES c3 :
+          SEQ
+            VAL CHAN OF INT d RETYPES x :
+            d ! 101
+          INT y :
+          SEQ
+            VAL INT x RETYPES c4 :
+            y := x
+            CHAN OF INT e RETYPES y :
+            e ! 199
+          ASM
+            LD ADDRESSOF c4
+            LDNL 0
+            LDC 299
+            OUTWORD
+            
+        INT a1, a2, a3, a4 :
+        SEQ
+          c1 ? a1
+          check(a1, 88, "B494a")
+          c2 ? a2
+          check(a2, 99, "B494b")
+          c3 ? a3
+          check(a3, 101, "B494c")
+          c4 ? a4
+          check(a4, 199, "B494d")
+          c4 ? a4
+          check(a4, 299, "B494e")
+    :
+    bug.494()
+    --}}}
+    #ENDIF
+    --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    --{{{  protocol RETYPES test  PR1 - PR12
+    PROC protocolRetype()
+      PROTOCOL p1 IS BYTE; BOOL :
+      PROTOCOL p2 IS REAL32; INT :
+      PROTOCOL p3 
+        CASE
+          c1; BYTE
+          c2; INT
+          c3; REAL32
+          c4; REAL64
+          c5; INT :: []BYTE
+          c6; BYTE :: []INT
+      :
+      CHAN OF p1 chan :
+      PAR
+        SEQ
+          chan ! 1(BYTE); TRUE
+          CHAN OF p2 rchan RETYPES chan :
+          rchan ! 2.0(REAL32); 3
+          CHAN OF p3 rchan RETYPES chan :
+          SEQ
+            rchan ! c1; 1(BYTE)
+            rchan ! c2; 2
+            rchan ! c3; 3.0(REAL32)
+            rchan ! c4; 4.0(REAL64)
+            rchan ! c5; 3 :: "Hi!"
+            rchan ! c6; 5(BYTE) :: [6, 7, 8, 9, 10]
+        BYTE a:
+        BOOL b :
+        REAL32 c :
+        INT d :
+        SEQ
+          chan ? a; b
+          check(INT a, 1, "PR1")
+          check(INT b, INT TRUE, "PR2")
+          VAL CHAN OF p2 rchan RETYPES chan :
+          rchan ? c; d
+          check(INT ROUND c, 2, "PR3")
+          check(INT d, 3, "PR4")
+          VAL CHAN OF p3 rchan RETYPES chan :
+          BYTE a :
+          INT  b :
+          REAL32 c :
+          REAL64 d :
+          [3]BYTE array1 :
+          [5]INT  array2 :
+          SEQ
+            rchan ? CASE c1; a
+            check(INT a, 1, "PR5")
+            SEQ i = 0 FOR 5
+              rchan ? CASE
+                c2; b
+                  check(b, 2, "PR6")
+                c3; c
+                  check(INT TRUNC c, 3, "PR7")
+                c4; d
+                  check(INT TRUNC d, 4, "PR8")
+                c5; b :: array1
+                  SEQ
+                    check(b, 3, "PR9")
+                    SEQ i = 0 FOR b
+                      check(INT array1[i], INT "Hi!"[i], "PR10")
+                c6; a :: array2
+                  SEQ
+                    check(INT a, 5, "PR11")
+                    SEQ i = 0 FOR 5
+                      check(array2[i], i + 6, "PR12")
+    :
+    protocolRetype()
+    --}}}
+    --{{{  ASM of INT16           AT1 - AT12
+    PROC asmTest()
+      INT16 a, b :
+      [2]INT16 a2 :
+      [3]INT16 a3 :
+      [2]INT16 silly :
+      INT32 i32 :
+      INT64 i64 :
+      REAL32 r32 :
+      REAL64 r64 :
+      VAL []INT16 r32.32 RETYPES 32.0(REAL32) :
+      VAL []INT16 r64.64 RETYPES 64.0(REAL64) :
+      INT x, y, z :
+      SEQ
+        a, b                := 1(INT16), 2(INT16)
+        a2[0], a2[1]        := 1(INT16), 2(INT16)
+        a3[0], a3[1], a3[2] := 1(INT16), 2(INT16), 3(INT16)
+        silly[1] := #1234(INT16)
+        i32 := 32(INT32)
+        i64 := 64(INT64)
+        ASM
+          LD    a
+          ST    b
+    
+          LDAB  a2[0], a2[1]
+          STAB  a2[1], a2[0]
+    
+          LDABC a3[0], a3[1], a3[2]
+          STABC a3[1], a3[2], a3[0]
+    
+          LD    ADDRESSOF silly[1]
+          LB
+          ST    x
+          LD    ADDRESSOF silly[1]
+          ADC   1
+          LB
+          ST    y
+        check(INT b,     1, "AT1")
+        check(INT a2[0], 2, "AT2")
+        check(INT a2[1], 1, "AT3") -- bug 777
+        check(INT a3[0], 3, "AT4")
+        check(INT a3[1], 1, "AT5")
+        check(INT a3[2], 2, "AT6") -- bug 777
+        check(x, #34, "AT7")
+        check(y, #12, "AT8")
+    
+    
+        i32 := 32(INT32)
+        i64 := 64(INT64)
+        ASM
+          LD   ADDRESSOF i32
+          LDNL 0
+          ST   x
+    
+          LD   ADDRESSOF i64
+          LDNL 0
+          ST   y
+        check(x, 32, "AT9")
+        check(y, 64, "AT10")
+    
+        r32 := 32.0(REAL32)
+        r64 := 64.0(REAL64)
+        ASM
+          LD   ADDRESSOF r32
+          LDNL 0
+          ST   x
+    
+          LD   ADDRESSOF r64
+          LDNL 0
+          ST   y
+        check(x /\ #FFFF, INT r32.32[0], "AT11")
+        check(y /\ #FFFF, INT r64.64[0], "AT12")
+    :
+    asmTest()
+    --}}}
+    --{{{  GUY                    GT1
+    -- This code would not work using ASM 
+    PROC guyTest()
+      INT x, y :
+      PROC chainTest()
+        INT local :
+        SEQ
+          GUY
+            LDLP y
+            STL  local
+            LDL  x
+            LDL  local
+            STNL 0
+      :
+      SEQ
+        x, y := 3, 4
+        chainTest()
+        check(y, 3, "GT1")
+    :
+    guyTest()
+    --}}}
+    --{{{  PORTs
+    -- This test has been moved to a separate test in the 'rtrun' directory
+    -- because it produces a warning about a PORT not being placed.
+    -- This is 'dubious', so I am taking it out of the mainstream tests.
+    -- Conor O'Neill; 24/03/93.
+    --PROC test.PORTs()
+    --  SKIP -- deleted
+    --:
+    --test.PORTs()
+    --}}}
+    #IF (TARGET.BITS.PER.WORD = 32)
+    --{{{  misc ASM
+    PROC misc.ASM()
+      INT x, y, z :
+      --{{{  q
+      PROC q ()
+        INT local :
+        SEQ
+          ASM
+            LD x
+            ST local
+            LDL .STATIC
+            LDC 1
+          check(local, 1, "ASM001")
+      :
+      --}}}
+      VAL string IS "hello" :
+      [10]INT a :
+      [5]INT p :
+      PLACE p IN WORKSPACE:
+      INT ws0, ws1, temp :
+      SEQ
+        x,y,z := 1,2,3
+        q ()
+        ASM
+          LDLP 0
+          ST ws0
+          AJW .WSSIZE
+          LDC 1
+          AJW - .WSSIZE
+          LDLP 0
+          STAB ws1, temp
+        check(ws1 MINUS ws0, 0, "ASM002")
+        check(temp, 1, "ASM003")
+    
+        ASM
+          LDLP .VSPTR
+          LDL  .VSPTR
+          LDL .WSSIZE
+          
+          --IN
+          --TIN
+      
+          LDL 4
+          STL 4
+          LDL x
+          STL x
+      
+          LDC 0
+          ADC 88
+          ADC x
+          ADC y
+    
+          LD x
+          ST x
+    
+          LDAB x, ADDRESSOF x
+          STAB x, y
+    
+          LDABC x, 99, x + x
+          STABC x, y, z
+    
+          :OK
+          J :label
+          BYTE string
+          LDC 0
+          CJ :OK
+    
+          :label
+          J :hop
+          PFIX 0
+    
+          :hop    
+          --SETERR
+          LDAB ADDRESSOF p[3], 27
+          STNL 0
+    
+          LDAB ADDRESSOF p, 99
+          STNL 0
+        check(p[3], 27, "ASM004")
+        check(p[0], 99, "ASM005")
+    
+        ASM
+          :loop
+          LDLABELDIFF :here - :loop
+          --LEND
+          :here
+    
+          LD ADDRESSOF string
+          LB
+          ST x
+        check(x, INT 'h', "ASM006")
+    
+        ASM
+          LD ADDRESSOF 999  -- This is dubious
+          LDNL 0
+          ST x
+        check(x, 999, "ASM008")
+          --LD ADDRESSOF q
+        ASM
+          LD MOSTNEG INT
+          ST x
+        check(x, MOSTNEG INT, "ASM009")
+        ASM
+          LDC MOSTNEG INT
+          ST x
+        check(x, MOSTNEG INT, "ASM009")
+          --LD ADDRESSOF x + x -- error
+    :
+    misc.ASM()
+    --}}}
+    #ENDIF
+    --{{{  bug 594
+    PROC bug.594()
+      [10][10]INT array :
+      INT x, y, z :
+      SEQ
+        SEQ i = 0 FOR SIZE array
+          SEQ j = 0 FOR SIZE array[0]
+            array[i][j] := i + j
+        x := 1
+        sub.array IS array[x] :
+        GUY
+          LDLP sub.array
+          LDNL 5
+          STL  y
+        check(y, 6, "B594a")
+        b IS array[x][x] :
+        GUY
+          LDL b
+          STL y
+          LDLP b
+          LDNL 0
+          STL z
+        check(y, 2, "B594b")
+        check(z, 2, "B594c")
+        VAL b IS array[x][x] :
+        GUY
+          LDL b
+          STL y
+          LDLP b
+          LDNL 0
+          STL z
+        check(y, 2, "B594d")
+        check(z, 2, "B594e")
+    :
+    bug.594()
+    --}}}
+    --{{{  bug 1112
+    PROC bug.1112()
+      INLINE PROC q()
+        ASM
+          J :label
+          :label
+      :
+      SEQ
+        q ()
+        check(1, 1, "B1112")
+    :
+    bug.1112()
+    --}}}
+    --{{{  bug 1113
+    PROC bug.1113()
+      INLINE PROC q()
+        ASM
+          J :label
+          :label
+      :
+      SEQ
+        q ()
+        q ()
+        check(1, 1, "B1113")
+    :
+    bug.1113()
+    --}}}
+    --{{{  bug 1166 (RESERVELOWWS)
+    PROC bug.1166()
+      CHAN OF INT c :
+      PAR
+        SEQ   -- first branch is at higher w/s
+          c ! 0 -- synchronise after other branch has set up w/s
+          ASM
+            RESERVELOWWS 20
+          SEQ i = -20 FOR 10
+            ASM
+              LDC #DEAD
+              LDL i
+              LDLP 0
+              WSUB
+              STNL 0
+          c ! 0 -- re-synchronise after clobbering own below w/s
+        [20]INT a :
+        INT x :
+        SEQ
+          SEQ i = 0 FOR 20
+            a[i] := i
+          c ? x
+          c ? x
+          SEQ i = 0 FOR 20
+            check(a[i], i, "B1166a")
+    :
+    bug.1166()
+    --}}}
+    --{{{  bug 1240 (CALL proc name)
+    --{{{  PROC outer
+    PROC outer(INT x)
+      x := 99
+    :
+    --}}}
+    PROC call.through.ASM()
+      --{{{  FUNCTION f
+      INT FUNCTION f(VAL INT x) IS x + 2 :
+      --}}}
+      --{{{  FUNCTION g
+      INT FUNCTION g(VAL INT x)
+        INT res :
+        VALOF
+          res := x + 2
+          RESULT res
+      :
+      --}}}
+      INT global :
+      --{{{  PROC inner
+      PROC inner(INT x)
+        x := 99
+      :
+      --}}}
+      --{{{  PROC access.global
+      PROC access.global(INT x)
+        x := global
+      :
+      --}}}
+      INT x, y :
+      SEQ
+        --{{{   CALL outer
+        x, y := 101, 101
+        ASM
+          LD ADDRESSOF x
+          CALL outer
+        outer(y)
+        check(x, 99, "CALL11")
+        check(x, y,  "CALL12")
+        --}}}
+        ----{{{  GCALL outer
+        --x, y := 101, 101
+        --ASM
+        --  RESERVELOWWS 20
+        --  LD ADDRESSOF x
+        --  STL -3
+        --  LDLABELDIFF :return0 - :here0
+        --  LDPI
+        --  :here0
+        --  STL -4
+        --  LD ADDRESSOF outer
+        --  AJW -4
+        --  GCALL
+        --  :return0
+        --outer(y)
+        --check(x, 99, "CALL13")
+        --check(x, y,  "CALL14")
+        ----}}}
+        --{{{   CALL inner
+        x, y := 101, 101
+        ASM
+          LD ADDRESSOF x
+          CALL inner
+        inner(y)
+        check(x, 99, "CALL21")
+        check(x, y,  "CALL22")
+        --}}}
+        ----{{{  GCALL inner
+        --x, y := 101, 101
+        --ASM
+        --  RESERVELOWWS 20
+        --  LD ADDRESSOF x
+        --  STL -3
+        --  LDLABELDIFF :return1 - :here1
+        --  LDPI
+        --  :here1
+        --  STL -4
+        --  LD ADDRESSOF inner
+        --  AJW -4
+        --  GCALL
+        --  :return1
+        --inner(y)
+        --check(x, 99, "CALL23")
+        --check(x, y,  "CALL24")
+        ----}}}
+        --{{{   CALL f
+        x, y := 101, 101
+        ASM
+          LD x
+          CALL f
+          ST x
+        y := f(y)
+        check(x, 103, "CALL31")
+        check(x, y,   "CALL32")
+        --}}}
+        ----{{{  GCALL f
+        --x, y := 101, 101
+        --ASM
+        --  RESERVELOWWS 20
+        --  LD x
+        --  STL -3
+        --  LDLABELDIFF :return2 - :here2
+        --  LDPI
+        --  :here2
+        --  STL -4
+        --  LD ADDRESSOF f
+        --  AJW -4
+        --  GCALL
+        --  :return2
+        --  ST x
+        --y := f(y)
+        --check(x, 103, "CALL33")
+        --check(x, y,   "CALL34")
+        ----}}}
+        --{{{   CALL g
+        x, y := 101, 101
+        ASM
+          LD x
+          CALL g
+          ST x
+        y := g(y)
+        check(x, 103, "CALL41")
+        check(x, y,   "CALL42")
+        --}}}
+        ----{{{  GCALL g
+        --x, y := 101, 101
+        --ASM
+        --  RESERVELOWWS 20
+        --  LD x
+        --  STL -3
+        --  LDLABELDIFF :return3 - :here3
+        --  LDPI
+        --  :here3
+        --  STL -4
+        --  LD ADDRESSOF g
+        --  AJW -4
+        --  GCALL
+        --  :return3
+        --  ST x
+        --y := g(y)
+        --check(x, 103, "CALL43")
+        --check(x, y,   "CALL44")
+        ----}}}
+        --{{{   CALL access.global
+        ASM
+          LDC 99
+          ST global
+          LD ADDRESSOF x
+          LDLP 0
+          CALL access.global
+        
+        global := 99
+        access.global(y)
+        check(x, 99, "CALL51")
+        check(x,  y, "CALL52")
+        --}}}
+        ----{{{  GCALL access.global
+        --ASM
+        --  LDC 99
+        --  ST global
+        --
+        --  RESERVELOWWS 20
+        --  LDLP 0
+        --  STL -3
+        --  LD ADDRESSOF x
+        --  STL -2
+        --  LDLABELDIFF :return4 - :here4
+        --  LDPI
+        --  :here4
+        --  STL -4
+        --  LD ADDRESSOF access.global
+        --  AJW -4
+        --  GCALL
+        --  :return4
+        --global := 99
+        --access.global(y)
+        --check(x, 99, "CALL53")
+        --check(x,  y, "CALL54")
+        ----}}}
+    :
+    call.through.ASM()
+    --}}}
+    #IF FALSE
+    --{{{  bug 1409
+    PROC bug.1409 ()
+      INLINE PROC q(VAL []BYTE b, INT x)
+        ASM
+          --LDL b
+          LD ADDRESSOF b
+          ST x
+      :
+      INT x, y :
+      VAL str IS "string" :
+      SEQ
+        q("string", x)
+        q(str, x)
+        LOAD.BYTE.VECTOR(y, str)
+        check(x, y, "B1409a")
+    :
+    bug.1409()
+    --}}}
+    #ENDIF
+    #ENDIF
+    --{{{  bug 1505
+    PROC bug.1505()
+      SEQ
+        --{{{  bug 1505 a
+        PROC bug.1505a (VAL []BYTE array)
+          VAL []BOOL retype RETYPES array :
+          PROC nested()
+            INT x :
+            VAL abbrev.of.retype IS retype :
+            SEQ
+              x := SIZE abbrev.of.retype
+              check(x, 5, "B1505a")
+          :
+          nested()
+        :
+        bug.1505a("hello")
+        --}}}
+        --{{{  bug 1505 b and c
+        PROC bug.1505b([]BYTE b, []INT16 int16, VAL INT b.len, i16.len, zero)
+          INT x :
+          SEQ
+        
+            --{{{  B1505bb_ []type    c RETYPES b
+            []INT c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16 / bpw, "B1505bba")
+            []BOOL c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505bbb")
+            []BYTE c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505bbc")
+            []INT16 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bbd")
+            []INT32 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bbe")
+            []INT64 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bbf")
+            []REAL32 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bbg")
+            []REAL64 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bbh")
+            --}}}
+            --{{{  B1505bc_ [][2]type c RETYPES b
+            [][2]BOOL c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bca")
+            [][2]BYTE c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bcb")
+            [][2]INT c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8 / bpw, "B1505bcc")
+            [][2]INT16 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bcd")
+            [][2]INT32 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bce")
+            [][2]INT64 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505bcf")
+            [][2]REAL32 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bcg")
+            [][2]REAL64 c RETYPES b :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505bch")
+            --}}}
+        
+            --{{{  B1505bd_ []type    c RETYPES [b FROM 0 FOR b.len]
+            []INT c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16 / bpw, "B1505bda")
+            []BOOL c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505bdb")
+            []BYTE c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505bdc")
+            []INT16 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bdd")
+            []INT32 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bde")
+            []INT64 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bdf")
+            []REAL32 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bdg")
+            []REAL64 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bdh")
+            --}}}
+            --{{{  B1505be_ [][2]type c RETYPES [b FROM 0 FOR b.len]
+            [][2]BOOL c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bea")
+            [][2]BYTE c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505beb")
+            [][2]INT c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8 / bpw, "B1505bec")
+            [][2]INT16 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bed")
+            [][2]INT32 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bee")
+            [][2]INT64 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505bef")
+            [][2]REAL32 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505beg")
+            [][2]REAL64 c RETYPES [b FROM 0 FOR b.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505beh")
+            --}}}
+        
+            --{{{  B1505bf_ []type    c RETYPES [b FROM zero FOR b.len + zero]
+            []INT c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16 / bpw, "B1505bfa")
+            []BOOL c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505bfb")
+            []BYTE c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505bfc")
+            []INT16 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bfd")
+            []INT32 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bfe")
+            []INT64 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bff")
+            []REAL32 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bfg")
+            []REAL64 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bfh")
+            --}}}
+            --{{{  B1505bg_ [][2]type c RETYPES [b FROM zero FOR b.len + zero]
+            [][2]BOOL c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bga")
+            [][2]BYTE c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505bgb")
+            [][2]INT c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8 / bpw, "B1505bgc")
+            [][2]INT16 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505bgd")
+            [][2]INT32 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bge")
+            [][2]INT64 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505bgf")
+            [][2]REAL32 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505bgg")
+            [][2]REAL64 c RETYPES [b FROM zero FOR b.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505bgh")
+            --}}}
+        
+            --{{{  B1505cb_ []type    c RETYPES int16
+            []INT c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16 / bpw, "B1505cba")
+            []BOOL c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505cbb")
+            []BYTE c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505cbc")
+            []INT16 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cbd")
+            []INT32 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cbe")
+            []INT64 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cbf")
+            []REAL32 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cbg")
+            []REAL64 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cbh")
+            --}}}
+            --{{{  B1505cc_ [][2]type c RETYPES int16
+            [][2]BOOL c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cca")
+            [][2]BYTE c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505ccb")
+            [][2]INT c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8 / bpw, "B1505ccc")
+            [][2]INT16 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505ccd")
+            [][2]INT32 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cce")
+            [][2]INT64 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505ccf")
+            [][2]REAL32 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505ccg")
+            [][2]REAL64 c RETYPES int16 :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505cch")
+            --}}}
+        
+            --{{{  B1505cd_ []type    c RETYPES [int16 FROM 0 FOR i16.len]
+            []INT c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16 / bpw, "B1505cda")
+            []BOOL c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505cdb")
+            []BYTE c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505cdc")
+            []INT16 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cdd")
+            []INT32 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cde")
+            []INT64 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cdf")
+            []REAL32 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cdg")
+            []REAL64 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cdh")
+            --}}}
+            --{{{  B1505ce_ [][2]type c RETYPES [int16 FROM 0 FOR i16.len]
+            [][2]BOOL c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cea")
+            [][2]BYTE c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505ceb")
+            [][2]INT c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8 / bpw, "B1505cec")
+            [][2]INT16 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505ced")
+            [][2]INT32 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cee")
+            [][2]INT64 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505cef")
+            [][2]REAL32 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505ceg")
+            [][2]REAL64 c RETYPES [int16 FROM 0 FOR i16.len] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505ceh")
+            --}}}
+        
+            --{{{  B1505cf_ []type    c RETYPES [int16 FROM zero FOR i16.len + zero]
+            []INT c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16 / bpw, "B1505cfa")
+            []BOOL c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505cfb")
+            []BYTE c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 16, "B1505cfc")
+            []INT16 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cfd")
+            []INT32 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cfe")
+            []INT64 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cff")
+            []REAL32 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cfg")
+            []REAL64 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cfh")
+            --}}}
+            --{{{  B1505cg_ [][2]type c RETYPES [int16 FROM zero FOR i16.len + zero]
+            [][2]BOOL c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cga")
+            [][2]BYTE c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8, "B1505cgb")
+            [][2]INT c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 8 / bpw, "B1505cgc")
+            [][2]INT16 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 4, "B1505cgd")
+            [][2]INT32 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cge")
+            [][2]INT64 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505cgf")
+            [][2]REAL32 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 2, "B1505cgg")
+            [][2]REAL64 c RETYPES [int16 FROM zero FOR i16.len + zero] :
+            SEQ
+              x := SIZE c
+              c := c
+            check(x, 1, "B1505cgh")
+            --}}}
+        
+        :
+        [16]BYTE bytes :
+        [8]INT16 i16s :
+        SEQ
+          bytes := "1234567890123456"
+          VAL x IS 27(INT16) :
+          i16s := [x,x,x,x,x,x,x,x]
+          bug.1505b(bytes, i16s, 16, 8, 0)
+        --}}}
+        --{{{  bug 1505 d
+        PROC bug.1505d()
+          PROC nested(VAL [][][]INT16 i16)
+            INT x, i, j :
+            BYTE b :
+            INT64 i64 :
+            SEQ
+              i,j := 0,0
+        
+              VAL [][5]BYTE retype RETYPES i16 :
+              SEQ
+                b := retype[i][j]
+                x := SIZE retype
+                check(x, 160, "B1505da")
+        
+              VAL [5][]BYTE retype RETYPES i16 :
+              SEQ
+                b := retype[i][j]
+                x := SIZE retype[0]
+                check(x, 160, "B1505db")
+        
+              VAL [][5]INT64 retype RETYPES i16 :
+              SEQ
+                i64 := retype[i][j]
+                x := SIZE retype
+                check(x, 20, "B1505dc")
+        
+              VAL [5][]INT64 retype RETYPES i16 :
+              SEQ
+                i64 := retype[i][j]
+                x := SIZE retype[0]
+                check(x, 20, "B1505dd")
+          :
+          [5][16][5]INT16 i16 :
+          SEQ
+            nested(i16)
+        :
+        bug.1505d()
+        --}}}
+        --{{{  bug 1505 e
+        PROC bug.1505e()
+          PROC nested([]INT16 i16, []INT32 i32)
+            INT x :
+            SEQ
+              []INT c RETYPES i16 :
+              SEQ
+                x := c[0]
+                x := SIZE c
+                check(x, 16 / bpw, "B1505ea")
+              []INT c RETYPES i32 :
+              SEQ
+                x := c[0]
+                x := SIZE c
+                check(x, 16 / bpw, "B1505eb")
+          :
+          [8]INT16 i16 :
+          [4]INT32 i32 :
+          SEQ
+            SEQ i = 0 FOR SIZE i32
+              i32[i] := 0(INT32)
+            SEQ i = 0 FOR SIZE i16
+              i16[i] := 0(INT16)
+            nested(i16, i32)
+        :
+        bug.1505e()
+        --}}}
+    :
+    bug.1505()
+    --}}}
+    #IF FALSE
+    --{{{  bug 1751
+    PROC bug.1751()
+      VAL link.no IS 20 :
+      CHAN OF INT c :
+      -- disabled by frmb: PLACEd chans are now UDCs in KRoC
+      -- PLACE c AT link.no :
+      INT addr :
+      VAL address IS (MOSTNEG INT) + (link.no * bpw) :
+      PROC p(CHAN OF INT param)
+        INT addr :
+        SEQ
+          LOAD.OUTPUT.CHANNEL(addr, param)
+          check(addr, address, "B1751d")
+      :
+      SEQ
+        LOAD.OUTPUT.CHANNEL(addr, c)
+        check(addr, address, "B1751a")
+        d IS c :
+        SEQ
+          LOAD.OUTPUT.CHANNEL(addr, d)
+          check(addr, address, "B1751b")
+        CHAN OF REAL32 e RETYPES c :
+        SEQ
+          LOAD.OUTPUT.CHANNEL(addr, e)
+          check(addr, address, "B1751c")
+        p(c)
+    :
+    bug.1751()
+    --}}}
+    #ENDIF
+    --{{{  bug TS/1860
+    PROC bug.TS.1860()
+      INT global :
+      PROC blurb(VAL []BYTE message)
+        global := SIZE message
+      :
+      PROC blurb2(VAL []BYTE message, VAL INT useless)
+        blurb(message)
+      :
+      SEQ
+        global := 99
+        blurb2("hello", 7)
+        check(global, 5, "B1860a")
+    :
+    bug.TS.1860()
+    --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    #IF FALSE
+    --{{{  bug TS/2015
+    PROC bug.TS.2015()
+      INT INLINE FUNCTION get.word(VAL INT base, offset)
+        #PRAGMA ASSUMECONSTANT offset
+        INT word :
+        VALOF
+          ASM
+            LD   base
+            LDNL offset
+            ST   word
+          RESULT word
+      :
+      [20]INT x :
+      INT addr, res :
+      SEQ
+        SEQ i = 0 FOR SIZE x
+          x[i] := 99-i
+        []BYTE b.x RETYPES x :
+        LOAD.BYTE.VECTOR(addr, b.x)
+        res := get.word(addr, 10)
+        check(res, x[10], "B2015A")
+    :
+    bug.TS.2015()
+    --}}}
+    #ENDIF
+    --{{{  bug TS/2038
+    PROC bug.TS.2038()
+      PROC local.0 ([10]CHAN OF INT a, VAL INT i, INT x)
+        a[i] ? x
+      :
+      PROC local.1 ([10]CHAN OF INT a, VAL INT i, INT x)
+        c IS [a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], a[8], a[9]] :
+        SEQ
+          local.0(c, i, x)
+      :
+      PROC local.2 ([10]CHAN OF INT a, VAL INT i, INT x)
+        SEQ -- don't remove this 'SEQ' it prevents 'PROC renaming'
+          local.0(a, i, x)
+      :
+      [10]CHAN OF INT a :
+      PAR
+        SEQ
+          a[3] ! 77
+          a[5] ! 88
+        INT x :
+        SEQ
+          local.0(a, 3, x)
+          check(x, 77, "B2038a")
+          local.2(a, 5, x)
+          check(x, 88, "B2038b")
+          check.BOOL(VSSIZEOF(local.1) < (VSSIZEOF(local.2) + 20), TRUE, "B2038c")
+          check.BOOL(WSSIZEOF(local.1) < (WSSIZEOF(local.2) + 20), TRUE, "B2038d")
+    :
+    bug.TS.2038()
+    --}}}
+    #ENDIF
+    --{{{  bug INSdi01929
+    PROC bug.INSdi01929()
+      SEQ
+        --{{{  Nathan's bug
+        REAL32 INLINE FUNCTION toREAL32(VAL []INT32 value)
+          VAL []REAL32 value RETYPES value :
+          VALOF
+            SKIP
+            RESULT value[0]
+        :
+        PROC exec.FLT(VAL [2]INT32 op0)
+          REAL32 value.0 :
+          SEQ
+            value.0 := toREAL32(op0)
+            VAL INT32 value.i32 RETYPES value.0 :
+            check(INT value.i32, 99, "di01929a")
+        :
+        exec.FLT( [ id.INT32(99(INT32)), id.INT32(-7(INT32)) ])
+        --}}}
+        --{{{  Ruth Wilson's bug
+        PROC p (VAL INT index)
+          INLINE PROC q([]BYTE b, VAL INT index, INT16 result)
+            []INT16 x16 RETYPES b :
+            INT x :
+            SEQ
+              x16 := x16
+              x := SIZE x16
+              check(x, 50, "di01929b")
+              result := x16[index]
+          :
+          [100]BYTE b :
+          INT16 result :
+          SEQ
+            SEQ i = 0 FOR SIZE b
+              b[i] := BYTE i
+            q(b, index, result)
+            VAL [2]BYTE b.result RETYPES result :
+            SEQ
+              check.BYTE (b.result[0], 50(BYTE), "di01929c")
+              check.BYTE (b.result[1], 51(BYTE), "di01929d")
+        :
+        p(25)
+        --}}}
+    :
+    bug.INSdi01929()
+    --}}}
+    #IF NOT DEFINED (COMPILER.TOCK)
+    --{{{  bug INSdi02058
+    PROC bug.INSdi02058()
+      INT w, x, y, z :
+      [10]INT ar :
+      INT FUNCTION id(VAL INT x) IS x :
+      INT INLINE FUNCTION f(VAL INT x, y, z)
+        INT r :
+        VALOF
+          IF
+            x <> 0
+              r := y
+            TRUE
+              r := z
+          RESULT r
+      :
+      SEQ
+        w, x, y, z := id(66), id(77), id(8), id(9)
+        SEQ i = 0 FOR SIZE ar
+          ar[i] := i
+        ASM
+          LD w
+          ST ar[(INT r :
+                 VALOF
+                   IF
+                     x <> 0
+                       r := y
+                     TRUE
+                       r := z
+                   RESULT r
+                )]
+        check(ar[8], 66, "Bdi2058a")
+        SEQ i = 0 FOR SIZE ar
+          ar[i] := i
+        ASM
+          LD w
+          ST ar[f(x,y,z)]
+        check(ar[8], 66, "Bdi2058b")
+        ASM
+          LD x
+          ST ar[id(7)]
+        check(ar[7], 77, "Bdi2058c")
+    :
+    bug.INSdi02058()
+    --}}}
+    --{{{  bug INSdi02071
+    PROC bug.INSdi02071()
+      PROC silly.ASM.label(INT x)
+        ASM
+          :label1
+          LDLABELDIFF :label2 - :label1
+          :label2
+          ST x
+      :
+      PROC waste(CHAN OF REAL32 c, VAL REAL32 x)
+        c ! (x + x)
+      :
+      SEQ
+        CHAN OF REAL32 c :
+        PAR
+          waste(c, 42.0(REAL32))
+          REAL32 x :
+          INT y :
+          SEQ
+            c ? x
+            check(INT ROUND x, 84, "B02071a")
+            silly.ASM.label(y)
+            check(y, y+0, "B02071b")
+        CHAN OF REAL32 cc :
+        PAR
+          REAL32 x, y, z :
+          SEQ
+            x, y, z := 232.0(REAL32), 77.0(REAL32), 77.0(REAL32)
+            cc ! z
+            cc ! z
+            cc ! z
+            cc ! z
+            cc ! x + y
+            cc ! z
+          REAL32 x :
+          SEQ
+            SEQ i = 0 FOR 4
+              cc ? x
+            cc ? x
+            check(INT ROUND x, 309, "B02071c")
+            cc ? x
+            check(INT ROUND x, 77, "B02071d")
+    :
+    bug.INSdi02071()
+    --}}}
+    --{{{  bug INSdi02497
+    PROC bug.INSdi02497()
+      PROC p (INT addr)
+        PROC q ()
+          SKIP
+        :
+        ASM
+          LD ADDRESSOF q
+          ST addr
+      :
+      INT addr :
+      SEQ
+        p (addr)
+        check(addr, addr, "di02497")
+    :
+    bug.INSdi02497()
+    --}}}
+    #ENDIF
+    finish ()
+:

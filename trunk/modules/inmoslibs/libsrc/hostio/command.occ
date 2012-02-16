@@ -1,0 +1,84 @@
+--
+--	Inmos Libraries
+--	Copyright (C) 1988, 1989, 1990, 1991, 1993  Inmos Limited
+--      Modifications Copyright (C) 2004  Fred Barnes
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--	You should have received a copy of the GNU Lesser General Public
+--	License along with this library; if not, write to the Free Software
+--	Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+--
+
+--** @module hostio
+
+#COMMENT "Host i/o library, V1.00, 10/03/89"
+#COMMENT "(c) Copyright INMOS Limited 1989"
+#COMMENT "KROC simplified version 1995"
+
+#INCLUDE "hostio.inc"
+#USE "conv"
+
+--{{{  OC.comdline
+VAL unix.max.readbuffer.size IS (sp.max.readbuffer.size/4) + 1:
+#PRAGMA EXTERNAL "PROC C.comdline (INT result, VAL INT all, INT len, [unix.max.readbuffer.size]INT block, VAL INT bytespace) = 0"
+-- #PRAGMA EXTERNAL "PROC chars.to.bytes (VAL []INT from, []BYTE to) = 4"
+PROC OC.comdline (INT result, VAL INT all, INT len, []BYTE block)
+  [unix.max.readbuffer.size]INT unixblock:
+  SEQ
+    C.comdline (result, all, len, unixblock, SIZE block)
+    IF
+      (result = 0) AND (len > 0)
+        chars.to.bytes (unixblock, [block FOR len])
+      TRUE
+        SKIP
+:
+--}}}  
+--{{{  sp.commandline
+--* Return the command line passed to the server on invocation.
+--
+-- @param fs from server
+-- @param ts to server
+-- @param all either sp.short.commandline, remove the server's own
+--   name, its recognised options and their parameters or
+--   sp.whole.commandline, the entire command line
+-- @param length the number of bytes returned in string, starting from
+--   string[ 0 ], being zero in the case of result >=
+--   spr.operation.failed
+-- @param string contains the requested command line if result =
+--   spr.ok; contains a truncation of the requested command line if
+--   result = spr.buffer.overflow; is undefined otherwise.  There is no
+--   restriction on the size of string.
+-- @param result equal to spr.ok if the command line was successfully
+--   returned; otherwise takes on a value indicating what went wrong:
+--   spr.buffer.overflow   string is not long enough to contain the
+--   command line, but the latter has been truncated to fit
+--   >=spr.operation.failed  the operation failed - refer to hostio.inc
+--   or iserver documentation for further details
+PROC sp.commandline (CHAN OF SP fs, ts, VAL BYTE all,
+                     INT length, []BYTE string, BYTE result)
+  INT iresult:
+  SEQ
+    OC.comdline (iresult, INT all, length, string)
+    IF
+      iresult = 0
+        result := spr.ok
+      TRUE
+        result := spr.buffer.overflow
+:
+--}}}  sp.commandline
+--{{{  so.commandline
+PROC so.commandline (CHAN OF SP fs, ts, VAL BYTE all,
+                     INT length, []BYTE string, BYTE result)
+
+  sp.commandline (fs, ts, all, length, string, result)
+:
+--}}}  so.commandline
