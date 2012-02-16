@@ -1,8 +1,0 @@
--- This shouldn't compile.
-
-PROTOCOL MY.PROTO IS INT:
-
-PROC main ()
-  CHAN SHARED MY.PROTO c:   -- error here
-  SKIP
-:

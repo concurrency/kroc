@@ -1,5 +1,0 @@
---* PROC with mismatched parameters list.
--- @param blah nope
-PROC foo ()
-  SKIP
-:

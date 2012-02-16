@@ -1,7 +1,0 @@
-#INCLUDE "wiring.module"
-
-PROC main ()
-  SEQ
-    beginSerial (57600)
-    serialWrite ("hello, world*n")
-:

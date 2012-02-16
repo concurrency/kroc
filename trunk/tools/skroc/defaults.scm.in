@@ -1,3 +1,0 @@
-(module defaults mzscheme (provide (all-defined))
-	(define default-runtime-libraries "@skroc_default_libs@")
-	(define install-dir "@prefix@"))

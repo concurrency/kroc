@@ -1,7 +1,0 @@
-#INCLUDE "player.inc"
-#INCLUDE "pioneer_hud.inc"
-
--- This is where your program starts!
-PROC main(CHAN BYTE keyboard?, screen!, error!)
-  SKIP  -- Your code goes here
-:

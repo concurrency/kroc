@@ -1,7 +1,0 @@
-#INCLUDE "plumbing.module"
-
-PROC blinkie ()
-  PAR
-    -- heartbeat ()
-    blink (35, 500)
-:

@@ -1,9 +1,0 @@
-
-corner-cases
-------------
-
-Programs in this directory are generally examples of occam-pi code that
-should be valid, but that the existing occ21/tranx86 toolchain does not
-accept, or does not handle correctly. They are being collected here as
-testcases for other occam-pi compilers.
-

@@ -1,5 +1,0 @@
---** @module merge
-
---* Constant in merge2
-VAL INT foo.2 IS 42:
-

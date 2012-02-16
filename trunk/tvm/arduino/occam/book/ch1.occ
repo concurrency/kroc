@@ -1,5 +1,0 @@
-#INCLUDE "plumbing.module"
-
-PROC main ()
-  heartbeat ()
-:

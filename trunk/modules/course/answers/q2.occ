@@ -1,7 +1,0 @@
-#INCLUDE "course.module"
-
-PROC q2 (CHAN BYTE keyboard?, screen!, error!)
-  #USE "q2-1"
-  real.q2 (keyboard?, screen!, error!)
-:
-

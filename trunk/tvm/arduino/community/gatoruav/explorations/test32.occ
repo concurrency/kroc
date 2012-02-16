@@ -1,7 +1,0 @@
-PROC main ()
-  INITIAL INT int IS 0:
-  INT32 int32:
-  SEQ
-   
-    int32 := INT32(int)
-:

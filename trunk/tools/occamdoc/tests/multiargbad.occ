@@ -1,5 +1,0 @@
---* Multi-arg with type mismatch.
--- @param a, b Two bad args
-PROC foo (INT a, BYTE b)
-  SKIP
-:

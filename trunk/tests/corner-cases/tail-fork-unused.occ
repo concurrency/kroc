@@ -1,6 +1,0 @@
-PROC main ()
-  REC PROC foo ()
-    SKIP
-  :
-  FORK foo ()
-:

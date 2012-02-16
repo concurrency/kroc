@@ -1,7 +1,0 @@
-Import("env")
-local = env.Clone()
-
-schemescanner = local.Mzc('schemescanner')
-
-env['SCHEMESCANNER'] = schemescanner
-env['schemescanner'] = schemescanner[0].path

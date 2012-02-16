@@ -1,9 +1,0 @@
-Package: @STEM@ 
-Version: @VERSION@
-Section: main
-Priority: optional
-Architecture: @BUILD_ARCHITECTURE@
-Depends: @STEM@-tvm-avr-arduino, @STEM@-tvm-posix-posix, @STEM@-kroc-posix-posix, @STEM@-occplug
-Installed-Size:
-Maintainer: matt@concurrency.cc
-Description: occam-pi for the desktop and the Arduino.

@@ -1,5 +1,0 @@
-# 
-# Ubuntu properties
-#
-plugin.OccPlugPlugin.linux.occampi.catalog=<MODE NAME="occam-pi" FILE="occam-pi.xml" FILE_NAME_GLOB="*.{occ,module}" />
-plugin.OccPlugPlugin.linux.flavor=ubuntu

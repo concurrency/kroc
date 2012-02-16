@@ -1,2 +1,0 @@
-python make-deb-pkg.py --with-temp-dir ~/clean --ubuntu-version lucid --uber trunk
-python make-deb-pkg.py --with-temp-dir ~/clean --ubuntu-version lucid --upload

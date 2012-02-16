@@ -1,5 +1,0 @@
-# Changes Since 20100719.0455
-
-I have been using this version to test the cumulative changelogs for Sparkle,
-which I am just sorting out, thus there are no changes listed for this or
-earlier versions of the Transterpreter.

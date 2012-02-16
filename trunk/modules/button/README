@@ -1,4 +1,0 @@
-This module in the KRoC repository is currently a copy of its equivalent in the
-Transterpreter repository -- please make changes to the source there first.
-
-This module depends on occSDL and occGL working.

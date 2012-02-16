@@ -1,8 +1,0 @@
-DATA TYPE R
-  RECORD
-    INT a, b:
-:
-PROC main ()
-  INITIAL MOBILE []MOBILE []R rs IS MOBILE [24]MOBILE []R:
-  SKIP
-:

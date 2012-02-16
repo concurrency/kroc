@@ -1,7 +1,0 @@
-The files in this directory are example worlds to use with Player/Stage.
-To start an instance of Stage running, run:
-
-	player whatever.cfg
-
-default.cfg (along with its associated files) is a template that you can
-use when creating new worlds.

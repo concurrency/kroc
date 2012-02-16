@@ -1,4 +1,0 @@
-Import("env")
-local = env.Clone()
-
-local.Mzc("tinyswig")

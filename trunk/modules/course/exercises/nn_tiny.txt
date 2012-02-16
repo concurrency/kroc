@@ -1,6 +1,0 @@
-Fred -10
-Alison 944
-Fred 720
-George 628
-Alison 20
-Peter 331
