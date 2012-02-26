@@ -1,0 +1,139 @@
+  BareMichael SCC baremetal framework.
+  Copyright (C) 2012.  All rights reserved.
+=========================================================
+===== BareMichael Baremetal Framework for Intel SCC =====
+=========================================================
+
+This is a collection of files intended to help someone get started on writing 
+baremetal SCC apps.  Note that this includes no support for message-passing, 
+just the basics to get the cores properly configured and running your C code.  
+All files are taken from Michael Ziwisky's work on SCC Xinu, a port of 
+Embedded Xinu.  For more info on Embedded Xinu, see http://xinu.mscs.mu.edu/
+
+Note that this was done rather hastily, and very little effort was put into 
+stripping out ALL unnecessary things (i.e. Xinu-specific things) for running 
+baremetal apps.  Specifically, interrupt/exception handling might be done kind 
+of strangely, but I decided it would be useful to other developers to leave in 
+some default exception handlers for vectors 0 through 31.  With the included 
+code, if an exception occurs, a register and stack dump will be produced.
+
+The included code will initialize the Pentium cores before jumping to main() 
+in ./test/main.c.  A subset of the C standard library is included in 
+./lib/libxc/ and gets compiled and linked into your code.
+
+With this framework, you are unable to send input to the SCC, but you can get 
+output from it using the included tool called miketerm.  cd to ./miketerm/ and 
+type `make` to compile the tool.  Then run it with `./miketerm`.  Ctrl-C to 
+exit.  To print to miketerm from your SCC program, simply use printf().
+
+Some notes about ./compile/Makefile:
+In order to get this environment to build on your marc machine, you must 
+modify two variables in the Makefile: COMIPLER_PATH and BIN2OBJ_TOOL.  
+COMPILER_PATH must point to the path of the Intel-supplied x86 cross-compiler.  
+BIN2OBJ_TOOL must point to the Intel-supplied binary `bin2obj`.  See 
+HowtoBuildSCCLinux.pdf at http://communities.intel.com/docs/DOC-5802 for 
+instructions on getting these onto your machine.
+
+Without any other modifications besides changing the COMPILER_PATH and 
+BIN2OBJ_TOOL variables, you should be able to go to ./compile/ and do `make; 
+make run`.  Do this with miketerm running in another terminal to see a "Hello 
+World!" from five cores.
+
+Some fairly self-explanatory SCC functions and macros (get_my_tileid(), 
+get_my_coreid(), etc.) are included in ./system/scc.c and ./system/scc.h.  
+Note that these are just functions I've written for my own work that I thought 
+others would find useful -- you may want to write these things differently.  
+(That's a true statement for every line of code in this entire framework, of 
+course!)
+
+I don't have a totally elegant way to change which cores run your code, but 
+it's not too bad.  You must change two special targets in the Makefile: 'run' 
+and '$(MT_FILE)'.  First, the $(MT_FILE) target produces a file with 48 lines 
+in it, each corresponding to a core (plus a comment line at the top).  The 
+cores are enumerated by the first value in each line.  If you want a core to 
+have your code loaded into its private memory, you must ensure that the line 
+corresponding to that core does NOT have a '#' in front of it.  Lines with the 
+leading '#' character will not get your code loaded into their private memory 
+space.  Second, the cores that you want to run (presumably the same ones you 
+loaded your code into) should be listed at the end of the 'run' target.
+
+This should give you enough to start playing with the baremetal cores 
+individually.  To do more interesting things, like message passing, you have 
+to code it up yourself.
+
+Acknowledgement is due to Intel developers for most of the SCC-specific defines
+in ./include/scc.h, and to Linux developers for the defines in ./include/apic.h.
+Furthermore, the ideas for getting a "reset vector" to address 0xfffffff0 were
+derived from SCC Linux.  And finally, thank you to several members of the Intel
+Many-core Applications Research Community -- in particular Ted Kubaska and Jan-
+Arne Sobania -- for their prompt and clear responses to questions arising
+during development on the SCC.
+
+Questions?  Ask me on the MARC forums.  My username is mziwisky.  Also, if you 
+find this useful, I'd love to hear about it.
+
+================================
+==== Listing of directories ====
+================================
+
+boot -- contains assembly for platform initialization.
+
+compile -- contains Makefile and other files needed for compilation.
+
+include -- contains header files for the stripped down C lib and some SCC 
+functions.
+
+lib -- contains stripped down C library.
+
+miketerm -- tool for reading output from SCC cores.
+
+system -- contains source for interrupt handling, some platform 
+initialization, and some SCC functions.
+
+test -- default location for user code.
+
+===================
+==== Changelog ====
+===================
+
+v5 (Jan 26, 2012):
+-- Some comments added in a couple of source files and in this README to
+   properly acknowledge a few people who have contributed to this framework.
+
+v4 (Jan 20, 2012):
+-- Caching is now enabled.
+-- Paging is enabled and configured for a flat address space.  (Paging is a
+   prerequisite for caching.)
+-- License information has been included in LICENSE file.
+-- No longer need to call ack_APIC_irq() at the end of LINT handlers -- it is
+   taken care of by setupLINT().
+
+v3 (Dec 20, 2011):
+-- Added real-time clock support using the local APIC timer.  Files added:
+   system/clock.c, system/clockIRQ.S, include/clock.h, and include/conf.h.
+   Disable clock by setting RTCLOCK to FALSE in conf.h.
+
+v2 (Sep 10, 2011):
+-- Added this changelog.
+-- Fixed miketerm bug where some lines would be missing the core designator at
+   the beginning.
+-- Added restore() to restore global interrupt state to a saved value.
+-- Made acquire_lock() disable global interrupts and release_lock() restore
+   global interrupts state to its value before acquire_lock() was called.
+   Added this to avoid deadlock -- e.g. if a lock is acquired and an interrupt
+   handler runs that also tries to acquire that lock before it was released,
+   deadlock occurs.
+
+v1 (Sep 8, 2011):
+-- miketerm now works with sccKit 1.4.1 (on my machine, at least!)
+-- Changed get_my_coreid() and get_my_tileid() to be more efficient. I.e.,
+   each core reads and stores its own coreid and tileid at initialization,
+   then those functions simply reference the stored values rather than getting
+   them from the MYTILEID register each time.
+-- Added enough LAPIC configuration to get inter-core interrupts working.
+-- Added interrupt_core() for triggering a LAPIC interrupt pin (LINT0 or
+   LINT1) on any core.
+-- Added acquire_lock() and release_lock() for acquiring LOCK0 and LOCK1
+   test-and-set tile registers.
+-- main.c demonstrates setting up LINT0/1 handlers and using one core to
+   interrupt another.
