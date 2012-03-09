@@ -18,7 +18,7 @@ STRIP    = ${COMPILER_ROOT}strip
 BIN2OBJ_TOOL = /opt/tools/bin2obj
 
 DEFINES = -DI386 -DDETAIL -DHAVE_CONFIG_H -DTVM_INTERNALS
-INCLUDE = -I../include -I../tvm -I../tvm/libtvm -I../occam
+INCLUDE = -I../include -I../tvm -I../tvm/include -I../occam -I../../../runtime/libtvm
 
 CFLAGS = -O0 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
 		 -nostdinc -fno-builtin -fno-strict-aliasing -fno-common \
