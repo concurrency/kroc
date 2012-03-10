@@ -15,6 +15,7 @@ static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
 
 void print(char* str)
 {
+	printf("INFO: Gonna print something.");
 	printf(str);
 }
 
