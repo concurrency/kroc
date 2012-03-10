@@ -16,8 +16,9 @@ PROC tlup (CHAN BYTE scr!)
 :
 
 -- Occam process to interface with the the print function from the foreign function interface (FFI).
-INLINE PROC write.screen (VAL []BYTE buffer)
-  #PRAGMA EXTERNAL "PROC C.print (VAL []BYTE buffer) = 0"
+#PRAGMA EXTERNAL "PROC C.print (BYTE buffer) = 0"
+
+INLINE PROC write.screen (BYTE buffer)
   C.print (buffer)
 :
 
