@@ -157,28 +157,28 @@ for proc in dist:
 	bcount=1 # keeps track of batch number
 	for batch in proc:
 		filelist.append("\n")
-		filelist.append("\tbatch_t b%d%d = malloc(sizeof(struct batch));\n" % (pcount, bcount))
-		filelist.append("\tprocess_t p%d%d1 = malloc(sizeof(struct process));\n" % (pcount, bcount))
+		filelist.append("\tbatch_t b_%d_%d = malloc(sizeof(struct batch));\n" % (pcount, bcount))
+		filelist.append("\tprocess_t p_%d_%d_1 = malloc(sizeof(struct process));\n" % (pcount, bcount))
 		filelist.append("\n")
-		filelist.append("\tp%d%d1->id = %d%d1;\n" % (pcount, bcount, pcount, bcount))
-		filelist.append("\tb%d%d->head = p%d%d1;\n" % (pcount, bcount, pcount, bcount))
-		filelist.append("\tb%d%d->stolen = 0;\n" % (pcount, bcount))
-		filelist.append("\tb%d%d->window = 0;\n" % (pcount, bcount))
+		filelist.append("\tp_%d_%d_1->id = %d%d1;\n" % (pcount, bcount, pcount, bcount))
+		filelist.append("\tb_%d_%d->head = p_%d_%d_1;\n" % (pcount, bcount, pcount, bcount))
+		filelist.append("\tb_%d_%d->stolen = 0;\n" % (pcount, bcount))
+		filelist.append("\tb_%d_%d->window = 0;\n" % (pcount, bcount))
 		filelist.append("\n")
 
 		# initialize all but first process in this batch
 		for i in (range(1,batch)):
-			filelist.append("\tprocess_t p%d%d%d = malloc(sizeof(struct process));\n" % (pcount, bcount, (i+1)))
-			filelist.append("\tp%d%d%d->id = %d%d%d;\n" % (pcount, bcount,(i+1), pcount, bcount, (i+1)))
+			filelist.append("\tprocess_t p_%d_%d_%d = malloc(sizeof(struct process));\n" % (pcount, bcount, (i+1)))
+			filelist.append("\tp_%d_%d_%d->id = %d%d%d;\n" % (pcount, bcount,(i+1), pcount, bcount, (i+1)))
 	
 		# assign next pointers (process)
 		filelist.append("\n")
 		for i in (range(0,batch-1)):
-			filelist.append("\tp%d%d%d->next = p%d%d%d;\n" % (pcount, bcount,(i+1), pcount, bcount, (i+2)))
+			filelist.append("\tp_%d_%d_%d->next = p_%d_%d_%d;\n" % (pcount, bcount,(i+1), pcount, bcount, (i+2)))
 		if batch>1:	
-		  filelist.append("\tp%d%d%d->next = NULL;\n" % (pcount, bcount,(i+2)))
+		  filelist.append("\tp_%d_%d_%d->next = NULL;\n" % (pcount, bcount,(i+2)))
 		else:
-		  filelist.append("\tp%d%d%d->next = NULL;\n" % (pcount, bcount, 1))
+		  filelist.append("\tp_%d_%d_%d->next = NULL;\n" % (pcount, bcount, 1))
 			
 		bcount+=1
 	# END FOR batch in proc
@@ -189,7 +189,7 @@ for proc in dist:
 	windowC=winS
 	filelist.append("\n")
 	while(batchC <= len(proc)) and (windowC > 0):
-		filelist.append("\tb%d%d->window = 1;\n" % (pcount, batchC))
+		filelist.append("\tb_%d_%d->window = 1;\n" % (pcount, batchC))
 		batchC+=1
 		windowC-=1
 
@@ -198,19 +198,19 @@ for proc in dist:
 	# len(proc) = number of batches on proc
 	filelist.append("\n")
 	for i in (range(0,len(proc)-1)):
-		filelist.append("\tb%d%d->next = b%d%d;\n" % (pcount, (i+1), pcount, (i+2)))
-	if len(proc)>1:	
-		filelist.append("\tb%d%d->next = NULL;\n" % (pcount, (i+2)))
+		filelist.append("\tb_%d_%d->next = b_%d_%d;\n" % (pcount, (i+1), pcount, (i+2)))
+	if len(proc)>1:
+		filelist.append("\tb_%d_%d->next = NULL;\n" % (pcount, (i+2)))
 	else:
-		filelist.append("\tb%d%d->next = NULL;\n" % (pcount, 1))
+		filelist.append("\tb_%d_%d->next = NULL;\n" % (pcount, 1))
 		
 
 	# assign head and tail for each processor  
-	filelist.append("\tpr%d->head = b%d%d;\n" % (pcount, pcount, 1))
+	filelist.append("\tpr%d->head = b_%d_%d;\n" % (pcount, pcount, 1))
 	if len(dist[pcount-1]) > 1:
-		filelist.append("\tpr%d->tail = b%d%d;\n" % (pcount, pcount, (len(dist[pcount-1]))))
+		filelist.append("\tpr%d->tail = b_%d_%d;\n" % (pcount, pcount, (len(dist[pcount-1]))))
 	else:
-		filelist.append("\tpr%d->tail = b%d%d;\n" % (pcount, pcount, 1))
+		filelist.append("\tpr%d->tail = b_%d_%d;\n" % (pcount, pcount, 1))
 
 	pcount+=1
 

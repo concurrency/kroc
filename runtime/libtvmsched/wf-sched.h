@@ -52,6 +52,7 @@ typedef struct logical_processor *logical_processor_t;
 /* declare functions for finegrained interactoins
    now in schedlib.c */
 /*{{{ */
+
 void setStolen(batch_t b);
 void remove_from_window(batch_t b);
 void extend_window(batch_t b);
