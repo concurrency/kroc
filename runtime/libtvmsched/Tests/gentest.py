@@ -92,7 +92,7 @@ filelist.append(" * \n")
 filelist.append(" * %d PROCESSORS (must match constant in wf-sched.h)\n" % processor)
 filelist.append(" * %d = dispatch count (must match constant in wf-sched.h)\n" % dis)
 filelist.append(" * %d Processes\n" % numP)
-filelist.append(" * %d = window size\n" % winS)
+filelist.append(" * %d = window size, must be < MAX_WINDOW_SIZE in wf-sched.h\n" % winS)
 filelist.append(" * \n")
 filelist.append(" */\n\n")
 
@@ -122,6 +122,8 @@ for i in range(processor):
 filelist.append("\n")
 for i in range(processor):
 	filelist.append("\tpr%d->id = %d;\n" % ((i+1), (i)))
+	filelist.append("\tpr%d->window_size = %d;\n" % ((i+1), winS))
+
 
 # link processors
 filelist.append("\n")
@@ -162,7 +164,7 @@ for proc in dist:
 		filelist.append("\n")
 		filelist.append("\tp_%d_%d_1->id = %d%d1;\n" % (pcount, bcount, pcount, bcount))
 		filelist.append("\tb_%d_%d->head = p_%d_%d_1;\n" % (pcount, bcount, pcount, bcount))
-		filelist.append("\tb_%d_%d->stolen = 0;\n" % (pcount, bcount))
+		filelist.append("\tb_%d_%d->stolen = 1;\n" % (pcount, bcount))
 		filelist.append("\tb_%d_%d->window = 0;\n" % (pcount, bcount))
 		filelist.append("\n")
 

@@ -61,9 +61,9 @@ typedef struct logical_processor *logical_processor_t;
    now in schedlib.c */
 /*{{{ */
 
-static logical_processor_t selectprocessor(logical_processor_t p);
+logical_processor_t selectprocessor(logical_processor_t p);
 
-static void * test_run(void * arg);
+void * test_run(void * arg);
 /*}}}*/
 
 
