@@ -5,8 +5,8 @@ header for currently external workstealling wait-free scheduler
 #include <pthread.h>
 
 /* declare constant for number of virtual processors*/
-#define NUMBER_OF_PROCS 4
-#define DISPATCH_COUNT 4
+#define NUMBER_OF_PROCS 4 
+#define DISPATCH_COUNT 15
 
 /* maximum number of batches in a window */ 
 /* note: WINDOW_MAX_SIZE is a "soft cap" and the actual number
@@ -14,7 +14,6 @@ header for currently external workstealling wait-free scheduler
  * parallel computations 
  */
 #define MAX_WINDOW_SIZE 10
-
 
 
 /*{{{ */

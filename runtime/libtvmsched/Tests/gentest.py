@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+# use: ./gentest.py number_of_processors number_of_processes disbatch_count window_size
+
 # python script to generate 
 # test files for work stealing 
 # threaded scheduler
@@ -99,8 +102,8 @@ filelist.append(" */\n\n")
 
 filelist.append("#include <stdio.h>\n#include <stdlib.h>\n#include <wf-sched.h>\n")
 
-filelist.append("int global_procs[NUMBER_OF_PROCS];\n")
-filelist.append("logical_processor_t global_proc_pointer[NUMBER_OF_PROCS];\n\n")
+filelist.append("int global_procs[%d];\n" % processor)
+filelist.append("logical_processor_t global_proc_pointer[%d];\n\n" % processor)
 
 filelist.append("void main()\n{\n")
 #populate the test
@@ -142,7 +145,7 @@ for i in range(processor):
 
 filelist.append("\n")
 # set up global processor list (tells which processors have work)
-filelist.append("\tint i=0;\n\tfor(i=0;i<NUMBER_OF_PROCS;i++)\n\t\tglobal_procs[i]=1;\n")
+filelist.append("\tint i=0;\n\tfor(i=0;i<%d;i++)\n\t\tglobal_procs[i]=1;\n" % processor)
 
 # set up processes and batches for each processor
 
@@ -181,9 +184,15 @@ for proc in dist:
 		  filelist.append("\tp_%d_%d_%d->next = NULL;\n" % (pcount, bcount,(i+2)))
 		else:
 		  filelist.append("\tp_%d_%d_%d->next = NULL;\n" % (pcount, bcount, 1))
-			
+		
+
+
 		bcount+=1
 	# END FOR batch in proc
+
+	# there are less batches then window_size 
+	if proc<winS:
+		filelist.append("\tpr%d->window_size = %d;\n" % ((i+1), proc))
 
 	# set the first winS batches of every 
 	# processor to be in the window
@@ -196,7 +205,6 @@ for proc in dist:
 		windowC-=1
 
 	# assign next pointers (batches)
-	# len(proc) = number of batches on proc
 	# len(proc) = number of batches on proc
 	filelist.append("\n")
 	for i in (range(0,len(proc)-1)):

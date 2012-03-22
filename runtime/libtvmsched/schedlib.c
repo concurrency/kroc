@@ -30,6 +30,8 @@ int atomic_swap(logical_processor_t p, int* a, int b)
 	/* TODO: atomic magic swaper */
 	/* for now we just you mutex lock for testing */
 
+
+
 	/* LOCK */
 	pthread_mutex_lock(p->run_queue_lock);
 	DEBUG(1, p->id, "atomic_swap: run_queue locked");
@@ -59,9 +61,24 @@ void enqueue(logical_processor_t p)
 {
 	DEBUG(0, p->id, "enqueue: function called");
 	batch_t batch = p->activeQ;
+
+	/* update as not stolen and next pointer*/
+	batch->next = NULL;
+	batch->stolen = 1; 
+
+
 	/* link batch into runqueue */
 	p->tail->next = batch;
+
+	/* check to see if runqueue is empty */
+	if(p->head == NULL)
+	{
+		DEBUG(1, p->id, "enqueue: runqueue currently empty");
+		p->head = batch;	
+	}
+
 	p->tail = batch;
+
 	DEBUG(1, p->id, "enqueue: batch linked into runqueue");
 
 	/* the current window size is less the max, batch to window */
@@ -75,6 +92,7 @@ void enqueue(logical_processor_t p)
 	DEBUG(0, p->id, "enqueue: function complete");
 }
 
+
 int local_dequeue (logical_processor_t p)
 {
 	DEBUG(0, p->id, "local_dequeue: function called");
@@ -87,11 +105,12 @@ int local_dequeue (logical_processor_t p)
 	/* should not be necessary */
 	if(p->activeQ == NULL)
 	{
-		DEBUG(2, p->id, "local_dequeue: removed null element, runqueue empty, return 0");
+		DEBUG(2, p->id, "local_dequeue: runqueue empty, return 0");
 		return 0;
 	}
 
-	while((p->activeQ != NULL) && (atomic_swap(p, &(p->activeQ->stolen), 0) == 0))
+	while((p->activeQ != NULL) && 
+			(atomic_swap(p, &(p->activeQ->stolen), 0) == 0))
 	{
 		DEBUG(1, p->id, "local_dequeue: top of while, dequeued a stolen batch");
 
@@ -101,11 +120,16 @@ int local_dequeue (logical_processor_t p)
 	
 		/* if active queue is now tail we have gone through 
 		 * the runqueue and found nothing, return with failure */
-		if(p->activeQ==p->tail)
+
+		 /*TODO: should not need both these checks but gets caught in loop
+		  on some inputs without it, this indicates problem elsewhere
+		  with tails next not pointing to null */
+		if(p->activeQ->next == NULL || p->activeQ == p->tail)
 		{
 			DEBUG(2, p->id, "local_dequeue: dequeud batch=tail, return 0");
 			return 0;
 		}
+
 		
 		/* get next batch in queue */		
 		p->activeQ = p->head;
@@ -141,16 +165,18 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 		return 0;
 	}
 
-
 	while(1)
 	{
+		if(b == NULL)
+			return 0;
+
 		DEBUG(0, p->id, "atomic_remote_dequeue: top of while true");
 	 	/* go through victum queue and find first batch in the window */
 	 	while(b->window==0)
 	 	{
 			DEBUG(1, p->id, "atomic_remote_dequeue: batch not in window");
 			/* if we get to the last element we are done */
-			if(b->next==NULL)
+			if(b == NULL || b->next==NULL || b == p->tail)
 			{
 				DEBUG(2, p->id, "atomic_remote_dequeue: at last batch in run_queue, return 0");
 				return 0;
@@ -159,6 +185,7 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 			b = b->next;
 	 	}
 	 
+		DEBUG(0, p->id, "atomic_remote_dequeue: batch in window found");
 	 	/* swap window entry with null  
 		 * if result is null batch has already been stolen
 		 * else steal batch 
@@ -166,6 +193,7 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 	 	if(atomic_swap(v, &(b->stolen), 0) != 0)
 	 	{
 			DEBUG(2, p->id, "atomic_remote_dequeue: clear to theft batch, do it and return 1");
+			/* maybe i should make a local copy */
 			p->activeQ = b;
 			return 1;
 	 	}
@@ -174,7 +202,7 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 		 * at the tail and then restart loop 
 		 */
 		DEBUG(1, p->id, "atomic_remote_dequeue: batch already stolen");
-		if(b->next==NULL)
+		if(b->next==NULL || b == v->tail)
 		{
 			DEBUG(2, p->id, "atomic_remote_dequeue: at last batch in run_queue, return 0");
 			return 0;
@@ -182,7 +210,7 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 		b = b->next;
 		DEBUG(1, p->id, "atomic_remote_dequeue: get next batch in runqueue");
 	}
-	DEBUG(0, p->id, "atomic_remote_dequeue: function complete");
+	DEBUG(0, p->id, "atomic_remote_dequeue: function should never print");
 }
 
 
@@ -201,15 +229,19 @@ int remote_dequeue(logical_processor_t p)
 	ret = atomic_remote_dequeue (p, victum);
 	DEBUG(2, p->id, "remote_dequeue: atomic_remote_dequeue called");
 
-	/* update pointer to next victum cannot be current processor*/
-	p->partner++; 
-	if(p->partner == p->id)
-		p->partner++;
-	if(p->partner == NUMBER_OF_PROCS) 
-		p->partner=0;
-	if(p->partner == p->id) /* must recheck this */
-		p->partner++;
-	DEBUG(1, p->id, "remote_dequeue: partner (victum) pointer updated");
+	/* if dequeue failed update pointer to next */ 
+	/* victum (cannot be current processor) */
+	if(ret==0)
+	{
+		p->partner++; 
+		if(p->partner == p->id)
+			p->partner++;
+		if(p->partner == NUMBER_OF_PROCS) 
+			p->partner=0;
+		if(p->partner == p->id) /* must recheck this */
+			p->partner++;
+		DEBUG(1, p->id, "remote_dequeue: partner (victum) pointer updated");
+	}
 
 	DEBUG(0, p->id, "remote_dequeue: function complete");
 	return ret;
@@ -221,7 +253,7 @@ void execute(logical_processor_t p)
 {
 	/*  temp, to show other code is working */
 	printf("%d: EXECUTE: executing process %d  \n", 
-			(p->id+1), p->current_process->id);
+			(p->id), p->current_process->id);
 	/* remove current process from queue */
 	p->activeQ->head=p->activeQ->head->next;
 
@@ -234,55 +266,55 @@ void execute(logical_processor_t p)
 void schedule(logical_processor_t p)
 {
 
-	DEBUG(0, p->id, "schedule: function called");
+	DEBUG(4, p->id, "schedule: function called");
 	/* if run queue is empty or local dequeue fails run remote dequeue */
 	if(p->head!=NULL)
 	{
-		DEBUG(0, p->id, "schedule: call local_dequeue");
+		DEBUG(4, p->id, "schedule: call local_dequeue");
 		if(!local_dequeue(p)) 
 		{
-			DEBUG(0, p->id, "schedule: local_dequeue failed, call remote_dequeue");
+			DEBUG(4, p->id, "schedule: local_dequeue failed, call remote_dequeue");
 			global_procs[p->id]=remote_dequeue(p);
 		}
 		else
 		{
-			DEBUG(0, p->id, "schedule: local_dequeue");
+			DEBUG(4, p->id, "schedule: local_dequeue");
 			global_procs[p->id]=1;
 		}
 	}
 	else
 	{
-		DEBUG(0, p->id, "schedule: local runqueue empty, call remote_dequeue");
+		DEBUG(4, p->id, "schedule: local runqueue empty, call remote_dequeue");
 		global_procs[p->id]=remote_dequeue(p);
 	}
 
 	/* only try to execute if you have sucessfully dequeued*/
 	if(global_procs[p->id]!=0)
 	{
-		DEBUG(0, p->id, "schedule: dequeue was sucessful");
+		DEBUG(4, p->id, "schedule: dequeue was sucessful");
 		/* set dispatch count */ 
 		p->dispatch_count = DISPATCH_COUNT;
 		
 		while(p->dispatch_count > 0 && p->activeQ->head != NULL)
 		{
-			DEBUG(0, p->id, "schedule: dispatch_count>0, activeQ not empty");
+			DEBUG(4, p->id, "schedule: dispatch_count>0, activeQ not empty");
 			/* set current process */
 			p->current_process = p->activeQ->head;
 
-			DEBUG(0, p->id, "schedule: executing processes");
+			DEBUG(4, p->id, "schedule: executing processes");
 			execute(p);
 		}
 		
 		if(p->dispatch_count == 0 && p->activeQ->head != NULL) 
 		{
-			DEBUG(0, p->id, "schedule: batch not empty,call enqueue");
+			DEBUG(4, p->id, "schedule: batch not empty,call enqueue");
 			enqueue(p); /*all remaining processes are locally enqueued*/
 		}
 	}
 	else
-		DEBUG(0, p->id, "schedule: all dequeues failed");
+		DEBUG(4, p->id, "schedule: all dequeues failed");
 		
-	DEBUG(0, p->id, "schedule: function complete");
+	DEBUG(4, p->id, "schedule: function complete");
 }
 
 
@@ -291,16 +323,31 @@ void schedule(logical_processor_t p)
  */
 logical_processor_t selectprocessor(logical_processor_t p)
 {
-	DEBUG(0, p->id, "selectprocessor: function called");
+	DEBUG(4, p->id, "selectprocessor: function called");
 	return global_proc_pointer[p->partner];
 }
 
 void set_dispatch_count(logical_processor_t p, int count)
 {
-	DEBUG(0, p->id, "set_dispatch_count: function called");
+	DEBUG(4, p->id, "set_dispatch_count: function called");
 	p->dispatch_count = count;
 }
+/* 
+ * copy batch by creating new one
+ */
+batch_t copy_batch(logical_processor_t p, batch_t b)
+{
+	DEBUG(0, p->id, "copy_batch: function called");
+	batch_t temp = malloc(sizeof(struct batch));
+	temp->head = b->head;
+	temp->tail = b->tail;
+	temp->next = b->next;
+	temp->window = b->window;
+	temp->stolen = b->stolen;
 
+	DEBUG(0, p->id, "copy_batch: function complete");
+	return temp;
+}
 /*
  * pre integration testing
  *
@@ -312,11 +359,11 @@ void * test_run(void * arg)
 	int i=0;
 	int flag=1;
 	logical_processor_t p = (logical_processor_t) arg;
-	DEBUG(0, p->id, "test_run: args extracted");
+	DEBUG(4, p->id, "test_run: args extracted");
 
 	while(1) 
 	{
-		DEBUG(0, p->id, "test_run: calling schedule");
+		DEBUG(4, p->id, "test_run: calling schedule");
 		schedule(p);
 
 		/* check to see if all processors are done executing */
@@ -325,14 +372,14 @@ void * test_run(void * arg)
 			if(global_procs[i]!=0)
 			{
 				flag=0;
-				DEBUG(0, p->id, "test_run: all processors are out of work");
+				DEBUG(4, p->id, "test_run: not all processors are out of work");
 				break;
 			}
 		if(flag)		
 		{
-			DEBUG(0, p->id, "test_run: complete");
+			DEBUG(4, p->id, "test_run: complete");
 			return;
 		}
-		DEBUG(0, p->id, "test_run: relooping");
+		DEBUG(4, p->id, "test_run: relooping");
 	}
 }
