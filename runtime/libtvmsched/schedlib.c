@@ -156,12 +156,12 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 {
 	DEBUG(0, p->id, "atomic_remote_dequeue: function called");
 
-	/* get pointer to first batch on victum */
+	/* get pointer to first batch on victim */
 	batch_t b=v->head; 
 	 
 	if(b==NULL)
 	{
-		DEBUG(0, p->id, "atomic_remote_dequeue: victum had empty runqueue, return 0");
+		DEBUG(0, p->id, "atomic_remote_dequeue: victim had empty runqueue, return 0");
 		return 0;
 	}
 
@@ -171,7 +171,7 @@ int atomic_remote_dequeue (logical_processor_t p, logical_processor_t v)
 			return 0;
 
 		DEBUG(0, p->id, "atomic_remote_dequeue: top of while true");
-	 	/* go through victum queue and find first batch in the window */
+	 	/* go through victim queue and find first batch in the window */
 	 	while(b->window==0)
 	 	{
 			DEBUG(1, p->id, "atomic_remote_dequeue: batch not in window");
@@ -220,17 +220,17 @@ int remote_dequeue(logical_processor_t p)
 	DEBUG(0, p->id, "remote_dequeue: function called");
 	int ret; 
 
-	/* declare processor pointer  for victum*/
-	logical_processor_t victum;
-	victum = selectprocessor(p);
-	DEBUG(1, p->id, "remote_dequeue: victum processor selected");
+	/* declare processor pointer  for victim*/
+	logical_processor_t victim;
+	victim = selectprocessor(p);
+	DEBUG(1, p->id, "remote_dequeue: victim processor selected");
 
-	/* waitfree dequeue from victum */
-	ret = atomic_remote_dequeue (p, victum);
+	/* waitfree dequeue from victim */
+	ret = atomic_remote_dequeue (p, victim);
 	DEBUG(2, p->id, "remote_dequeue: atomic_remote_dequeue called");
 
 	/* if dequeue failed update pointer to next */ 
-	/* victum (cannot be current processor) */
+	/* victim (cannot be current processor) */
 	if(ret==0)
 	{
 		p->partner++; 
@@ -240,7 +240,7 @@ int remote_dequeue(logical_processor_t p)
 			p->partner=0;
 		if(p->partner == p->id) /* must recheck this */
 			p->partner++;
-		DEBUG(1, p->id, "remote_dequeue: partner (victum) pointer updated");
+		DEBUG(1, p->id, "remote_dequeue: partner (victim) pointer updated");
 	}
 
 	DEBUG(0, p->id, "remote_dequeue: function complete");
@@ -332,22 +332,7 @@ void set_dispatch_count(logical_processor_t p, int count)
 	DEBUG(4, p->id, "set_dispatch_count: function called");
 	p->dispatch_count = count;
 }
-/* 
- * copy batch by creating new one
- */
-batch_t copy_batch(logical_processor_t p, batch_t b)
-{
-	DEBUG(0, p->id, "copy_batch: function called");
-	batch_t temp = malloc(sizeof(struct batch));
-	temp->head = b->head;
-	temp->tail = b->tail;
-	temp->next = b->next;
-	temp->window = b->window;
-	temp->stolen = b->stolen;
 
-	DEBUG(0, p->id, "copy_batch: function complete");
-	return temp;
-}
 /*
  * pre integration testing
  *
