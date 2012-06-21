@@ -10,6 +10,8 @@
 
 #include <tbb/parallel_for.h>
 #include <tbb/queuing_mutex.h>
+#include <tbb/task_scheduler_init.h>
+
 typedef tbb::queuing_mutex mutex_t;
 
 #define N_CYCLES	1024
@@ -328,6 +330,14 @@ static void proc_main (void)
 
 int main (int argc, char *argv[])
 {
+	int cpus = tbb::task_scheduler_init::automatic;
+	const char *envstr = getenv ("THREADS");
+	if (envstr != NULL) {
+		cpus = (int) strtol (envstr, NULL, 10);
+	}
+
+	tbb::task_scheduler_init sched (cpus);
+
 	if (argc >= 2)
 		world_size = atoi (argv[1]);
 	if (argc >= 3)
