@@ -10,6 +10,7 @@
 
 #include <tbb/parallel_for.h>
 #include <tbb/queuing_mutex.h>
+typedef tbb::queuing_mutex mutex_t;
 
 #define N_CYCLES	1024
 
@@ -30,7 +31,7 @@ typedef struct _vector_t {
 typedef struct _agent_t agent_t;
 
 typedef struct _agent_list_t {
-	tbb::queuing_mutex mutex;
+	mutex_t		mutex;
 	agent_t		*head;
 	agent_t		*tail;
 	int		size;
@@ -112,7 +113,7 @@ static agent_list_t *alloc_agent_list (void)
 
 static void add_agent (agent_list_t *l, agent_t *info)
 {
-	tbb::queuing_mutex::scoped_lock lock(l->mutex);
+	mutex_t::scoped_lock lock(l->mutex);
 
 	info->next = NULL;
 
@@ -130,7 +131,7 @@ static void add_agent (agent_list_t *l, agent_t *info)
 
 static void remove_agent (agent_list_t *l, agent_t *info)
 {
-	tbb::queuing_mutex::scoped_lock lock(l->mutex);
+	mutex_t::scoped_lock lock(l->mutex);
 
 	if (info->prev == NULL) {
 		l->head = info->next;
