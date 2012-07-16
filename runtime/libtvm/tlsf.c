@@ -50,6 +50,7 @@
  */
 
 #include "tvm.h"
+#include <stdio.h>
 
 /* The  debug functions  only can  be used  when _DEBUG_TLSF_  is set. */
 /* #define _DEBUG_TLSF_	(0) */

@@ -38,7 +38,7 @@ void platforminit()
 	init_clock(); // set up and start the real-time clock
 #endif /* RTCLOCK */
 
-	enable_caching();
+//	enable_caching();
 }
 
 

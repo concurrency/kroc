@@ -56,7 +56,7 @@ byte = fInp.read(1)
 i = 0
 
 while byte != "":
-	if(i == 4):
+	if(i == 1):
 		fOut.write("\n")
 		i = 0
 	fOut.write("{b}".format(b = hex(ord(byte))))

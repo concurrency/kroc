@@ -7,12 +7,13 @@
 #include <stddef.h>
 #include <conf.h>
 
-extern ulong clkticks;          /**< counts clock interrupts */
-extern ulong clktime;           /**< current time in secs since boot */
+extern volatile ulong clkticks;          /**< counts clock interrupts */
+extern volatile ulong clktime_ms;           /**< current time in secs since boot */
 
 /* Clock function prototypes */
 void init_clock(void);
-interrupt clkhandler(void);
 ulong time_millis(void);
+ulong time_micros(void);
+interrupt clkhandler(void);
 
 #endif /* _CLOCK_H_ */

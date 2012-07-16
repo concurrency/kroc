@@ -20,7 +20,7 @@ BIN2OBJ_TOOL = /opt/tools/bin2obj
 DEFINES = -DI386 -DDETAIL -DHAVE_CONFIG_H -DTVM_INTERNALS
 INCLUDE = -I../include -I../tvm -I../tvm/include -I../occam -I../../../runtime/libtvm
 
-CFLAGS = -O0 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
+CFLAGS = -O2 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
 		 -nostdinc -fno-builtin -fno-strict-aliasing -fno-common \
 		 -fno-pic -ffunction-sections \
 		 ${INCLUDE} ${DEFINES} -c
@@ -29,10 +29,10 @@ CFLAGS = -O0 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
 # GETPROT_ADDR must be low enough to keep the compiled getprotected.S binary
 # within a 16-bit address range.
 GETPROT_ADDR = 0x00001000
-IMG_ADDR = 0x28f00000
+IMG_ADDR = 0x028f0000
 RESET_VEC_ADDR = 0xfffff000
 
-LDFLAGS = --oformat binary -Ttext $(IMG_ADDR) -melf_i386 -e _start
+LDFLAGS = -static --oformat binary -Ttext $(IMG_ADDR) -melf_i386 -e _start
 
 PWD = `pwd`
 TOPDIR = ..
@@ -131,7 +131,7 @@ deploy: obj/
 	sccBoot -g $<
 
 run: obj/
-	sccBoot -g $<; sccReset -r 0x0
+	sccBoot -g $<; sccReset -r 0x03
 
 $(LOADMAP):
 	@echo "$(GETPROT_ADDR) $(GETPROT_BIN)" > $(LOADMAP)
@@ -140,10 +140,10 @@ $(LOADMAP):
 
 $(MT_FILE):
 	@echo "# pid mch-route mch-dest-id mch-offset-base testcase" > $(MT_FILE)
-	@echo "0x00 0x00 6 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "#0x00 0x00 6 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x01 0x00 6 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x02 0x00 6 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x03 0x00 6 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x03 0x00 6 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x04 0x00 6 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x05 0x00 6 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x06 0x05 4 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
@@ -188,3 +188,6 @@ $(MT_FILE):
 	@echo "#0x2d 0x25 4 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x2e 0x25 4 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "#0x2f 0x25 4 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+
+occtest: ../occam/test.occ
+	cd ../occam; rm test.tbc test.tce bytecode.h; occbuild --program test.occ; tbc2h test.tbc; mv test.h bytecode.h

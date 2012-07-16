@@ -1,72 +1,37 @@
 #include "tvm-scc.h"
+#include <bytecode.h>
+
+//#define PREREAD 1
 
 static tvm_t tvm;
 tvm_ectx_t context;
 
-#define MEM_WORDS 5120
+// 50k WORDS = 200kB -> Leaves 56kB for TVM + bytecode to fit in L2 cache (256kB)
+#define MEM_WORDS 512000
 static WORD raw_memory[MEM_WORDS + 1];
 static WORDPTR memory;
 
 /* The bytecode file, loaded into flash at a fixed address. */
-extern const unsigned char transputerbytecode[];
 static const BYTE *tbc_data = transputerbytecode;
 static BYTEPTR initial_iptr;
 
-//TODO modify for use on SCC
-/* Time is in milliseconds, since microseconds wrap round too fast in
-   16 bits to be useful. */
-static WORD get_time(ECTX ectx) {
-	return time_millis();
+WORD get_time(ECTX ectx) {
+	return (WORD)time_millis();
 }
 
-//TODO modify for use on SCC
 static void modify_sync_flags(ECTX ectx, WORD set, WORD clear) {
-//	cli ();
 	ectx->sflags = (ectx->sflags & (~clear)) | set;
-//	sei ();
 }
 
-static void dump_machine_state() {
-/*	WORDPTR wp;
-	BYTEPTR bp;
-	const BYTE *file;
-	UWORD line;
-	const UWORD iptr_offset = (UWORD) (context.iptr - initial_iptr);
-
-	if (tbc_file_and_line (tbc_data, iptr_offset, &file, &line) == 0) { //TODO TBC USED
-		printf_P (PSTR ("\nfile=%S line=%d"), file, (int) line);
-	}
-
-	printf_P (PSTR ("\nwptr=%04x (rel=%04x)  iptr=%04x (rel=%04x)  "
-	                "eflags=%04x sflags=%04x\n"
-	                "areg=%04x breg=%04x creg=%04x  oreg=%04x\n"),
-	          (int) context.wptr, (int) (context.wptr - memory),
-	          (int) context.iptr, (int) (context.iptr - initial_iptr),
-	          context.eflags, context.sflags,
-	          context.areg, context.breg, context.creg, context.oreg);
-
-	for (wp = context.wptr - 7; wp < context.wptr + 7; ++wp) {
-		if (wp == context.wptr) {
-			printf_P (PSTR ("wptr>"));
-		}
-		printf_P (PSTR ("%04x "), read_word (wp));
-	}
-	printf_P (PSTR ("\n"));
-
-	for (bp = context.iptr - 12; bp < context.iptr + 12; ++bp) {
-		if (bp == context.iptr) {
-			printf_P (PSTR ("iptr>"));
-		}
-		printf_P (PSTR ("%02x "), read_byte (bp));
-	}
-	printf_P (PSTR ("\n"));
-*/}
-
-int main () {
+int main()
+{
 	int i;
+#ifdef PREREAD
+	unsigned char tmp;
+	unsigned char* preread_ptr;
+#endif
 
-	init_clock();
-	init_idt();
+	enable();
 
 	/* The Transputer memory must be word-aligned. */
 	memory = (WORDPTR) (((int) (raw_memory + 1)) & ~1);
@@ -88,11 +53,32 @@ int main () {
 	context.sffi_table = sffi_table;
 	context.sffi_table_length = sffi_table_length;
 
-	printf("INFO: SFFI table length is %d.\n", sffi_table_length);
+#ifdef PREREAD
+	printf("INFO: Prereading execution context ...\n");
+	
+	preread_ptr = (unsigned char*)&context;
+	for(i = 0; i < sizeof(context); i++)
+	{
+		tmp = *preread_ptr;
+		preread_ptr++;
+	}
+	
+	preread_ptr = (unsigned char*)transputerbytecode;
+	for(i = 0; i < sizeof(transputerbytecode); i++)
+	{
+		tmp = *preread_ptr;
+		preread_ptr++;
+	}
+/*	
+	preread_ptr = (unsigned char*)raw_memory;
+	for(i = 0; i < sizeof(raw_memory); i++)
+	{
+		tmp = *preread_ptr;
+		preread_ptr++;
+	}*/
+#endif
 	
 	printf("INFO: Starting TVM ...\n");
-
-	while(1){}
 
 	while (1) {
 		int ret = tvm_run (&context);
@@ -118,9 +104,6 @@ int main () {
 			}
 			case ECTX_SHUTDOWN: {
 				printf("INFO: End of program reached.\n");
-			}
-			default: {
-				printf("ERRO: Exit status is %x.\n", &ret);
 			}
 		}
 	}

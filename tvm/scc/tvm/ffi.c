@@ -1,27 +1,22 @@
 #include "tvm-scc.h"
 
-/* Copy a block of memory from the Transterpreter's possibly-virtual memory
-   space into real memory. */
-static void memcpy_from_tvm (BYTEPTR from, void *to, int size) {
-	BYTE *real_to = (BYTE *) to;
+int _print(ECTX ectx, WORD args[])
+{
+	char* str = (char*)args[0];
+	int len = args[1];
+	int pos = 0;
+	volatile char buffer[256];
 
-	while (size > 0) {
-		*real_to = read_byte (from);
-		from = byteptr_plus (from, 1);
-		++real_to;
-		--size;
+	while(pos < len)
+	{
+		buffer[pos] = str[pos];
+		pos++;
 	}
-}
-
-void print(char* str)
-{
-	printf("INFO: Gonna print something.");
-	printf(str);
-}
-
-void _print(ECTX ectx, WORD args[])
-{
-	print((char*)args[0]);
+	buffer[len] = '\0';
+	
+	printf(buffer);
+	
+	return SFFI_OK;
 }
 
 SFFI_FUNCTION sffi_table[] = {_print};
