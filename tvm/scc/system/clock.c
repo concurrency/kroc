@@ -5,11 +5,10 @@
 #include <apic.h>
 #include <scc.h>
 #include <clock.h>
-#include <stdio.h>
 
 #if RTCLOCK
-volatile ulong clkticks;      /** ticks per second downcounter */
-volatile ulong clktime_ms;       /** current time in milliseconds */
+ulong clkticks;      /** ticks per second downcounter */
+ulong clktime_ms;       /** current time in milliseconds */
 
 void init_clock()
 {
@@ -20,7 +19,7 @@ void init_clock()
 	clktime_ms = 0;
 
 	set_trap_gate(IRQBASE + LOCAL_TIMER_IRQ, clockIRQ);
-	
+
 	/* make timer periodic */
 	value = APIC_LVT_TIMER_PERIODIC | (IRQBASE + LOCAL_TIMER_IRQ);
 	lapic->lvtt = value;
@@ -31,19 +30,7 @@ void init_clock()
 
 	/* This write starts the timer */
 	lapic->tmict = get_tile_freq(get_my_tileid()) / CLKTICKS_PER_SEC;
-	
-	printf("Clock frequency = %d MHz.\n", get_tile_freq(get_my_tileid()) / 1000000);
 }
-
-ulong time_millis()
-{
-	return clktime_ms;
-}
-ulong time_micros(void)
-{
-	return clktime_ms * 1000;
-}
-
 /* new: */
 interrupt clkhandler()
 {
@@ -51,7 +38,7 @@ interrupt clkhandler()
 	clkticks++;
 
 	// update global second counter
-	if(CLKTICKS_PER_MS == clkticks)
+	if(clkticks == CLKTICKS_PER_MS)
 	{
 		clktime_ms++;
 		clkticks = 0;
@@ -71,5 +58,10 @@ interrupt clkhandler()
 	}
 }
 */
+
+ulong time_millis(void)
+{
+	return clktime_ms;
+}
 
 #endif /* RTCLOCK */

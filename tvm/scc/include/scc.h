@@ -111,6 +111,14 @@
 #define TFS_TILE_FREQ_106	0x3480E00
 #define TFS_TILE_FREQ_100	0x3800F00
 
+/* FPGA registers (new for sccKit >= 1.4.0) */
+#define FPGA_REGS           0xf9000000
+#define GTSC_LO             0x8224
+#define GTSC_HI             0x8228
+#define ATOMIC_CNT_INC(x)   (((x) < 48 ? 0xE000 : 0xF000) + (((x) % 48) * 8))
+#define ATOMIC_CNT_INIT(x)  (((x) < 48 ? 0xE000 : 0xF000) + (((x) % 48) * 8) + 4)
+/* NOTE: inter-core interrupt definitions omitted */
+
 /* Instruction to invalidate L1 cache lines of message buffer type */
 #define CL1INVMB __asm__ volatile ( ".byte 0x0f; .byte 0x0a;\n" )
 
@@ -127,5 +135,6 @@ long get_mesh_freq(tileid_typ);
 void acquire_lock(int);
 void release_lock(int);
 int interrupt_core(int, int);
+unsigned long long getticks(void);
 
 #endif /* _SCC_H_ */

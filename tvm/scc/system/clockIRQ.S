@@ -2,6 +2,11 @@
  * Copyright (C) 2012.  All rights reserved. */
 
 #include <apic.h>
+#include <conf.h>
+#define TRUE 1    /* so we don't have to include stddef */
+#define FALSE 0
+
+#if RTCLOCK
 .text
 	.globl clockIRQ
 clockIRQ:
@@ -13,3 +18,4 @@ clockIRQ:
 	popal
 	sti
 	iret
+#endif /* RTCLOCK */

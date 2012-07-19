@@ -5,26 +5,31 @@
 =========================================================
 
 This is a collection of files intended to help someone get started on writing 
-baremetal SCC apps.  Note that this includes no support for message-passing, 
-just the basics to get the cores properly configured and running your C code.  
-All files are taken from Michael Ziwisky's work on SCC Xinu, a port of 
-Embedded Xinu.  For more info on Embedded Xinu, see http://xinu.mscs.mu.edu/
+baremetal SCC apps.  Note that this includes no support for message-passing 
+(though there is now support for linking in the baremetal RCCE library), just 
+the basics to get the cores properly configured and running your C code.  All 
+files are taken from Michael Ziwisky's work on Xipx, a port of Embedded Xinu.  
+For more info on Embedded Xinu, see http://xinu.mscs.mu.edu/
 
-Note that this was done rather hastily, and very little effort was put into 
-stripping out ALL unnecessary things (i.e. Xinu-specific things) for running 
-baremetal apps.  Specifically, interrupt/exception handling might be done kind 
-of strangely, but I decided it would be useful to other developers to leave in 
-some default exception handlers for vectors 0 through 31.  With the included 
-code, if an exception occurs, a register and stack dump will be produced.
+
+===== WHAT BAREMICHAEL DOES =====
 
 The included code will initialize the Pentium cores before jumping to main() 
 in ./test/main.c.  A subset of the C standard library is included in 
-./lib/libxc/ and gets compiled and linked into your code.
+./lib/libxc/ and gets compiled and linked into your code.  Some default 
+exception handlers for vectors 0 through 31 are configured to produce a stack 
+dump if an exception occurs.
+
+
+===== HOW IT TALKS TO YOU =====
 
 With this framework, you are unable to send input to the SCC, but you can get 
 output from it using the included tool called miketerm.  cd to ./miketerm/ and 
 type `make` to compile the tool.  Then run it with `./miketerm`.  Ctrl-C to 
 exit.  To print to miketerm from your SCC program, simply use printf().
+
+
+===== HOW TO MAKE IT WORK =====
 
 Some notes about ./compile/Makefile:
 In order to get this environment to build on your marc machine, you must 
@@ -36,8 +41,14 @@ instructions on getting these onto your machine.
 
 Without any other modifications besides changing the COMPILER_PATH and 
 BIN2OBJ_TOOL variables, you should be able to go to ./compile/ and do `make; 
-make run`.  Do this with miketerm running in another terminal to see a "Hello 
-World!" from five cores.
+make run;../miketerm/miketerm` to see a "Hello World!" from five cores.
+
+By default, your single compiled image gets loaded onto all 48 cores.  In 
+order to set which cores actually reset and run the code upon calling `make 
+run`, simply change the BOOTCORES variable in the Makefile.
+
+
+===== EXTRAS =====
 
 Some fairly self-explanatory SCC functions and macros (get_my_tileid(), 
 get_my_coreid(), etc.) are included in ./system/scc.c and ./system/scc.h.  
@@ -46,20 +57,31 @@ others would find useful -- you may want to write these things differently.
 (That's a true statement for every line of code in this entire framework, of 
 course!)
 
-I don't have a totally elegant way to change which cores run your code, but 
-it's not too bad.  You must change two special targets in the Makefile: 'run' 
-and '$(MT_FILE)'.  First, the $(MT_FILE) target produces a file with 48 lines 
-in it, each corresponding to a core (plus a comment line at the top).  The 
-cores are enumerated by the first value in each line.  If you want a core to 
-have your code loaded into its private memory, you must ensure that the line 
-corresponding to that core does NOT have a '#' in front of it.  Lines with the 
-leading '#' character will not get your code loaded into their private memory 
-space.  Second, the cores that you want to run (presumably the same ones you 
-loaded your code into) should be listed at the end of the 'run' target.
-
 This should give you enough to start playing with the baremetal cores 
 individually.  To do more interesting things, like message passing, you have 
 to code it up yourself.
+
+
+===== RCCE SUPPORT =====
+
+Note, however, that since v6 of the framework, there is now enough support to 
+use the RCCE V2.0 baremetal library.  To do so, compile RCCE as directed in 
+its README (making sure to do `./configure SCC_BAREMETAL` when you get to that 
+step), then edit the BareMichael Makefile so that the RCCE_PATH variable 
+points to the root directory of RCCE and the RCCE_SUPPORT variable is set to 
+1.  The functions added to BareMichael v6 to support RCCE are located in 
+./system/rccesupport.c.  Note that some of them (such as mmap() and munmap()) 
+are tailored only for RCCE support, and are not fully implemented to fulfil 
+their intended duties.  These functions are not necessarily safe for use 
+outside of the purpose of supporting RCCE V2.0.  A "pingpong" benchmark, taken 
+from iRCCE ("improved RCCE" -- see http://communities.intel.com/thread/22921) 
+is included as ./test/RCCE_pingpong.c for demonstration purposes.  An 
+important thing to note in that source is how to create the argc and argv 
+variables to pass to RCCE_init().  (This is a little hacky because we don't 
+invoke RCCE programs from a shell like one would with SCC Linux.)
+
+
+===== SHOULDERS OF GIANTS =====
 
 Acknowledgement is due to Intel developers for most of the SCC-specific defines
 in ./include/scc.h, and to Linux developers for the defines in ./include/apic.h.
@@ -95,6 +117,19 @@ test -- default location for user code.
 ===================
 ==== Changelog ====
 ===================
+
+v7 (June 12, 2012):
+-- Updated MikeTerm.  Used to get output from sccDump by using a file in /tmp,
+   but now does so via a pipe.  This avoids sharing conflicts on that temporary
+   file.
+-- Added section headers to this README to make it more readable.
+
+v6 (May 3, 2012):
+-- Added support for linking in the baremetal RCCE V2.0 library.
+-- A few more #defines in include/scc.h along with additional page mappings in
+   boot/initPaging.c to support the special FPGA registers that were new with
+   sccKit v1.4.0
+-- MPB pages now use PMB flag and not CD (cache disable) flag by default
 
 v5 (Jan 26, 2012):
 -- Some comments added in a couple of source files and in this README to

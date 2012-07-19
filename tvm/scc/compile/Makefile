@@ -14,13 +14,21 @@ LD       = ${COMPILER_ROOT}ld
 AS       = ${COMPILER_ROOT}as
 AR       = ${COMPILER_ROOT}ar
 STRIP    = ${COMPILER_ROOT}strip
+OBJCOPY  = ${COMPILER_ROOT}objcopy
 
 BIN2OBJ_TOOL = /opt/tools/bin2obj
+
+BOOTCORES = 0 1
+
+RCCE_SUPPORT    = 1
+RCCE_GORY       = 0
+RCCE_SMALLFLAGS = 0
+RCCE_PATH       = ../lib/rcce
 
 DEFINES = -DI386 -DDETAIL -DHAVE_CONFIG_H -DTVM_INTERNALS
 INCLUDE = -I../include -I../tvm -I../tvm/include -I../occam -I../../../runtime/libtvm
 
-CFLAGS = -O2 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
+CFLAGS = -O0 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
 		 -nostdinc -fno-builtin -fno-strict-aliasing -fno-common \
 		 -fno-pic -ffunction-sections \
 		 ${INCLUDE} ${DEFINES} -c
@@ -28,11 +36,16 @@ CFLAGS = -O2 -m32 -Wall -Wstrict-prototypes -Wno-trigraphs \
 
 # GETPROT_ADDR must be low enough to keep the compiled getprotected.S binary
 # within a 16-bit address range.
+#GETPROT_ADDR = 0x00001000
+#IMG_ADDR = 0x18000000
+#RESET_VEC_ADDR = 0xfffff000
 GETPROT_ADDR = 0x00001000
 IMG_ADDR = 0x028f0000
 RESET_VEC_ADDR = 0xfffff000
 
-LDFLAGS = -static --oformat binary -Ttext $(IMG_ADDR) -melf_i386 -e _start
+#LDFLAGS = --oformat binary -Ttext $(IMG_ADDR) -melf_i386 -e _start
+LDFLAGS = -Ttext $(IMG_ADDR) -melf_i386 -e _start
+OCFLAGS = -I elf32-i386 -O binary
 
 PWD = `pwd`
 TOPDIR = ..
@@ -43,7 +56,7 @@ S_FILES = ../boot/startup.S \
 		  ../system/intr.S \
 		  ../system/enable_caching.S \
 		  ../system/clockIRQ.S
-C_FILES = ../tvm/tvm.c \
+C_FILES = ../tvm/mtvm.c \
 	../tvm/ffi.c \
 	../tvm/tbc.c \
 	../../../runtime/libtvm/mem_array.c \
@@ -76,6 +89,25 @@ LIBS = libxc
 
 LIB_ARC = ${LIBS:%=${LIBDIR}/%.a}
 
+ifeq ($(RCCE_SUPPORT),1)
+	INCLUDE += -I$(RCCE_PATH)/include
+	O_FILES += ../system/rccesupport.o
+	DEFINES += -DRCCE_SUPPORT
+	ifeq ($(RCCE_GORY),0)
+		ifeq ($(RCCE_SMALLFLAGS),0)
+			LIB_RCCE = $(RCCE_PATH)/bin/SCC_BAREMETAL/libRCCE_bigflags_nongory_nopwrmgmt.a
+		else
+			LIB_RCCE = $(RCCE_PATH)/bin/SCC_BAREMETAL/libRCCE_smallflags_nongory_nopwrmgmt.a
+		endif
+	else
+		ifeq ($(RCCE_SMALLFLAGS),0)
+			LIB_RCCE = $(RCCE_PATH)/bin/SCC_BAREMETAL/libRCCE_bigflags_gory_nopwrmgmt.a
+		else
+			LIB_RCCE = $(RCCE_PATH)/bin/SCC_BAREMETAL/libRCCE_smallflags_gory_nopwrmgmt.a
+		endif
+	endif
+endif
+
 
 # don't delete .o files without my permission!
 #.SECONDARY: $(O_FILES)
@@ -102,8 +134,10 @@ $(OBJ_FILE): $(RESET_VEC_BIN) $(GETPROT_BIN) $(IMAGE_BIN) $(LOADMAP)
 %.o: %.S
 	$(CC) ${CFLAGS} -o $@ $<
 
-$(IMAGE_BIN): $(O_FILES) $(LIB_ARC) ld.script
-	$(LD) $(LDFLAGS) -o $@ $^
+$(IMAGE_BIN): $(O_FILES) $(LIB_RCCE) $(LIB_ARC) ld.script
+	#$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $(@:%.bin=%.elf) $^
+	$(OBJCOPY) $(OCFLAGS) $(@:%.bin=%.elf) $@
 	chmod a-x $@
 
 $(RESET_VEC_BIN): $(@:%.bin=%.S)
@@ -121,7 +155,7 @@ ${LIB_ARC}:
 	
 clean:
 	$(MAKE) -C ${LIBDIR}/${LIBS} clean
-	rm -f $(RESET_VEC_BIN) $(RESET_VEC_BIN:%.bin=%.o) $(GETPROT_BIN) $(GETPROT_BIN:%.bin=%.o) $(IMAGE_BIN) $(OBJ_FILE) $(MT_FILE) $(O_FILES) $(LOADMAP) ../boot/initPaging.o
+	rm -f $(RESET_VEC_BIN) $(RESET_VEC_BIN:%.bin=%.o) $(GETPROT_BIN) $(GETPROT_BIN:%.bin=%.o) $(IMAGE_BIN) $(IMAGE_BIN:%.bin=%.elf) $(OBJ_FILE) $(MT_FILE) $(O_FILES) $(LOADMAP) ../boot/initPaging.o
 	rm -rf obj/
 
 ###################
@@ -131,7 +165,7 @@ deploy: obj/
 	sccBoot -g $<
 
 run: obj/
-	sccBoot -g $<; sccReset -r 0x03
+	sccBoot -g $<; sccReset -r $(BOOTCORES)
 
 $(LOADMAP):
 	@echo "$(GETPROT_ADDR) $(GETPROT_BIN)" > $(LOADMAP)
@@ -140,54 +174,51 @@ $(LOADMAP):
 
 $(MT_FILE):
 	@echo "# pid mch-route mch-dest-id mch-offset-base testcase" > $(MT_FILE)
-	@echo "#0x00 0x00 6 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x01 0x00 6 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x02 0x00 6 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x00 0x00 6 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x01 0x00 6 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x02 0x00 6 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
 	@echo "0x03 0x00 6 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x04 0x00 6 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x05 0x00 6 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x06 0x05 4 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x07 0x05 4 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x08 0x05 4 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x09 0x05 4 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x0a 0x05 4 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x0b 0x05 4 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x0c 0x00 6 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x0d 0x00 6 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x0e 0x00 6 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x0f 0x00 6 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x10 0x00 6 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x11 0x00 6 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x12 0x05 4 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x13 0x05 4 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x14 0x05 4 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x15 0x05 4 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x16 0x05 4 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x17 0x05 4 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x18 0x20 6 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x19 0x20 6 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x1a 0x20 6 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x1b 0x20 6 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x1c 0x20 6 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x1d 0x20 6 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x1e 0x25 4 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x1f 0x25 4 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x20 0x25 4 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x21 0x25 4 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x22 0x25 4 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x23 0x25 4 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x24 0x20 6 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x25 0x20 6 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x26 0x20 6 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x27 0x20 6 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x28 0x20 6 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x29 0x20 6 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x2a 0x25 4 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x2b 0x25 4 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x2c 0x25 4 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x2d 0x25 4 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x2e 0x25 4 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-	@echo "#0x2f 0x25 4 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
-
-occtest: ../occam/test.occ
-	cd ../occam; rm test.tbc test.tce bytecode.h; occbuild --program test.occ; tbc2h test.tbc; mv test.h bytecode.h
+	@echo "0x04 0x00 6 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x05 0x00 6 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x06 0x05 4 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x07 0x05 4 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x08 0x05 4 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x09 0x05 4 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x0a 0x05 4 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x0b 0x05 4 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x0c 0x00 6 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x0d 0x00 6 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x0e 0x00 6 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x0f 0x00 6 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x10 0x00 6 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x11 0x00 6 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x12 0x05 4 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x13 0x05 4 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x14 0x05 4 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x15 0x05 4 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x16 0x05 4 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x17 0x05 4 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x18 0x20 6 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x19 0x20 6 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x1a 0x20 6 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x1b 0x20 6 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x1c 0x20 6 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x1d 0x20 6 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x1e 0x25 4 0x00 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x1f 0x25 4 0x01 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x20 0x25 4 0x02 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x21 0x25 4 0x03 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x22 0x25 4 0x04 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x23 0x25 4 0x05 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x24 0x20 6 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x25 0x20 6 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x26 0x20 6 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x27 0x20 6 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x28 0x20 6 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x29 0x20 6 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x2a 0x25 4 0x06 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x2b 0x25 4 0x07 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x2c 0x25 4 0x08 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x2d 0x25 4 0x09 $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x2e 0x25 4 0x0a $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)
+	@echo "0x2f 0x25 4 0x0b $(PWD)/$(OBJ_FILE)" >> $(MT_FILE)

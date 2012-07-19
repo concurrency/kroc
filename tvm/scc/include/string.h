@@ -9,7 +9,7 @@ int strncmp(const char *, const char *, int);
 char *strchr(const char *, int);
 char *strrchr(const char *, int);
 char *strstr(const char *, const char *);
-int strnlen(const char *, uint);
+int strnlen(const char *, unsigned int);
 
 int memcmp(const void *, const void *, int);
 void *memcpy(void *, const void *, int);

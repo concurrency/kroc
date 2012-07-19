@@ -100,6 +100,19 @@ prot_world:
 	call	_asm_bzero
 	addl	$2*4,	%esp
 
+#ifdef RCCE_SUPPORT
+
+	/* mark beginning of heap mem right after pagetable */
+	.extern memheap
+	leal	memheap, %edx
+	movl	$(PTBASE + 0x400000), (%edx)
+
+	/* Give a dummy 'stdout' symbol so fprintf doesn't complain */
+	.globl	stdout
+stdout:
+
+#endif /* RCCE_SUPPORT */
+
 	finit	/* Initialize the floating point unit */
 
 	/* set base pointer equal to stack pointer for C code */

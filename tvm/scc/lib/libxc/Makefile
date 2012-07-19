@@ -8,7 +8,7 @@ LIBDIR	= ..
 LIBNAME = libxc
 
 # Make sure the library is optimized for size, if we want any optimization
-CFLAGS := ${CFLAGS:-O%=-O2}
+CFLAGS := ${CFLAGS:-O%=-Os}
 
 # Update the include flag
 CFLAGS := ${CFLAGS:-I%=${INCLUDE}}
@@ -39,7 +39,6 @@ ${LIBNAME}.a:	${OFILES}
 
 install:	${LIBNAME}.a
 		cp ${LIBNAME}.a ${LIBDIR}/${LIBNAME}.a
-		strip -g ${LIBDIR}/${LIBNAME}.a
 
 clean:
 		rm -f ${OFILES} ${LIBNAME}.a ${LIBDIR}/${LIBNAME}.a

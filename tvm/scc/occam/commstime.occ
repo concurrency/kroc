@@ -1,0 +1,238 @@
+
+PROC strout (VAL []BYTE s, CHAN BYTE out!)
+  VAL INT length IS SIZE s:
+  SEQ
+    SEQ i = 0 FOR length
+      out ! s[i]
+:
+
+PROC intout (VAL INT n, CHAN BYTE out!)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      strout ("-2147483648", out!)
+      --}}}
+    n = 0
+      --{{{  zero
+      out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n < 0
+            out ! '-'
+        --}}}
+        --{{{  output
+        #PRAGMA DEFINED D
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+
+--* Copy input to output.
+PROC id (CHAN INT in?, out!)
+  --{{{
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x
+  --}}}
+:
+
+--* Add one to input numbers.
+PROC succ (CHAN INT in?, out!)
+  --{{{
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      out ! x PLUS 1  -- let's ignore overflow
+  --}}}
+:
+
+--* Output a fixed number, then copy input to output.
+PROC prefix (VAL INT n, CHAN INT in?, out!)
+  --{{{
+  SEQ
+    out ! n
+    id (in?, out!)
+  --}}}
+:
+
+PROC seq.delta (CHAN INT in?, out.0!, out.1!)
+  WHILE TRUE
+    INT n:
+    SEQ
+      in ? n
+      out.0 ! n
+      out.1 ! n
+:
+
+PROC par.delta (CHAN INT in?, out.1!, out.2!)
+  WHILE TRUE
+    INT x:
+    SEQ
+      in ? x
+      PAR
+        out.1 ! x
+        out.2 ! x
+:
+
+PROC consume (VAL INT n.loops, CHAN INT in?, CHAN BYTE out!)
+  TIMER tim:
+  INT t0, t1:
+  INT value:
+  SEQ
+    --{{{  warm-up loop
+    VAL INT warm.up IS 16:
+    SEQ i = 0 FOR warm.up
+      in ? value
+    --}}}
+    WHILE TRUE
+      SEQ
+        tim ? t0
+        --{{{  bench-mark loop
+        SEQ i = 0 FOR n.loops
+          in ? value
+        --}}}
+        tim ? t1
+        --{{{  report
+        VAL INT microsecs IS t1 MINUS t0:
+        VAL INT64 nanosecs IS 1000 * (INT64 microsecs):
+        SEQ
+          strout ("Last value received = ", out!)
+          intout (value, out!)
+          strout ("*c*n", out!)
+          strout ("Time = ", out!)
+          intout (microsecs, out!)
+          strout (" microsecs*c*n", out!)
+          strout ("Time per loop = ", out!)
+          intout (INT (nanosecs/(INT64 n.loops)), out!)
+          strout (" nanosecs*c*n", out!)
+          strout ("Context switch = ", out!)
+          intout (INT ((nanosecs/(INT64 n.loops))/4), out!)
+          strout (" nanosecs*c*n*n", out!)
+        --}}}
+:
+
+PROC comms.time (CHAN BYTE screen!)
+
+  BOOL use.seq.delta:
+
+  SEQ
+
+    --{{{  announce
+    SEQ
+      strout ("*c*nCommstime in occam ...*c*n*n", screen!)
+      strout ("Using the SEQ-output version of the delta process*c*n", screen!)
+      strout ("yields a more accurate measure of context-switch time*c*n*n", screen!)
+      strout ("Using the PAR-output version carries an extra overhead*c*n", screen!)
+      strout ("of one process startup/shutdown per Commstime loop*c*n*n", screen!)
+      strout ("By comparing **loop** times between the SEQ and PAR versions,*c*n", screen!)
+      strout ("the process startup/shutdown overhead may be deduced*c*n*n", screen!)
+    --}}}
+
+    use.seq.delta := TRUE
+    strout ("*nCommstime starting ...*c*n*n", screen!)
+
+    CHAN INT a, b, c, d:
+    PAR
+      prefix (0, b?, a!)
+      IF
+        use.seq.delta
+          seq.delta (a?, c!, d!)
+        TRUE
+          par.delta (a?, c!, d!)
+      succ (c?, b!)
+      consume (1000000, d?, screen!)
+
+:
+
+-- Occam process to interface with the the print function from the foreign function interface (FFI).
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.print (VAL []BYTE buffer) = 0"
+
+INLINE PROC write.screen (VAL []BYTE buffer)
+  C.tvmspecial.0.print (buffer)
+:
+
+-- Screen process accepting characters to be written to the screen.
+PROC screen (CHAN BYTE in?)
+  VAL INT buffer.size IS 64:
+  INITIAL INT len IS 0:
+  [buffer.size]BYTE buffer:
+  WHILE TRUE
+    BOOL flush:
+    SEQ
+      -- Extended rendezvous here. If there is no extended rendezvous we might
+      -- loose one character of output. This might happen if:
+      --  * A process send a character on screen, blocks
+      --  * It gets picked up by screen handler, which runs the process again
+      --    (no further code in screen handler than in ? ch is executed)
+      --  * The process had sent its last character, does no more
+      --    communication and does the final return. Ie the program quits
+      --    but the part of the screen handler which does output has never
+      --    been executed and the last character is lost
+#IF DEFINED (OCCAMPI)
+      in ?? buffer[len]
+        SEQ
+#ELSE
+      in ? buffer[len]
+      SEQ
+        SEQ
+#ENDIF
+          CASE buffer[len]
+            #FF
+              flush := TRUE
+            '*n', '*c'
+              flush, len := TRUE, (len + 1)
+            ELSE
+              SEQ
+                len   := len + 1
+                flush := len >= buffer.size
+          IF
+            flush
+              SEQ
+                #PRAGMA DEFINED buffer
+                write.screen ([ buffer FOR len ])
+                len := 0
+            TRUE
+              SKIP
+:
+
+-- The World running on the TVM:
+--  -> the screen process to output data
+--  -> the top-level user process
+PROC the.world ()
+  CHAN BYTE scr:
+  PAR
+    screen(scr)
+    comms.time(scr)
+:
+

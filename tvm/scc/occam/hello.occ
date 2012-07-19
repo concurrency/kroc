@@ -1,0 +1,58 @@
+PROC strout(VAL []BYTE s, CHAN BYTE out!)
+  VAL INT length IS SIZE s:
+  SEQ
+    SEQ i = 0 FOR length
+      out ! s[i]
+:
+
+-- Top-level user process.
+PROC main(CHAN BYTE scr!)
+  SEQ
+    strout("Hello world!!!*n", scr)
+:
+
+-- Occam process to interface with the the print function from the foreign function interface (FFI).
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.print (VAL []BYTE buffer) = 0"
+
+INLINE PROC write.screen(VAL []BYTE buffer)
+  C.tvmspecial.0.print(buffer)
+:
+
+-- Screen process accepting characters to be written to the screen.
+PROC screen(CHAN BYTE in?)
+  VAL INT buffer.size IS 64:
+  INITIAL INT len IS 0:
+  [buffer.size]BYTE buffer:
+  WHILE TRUE
+    BOOL flush:
+    SEQ
+      in ?? buffer[len]
+        SEQ
+          CASE buffer[len]
+            #FF
+              flush := TRUE
+            '*n', '*c'
+              flush, len := TRUE, (len + 1)
+            ELSE
+              SEQ
+                len   := len + 1
+                flush := len >= buffer.size
+          IF
+            flush
+              SEQ
+                #PRAGMA DEFINED buffer
+                write.screen ([ buffer FOR len ])
+                len := 0
+            TRUE
+              SKIP
+:
+
+-- The World running on the TVM:
+--  -> the screen process to output data
+--  -> the top-level user process main
+PROC the.world()
+  CHAN BYTE scr:
+  PAR
+    screen(scr)
+    main(scr)
+:

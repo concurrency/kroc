@@ -9,6 +9,8 @@ typedef unsigned short ushort;  /**< unsigned short type                */
 typedef unsigned int uint;      /**< unsigned int type                  */
 typedef unsigned long ulong;    /**< unsigned long type                 */
 typedef char bool;              /**< boolean type                       */
+typedef unsigned long size_t;   /**< size type                          */
+typedef long ssize_t;
 
 /* Function declaration return types */
 typedef int syscall;            /**< system call declaration            */
@@ -20,8 +22,6 @@ typedef void exchandler;        /**< exception procedure                */
 typedef int message;            /**< message passing content            */
 
 typedef int tid_typ;            /**< thread ID type                     */
-
-typedef int size_t;		/**< expresses a size or count in bytes	*/
 
 /* Boolean type and constants */
 #define FALSE        0          /**< boolean false                      */

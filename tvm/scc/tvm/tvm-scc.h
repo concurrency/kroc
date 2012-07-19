@@ -1,7 +1,6 @@
 #ifndef TVM_SCC_H
 #define TVM_SCC_H
 
-#include <stddef.h>
 #include <stdio.h>
 #include <scc.h>
 #include <apic.h>

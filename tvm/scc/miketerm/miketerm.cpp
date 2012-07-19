@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
-#include <fstream>
+#include <ext/stdio_filebuf.h>
 #include <unistd.h>
 #include <signal.h>
 #include <iomanip>
@@ -28,53 +28,51 @@ int main() {
 	long int head[NUMCORES], tail[NUMCORES], minmemget, maxmemget;
 	char wrapped = 0;
 
+	FILE *pipe = NULL;
+
 	/* compare and substr[8] won't ever change */
 	sprintf(compare, "%016lx", HEADTAIL);
 	substr[8] = '\0';
 
 	while(1) {
-		
-	/* get head and tail */
-	/* sccDump the head and tail to a txt file */
-//	sprintf(str, "sccDump -d 0 0x%lx %d 4 > /tmp/scc.txt", HEADTAIL, 16*NUMCORES);
+//	sprintf(str, "sccDump -d 0 0x%lx %d 4", HEADTAIL, 16*NUMCORES);
 //	TODO: delete next line and uncomment prev line when 128-bit write restriction bug of sccKit 1.4.1 is fixed
-	sprintf(str, "sccDump -d 0 0x%lx %d 4 > /tmp/scc.txt", HEADTAIL, 32*NUMCORES);
-	while (system(str)) {
-		if (++attempts >= MAXATTEMPTS) {
-			printf("Too many failed attempts at sccDump (head/tail).  Bye!\n");
-			exit(1);
-		}
+	sprintf(str, "sccDump -d 0 0x%lx %d 4", HEADTAIL, 32*NUMCORES);
+	if (!(pipe = popen(str, "r"))) {
+		printf("MIKETERM ERROR trying to do popen(\"sccDump ...\") [head/tail].  Bye!\n");
+		exit(1);
 	}
-	attempts = 0;
+	// TODO: try/catch the following constructions
+	__gnu_cxx::stdio_filebuf<char> pipe_buf(pipe, ios_base::in);
+	istream pipe_stream(&pipe_buf);
 
-	datafile.open("/tmp/scc.txt");
-	if (datafile.fail()) {
-		printf("MIKETERM ERROR: For some reason, couldn't open scc.txt.  Bye!\n");
+	if (pipe_stream.fail()) {
+		printf("MIKETERM ERROR opening pipe_stream [head/tail].  Bye!\n");
 		exit(1);
 	}
 
-	/* iterate through lines of txt file to find head and tail */
-	while ( datafile.getline(str, 100) ) {
+	/* iterate through lines of pipe stream to find head and tail */
+	while ( pipe_stream.getline(str, 100) ) {
 		if (!strncmp(str, compare, 16)) { /* correct line */
 			/* get all heads and tails */
 			for (i=0; i<NUMCORES; i++) {
 				strncpy(substr, &str[19], 8);
 				head[i] = strtol(substr, NULL, 16);
 				/* next line for tail */
-//				datafile.getline(str, 100);
+//				pipe_stream.getline(str, 100);
 //	TODO: delete next line and uncomment prev line when 128-bit write restriction bug of sccKit 1.4.1 is fixed
-				datafile.getline(str, 100); datafile.getline(str, 100);
+				pipe_stream.getline(str, 100); pipe_stream.getline(str, 100);
 				strncpy(substr, &str[19], 8);
 				tail[i] = strtol(substr, NULL, 16);
-//				datafile.getline(str, 100);
+//				pipe_stream.getline(str, 100);
 //	TODO: delete next line and uncomment prev line when 128-bit write restriction bug of sccKit 1.4.1 is fixed
-				datafile.getline(str, 100); datafile.getline(str, 100);
+				pipe_stream.getline(str, 100); pipe_stream.getline(str, 100);
 			}
 			break;
 		}
 	}
 
-	datafile.close();
+	pclose(pipe);
 	
 	for (i=0; i<NUMCORES; i++) {
 		if (head[i] != tail[i]) {
@@ -97,23 +95,23 @@ int main() {
 				maxmemget = head[i] + (32 - (head[i] % 32));
 			}
 
-			sprintf(str, "sccDump -d 0 0x%lx %ld > /tmp/scc.txt",
+reDump:
+			sprintf(str, "sccDump -d 0 0x%lx %ld",
 					minmemget + PBOFFSET + PBSIZE*i, maxmemget - minmemget);
-			while (system(str)) {
-				if (++attempts >= MAXATTEMPTS) {
-					printf("MIKETERM ERROR: Too many failed attempts at sccDump (buffer).  Bye!\n");
-					exit(1);
-				}
+			if (!(pipe = popen(str, "r"))) {
+				printf("MIKETERM ERROR trying to do popen(\"sccDump ...\") [buffer].  Bye!\n");
+				exit(1);
 			}
-			attempts = 0;
+			// TODO: try/catch the following constructions
+			__gnu_cxx::stdio_filebuf<char> pipe_buf(pipe, ios_base::in);
+			istream pipe_stream(&pipe_buf);
 
-			/* data is in the txt file.  Now parse it and print it. */
-			datafile.open("/tmp/scc.txt");
-			if (datafile.fail()) {
-				printf("MIKETERM ERROR: For some reason, couldn't open scc.txt.  Bye!\n");
+			if (pipe_stream.fail()) {
+				printf("MIKETERM ERROR opening pipe_stream [buffer].  Bye!\n");
 				exit(1);
 			}
 
+			/* Now parse and print the character data */
 			str[0] = '\0';
 			while (head[i] != tail[i]) {
 				/* is str already the correct line? */
@@ -121,14 +119,12 @@ int main() {
 						(PBOFFSET + PBSIZE*i + tail[i]) - ((PBOFFSET + PBSIZE*i + tail[i]) % 8) );
 				if (strncmp(str, memline, 16)) {
 					/* load str with next line */
-					if (!datafile.getline(str, 100)) {
+					if (!pipe_stream.getline(str, 100)) {
 						/* if haven't wrapped yet, then
 						 * wrap to beginning and search once more */
 						if (!wrapped) {
-							datafile.clear();
-							datafile.seekg(0, ios::beg);
 							wrapped = 1;
-							continue;
+							goto reDump;
 						} else { /* else, terminate gracefully */
 							printf("MIKETERM ERROR: Couldn't find appropriate line in buffer. Bye!\n");
 							printf("  head = %ld; tail = %ld\n", head[i], tail[i]);
@@ -151,7 +147,7 @@ int main() {
 				if (tail[i] >= PBSIZE) tail[i] = 0;
 			}
 
-			datafile.close();
+			pclose(pipe);
 
 			/* use sccWrite to adjust tail up to new value */
 //			sprintf(str, "sccWrite -d 0 0x%lx 0x%lx > /dev/null", HEADTAIL+8 + 16*i, tail[i]);

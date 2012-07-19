@@ -1,0 +1,542 @@
+VAL INT iterations IS 10:
+
+PROC strout (VAL []BYTE s, CHAN BYTE out!)
+  VAL INT length IS SIZE s:
+  SEQ
+    SEQ i = 0 FOR length
+      out ! s[i]
+:
+
+PROC intout (VAL INT n, CHAN BYTE out!)
+  --{{{  
+  IF
+    n = (MOSTNEG INT)
+      --{{{  minint
+      strout ("-2147483648", out!)
+      --}}}
+    n = 0
+      --{{{  zero
+      out ! '0'
+      --}}}
+    TRUE
+      --{{{  anything else
+      VAL INT max.digits IS 20:
+      [max.digits]INT D:
+      INT x, i:
+      SEQ
+        --{{{  check negative
+        IF
+          n < 0
+            x := -n
+          TRUE         -- (n > 0)
+            x := n
+        --}}}
+        --{{{  decompose
+        SEQ
+          i := 0
+          WHILE x > 0
+            SEQ
+              D[i] := x\10
+              x := x/10
+              i := i + 1
+        --}}}
+        --{{{  pad
+        IF
+          n < 0
+            out ! '-'
+        --}}}
+        --{{{  output
+        #PRAGMA DEFINED D
+        WHILE i > 0
+          SEQ
+            i := i - 1
+            out ! BYTE (D[i] + (INT '0'))
+        --}}}
+      --}}}
+  --}}}
+:
+
+PROC bench4096(CHAN BYTE screen!)
+  VAL INT count IS 4096:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench8192(CHAN BYTE screen!)
+  VAL INT count IS 8192:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench12288(CHAN BYTE screen!)
+  VAL INT count IS 12288:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench16384(CHAN BYTE screen!)
+  VAL INT count IS 16384:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench20480(CHAN BYTE screen!)
+  VAL INT count IS 20480:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench24576(CHAN BYTE screen!)
+  VAL INT count IS 24576:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench28672(CHAN BYTE screen!)
+  VAL INT count IS 28672:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench32768(CHAN BYTE screen!)
+  VAL INT count IS 32768:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench36864(CHAN BYTE screen!)
+  VAL INT count IS 36864:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench40960(CHAN BYTE screen!)
+  VAL INT count IS 40960:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench45056(CHAN BYTE screen!)
+  VAL INT count IS 45056:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench49152(CHAN BYTE screen!)
+  VAL INT count IS 49152:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench53248(CHAN BYTE screen!)
+  VAL INT count IS 53248:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench57244(CHAN BYTE screen!)
+  VAL INT count IS 57244:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench61440(CHAN BYTE screen!)
+  VAL INT count IS 61440:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC bench65536(CHAN BYTE screen!)
+  VAL INT count IS 65536:
+  [count]INT32 ray1, ray2:
+  INT32 tmp:
+  TIMER tim:
+  INT t0, t1, time:
+  SEQ
+    SEQ i = 0 FOR count
+      SEQ
+        ray1[i] := INT32 i
+        ray2[i] := ray1[i] + ray1[i]
+        tmp := ray2[i]
+    tim ? t0
+    SEQ it = 0 FOR iterations
+      SEQ i = 0 FOR count
+        ray2[i] := ray1[i] + ray1[i]
+    tim ? t1
+    time := (t1 - t0)
+    intout(count, screen!)
+    strout(",", screen!)
+    intout(time, screen!)
+    strout("*c*n", screen!)
+:
+
+PROC main (CHAN BYTE screen!)
+  SEQ
+    bench4096(screen)
+    bench8192(screen)
+    bench12288(screen)
+    bench16384(screen)
+    bench20480(screen)
+    bench24576(screen)
+    bench28672(screen)
+    bench32768(screen)
+    bench36864(screen)
+    bench40960(screen)
+    bench45056(screen)
+    bench49152(screen)
+    bench53248(screen)
+    bench57244(screen)
+    bench61440(screen)
+    bench65536(screen)
+    strout("Done!*c*n", screen!)
+    bench4096(screen)
+    bench8192(screen)
+    bench12288(screen)
+    bench16384(screen)
+    bench20480(screen)
+    bench24576(screen)
+    bench28672(screen)
+    bench32768(screen)
+    bench36864(screen)
+    bench40960(screen)
+    bench45056(screen)
+    bench49152(screen)
+    bench53248(screen)
+    bench57244(screen)
+    bench61440(screen)
+    bench65536(screen)
+    strout("Done!*c*n", screen!)
+:
+
+-- Occam process to interface with the the print function from the foreign function interface (FFI).
+#PRAGMA EXTERNAL "PROC C.tvmspecial.0.print (VAL []BYTE buffer) = 0"
+
+INLINE PROC write.screen (VAL []BYTE buffer)
+  C.tvmspecial.0.print (buffer)
+:
+
+-- Screen process accepting characters to be written to the screen.
+PROC screen (CHAN BYTE in?)
+  VAL INT buffer.size IS 64:
+  INITIAL INT len IS 0:
+  [buffer.size]BYTE buffer:
+  WHILE TRUE
+    BOOL flush:
+    SEQ
+      -- Extended rendezvous here. If there is no extended rendezvous we might
+      -- loose one character of output. This might happen if:
+      --  * A process send a character on screen, blocks
+      --  * It gets picked up by screen handler, which runs the process again
+      --    (no further code in screen handler than in ? ch is executed)
+      --  * The process had sent its last character, does no more
+      --    communication and does the final return. Ie the program quits
+      --    but the part of the screen handler which does output has never
+      --    been executed and the last character is lost
+#IF DEFINED (OCCAMPI)
+      in ?? buffer[len]
+        SEQ
+#ELSE
+      in ? buffer[len]
+      SEQ
+        SEQ
+#ENDIF
+          CASE buffer[len]
+            #FF
+              flush := TRUE
+            '*n', '*c'
+              flush, len := TRUE, (len + 1)
+            ELSE
+              SEQ
+                len   := len + 1
+                flush := len >= buffer.size
+          IF
+            flush
+              SEQ
+                #PRAGMA DEFINED buffer
+                write.screen ([ buffer FOR len ])
+                len := 0
+            TRUE
+              SKIP
+:
+
+-- The World running on the TVM:
+--  -> the screen process to output data
+--  -> the top-level user process
+PROC the.world ()
+  CHAN BYTE scr:
+  PAR
+    screen(scr)
+    main(scr)
+:
+
+

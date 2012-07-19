@@ -15,7 +15,7 @@
 
 .org 0x0000
 _start:
-	jmp startup
+	jmp getprotected
 	
 	.align	8	/* Intel likes 8-byte alignment for the GDT */
 gdt:
@@ -45,7 +45,7 @@ gdt_desc:
 	.word	gdt_end - gdt - 1	/* gdt limit */
 	.long	gdt					/* gdt base */
 
-startup:
+getprotected:
 	/* hard code an LGDT */
 	.byte	0x66		/* 32-bit operand override */
 	.byte	0x8d		/* lea (e)bx,Addr */

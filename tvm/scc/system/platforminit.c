@@ -38,7 +38,21 @@ void platforminit()
 	init_clock(); // set up and start the real-time clock
 #endif /* RTCLOCK */
 
-//	enable_caching();
+#ifdef RCCE_SUPPORT
+	void init_heap(void);
+	init_heap(); // set up a heap because RCCE needs malloc/free
+
+	/* zero out the MPB to prepare for RCCE programs */
+	volatile unsigned long *my_mpb;
+	int i;
+	my_mpb = (volatile unsigned long *)(MPB_OWN + (core ? MPB_SIZE : 0));
+	for (i = 0; i < MPB_SIZE/sizeof(long); i++)
+	{
+		*(my_mpb + i) = 0;
+	}
+#endif
+
+	enable_caching();
 }
 
 

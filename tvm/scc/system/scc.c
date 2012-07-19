@@ -48,7 +48,27 @@ long get_mesh_freq(tileid_typ tid)
 	}
 }
 
-static irqmask lockim;
+/**
+ * Read x86 time stamp counter. For timing stuff.
+ * Typical usage:
+ *     unsigned long long start, end;
+ *     start = getticks();
+ *     ... [code to time] ...
+ *     end = getticks();
+ *     printf("Execution time: %u cycles\n", end - start);
+ * Note, libxc does not support printing an unsigned long long (%llu), so a 
+ * better usage will check whether the upper half of the result of
+ * (end - start) is 0.
+ */ 
+unsigned long long getticks()
+{
+    __asm__("pushl   %%ebx;":);
+    __asm__("cpuid;":);
+    __asm__("rdtsc;":);
+    __asm__("movl    %%eax,-8(%%ebp);":);
+    __asm__("movl    %%edx,-4(%%ebp);":);
+    __asm__("popl    %%ebx;":);
+}
 
 void acquire_lock(int coreid)
 {
@@ -62,7 +82,6 @@ void acquire_lock(int coreid)
 	crb_base = (void *)CRB_ADDR(tile % 6, tile / 6); 
 	lock = (char *)((ulong)crb_base + (core ? LOCK1 : LOCK0));
 
-	lockim = disable();
 	/* The LOCK bit is clear-on-read i.e. we have the lock when reading a '1' 
 	*/
 	while (!(*lock & 0x1)) ; // might want to sleep or something? 
@@ -82,7 +101,6 @@ void release_lock(int coreid)
 
 	/* The LOCK bit is set by writing to the register */
 	*lock = 0;
-	restore(lockim);
 }
 
 /* interrupt_core(int coreid, int lint):

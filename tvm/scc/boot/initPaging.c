@@ -42,11 +42,9 @@ void initPaging()
 	// SHM (0x80000000 -> same; < 0x84000000)
 	MAP(0x80000000, 0x80000000, 0x84000000, PTE_P | PTE_RW | PTE_CD);
 	// MPB (0xc0000000 -> same; < 0xd9000000)
-	MAP(0xc0000000, 0xc0000000, 0xd9000000, PTE_P | PTE_RW | PTE_CD);
-	// CRB (0xe0000000 -> same; < 0xf9000000)
-	MAP(0xe0000000, 0xe0000000, 0xf9000000, PTE_P | PTE_RW | PTE_CD);
-	// MCPC TCP/IP interface and VRC (0xfa000000 -> same; < 0xfc000000)
-	MAP(0xfa000000, 0xfa000000, 0xfc000000, PTE_P | PTE_RW | PTE_CD);
+	MAP(0xc0000000, 0xc0000000, 0xd9000000, PTE_P | PTE_RW | PTE_PMB);
+	// CRB, FPGA, MCPC TCP/IP IF, and VRC (0xe0000000 -> same; < 0xfc000000)
+	MAP(0xe0000000, 0xe0000000, 0xfc000000, PTE_P | PTE_RW | PTE_CD);
 	// APIC and upper private mem (0xfee00000 -> same; < 0xffc00000)
 	MAP(0xfee00000, 0xfee00000, 0xffc00000, PTE_P | PTE_RW | PTE_CD);
 

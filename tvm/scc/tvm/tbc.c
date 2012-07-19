@@ -1,5 +1,6 @@
 #include "tvm-scc.h"
 #include <tvm_tbc.h>
+#include <bytecode.h>
 
 static int load_uint (BYTE **data, unsigned int *length, const char *id, UWORD *dst)
 {
@@ -97,6 +98,18 @@ static int load_tbc (BYTE *data, tenc_element_t *element) {
 	}
 
 	return 0;
+}
+
+/* Fetch file and line number information for a given iptr offset.
+   Returns 0 on success, -1 on failure. */
+int tbc_file_and_line (BYTE *data, UWORD offset, BYTE **file, UWORD *line) {
+	tenc_element_t element;
+
+	if (load_tbc (data, &element) != 0) {
+		return -1;
+	}
+
+	return tbc_debug_file_and_line (element.data.bytes, element.length, offset, (char**)file, line);
 }
 
 /* Initialise a Transputer context from a TBC file in program memory.

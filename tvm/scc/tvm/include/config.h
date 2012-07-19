@@ -140,7 +140,7 @@
 #define TVM_USE_MEMSET 1
 
 /* define to use TLSF dynamic memory allocator */
-//#define TVM_USE_TLSF 1
+#define TVM_USE_TLSF 1
 
 /* define emulated word length */
 #define TVM_WORD_LENGTH 4

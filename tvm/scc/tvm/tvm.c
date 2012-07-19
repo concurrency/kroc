@@ -1,37 +1,30 @@
 #include "tvm-scc.h"
-#include <bytecode.h>
-
-//#define PREREAD 1
 
 static tvm_t tvm;
 tvm_ectx_t context;
 
-// 50k WORDS = 200kB -> Leaves 56kB for TVM + bytecode to fit in L2 cache (256kB)
-#define MEM_WORDS 512000
+#define MEM_WORDS 5120
 static WORD raw_memory[MEM_WORDS + 1];
 static WORDPTR memory;
 
 /* The bytecode file, loaded into flash at a fixed address. */
+extern const unsigned char transputerbytecode[];
 static const BYTE *tbc_data = transputerbytecode;
 static BYTEPTR initial_iptr;
 
-WORD get_time(ECTX ectx) {
-	return (WORD)time_millis();
+static WORD get_time(ECTX ectx) {
+	return time_millis();
 }
 
 static void modify_sync_flags(ECTX ectx, WORD set, WORD clear) {
 	ectx->sflags = (ectx->sflags & (~clear)) | set;
 }
 
-int main()
-{
+int main () {
 	int i;
-#ifdef PREREAD
-	unsigned char tmp;
-	unsigned char* preread_ptr;
-#endif
 
-	enable();
+	init_clock();
+	init_idt();
 
 	/* The Transputer memory must be word-aligned. */
 	memory = (WORDPTR) (((int) (raw_memory + 1)) & ~1);
@@ -53,32 +46,11 @@ int main()
 	context.sffi_table = sffi_table;
 	context.sffi_table_length = sffi_table_length;
 
-#ifdef PREREAD
-	printf("INFO: Prereading execution context ...\n");
-	
-	preread_ptr = (unsigned char*)&context;
-	for(i = 0; i < sizeof(context); i++)
-	{
-		tmp = *preread_ptr;
-		preread_ptr++;
-	}
-	
-	preread_ptr = (unsigned char*)transputerbytecode;
-	for(i = 0; i < sizeof(transputerbytecode); i++)
-	{
-		tmp = *preread_ptr;
-		preread_ptr++;
-	}
-/*	
-	preread_ptr = (unsigned char*)raw_memory;
-	for(i = 0; i < sizeof(raw_memory); i++)
-	{
-		tmp = *preread_ptr;
-		preread_ptr++;
-	}*/
-#endif
+	printf("INFO: SFFI table length is %d.\n", sffi_table_length);
 	
 	printf("INFO: Starting TVM ...\n");
+
+	while(1){}
 
 	while (1) {
 		int ret = tvm_run (&context);
@@ -104,6 +76,9 @@ int main()
 			}
 			case ECTX_SHUTDOWN: {
 				printf("INFO: End of program reached.\n");
+			}
+			default: {
+				printf("ERRO: Exit status is %x.\n", &ret);
 			}
 		}
 	}
