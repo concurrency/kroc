@@ -7,7 +7,7 @@
 #	mv $(APP_NAME).h bytecode.h
 
 filename = sandbox
-mtvm : filename = mtvm
+mtvm: filename = mtvm
 hello: filename = hello
 commstime: filename = commstime
 
