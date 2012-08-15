@@ -1,6 +1,5 @@
 #include "tvm-scc.h"
 #include <tvm_tbc.h>
-#include <bytecode.h>
 
 static int load_uint (BYTE **data, unsigned int *length, const char *id, UWORD *dst)
 {

@@ -3,7 +3,7 @@
 static tvm_t tvm;
 tvm_ectx_t context;
 
-#define MEM_WORDS 5120
+#define MEM_WORDS 51200
 static WORD raw_memory[MEM_WORDS + 1];
 static WORDPTR memory;
 
@@ -22,15 +22,22 @@ static void modify_sync_flags(ECTX ectx, WORD set, WORD clear) {
 
 int main () {
 	int i;
+#ifdef PREREAD
+	WORD tmpWORD;
+	BYTE tmpBYTE;
+#endif
 
-	init_clock();
-	init_idt();
+	enable();
 
 	/* The Transputer memory must be word-aligned. */
 	memory = (WORDPTR) (((int) (raw_memory + 1)) & ~1);
 
 	for (i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
+//Preread the memory pool
+#ifdef PREREAD
+		tmpWORD = memory[i];
+#endif
 	}
 
 	tvm_init (&tvm);
@@ -40,6 +47,12 @@ int main () {
 		printf("ERRO: init_context_from_tbc() failed.\n");
 	}
 	initial_iptr = context.iptr;
+
+//Preread the bytecode
+#ifdef PREREAD
+	for(i = 0; i < sizeof(transputerbytecode); i++)
+		tmpBYTE = transputerbytecode[i];
+#endif
 
 	context.get_time = get_time;
 	context.modify_sync_flags = modify_sync_flags;

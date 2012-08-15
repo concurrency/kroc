@@ -10,6 +10,8 @@ filename = sandbox
 mtvm: filename = mtvm
 hello: filename = hello
 commstime: filename = commstime
+add: filename = add
+preread: filename = preread
 
 sandbox: $(filename).occ
 	touch bytecode.h
@@ -36,6 +38,22 @@ hello: $(filename).occ
 	mv $(filename).h bytecode.h
 	
 commstime: $(filename).occ
+	touch bytecode.h
+	rm bytecode.h
+	occbuild --program $(filename).occ
+	tbc2h $(filename).tbc
+	rm $(filename) $(filename).tbc $(filename).tce
+	mv $(filename).h bytecode.h
+	
+add: $(filename).occ
+	touch bytecode.h
+	rm bytecode.h
+	occbuild --program $(filename).occ
+	tbc2h $(filename).tbc
+	rm $(filename) $(filename).tbc $(filename).tce
+	mv $(filename).h bytecode.h
+	
+preread: $(filename).occ
 	touch bytecode.h
 	rm bytecode.h
 	occbuild --program $(filename).occ

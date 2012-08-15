@@ -1,10 +1,13 @@
 #include "tvm-scc.h"
 #include "RCCE.h"
+#include "bytecode.h"
+
+#define MEM_WORDS 51200
+#define PREREAD
 
 static tvm_t tvm;
 tvm_ectx_t context;
 
-#define MEM_WORDS 5120
 static WORD raw_memory[MEM_WORDS + 1];
 static WORDPTR memory;
 
@@ -23,7 +26,10 @@ static void modify_sync_flags(ECTX ectx, WORD set, WORD clear) {
 
 int main () {
 	int i;
-
+#ifdef PREREAD
+	WORD prWORD;
+	BYTE prBYTE;
+#endif
 	enable();
 
 	int argc = 5;
@@ -36,9 +42,26 @@ int main () {
 	/* The Transputer memory must be word-aligned. */
 	memory = (WORDPTR) (((int) (raw_memory + 1)) & ~1);
 
+#ifdef PREREAD
+	if(get_my_coreid() == 0)
+		printf("INFO: Prereading the memory pool...\n");
+#endif
 	for (i = 0; i < MEM_WORDS; i++) {
 		memory[i] = MIN_INT;
+#ifdef PREREAD //Preread memory pool;
+		if(get_my_coreid() == 0)
+			prWORD = memory[i];
+#endif
 	}
+
+#ifdef PREREAD //Preread bytecode;
+	if(get_my_coreid() == 0)
+	{
+		printf("INFO: Prereading the bytecode...\n");
+		for(i = 0; i < TBCLENGTH; i++)
+			prBYTE = transputerbytecode[i];
+	}
+#endif
 
 	tvm_init (&tvm);
 	tvm_ectx_init (&tvm, &context);
