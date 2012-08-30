@@ -10,8 +10,6 @@ AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
 
-AM_C_PROTOTYPES
-
 AC_DEFINE(HOST_OS_IS_UNIX,1,[define if host OS is UNIX])
 
 dnl Checks for header files.

@@ -13,9 +13,6 @@ AC_PROG_MAKE_SET
 dnl AC_PROG_RANLIB
 AC_CHECK_TOOL(RANLIB,ranlib,:)
 
-
-AM_C_PROTOTYPES
-
 target_cpu_=target_cpu_`echo $target_cpu | tr -d _.`
 ARCH_DEFS="-D${target_cpu_}"
 

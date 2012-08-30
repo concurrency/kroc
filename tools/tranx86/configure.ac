@@ -156,8 +156,6 @@ if test "$GNUASFLAGS" != ""; then
  AC_DEFINE_UNQUOTED([GNUASFLAGS],"$GNUASFLAGS",[extra flags for GNU assembler])
 fi
 
-AM_C_PROTOTYPES
-
 dnl Checks for libraries.
 
 dnl Checks for header files.
