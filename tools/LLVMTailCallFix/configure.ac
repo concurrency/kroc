@@ -10,8 +10,6 @@ AC_PROG_RANLIB
 AC_PROG_MAKE_SET
 AC_CHECK_TOOL(LD,ld)
 
-AM_C_PROTOTYPES
-
 dnl Check for LLVM.
 AC_CHECK_TOOL([LLVM_CONFIG], [llvm-config], [no])
 if test "x$LLVM_CONFIG" = "xno"; then
