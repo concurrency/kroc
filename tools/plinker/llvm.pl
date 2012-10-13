@@ -270,7 +270,7 @@ if (system (@llc_cmd)) {
 	exit 1;
 }
 
-my $cc = $ENV{'CC'} || ((`uname` eq 'Darwin') ? 'gcc-4.2' : 'cc');
+my $cc = $ENV{'CC'} || ((`uname` =~ m/^Darwin/gs) ? 'gcc-4.2' : 'cc');
 my @cc_cmd = ($cc, @cc_flags, '-O', '-o', $output{'o'}, '-c', $output{'s'});
 print "Running: ", join (' ', @cc_cmd), "\n" if $verbose;
 if (system (@cc_cmd)) {
