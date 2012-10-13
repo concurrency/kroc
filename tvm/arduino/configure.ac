@@ -14,15 +14,19 @@ F_CPU=16000000
 #MCU=atmega328p
 UPLOAD_PORT=/dev/ttyUSB0
 UPLOAD_RATE=57600
+FIRMWARE_NAME=firmware.hex
 
 AC_ARG_WITH([target-board],
             AC_HELP_STRING([--with-target-board=...],
-                           [target board (arduino, sanguino, arduinomega, seeedmega)]),
+                           [target board (arduino, bare644, arduinomega, seeedmega)]),
             [target_board=$withval], [target_board=arduino])
-if test "x$target_board" = "xsanguino" 
+if test "x$target_board" = "xbare644" 
 then
 	MCU=atmega644p
-	DUDEMCU=m664p
+	# WARNING: DUDEMCU was m664p. That looked wrong.
+	# It may have been right, but I changed it. MCJ 1101106
+	DUDEMCU=m644p
+	# Unsure what the upload rate *should* be.
 	UPLOAD_RATE=38400
 fi
 
@@ -67,12 +71,18 @@ AC_ARG_WITH([upload-rate],
             AC_HELP_STRING([--with-upload-rate=...],
                            [serial rate to upload at]),
             [UPLOAD_RATE=$withval])
+AC_ARG_WITH([firmware-name],
+	    AC_HELP_STRING([--with-firmware-name=...],
+			   [name of the generated firmware file]),
+            [FIRMWARE_NAME=$withval])
+
 
 AC_SUBST(BYTECODE_ADDR)
 AC_SUBST(F_CPU)
 AC_SUBST(MCU)
 AC_SUBST(UPLOAD_PORT)
 AC_SUBST(UPLOAD_RATE)
+AC_SUBST(FIRMWARE_NAME)
 
 CFLAGS="-g -Wall -Os -mmcu=$MCU"
 

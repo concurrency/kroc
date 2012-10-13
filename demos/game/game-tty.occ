@@ -28,15 +28,22 @@ PROC tty.client (IO.LINK? link, CHAN BYTE kyb?, scr!)
   --{{{  PROC screen.if (CHAN MOBILE []BYTE display?, out!, CHAN BYTE key.in?, scr!)
   PROC screen.if (CHAN MOBILE []BYTE display?, out!, CHAN BYTE key.in?, scr!)
     INT nlines:
-    MOBILE []MOBILE []BYTE lines:
+    MOBILE []GSTR lines:
     INT cline:
     [128]BYTE linebuf:
     INT linepos:
     SEQ
+      SETPRI (0)
+
       nlines := 22
-      lines := MOBILE [nlines]MOBILE []BYTE
+      lines := MOBILE [nlines]GSTR
+      SEQ i = 0 FOR nlines
+        lines[i][slen] := 0
       cline := 1
-      lines[0] := "newgame TTY interface."
+      VAL []BYTE xstr IS "newgame TTY interface.":
+      SEQ
+        [lines[0][str] FOR SIZE xstr] := xstr
+        lines[0][slen] := SIZE xstr
 
       linepos := 0
 
@@ -52,7 +59,7 @@ PROC tty.client (IO.LINK? link, CHAN BYTE kyb?, scr!)
                   SEQ
                     cursor.x.y (1, BYTE (i + 1), scr!)
                     VAL INT i IS ((cline + i ) \ nlines):
-                    out.string (lines[i], 0, scr!)
+                    out.string ([lines[i][str] FOR lines[i][slen]], 0, scr!)
                 redraw.inline := TRUE
                 cursor.x.y (1, BYTE (nlines + 1), scr!)
                 out.string ("---------------------------------------------------------------------", 0, scr!)
@@ -97,8 +104,10 @@ PROC tty.client (IO.LINK? link, CHAN BYTE kyb?, scr!)
                     redraw.inline := TRUE
             MOBILE []BYTE tline:
             display ? tline
+              INITIAL INT tnlen IS SIZE tline:
               SEQ
-                lines[cline] := tline
+                [lines[cline][str] FOR tnlen] := [tline FOR tnlen]
+                lines[cline][slen] := tnlen
                 redraw.all := TRUE
                 cline := (cline + 1) \ nlines
   :

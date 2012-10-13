@@ -249,3 +249,35 @@ COMPLEX32 INLINE FUNCTION COMPLEX64TRUNC (VAL COMPLEX64 x) IS
 COMPLEX64 INLINE FUNCTION COMPLEX64SQR (VAL COMPLEX64 z) IS
   [(z[real] + z[imag])*(z[real] - z[imag]), (z[real]*z[imag])*2.0]:
 --}}}
+
+--{{{  PROTOCOL P.LEX.BYTESTREAM
+--* Byte-stream protocol.
+PROTOCOL P.LEX.BYTESTREAM
+  CASE
+    bytes; MOBILE []BYTE            --* Some bytes.
+    end.of.file                     --* End of file.
+:
+--}}}
+--{{{  PROTOCOL P.LEX.LINESTREAM
+--* Line-stream protocol.
+PROTOCOL P.LEX.LINESTREAM
+  CASE
+    line; INT; MOBILE []BYTE        --* Whole line of text with line-number (without the trailing newline).
+    end.of.file                     --* End of file.
+:
+--}}}
+--{{{  PROTOCOL P.LEX.TOKENSTREAM
+--* Token-stream protocol.
+PROTOCOL P.LEX.TOKENSTREAM
+  CASE
+    word; INT; MOBILE []BYTE        --* Single word/name/etc prefixed with line-number.
+    symbol; INT; BYTE               --* Distinct symbol (character) prefixed with line-number.
+    integer; INT; INT               --* Integer prefixed with line-number.
+    string; INT; MOBILE []BYTE      --* Quoted string prefixed with line-number.
+    indent; INT; INT                --* Indent to new level (when tracking indentation) prefixed with line-number.
+    outdent; INT; INT               --* Outdent to old level (when tracking indentation) prefixed with line-number.
+    end.of.file                     --* End of file.
+:
+--}}}
+
+

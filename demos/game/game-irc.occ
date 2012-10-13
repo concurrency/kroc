@@ -295,7 +295,7 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
     ircplug.client (to.irc?, from.irc!)
     --{{{  do stuff
     INITIAL BOOL connected IS FALSE:
-    MOBILE []MOBILE []BYTE cli.names:
+    MOBILE []GSTR cli.names:
     MOBILE []BOOL cli.ok:
     MOBILE []IO.LINK? cli.svr:
     SEQ
@@ -320,7 +320,7 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
       --{{{  initialise
       VAL INT max.irc.clients IS 64:
       SEQ
-        cli.names := MOBILE [max.irc.clients]MOBILE []BYTE
+        cli.names := MOBILE [max.irc.clients]GSTR
         cli.ok := MOBILE [max.irc.clients]BOOL
         cli.svr := MOBILE [max.irc.clients]IO.LINK?
         SEQ i = 0 FOR max.irc.clients
@@ -346,7 +346,7 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
               SEQ
                 IF
                   IF i = 0 FOR SIZE cli.names
-                    cli.ok[i] AND (cli.names[i] = name)
+                    cli.ok[i] AND ([cli.names[i][str] FOR cli.names[i][slen]] = name)
                       idx := i
                   TRUE
                     idx := (-1)
@@ -355,7 +355,7 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
                     SKIP
                   TRUE
                     SEQ
-                      cli.names[idx] := ""
+                      cli.names[idx][slen] := 0
                       cli.ok[idx] := FALSE
                 to.irc ! privmsg; SIZE name::[name FROM 0]; SIZE msg::[msg FROM 0]
           from.irc ? CASE
@@ -485,7 +485,7 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
 			    --{{{  check existing / find-free slot, tell game engine
 			    IF
 			      IF i = 0 FOR SIZE cli.names
-                                cli.ok[i] AND (cli.names[i] = [a1 FOR namelen])
+                                cli.ok[i] AND ([cli.names[i][str] FOR cli.names[i][slen]] = [a1 FOR namelen])
 				  idx := i
 			      TRUE
 			        idx := (-1)
@@ -510,11 +510,9 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
 				    TRUE
 				      --{{{  free slot at index `free' -- forward to game handler
                                       IO.LINK! iocli:
-                                      MOBILE []BYTE tcname:
 				      SEQ
                                         cli.svr[free], iocli := MOBILE IO.LINK
-                                        tcname := [a1 FOR namelen]
-                                        cli.names[free] := tcname
+                                        [cli.names[free][str] FOR namelen] := [a1 FOR namelen]
                                         cli.ok[free] := TRUE
                                         FORK irc.client.if ([a1 FOR namelen], iocli, to.game, irc.out!)
 					-- we ALT for the answer
@@ -566,7 +564,7 @@ PROC irc.server (VAL []BYTE hostname, VAL INT port, SHARED CT.GAMECTRL! to.game,
 			    --{{{  find client index
 			    IF
 			      IF i = 0 FOR SIZE cli.names
-                                cli.ok[i] AND (cli.names[i] = [a1 FOR namelen])
+                                cli.ok[i] AND ([cli.names[i][str] FOR cli.names[i][slen]] = [a1 FOR namelen])
 				  idx := i
 			      TRUE
 			        idx := -1

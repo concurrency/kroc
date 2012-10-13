@@ -94,6 +94,10 @@ for bin in LIPO_BINARIES:
 copy_tree('build/python/lib/python%d.%d/site-packages/serial/' %
         (sys.version_info[0], sys.version_info[1]),
         os.path.join(PYTHON_DIR, 'serial'))
+copy_files('install/lib/python%d.%d/site-packages/tenctool/tenclib.*' %
+        (sys.version_info[0], sys.version_info[1]),
+        os.path.join(PYTHON_DIR))
+copy_files('install/bin/tenc*', BIN_DIR)
 
 # Sparkle
 copy_tree(
@@ -104,7 +108,6 @@ copy_tree(
 # FIXME: These should go elsewhere
 for lib in LIBRARIES:
     copy_files(os.path.join('install/lib/', lib), BIN_DIR)
-
 
 # tvm posix includes, libs and firmware
 mkdirs(POSIX_TVM_INC_DIR)
@@ -124,7 +127,7 @@ copy_file('install-tvm-ppc/share/tvm/firmware/tvm-posix.tbc', POSIX_TVMPPC_FW_DI
 #copydir "install/share/kroc" "$outputDir/$rezDir/share/kroc"
 
 # Arduino firmware
-copy_files('build/kroc-tvm-avr-*-*-wrapper/tvm-avr-*-*.hex', ARDUINO_TVM_FW_DIR)
+copy_files('build/arduino_firmware/output/*.hex', ARDUINO_TVM_FW_DIR)
 
 # Arduino config files
 for conf in glob.iglob('../../tvm/arduino/occam/conf/*.conf.in'):
@@ -151,8 +154,8 @@ copy_tree('install-avr/share/tvm/avr-vtinclude', ARDUINO_TVM_LIB_DIR)
 copy_tree('install-avr/share/tvm/avr-vtlib', ARDUINO_TVM_LIB_DIR)
 
 # Avrdude
-copy_file('install/bin/avrdude', BIN_DIR)
-copy_file('install/etc/avrdude.conf', BIN_DIR)
+copy_file('install-avrdude/bin/avrdude', BIN_DIR)
+copy_file('install-avrdude/etc/avrdude.conf', BIN_DIR)
 
 # JEdit
 mkdirs(JEDIT_DIR)

@@ -146,6 +146,8 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
       if test $have_librt_sem = yes; then
         KROC_CCSP_LDFLAGS="$KROC_CCSP_LDFLAGS -lrt"
       fi
+      # if POSIX threads is supported, make sure we explicitly link in the library when building executables.
+      KROC_CCSP_LIBS="$KROC_CCSP_LIBS -lpthread"
     elif test $have_dashpthread = yes; then
       AC_MSG_RESULT(yes)
       KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DKROC_USES_PTHREADS"

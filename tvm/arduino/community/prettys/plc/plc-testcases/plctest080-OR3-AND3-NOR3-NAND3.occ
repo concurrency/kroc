@@ -1,0 +1,33 @@
+#INCLUDE "plumbing.module"
+#INCLUDE "plcBasic.module"
+#INCLUDE "plcLogic.module"
+
+-- Test case 8
+-- Tests plc.LD, IR4, OR3, AND3, NOR3, NAND3 and OUT
+-- Testing two input logic functions
+
+PROC main ()
+  CHAN LEVEL x, x1, x2, x3, x4:
+  CHAN LEVEL y, y1, y2, y3, y4:
+  CHAN LEVEL z, z1, z2, z3, z4:
+  CHAN LEVEL o1, o2, o3, o4:
+  SEQ
+    PAR
+      plc.LD (2, x!)
+      plc.LD (3, y!)
+      plc.LD (4, z!)
+      
+      plc.IR4 (x?, x1!, x2!, x3!, x4!)
+      plc.IR4 (y?, y1!, y2!, y3!, y4!)
+      plc.IR4 (z?, z1!, z2!, z3!, z4!)
+      
+      plc.OR3   (x1?, y1?, z1?, o1!)
+      plc.AND3  (x2?, y2?, z2?, o2!)
+      plc.NOR3  (x3?, y3?, z3?, o3!)
+      plc.NAND3 (x4?, y4?, z4?, o4!)
+      
+      plc.OUT (12, o1?)
+      plc.OUT (11, o2?)
+      plc.OUT (10, o3?)
+      plc.OUT (9, o4?)
+:  

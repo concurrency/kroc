@@ -10,6 +10,7 @@ OCCAM_OCCBUILD
 build_video=yes
 
 dnl Checks for headers.
+AC_CHECK_HEADER([linux/videodev.h], , [build_video=no])
 AC_CHECK_HEADER([linux/videodev2.h], , [build_video=no])
 AC_CHECK_HEADER([libv4lconvert.h], , [build_video=no])
 

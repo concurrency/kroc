@@ -1,6 +1,6 @@
 # Top-level configure.ac for the KRoC tree.
 
-AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
+AC_INIT([kroc], [1.5.0-pre6], [kroc-bugs@kent.ac.uk])
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
 
@@ -36,6 +36,7 @@ if test $OCCBUILD_TOOLCHAIN = kroc; then
 fi
 
 if test $OCCBUILD_TOOLCHAIN = tvm; then
+  OCCAM_CONFIG_SUBDIRS(tools/tenctool)
   OCCAM_CONFIG_SUBDIRS(tools/skroc)
   OCCAM_CONFIG_SUBDIRS(tools/slinker)
   OCCAM_CONFIG_SUBDIRS(tools/tinyswig)

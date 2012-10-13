@@ -16,6 +16,28 @@ enum {
 	vintr_USART_RX,
 	vintr_USART_UDRE,
 	vintr_USART_TX,
+	vintr_TWI,
+	NUM_INTERRUPTS
+};
+/*}}}*/
+/*{{{ ATmega644 enumeration*/
+#elif defined(atmega644p)
+enum {
+	vintr_INT0 = 0,
+	vintr_INT1,
+	vintr_PCINT0,
+	vintr_PCINT1,
+	vintr_PCINT2,
+	vintr_TIMER1,
+	vintr_TIMER2,
+	vintr_ADC,
+	vintr_USART_RX0,
+	vintr_USART_RX1,
+	vintr_USART_UDRE0,
+	vintr_USART_UDRE1,
+	vintr_USART_TX0,
+	vintr_USART_TX1,
+	vintr_TWI,
 	NUM_INTERRUPTS
 };
 /*}}}*/
@@ -52,6 +74,7 @@ enum {
 	vintr_USART_TX1,
 	vintr_USART_TX2,
 	vintr_USART_TX3,
+	vintr_TWI,
 	NUM_INTERRUPTS
 };
 #endif
@@ -145,12 +168,22 @@ static int wait_interrupt (vinterrupt *intr, ECTX ectx, WORDPTR time_ptr) {
 	}
 MAP_SIMPLE_INTERRUPT(INT0_vect, vintr_INT0)
 MAP_SIMPLE_INTERRUPT(INT1_vect, vintr_INT1)
+#if defined(atmega1280)
+MAP_SIMPLE_INTERRUPT(INT2_vect, vintr_INT2)
+MAP_SIMPLE_INTERRUPT(INT3_vect, vintr_INT3)
+MAP_SIMPLE_INTERRUPT(INT4_vect, vintr_INT4)
+MAP_SIMPLE_INTERRUPT(INT5_vect, vintr_INT5)
+MAP_SIMPLE_INTERRUPT(INT6_vect, vintr_INT6)
+MAP_SIMPLE_INTERRUPT(INT7_vect, vintr_INT7)
+#endif
+
 MAP_SIMPLE_INTERRUPT(PCINT0_vect, vintr_PCINT0)
 MAP_SIMPLE_INTERRUPT(PCINT1_vect, vintr_PCINT1)
 MAP_SIMPLE_INTERRUPT(PCINT2_vect, vintr_PCINT2)
 MAP_SIMPLE_INTERRUPT(TIMER1_OVF_vect, vintr_TIMER1)
 MAP_SIMPLE_INTERRUPT(TIMER2_OVF_vect, vintr_TIMER2)
 MAP_SIMPLE_INTERRUPT(ADC_vect, vintr_ADC)
+MAP_SIMPLE_INTERRUPT(TWI_vect, vintr_TWI)
 
 /*{{{ ATmega328 serial interrupts */
 #if defined(atmega328p)

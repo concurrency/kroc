@@ -85,7 +85,7 @@ PROC game (CHAN BYTE kyb?, scr!, err!)
         io.cli, io.svr := MOBILE IO.LINK
         f.len := 0
         buffer.set.string (f.name, f.len, ##BASEPATH)
-        buffer.set.string (f.name, f.len, "SCRIPT")
+        buffer.set.string (f.name, f.len, "/SCRIPT")
         process.script ([f.name FOR f.len], game.cli, linc.cli, scr!)
 
         #IF DEFINED (USE.TELNET.IF)

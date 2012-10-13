@@ -108,7 +108,7 @@ VAL INT VINTR.USART.TX0     IS  26:  -- Tx Complete
 VAL INT VINTR.USART.TX1     IS  27:  --
 VAL INT VINTR.USART.TX2     IS  28:  --
 VAL INT VINTR.USART.TX3     IS  29:  --
-
+VAL INT VINTR.TWI           IS  30:  -- Two-Wire Interface
 --}}}
 
 --{{{ serial constants

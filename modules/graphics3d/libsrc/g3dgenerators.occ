@@ -757,4 +757,120 @@ PROC spherepoint.generator (CHAN INT trigger?, VAL REAL32 rad, CHAN MOBILE []G3D
             out ! CLONE cpnts
 :
 --}}}
+--{{{  PROC heightfieldpoint.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT2.3R adjust?, VAL [][]REAL32 imap, CHAN MOBILE [][]G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+--* Height-field points generator.
+-- Generates a set of points used to draw a grid (specifically a height-field).  The default size is 2.0 by 2.0.
+--
+-- @param trigger Trigger channel.
+-- @param adjust Adjusts specific points in the height field.
+-- @param imap Initial height map (and size).
+-- @param out Points generated.
+-- @param ctrl Control channel.
+--
+PROC heightfieldpoint.generator (CHAN INT trigger?, CHAN MOBILE []G3D.POINT2.3R adjust?, VAL [][]REAL32 imap, CHAN MOBILE [][]G3D.POINT3 out!, CHAN G3D.GEN.CONTROL ctrl?)
+  MOBILE [][]G3D.POINT3 cpnts, opnts:
+  INT width, height:
+  
+  PROC reset () --{{{
+    REAL32 zstep, xstep:
+    SEQ
+      height := SIZE imap
+      width := SIZE imap[0]
+
+      opnts := MOBILE [height][width]G3D.POINT3
+      zstep := 2.0 / (REAL32 ROUND (height - 1))
+      xstep := 2.0 / (REAL32 ROUND (width - 1))
+
+      SEQ z = 0 FOR height
+        REAL32 tz:
+        SEQ
+          tz := (-1.0) + ((REAL32 ROUND z) * zstep)
+          SEQ x = 0 FOR width
+            REAL32 tx:
+            SEQ
+              tx := (-1.0) + ((REAL32 ROUND x) * xstep)
+
+              opnts[z][x] := [tx, imap[z][x], tz]
+  :
+  --}}}
+
+  SEQ
+    --{{{  initialise
+    reset ()
+    cpnts := CLONE opnts
+
+    --}}}
+
+    INITIAL BOOL running IS TRUE:
+    WHILE running
+      SEQ
+        PRI ALT
+          ctrl ? CASE
+            --{{{  reset: initialise back to default state
+            reset
+              SEQ
+                reset ()
+                cpnts := CLONE opnts
+            --}}}
+            --{{{  add.scale: add scale to current points
+            [3]REAL32 scale:
+            add.scale; scale
+              SEQ z = 0 FOR height
+                SEQ x = 0 FOR width
+                  SEQ
+                    cpnts[z][x][x] := cpnts[z][x][x] * scale[0]
+                    cpnts[z][x][y] := cpnts[z][x][y] * scale[1]
+                    cpnts[z][x][z] := cpnts[z][x][z] * scale[2]
+            --}}}
+            --{{{  set.scale: set scale based on old points
+            [3]REAL32 scale:
+            set.scale; scale
+              SEQ z = 0 FOR height
+                SEQ x = 0 FOR width
+                  SEQ
+                    cpnts[z][x][x] := opnts[z][x][x] * scale[0]
+                    cpnts[z][x][y] := opnts[z][x][y] * scale[1]
+                    cpnts[z][x][z] := opnts[z][x][z] * scale[2]
+            --}}}
+            --{{{  add.trans: add translation to current points
+            [3]REAL32 trans:
+            add.trans; trans
+              SEQ z = 0 FOR height
+                SEQ x = 0 FOR width
+                  SEQ
+                    cpnts[z][x][x] := cpnts[z][x][x] + trans[0]
+                    cpnts[z][x][y] := cpnts[z][x][y] + trans[1]
+                    cpnts[z][x][z] := cpnts[z][x][z] + trans[2]
+            --}}}
+            --{{{  set.trans: set translation based on original points
+            [3]REAL32 trans:
+            set.trans; trans
+              SEQ z = 0 FOR height
+                SEQ x = 0 FOR width
+                  SEQ
+                    cpnts[z][x][x] := opnts[z][x][x] + trans[0]
+                    cpnts[z][x][y] := opnts[z][x][y] + trans[1]
+                    cpnts[z][x][z] := opnts[z][x][z] + trans[2]
+            --}}}
+          MOBILE []G3D.POINT2.3R adj:
+          adjust ? adj
+            --{{{  adjust particular point(s) in the height field
+            SEQ i = 0 FOR SIZE adj
+              IF
+                (adj[i][x] < 0) OR (adj[i][x] >= width)
+                  SKIP
+                (adj[i][y] < 0) OR (adj[i][y] >= height)
+                  SKIP
+                TRUE
+                  SEQ
+                    opnts[adj[i][y]][adj[i][x]][y] := adj[i][z]
+                    cpnts[adj[i][y]][adj[i][x]][y] := adj[i][z]
+            --}}}
+          INT any:
+          trigger ? any
+            --{{{  generate points for output
+            out ! CLONE cpnts
+            --}}}
+:
+--}}}
 

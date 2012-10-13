@@ -52,6 +52,7 @@ import org.transterpreter.occPlug.OccPlugUtil;
 import org.transterpreter.occPlug.OccPlug;
 import org.transterpreter.occPlug.OccPlug.DocumentWriter;
 import org.transterpreter.occPlug.hosts.BaseHost;
+import org.transterpreter.occPlug.hosts.Windows;
 import org.transterpreter.occPlug.process.Command;
 import org.transterpreter.occPlug.process.CommandExternal;
 import org.transterpreter.occPlug.process.CommandRunnable;
@@ -170,7 +171,12 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 			return getProp("TVM_BYTECODE_ADDR");
 		}
-		
+
+		public String getProgrammer()
+		{
+			return getProp("PROGRAMMER");
+		}
+	
 		public String getConfigFileName() {
 			return configFile;
 		}
@@ -326,7 +332,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-U", "flash:w:" + OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(host.getPath("tvm-arduino", "firmware"), props.getFirmware())) + ":i",
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
-				"-c", "arduino", 
+				"-c", props.getProgrammer(), 
 				"-p", props.getMCU(), 
 				"-b", props.getUploadRate() };
 
@@ -392,7 +398,14 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		output.writeRegular("Compiling: " + occFile + "\n");
 		OccPlugUtil.writeVerbose("Command: " + Arrays.asList(occbuildCommand) + "\n", output);
 
-		final String[] env = OccbuildHelper.makeOccbuildEnvironment("tvm-arduino");
+		String[] env = null;
+		if(host instanceof Windows)
+		{
+		  /* FIXME: should we add more of the environment?
+		   */
+      env = new String[] { "Path=" + OccPlugUtil.pathifyXXX("bin") + ";" + System.getenv("PATH") };
+		}
+		env = OccbuildHelper.makeOccbuildEnvironment("tvm-arduino", env);
 		OccPlugUtil.writeVerbose("Environment: " + Arrays.asList(env) + "\n", output);
 		
 		final Runnable[] finalisers = { finished };
@@ -427,12 +440,13 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		ArduinoDevice selectedDevice = (ArduinoDevice) arduinoDevicesModel.getSelectedItem();
 		DeviceProperties props = new DeviceProperties(selectedDevice);
 		
-		final String fileBase = MiscUtilities.getFileNameNoExtension(targetSupport.getActiveFileName());
+		final String fileBase = OccPlugUtil.removeExtension(targetSupport.getActiveFileName());
 		final String tbcFile = fileBase + ".tbc";
 		final String ihexFile = fileBase + ".ihex";
 		final File curDir = new File(targetSupport.getActiveDirectory());
 		final String [] ihexCommand = {
 				OccPlugUtil.pathifyXXX(MiscUtilities.constructPath(bin, host.getCommandName("binary-to-ihex"))),
+				"-s",
 				props.getBytecodeAddr(),
 				tbcFile,
 				ihexFile
@@ -445,7 +459,7 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 				"-F", 
 				"-P", (String) arduinoPort.getSelectedItem(),
 				"-D",
-				"-c", "arduino", 
+				"-c", props.getProgrammer(), 
 				"-p", props.getMCU(), 
 				"-b", props.getUploadRate(), 
 				"-U", "flash:w:" + ihexFile + ":i"};
@@ -467,18 +481,27 @@ public class Arduino extends BaseTarget implements FirmwareAbility,
 		{
 			runEnv.add("PYTHONPATH=" + OccPlugUtil.pathifyXXX(pythonPath));
 		}
+
+		String sep = ":";
+		if(host instanceof Windows)
+		{
+			sep = ";";
+		}
+      		runEnv.add("PATH=" + OccPlugUtil.pathifyXXX("bin") + sep +      System.getenv("PATH"));
+
 		OccPlugUtil.writeVerbose("Environment: " + runEnv, output);
-		
+	
+		String[]  env = runEnv.toArray(new String[0]);
 		Command[] commands = new Command[] {
-			new CommandExternal(ihexCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
-			new CommandExternal(runCommand, null, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new CommandExternal(ihexCommand, env, curDir, new TargetExecWorkerHelper("run", output, null, true)),
+			new CommandExternal(runCommand, env, curDir, new TargetExecWorkerHelper("run", output, null, true)),
 			new CommandRunnable(new Runnable() { 
 				public void run() { 
 					output.writeRegular("Any output from the connected device will appear below\n");
 					output.writeRegular("(hit stop to disconnect)\n");
 					output.writeRegular("------------------------------------------------------\n");
 				} }),
-			new CommandExternal(readArduinoCommand, (String[]) runEnv.toArray(new String[0]), curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
+			new CommandExternal(readArduinoCommand, env, curDir, new TargetExecWorkerHelper("read-arduino", output, null, true)),
 		};
 		
 		ExecWorker worker = new ExecWorker(commands, finalisers);

@@ -10,6 +10,7 @@ EXTRA_DIST = \
 	make-format.py \
 	format.occ \
 	io.occ \
+	lexer.occ \
 	math.occ \
 	matrix.occ \
 	string.occ \
@@ -21,6 +22,7 @@ useful_lib_objs = \
 	format.tce \
 	format-gen.tce \
 	io.tce \
+	lexer.tce \
 	math.tce \
 	matrix.tce \
 	string.tce \

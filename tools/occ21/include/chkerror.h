@@ -445,6 +445,9 @@
 /* protocol inclusion errors */
 #define CHK_BAD_CASE_INCLUSION		337
 
+/* other */
+#define CHK_INVSIZE_CONST		338
+
 
 /*}}}*/
 /*{{{  error macros */

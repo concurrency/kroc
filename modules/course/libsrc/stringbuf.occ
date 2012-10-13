@@ -1,6 +1,6 @@
 --
 --	stringbuf.occ -- string buffer routines
---	Copyright (C) 2009 Fred Barnes <frmb@kent.ac.uk>
+--	Copyright (C) 2009,2012 Fred Barnes <frmb@kent.ac.uk>
 --
 --	This program is free software; you can redistribute it and/or modify
 --	it under the terms of the GNU General Public License as published by
@@ -187,6 +187,23 @@ PROC buffer.set.real32 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL32 n)
   INT v.len:
   SEQ
     course.REAL32TOSTRING (v.len, v.buf, n, ip, dp)
+    buffer.set.string (buf, len, [v.buf FOR v.len])
+:
+--}}}
+--{{{  PROC buffer.set.real64 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL64 n)
+--* Adds a REAL64 value to a string buffer.
+--
+-- @param buf String buffer.
+-- @param len Length of valid data in buffer.
+-- @param ip integer portion alignment.
+-- @param dp decimal portion alignment.
+-- @param n Value to put in buffer.
+--
+PROC buffer.set.real64 ([]BYTE buf, INT len, VAL INT ip, dp, VAL REAL64 n)
+  [32]BYTE v.buf:
+  INT v.len:
+  SEQ
+    course.REAL64TOSTRING (v.len, v.buf, n, ip, dp)
     buffer.set.string (buf, len, [v.buf FOR v.len])
 :
 --}}}

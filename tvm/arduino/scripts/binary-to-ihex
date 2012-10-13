@@ -1,8 +1,17 @@
 #!/usr/bin/python
 # Convert a binary file to Intel HEX.
-# Usage: binary-to-ihex STARTING-ADDRESS INPUT-FILE OUTPUT-FILE
+# Usage: binary-to-ihex [-s] STARTING-ADDRESS INPUT-FILE OUTPUT-FILE
 
 import sys
+
+if len(sys.argv) < 3:
+	print "binary-to-ihex [-s] STARTING-ADDRESS INPUT-FILE OUTPUT-FILE"
+	sys.exit(1)
+
+strip = False
+if sys.argv[1] == "-s":
+	strip = True
+	del sys.argv[1]
 
 addr = int(sys.argv[1].replace("0x", ""), 16)
 line_len = 16
@@ -14,6 +23,18 @@ END_OF_FILE = 0x01
 f = open(sys.argv[2], "rb")
 data = f.read()
 f.close()
+
+if strip:
+	from subprocess import Popen, PIPE
+	try:
+		data = Popen(["tencstrip", "-", "-"], 
+			stdin=PIPE, stdout=PIPE).communicate(data)[0]
+	except OSError, e:
+		if e.errno == 2:
+			print "Could not find 'tencstrip', cannot use -s"
+			sys.exit(1)
+		else:
+			raise
 
 f = open(sys.argv[3], "w")
 

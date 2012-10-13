@@ -776,16 +776,19 @@ if [ "$intree" = "" ]; then
 	occ21=${OCC21:-"$kroc_archbindir/occ21"}
 	octran=${OCTRAN:-"$kroc_archbindir/lletc.pl"}
 	tcedump=${TCEDUMP:-"$kroc_archbindir/tce-dump.pl"}
+	rtsmain=${RTSMAIN:-"$kroc_archlibdir/rtsmain.o"}
 else
 	occ21="$intree/tools/occ21/occ21"
 	octran="$intree/tools/plinker/lletc.pl"
 	tcedump="$intree/tools/plinker/tce-dump.pl"
+	rtsmain="$intree/runtime/libkrocif/rts/rtsmain.o"
 fi
 
+
 if [ $dtraces -eq 1 ]; then
-	ocrts="-lkrocif -lccsptrace"
+	ocrts="$rtsmain -lkrocif -lccsptrace"
 else
-	ocrts="-lkrocif -lccsp"
+	ocrts="$rtsmain -lkrocif -lccsp"
 fi
 
 

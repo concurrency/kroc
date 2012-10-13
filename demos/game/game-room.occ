@@ -35,17 +35,17 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
   [4]BOOL link.ok:
   INT nexits:
 
-  MOBILE []MOBILE []BYTE desclines:
+  MOBILE []GSTR desclines:
   INT ndesclines:
 
   INT nclients:
   MOBILE []CT.CLIENT! people:
-  MOBILE []MOBILE []BYTE pnames:
+  MOBILE []GSTR pnames:
   MOBILE []BOOL people.ok:
 
   INT nobjects:
   MOBILE []CT.OBJECT! objects:
-  MOBILE []MOBILE []BYTE onames:
+  MOBILE []GSTR onames:
   MOBILE []BOOL objects.ok:
 
   SHARED CT.ROOMLINK! in.link:
@@ -71,17 +71,21 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
       TRUE
         nclients := ##MAX.USERS.PER.ROOM
     people := MOBILE [nclients]CT.CLIENT!
-    pnames := MOBILE [nclients]MOBILE []BYTE
+    pnames := MOBILE [nclients]GSTR
     people.ok := MOBILE [nclients]BOOL
     SEQ i = 0 FOR nclients
-      people.ok[i] := FALSE
+      SEQ
+        people.ok[i] := FALSE
+        pnames[i][slen] := 0
 
     nobjects := ##MAX.OBJECTS.PER.ROOM
     objects := MOBILE [nobjects]CT.OBJECT!
-    onames := MOBILE [nobjects]MOBILE []BYTE
+    onames := MOBILE [nobjects]GSTR
     objects.ok := MOBILE [nobjects]BOOL
     SEQ i = 0 FOR nobjects
-      objects.ok[i] := FALSE
+      SEQ
+        objects.ok[i] := FALSE
+        onames[i][slen] := 0
 
     --}}}
     --{{{  read room description
@@ -100,7 +104,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
     IF
       ndesclines > 0
         SEQ
-          desclines := MOBILE [ndesclines + 1]MOBILE []BYTE
+          desclines := MOBILE [ndesclines + 1]GSTR
           CLAIM to.game
             SEQ
               ndesclines := 0
@@ -108,8 +112,13 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
               INITIAL BOOL done IS FALSE:
               WHILE (NOT done) AND (ndesclines < (SIZE desclines))
                 to.game[out] ? CASE
-                  string; desclines[ndesclines]
-                    ndesclines := ndesclines + 1
+                  MOBILE []BYTE str:
+                  string; str
+                    INITIAL INT slen IS SIZE str:
+                    SEQ
+                      [desclines[ndesclines][str] FOR slen] := [str FOR slen]
+                      desclines[ndesclines][slen] := slen
+                      ndesclines := ndesclines + 1
                   end.of.list
                     done := TRUE
       TRUE
@@ -165,7 +174,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
     PROC one.msg (VAL []BYTE pname, msg)
       IF
         IF i = 0 FOR nclients
-          people.ok[i] AND (pnames[i] = pname)
+          people.ok[i] AND ([pnames[i][str] FOR pnames[i][slen]] = pname)
             people[i][s.in] ! genmsg; msg
         TRUE
           SKIP
@@ -229,10 +238,12 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 IF
                   IF i = 0 FOR nclients
                     people.ok[i] = FALSE
+                      INITIAL INT tslen IS SIZE t.name:
                       SEQ
                         people.ok[i] := TRUE
                         people[i] := t.cli
-                        pnames[i] := t.name
+                        [pnames[i][str] FOR tslen] := [t.name FOR tslen]
+                        pnames[i][slen] := tslen
                         cs := i
                   TRUE
                     -- this room filled up ...!
@@ -250,7 +261,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 --}}}
                 --{{{  inform others
                 SEQ
-                  enter.msg (pnames[cs], cs)
+                  enter.msg ([pnames[cs][str] FOR pnames[cs][slen]], cs)
                 --}}}
               --}}}
             CT.OBJECT! t.obj:
@@ -273,10 +284,12 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 IF
                   IF i = 0 FOR nobjects
                     objects.ok[i] = FALSE
+                      INITIAL INT tslen IS SIZE t.name:
                       SEQ
                         objects.ok[i] := TRUE
                         objects[i] := t.obj
-                        onames[i] := t.name
+                        [onames[i][str] FOR tslen] := [t.name FOR tslen]
+                        onames[i][slen] := tslen
                         os := i
                         destroyed := FALSE
                   TRUE
@@ -380,19 +393,19 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
               MOBILE []BYTE str:
               say; str
                 --{{{  say something
-                say.msg (pnames[i], str, -1)
+                say.msg ([pnames[i][str] FOR pnames[i][slen]], str, -1)
                 --}}}
               MOBILE []BYTE str:
               action; str
                 --{{{  perform arbitrary action
-                action.msg (pnames[i], str, -1)
+                action.msg ([pnames[i][str] FOR pnames[i][slen]], str, -1)
                 --}}}
               MOBILE []BYTE oname:
               get; oname
                 --{{{  get object
                 IF
                   IF j = 0 FOR nobjects
-                    objects.ok[j] AND (onames[j] = oname)
+                    objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
                       BOOL can.get:
                       SEQ
                         --{{{  query object first
@@ -409,7 +422,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                               --{{{  prep tell others about it
                               SEQ
                                 t.len := 0
-                                buffer.set.string (t.buf, t.len, pnames[i])
+                                buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
                                 buffer.set.string (t.buf, t.len, " picked up the ")
                                 buffer.set.string (t.buf, t.len, oname)
                               --}}}
@@ -428,7 +441,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 --{{{  use object
                 IF
                   IF j = 0 FOR nobjects
-                    objects.ok[j] AND (onames[j] = oname)
+                    objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
                       BOOL can.use, cli.use:
                       SEQ
                         --{{{  query object first
@@ -451,12 +464,12 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                               -- give client to object
                               people[i][in] ! yes
                               t.len := 0
-                              buffer.set.string (t.buf, t.len, pnames[i])
+                              buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
                               buffer.set.string (t.buf, t.len, " left using the ")
-                              buffer.set.string (t.buf, t.len, onames[j])
+                              buffer.set.string (t.buf, t.len, [onames[j][str] FOR onames[j][slen]])
                               all.msg ([t.buf FOR t.len], i)
                               people.ok[i] := FALSE
-                              objects[j][in] ! use.client; pnames[i]; people[i]
+                              objects[j][in] ! use.client; [pnames[i][str] FOR pnames[i][slen]]; people[i]
                           can.use
                             SEQ
                               -- send use message to client
@@ -472,13 +485,13 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 --{{{  examine object
                 IF
                   IF j = 0 FOR nobjects
-                    objects.ok[j] AND (onames[j] = oname)
+                    objects.ok[j] AND ([onames[j][str] FOR onames[j][slen]] = oname)
                       SEQ
                         objects[j][in] ! examine
                         objects[j][out] ? CASE name; oname
                         people[i][in] ! string; oname
                   IF j = 0 FOR nclients
-                    people.ok[j] AND (pnames[j] = oname)
+                    people.ok[j] AND ([pnames[j][str] FOR pnames[j][slen]] = oname)
                       IF
                         j = i
                           people[i][in] ! string; "I*'m fine :)"
@@ -521,7 +534,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
               roomdrop; oname; obj
                 --{{{  dropping object in room
                 SEQ
-                  drop.msg (pnames[i], oname, -1)
+                  drop.msg ([pnames[i][str] FOR pnames[i][slen]], oname, -1)
                   FORK forked.inobj (in.link, oname, obj)
                 --}}}
               MOBILE []BYTE who, oname:
@@ -532,14 +545,14 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 SEQ
                   IF
                     IF j = 0 FOR nclients
-                      people.ok[j] AND (pnames[j] = who)
+                      people.ok[j] AND ([pnames[j][str] FOR pnames[j][slen]] = who)
                         other := j
                     TRUE
                       other := -1
                   IF
                     other = i
                       SEQ
-                        onen.msg ("attack yourself, are you mad ?", i)
+                        onen.msg ("attack yourself, are you mad?", i)
                         other := -1
                     TRUE
                       SKIP
@@ -557,13 +570,13 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                         buffer.set.string (t.buf, t.len, " hit points)")
                         onen.msg ([t.buf FOR t.len], i)
 
-                        people[other][s.in] ! take.damage; CLONE pnames[i]; oname; damage
+                        people[other][s.in] ! take.damage; [pnames[i][str] FOR pnames[i][slen]]; oname; damage
                         people[other][s.out] ? CASE
                           dead
                             --{{{  that killed them
                             SEQ
                               t.len := 0
-                              buffer.set.string (t.buf, t.len, pnames[i])
+                              buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
                               buffer.set.string (t.buf, t.len, " killed ")
                               buffer.set.string (t.buf, t.len, who)
                               all.msg ([t.buf FOR t.len], -1)
@@ -572,7 +585,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
 
                               -- move person to the void
                               CLAIM to.game
-                                to.game[in] ! dead.client; pnames[other]; people[other]
+                                to.game[in] ! dead.client; [pnames[other][str] FOR pnames[other][slen]]; people[other]
                               people.ok[other] := FALSE
                             --}}}
                           yes
@@ -580,7 +593,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
 
                         -- tell others
                         t.len := 0
-                        buffer.set.string (t.buf, t.len, pnames[i])
+                        buffer.set.string (t.buf, t.len, [pnames[i][str] FOR pnames[i][slen]])
                         buffer.set.string (t.buf, t.len, " attacks ")
                         buffer.set.string (t.buf, t.len, who)
                         all.msg2 ([t.buf FOR t.len], i, other)
@@ -603,7 +616,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                   IF
                     ndesclines > 0
                       SEQ j = 0 FOR ndesclines
-                        people[i][in] ! string; CLONE desclines[j]
+                        people[i][in] ! string; [desclines[j][str] FOR desclines[j][slen]]
                     TRUE
                       SKIP
                   --}}}
@@ -615,7 +628,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                   SEQ j = 0 FOR nclients
                     IF
                       people.ok[j] AND (j <> i)
-                        people[i][in] ! string; CLONE pnames[j]
+                        people[i][in] ! string; [pnames[j][str] FOR pnames[j][slen]]
                       TRUE
                         SKIP
                   people[i][in] ! end.of.list
@@ -626,7 +639,7 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                   SEQ j = 0 FOR nobjects
                     IF
                       objects.ok[j]
-                        people[i][in] ! string; CLONE onames[j]
+                        people[i][in] ! string; [onames[j][str] FOR onames[j][slen]]
                       TRUE
                         SKIP
                   people[i][in] ! end.of.list
@@ -639,10 +652,10 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 IF
                   link.ok[0]
                     SEQ
-                      leave.msg (pnames[i], 0, i)
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 0, i)
                       people.ok[i] := FALSE
                       tmpct := clinks[0]
-                      tmpname := pnames[i]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
                       tmpcli := people[i]
                       FORK move.new.client (tmpct, tmpname, tmpcli)
                       --CLAIM clinks[0]
@@ -658,10 +671,10 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 IF
                   link.ok[1]
                     SEQ
-                      leave.msg (pnames[i], 1, i)
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 1, i)
                       people.ok[i] := FALSE
                       tmpct := clinks[1]
-                      tmpname := pnames[i]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
                       tmpcli := people[i]
                       FORK move.new.client (tmpct, tmpname, tmpcli)
                   TRUE
@@ -675,10 +688,10 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 IF
                   link.ok[2]
                     SEQ
-                      leave.msg (pnames[i], 2, i)
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 2, i)
                       people.ok[i] := FALSE
                       tmpct := clinks[2]
-                      tmpname := pnames[i]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
                       tmpcli := people[i]
                       FORK move.new.client (tmpct, tmpname, tmpcli)
                   TRUE
@@ -692,10 +705,10 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
                 IF
                   link.ok[3]
                     SEQ
-                      leave.msg (pnames[i], 3, i)
+                      leave.msg ([pnames[i][str] FOR pnames[i][slen]], 3, i)
                       people.ok[i] := FALSE
                       tmpct := clinks[3]
-                      tmpname := pnames[i]
+                      tmpname := [pnames[i][str] FOR pnames[i][slen]]
                       tmpcli := people[i]
                       FORK move.new.client (tmpct, tmpname, tmpcli)
                   TRUE
@@ -708,9 +721,9 @@ PROC room (VAL []BYTE name, VAL INT roomno, SHARED CT.GAMECTRL! to.game, CT.ROOM
               logout
                 --{{{  client logging out of game
                 SEQ
-                  action.msg (pnames[i], "left the game", i)
+                  action.msg ([pnames[i][str] FOR pnames[i][slen]], "left the game", i)
                   people.ok[i] := FALSE
-                  people[i][in] ! returned.client; pnames[i]; people[i]
+                  people[i][in] ! returned.client; [pnames[i][str] FOR pnames[i][slen]]; people[i]
                 --}}}
         --{{{  debug
         #IF DEFINED (DEBUG)

@@ -51,6 +51,8 @@ x_endian=little
 # m4/occbuild.m4.
 case "$host_cpu" in
   arm*)
+    x_fpu=yes
+    have_twoword=yes
     ;;
   avr*)
     word_length=2

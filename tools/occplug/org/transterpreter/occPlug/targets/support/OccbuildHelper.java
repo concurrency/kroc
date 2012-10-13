@@ -39,6 +39,11 @@ public class OccbuildHelper {
 
 	public static String[] makeOccbuildEnvironment(String toolchain, String[] additional)
 	{
+		if(additional == null)
+		{
+			return makeOccbuildEnvironment(toolchain);
+		}
+
 		Hashtable h = new Hashtable();
 		for(int i = 0; i < additional.length; i++)
 		{
@@ -49,16 +54,21 @@ public class OccbuildHelper {
 		return makeOccbuildEnvironment(toolchain, h);
 	}
 	
+	public static String quote(String s)
+	{
+    return "'" + s + "'";
+	}
+	
 	public static String[] makeOccbuildEnvironment(String toolchain, final Hashtable additional)
 	{		
 		final Hashtable occbuildEnv = new Hashtable();
 		final String bin = getBinPath(toolchain);
 		
-		occbuildEnv.put("OCC21", MiscUtilities.constructPath(bin, host.getCommandName("occ21")));
-		occbuildEnv.put("TCE-DUMP.PL", MiscUtilities.constructPath(bin, host.getCommandName("tce-dump")));
-		occbuildEnv.put("PLINKER.PL", MiscUtilities.constructPath(bin, host.getCommandName("plinker")));
-		occbuildEnv.put("KROC", MiscUtilities.constructPath(bin, host.getCommandName("kroc")));
-		occbuildEnv.put("OCTRAN", MiscUtilities.constructPath(bin, host.getCommandName("tranx86")));
+		occbuildEnv.put("OCC21", quote(MiscUtilities.constructPath(bin, host.getCommandName("occ21"))));
+		occbuildEnv.put("TCE-DUMP.PL", quote(MiscUtilities.constructPath(bin, host.getCommandName("tce-dump"))));
+		occbuildEnv.put("PLINKER.PL", quote(MiscUtilities.constructPath(bin, host.getCommandName("plinker"))));
+		occbuildEnv.put("KROC", quote(MiscUtilities.constructPath(bin, host.getCommandName("kroc"))));
+		occbuildEnv.put("OCTRAN", quote(MiscUtilities.constructPath(bin, host.getCommandName("tranx86"))));
 		
 		if(additional != null)
 		{

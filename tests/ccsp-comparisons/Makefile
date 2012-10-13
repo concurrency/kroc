@@ -1,5 +1,6 @@
 KROC = kroc
 CC = gcc
+CXX = g++
 GHC = ghc
 ERLC = erlc
 JAVAC = javac
@@ -37,6 +38,7 @@ targets = \
 	agents.pthread \
 	agents-dp.pthread \
 	agents.serial \
+	agents.tbb \
 	java6/Agents.class \
 	jcsp/Agents.class \
 	blur.ccsp \
@@ -75,6 +77,9 @@ ts:	ts.c
 
 %.serial:	serial/%.c
 	$(CC) $(CFLAGS) -O2 -Wall $< -o $@
+
+%.tbb:		tbb/%.cc
+	$(CXX) -std=c++0x -O2 -Wall `pkg-config --cflags tbb` $< -o $@ `pkg-config --libs tbb`
 
 clean:
 	rm -f $(targets) 

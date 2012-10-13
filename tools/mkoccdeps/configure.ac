@@ -9,8 +9,6 @@ AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 
-AM_C_PROTOTYPES
-
 dnl Checks for libraries.
 
 dnl Checks for header files.

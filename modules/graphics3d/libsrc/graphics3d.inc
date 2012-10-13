@@ -94,6 +94,13 @@ DATA TYPE G3D.POINT2.3S
     INT r:
 :
 
+--* Height-field point in 2D space.
+DATA TYPE G3D.POINT2.3R
+  RECORD
+    INT x, y:
+    REAL32 z:
+:
+
 --}}}
 --{{{  polygon types
 --* General polygon in 2D space, orignal Z multiplied up.
@@ -217,6 +224,12 @@ PROTOCOL G3D.TMR.CONTROL
     faster                    --* Go faster.
     slower                    --* Go slower.
     set.fps; INT              --* Set frames-per-second absolutely.
+:
+
+--* Specific height-field control.
+CHAN TYPE G3D.HEIGHTFIELD.CONTROL
+  MOBILE RECORD
+    CHAN MOBILE []G3D.POINT2.3R adjust?:
 :
 
 --}}}

@@ -1,0 +1,254 @@
+--
+--      Copyright (C)      2010   Michael Andrew Pirrone-Brusse
+--
+--	This library is free software; you can redistribute it and/or
+--	modify it under the terms of the GNU Lesser General Public
+--	License as published by the Free Software Foundation; either
+--	version 2 of the License, or (at your option) any later version.
+--
+--	This library is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+--	Lesser General Public License for more details.
+--
+--      You should have received a copy of the GNU General Public License
+--      along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+--** Pulse Width Modulation board-specific helper functions for the ATmega328.
+--
+-- @module 644.pwm.arch
+
+-- FIXME
+-- FIXME mjadud I have not really tested this yet. The 644 is a bit different from
+-- FIXME        the 328, and all three PWM channels are 16-bit; two are 8-bit. 
+-- FIXME        A bit more care is needed here before I trust PWM. I don't need it
+-- FIXME        *right now*, so I'm leaving it.
+-- FIXME        I filled in the 8-bit lookup, but... it is probably wrong. And 16-bit
+-- FIXME        has not been touched.
+-- FIXME
+
+#IF NOT (DEFINED (PWMARCH.MODULE))
+#DEFINE PWMARCH.MODULE
+
+--{{{ FUNCTION pwm8.lookup
+--* Lookup function that returns a variety of useful numbers involved with
+-- the operation of Pulse Width Modulation on 8 bit timers.
+--
+-- @param avr.pin The [@em AVR] pin connected to the PWM operations.
+-- @returns TCCRnA Timer/Counter Control Register A for the given PWM pin.
+-- @returns TCCRnB Timer/Counter Control Register B for the given PWM pin.
+-- @returns OCRnx Output Compare Register for the given PWM pin.
+-- @returns TCCRnA.bit The BYTE to be written into TCCRnA. Might be modified
+--   by aditional FUNCTIONs.
+-- @returns TCCRnB.bit The BYTE to be written into TCCRnB. Might be modified
+--   by aditional FUNCTIONs.
+INT, INT, INT, BYTE, BYTE FUNCTION pwm8.lookup (VAL INT avr.pin)
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits, TCCRnB.bits:
+  VALOF
+    SEQ
+      TCCRnB.bits := 0
+      CASE avr.pin
+        20
+          SEQ
+            TCCRnA := TCCR2A
+            TCCRnB := TCCR2B
+            TCCRnA.bits := (BV (WGM20) \/ BV (COM2B1))
+            OCRnx := OCR2B
+        5
+          SEQ
+            TCCRnA := TCCR0A
+            TCCRnB := TCCR0B
+            TCCRnA.bits := (BV (WGM00) \/ BV (COM0B1))
+            OCRnx := OCR0B
+        4
+          SEQ
+            TCCRnA := TCCR0A
+            TCCRnB := TCCR0B
+            TCCRnA.bits := (BV (WGM00) \/ BV (COM0A1))
+            OCRnx := OCR0A
+        19
+          SEQ
+            TCCRnA := TCCR1A
+            TCCRnB := TCCR1B
+            TCCRnA.bits := (BV (WGM10) \/ BV (COM1A1))
+            OCRnx := OCR1A
+        18
+          SEQ
+            TCCRnA := TCCR1A
+            TCCRnB := TCCR1B
+            TCCRnA.bits := (BV (WGM10) \/ BV (COM1B1))
+            OCRnx := OCR1B
+        21
+          SEQ
+            TCCRnA := TCCR2A
+            TCCRnB := TCCR2B
+            TCCRnA.bits := (BV (WGM20) \/ BV (COM2A1))
+            OCRnx := OCR2A
+        ELSE
+          die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits
+:
+--}}}
+
+--{{{ FUNCTION pwm16.lookup
+--* Lookup function that returns a variety of useful numbers involved with
+-- the operation of Pulse Width Modulation on 16 bit timers.
+--
+-- @param avr.pin The [@em AVR] pin connected to the PWM operations.
+-- @returns TCCRnA Timer/Counter Control Register A for the given PWM pin.
+-- @returns TCCRnB Timer/Counter Control Register B for the given PWM pin.
+-- @returns OCRnx Output Compare Register for the given PWM pin.
+-- @returns TCCRnA.bit The BYTE to be written into TCCRnA. Might be modified
+--   by aditional FUNCTIONs.
+-- @returns TCCRnB.bit The BYTE to be written into TCCRnB. Might be modified
+--   by aditional FUNCTIONs.
+INT, INT, INT, BYTE, BYTE FUNCTION pwm16.lookup (VAL INT avr.pin)
+  INT TCCRnA, TCCRnB, OCRnx:
+  BYTE TCCRnA.bits, TCCRnB.bits:
+  VALOF
+    SEQ
+      TCCRnA := TCCR1A
+      TCCRnB := TCCR1B
+      TCCRnB.bits := BV (WGM13)
+      CASE avr.pin
+        15
+          SEQ
+            TCCRnA.bits := (BV (COM1A1))
+            OCRnx := OCR1A
+        16
+          SEQ
+            TCCRnA.bits := (BV (COM1B1))
+            OCRnx := OCR1B
+        ELSE
+          die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
+    RESULT TCCRnA, TCCRnB, OCRnx, TCCRnA.bits, TCCRnB.bits
+:
+--}}}
+
+--{{{ FUNCTION pwm8.TCCRnB.helper
+--* Helper function that modifies the TCCRnB.bits BYTE initially found in
+-- pwm8.lookup.
+-- The modifications are based on the desired prescale value to be used with
+-- the PWM operations.
+--
+-- @param TCCRnB.bits The TCCRnB.bits BYTE initially found in pwm8.lookup.
+-- @param prescale The desired prescale value.
+-- @returns TCCRnB.bits The modified TCCRnB.bits BYTE to
+--   be written into TCCRnB.
+BYTE FUNCTION pwm8.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
+  BYTE bits:
+  VALOF
+    SEQ
+      CASE prescale
+        0
+          bits := TCCRnB.bits \/ #01 -- := BV (CSn0)
+        8
+          bits := TCCRnB.bits \/ #02 -- := BV (CSn1)
+        64
+          bits := TCCRnB.bits \/ #03 -- := BV (CSn0) \/ BV (CSn1)
+        256
+          bits := TCCRnB.bits \/ #04 -- := BV (CSn2)
+        1024
+          bits := TCCRnB.bits \/ #05 -- := BV (CSn2) \/ BV (CSn0)
+        ELSE
+          die ("Invalid clock prescale value")
+    RESULT bits
+:
+--}}}
+
+--{{{ FUNCTION pwm16.TCCRnB.helper
+--* Helper function that modifies the TCCRnB.bits BYTE initially found in
+-- pwm16.lookup.
+-- The modifications are based on the desired prescale value to be used with
+-- the PWM operations.
+--
+-- @param TCCRnB.bits The TCCRnB.bits BYTE initially found in pwm16.lookup.
+-- @param prescale The desired prescale value.
+-- @returns TCCRnB.bits The modified TCCRnB.bits BYTE to
+--   be written into TCCRnB.
+BYTE FUNCTION pwm16.TCCRnB.helper (VAL BYTE TCCRnB.bits, VAL INT prescale)
+  BYTE bits:
+  VALOF
+    CASE prescale
+      0
+        bits := TCCRnB.bits \/ #01 -- := BV (CSn0)
+      8
+        bits := TCCRnB.bits \/ #02 -- := BV (CSn1)
+      64
+        bits := TCCRnB.bits \/ #03 -- := BV (CSn0) \/ BV (CSn1)
+      256
+        bits := TCCRnB.bits \/ #04 -- := BV (CSn2)
+      1024
+        bits := TCCRnB.bits \/ #05 -- := BV (CSn2) \/ BV (CSn0)
+      ELSE
+        die ("Invalid clock prescale value")
+    RESULT bits
+:
+--}}}
+
+--{{{ FUNCTION pwm8.compare.lookup
+--* Lookup FUNCTION for finding the appropriate Output Compare Register.
+--
+-- @param avr.pin The [@em AVR] pin being used for PWM operations.
+-- @returns OCRnx The Output Compare Register for the given PWM pin.
+INT FUNCTION pwm8.compare.lookup (VAL INT avr.pin)
+  INT OCRnx:
+  VALOF
+    CASE avr.pin
+      5
+        OCRnx := OCR2B
+      11
+        OCRnx := OCR0B
+      12
+        OCRnx := OCR0A
+      15
+        OCRnx := OCR1A
+      16
+        OCRnx := OCR1B
+      17
+        OCRnx := OCR2A
+      ELSE
+        die ("The Arduino only supports 8-bit PWM on pins 3,5,6,9,10 and 11.")
+    RESULT OCRnx
+:
+--}}}
+
+--{{{ FUNCTION pwm16.compare.lookup
+--* Lookup FUNCTION for finding the appropriate Output Compare Register.
+--
+-- @param avr.pin The [@em AVR] pin being used for PWM operations.
+-- @returns OCRnx The Output Compare Register for the given PWM pin.
+INT FUNCTION pwm16.compare.lookup (VAL INT avr.pin)
+  INT OCRnx:
+  VALOF
+    CASE avr.pin
+      15
+        OCRnx := OCR1A
+      16
+        OCRnx := OCR1B
+      ELSE
+        die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
+    RESULT OCRnx
+:
+--}}}
+
+--{{{ FUNCTION pwm16.ICRn.lookup
+--* Lookup FUNCTION for finding the appropriate Input Capture Register
+-- for the given [@em 16bit], [@em AVR] pin being used for PWM operations.
+--
+-- @param avr.pin The [@em AVR] pin being used for PWM operations.
+-- @returns ICRn The Input Capture Register for the given PWM pin.
+INT FUNCTION pwm16.ICRn.lookup (VAL INT avr.pin)
+  INT ICRn:
+  VALOF
+    CASE avr.pin
+      15, 16
+        ICRn := ICR1
+      ELSE
+        die ("The Arduino only supports 16-bit PWM on pins 9 and 10.")
+    RESULT ICRn
+: 
+--}}}
+
+#ENDIF

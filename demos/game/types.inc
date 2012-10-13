@@ -23,6 +23,14 @@ CHAN TYPE CT.CLIENT:
 CHAN TYPE CT.ROOMLINK:
 --}}}
 
+--{{{  GSTR (game string type)
+DATA TYPE GSTR
+  RECORD
+    [256]BYTE str:
+    INT slen:
+:
+
+--}}}
 --{{{  OBJECT
 PROTOCOL P.OBJECT.IN
   CASE

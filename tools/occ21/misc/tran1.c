@@ -862,6 +862,11 @@ printtreenl (stderr, 4, tptr);
 		tptr = ConstTableTypeOf (tptr);
 
 		for (; looping;) {
+			if (!tptr) {
+				/* oops! */
+				msg_out (SEV_INTERNAL_BANNER, TRANS, TRANS_INTERNAL_ERROR, locn);
+				return NULL;
+			}
 			switch (TagOf (tptr)) {
 			case S_ARRAY:
 				if (TagOf (ARTypeOf (tptr)) == S_ARRAY) {

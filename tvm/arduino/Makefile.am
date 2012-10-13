@@ -11,7 +11,6 @@ CPPFLAGS = \
 	@CPPFLAGS@
 LDFLAGS = -Llibtvm @LDFLAGS@
 LIBS = -ltvm -lm @LIBS@
-FIRMWARE=tvm-avr-$(MCU)-$(F_CPU)
 
 firmware_SOURCES = \
 	ffi.c \
@@ -30,11 +29,11 @@ upload: tvm-arduino.hex
 	./read-arduino $(UPLOAD_PORT)
 
 install: all
-	cp $(FIRMWARE).hex $(prefix)/share/
+	cp $(FIRMWARE_NAME) $(prefix)/share/
 
 firmware.hex: firmware
 	$(OBJCOPY) -O ihex -R .eeprom firmware firmware.hex
-	mv firmware.hex $(FIRMWARE).hex
+	mv firmware.hex $(FIRMWARE_NAME)
 
 # All the source files need libtvm to be built first.
 $(firmware_SOURCES): libtvm/libtvm.a

@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #include <pthread.h>
 
@@ -32,7 +33,7 @@ typedef struct _chan_t {
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 	volatile int full;
-	volatile int data;
+	volatile intptr_t data;
 } chan_t;
 
 typedef struct _cli_svr_t {
@@ -292,7 +293,7 @@ static cli_svr_t *alloc_cli_svr (void)
 	return cs;
 }
 
-static void send_to (chan_t *chan, int d)
+static void send_to (chan_t *chan, intptr_t d)
 {
 	pthread_mutex_lock (&(chan->mutex));
 	while (chan->full)
@@ -303,9 +304,9 @@ static void send_to (chan_t *chan, int d)
 	pthread_mutex_unlock (&(chan->mutex));
 }
 
-static int recv_from (chan_t *chan)
+static intptr_t recv_from (chan_t *chan)
 {
-	int d;
+	intptr_t d;
 	pthread_mutex_lock (&(chan->mutex));
 	while (!chan->full)
 		pthread_cond_wait (&(chan->cond), &(chan->mutex));
@@ -330,14 +331,14 @@ static void compile_view (cli_svr_t **search, agent_list_t **result)
 		send_to (loc->req, LOC_BORROW_INFO);
 		agents = (agent_list_t *) recv_from (loc->resp);
 		merge_agents (&(offsets[i]), result, agents);
-		send_to (loc->req, (int) agents);
+		send_to (loc->req, (intptr_t) agents);
 		pthread_mutex_unlock (&(loc->cli_lock));
 	}
 }
 
 static void *view (void *param_ptr)
 {
-	int *params		= (int *) param_ptr;
+	intptr_t *params	= (intptr_t *) param_ptr;
 	cli_svr_t **search	= (cli_svr_t **) params[0];
 	agent_list_t *data	= alloc_agent_list ();
 	chan_t	*req		= (chan_t *) params[1];
@@ -352,7 +353,7 @@ static void *view (void *param_ptr)
 				compile_view (search, &data);
 				cycle = msg;
 			}
-			send_to (resp, (int) data);
+			send_to (resp, (intptr_t) data);
 		} else {
 			running = 0;
 		}
@@ -395,12 +396,12 @@ static void redirect_agent (cli_svr_t **neighbours, chan_t *resp, agent_t *info)
 	vector_sub (&(info->pos), &o);
 
 	send_to (resp, LOC_GO_THERE);
-	send_to (resp, (int) neighbours[d]);
+	send_to (resp, (intptr_t) neighbours[d]);
 }
 
 static void *location (void *param_ptr)
 {
-	int *params		= (int *) param_ptr;
+	intptr_t *params	= (intptr_t *) param_ptr;
 	int	loc		= params[0];
 	cli_svr_t *svr		= (cli_svr_t *) params[1];
 	cli_svr_t **neighbours	= (cli_svr_t **) params[2];
@@ -413,13 +414,13 @@ static void *location (void *param_ptr)
 
 	{
 		cli_svr_t **search	= build_search (svr, neighbours);
-		int *params		= (int *) malloc (sizeof (int) * 3);
+		intptr_t *params	= (intptr_t *) malloc (sizeof (intptr_t) * 3);
 		pthread_t thread;
 		int ret;
 
-		params[0] = (int) search;
-		params[1] = (int) view_cb->req;
-		params[2] = (int) view_cb->resp;
+		params[0] = (intptr_t) search;
+		params[1] = (intptr_t) view_cb->req;
+		params[2] = (intptr_t) view_cb->resp;
 
 		ret = pthread_create (&thread, &thread_attrs, view, params);
 		if (ret != 0) {
@@ -453,9 +454,9 @@ static void *location (void *param_ptr)
 				remove_agent (&state, idx);
 			}
 		} else if (type == LOC_GET_VIEW) {
-			send_to (resp, (int) view_cb);
+			send_to (resp, (intptr_t) view_cb);
 		} else if (type == LOC_BORROW_INFO) {
-			send_to (resp, (int) state);
+			send_to (resp, (intptr_t) state);
 			recv_from (req);
 		} else if (type == LOC_SHUTDOWN) {
 			pthread_mutex_lock (&(view_cb->cli_lock));
@@ -491,7 +492,7 @@ static int a_sqrt (const int x, int r)
 #define AGENT_STACK 4096
 static void *agent (void *param_ptr)
 {
-	int *params	= (int *) param_ptr;
+	intptr_t *params = (intptr_t *) param_ptr;
 	
 	barrier_t *b	= (barrier_t *) params[4];
 	cli_svr_t *loc	= (cli_svr_t *) params[3];
@@ -513,7 +514,7 @@ static void *agent (void *param_ptr)
 
 	pthread_mutex_lock (&(loc->cli_lock));
 	send_to (loc->req, LOC_ENTER);
-	send_to (loc->req, (int) &info);
+	send_to (loc->req, (intptr_t) &info);
 	resp = recv_from (loc->resp);
 	assert (resp == LOC_STAY_HERE);
 	send_to (loc->req, LOC_GET_VIEW);
@@ -596,7 +597,7 @@ static void *agent (void *param_ptr)
 			} else {
 				send_to (loc->req, LOC_ENTER);
 			}
-			send_to (loc->req, (int) &info);
+			send_to (loc->req, (intptr_t) &info);
 			resp = recv_from (loc->resp);
 			if (resp == LOC_STAY_HERE) {
 				if (idx > 1) {
@@ -672,13 +673,13 @@ static void proc_main (void)
 	
 	for (i = 0; i < world_area; ++i) {
 		cli_svr_t **neighbours = build_neighbours (i, world);
-		int *params = (int *) malloc (sizeof (int) * 3);
+		intptr_t *params = (intptr_t *) malloc (sizeof (intptr_t) * 3);
 		pthread_t thread;
 		int ret;
 
 		params[0] = i;
-		params[1] = (int) world[i];
-		params[2] = (int) neighbours;
+		params[1] = (intptr_t) world[i];
+		params[2] = (intptr_t) neighbours;
 
 		ret = pthread_create (&thread, &thread_attrs, location, params);
 		if (ret != 0) {
@@ -690,15 +691,15 @@ static void proc_main (void)
 	for (i = 0, id = 1; i < world_area; ++i) {
 		for (j = 0; j < loc_agents; ++j, ++id) {
 			int o = LOC_MIN + ((LOC_SIZE / (loc_agents + 4)) * (j + 2));
-			int *params = (int *) malloc (sizeof (int) * 5);
+			intptr_t *params = (intptr_t *) malloc (sizeof (intptr_t) * 5);
 			pthread_t thread;
 			int ret;
 
 			params[0] = id;
 			params[1] = o;
 			params[2] = o;
-			params[3] = (int) world[i];
-			params[4] = (int) b;
+			params[3] = (intptr_t) world[i];
+			params[4] = (intptr_t) b;
 
 			ret = pthread_create (&thread, &thread_attrs, agent, params);
 			if (ret != 0) {

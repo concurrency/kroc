@@ -3,7 +3,7 @@
 
 # App name
 PLUMB="plumb"
-TVM_INST_ROOT=@FINAL@
+TVM_INST_ROOT=@DESTDIR,final@
 
 usage()
 {
@@ -26,7 +26,7 @@ if [ "$1" == "" ]; then
 fi	
 
 PLATFORM=$1
-SHARE=@FINAL_DEST_SHARE@
+SHARE=@DESTDIR,share@
 source $SHARE/conf/$PLATFORM.conf
 
 # Sanity check
@@ -45,7 +45,7 @@ if [ "$3" == "firmware" ]; then
   #avrdude -C $TVM_AVRDUDE_CONF \
   avrdude \
      $TVM_AVRDUDE_FIRMWARE_FLAGS \
-    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c arduino \
+    -P $UPLOAD_PORT -b $TVM_UPLOAD_RATE -c $PROGRAMMER \
     -U flash:w:$SHARE/firmware/$TVM_ARDUINO_FIRMWARE
   exit
 fi
@@ -94,12 +94,12 @@ echo "Compiling..."
 # I think ISEARCH, being set in the .conf, should do
 # the work of finding the platform-specific libraries...
 avr-occbuild \
-  --search @FINAL_DEST_SHARE@/tvm/avr-vtinclude \
-  --search @FINAL_DEST_SHARE@/tvm/avr-vtlib \
-  --search @FINAL_DEST_INCLUDE@ \
-  --search @FINAL_DEST_INCLUDE@/arch/common \
-  --search @FINAL_DEST_INCLUDE@/arch/$TVM_MCU \
-	--search @FINAL_DEST_INCLUDE@/platforms/$PLATFORM \
+  --search @DESTDIR,share@/tvm/avr-vtinclude \
+  --search @DESTDIR,share@/tvm/avr-vtlib \
+  --search @DESTDIR,include@ \
+  --search @DESTDIR,include@/arch/common \
+  --search @DESTDIR,include@/arch/$TVM_MCU \
+	--search @DESTDIR,include@/platforms/$PLATFORM \
   -DF.CPU=$TVM_F_CPU --program $FILENAME
 
 if [ $? -eq 0 ]; then

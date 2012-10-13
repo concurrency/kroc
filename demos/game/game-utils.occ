@@ -222,8 +222,8 @@ INT, BOOL FUNCTION parse.int (VAL []BYTE str)
 :
 --}}}
 
---{{{  PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []MOBILE []BYTE lines)
-PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []MOBILE []BYTE lines)
+--{{{  PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []GSTR lines)
+PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []GSTR lines)
 
   PROTOCOL LOCAL
     CASE
@@ -242,15 +242,20 @@ PROC file.readlines (VAL []BYTE fname, RESULT BOOL ok, RESULT MOBILE []MOBILE []
       c ? CASE
         INT n:
         nlines; n
-          lines := MOBILE [n]MOBILE []BYTE
+          SEQ
+            lines := MOBILE [n]GSTR
+            SEQ m = 0 FOR n
+              lines[m][slen] := 0
         MOBILE []BYTE str:
         string; str
           IF
             line >= (SIZE lines)
               SKIP
             TRUE
+              INITIAL INT slen IS SIZE str:
               SEQ
-                lines[line] := str
+                [lines[line][str] FOR slen] := [str FOR slen]
+                lines[line][slen] := slen
                 line := line + 1
         done
           ok := FALSE
@@ -346,6 +351,7 @@ PROC file.rdescline (VAL []BYTE fname, suffix, RESULT BOOL ok, RESULT MOBILE []B
   SEQ
     f.len := 0
     buffer.set.string (f.buf, f.len, ##BASEPATH)
+    buffer.set.string (f.buf, f.len, "/")
     buffer.set.string (f.buf, f.len, fname)
     buffer.set.string (f.buf, f.len, suffix)
     file.readline ([f.buf FOR f.len], ok, line)

@@ -5,7 +5,7 @@ CPPFLAGS=-Wall -Os
 VPATH=$(srcdir)
 
 Transterpreter.exe: winstub.o resource.o
-	g++ -mwindows -static $? -o $@
+	g++ -mwindows -static $^ -o $@
 
 resource.o: resource.rc
 

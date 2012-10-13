@@ -202,7 +202,7 @@ def build():
 		with pushd():
 			header("BUILDING  FIRMWARES")
 			cd(concat([config.get('SVN'), "/tvm/arduino"]))
-			cmd("./build.sh")
+			cmd("./build_firmware.sh")
 
 def install():
 	header("DOING MAKE INSTALL")
@@ -651,19 +651,20 @@ def upload():
 		
 		header("PACKAGING AVR")
 		build_avr()
+		build()
 		dependencies()
-		#copy_arduino_config()
-		#copy_arduino_build()
+		copy_arduino_config()
+		copy_arduino_build()
 		deb()			
 		header("PACKAGING NATIVE KROC")
 		build_native_kroc()
 		dependencies()
-		#copy_native_build()
+		copy_native_build()
 		deb()
 		header("PACKAGING NATIVE TVM")
 		build_native_tvm()
 		dependencies()
-		#copy_native_tvm_build()
+		copy_native_tvm_build()
 		deb()
 		header("PACKAGING META")
 		meta_deb()
@@ -722,7 +723,7 @@ def upload():
 			
 		with pushd():
 			cd(root + '/PACKAGES/binary')
-			cmd(config.get('SCP_CMD'))
+			#cmd(config.get('SCP_CMD'))
 
 
 
