@@ -273,7 +273,7 @@ def parse_decl(f):
 	while 1:
 		ls, init, pos = get_occam_line(f)
 		if ls == []:
-			raise OccamDocException("EOF while parsing declaration after line '" + s + "'")
+			raise OccamDocException("EOF while parsing declaration")
 		s = trim_line(init)
 		if s != "":
 			break
