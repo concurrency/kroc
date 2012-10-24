@@ -33,7 +33,7 @@
 --     |                                |              |    | screen
 --     |                                | print.stream |-------->--
 --     |                                |______________|    |
---     |  a4                                                |
+--     |  q4                                                |
 --     |____________________________________________________|
 -- 
 --
@@ -65,7 +65,7 @@
 --   |                            __\_____________\_____________\__   |
 --   |                           |                                 |  | screen
 --   |                           |          print.streams          |------>--
---   |  a4                       |_________________________________|  |
+--   |  q4                       |_________________________________|  |
 --   |________________________________________________________________|
 --
 -- Note: those using the Transterpreter currently have to have the external
@@ -111,7 +111,7 @@
 --   |                            __\_____________\_____________\__   |
 --   |                           |                                 |  | screen
 --   |                           |          print.streams          |------>--
---   |  a4                       |_________________________________|  |
+--   |  q4                       |_________________________________|  |
 --   |________________________________________________________________|
 --
 -- Note: those using the Transterpreter currently have to have the external
@@ -206,7 +206,7 @@
 --   |                            __\_____________\_____________\__   |
 --   |                           |                                 |  | screen
 --   |                           |          print.streams          |------>--
---   |  a4                       |_________________________________|  |
+--   |  q4                       |_________________________________|  |
 --   |________________________________________________________________|
 --
 -- Note: those using the Transterpreter currently have to have the external
@@ -323,7 +323,7 @@
 
 --* This pauses execution of the invoking process by delay microseconds.
 --
--- @param delay The length of the pause (in microseconds)
+-- @param delay The length of the pause (in microseconds).
 --
 PROC pause (VAL INT delay)
   TIMER tim:
@@ -337,9 +337,9 @@ PROC pause (VAL INT delay)
 --* This inputs numbers and tabulates them into lines of text output.
 --  It pauses for 'delay' microseconds after each line.
 --
--- @param delay The length of the pause (in microseconds) between lines
--- @param in Numbers coming in
--- @param out Characters going out
+-- @param delay The length of the pause (in microseconds) between lines.
+-- @param in Numbers coming in.
+-- @param out Characters going out.
 --
 PROC print.stream (VAL INT delay, CHAN INT in?, CHAN BYTE out!)
   WHILE TRUE
@@ -356,10 +356,10 @@ PROC print.stream (VAL INT delay, CHAN INT in?, CHAN BYTE out!)
 --  It tabulates one number from each stream across one line of output.
 --  Then, it pauses for delay microseconds.  It repeats this for ever.
 --
--- @param col.width The field width for the tabulation
--- @param delay The length of the pause (in microseconds) between lines
--- @param in The array of INT input streams
--- @param out Characters (tabulated columns of numbers) going out
+-- @param col.width The field width for the tabulation.
+-- @param delay The length of the pause (in microseconds) between lines.
+-- @param in The array of INT input streams.
+-- @param out Characters (tabulated columns of numbers) going out.
 --
 PROC print.streams (VAL INT col.width, delay, []CHAN INT in?, CHAN BYTE out!)
   INITIAL MOBILE []INT n IS MOBILE [SIZE in?]INT:
@@ -381,19 +381,19 @@ PROC print.streams (VAL INT col.width, delay, []CHAN INT in?, CHAN BYTE out!)
 --{{{  resetting and resettable components
 
 --* Most of the time, this just copies numbers from its 'in?' to 'out!'
---  channels.  If anything on the 'control?' channel appears, that is
---  copies through to the 'out!' channel, *replacing* the next number
+--  channels.  If anything on the 'inject?' channel appears, it is
+--  copied through to the 'out!' channel, [@em replacing] the next number
 --  on the 'in?' stream (which is discarded).
 --
--- @param in The controlled input stream
--- @param control The channel of replacement (reset) numbers
--- @param out The controlled output stream
+-- @param in The input stream.
+-- @param inject Occasionally, replacement (reset) numbers will be sent down this channel.
+-- @param out The output stream.
 --
-PROC replace (CHAN INT in?, control?, out!)
+PROC replace (CHAN INT in?, out!, inject?)
   WHILE TRUE
     PRI ALT
       INT x:
-      control ? x
+      inject ? x
         PAR
           INT any:
           in ? any
@@ -420,9 +420,9 @@ PROC replace (CHAN INT in?, control?, out!)
 
 --* The main process.
 --
--- @param keyboard The standard input channel (stdin, in Unix-speak)
--- @param screen The standard output channel (stdout, in Unix-speak)
--- @param error The standard output channel (stderr, in Unix-speak)
+-- @param keyboard The standard input channel (stdin, in Unix-speak).
+-- @param screen The standard output channel (stdout, in Unix-speak).
+-- @param error The standard output channel (stderr, in Unix-speak).
 --
 PROC q4 (CHAN BYTE keyboard?, screen!, error!)
   SKIP  -- replace with your own code

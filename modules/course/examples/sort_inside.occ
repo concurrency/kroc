@@ -6,31 +6,31 @@
 
 --{{{  COMMENT documentation
 --
-                    --The Sort Pump
-                    ---------------
+--               Inside the Sort Pump (version 1)
+--               --------------------------------
 --
---This demonstrates the internal behaviour of the sort pump.
+-- This demonstrates the internal behaviour of the sort pump.
 --
---Each cell in the sort pump has two registers: one holds the
---`heavy' character it is retaining and the other holds the
---latest character to arrive.  This program shows this pair
---of registers as adjacent characters.  The sort pump is thus
---represented by a line of 15 character pairs, one for each
---cell.  Each cell refreshes the display of its internal state
---after inputting the latest character and just before it
---compares this with the retained chacter.  Characters from
---the keyboard are output directly into the sort pump, which
---cause the states of all cells to be updated.  Characters
---leaving the sort pump are layed out lower on the screen.
---The end-markers separating the character groups being sorted
---are represented by dots.  Initially, all the cells in the
---sort pump contain these end-markers.
+-- Each cell in the sort pump has two registers: one holds the
+-- `heavy' character it is retaining and the other holds the
+-- latest character to arrive.  This program shows this pair
+-- of registers as adjacent characters.  The sort pump is thus
+-- represented by a line of 15 character pairs, one for each
+-- cell.  Each cell refreshes the display of its internal state
+-- after inputting the latest character and just before it
+-- compares this with the retained chacter.  Characters from
+-- the keyboard are output directly into the sort pump, which
+-- cause the states of all cells to be updated.  Characters
+-- leaving the sort pump are layed out lower on the screen.
+-- The end-markers separating the character groups being sorted
+-- are represented by dots.  Initially, all the cells in the
+-- sort pump contain these end-markers.
 --
---The screen is controlled by a simple de-multiplexer of its
---vector of input channels.
+-- The screen is controlled by a simple de-multiplexer of its
+-- vector of input channels.
 --
---Since the pump is only 15 cells long, the keyboard process
---does not allow groups of more than 16 characters to be sent.
+-- Since the pump is only 15 cells long, the keyboard process
+-- does not allow groups of more than 16 characters to be sent.
 --
 --}}}
 
@@ -49,11 +49,11 @@ VAL  INT total       IS 16:
 PROC reporting.cell (VAL INT p,  CHAN BYTE in?, report!, out!)
   --{{{  COMMENT some documentation on the traffic carried by in and out
   --
-  --in ? {{printable}* end.marker}*
-  --out ! {{printable}* end.marker}*
-  --report ! {next-character largest-so-far-character}*
+  -- in ? {{printable}* end.marker}*
+  -- out ! {{printable}* end.marker}*
+  -- report ! {next-character largest-so-far-character}*
   --
-  --ASSUME : end.marker > {printable}
+  -- ASSUME : end.marker > {printable}
   --
   --}}}
   SEQ
@@ -98,11 +98,11 @@ PROC reporting.cell (VAL INT p,  CHAN BYTE in?, report!, out!)
 PROC sort (CHAN BYTE in?, []CHAN BYTE monitor!, CHAN BYTE out!)
   --{{{  COMMENT some documentation on the traffic carried by in and out
   --
-  --in ? {{printable}* end.marker}*
-  --out ! {{printable}* end.marker}*
-  --monitor[p] ! {next-chacter retained-character}*
+  -- in ? {{printable}* end.marker}*
+  -- out ! {{printable}* end.marker}*
+  -- monitor[p] ! {next-character; retained-character}*
   --
-  --ASSUME : end.marker > {printable}
+  -- ASSUME : end.marker > {printable}
   --
   --}}}
   [total - 2]CHAN BYTE c:

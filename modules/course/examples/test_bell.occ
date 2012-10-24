@@ -14,29 +14,70 @@ PROC test.bell (CHAN BYTE keyboard?, screen!, error!)
   BYTE ch:
   SEQ
     
-    -- test BELL on screen channel ...
+    -- Test BELL on screen channel ...
     
-    out.string ("screen: this line will end with a BELL (press a key) ...", 0, screen!)
-    screen ! FLUSH
-    keyboard ? ch
-    screen ! BELL
-    screen ! FLUSH     -- the effect of the BELL, if any, happens now!
+    -- In Unix systems, bytes sent to the screen channel are not shown
+    -- immediately.  Instead, they are buffered and only flushed to
+    -- the actual screen hardware when *either* the buffer is full
+    -- *or* when a new-line character ('*n' in occam) is received
+    -- *or* when a special FLUSH byte (255 in occam) is received.
+
+    out.string ("*c*nscreen: type *'b*' for a BELL or [ENTER] to move on ... ", 0, screen!)
+    screen ! FLUSH               -- force the text to the screen
+
+    INITIAL BOOL again IS TRUE:
+    WHILE again
+      SEQ
+        keyboard ? ch
+        CASE ch
+          'b'
+            SEQ
+              screen ! 'b'
+              screen ! BELL
+              screen ! FLUSH     -- the 'b' and the effect of the BELL,
+                                 -- if any, happens now!
+          '*n', '*c'
+            again := FALSE
+          ELSE
+            SKIP
     out.string ("*c*n", 0, screen!)
 
-    keyboard ? ch      -- wait for keypress.  This is to let the terminal
-                       -- emulator complete its reaction to the BELL on
-                       -- the screen channel.  Otherwise the terminal
-                       -- emulator mixes that up with the following text
-                       -- sent to the error channel.  By default, screen
-                       -- and error channels are crudely multiplexed to
-                       -- the same output device.  From Unix, they can
-                       -- be separated.
+    out.string ("screen channel: on the next line, type any character to move on ... *c*n", 0, screen!)
 
-    -- test BELL on error channel ...
+    keyboard ? ch      -- Wait for keypress.  This is to let the terminal
+                       -- emulator complete its output to the screen.
+                       -- Otherwise the terminal emulator may mix that up
+                       -- with the following text sent to the error channel.
+                       -- By default, screen and error channels are crudely
+                       -- multiplexed to the same output device (your terminal
+                       -- screen, with text interleaved arbitrarily).
+                       -- From Unix at least, screen and error channels can
+                       -- be directed to different devices.
+
+    -- Test BELL on error channel ...
     
-    out.string ("error: this line will end with a BELL (press a key) ...", 0, error!)
-    keyboard ? ch
-    error ! BELL       -- the effect of the BELL, if any, happens now!
-    out.string ("*c*n", 0, error!)
+    -- In Unix systems, anything sent to the error channel appears immediately
+    -- (there is no need to FLUSH).  Unfortunately, some versions of the
+    -- Transterpreter treat the error channel in the same way as the screen
+    -- (so, a FLUSH may be needed).
+    
+    out.string ("error channel: type *'b*' for a BELL or [ENTER] to finish ... ", 0, error!)
+    -- error ! FLUSH   -- this should not be needed
+
+    INITIAL BOOL again IS TRUE:
+    WHILE again
+      SEQ
+        keyboard ? ch
+        CASE ch
+          'b'
+            SEQ
+              error ! 'b'           -- the 'b' should appear (without being flushed)
+              error ! BELL          -- the effect of the BELL, if any, happens now!
+              -- error ! FLUSH      -- this should not be needed.
+          '*n', '*c'
+            again := FALSE
+          ELSE
+            SKIP
+    out.string ("*c*n*n", 0, error!)
 
 :

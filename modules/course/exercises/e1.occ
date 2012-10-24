@@ -69,13 +69,14 @@ REC PROC ascending.merge ([]CHAN INT in?, CHAN INT out!)
   -- Hint: use parallel code and recursion.
   -- Note: you are not expected to be able to tackle this yet!
   -- But ... do it anyway, :).
-  CASE SIZE in?                     -- see slides 39-46 of "shared-etc"
+  CASE SIZE in?      -- see section "CASE process" of "shared-etc" slides
     2
       ascending.merge.2 (in[0]?, in[1]?, out!)
     3
       ascending.merge.3 (in[0]?, in[1]?, in[2]?, out!)
     ELSE
-      -- see slide 118 of "shared-etc" to understand the next two lines ...
+      -- see section "Array slices" of the "shared-etc" slides to understand
+      -- the next two lines ...
       []CHAN INT in.lo? IS [in? FOR (SIZE in?)/2]:  -- botton half of array
       []CHAN INT in.hi? IS [in? FROM (SIZE in?)/2]: -- top half of array
       SKIP  -- replace this with your code

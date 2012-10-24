@@ -6,25 +6,25 @@
 
 --{{{  COMMENT documentation
 --
-                    --The Sort Pump
-                    ---------------
+--                    The Sort Pump
+--                    -------------
 --
---This demonstrates the functional behaviour of the sort pump.
+-- This demonstrates the functional behaviour of the sort pump.
 --
---Characters from the keyboard are buffered through a "window"
---display process before being fed into the pump.  On leaving
---the pump, they are buffered through another "window" before
---being layed out on the screen.  Each "window" reports its
---contents whenever it changes.  The end-markers separating
---the character groups being sorted are represented by dots.
---Initially, both "windows" and all the cells in the sort
---pump contain these end-markers.
+-- Characters from the keyboard are buffered through a "window"
+-- display process before being fed into the pump.  On leaving
+-- the pump, they are buffered through another "window" before
+-- being layed out on the screen.  Each "window" reports its
+-- contents whenever it changes.  The end-markers separating
+-- the character groups being sorted are represented by dots.
+-- Initially, both "windows" and all the cells in the sort
+-- pump contain these end-markers.
 --
---The screen is controlled by a simple de-multiplexer of its
---vector of input channels.
+-- The screen is controlled by a simple de-multiplexer of its
+-- vector of input channels.
 --
---Since the pump is only 15 cells long, the keyboard process
---does not allow groups of more than 16 characters to be sent.
+-- Since the pump is only 15 cells long, the keyboard process
+-- does not allow groups of more than 16 characters to be sent.
 --
 --}}}
 
@@ -43,17 +43,16 @@ VAL  INT total       IS 16:
 PROC cell (CHAN BYTE in?, out!)
   --{{{  COMMENT some documentation on the traffic carried by in and out
   --
-  --in ? {{printable}* end.marker}*
-  --out ! {{printable}* end.marker}*
+  -- in ? {{printable}* end.marker}*
+  -- out ! {{printable}* end.marker}*
   --
-  --ASSUME : end.marker > {printable}
+  -- ASSUME : end.marker > {printable}
   --
   --}}}  
   WHILE TRUE
     BYTE largest:
     SEQ
       in ? largest
-      out ! end.marker
       WHILE largest <> end.marker
         BYTE next:
         SEQ
@@ -65,6 +64,7 @@ PROC cell (CHAN BYTE in?, out!)
               SEQ
                 out ! largest
                 largest := next
+      out ! end.marker
 :
 --}}}
 
@@ -72,10 +72,10 @@ PROC cell (CHAN BYTE in?, out!)
 PROC sort (CHAN BYTE in?, out!)
   --{{{  COMMENT some documentation on the traffic carried by in and out
   --
-  --in ? {{printable}* end.marker}*
-  --out ! {{printable}* end.marker}*
+  -- in ? {{printable}* end.marker}*
+  -- out ! {{printable}* end.marker}*
   --
-  --ASSUME : end.marker > {printable}
+  -- ASSUME : end.marker > {printable}
   --
   --}}}
   [total - 2]CHAN BYTE c:
@@ -294,4 +294,3 @@ PROC sort.pump (CHAN BYTE keyboard?, screen!, error!)
     sort (a?, b!)
     test.rig (keyboard?, screen!, b?, a!)
 :
-

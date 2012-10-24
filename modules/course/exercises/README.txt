@@ -69,7 +69,7 @@ You will need your own copies of all the `.occ' files in this directory.
     These present the classic Santa-Claus concurrency problem and
     invites various solutions in occam-pi.  There is no starter file!
 
-  cylons.doc/.pdf
+  cylons.doc/pdf
 
     This is a simple exercise in robotics.  Your task is to program
     a better brain ('brain.1') for the green robots.  They must keep

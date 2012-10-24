@@ -6,35 +6,46 @@
 
 --{{{  COMMENT documentation
 --
-                    --The Sort Pump
-                    ---------------
+--               Inside the Sort Pump (version 2)
+--               --------------------------------
 --
---This demonstrates the internal behaviour of the sort pump.
+-- This demonstrates the internal behaviour of the sort pump.
 --
---Each cell in the sort pump has two registers: one holds the
---`heavy' character it is retaining and the other holds the
---latest character to arrive.  This program shows this pair
---of registers as adjacent characters.  The sort pump is thus
---represented by a line of 15 character pairs, one for each
---cell.  Each cell refreshes the display of its internal state
---after inputting the latest character and just before it
---compares this with the retained chacter.  Characters from
---the keyboard are output directly into the sort pump, which
---cause the states of all cells to be updated.  Characters
---leaving the sort pump are layed out lower on the screen.
---Characters leaving the sort pump are deliberately delayed
---to a (slow) human typing speed, so that the capacities
---in the cells can be experimented with and demonstrated.
+-- This is a more realistic than version 1.  Cell reports are
+-- processed individually whenever made, so the cells can cycle
+-- independently (not in lock-step).  A delay process (that holds
+-- up each passing number by half a second) is placed at the end
+-- of the sort pump, as part of the test-rig.  If you can type
+-- characters faster than 2 per second, you will see the sort pump
+-- fill up.  In a real application, data will be being supplied
+-- faster than the pump cells can cycle, so all will be busy all
+-- the time - which is the point of the exercise!
 --
---The end-markers separating the character groups being sorted
---are represented by dots.  Initially, all the cells in the
---sort pump contain these end-markers.
 --
---The screen is controlled by a simple de-multiplexer of its
---vector of input channels.
+-- Each cell in the sort pump has two registers: one holds the
+-- `heavy' character it is retaining and the other holds the
+-- latest character to arrive.  This program shows this pair
+-- of registers as adjacent characters.  The sort pump is thus
+-- represented by a line of 15 character pairs, one for each
+-- cell.  Each cell refreshes the display of its internal state
+-- after inputting the latest character and just before it
+-- compares this with the retained chacter.  Characters from
+-- the keyboard are output directly into the sort pump, which
+-- cause the states of all cells to be updated.  Characters
+-- leaving the sort pump are layed out lower on the screen.
+-- Characters leaving the sort pump are deliberately delayed
+-- to a (slow) human typing speed, so that the capacities
+-- in the cells can be experimented with and demonstrated.
 --
---Since the pump is only 15 cells long, the keyboard process
---does not allow groups of more than 16 characters to be sent.
+-- The end-markers separating the character groups being sorted
+-- are represented by dots.  Initially, all the cells in the
+-- sort pump contain these end-markers.
+--
+-- The screen is controlled by a simple de-multiplexer of its
+-- vector of input channels.
+--
+-- Since the pump is only 15 cells long, the keyboard process
+-- does not allow groups of more than 16 characters to be sent.
 --
 --}}}
 
@@ -54,11 +65,11 @@ VAL  INT interval    IS 500000:   -- throttle delay (microseconds)
 PROC reporting.cell (CHAN BYTE in?, report!, out!)
   --{{{  COMMENT some documentation on the traffic carried by in and out
   --
-  --in ? {{printable}* end.marker}*
-  --out ! {{printable}* end.marker}*
-  --report ! {next-character largest-so-far-character}*
+  -- in ? {{printable}* end.marker}*
+  -- out ! {{printable}* end.marker}*
+  -- report ! {next-character largest-so-far-character}*
   --
-  --ASSUME : end.marker > {printable}
+  -- ASSUME : end.marker > {printable}
   --
   --}}}
   WHILE TRUE
@@ -104,11 +115,11 @@ PROC reporting.cell (CHAN BYTE in?, report!, out!)
 PROC sort (CHAN BYTE in?, []CHAN BYTE monitor!, CHAN BYTE out!)
   --{{{  COMMENT some documentation on the traffic carried by in and out
   --
-  --in ? {{printable}* end.marker}*
-  --out ! {{printable}* end.marker}*
-  --monitor[p] ! {next-chacter retained-character}*
+  -- in ? {{printable}* end.marker}*
+  -- out ! {{printable}* end.marker}*
+  -- monitor[p] ! {next-chacter retained-character}*
   --
-  --ASSUME : end.marker > {printable}
+  -- ASSUME : end.marker > {printable}
   --
   --}}}
   [total - 2]CHAN BYTE c:
