@@ -6,7 +6,7 @@
 
 --{{{  COMMENT documentation
 --
---                The Sort Pump (version 1)
+--                The Sort Pump (version 2)
 --                -------------------------
 --
 -- This demonstrates the functional behaviour of the sort pump.
@@ -69,6 +69,7 @@ PROC cell (CHAN BYTE in?, out!)
     BYTE largest:
     SEQ
       in ? largest
+      out ! end.marker
       WHILE largest <> end.marker
         BYTE next:
         SEQ
@@ -80,7 +81,6 @@ PROC cell (CHAN BYTE in?, out!)
               SEQ
                 out ! largest
                 largest := next
-      out ! end.marker
 :
 --}}}
 
