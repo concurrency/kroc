@@ -88,8 +88,8 @@ PROC reporting.cell (VAL INT p,  CHAN BYTE in?, report!, out!)
         in ? largest
         --{{{  output monitor info
         SEQ
-          report ! largest
           report ! end.marker
+          report ! largest
         --}}}
         out ! end.marker
         WHILE largest <> end.marker
