@@ -55,6 +55,24 @@ PROC reporting.cell (VAL INT p,  CHAN BYTE in?, report!, out!)
   --
   -- ASSUME : end.marker > {printable}
   --
+  -- This version always reports the two items it is holding
+  -- whenever anything changes.  The second of these is the
+  -- largest number, so far, in the group being processed.
+  --
+  -- In between groups, the cell holds no items and then only
+  -- one, as the first item arrives.  At these times, 'end.marker'
+  -- is -- substituted for missing items (since two items must
+  -- always be reported.  A reported 'end.marker' will be rendered
+  -- as 'end.char' (".") by the 'screen.plex' process.
+  -- 
+  -- Initially, this outputs 'p + 1' pairs of 'end.marker's, where
+  -- 'p + 1' is the position of the cell in the pump pipeline.
+  -- This is not very nice, but is needed because the 'report.plex'
+  -- process gathers a pair of items *in parallel* from each
+  -- reporting cell (and because data flows into the pipeline,
+  -- like all pipelines, one cell at a time - so later cells have
+  -- to pretend they are there and report something!).
+  --
   --}}}
   SEQ
     --{{{  initialise
@@ -261,6 +279,14 @@ PROC history (CHAN BYTE in?, out!)
 
 --{{{  PROC delay (VAL INT n,  CHAN BYTE in?, out!)
 PROC delay (VAL INT n,  CHAN BYTE in?, out!)
+  --{{{  COMMENT
+  --
+  -- This is a delay line of 'n' elements.  It first inputs 'n' items.
+  -- For each subsequent input, it outputs the item it received 'n'
+  -- inputs ago.  For this coding, the maximum allowed value for 'n'
+  -- is 10.
+  --
+  --}}}
   VAL max.delay IS 10:
   [max.delay]BYTE buffer:
   INT nn, ptr:

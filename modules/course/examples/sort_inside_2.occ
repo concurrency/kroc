@@ -71,6 +71,18 @@ PROC reporting.cell (CHAN BYTE in?, report!, out!)
   --
   -- ASSUME : end.marker > {printable}
   --
+  -- This version always reports the two items it is holding
+  -- whenever anything changes.  The second of these is the
+  -- largest number, so far, in the group being processed.
+  --
+  -- In between groups, the cell holds no items and then only
+  -- one, as the first item arrives.  At the end of each inner
+  -- loop, the cell only holds one item (the largest), having
+  -- sent on the other.  At these times, the 'end.marker' is
+  -- substituted for missing items (since two items must always
+  -- be reported.  A reported 'end.marker' will be rendered as
+  -- 'end.char' (".") by the 'screen.plex' process.
+  --
   --}}}
   WHILE TRUE
     BYTE largest:
@@ -293,6 +305,14 @@ PROC report.plex.2 ([]CHAN BYTE monitor?, CHAN BYTE out!)
 
 --{{{  PROC delay.2 (VAL INT gap, CHAN BYTE in?, out!)
 PROC delay.2 (VAL INT gap, CHAN BYTE in?, out!)
+  --{{{  COMMENT
+  --
+  -- This is a time-delaying process.  It waits 'gap' time units between
+  -- inputting a number and outputting it.  It's used in the testrig to
+  -- slow down the actions inside the sort pump, so that we can see what
+  -- is happening!
+  --
+  --}}}
   WHILE TRUE
     BYTE b:
     TIMER tim:
