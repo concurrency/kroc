@@ -68,11 +68,20 @@ These files are all main compilation units:
     This process will be explained in the course.  It demonstrates
     the functionality of a parallel `sort pump', viewed as a black box.
 
+  sort_pump_2.occ
+
+    This is different from 'sort_pump.occ' only in the position of
+    one line in the 'cell' process inside the pump.  It is less
+    efficient than the original, but has more regular behaviour
+    that is easier to follow.  Challenge: why is this less efficient
+    than 'sort_pump.occ' and can you explain the difference in
+    behaviour seen by a user running this version?
+
   sort_inside.occ
 
     This process will be explained in the course.  It demonstrates
     the internal workings of the parallel sort pump.  This version
-    is a little artificial so that, for easy viewing, the flow of data
+    is a little artificial in that, for easy viewing, the flow of data
     through the pump is constrained by the way the cell reports are
     processed: the cells are lock-stepped by a report from *every*
     cell being demanded every cycle.
@@ -101,4 +110,4 @@ These files are all main compilation units:
 
 
 Peter Welch.
-(23-11-2011)
+(29-10-2012)
