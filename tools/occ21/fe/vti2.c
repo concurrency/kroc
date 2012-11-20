@@ -678,7 +678,7 @@ PUBLIC void init_nodetypeoftag (void)
 #ifndef CAN_USE_INLINE
 PUBLIC nodetypeoftag_t nodetypeoftag (const int t)
 {
-	if (t < 0 || t >= MAX_TAG) {
+	if ((t < 0) || (t >= MAX_TAG)) {
 		return NONODE;
 	}
 	return vti_keyword_table[t].s_nodetype;
@@ -760,6 +760,11 @@ PUBLIC nametypeoftag_t nametypeoftag (const int tag)
 /*{{{  PUBLIC       treenode *checknode_fn*/
 PUBLIC treenode *checknode_fn (treenode *const tptr, const nodetypeoftag_t nodetype, const char *const file, const int line)
 {
+	if (!tptr) {
+		// msg_out_s (SEV_INTERNAL, ANY_MODULE, ANY_FILEINFO, NOPOSN, "checknode_fn() NULL");
+		err_abort ("checknode_fn()");
+		return NULL;
+	}
 	if (nodetypeoftag (TagOf (tptr)) != nodetype) {
 		msg_out_is (SEV_INFO, ANY_MODULE, ANY_FILEINFO, NOPOSN, line, file);
 		badtag (LocnOf (tptr), TagOf (tptr), "checknode_fn");

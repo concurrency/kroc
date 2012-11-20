@@ -2899,11 +2899,17 @@ printtreenl (stderr, 4, name);
 						}
 						p = newcnode (S_CLAIM, claimlocn, newlistnode (S_LIST, NOPOSN, pr, NULL));
 					} else {
+						treenode *rproc;
+
 						/* might actually have a subscript expression here or something.. */
 						if (checknlindent (saved_indent + 2)) {
 							goto error2;
 						}
-						p = newcnode (S_CLAIM, locn, newlistnode (S_LIST, NOPOSN, rprocess (), NULL));
+						rproc = rprocess ();
+						if (!rproc) {
+							goto error2;
+						}
+						p = newcnode (S_CLAIM, locn, newlistnode (S_LIST, NOPOSN, rproc, NULL));
 					}
 					*procptr = p;
 					SetCTemp (p, name);
