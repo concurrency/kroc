@@ -1065,7 +1065,11 @@ PRIVATE void type_mismatch (const treenode *const expected_type, const BOOL reco
 
 	if (typecheck_params != NULL) {
 		/* INSdi02233 */
-		msg_out_is (sev, CHK, CHK_INVTYPE_PARAM, chklocn, typecheck_params->paramno, WNameOf (typecheck_params->fn_name));
+		if (!typecheck_params->fn_name) {
+			msg_out (sev, CHK, CHK_TYPE_MISMATCH, chklocn);
+		} else {
+			msg_out_is (sev, CHK, CHK_INVTYPE_PARAM, chklocn, typecheck_params->paramno, WNameOf (typecheck_params->fn_name));
+		}
 	} else if (isscalartype (TagOf (expected_type))) {
 		msg_out_s (sev, CHK, CHK_TYPE_MISMATCH_EXPECTED, chklocn, tagstring (TagOf (expected_type)));
 	} else {		/* we're not sure what to say, so say nothing about what type is expected */
@@ -3315,10 +3319,11 @@ printf ("\n");
 			/*#endif */
 			/*}}} */
 		default:
-			if (LitTypeOf (tptr) == NULL)
+			if (LitTypeOf (tptr) == NULL) {
 				type_mismatch (default_type, FALSE);
-			else
+			} else {
 				chkreport (CHK_INV_TYPE_DECORATION, chklocn);
+			}
 			break;
 		}
 		#ifdef USER_DEFINED_OPERATORS
