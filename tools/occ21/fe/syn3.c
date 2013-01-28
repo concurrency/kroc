@@ -2574,6 +2574,9 @@ printtreenl (stderr, 4, calladdr);
 			}
 			if (specflag) {
 				*procptr = a;
+#if 0
+fprintf (stderr, "rprocess(1): specflag was %d, a = %p\n", specflag, a);
+#endif
 				procptr = DBodyAddr (a);
 			} else {
 				if (symb == S_LPAREN) {
@@ -2617,6 +2620,9 @@ printtreenl (stderr, 4, calladdr);
 						if ((*procptr) == NULL) {
 							goto error2;
 						}
+#if 0
+fprintf (stderr, "in rprocess(2): *procptr = %p\n", *procptr);
+#endif
 						procptr = DBodyAddr (*procptr);
 						/*}}}*/
 #ifdef MOBILES
@@ -2680,6 +2686,12 @@ fprintf (stderr, "syn3: well, looks like a chan-type declaration!\n");
 								namelist = name;
 							}
 							*procptr = rrestofspec (a, namelist, locn, indent, TRUE);
+#if 0
+fprintf (stderr, "in rprocess(3): *procptr = %p\n", *procptr);
+#endif
+							if (!(*procptr)) {
+								goto error2;
+							}
 							procptr = DBodyAddr (*procptr);
 						} else {
 							nextsymb ();
