@@ -108,7 +108,9 @@ static int r_encode_address_family (int af) {
 		#ifdef AF_AX25
 		case OCC_AF_AX25:	return AF_AX25;
 		#endif /* AF_AX25 */
+		#ifdef AF_IPX
 		case OCC_AF_IPX:	return AF_IPX;
+		#endif	/* AF_IPX */
 		case OCC_AF_APPLETALK:	return AF_APPLETALK;
 		#ifdef AF_NETROM
 		case OCC_AF_NETROM:	return AF_NETROM;
@@ -139,7 +141,9 @@ static int r_encode_address_family (int af) {
 		case OCC_AF_KEY:	return AF_KEY;
 		#endif /* AF_KEY */
 		/* case OCC_AF_NETLINK:	return AF_NETLINK */
+		#ifdef AF_ROUTE
 		case OCC_AF_ROUTE:	return AF_ROUTE;
+		#endif	/* AF_ROUTE */
 		#ifdef AF_PACKET
 		case OCC_AF_PACKET:	return AF_PACKET;
 		#endif /* AF_PACKET */
@@ -346,8 +350,10 @@ static int r_encode_msg_flags (int flags)
 		ret |= MSG_TRUNC;
 	if (flags & OCC_MSG_DONTWAIT)
 		ret |= MSG_DONTWAIT;
+	#ifdef MSG_EOR
 	if (flags & OCC_MSG_EOR)
 		ret |= MSG_EOR;
+	#endif	/* MSG_EOR */
 	if (flags & OCC_MSG_WAITALL)
 		ret |= MSG_WAITALL;
 	#ifdef MSG_FIN
