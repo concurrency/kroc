@@ -89,7 +89,7 @@ static void exit_handler (int status, bool core)
 /*
  *	start here
  */
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(HOSTOS_CYGWIN)
 __attribute__ ((weak))
 #endif
 int main (int argc, char **argv)
