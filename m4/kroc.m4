@@ -97,7 +97,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
 
   case "$target_os" in
     cygwin*)
-      KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -DHOSTOS_CYGWIN"
+      KROC_CCSP_CFLAGS="-mconsole $KROC_CCSP_CFLAGS -DHOSTOS_CYGWIN"
       ;;
     darwin*)
       # Disable automatic PIC usage on Apple's GCC.
