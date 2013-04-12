@@ -32,6 +32,7 @@ dist_aclocal_DATA = \
 	m4/occam-opengl.m4 \
 	m4/occam-pkg.m4 \
 	m4/occam-sdl.m4 \
+	m4/occam-cuda.m4 \
 	m4/occbuild.m4 \
 	m4/tvm.m4
 
