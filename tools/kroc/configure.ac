@@ -1,4 +1,4 @@
-AC_INIT([kroc], [1.5.0-pre5], [kroc-bugs@kent.ac.uk])
+AC_INIT([kroc], [1.5.0-pre6], [kroc-bugs@kent.ac.uk])
 
 AC_CANONICAL_SYSTEM
 
