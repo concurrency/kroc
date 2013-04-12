@@ -22,9 +22,9 @@ Some occam-pi modules can optionally make use of other native libraries if avail
 * MySQL
 * Player
 
-To check out and update KRoC from the Subversion repository, you will also need:
+To check out and update KRoC from the Git repository, you will also need:
 
-* Subversion
+* Git
 * automake 1.8 or later, autoconf 2.52 or later (but not autoconf 2.64, which is buggy)
 
 On Debian-based systems, we suggest installing the following packages:
@@ -34,7 +34,7 @@ apt-get install bash gcc binutils gawk make automake autoconf pkg-config \
 libc6-dev libsdl1.2-dev libsdl-sound1.2-dev libgl1-mesa-dev \
 libmysqlclient15-dev libpng12-dev libxmu-dev libxi-dev \
 libplayercore2-dev libplayerc2-dev libltdl3-dev \
-perl python xsltproc subversion
+perl python xsltproc git
 ```
 
 On x86-64 Debian systems, you will also need the packages that allow 32-bit binaries to be compiled:
