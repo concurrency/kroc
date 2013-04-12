@@ -1,0 +1,60 @@
+--
+--	listdev.occ -- list CUDA devices
+--	Copyright (C) 2013 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+#INCLUDE "course.module"
+#INCLUDE "ocuda.module"
+
+
+PROC listdev (CHAN BYTE scr!)
+  INT dcnt, res:
+  SEQ
+    dcnt := 0
+    ocuda.init (dcnt, res)
+    IF
+      res <> 0
+        SEQ
+          out.string ("listdev: failed to initialise CUDA library*n", 0, scr!)
+          STOP
+      TRUE
+        SKIP
+
+    SEQ
+      out.string ("listdev: found ", 0, scr!)
+      out.int (dcnt, 0, scr!)
+      out.string (" devices.*n", 0, scr!)
+
+    SEQ i = 0 FOR dcnt
+      OCUDA.DEVINFO dinf:
+      SEQ
+        ocuda.devinfo (i, dinf, res)
+        IF
+          res = 0
+            SEQ
+              out.int (i, 0, scr!)
+              out.string (": [", 0, scr!)
+              out.string ([dinf[dname] FOR dinf[dname.len]], 0, scr!)
+              out.string ("] cap. ", 0, scr!)
+              out.int ((dinf[cversion] >> 16) /\ #FFFF, 0, scr!)
+              scr ! '.'
+              out.int (dinf[cversion] /\ #FFFF, 0, scr!)
+              out.string ("*n", 0, scr!)
+          TRUE
+            SKIP
+:
+

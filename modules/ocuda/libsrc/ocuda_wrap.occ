@@ -1,0 +1,71 @@
+--
+--	ocuda_wrap.occ -- occam-CUDA wrappings (occam-side)
+--	Copyright (C) 2013 Fred Barnes <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+
+--** CUDA interface.
+--
+-- This module provides a basic way of accessing CUDA devices from within
+-- occam-pi programs.  It requires the NVidia CUDA toolkit and run-time libraries
+-- to be installed.
+--
+-- @module ocuda
+
+--{{{  includes
+
+#INCLUDE "ocuda.inc"
+
+--}}}
+
+
+--{{{  PROC ocuda.init (INT d.count, RESULT INT res)
+--* Initialise the CUDA library.
+--
+-- @param d.count Maximum number of devices to detect, 0 means all, updated to reflect actual number of devices.
+-- @param res Set to zero on success, non-zero on failure.
+--
+PROC ocuda.init (INT d.count, RESULT INT res)
+  SEQ
+    C.cuda.init (d.count, res)
+:
+--}}}
+--{{{  PROC ocuda.shutdown (RESULT INT res)
+--* Shuts-down the CUDA library.
+--
+-- @param res Set to zero on success, non-zero on failure.
+--
+PROC ocuda.shutdown (RESULT INT res)
+  SEQ
+    -- no-op.
+    res := 0
+:
+--}}}
+--{{{  PROC ocuda.devinfo (VAL INT dnum, RESULT OCUDA.DEVINFO dinfo, RESULT INT res)
+--* Gets details about a specific CUDA device.
+--
+-- @param dnum Device number (0..).
+-- @param dinfo Structure populated with device information.
+-- @param res Set to zero on success, non-zero on failure.
+--
+PROC ocuda.devinfo (VAL INT dnum, RESULT OCUDA.DEVINFO dinfo, RESULT INT res)
+  SEQ
+    C.cuda.devinfo (dnum, dinfo, res)
+:
+--}}}
+
+
