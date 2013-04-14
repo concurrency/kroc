@@ -107,7 +107,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
 
   # If we're configuring in the tree, we also need to get our headers and
   # libraries from there.
-  KROC_CCSP_CINCPATH="$KROC_CCSP_CINCPATH -I$KROC_BUILD_ROOT/runtime/ccsp/include -I$KROC_SRC_ROOT/runtime/ccsp/include -I$KROC_BUILD_ROOT/modules/cif/libsrc -I$KROC_SRC_ROOT/modules/cif/libsrc"
+  KROC_CCSP_CINCPATH="$KROC_CCSP_CINCPATH -I$KROC_BUILD_ROOT/runtime/ccsp/include -I$KROC_SRC_ROOT/runtime/ccsp/include -I$KROC_BUILD_ROOT/modules/cif/libsrc -I$KROC_SRC_ROOT/modules/cif/libsrc -I$KROC_BUILD_ROOT/modules/ocuda/libsrc"
   KROC_CCSP_LIBPATH="$KROC_CCSP_LIBPATH -L$KROC_BUILD_ROOT/runtime/ccsp -L$KROC_BUILD_ROOT/runtime/libkrocif"
 
   AC_CHECK_FUNC(dlsym, have_libc_dlsym=yes, have_libc_dlsym=no)

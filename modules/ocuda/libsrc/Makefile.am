@@ -10,6 +10,7 @@ NVCC = @CUDA_CC@
 NVCC_FLAGS = @CUDA_CFLAGS@
 NVCC_LIBS = @CUDA_LIBS@
 
+ocudadir = $(includedir)/kroc
 
 if BUILD_OCUDA
 EXTRA_DIST = \
@@ -25,6 +26,8 @@ ocuda_lib_objs = \
 ocuda_libs = ocuda.lib
 ocuda_includes = \
 	$(srcdir)/ocuda.inc
+
+ocuda_HEADERS = ocuda_ctypes.h
 
 endif
 

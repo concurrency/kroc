@@ -20,12 +20,20 @@
 #ifndef __OCUDA_CTYPES_H
 #define __OCUDA_CTYPES_H
 
+/* defines a CUDA device (basic) */
+
 typedef struct TAG_ocuda_devinfo {
 	int dnum;
 	char dname[64];
 	int dname_len;
 	int cversion;
 } ocuda_devinfo_t;
+
+/* available to other CUDA code: */
+
+int __get_last_cuda_error (const char *, const char *, const int);
+#define get_last_cuda_error(MSG) __get_last_cuda_error (MSG, __FILE__, __LINE__)
+
 
 #endif	/* !__OCUDA_CTYPE_H */
 

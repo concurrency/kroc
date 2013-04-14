@@ -1,0 +1,263 @@
+--
+--	mandelgpu.occ -- text example of a mandelbrot set in occam, with CUDA
+--      Copyright (C) 2013 Fred Barnes, University of Kent  <frmb@kent.ac.uk>
+--
+--      Based on code:
+--	Copyright (C) 1997 Jim Moores
+--	COMPLEX64 code Copyright (C) 1997 D.C. Wood <D.C.Wood@ukc.ac.uk>
+--      (distributed version, client)
+--	Modifications (C) 2001, 2007, 2012 Fred Barnes
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+--
+
+
+#INCLUDE "sdlraster.module"
+#INCLUDE "rastergraphics.module"
+#INCLUDE "rastertext.module"
+#INCLUDE "rasterio.module"
+#INCLUDE "course.module"
+#INCLUDE "useful.module"
+#INCLUDE "ocuda.module"
+#INCLUDE "font6x13.inc"
+
+#INCLUDE "mandelgpu_types.inc"
+
+DATA TYPE MANDELCUDA.AINFO IS INT:
+
+#PRAGMA EXTERNAL "PROC C.cuda.allocmem (OCUDA.DEVINFO device, MANDELCUDA.AINFO ainfo, VAL []INT iparams) = 0"
+#PRAGMA EXTERNAL "PROC C.cuda.freemem (MANDELCUDA.AINFO ainfo) = 0"
+#PRAGMA EXTERNAL "PROC C.cuda.mandelbrot (MANDELCUDA.AINFO ainfo, VAL []REAL64 settings, [][]INT fb, VAL []INT iparams, colouring) = 0"
+
+
+VAL INT N.ITERS IS 1500:
+VAL INT FRAME.SPEED IS 20000:         -- 50 FPS
+
+PROTOCOL RASTER.AND.PARAMS IS RASTER; [3]REAL64; INT:
+
+PROC gpu.mandelbrot (OCUDA.DEVINFO device, CHAN RASTER.AND.PARAMS scr.in?, CHAN RASTER scr.out!, VAL []INT colouring) --{{{
+  MANDELCUDA.AINFO ainfo:
+  [3]REAL64 params:
+  [3]INT iparams:
+  SEQ
+    iparams[0] := IMAGE.WIDTH
+    iparams[1] := IMAGE.HEIGHT
+    iparams[2] := 0
+
+    C.cuda.allocmem (device, ainfo, iparams)
+    
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        SEQ
+          scr.in ? r; params; iparams[2]
+
+          C.cuda.mandelbrot (ainfo, params, r, iparams, colouring)
+
+          -- decorate
+          draw.text (2, 2, "GPU Mandelbrot Explorations", FONT.6X13, #00FFFFFF, r)
+          [128]BYTE buf:
+          INITIAL INT blen IS 0:
+          SEQ
+            buffer.set.string (buf, blen, "X drift: ")
+            buffer.set.real64 (buf, blen, 2, 15, params[0])
+
+            draw.text (2, 17, [buf FOR blen], FONT.6X13, #00FFFFFF, r)
+
+            blen := 0
+            buffer.set.string (buf, blen, "Y drift: ")
+            buffer.set.real64 (buf, blen, 2, 15, params[1])
+
+            draw.text (2, 32, [buf FOR blen], FONT.6X13, #00FFFFFF, r)
+
+            blen := 0
+            buffer.set.string (buf, blen, "Zoom: ")
+            buffer.set.real64 (buf, blen, 2, 15, params[2])
+
+            draw.text (2, 47, [buf FOR blen], FONT.6X13, #00FFFFFF, r)
+          draw.text (2, 62, "o/O - zoom out to 64", FONT.6X13, #00FFFFFF, r)
+          draw.text (2, 77, "t/T - trippy mode on/off", FONT.6X13, #00FFFFFF, r)
+          scr.out ! r
+    
+    C.cuda.freemem (ainfo)
+
+:
+
+--}}}
+PROC rate.limit (CHAN RASTER in?, out!) --{{{
+  TIMER tim:
+  INT t:
+  SEQ
+    tim ? t
+    WHILE TRUE
+      RASTER r:
+      SEQ
+        t := t PLUS FRAME.SPEED
+        tim ? AFTER t
+        in ? r
+        out ! r
+:
+--}}}
+PROC event.handler (CHAN RASTER.EVENT ev.in?, CHAN RASTER in?, CHAN RASTER.AND.PARAMS out!) --{{{
+  INITIAL REAL64 zoom IS 16.0:
+  INITIAL REAL64 x.drift IS 0.0:
+  INITIAL REAL64 y.drift IS 0.0:
+  INITIAL REAL64 x.target IS  1.16000014858:
+  INITIAL REAL64 y.target IS -0.27140215305:
+  INITIAL INT iparm IS 0:
+
+  INITIAL BOOL zoom.in IS FALSE:
+  INITIAL BOOL zoom.out IS FALSE:
+  INITIAL BOOL zoom.to.64 IS FALSE:
+  INITIAL BOOL trippy IS FALSE:
+  INITIAL BOOL redraw IS TRUE:
+
+  INT rel.x, rel.y:
+  SEQ
+    rel.x := 0
+    rel.y := 0
+
+    WHILE TRUE
+      BOOL any.active:
+      SEQ
+        any.active := (zoom.to.64 OR zoom.in OR zoom.out OR trippy OR redraw)
+
+        PRI ALT
+          RASTER.EVENT ev:
+          ev.in ? ev
+            --{{{  handle event
+            SEQ
+              CASE ev[type]
+                RASTER.ET.KEYDOWN
+                  IF
+                    (ev[id] = (INT 'o')) OR (ev[id] = (INT 'O'))
+                      zoom.to.64 := NOT zoom.to.64
+                    (ev[id] = (INT 't')) OR (ev[id] = (INT 'T'))
+                      IF
+                        trippy
+                          trippy, iparm := FALSE, 0
+                        TRUE
+                          trippy := TRUE
+                    TRUE
+                      SKIP
+                RASTER.ET.MOUSEBUTTONDOWN
+                  SEQ
+                    rel.x := (INT ev[x]) - (IMAGE.WIDTH / 2)
+                    rel.y := (INT ev[y]) - (IMAGE.HEIGHT / 2)
+                    IF
+                      ev[id] = RASTER.BUTTON.LEFT
+                        zoom.in := TRUE
+                      ev[id] = RASTER.BUTTON.RIGHT
+                        zoom.out := TRUE
+                      TRUE
+                        SKIP
+                RASTER.ET.MOUSEBUTTONUP
+                  IF
+                    ev[id] = RASTER.BUTTON.LEFT
+                      zoom.in := FALSE
+                    ev[id] = RASTER.BUTTON.RIGHT
+                      zoom.out := FALSE
+                    TRUE
+                      SKIP
+                RASTER.ET.EXPOSE
+                  redraw := TRUE
+                ELSE
+                  SKIP
+            --}}}
+
+          RASTER r:
+          any.active & in ? r
+            [3]REAL64 params:
+            SEQ
+              params[0] := x.drift
+              params[1] := y.drift
+              params[2] := zoom
+
+              out ! r; params; iparm
+
+              -- apply things
+              IF
+                trippy
+                  IF
+                    iparm = 23
+                      iparm := 0
+                    TRUE
+                      iparm := (iparm + 1)
+                TRUE
+                  SKIP
+              IF
+                zoom.in
+                  SEQ
+                    zoom := zoom + (zoom / 32.0)
+                    x.target := x.target - ((REAL64 ROUND rel.x) / (zoom * 32.0))
+                    y.target := y.target - ((REAL64 ROUND rel.y) / (zoom * 32.0))
+
+                    x.drift := x.drift + ((x.target - x.drift) / 12.0)
+                    y.drift := y.drift + ((y.target - y.drift) / 12.0)
+                zoom.out
+                  zoom := zoom - (zoom / 32.0)
+                zoom.to.64
+                  IF
+                    zoom <= 64.0
+                      zoom.to.64 := FALSE
+                    TRUE
+                      zoom := zoom - (zoom / 24.0)
+                TRUE
+                  SKIP
+
+              -- redrawn
+              redraw := FALSE
+
+:
+--}}}
+
+
+PROC mandelbrot (CHAN BYTE kyb?, scr!, SHARED CHAN BYTE err!)
+  INITIAL INT fail IS 0:
+  [256]INT colouring:
+  INITIAL INT dcount IS 1:
+  OCUDA.DEVINFO cudadev:
+  SEQ
+    ocuda.init (dcount, fail)
+    IF
+      fail = 0
+        SKIP
+    ocuda.devinfo (0, cudadev, fail)
+    IF
+      fail = 0
+        SKIP
+
+    out.string ("CUDA initialised, device is [", 0, scr!)
+    out.string ([cudadev[dname] FOR cudadev[dname.len]], 0, scr!)
+    out.string ("]*n", 0, scr!)
+
+    colouring[255] := #00000000
+    SEQ i = 0 FOR (SIZE colouring) - 1
+      INITIAL REAL32 hval IS (REAL32 TRUNC i) / 256.0:
+      colouring[i] := hsv.to.rgb (hval, 0.6, 0.7)
+
+    CHAN RASTER c, d, f:
+    CHAN RASTER.AND.PARAMS e:
+    CHAN RASTER.EVENT ev:
+    PAR
+      rate.limit (f?, c!)
+      raster.display ("Mandelbrot", IMAGE.WIDTH, IMAGE.HEIGHT, 2, c?, d!, ev!)
+      -- raster.capture ("Mandelbrot", IMAGE.WIDTH, IMAGE.HEIGHT, 2, c?, d!, ev!, err!)
+      event.handler (ev?, d?, e!)
+      gpu.mandelbrot (cudadev, e?, f!, colouring)
+
+:
+
+

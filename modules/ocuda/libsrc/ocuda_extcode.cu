@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 
+#include <dmem_if.h>
+
 #include "ocuda_ctypes.h"
 
 #define MAX_GPU_INSTANCES	(8)
@@ -39,7 +41,6 @@ int __get_last_cuda_error (const char *msg, const char *file, const int line) /*
 }
 /*}}}*/
 
-#define get_last_cuda_error(MSG) __get_last_cuda_error (MSG, __FILE__, __LINE__)
 
 static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 {
@@ -85,7 +86,9 @@ static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 			devinfo[i].dname_len = strlen (prop.name);
 			memcpy (devinfo[i].dname, prop.name, devinfo[i].dname_len);
 		}
+#if defined(OCUDA_DEBUG)
 		fprintf (stderr, "CUDA device %d: \"%s\" (%d.%d) init\n", devinfo[i].dnum, prop.name, (devinfo[i].cversion >> 16) & 0xffff, (devinfo[i].cversion & 0xffff));
+#endif
 	}
 
 	return;
