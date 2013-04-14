@@ -27,6 +27,32 @@ typedef struct TAG_ocuda_devinfo {
 	char dname[64];
 	int dname_len;
 	int cversion;
+	int cmode;
+
+	int global_mem;
+	int shared_mem_per_block;
+	int regs_per_block;
+	int warp_size;
+	int mem_pitch;
+	int max_threads_per_block;
+	int max_threads_dim[3];
+	int max_grid_size[3];
+	int clock_rate;
+	int total_const_mem;
+	int mproc_count;
+	int max_threads_per_mproc;
+	int integrated;
+	int can_map_host_memory;
+	int concur_kernels;
+	int async_engine_count;
+	int pci_bus_id;
+	int pci_device_id;
+	int pci_domain_id;
+	int tcc_driver;
+	int unified_addressing;
+	int mem_clock_rate;
+	int mem_bus_width;
+	int l2_cache_size;
 } ocuda_devinfo_t;
 
 /* available to other CUDA code: */

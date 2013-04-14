@@ -46,13 +46,112 @@ PROC listdev (CHAN BYTE scr!)
         IF
           res = 0
             SEQ
-              out.int (i, 0, scr!)
+              out.int (i, 1, scr!)
               out.string (": [", 0, scr!)
               out.string ([dinf[dname] FOR dinf[dname.len]], 0, scr!)
-              out.string ("] cap. ", 0, scr!)
+              out.string ("] compute-capability ", 0, scr!)
               out.int ((dinf[cversion] >> 16) /\ #FFFF, 0, scr!)
               scr ! '.'
               out.int (dinf[cversion] /\ #FFFF, 0, scr!)
+              out.string (",  integrated: ", 0, scr!)
+              IF
+                dinf[integrated] = 0
+                  out.string ("no", 0, scr!)
+                TRUE
+                  out.string ("yes", 0, scr!)
+              out.string ("*n", 0, scr!)
+
+              out.string ("   compute-mode: ", 0, scr!)
+              CASE dinf[cmode]
+                OCUDA.CMODE.DEFAULT
+                  out.string ("default (multi-thread, multi-proc)*n", 0, scr!)
+                OCUDA.CMODE.EXCLUSIVE
+                  out.string ("exclusive (single-thread, single-proc)*n", 0, scr!)
+                OCUDA.CMODE.PROHIBITED
+                  out.string ("prohibited (not for CUDA)*n", 0, scr!)
+                OCUDA.CMODE.EXCLUSIVEPROC
+                  out.string ("exclusive process (multi-thread, single-proc)*n", 0, scr!)
+
+              out.string ("   mem: global: ", 0, scr!)
+              out.int (dinf[global.mem], 0, scr!)
+              out.string (" KiB,  shared-per-block: ", 0, scr!)
+              out.int (dinf[shared.mem.per.block], 0, scr!)
+              out.string (" KiB,  const-data: ", 0, scr!)
+              out.int (dinf[total.const.mem], 0, scr!)
+              out.string (" KiB,  L2-cache: ", 0, scr!)
+              out.int (dinf[l2.cache.size], 0, scr!)
+              out.string (" KiB*n", 0, scr!)
+
+              out.string ("   regs-per-block: ", 0, scr!)
+              out.int (dinf[regs.per.block], 0, scr!)
+              out.string (",  warp-size: ", 0, scr!)
+              out.int (dinf[warp.size], 0, scr!)
+              out.string (" threads,  max-threads-per_block: ", 0, scr!)
+              out.int (dinf[max.threads.per.block], 0, scr!)
+              out.string ("*n", 0, scr!)
+              
+              out.string ("   max-block-dims: [", 0, scr!)
+              out.int (dinf[max.threads.dim][0], 0, scr!)
+              out.string (",", 0, scr!)
+              out.int (dinf[max.threads.dim][1], 0, scr!)
+              out.string (",", 0, scr!)
+              out.int (dinf[max.threads.dim][2], 0, scr!)
+              out.string ("],  max-grid-dims: [", 0, scr!)
+              out.int (dinf[max.grid.size][0], 0, scr!)
+              out.string (",", 0, scr!)
+              out.int (dinf[max.grid.size][1], 0, scr!)
+              out.string (",", 0, scr!)
+              out.int (dinf[max.grid.size][2], 0, scr!)
+              out.string ("]*n", 0, scr!)
+
+              out.string ("   clock-speed: ", 0, scr!)
+              out.int (dinf[clock.rate], 0, scr!)
+              out.string (" KHz,  mem-clock: ", 0, scr!)
+              out.int (dinf[mem.clock.rate], 0, scr!)
+              out.string (" KHz,  mem-width: ", 0, scr!)
+              out.int (dinf[mem.bus.width], 0, scr!)
+              out.string (" bits*n", 0, scr!)
+
+              out.string ("   multiprocessor-count: ", 0, scr!)
+              out.int (dinf[mproc.count], 0, scr!)
+              out.string (",  max-threads-per: ", 0, scr!)
+              out.int (dinf[max.threads.per.mproc], 0, scr!)
+              out.string ("*n", 0, scr!)
+
+              out.string ("   can-map-host-memory: ", 0, scr!)
+              IF
+                dinf[can.map.host.memory] = 0
+                  out.string ("no", 0, scr!)
+                TRUE
+                  out.string ("yes", 0, scr!)
+              out.string (",  unified-addressing: ", 0, scr!)
+              IF
+                dinf[unified.addressing] = 0
+                  out.string ("no", 0, scr!)
+                TRUE
+                  out.string ("yes", 0, scr!)
+              out.string (",  concurrent-kernel-exec: ", 0, scr!)
+              IF
+                dinf[concur.kernels] = 0
+                  out.string ("no", 0, scr!)
+                TRUE
+                  out.string ("yes", 0, scr!)
+              out.string ("*n", 0, scr!)
+
+              out.string ("   async-engines: ", 0, scr!)
+              out.int (dinf[async.engine.count], 0, scr!)
+              out.string (",  PCI (bus,dev,dom): ", 0, scr!)
+              out.int (dinf[pci.bus.id], 0, scr!)
+              out.string (":", 0, scr!)
+              out.int (dinf[pci.device.id], 0, scr!)
+              out.string (".", 0, scr!)
+              out.int (dinf[pci.domain.id], 0, scr!)
+              out.string (",  tcc-driver: ", 0, scr!)
+              IF
+                dinf[tcc.driver] = 0
+                  out.string ("no", 0, scr!)
+                TRUE
+                  out.string ("yes", 0, scr!)
               out.string ("*n", 0, scr!)
           TRUE
             SKIP
