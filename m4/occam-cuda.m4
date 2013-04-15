@@ -6,8 +6,9 @@ dnl @author Fred Barnes <frmb@kent.ac.uk>
 dnl @license public domain
 
 
-dnl OCCAM_HAVE_CUDA([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl OCCAM_HAVE_CUDA([MINIMUM-VERSION, DEFAULT-COMPUTE-LEVEL, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
 dnl Test for CUDA and define CUDA_CC, CUDA_CFLAGS and CUDA_LIBS
+dnl Always sets the -arch .. flag to nvcc, else what is compiled-to typically lacks double support.
 dnl
 AC_DEFUN([OCCAM_HAVE_CUDA],
 [dnl
@@ -44,12 +45,17 @@ fi
 AC_PATH_PROG([CUDA_CC], [nvcc], [no])
 
 min_cuda_version=ifelse([$1], ,4.1,$1)
+def_compute_level=ifelse([$2], ,sm_13,$2)
+
+AC_MSG_CHECKING([what CUDA compute-level to compile for])
+AC_MSG_RESULT($def_compute_level)
+
 AC_MSG_CHECKING([for CUDA version >= $min_cuda_version])
 no_cuda=""
 if test "$CUDA_CC" = "no" ; then
   no_cuda="yes"
 else
-  CUDA_CFLAGS="$(printf '%s' "$KROC_CCSP_CINCPATH") -Xcompiler $(printf '%s' "$KROC_CCSP_CFLAGS" | sed 's/^[ ]*//' | tr ' ' ',') -arch sm_13"
+  CUDA_CFLAGS="$(printf '%s' "$KROC_CCSP_CINCPATH") -Xcompiler $(printf '%s' "$KROC_CCSP_CFLAGS" | sed 's/^[ ]*//' | tr ' ' ',') -arch $def_compute_level"
   CUDA_LIBS="-lcudart"
   cuda_major_version=$($CUDA_CC --version | \
   	grep 'release' | sed 's/.*release \([[0-9]]*\).\([[0-9]]*\).*/\1/')
@@ -111,13 +117,13 @@ fi
 
 if test "x$no_cuda" = "x" ; then
   AC_MSG_RESULT(yes)
-  ifelse([$2], , :, [$2])
+  ifelse([$3], , :, [$3])
 else
   AC_MSG_RESULT(no)
   echo "*** The CUDA compiler (nvcc) could not be found."
   echo "*** If CUDA is installed, use --with-cuda-prefix=..."
   echo "*** to specify its location."
-  ifelse([$3], , :, [$3])
+  ifelse([$4], , :, [$4])
 
   CUDA_CC=""
   CUDA_CFLAGS=""

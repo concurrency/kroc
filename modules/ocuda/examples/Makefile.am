@@ -8,10 +8,14 @@ NVCC_FLAGS = @CUDA_CFLAGS@
 OCCBUILD = @OCCBUILD@
 
 EXTRA_DIST = \
-	listdev.occ
-	mandelgpu.occ
-	mandelgpu_types.inc
-	mandelcuda.cu
+	listdev.occ \
+	mandelgpu.occ \
+	mandelgpu_types.inc \
+	mandelcuda.cu \
+	occoids_cuda.cu \
+	occoids_ctypes.h \
+	gpuboids.occ \
+	gpuboids_params.inc
 
 if BUILD_OCUDA_EXAMPLES
 ocuda_examples = \
@@ -19,7 +23,8 @@ ocuda_examples = \
 endif
 if BUILD_OCUDA_SDL_EXAMPLES
 ocuda_sdl_examples = \
-	mandelgpu
+	mandelgpu \
+	gpuboids
 endif
 
 examples = $(ocuda_examples) $(ocuda_sdl_examples)
@@ -30,10 +35,13 @@ install-exec-local: $(examples)
 	$(OCCBUILD) --install-examples ocuda --prefix "$(prefix)" --destdir "$(DESTDIR)" $(examples)
 
 clean-local:
-	$(OCCBUILD) --clean $(examples)
+	$(OCCBUILD) --clean $(examples) mandelcuda.o occoids_cuda.o
 
 mandelgpu: mandelgpu.occ mandelgpu_types.inc mandelcuda.o
 	$(OCCBUILD) --program $(srcdir)/mandelgpu.occ mandelcuda.o
+
+gpuboids: gpuboids.occ gpuboids_params.inc gpuboids_cuda.inc occoids_cuda.o
+	$(OCCBUILD) --program $(srcdir)/gpuboids.occ occoids_cuda.o
 
 SUFFIXES = .occ .cu
 

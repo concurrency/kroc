@@ -9,7 +9,7 @@ OCCAM_OCCBUILD
 build_ocuda_examples=yes
 build_ocuda_sdl_examples=yes
 
-OCCAM_HAVE_CUDA(4.2, ,[build_ocuda_examples=no])
+OCCAM_HAVE_CUDA(4.2, sm_20, ,[build_ocuda_examples=no])
 
 OCCAM_INCLUDE([course.module ocuda.module], ,[build_ocuda_examples=no])
 OCCAM_INCLUDE([sdlraster.module rastergraphics.module rastertext.module useful.module rasterio.module], ,[build_ocuda_sdl_examples=no])

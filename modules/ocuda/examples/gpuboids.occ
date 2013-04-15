@@ -1,0 +1,1778 @@
+--** Boids implementation in occam-pi.
+--	
+--      gpuboids.occ -- Boids implementation with CUDA
+--	Copyright (C) 2012-2013 Fred Barnes, University of Kent  <frmb@kent.ac.uk>
+--
+--	This program is free software; you can redistribute it and/or modify
+--	it under the terms of the GNU General Public License as published by
+--	the Free Software Foundation; either version 2 of the License, or
+--	(at your option) any later version.
+--
+--	This program is distributed in the hope that it will be useful,
+--	but WITHOUT ANY WARRANTY; without even the implied warranty of
+--	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+--	GNU General Public License for more details.
+--
+--	You should have received a copy of the GNU General Public License
+--	along with this program; if not, write to the Free Software
+--	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+--
+
+-- Note: original boid implementations by Adam Sampson, Paul Andrews, Peter Welch, Carl Ritson.
+-- mostly done as part of the CoSMoS project.
+
+#INCLUDE "course.module"
+#INCLUDE "sdlraster.module"
+#INCLUDE "maths.module"
+#INCLUDE "rastergraphics.module"
+#INCLUDE "rastertext.module"
+#INCLUDE "ocuda.module"
+
+--{{{  Settings that would normally be provided on the compiler command-line, consumed by headers below and elsewhere
+#UNDEF NO.GPU
+#DEFINE DO.VIS
+#DEFINE INTERACTIVE
+#DEFINE N.INITIAL.BOIDS 8192
+#DEFINE N.INITIAL.OBST 32
+#DEFINE N.MAX.VIEWABLE.AGENTS 2048
+#DEFINE N.WIDTH 16
+#DEFINE N.HEIGHT 12
+#DEFINE SYNC.VIS
+#UNDEF SHOW.BENCHMARK
+
+--}}}
+
+#INCLUDE "gpuboids_params.inc"
+#INCLUDE "gpuboids_cuda.inc"
+
+--{{{  externals
+#PRAGMA EXTERNAL "PROC C.ccsp.get.process.count (INT count) = 0"
+
+--}}}
+
+--{{{  data types and protocols
+--{{{  vectors
+
+VECTOR INLINE FUNCTION "+" (VAL VECTOR a, b) IS [a[x] + b[x], a[y] + b[y]]:
+VECTOR INLINE FUNCTION "-" (VAL VECTOR a, b) IS [a[x] - b[x], a[y] - b[y]]:
+VECTOR INLINE FUNCTION "**" (VAL VECTOR a, VAL REAL32 b) IS [a[x] * b, a[y] * b]:
+VECTOR INLINE FUNCTION "/" (VAL VECTOR a, VAL REAL32 b) IS [a[x] / b, a[y] / b]:
+
+--* Compute the square of the magnitude of the vector.
+REAL32 INLINE FUNCTION magnitude2 (VAL VECTOR v) IS (v[x] * v[x]) + (v[y] * v[y]):
+
+PROC out.vector (VAL VECTOR v, CHAN BYTE out!)
+  SEQ
+    out ! '('
+    out.real32 (v[x], 0, 0, out!)
+    out ! ','
+    out.real32 (v[y], 0, 0, out!)
+    out ! ')'
+:
+--}}}
+PROC buffer.set.vector ([]BYTE buf, INT buf.len, VAL VECTOR v) --{{{
+  SEQ
+    buffer.set.string (buf, buf.len, "(")
+    buffer.set.real32 (buf, buf.len, 0, 6, v[x])
+    buffer.set.string (buf, buf.len, ",")
+    buffer.set.real32 (buf, buf.len, 0, 6, v[y])
+    buffer.set.string (buf, buf.len, ")")
+:
+--}}}
+--{{{  agent info
+--*{{{ AT agent types
+VAL INT AT.BOID IS 1:
+VAL INT AT.CYLINDER IS 2:
+
+INT INLINE FUNCTION type.id.to.type (VAL INT type.id) IS (type.id >> 24) /\ #FF:
+
+--*}}}
+
+--}}}
+--{{{  agents
+PROTOCOL AGENT.REQ
+  CASE
+:
+
+PROTOCOL AGENT.RESP
+  CASE
+:
+
+CHAN TYPE AGENT.CT
+  MOBILE RECORD
+    CHAN AGENT.REQ req?:
+    CHAN AGENT.RESP resp!:
+:
+--}}}
+--{{{  locations
+CHAN TYPE LOC.CT:
+
+PROTOCOL LOC.REQ
+  CASE
+    enter; INT
+    move.boids
+    leave; INT
+:
+
+PROTOCOL LOC.RESP
+  CASE
+:
+
+CHAN TYPE LOC.CT
+  MOBILE RECORD
+    CHAN LOC.REQ req?:
+    CHAN LOC.RESP resp!:
+:
+--}}}
+--{{{  interactive handling
+PROTOCOL INTERACT.EVENT
+  CASE
+    on; VECTOR
+    off; VECTOR
+    move; VECTOR
+
+:
+
+PROTOCOL INTERACT.CHANGE
+  CASE
+    rdist; REAL32
+    vrad; REAL32
+    vmaxdiff; REAL32
+    slimit; REAL32
+    rfrac; REAL32
+    cmfrac; REAL32
+    mvfrac; REAL32
+    ofrac; REAL32
+    saccel; REAL32
+    preset; INT
+:
+
+CHAN TYPE INTERACT.CT
+  MOBILE RECORD
+    CHAN INTERACT.EVENT in?:
+    CHAN INTERACT.CHANGE change?:
+:
+
+--}}}
+--}}}
+
+PROC main (SHARED CHAN BYTE err!)
+  --{{{  FUNCTION dir.value
+  --* Figure out what direction we should move in given a coordinate.
+  -- Between -1 and 1, this'll return 0; else it'll return the sign of the
+  -- input.
+  INT FUNCTION dir.value (VAL REAL32 base, r)
+    INT d:
+    VALOF
+      IF
+        r < base
+          d := -1
+        r >= (base + 1.0)
+          d := 1
+        TRUE
+          d := 0
+      RESULT d
+  :
+  --}}}
+
+  --{{{  FUNCTION random.real32
+  --* Generate a random [@code REAL32].
+  REAL32, INT FUNCTION random.real32 (VAL REAL32 range, VAL INT seed)
+    REAL32 result:
+    INT value, newseed:
+    VALOF
+      SEQ
+        value, newseed := random (MOSTPOS INT, seed)
+        result := (range * (REAL32 ROUND value)) / (REAL32 ROUND (MOSTPOS INT))
+      RESULT result, newseed
+  :
+  --}}}
+
+  --{{{  PROC random.vector
+  --* Generate a random vector.
+  PROC random.vector (VAL REAL32 mag, INT seed, RESULT VECTOR vector)
+    SEQ
+      vector[x], seed := random.real32 (mag, seed)
+      vector[y], seed := random.real32 (mag, seed)
+  :
+  --}}}
+
+  --{{{  FUNCTION min
+  --* Return the lower of two integers.
+  INT FUNCTION min (VAL INT a, b)
+    INT r:
+    VALOF
+      IF
+        a < b
+          r := a
+        TRUE
+          r := b
+      RESULT r
+  :
+  --}}}
+
+  --{{{  PROC resize.array.int
+  --* Resize an array of integers, keeping the contents intact.
+  PROC resize.array.int (MOBILE []INT array, VAL INT new.size)
+    IF
+      (SIZE array) = new.size
+        SKIP
+      TRUE
+        RESIZE.MOBILE.ARRAY.1D (array, new.size)
+  :
+  --}}}
+
+  CHAN TYPE MOVED.CT
+    MOBILE RECORD
+      CHAN INT c?:
+  :
+
+  --{{{  PROC location
+  --* A location on the grid.
+  PROC location (LOC.CT? svr, SHARED LOC.CT! cli, MOBILE []SHARED LOC.CT! neighbours,
+                 INT act.cycle, VAL [2]INT agent.info.addr, VAL INT viewable.addr, viewcount.addr,
+                 VAL INT pos.x, pos.y, boundary, cell.num,
+                 SHARED CHAN BYTE err!)
+    VECTOR base.pos:
+    PLACED [VIEWABLE.ARRAY.SIZE]INT all.infos AT viewable.addr:
+    PLACED [NUM.LOCATIONS]INT counts AT viewcount.addr:
+    INITIAL INT start IS (MAX.VIEWABLE.AGENTS * cell.num):
+
+    --{{{  PROC report
+    PROC report (CHAN BYTE out!)
+      SEQ
+        out.string ("Location(", 0, out!)
+        out.int (pos.x, 0, out!)
+        out ! ','
+        out.int (pos.y, 0, out!)
+        out.string ("): ", 0, out!)
+    :
+    --}}}
+
+    --{{{  PROC remove.agent
+    PROC remove.agent (INT i, num.agents)
+      SEQ
+        IF
+          i = (num.agents - 1)
+            SKIP
+          TRUE
+            --{{{  move the last agent down to this position
+            SEQ
+              all.infos[start + i] := all.infos[start + (num.agents - 1)]
+              i := i - 1        -- re-examine this one
+            --}}}
+        num.agents := num.agents - 1
+    :
+    --}}}
+
+    SEQ
+      counts[cell.num] := 0
+
+      #PRAGMA DEFINED all.infos, counts
+
+      base.pos[x] := REAL32 ROUND pos.x
+      base.pos[y] := REAL32 ROUND pos.y
+
+      WHILE TRUE
+        ALT
+          svr[req] ? CASE
+            INT id:
+            enter; id
+              --{{{  enter (phase 1 or 2)
+              PLACED [MAX.AGENTS]AGENT.INFO all.agents AT agent.info.addr[act.cycle]:
+              SEQ
+                IF
+                  counts[cell.num] = MAX.VIEWABLE.AGENTS
+                    STOP
+                  TRUE
+                    SKIP
+                all.infos[start + counts[cell.num]] := id
+                counts[cell.num] := counts[cell.num] + 1
+
+                -- set location info in agent
+                all.agents[id][locn] := (boundary << 28) \/ cell.num
+              --}}}
+            INT id:
+            leave; id
+              --{{{  leave (phase 1 or 2)
+              INT n:
+              SEQ
+                IF i = 0 FOR counts[cell.num]
+                  all.infos[start + i] = id
+                    n := i
+
+                remove.agent (n, counts[cell.num])
+              --}}}
+  :
+  --}}}
+
+  --{{{  FUNCTION wrap
+  --* Wrap array indexes around.
+  -- If given [@code -1], this will return [@code max - 1]; if given [@code max
+  -- + 1], this will return [@code 1]. This is not quite the same thing as
+  -- [@code \ max], since that doesn't do the right thing for negative numbers.
+  INT FUNCTION wrap (VAL INT i, max)
+    INT n:
+    VALOF
+      SEQ
+        n := i
+        WHILE n < 0
+          n := n + max
+      RESULT n \ max
+  :
+  --}}}
+
+  --{{{  PROC agent
+  --* An abstract interface between an actual agent and the simulated world.
+  -- This process hides all the details of vision and movement behind the [@ref
+  -- AGENT.CT] interface.
+  PROC agent (VAL INT id, agent.info.addr, viewable.addr, viewmap.addr, AGENT.CT? svr, SHARED LOC.CT! location,
+              SHARED CHAN BYTE err!)
+    SHARED LOC.CT! new.location:
+    INITIAL BOOL moving IS FALSE:
+
+    PLACED [MAX.AGENTS]AGENT.INFO all.agents AT agent.info.addr:
+
+    SEQ
+      --{{{  register with starting location
+      CLAIM location
+        location[req] ! enter; id
+      --}}}
+
+      -- NOTE: this just terminates now, everything else continues in the processing-engine, updaters and locations.
+  :
+  --}}}
+
+  PROC boid.combined.rules (VAL INT id, RESULT AGENT.INFO result, []AGENT.INFO all.agents, VAL []INT viewable, viewcounts, viewmap, VAL SIMPARAMS params, SHARED CHAN BYTE err!) --{{{
+
+    --{{{  PROC clamp
+    --* Clamp values that are close to zero to actually be zero.
+    -- This avoids underflow problems.
+    PROC clamp (REAL32 r)
+      IF
+        ABS (r) < EPSILON
+          r := 0.0
+        TRUE
+          SKIP
+    :
+    --}}}
+    --{{{  FUNCTION angle.diff
+    REAL32 FUNCTION angle.diff (VAL REAL32 a, b)
+      REAL32 r:
+      VALOF
+        SEQ
+          r := a - b
+          IF
+            r < (-Pi)
+              r := r + (2.0 * Pi)
+            r > Pi
+              r := r - (2.0 * Pi)
+            TRUE
+              SKIP
+        RESULT ABS (r)
+    :
+    --}}}
+
+    INITIAL REAL32 my.angle IS ATAN2 (all.agents[id][velocity][x], all.agents[id][velocity][y]):
+    INITIAL REAL32 my.vel2 IS magnitude2 (all.agents[id][velocity]):
+    VAL BOOL not.moving IS (my.vel2 < params[epsilon]):
+
+    INITIAL INT n.boids IS 0:
+    INITIAL INT n.obst IS 0:
+
+    INITIAL VECTOR com IS [0.0, 0.0]:           -- centre of mass
+    INITIAL VECTOR rpush IS [0.0, 0.0]:         -- repulsion push
+    INITIAL VECTOR opush IS [0.0, 0.0]:         -- obstacle push
+    INITIAL VECTOR perc.vel IS [0.0, 0.0]:      -- perceived velocity
+
+    INITIAL VECTOR accel IS [0.0, 0.0]:
+
+
+    INT cell.num, boundary:
+    SEQ
+      result[locn] := all.agents[id][locn] /\ #F0FFFFFF
+      result[velocity] := all.agents[id][velocity]
+
+      cell.num := (all.agents[id][locn] /\ #00FFFFFF)
+      boundary := (all.agents[id][locn] >> 28) /\ #0F
+
+      SEQ v = 0 FOR params[ndir] + 1
+        INT cidx:
+        SEQ
+          IF
+            v = params[ndir]
+              cidx := cell.num
+            TRUE
+              cidx := viewmap[(cell.num * params[ndir]) + v]
+
+          VAL INT cvcount IS viewcounts[cidx]:
+          VAL INT cvstart IS (cidx * MAX.VIEWABLE.AGENTS):
+
+          SEQ i = 0 FOR cvcount
+            VAL INT a.id IS viewable[cvstart + i]:
+            IF
+              a.id = id
+                SKIP        -- can't see ourselves
+              TRUE
+                VECTOR rel.pos:
+                BOOL visible:
+                INITIAL INT atype IS type.id.to.type (all.agents[a.id][type.id]):
+                SEQ
+                  --{{{  compute relative position of agent, accouting for wrap-around
+                  rel.pos := (all.agents[a.id][position] - all.agents[id][position])
+                  IF
+                    boundary = 0
+                      SKIP
+                    (boundary /\ #05) = 0
+                      SKIP
+                    rel.pos[x] > 2.0
+                      -- cannot possibly be this much!
+                      rel.pos[x] := rel.pos[x] - (REAL32 TRUNC WIDTH.LOCATIONS)
+                    rel.pos[x] < (-2.0)
+                      rel.pos[x] := rel.pos[x] + (REAL32 TRUNC WIDTH.LOCATIONS)
+                    TRUE
+                      SKIP
+                  IF
+                    boundary = 0
+                      SKIP
+                    (boundary /\ #0A) = 0
+                      SKIP
+                    rel.pos[y] > 2.0
+                      -- cannot possibly be this much!
+                      rel.pos[y] := rel.pos[y] - (REAL32 TRUNC HEIGHT.LOCATIONS)
+                    rel.pos[y] < (-2.0)
+                      rel.pos[y] := rel.pos[y] + (REAL32 TRUNC HEIGHT.LOCATIONS)
+                    TRUE
+                      SKIP
+                  --}}}
+                  --{{{  is it visible?
+                  IF
+                    magnitude2 (rel.pos) > (VISION.RADIUS * VISION.RADIUS)
+                      visible := FALSE
+                    atype = AT.CYLINDER
+                      visible := TRUE         -- obstacles always visible
+                    not.moving
+                      visible := TRUE         -- not moving, look around
+                    angle.diff (ATAN2 (rel.pos[x], rel.pos[y]), my.angle) > VISION.MAX.ANGULAR.DIFF
+                      visible := FALSE        -- out of field-of-view
+                    TRUE
+                      visible := TRUE
+                  --}}}
+                  IF
+                    visible AND (atype = AT.BOID)
+                      SEQ
+                        n.boids := n.boids + 1
+                        --{{{  centre of mass (1)
+                        com := com + rel.pos
+                        --}}}
+                        --{{{  repulsion (1)
+                        IF
+                          magnitude2 (rel.pos) < (REPULSION.DISTANCE * REPULSION.DISTANCE)
+                            rpush := rpush - rel.pos
+                          TRUE
+                            SKIP
+                        --}}}
+                        --{{{  mean velocity (1)
+                        perc.vel := perc.vel + all.agents[a.id][velocity]
+                        --}}}
+                    visible AND (atype = AT.CYLINDER)
+                      SEQ
+                        n.obst := n.obst + 1
+                        --{{{  obstacle rule (1)
+                        INITIAL REAL32 dist IS SQRT (magnitude2 (rel.pos)) - all.agents[a.id][radius]:
+                        IF
+                          dist < 0.0
+                            opush := opush - rel.pos          -- past
+                          dist < SOFT.THRESHOLD
+                            opush := opush - (rel.pos * (1.0 (REAL32) - (dist / SOFT.THRESHOLD)))    -- inside soft threshold
+                          TRUE
+                            SKIP                              -- nowhere near
+                        --}}}
+                    TRUE
+                      SKIP
+
+      --{{{  centre of mass (2)
+      IF
+        n.boids > 0
+          SEQ
+            com := com / (REAL32 ROUND n.boids)
+            accel := accel + (com / CENTRE.OF.MASS.FRACTION)
+        TRUE
+          SKIP
+      --}}}
+      --{{{  repulsion (2)
+      accel := accel + (rpush / REPULSION.FRACTION)
+      --}}}
+      --{{{  mean velocity (2)
+      IF
+        n.boids > 0
+          perc.vel := perc.vel / (REAL32 ROUND n.boids)
+        TRUE
+          SKIP
+
+      perc.vel := perc.vel - result[velocity]
+      accel := accel + (perc.vel / MEAN.VELOCITY.FRACTION)
+
+      --}}}
+      --{{{  obstacle rule (2)
+      IF
+        n.obst > 0
+          SEQ
+            accel := accel + (opush / OBSTACLE.FRACTION)
+        TRUE
+          SKIP
+      --}}}
+
+      --{{{  accelerate!
+      VAL REAL32 SPEED.LIMIT2 IS SPEED.LIMIT * SPEED.LIMIT:
+      REAL32 mag:
+      SEQ
+        result[velocity] := result[velocity] + (accel / SMOOTH.ACCELERATION)
+        clamp (result[velocity][x])
+        clamp (result[velocity][y])
+
+        mag := magnitude2 (result[velocity])
+        IF
+          mag > SPEED.LIMIT2
+            result[velocity] := result[velocity] / (mag / SPEED.LIMIT2)
+          TRUE
+            SKIP
+      --}}}
+      --{{{  compute new position
+      result[position] := all.agents[id][position] + result[velocity]
+
+      --}}}
+  :
+  --}}}
+
+  --{{{  PROC spawn.actor
+  --* Spawn a new actor into the grid.
+  PROC spawn.actor (VAL INT id, type, all.agents.addr, viewable.addr, viewcount.addr, viewmap.addr, INT seed, SHARED LOC.CT! location, VAL INT locn.cell, VAL VECTOR loc.pos, MOBILE BARRIER bar)
+
+
+    PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr:
+    AGENT.CT? svr:
+    AGENT.CT! cli:
+    SEQ
+      #PRAGMA DEFINED all.agents
+      cli, svr := MOBILE AGENT.CT
+      all.agents[id][type.id] := ((type << 24) /\ #FF000000) \/ (id /\ #00FFFFFF)
+      all.agents[id][locn] := locn.cell
+      random.vector (1.0, seed, all.agents[id][position])
+      all.agents[id][position] := all.agents[id][position] + loc.pos
+      CASE type
+        AT.BOID
+          --{{{  spawn a agent
+          SEQ
+            random.vector (MAX.INIT.VELOCITY * 2.0, seed, all.agents[id][velocity])
+            all.agents[id][velocity] := all.agents[id][velocity] - [MAX.INIT.VELOCITY, MAX.INIT.VELOCITY] (VECTOR)
+            all.agents[id][radius] := 0.0
+            all.agents[id][colour] := hsv.to.rgb ((REAL32 ROUND id) / (REAL32 ROUND INITIAL.BOIDS), BOID.RCOL.SAT, BOID.RCOL.VAL)
+          --}}}
+        AT.CYLINDER
+          --{{{  spawn an obstacle
+          SEQ
+            all.agents[id][velocity] := [0.0, 0.0]
+            all.agents[id][radius], seed := random.real32 (MAX.CYLINDER.RADIUS - MIN.CYLINDER.RADIUS, seed)
+            all.agents[id][radius] := all.agents[id][radius] + MIN.CYLINDER.RADIUS
+            all.agents[id][colour] := CYLINDER.COLOUR
+          --}}}
+      FORK agent (id, all.agents.addr, viewable.addr, viewmap.addr, svr, location, err!)
+  :
+  --}}}
+  #IF DEFINED (INTERACTIVE) AND DEFINED (DO.VIS)
+  PROC interactive.agent (VAL INT id, type, INT act.cycle, VAL [2]INT all.agents.addr, VAL INT parms.addr, MOBILE []SHARED LOC.CT! locations, MOBILE BARRIER bar, INTERACT.CT? svr, SHARED CHAN BYTE err!) --{{{
+    PLACED [1]SIMPARAMS simparms.a AT parms.addr:
+    SIMPARAMS simparms IS simparms.a[0]:
+    #PRAGMA DEFINED simparms
+
+    SHARED LOC.CT! location:
+    SHARED LOC.CT! new.location:
+    INT locn.id:
+    INITIAL BOOL moving IS FALSE:
+
+    SEQ
+      PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr[act.cycle]:
+      #PRAGMA DEFINED all.agents
+      SEQ
+        -- all.agents[id][type.id] := ((type << 24) /\ #FF000000) \/ (id /\ #00FFFFFF)
+        all.agents[id][type.id] := 0
+        all.agents[id][locn] := -1
+        all.agents[id][position] := [0.0, 0.0]
+        all.agents[id][velocity] := [0.0, 0.0]
+        all.agents[id][radius] := 0.3
+        all.agents[id][colour] := INTERACTIVE.AGENT.COLOUR
+
+      LOC.CT? dummy:
+      location, dummy := MOBILE LOC.CT
+
+      INITIAL BOOL active IS FALSE:
+      WHILE TRUE
+        VECTOR v:
+        INITIAL BOOL showing IS FALSE:
+        INITIAL BOOL hiding IS FALSE:
+        INITIAL BOOL act.move IS FALSE:
+        SEQ
+          SYNC bar        -- phase 1: agents compute new state via engine process
+
+          PLACED [MAX.AGENTS]AGENT.INFO src.agents AT all.agents.addr[act.cycle]:
+          PLACED [MAX.AGENTS]AGENT.INFO dst.agents AT all.agents.addr[1 - act.cycle]:
+          #PRAGMA DEFINED src.agents, dst.agents
+          INITIAL BOOL collect IS TRUE:
+          WHILE collect
+            PRI ALT
+              svr[in] ? CASE
+                on; v
+                  --{{{  turn agent on, at given position
+                  IF
+                    NOT active
+                      INITIAL INT my.x IS INT TRUNC v[x]:
+                      INITIAL INT my.y IS INT TRUNC v[y]:
+                      SEQ
+                        src.agents[id][position] := v
+                        dst.agents[id][position] := v
+                        src.agents[id][type.id] := ((type << 24) /\ #FF000000) \/ (id /\ #00FFFFFF)
+                        dst.agents[id][type.id] := ((type << 24) /\ #FF000000) \/ (id /\ #00FFFFFF)
+                        locn.id := (my.y * WIDTH.LOCATIONS) + my.x
+                        location := CLONE locations[locn.id]
+
+                        showing := TRUE
+                    TRUE
+                      SKIP
+                  --}}}
+                off; v
+                  --{{{  turn agent off
+                  IF
+                    NOT active
+                      SKIP
+                    TRUE
+                      SEQ
+                        src.agents[id][type.id] := 0
+                        dst.agents[id][type.id] := 0
+                        hiding := TRUE
+                  --}}}
+                move; v
+                  --{{{  handle movement whilst active
+                  IF
+                    active
+                      SEQ
+                        -- NOTE: set in both, since parallel copy will try and copy us anyway.
+                        -- This is still potentially unsafe (e.g. old value read/write interleaved), but
+                        -- it's only for the interactive bit and won't be far wrong..
+                        src.agents[id][position] := v
+                        dst.agents[id][position] := v
+                        act.move := TRUE
+                    TRUE
+                      SKIP
+                  --}}}
+              SKIP
+                collect := FALSE
+
+          #PRAGMA DEFINED v
+          SYNC bar        -- phase 2: moves occur
+
+          IF
+            hiding
+              --{{{  leave location
+              SEQ
+                CLAIM location!
+                  SEQ
+                    location[req] ! leave; id
+                active := FALSE
+              --}}}
+            act.move
+              --{{{  actively moving around (to 'v')
+              INITIAL INT my.x IS INT TRUNC v[x]:
+              INITIAL INT my.y IS INT TRUNC v[y]:
+              INT new.locn:
+              SEQ
+                -- position correctly set in phase 2, just moving here
+                new.locn := (my.y * WIDTH.LOCATIONS) + my.x
+
+                IF
+                  new.locn <> locn.id
+                    SEQ
+                      CLAIM location!
+                        location[req] ! leave; id
+                      locn.id := new.locn
+                      location := CLONE locations[locn.id]
+                      CLAIM location!
+                        location[req] ! enter; id
+                  TRUE
+                    SKIP
+              --}}}
+            showing
+              --{{{  enter location
+              SEQ
+                active := TRUE
+                CLAIM location!
+                  SEQ
+                    location[req] ! enter; id
+              --}}}
+            TRUE
+              SKIP
+
+          -- finally we loop checking for 'change' events
+          PROC cap.r32 (REAL32 val, VAL REAL32 min, max)
+            IF
+              val >= max
+                val := max
+              val <= min
+                val := min
+              TRUE
+                SKIP
+          :
+          INITIAL BOOL collect IS TRUE:
+          WHILE collect
+            REAL32 rdelta:
+            PRI ALT
+              svr[change] ? CASE
+                vrad; rdelta
+                  SEQ
+                    simparms[vrad] := simparms[vrad] + rdelta
+                    cap.r32 (simparms[vrad], simparms[epsilon], 1.0)
+                    simparms[vrad.sq] := simparms[vrad] * simparms[vrad]
+                rdist; rdelta
+                  SEQ
+                    simparms[rdist] := simparms[rdist] + rdelta
+                    cap.r32 (simparms[rdist], simparms[epsilon], 1.0)
+                    simparms[rdist.sq] := simparms[rdist] * simparms[rdist]
+                vmaxdiff; rdelta
+                  SEQ
+                    simparms[vmaxdiff] := simparms[vmaxdiff] + rdelta
+                    cap.r32 (simparms[vmaxdiff], 0.05, PI * 2.0)
+                slimit; rdelta
+                  SEQ
+                    simparms[slimit] := simparms[slimit] + rdelta
+                    cap.r32 (simparms[slimit], simparms[epsilon], 0.99)
+                    simparms[slimit.sq] := simparms[slimit] * simparms[slimit]
+                rfrac; rdelta
+                  SEQ
+                    simparms[rfrac] := simparms[rfrac] + rdelta
+                    cap.r32 (simparms[rfrac], 0.5, 1000.0)
+                mvfrac; rdelta
+                  SEQ
+                    simparms[mvfrac] := simparms[mvfrac] + rdelta
+                    cap.r32 (simparms[mvfrac], 0.5, 1000.0)
+                cmfrac; rdelta
+                  SEQ
+                    simparms[cmfrac] := simparms[cmfrac] + rdelta
+                    cap.r32 (simparms[cmfrac], 0.5, 1000.0)
+                ofrac; rdelta
+                  SEQ
+                    simparms[ofrac] := simparms[ofrac] + rdelta
+                    cap.r32 (simparms[ofrac], 0.5, 1000.0)
+                saccel; rdelta
+                  SEQ
+                    simparms[saccel] := simparms[saccel] + rdelta
+                    cap.r32 (simparms[saccel], 0.5, 100.0)
+                INT pnum:
+                preset; pnum
+                  SEQ
+                    -- change a whole bunch of parameters to interesting presets
+                    IF
+                      pnum < 0
+                        SKIP
+                      pnum >= (SIZE PRESET.PARAMS)
+                        SKIP
+                      TRUE
+                        simparms := PRESET.PARAMS[pnum]
+              SKIP
+                collect := FALSE
+  :
+  --}}}
+  #ENDIF
+
+  #IF DEFINED (NO.GPU)
+  PROC boid.engine (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, VAL INT viewable.addr, viewcount.addr, viewmap.addr, parms.addr, nagents, SHARED CHAN BYTE err!) --{{{
+    PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr:
+    #PRAGMA SHARED all.agents
+    #PRAGMA DEFINED all.agents
+    PLACED [VIEWABLE.ARRAY.SIZE]INT viewable AT viewable.addr:
+    PLACED [NUM.LOCATIONS]INT viewcounts AT viewcount.addr:
+    PLACED [NUM.LOCATIONS * DIRECTIONS]INT viewmap AT viewmap.addr:
+    PLACED [1]SIMPARAMS simparms.a AT parms.addr:
+
+    MOBILE []AGENT.INFO res.vel:
+    #PRAGMA SHARED res.vel
+    INITIAL INT stride IS (nagents + (CPU.WORKERS - 1)) / CPU.WORKERS:
+    SEQ
+      res.vel := MOBILE [nagents]AGENT.INFO
+
+      PAR d = 0 FOR CPU.WORKERS ENROLL bar
+        INITIAL INT start IS (d * stride):
+        INITIAL INT count IS stride:
+        SEQ
+          IF
+            (start + count) > nagents
+              count := nagents - start
+            TRUE
+              SKIP
+
+          WHILE TRUE
+            SEQ
+              SYNC bar          -- Phase 1: compute new agent velocities
+
+              SEQ i = start FOR count
+                IF
+                  (all.agents[i][type.id] >> 24) = AT.BOID
+                    boid.combined.rules (i, res.vel[i], all.agents, viewable, viewcounts,
+                                         viewmap, simparms.a[0], err!)
+                  TRUE
+                    SKIP
+
+              SEQ i = start FOR count
+                IF
+                  (all.agents[i][type.id] >> 24) = AT.BOID
+                    SEQ
+                      all.agents[i][velocity] := res.vel[i][velocity]
+                      all.agents[i][position] := res.vel[i][position]
+                      all.agents[i][locn] := res.vel[i][locn]
+                  TRUE
+                    SKIP
+
+              SYNC bar          -- Phase 2: moves occur
+  :
+  --}}}
+  #ELSE
+  PROC boid.gpu.engine (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, VAL INT viewable.addr, viewcount.addr, viewmap.addr, parms.addr, nagents, SHARED CHAN BYTE err!) --{{{
+    PLACED [1]SIMPARAMS simparms.a AT parms.addr:
+    SIMPARAMS simparms IS simparms.a[0]:
+
+    INT res, stride:
+    INITIAL INT dcount IS INITIAL.DCOUNT:      -- all devices
+    SEQ
+      --{{{  initialise CUDA (hard fail)
+      ocuda.init (dcount, res)
+      IF
+        res = 0
+          SKIP
+
+      --}}}
+      --{{{  compute stride for parallel devices, allocate result array
+      stride := (nagents + (dcount - 1)) / dcount
+
+      --}}}
+
+      PAR d = 0 FOR dcount ENROLL bar
+        INITIAL INT start IS (d * stride):
+        INITIAL INT count IS stride:
+        CPUPTR cpu.global, gpu.global:
+        OCUDA.DEVINFO dinfo:
+        INT l.res:
+        SEQ
+          l.res := 0
+          ocuda.devinfo (d, dinfo, l.res)
+          IF
+            l.res = 0
+              SKIP
+
+          --{{{  fixup for odd last group
+          IF
+            (start + count) > nagents
+              count := nagents - start
+            TRUE
+              SKIP
+          --}}}
+          --{{{  allocate global structures on host and device
+          C.cuda.alloc.global (dinfo, all.agents.addr[0], all.agents.addr[1], viewable.addr, viewcount.addr, viewmap.addr, parms.addr, cpu.global, gpu.global)
+          C.cuda.copy.viewmap (dinfo, cpu.global, gpu.global)
+
+          --}}}
+
+          WHILE TRUE
+            PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr[act.cycle]:
+            TIMER tim:
+            INT t0, t1, t2, t3:
+            SEQ
+              SYNC bar                -- phase 1: compute new velocities
+              tim ? t0
+              C.cuda.copy.global (dinfo, act.cycle, cpu.global, gpu.global)
+              B.cuda.doboids1 (dinfo, act.cycle, start, count, gpu.global)
+              C.cuda.copyback.global (dinfo, act.cycle, start, count, cpu.global, gpu.global)
+
+              -- B.cuda.runcycle (d, act.cycle, start, count, cpu.global, gpu.global)
+
+              SYNC bar                -- Phase 2: moves occur
+
+          C.cuda.free.global (dinfo, cpu.global, gpu.global)
+  :
+  --}}}
+  #ENDIF
+
+  #IF DEFINED (DO.VIS)
+  PROC agent.render (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, CHAN RASTER in?, out!) --{{{
+    CHAN BOOL go:
+    PAR
+      --{{{  loop synchronising on the barrier and signalling
+      WHILE TRUE
+        SEQ
+          SYNC bar
+          -- into phase 1: read and render active cycle (constant)
+          go ! TRUE
+          go ! FALSE
+          SYNC bar
+          -- into phase 2: moves/updates.
+      --}}}
+      --{{{  loop reading rasters and rendering
+      SEQ
+        INITIAL BOOL phase1 IS FALSE:
+        WHILE TRUE
+          SEQ
+            PRI ALT
+              #IF NOT DEFINED (SYNC.VIS)
+              go ? phase1
+                SKIP
+              #ENDIF
+              RASTER r:
+              in ? r
+                SEQ
+                  WHILE NOT phase1
+                    go ? phase1
+                  --{{{  render
+                  PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr[act.cycle]:
+                  #PRAGMA DEFINED all.agents
+                  SEQ
+                    SEQ i = 0 FOR MAX.AGENTS
+                      INT x, y:
+                      SEQ
+                        x := INT TRUNC (all.agents[i][position][x] * (REAL32 ROUND PIXEL.SCALE))
+                        y := INT TRUNC (all.agents[i][position][y] * (REAL32 ROUND PIXEL.SCALE))
+
+                        CASE type.id.to.type (all.agents[i][type.id])
+                          AT.BOID
+                            VAL INT dx IS INT TRUNC (all.agents[i][velocity][x] * (REAL32 ROUND PIXEL.SCALE)):
+                            VAL INT dy IS INT TRUNC (all.agents[i][velocity][y] * (REAL32 ROUND PIXEL.SCALE)):
+                            SEQ
+                              -- fill.circle (x, y, 2, all.agents[i][colour], r)
+                              fill.rectangle (x - 1, y - 1, 2, 2, all.agents[i][colour], r)
+                              INITIAL INT xx IS x:
+                              INITIAL INT yy IS y:
+                              draw.line (xx, yy, (-4) * dx, (-4) * dy, #FF000000, BOID.TAIL.COLOUR, r)
+                          AT.CYLINDER
+                            fill.circle (x, y, INT TRUNC (all.agents[i][radius] * (REAL32 ROUND PIXEL.SCALE)), all.agents[i][colour], r)
+                          ELSE
+                            SKIP
+                  --}}}
+                  out ! r
+                  #IF DEFINED (SYNC.VIS)
+                  WHILE phase1
+                    go ? phase1
+                  #ENDIF
+      --}}}
+  :
+  --}}}
+  --{{{  PROC display.engine (...)
+  PROC display.engine (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, VAL INT parms.addr, INTERACT.CT! i.cli, SHARED CHAN BYTE err!)
+
+    PROC infobox (VAL INT parms.addr, CHAN BOOL show.hide?, CHAN RASTER in?, out!) --{{{
+      PLACED [1]SIMPARAMS spa AT parms.addr:
+      SIMPARAMS params IS spa[0]:
+      #PRAGMA DEFINED params
+      INITIAL BOOL showing IS TRUE:
+      WHILE TRUE
+        PRI ALT
+          show.hide ? showing
+            SKIP
+          RASTER r:
+          in ? r
+            SEQ
+              IF
+                showing
+                  [128]BYTE buf:
+                  INT blen, yoff:
+                  SEQ
+                    yoff := 10
+                    blen := 0
+
+                    buffer.set.string (buf, blen, "occoids version 15")
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 20
+
+                    buffer.set.string (buf, blen, "s/S - show/hide this info")
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "g/G - show/hide location grid")
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "v/V - vision radius:       ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[vrad])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "a/A - vision angle:        ")
+                    VAL REAL32 const IS ((180.0 / PI) * 2.0):
+                    buffer.set.real32 (buf, blen, 3, 3, params[vmaxdiff] * const)
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "r/R - repulsion distance:  ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[rdist])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "l/L - speed limit:         ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[slimit])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "f/F - repulsion fraction:  ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[rfrac])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "c/C - centre of mass frac: ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[cmfrac])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "m/M - mean velocity frac:  ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[mvfrac])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "o/O - obstacle fraction:   ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[ofrac])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "z/Z - smooth acceleration: ")
+                    buffer.set.real32 (buf, blen, 3, 3, params[saccel])
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                    buffer.set.string (buf, blen, "0-")
+                    buffer.set.int (buf, blen, (SIZE PRESET.PARAMS) - 1)
+                    buffer.set.string (buf, blen, " - parameter presets")
+                    draw.text (10, yoff, [buf FOR blen], FONT.6X13, INFO.TEXT.COLOUR, r)
+                    blen, yoff := 0, yoff + 15
+
+                TRUE
+                  SKIP
+              out ! r
+    :
+    --}}}
+    PROC show.hide.filter (CHAN RASTER.EVENT in?, out!, CHAN BOOL show.hide!, grid.hide!) --{{{
+      INITIAL BOOL showing IS TRUE:
+      INITIAL BOOL grid.show IS TRUE:
+      WHILE TRUE
+        RASTER.EVENT ev:
+        INITIAL BOOL send IS TRUE:
+        SEQ
+          in ? ev
+          #IF DEFINED (INTERACTIVE)
+          IF
+            ev[type] = RASTER.ET.KEYDOWN
+              IF
+                (ev[id] = (INT 's')) AND (ev[mod] = 0)
+                  SEQ
+                    showing := NOT showing
+                    show.hide ! showing
+                    send := FALSE
+                (ev[id] = (INT 'g')) AND (ev[mod] = 0)
+                  SEQ
+                    grid.show := NOT grid.show
+                    grid.hide ! grid.show
+                    send := FALSE
+                TRUE
+                  SKIP
+            TRUE
+              SKIP
+          #ENDIF
+          IF
+            send
+              out ! ev
+            TRUE
+              SKIP
+    :
+    --}}}
+    PROC grid.clear (CHAN RASTER in?, out!, CHAN BOOL change?) --{{{
+      INITIAL BOOL show.grid IS TRUE:
+      WHILE TRUE
+        PRI ALT
+          change ? show.grid
+            SKIP
+          RASTER r:
+          in ? r
+            SEQ
+              clear.raster (r, BOID.BG.COLOUR)
+              IF
+                show.grid
+                  SEQ
+                    SEQ x = 1 FOR WIDTH.LOCATIONS - 1
+                      draw.vertical.line (x * PIXEL.SCALE, 0, SIZE r, BOID.GRID.COLOUR, r)
+                    SEQ y = 1 FOR HEIGHT.LOCATIONS - 1
+                      draw.horizontal.line (0, y * PIXEL.SCALE, SIZE r[0], BOID.GRID.COLOUR, r)
+                TRUE
+                  SKIP
+              out ! r
+    :
+    --}}}
+    PROC plain.clear (CHAN RASTER in?, out!) --{{{
+      WHILE TRUE
+        RASTER r:
+        SEQ
+          in ? r
+          clear.raster (r, BOID.BG.COLOUR)
+          SEQ x = 1 FOR WIDTH.LOCATIONS - 1
+            draw.vertical.line (x * PIXEL.SCALE, 0, SIZE r, BOID.GRID.COLOUR, r)
+          SEQ y = 1 FOR HEIGHT.LOCATIONS - 1
+            draw.horizontal.line (0, y * PIXEL.SCALE, SIZE r[0], BOID.GRID.COLOUR, r)
+          out ! r
+    :
+    --}}}
+    PROC speed.limit (CHAN RASTER in?, out!) --{{{
+      TIMER tim:
+      INT t:
+      SEQ
+        tim ? t
+        WHILE TRUE
+          RASTER r:
+          SEQ
+            IF
+              SCREEN.UPDATE.TIME > 0
+                SEQ
+                  tim ? AFTER t
+                  t := t PLUS SCREEN.UPDATE.TIME
+              TRUE
+                SKIP
+            in ? r
+            out ! r
+    :
+    --}}}
+    PROC event.handler (CHAN RASTER.EVENT in?, INTERACT.CT! out) --{{{
+      INITIAL BOOL down IS FALSE:
+      WHILE TRUE
+        RASTER.EVENT ev:
+        SEQ
+          in ? ev
+          #IF DEFINED (INTERACTIVE)
+          CASE ev[type]
+            RASTER.ET.MOUSEBUTTONDOWN
+              VECTOR rpos:
+              SEQ
+                rpos[x] := (REAL32 TRUNC ev[x]) / (REAL32 TRUNC PIXEL.SCALE)
+                rpos[y] := (REAL32 TRUNC ev[y]) / (REAL32 TRUNC PIXEL.SCALE)
+
+                IF
+                  ev[id] = RASTER.BUTTON.LEFT
+                    SEQ
+                      out[in] ! on; rpos
+                      down := TRUE
+                  TRUE
+                    SKIP
+            RASTER.ET.MOUSEBUTTONUP
+              VECTOR rpos:
+              SEQ
+                rpos[x] := (REAL32 TRUNC ev[x]) / (REAL32 TRUNC PIXEL.SCALE)
+                rpos[y] := (REAL32 TRUNC ev[y]) / (REAL32 TRUNC PIXEL.SCALE)
+
+                IF
+                  ev[id] = RASTER.BUTTON.LEFT
+                    SEQ
+                      out[in] ! off; rpos
+                      down := FALSE
+                  TRUE
+                    SKIP
+            RASTER.ET.MOUSEMOTION
+              IF
+                down
+                  VECTOR rpos:
+                  SEQ
+                    rpos[x] := (REAL32 TRUNC ev[x]) / (REAL32 TRUNC PIXEL.SCALE)
+                    rpos[y] := (REAL32 TRUNC ev[y]) / (REAL32 TRUNC PIXEL.SCALE)
+
+                    out[in] ! move; rpos
+                TRUE
+                  SKIP
+            RASTER.ET.KEYDOWN
+              SEQ
+                IF
+                  ((ev[id] >= (INT 'a')) AND (ev[id] <= (INT 'z'))) OR ((ev[id] >= (INT '0')) AND (ev[id] <= (INT '9')))
+                    BYTE ch:
+                    SEQ
+                      ch := BYTE (ev[id] /\ #FF)
+                      IF
+                        (ev[mod] /\ RASTER.MOD.LSHIFT) <> 0
+                          ch := ch - ('a' - 'A')
+                        TRUE
+                          SKIP
+                      CASE ch
+                        'a'
+                          out[change] ! vmaxdiff; (-0.05)
+                        'A'
+                          out[change] ! vmaxdiff; 0.05
+                        'v'
+                          out[change] ! vrad; (-0.02)
+                        'V'
+                          out[change] ! vrad; 0.02
+                        'r'
+                          out[change] ! rdist; (-0.01)
+                        'R'
+                          out[change] ! rdist; 0.01
+                        'l'
+                          out[change] ! slimit; (-0.01)
+                        'L'
+                          out[change] ! slimit; 0.01
+                        'f'
+                          out[change] ! rfrac; (-0.5)
+                        'F'
+                          out[change] ! rfrac; 0.5
+                        'c'
+                          out[change] ! cmfrac; (-1.0)
+                        'C'
+                          out[change] ! cmfrac; 1.0
+                        'm'
+                          out[change] ! mvfrac; (-0.5)
+                        'M'
+                          out[change] ! mvfrac; 0.5
+                        'o'
+                          out[change] ! ofrac; (-0.5)
+                        'O'
+                          out[change] ! ofrac; 0.5
+                        'z'
+                          out[change] ! saccel; (-0.5)
+                        'Z'
+                          out[change] ! saccel; 0.5
+                        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+                          out[change] ! preset; INT (ch - '0')
+                        ELSE
+                          SKIP
+                  TRUE
+                    SKIP
+            ELSE
+              SKIP
+          #ENDIF
+    :
+    --}}}
+    PROC event.sink (CHAN RASTER.EVENT in?) --{{{
+      WHILE TRUE
+        RASTER.EVENT ev:
+        SEQ
+          in ? ev
+    :
+    --}}}
+
+    CHAN RASTER.EVENT events, events.out:
+    CHAN RASTER r.in, r.out, cleared, ready, to.dpy, to.dpy2:
+    CHAN BOOL show.hide, grid.hide:
+    PAR
+      raster.display ("occoids", (WIDTH.LOCATIONS * PIXEL.SCALE), (HEIGHT.LOCATIONS * PIXEL.SCALE),
+                      4, r.in?, r.out!, events!)
+      agent.render (bar, act.cycle, all.agents.addr, cleared?, ready!)
+      #IF DEFINED (INTERACTIVE)
+      grid.clear (r.out?, cleared!, grid.hide?)
+      infobox (parms.addr, show.hide?, ready?, to.dpy!)
+      speed.limit (to.dpy?, r.in!)
+      show.hide.filter (events?, events.out!, show.hide!, grid.hide!)
+      event.handler (events.out?, i.cli!)
+      #ELSE
+      plain.clear (r.out?, cleared!)
+      speed.limit (ready?, r.in!)
+      event.sink (events?)
+      #ENDIF
+  :
+  --}}}
+  #ENDIF
+
+  --{{{  PROC cycle.limiter
+  --* Limit the maximum speed of the simulation.
+  -- This makes sure that the barrier cycles no more often than [@ref
+  -- CYCLE.TIME].
+  PROC cycle.limiter (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, SHARED CHAN BYTE err!)
+
+    TIMER tim:
+    INT last.top:
+    INITIAL INT total IS 0:
+    INITIAL INT cycle IS 0:
+    INITIAL REAL32 sum.vel2 IS 0.0:
+    INITIAL INT num.moving IS 0:
+    INITIAL INT p1.diff IS 0:
+    INITIAL INT p2.diff IS 0:
+    INT p1.time, p2.time:
+    SEQ
+      tim ? last.top
+      WHILE TRUE
+        INT top:
+        SEQ
+          tim ? top
+          IF
+            CYCLE.TIME = 0
+              SKIP
+            TRUE
+              tim ? AFTER last.top PLUS CYCLE.TIME
+
+          --{{{  update average
+          total := total + (top MINUS last.top)
+          cycle := cycle PLUS 1
+
+          IF
+            (cycle \ DISPLAY.TIME.CYCLES) = 0
+              PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr[act.cycle]:
+              SEQ
+                #IF DEFINED (CALC.SUMVEL)
+                sum.vel2 := 0.0
+                num.moving := 0
+                SEQ i = 0 FOR INITIAL.BOIDS
+                  INITIAL REAL32 m2v IS magnitude2 (all.agents[i][velocity]):
+                  SEQ
+                    IF
+                      m2v > ALIVE.EPSILON
+                        SEQ
+                          sum.vel2 := sum.vel2 + m2v
+                          num.moving := num.moving + 1
+                      TRUE
+                        SKIP
+                #ENDIF
+                #IF DEFINED (SHOW.BENCHMARK)
+                CLAIM err!
+                  INT num.procs:
+                  SEQ
+                    C.ccsp.get.process.count (num.procs)
+
+                    out.string ("Cycle ", 0, err!)
+                    out.int (cycle, 8, err!)
+                    out.string ("; cycle time = ", 0, err!)
+                    out.int (total / DISPLAY.TIME.CYCLES, 8, err!)
+                    out.string (" us; ", 0, err!)
+                    out.int (num.procs, 8, err!)
+                    out.string (" processes", 0, err!)
+                    out.string ("; ptimes (", 0, err!)
+                    out.int (p1.diff, 0, err!)
+                    out.string (",", 0, err!)
+                    out.int (p2.diff, 0, err!)
+                    out.string (")", 0, err!)
+                    #IF DEFINED (CALC.SUMVEL)
+                    out.string ("; sumvel ", 0, err!)
+                    out.int (num.moving, 0, err!)
+                    out.string (" ", 0, err!)
+                    out.real32 (sum.vel2, 2, 3, err!)
+                    #ENDIF
+                    out.string ("*n", 0, err!)
+                    total := 0
+                #ENDIF
+            TRUE
+              SKIP
+          --}}}
+
+          SYNC bar -- Phase 1
+          tim ? p2.time
+          p2.diff := p2.time MINUS top
+          SYNC bar -- Phase 2
+          tim ? p1.time
+          p1.diff := (p1.time MINUS p2.time)
+
+          last.top := top
+  :
+  --}}}
+
+  PROC move.engine (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, VAL INT viewable.addr, viewcount.addr, SHARED CHAN BYTE err!) --{{{
+    PLACED [VIEWABLE.ARRAY.SIZE]INT all.infos AT viewable.addr:
+    PLACED [NUM.LOCATIONS]INT counts AT viewcount.addr:
+    
+    #PRAGMA DEFINED all.infos, counts
+
+    SEQ
+      WHILE TRUE
+        SEQ
+          SYNC bar          -- Phase 1: update
+          -- copy agent stuff that isn't a boid
+          PLACED [MAX.AGENTS]AGENT.INFO all.agents.s AT all.agents.addr[act.cycle]:
+          PLACED [MAX.AGENTS]AGENT.INFO all.agents.t AT all.agents.addr[1 - act.cycle]:
+          #PRAGMA DEFINED all.agents.s
+          SEQ
+            SEQ i = INITIAL.BOIDS FOR (MAX.AGENTS - INITIAL.BOIDS)
+              all.agents.t[i] := all.agents.s[i]
+
+          SYNC bar          -- Phase 2: advance act.cycle and do moves
+
+          act.cycle := 1 - act.cycle
+
+          PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr[act.cycle]:
+          #PRAGMA DEFINED all.agents
+          SEQ g.y = 0 FOR HEIGHT.LOCATIONS
+            SEQ g.x = 0 FOR WIDTH.LOCATIONS
+              INITIAL INT c.num IS (g.y * WIDTH.LOCATIONS) + g.x:
+              INITIAL VECTOR base.pos IS [(REAL32 ROUND g.x), (REAL32 ROUND g.y)]:
+              INITIAL INT start IS (MAX.VIEWABLE.AGENTS * c.num):
+              SEQ
+                INITIAL INT i IS 0:
+                WHILE i < counts[c.num]
+                  SEQ
+                    INITIAL INT a.id IS all.infos[start + i]:
+                    INITIAL INT a.type IS type.id.to.type (all.agents[a.id][type.id]):
+                    IF
+                      a.type = AT.BOID
+                        INT dx, dy:
+                        SEQ
+                          --{{{  decide on left/right and wrap boid position
+                          IF
+                            all.agents[a.id][position][x] < base.pos[x]
+                              SEQ
+                                -- going left
+                                dx := -1
+                                IF
+                                  all.agents[a.id][position][x] < 0.0
+                                    all.agents[a.id][position][x] := all.agents[a.id][position][x] + (REAL32 ROUND WIDTH.LOCATIONS)
+                                  TRUE
+                                    SKIP
+                            all.agents[a.id][position][x] >= (base.pos[x] + 1.0)
+                              SEQ
+                                -- going right
+                                dx := 1
+                                IF
+                                  all.agents[a.id][position][x] >= (REAL32 ROUND WIDTH.LOCATIONS)
+                                    all.agents[a.id][position][x] := all.agents[a.id][position][x] - (REAL32 ROUND WIDTH.LOCATIONS)
+                                  TRUE
+                                    SKIP
+                            TRUE
+                              dx := 0
+                          --}}}
+                          --{{{  decide on up/down and wrap boid position
+                          IF
+                            all.agents[a.id][position][y] < base.pos[y]
+                              SEQ
+                                -- going up
+                                dy := -1
+                                IF
+                                  all.agents[a.id][position][y] < 0.0
+                                    all.agents[a.id][position][y] := all.agents[a.id][position][y] + (REAL32 ROUND HEIGHT.LOCATIONS)
+                                  TRUE
+                                    SKIP
+                            all.agents[a.id][position][y] >= (base.pos[y] + 1.0)
+                              SEQ
+                                -- going down
+                                dy := 1
+                                IF
+                                  all.agents[a.id][position][y] >= (REAL32 ROUND HEIGHT.LOCATIONS)
+                                    all.agents[a.id][position][y] := all.agents[a.id][position][y] - (REAL32 ROUND HEIGHT.LOCATIONS)
+                                  TRUE
+                                    SKIP
+                            TRUE
+                              dy := 0
+                          --}}}
+                          IF
+                            (dx <> 0) OR (dy <> 0)
+                              --{{{  do move
+                              INT t.x, t.y, t.c, t.start, t.boundary:
+                              SEQ
+                                t.x := wrap (g.x + dx, WIDTH.LOCATIONS)
+                                t.y := wrap (g.y + dy, HEIGHT.LOCATIONS)
+                                t.c := (t.y * WIDTH.LOCATIONS) + t.x
+                                t.start := MAX.VIEWABLE.AGENTS * t.c
+                                t.boundary := 0
+                                IF
+                                  t.x = 0
+                                    t.boundary := #01
+                                  t.x = (WIDTH.LOCATIONS - 1)
+                                    t.boundary := #04
+                                  TRUE
+                                    SKIP
+                                IF
+                                  t.y = 0
+                                    t.boundary := t.boundary \/ #02
+                                  t.y = (HEIGHT.LOCATIONS - 1)
+                                    t.boundary := t.boundary \/ #08
+                                  TRUE
+                                    SKIP
+
+                                -- moving from cell 'c.num' to cell 't.c'.
+                                IF
+                                  i = (counts[c.num] - 1)
+                                    -- last one anyway
+                                    SKIP
+                                  TRUE
+                                    SEQ
+                                      all.infos[start + i] := all.infos[start + (counts[c.num] - 1)]
+                                      i := i - 1
+                                counts[c.num] := counts[c.num] - 1
+
+                                IF
+                                  counts[t.c] = MAX.VIEWABLE.AGENTS
+                                    SEQ
+                                      CLAIM err!
+                                        SEQ
+                                          out.string ("move.engine: failing because counts[", 0, err!)
+                                          out.int (t.c, 0, err!)
+                                          out.string ("] = ", 0, err!)
+                                          out.int (counts[t.c], 0, err!)
+                                          out.string ("*n", 0, err!)
+                                      RESCHEDULE ()
+                                      STOP
+                                  TRUE
+                                    SEQ
+                                      all.infos[t.start + counts[t.c]] := a.id
+                                      all.agents[a.id][locn] := (t.boundary << 28) \/ t.c
+                                      counts[t.c] := counts[t.c] + 1
+                              --}}}
+                            TRUE
+                              SKIP
+                      TRUE
+                        SKIP
+                    i := i + 1
+  :
+  --}}}
+
+  #IF DEFINED (SANITY.CHECK)
+  PROC sanity.check.proc (MOBILE BARRIER bar, INT act.cycle, VAL [2]INT all.agents.addr, SHARED CHAN BYTE err!) --{{{
+    PLACED [MAX.AGENTS]AGENT.INFO all.agents AT all.agents.addr[act.cycle]:
+
+    INITIAL INT cyc IS 0:
+    WHILE TRUE
+      SEQ
+        SYNC bar      -- phase 1: observe and update private
+        SEQ i = 0 FOR INITIAL.BOIDS
+          VECTOR pos:
+          INT px, py, elocn:
+          SEQ
+            pos := all.agents[i][position]
+            px := INT TRUNC pos[x]
+            py := INT TRUNC pos[y]
+
+            elocn := px + (py * WIDTH.LOCATIONS)
+
+            IF
+              (all.agents[i][locn] /\ #00FFFFFF) <> elocn
+                CLAIM err!
+                  SEQ
+                    out.int (cyc, 0, err!)
+                    out.string (": agent ", 0, err!)
+                    out.int (i, 0, err!)
+                    out.string (" misplaced, pos ", 0, err!)
+                    out.vector (pos, err!)
+                    out.string (" locn #", 0, err!)
+                    out.hex (all.agents[i][locn], 0, err!)
+                    out.string (" expected #", 0, err!)
+                    out.hex (elocn, 0, err!)
+                    out.string ("*n", 0, err!)
+              TRUE
+                SKIP
+        SYNC bar      -- phase 2: do moves
+        cyc := cyc + 1
+  :
+  --}}}
+  #ENDIF
+
+  --{{{  main program
+  INITIAL MOBILE []SHARED LOC.CT! clis IS MOBILE [NUM.LOCATIONS]SHARED LOC.CT!:
+  INITIAL MOBILE []LOC.CT? svrs IS MOBILE [NUM.LOCATIONS]LOC.CT?:
+
+  --[NUM.LOCATIONS]CHAN MOBILE BARRIER cbar:
+
+  -- NOTE: these are made global (by its address being passed around freely)
+  MOBILE []AGENT.INFO agent.data.0:
+  MOBILE []AGENT.INFO agent.data.1:
+  [2]INT agent.data.addr:
+  INITIAL INT next.agent IS 0:
+  INT agent.cycle:
+  #PRAGMA SHARED agent.cycle
+
+  MOBILE []INT viewable.data:
+  INT viewable.data.addr:
+
+  MOBILE []INT viewcount.data:
+  INT viewcount.data.addr:
+
+  MOBILE []INT viewmap.data:
+  INT viewmap.data.addr:
+
+  MOBILE []SIMPARAMS simparms:
+  INT simparms.addr:
+
+  INTERACT.CT? i.svr:
+  INTERACT.CT! i.cli:
+
+  FORKING
+
+    SEQ
+      --{{{  allocate all the channel bundles
+      SEQ i = 0 FOR NUM.LOCATIONS
+        clis[i], svrs[i] := MOBILE LOC.CT
+
+      i.cli, i.svr := MOBILE INTERACT.CT
+
+      --}}}
+      --{{{  allocate and clear out 'agent.data.0', 'agent.data.1'
+      agent.data.0 := MOBILE [MAX.AGENTS]AGENT.INFO
+      agent.data.1 := MOBILE [MAX.AGENTS]AGENT.INFO
+      agent.data.addr[0] := ADDROF (agent.data.0)
+      agent.data.addr[1] := ADDROF (agent.data.1)
+      
+      #PRAGMA DEFINED agent.data.0, agent.data.1
+      SEQ i = 0 FOR SIZE agent.data.0
+        agent.data.0[i] := BLANK.AGENT.INFO
+      SEQ i = 0 FOR SIZE agent.data.1
+        agent.data.1[i] := BLANK.AGENT.INFO
+
+      #PRAGMA DEFINED agent.data.0, agent.data.1
+
+      agent.cycle := 0
+
+      --}}}
+      --{{{  allocate and clear out `viewable.data', 'viewcount.data', 'viewmap.data'
+      viewable.data := MOBILE [MAX.VIEWABLE.AGENTS * NUM.LOCATIONS]INT
+      viewable.data.addr := ADDROF (viewable.data)
+
+      viewcount.data := MOBILE [NUM.LOCATIONS]INT
+      viewcount.data.addr := ADDROF (viewcount.data)
+
+      viewmap.data := MOBILE [DIRECTIONS * NUM.LOCATIONS]INT
+      viewmap.data.addr := ADDROF (viewmap.data)
+
+      #PRAGMA DEFINED viewable.data, viewcount.data, viewmap.data
+
+      SEQ i = 0 FOR SIZE viewable.data
+        viewable.data[i] := 0
+
+      SEQ i = 0 FOR SIZE viewcount.data
+        viewcount.data[i] := 0
+
+      SEQ i = 0 FOR SIZE viewmap.data
+        viewmap.data[i] := 0
+
+      #PRAGMA DEFINED viewcount.data, viewmap.data, viewable.data
+
+      --}}}
+      --{{{  allocate and clear out 'simparms'
+      simparms := MOBILE [1]SIMPARAMS
+      simparms.addr := ADDROF (simparms)
+
+      --}}}
+      --{{{  correctly populate viewmap.data
+      SEQ x = 0 FOR WIDTH.LOCATIONS
+        SEQ y = 0 FOR HEIGHT.LOCATIONS
+          VAL INT cell.num IS x + (y * WIDTH.LOCATIONS):
+          [DIRECTIONS]INT this IS [viewmap.data FROM (cell.num * DIRECTIONS) FOR DIRECTIONS]:
+          SEQ j = 0 FOR DIRECTIONS
+            VAL INT that.x IS wrap (x + OFFSETS[j][0], WIDTH.LOCATIONS):
+            VAL INT that.y IS wrap (y + OFFSETS[j][1], HEIGHT.LOCATIONS):
+            VAL INT that.num IS that.x + (that.y * WIDTH.LOCATIONS):
+            this[j] := that.num
+
+      --}}}
+      --{{{  set initial simulation parameters
+      SIMPARAMS simparms IS simparms[0]:
+      SEQ
+        simparms := PRESET.PARAMS[0]
+
+      --}}}
+
+      PAR
+        --{{{  the grid of locations
+        PAR x = 0 FOR WIDTH.LOCATIONS
+          PAR y = 0 FOR HEIGHT.LOCATIONS
+            VAL INT cell.num IS x + (y * WIDTH.LOCATIONS):
+
+            VAL [DIRECTIONS]INT this.viewmap IS [viewmap.data FROM (cell.num * DIRECTIONS) FOR DIRECTIONS]:
+            INITIAL MOBILE []SHARED LOC.CT! these.clis IS MOBILE [DIRECTIONS]SHARED LOC.CT!:
+            INITIAL INT boundary IS 0:
+            SEQ
+              SEQ i = 0 FOR DIRECTIONS
+                VAL INT that.num IS this.viewmap[i]:
+                these.clis[i] := clis[that.num]
+              IF
+                x = 0
+                  boundary := #01
+                x = (WIDTH.LOCATIONS - 1)
+                  boundary := #04
+                TRUE
+                  SKIP
+              IF
+                y = 0
+                  boundary := boundary \/ #02
+                y = (HEIGHT.LOCATIONS - 1)
+                  boundary := boundary \/ #08
+                TRUE
+                  SKIP
+
+              location (svrs[cell.num], clis[cell.num], these.clis, agent.cycle, agent.data.addr, viewable.data.addr,
+                        viewcount.data.addr, x, y, boundary, cell.num, err!)
+        --}}}
+
+        SEQ
+          TIMER tim:
+          INT seed:
+          INITIAL MOBILE BARRIER bar IS MOBILE BARRIER:
+          SEQ
+            IF
+              INITIAL.SEED = 0
+                SEQ
+                  tim ? seed
+                  seed := (seed >> 2) + 1
+              TRUE
+                seed := INITIAL.SEED
+
+        
+            FORK cycle.limiter (bar, agent.cycle, agent.data.addr, err!)
+
+            --{{{  send barrier to locations
+            --SEQ i = 0 FOR NUM.LOCATIONS
+            --  cbar[i] ! bar
+            --}}}
+
+            --{{{  spawn agents
+            SEQ i = 0 FOR INITIAL.BOIDS
+              INT cell:
+              VECTOR cell.base:
+              SEQ
+                cell, seed := random (NUM.LOCATIONS, seed)
+                cell.base[y] := REAL32 TRUNC (cell / WIDTH.LOCATIONS)
+                cell.base[x] := REAL32 TRUNC (cell \ WIDTH.LOCATIONS)
+
+                SEQ
+                  spawn.actor (next.agent, AT.BOID, agent.data.addr[0], viewable.data.addr, viewcount.data.addr, viewmap.data.addr,
+                               seed, clis[cell], cell, cell.base, bar)
+                next.agent := next.agent + 1
+            --}}}
+            --{{{  spawn cylinders
+            SEQ i = 0 FOR INITIAL.CYLINDERS
+              INT cell:
+              VECTOR cell.base:
+              SEQ
+                cell, seed := random (NUM.LOCATIONS, seed)
+                cell.base[y] := REAL32 TRUNC (cell / WIDTH.LOCATIONS)
+                cell.base[x] := REAL32 TRUNC (cell \ WIDTH.LOCATIONS)
+
+                spawn.actor (next.agent, AT.CYLINDER, agent.data.addr[0], viewable.data.addr, viewcount.data.addr, viewmap.data.addr,
+                             seed, clis[cell], cell, cell.base, bar)
+                next.agent := next.agent + 1
+            --}}}
+            #IF DEFINED (INTERACTIVE) AND DEFINED (DO.VIS)
+            --{{{  spawn interactive agent
+            MOBILE []SHARED LOC.CT! clis.copy:
+            SEQ
+              clis.copy := MOBILE [NUM.LOCATIONS]SHARED LOC.CT!
+              SEQ i = 0 FOR NUM.LOCATIONS
+                clis.copy[i] := CLONE clis[i]
+
+              FORK interactive.agent (next.agent, AT.CYLINDER, agent.cycle, agent.data.addr, simparms.addr, clis.copy, bar, i.svr?, err!)
+            --}}}
+            #ENDIF
+            --{{{  boid processing engine
+            #IF DEFINED (NO.GPU)
+            #IF NOT DEFINED (BOID.ONLY)
+            FORK boid.engine (bar, agent.data.addr, viewable.data.addr, viewcount.data.addr, viewmap.data.addr, simparms.addr, INITIAL.BOIDS, err!)
+            #ENDIF
+            #ELSE
+            FORK boid.gpu.engine (bar, agent.cycle, agent.data.addr, viewable.data.addr, viewcount.data.addr, viewmap.data.addr, simparms.addr, INITIAL.BOIDS, err!)
+            #ENDIF
+            --}}}
+            FORK move.engine (bar, agent.cycle, agent.data.addr, viewable.data.addr, viewcount.data.addr, err!)
+            #IF DEFINED (SANITY.CHECK) --{{{  DEBUG
+            FORK sanity.check.proc (bar, agent.cycle, agent.data.addr, err!)
+            #ENDIF --}}}
+            #IF DEFINED (DO.VIS)
+            #IF DEFINED (SYNC.VIS)
+            FORK display.engine (bar, agent.cycle, agent.data.addr, simparms.addr, i.cli!, err!)
+            #ELSE
+            INITIAL MOBILE BARRIER tmp.bar IS MOBILE BARRIER:
+            SEQ
+              FORK display.engine (tmp.bar, agent.cycle, agent.data.addr, simparms.addr, i.cli!, err!)
+            #ENDIF
+            #ENDIF
+
+  --}}}
+:
+

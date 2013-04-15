@@ -186,6 +186,7 @@ modules/occade/examples/parrot_attack
 modules/occade/examples/scrollytext
 modules/ocuda/examples/listdev
 modules/ocuda/examples/mandelgpu
+modules/ocuda/examples/gpuboids
 modules/random/examples/test-random
 modules/raster/examples/drawstuff
 modules/raster/examples/imagetool

@@ -9,7 +9,7 @@ OCCAM_OCCBUILD
 
 build_ocuda=yes
 
-OCCAM_HAVE_CUDA(4.2, ,[build_ocuda=no])
+OCCAM_HAVE_CUDA(4.2, sm_13, ,[build_ocuda=no])
 
 
 AC_MSG_CHECKING([whether to build ocuda.module])
