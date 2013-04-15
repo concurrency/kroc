@@ -25,7 +25,6 @@
 #include <ocuda_ctypes.h>
 
 #define MANDEL_ABSSQLIM 32.0
-#define MANDEL_MAXCOUNT 240
 
 /*{{{  mandelcuda_ainfo_t: type to define various device-specific settings that can be passed to/from occam*/
 typedef struct TAG_mandelcuda_ainfo {
@@ -172,19 +171,31 @@ static inline void real_cuda_freemem (void **ainfo) /*{{{*/
 }
 
 /*}}}*/
-
-static inline void real_cuda_mandelbrot (void **ainfo, const double *dparms, int *framebuffer, const int *diparms, const int *colouring) /*{{{*/
+static inline void real_cuda_updatecolour (void **ainfo, const int *colouring) /*{{{*/
 {
 	mandelcuda_ainfo_t *minfo = (mandelcuda_ainfo_t *)(*ainfo);
 
 	cudaSetDevice (minfo->device->dnum);
-	cudaMemcpy (minfo->dev_parms, dparms, minfo->parmssize, cudaMemcpyHostToDevice);
-	cudaMemcpy (minfo->dev_iparms, diparms, minfo->iparmssize, cudaMemcpyHostToDevice);
 	cudaMemcpy (minfo->dev_colour, colouring, minfo->coloursize, cudaMemcpyHostToDevice);
 	get_last_cuda_error ("cudaMemcpy(HostToDevice)");
+}
+/*}}}*/
 
-	dim3 dim_block (16, 16);
+
+static inline void real_cuda_mandelbrot (void **ainfo, const double *dparms, int *framebuffer, const int *diparms) /*{{{*/
+{
+	mandelcuda_ainfo_t *minfo = (mandelcuda_ainfo_t *)(*ainfo);
+	int ydim = 16;
+	int xdim = (minfo->device->max_threads_per_block / ydim);
+
+	cudaSetDevice (minfo->device->dnum);
+	cudaMemcpy (minfo->dev_parms, dparms, minfo->parmssize, cudaMemcpyHostToDevice);
+	cudaMemcpy (minfo->dev_iparms, diparms, minfo->iparmssize, cudaMemcpyHostToDevice);
+	get_last_cuda_error ("cudaMemcpy(HostToDevice)");
+
+	dim3 dim_block (xdim, ydim);
 	dim3 dim_grid (minfo->width / dim_block.x, minfo->height / dim_block.y);
+
 	mandelbrot_kernel <<< dim_grid, dim_block >>> (minfo->dev_parms, minfo->dev_fb, minfo->dev_iparms, minfo->dev_colour);
 
 	cudaMemcpy (framebuffer, minfo->dev_fb, minfo->fbsize, cudaMemcpyDeviceToHost);
@@ -201,8 +212,11 @@ extern "C" {
 	/* PROC C.cuda.freemem (MANDELCUDA.AINFO ainfo) */
 	__host__ void _cuda_freemem (int *ws) { real_cuda_freemem ((void **)(ws[0])); }
 
-	/* PROC C.cuda.mandelbrot (MANDELCUDA.AINFO ainfo, VAL []REAL64 settings, [][]INT fb, VAL []INT iparams, colouring) */
+	/* PROC C.cuda.updatecolour (MANDELCUDA.AINFO ainfo, VAL []INT colouring) */
+	__host__ void _cuda_updatecolour (int *ws) { real_cuda_updatecolour ((void **)(ws[0]), (int *)(ws[1])); }
+
+	/* PROC C.cuda.mandelbrot (MANDELCUDA.AINFO ainfo, VAL []REAL64 settings, [][]INT fb, VAL []INT iparams) */
 	__host__ void _cuda_mandelbrot (int *ws) {
-		real_cuda_mandelbrot ((void **)(ws[0]), (double *)(ws[1]), (int *)(ws[3]), (int *)(ws[6]), (int *)(ws[8])); }
+		real_cuda_mandelbrot ((void **)(ws[0]), (double *)(ws[1]), (int *)(ws[3]), (int *)(ws[6])); }
 }
 

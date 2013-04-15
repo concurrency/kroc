@@ -45,7 +45,7 @@ int __get_last_cuda_error (const char *msg, const char *file, const int line) /*
 
 static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 {
-	int ndevices, i;
+	int ndevices, i, dcnt;
 
 	*sp = get_last_cuda_error ("initialise");
 	if (*sp) {
@@ -61,17 +61,17 @@ static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 		*d_count = ndevices;
 	}
 
-	for (i=0; i<(*d_count); i++) {
+	for (i=0,dcnt=0; dcnt<(*d_count); dcnt++) {
 		cudaDeviceProp prop;
 		int j;
 
-		cudaGetDeviceProperties (&prop, i);
+		cudaGetDeviceProperties (&prop, dcnt);
 		if (get_last_cuda_error ("cudaGetDeviceProperties()")) {
-			return;
+			continue;					/* just skip this one */
 		}
 
-		cudaSetDevice (i);					/* create stream(s) in device context */
-		devinfo[i].dnum = i;
+		cudaSetDevice (dcnt);					/* create stream(s) in device context */
+		devinfo[i].dnum = dcnt;
 		// cudaStreamCreate (&(devinfo[i].stream0));
 		// cudaStreamCreate (&(devinfo[i].stream1));
 		// devinfo[i].stream0 = 0;
@@ -119,7 +119,9 @@ static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 #if defined(OCUDA_DEBUG)
 		fprintf (stderr, "CUDA device %d: \"%s\" (%d.%d) init\n", devinfo[i].dnum, prop.name, (devinfo[i].cversion >> 16) & 0xffff, (devinfo[i].cversion & 0xffff));
 #endif
+		i++;
 	}
+	*d_count = i;
 
 	return;
 }

@@ -39,7 +39,8 @@ DATA TYPE MANDELCUDA.AINFO IS INT:
 
 #PRAGMA EXTERNAL "PROC C.cuda.allocmem (OCUDA.DEVINFO device, MANDELCUDA.AINFO ainfo, VAL []INT iparams) = 0"
 #PRAGMA EXTERNAL "PROC C.cuda.freemem (MANDELCUDA.AINFO ainfo) = 0"
-#PRAGMA EXTERNAL "PROC C.cuda.mandelbrot (MANDELCUDA.AINFO ainfo, VAL []REAL64 settings, [][]INT fb, VAL []INT iparams, colouring) = 0"
+#PRAGMA EXTERNAL "PROC C.cuda.updatecolour (MANDELCUDA.AINFO ainfo, VAL []INT colouring) = 0"
+#PRAGMA EXTERNAL "PROC C.cuda.mandelbrot (MANDELCUDA.AINFO ainfo, VAL []REAL64 settings, [][]INT fb, VAL []INT iparams) = 0"
 
 
 VAL INT N.ITERS IS 1500:
@@ -51,6 +52,9 @@ PROC gpu.mandelbrot (OCUDA.DEVINFO device, CHAN RASTER.AND.PARAMS scr.in?, CHAN 
   MANDELCUDA.AINFO ainfo:
   [3]REAL64 params:
   [3]INT iparams:
+  TIMER tim:
+  INT t1, t2:
+  INT fps, ccount:
   SEQ
     iparams[0] := IMAGE.WIDTH
     iparams[1] := IMAGE.HEIGHT
@@ -58,16 +62,35 @@ PROC gpu.mandelbrot (OCUDA.DEVINFO device, CHAN RASTER.AND.PARAMS scr.in?, CHAN 
 
     C.cuda.allocmem (device, ainfo, iparams)
     
+    C.cuda.updatecolour (ainfo, colouring)
+
+    fps := 0
+    ccount := 0
+
     WHILE TRUE
       RASTER r:
       SEQ
         SEQ
           scr.in ? r; params; iparams[2]
 
-          C.cuda.mandelbrot (ainfo, params, r, iparams, colouring)
+          IF
+            ccount = 0
+              SEQ
+                tim ? t1
+                C.cuda.mandelbrot (ainfo, params, r, iparams)
+                tim ? t2
+                IF
+                  t1 = t2
+                    fps := 1000000        -- non-plausable!
+                  TRUE
+                    fps := 1000000 / (t2 MINUS t1)
+            TRUE
+              SEQ
+                C.cuda.mandelbrot (ainfo, params, r, iparams)
+          ccount := (ccount + 1) /\ #0F
 
           -- decorate
-          draw.text (2, 2, "GPU Mandelbrot Explorations", FONT.6X13, #00FFFFFF, r)
+          draw.text (2, 2, "occam-pi/GPU Mandelbrot", FONT.6X13, #00FFFFFF, r)
           [128]BYTE buf:
           INITIAL INT blen IS 0:
           SEQ
@@ -87,28 +110,21 @@ PROC gpu.mandelbrot (OCUDA.DEVINFO device, CHAN RASTER.AND.PARAMS scr.in?, CHAN 
             buffer.set.real64 (buf, blen, 2, 15, params[2])
 
             draw.text (2, 47, [buf FOR blen], FONT.6X13, #00FFFFFF, r)
-          draw.text (2, 62, "o/O - zoom out to 64", FONT.6X13, #00FFFFFF, r)
-          draw.text (2, 77, "t/T - trippy mode on/off", FONT.6X13, #00FFFFFF, r)
+
+            blen := 0
+            buffer.set.string (buf, blen, "FPS: ")
+            buffer.set.int (buf, blen, fps)
+
+            draw.text (2, 62, [buf FOR blen], FONT.6X13, #00FFFFFF, r)
+
+          draw.text (2, 77, "o/O - zoom out to 64", FONT.6X13, #00FFFFFF, r)
+          draw.text (2, 92, "t/T - cycle palette on/off", FONT.6X13, #00FFFFFF, r)
           scr.out ! r
     
     C.cuda.freemem (ainfo)
 
 :
 
---}}}
-PROC rate.limit (CHAN RASTER in?, out!) --{{{
-  TIMER tim:
-  INT t:
-  SEQ
-    tim ? t
-    WHILE TRUE
-      RASTER r:
-      SEQ
-        t := t PLUS FRAME.SPEED
-        tim ? AFTER t
-        in ? r
-        out ! r
-:
 --}}}
 PROC event.handler (CHAN RASTER.EVENT ev.in?, CHAN RASTER in?, CHAN RASTER.AND.PARAMS out!) --{{{
   INITIAL REAL64 zoom IS 16.0:
@@ -244,19 +260,23 @@ PROC mandelbrot (CHAN BYTE kyb?, scr!, SHARED CHAN BYTE err!)
     out.string ("]*n", 0, scr!)
 
     colouring[255] := #00000000
-    SEQ i = 0 FOR (SIZE colouring) - 1
-      INITIAL REAL32 hval IS (REAL32 TRUNC i) / 256.0:
-      colouring[i] := hsv.to.rgb (hval, 0.6, 0.7)
+    -- make the first couple a bit different
+    SEQ i = 0 FOR 32
+      INITIAL REAL32 vval IS (REAL32 TRUNC i) / 32.0:       -- 0 -> 0.9..
+      colouring[i] := hsv.to.rgb (0.7, 0.8, vval)
 
-    CHAN RASTER c, d, f:
+    SEQ i = 32 FOR (SIZE colouring) - 33
+      INITIAL REAL32 hval IS (REAL32 TRUNC i) / 512.0:
+      colouring[i] := hsv.to.rgb (0.8 - hval, 0.7, 0.7)
+
+    CHAN RASTER c, d:
     CHAN RASTER.AND.PARAMS e:
     CHAN RASTER.EVENT ev:
     PAR
-      rate.limit (f?, c!)
       raster.display ("Mandelbrot", IMAGE.WIDTH, IMAGE.HEIGHT, 2, c?, d!, ev!)
       -- raster.capture ("Mandelbrot", IMAGE.WIDTH, IMAGE.HEIGHT, 2, c?, d!, ev!, err!)
       event.handler (ev?, d?, e!)
-      gpu.mandelbrot (cudadev, e?, f!, colouring)
+      gpu.mandelbrot (cudadev, e?, c!, colouring)
 
 :
 
