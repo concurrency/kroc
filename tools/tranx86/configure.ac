@@ -8,6 +8,7 @@ AM_INIT_AUTOMAKE
 AC_DEFINE_UNQUOTED([TARGET_CANONICAL],"${target}",[define canonical target])
 
 dnl Checks for programs.
+AC_LANG([C])
 AC_PROG_CC
 AC_PROG_MAKE_SET
 
@@ -59,9 +60,7 @@ case "$host_cpu" in
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$ARCH_DEFS $CFLAGS"
 
-  AC_RUN_IFELSE([
-  int main (void)
-  {
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([],[
    __asm__ __volatile__ ("		\n"
     "	xorl	%%eax, %%eax		\n"
     "	je	.LTMP1			\n"
@@ -71,7 +70,7 @@ case "$host_cpu" in
     "	nop				\n"
     ::: "cc", "memory");
     return 0;
-  }], [can_do_dotlabels=yes], [can_do_dotlabels=no], [can_do_dotlabels=no])
+  ])], [can_do_dotlabels=yes], [can_do_dotlabels=no], [can_do_dotlabels=no])
 
   CFLAGS="$saved_CFLAGS"
   ;;

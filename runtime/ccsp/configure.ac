@@ -7,6 +7,7 @@ AM_INIT_AUTOMAKE
 m4_pattern_allow([^AS_DEFS$])
 
 dnl Checks for programs.
+AC_LANG([C])
 AC_PROG_CC
 AM_PROG_AS
 AC_PROG_RANLIB
@@ -169,13 +170,12 @@ esac
 
 #{{{  test for mmap() of /dev/zero
 AC_RUN_IFELSE([
+AC_LANG_PROGRAM([
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-int main (void)
-{
+],[
  int fd;
  void *addr;
 
@@ -190,7 +190,7 @@ int main (void)
  munmap (addr, 1048576);
  close (fd);
  return 0; 
-}],[can_mmap_zero=yes],[can_mmap_zero=no],[can_mmap_zero=no])
+])],[can_mmap_zero=yes],[can_mmap_zero=no],[can_mmap_zero=no])
 #}}}
 
 AC_MSG_CHECKING([whether to enable mmap() based allocation])
@@ -201,13 +201,12 @@ AC_MSG_RESULT($can_mmap_zero)
 
 #{{{  test for mmap() of invalid descriptor
 AC_RUN_IFELSE([
+AC_LANG_PROGRAM([
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-int main (void)
-{
+],[
  void *addr;
 
  addr = mmap ((void *)0, 1048576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
@@ -216,7 +215,7 @@ int main (void)
  }
  munmap (addr, 1048576);
  return 0; 
-}],[can_mmap_anon=yes],[can_mmap_anon=no],[can_mmap_anon=no])
+])],[can_mmap_anon=yes],[can_mmap_anon=no],[can_mmap_anon=no])
 #}}}
 
 AC_MSG_CHECKING([whether MAP_ANON on an invalid descriptor is supported])
@@ -241,13 +240,12 @@ if test [ "$use_mmap" = yes ]; then
 
  #{{{  test for mmap() requiring MAP_FIXED for fixed allocation
  AC_RUN_IFELSE([
+ AC_LANG_PROGRAM([
  #include <sys/types.h>
  #include <sys/mman.h>
  #include <unistd.h>
  #include <fcntl.h>
-
- int main (void)
- {
+ ],[
   void *addr;
   #ifdef CAN_MMAP_ZERO
   int fd = open ("/dev/zero", O_RDRW);
@@ -270,17 +268,16 @@ if test [ "$use_mmap" = yes ]; then
    return 0;
   }
   return 1;
- }],[mmap_fixed=yes],[mmap_fixed=no],[mmap_fixed=no])
+ ])],[mmap_fixed=yes],[mmap_fixed=no],[mmap_fixed=no])
  #}}}
  #{{{  test for mmap() at a fixed address
  AC_RUN_IFELSE([
+ AC_LANG_PROGRAM([
  #include <sys/types.h>
  #include <sys/mman.h>
  #include <unistd.h>
  #include <fcntl.h>
-
- int main (void)
- {
+ ],[
   void *addr;
   #ifdef CAN_MMAP_ZERO
   int fd = open ("/dev/zero", O_RDRW);
@@ -305,7 +302,7 @@ if test [ "$use_mmap" = yes ]; then
    return 0;
   }
   return 1;
- }],[can_mmap_fixed=yes],[can_mmap_fixed=no],[can_mmap_fixed=no])
+ ])],[can_mmap_fixed=yes],[can_mmap_fixed=no],[can_mmap_fixed=no])
  #}}}
 
  CFLAGS="$SAVED_CFLAGS"
