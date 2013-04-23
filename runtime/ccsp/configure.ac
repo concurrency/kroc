@@ -10,7 +10,7 @@ dnl Maintainer mode not used
 dnl jm_MAINTAINER_MODE
 
 dnl Checks for programs.
-AM_PROG_CC_STDC
+AC_PROG_CC
 AM_PROG_AS
 AC_PROG_RANLIB
 AC_PROG_LN_S
