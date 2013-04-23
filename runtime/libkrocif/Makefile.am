@@ -2,9 +2,6 @@
 
 @SET_MAKE@
 
-## Cannot use ansi2knr because it is under GPL
-## AUTOMAKE_OPTIONS=ansi2knr
-## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign no-dependencies
 ACLOCAL_AMFLAGS = -I ../../m4
 

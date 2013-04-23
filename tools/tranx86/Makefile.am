@@ -12,9 +12,6 @@ AM_CPPFLAGS = -I.
 DEFS=@DEFS@ @ARCH_DEFS@ @KROC_CCSP_CINCPATH@
 EXTRALDFLAGS=@ARCH_DEFS@
 
-## Cannot use ansi2knr because it is under GPL
-## AUTOMAKE_OPTIONS=ansi2knr
-## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign
 ACLOCAL_AMFLAGS = -I ../../m4
 

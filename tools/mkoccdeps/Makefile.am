@@ -11,9 +11,6 @@ VPATH = @srcdir@
 AM_CPPFLAGS = -I.
 DEFS=@DEFS@
 
-## Cannot use ansi2knr because it is under GPL
-## AUTOMAKE_OPTIONS=ansi2knr
-## config.guess and config.sub have special exceptions
 AUTOMAKE_OPTIONS=foreign
 
 bin_PROGRAMS = mkoccdeps
