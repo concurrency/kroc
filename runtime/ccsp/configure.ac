@@ -6,9 +6,6 @@ AM_INIT_AUTOMAKE
 
 m4_pattern_allow([^AS_DEFS$])
 
-dnl Maintainer mode not used
-dnl jm_MAINTAINER_MODE
-
 dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_AS
