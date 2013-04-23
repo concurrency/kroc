@@ -1,6 +1,6 @@
 # Top-level configure.ac for the KRoC tree.
 
-AC_INIT([kroc], [1.5.0-pre6], [kroc-bugs@kent.ac.uk])
+AC_INIT([kroc], [1.6.0], [kroc-bugs@kent.ac.uk])
 AC_PREREQ(2.59)
 AC_CANONICAL_SYSTEM
 
