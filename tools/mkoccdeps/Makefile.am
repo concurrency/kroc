@@ -8,7 +8,7 @@
 ##
 
 VPATH = @srcdir@
-INCLUDES=-I.
+AM_CPPFLAGS = -I.
 DEFS=@DEFS@
 
 ## Cannot use ansi2knr because it is under GPL

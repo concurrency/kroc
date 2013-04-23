@@ -6,7 +6,7 @@ srcdir = @srcdir@
 VPATH = @srcdir@
 
 DEFS = @DEFS@
-INCLUDES = -I.. -I$(srcdir)/../include
+AM_CPPFLAGS = -I.. -I$(srcdir)/../include
 
 noinst_LIBRARIES = libtcofflib.a
 
