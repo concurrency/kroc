@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I ../../m4
 
 srcdir = @srcdir@
 VPATH = @srcdir@
-INCLUDES = -I. -I@srcdir@/include
+AM_CPPFLAGS = -I. -I@srcdir@/include
 DEFS = @DEFS@ @ARCH_DEFS@
 EXTRALDFLAGS = @EXTRA_LDFLAGS@
 
