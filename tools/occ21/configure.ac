@@ -7,7 +7,6 @@ AM_INIT_AUTOMAKE
 dnl Checks for programs.
 AC_CHECK_TOOL(CC,gcc,:)
 
-dnl AM_PROG_CC_STDC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 dnl AC_PROG_RANLIB

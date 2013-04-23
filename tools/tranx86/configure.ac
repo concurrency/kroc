@@ -9,7 +9,6 @@ AC_DEFINE_UNQUOTED([TARGET_CANONICAL],"${target}",[define canonical target])
 
 dnl Checks for programs.
 AC_PROG_CC
-AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 
 KROC_CCSP_FLAGS

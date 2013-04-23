@@ -6,7 +6,6 @@ AM_INIT_AUTOMAKE
 
 dnl Checks for programs.
 AC_PROG_CC
-AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 
 dnl Checks for libraries.
