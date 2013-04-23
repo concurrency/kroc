@@ -1,5 +1,5 @@
 AC_INIT([occ21], [1.4.1], [kroc-bugs@kent.ac.uk])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE

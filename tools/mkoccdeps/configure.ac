@@ -1,7 +1,7 @@
 AC_INIT([mkoccdeps], [0.9], [kroc-bugs@kent.ac.uk])
 AC_CANONICAL_SYSTEM
 
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE
 
 dnl Checks for programs.

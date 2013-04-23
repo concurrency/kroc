@@ -3,7 +3,7 @@
 ################################
 
 AC_INIT([libtvm], [1.0.0], [kroc-bugs@kent.ac.uk])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE
