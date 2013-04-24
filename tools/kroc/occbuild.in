@@ -19,7 +19,8 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, getopt, re, shlex, platform
+from __future__ import print_function
+import sys, os, getopt, re, shlex, platform, functools
 
 #{{{  globals
 VERSION = "$Revision$"[11:-2]
@@ -50,7 +51,7 @@ build_shared = True
 
 #{{{  helper functions
 def warn(*s):
-	print >>sys.stderr, "occbuild: " + "".join(map(str, s))
+	print ("occbuild: " + "".join(map(str, s)), file=sys.stderr)
 
 def die(*s):
 	warn(*s)
@@ -154,7 +155,7 @@ def make_relative_path(source, dest):
 	if output == []:
 		return "."
 	else:
-		return reduce(os.path.join, output)
+		return apply(os.path.join, output)
 
 def run(cmd):
 	"""Run a command, and check that it succeeded."""
@@ -369,7 +370,7 @@ def get_install_dir(default, default_suffix):
 def get_uselibs(etc_file):
 	"""Extract all the USELIB comments from a .etc file."""
 	comments = capture(programs["tce-dump.pl"] + ["-C", etc_file])
-	uselibs = re.findall("\.USELIB\s+(.*?)\s*\n", comments)
+	uselibs = re.findall(r"\.USELIB\s+(.*?)\s*\n", comments)
 	return uselibs
 
 def resolve_library(lib):
@@ -579,7 +580,7 @@ class KRoCToolchain(Toolchain):
 		cflags = "-DOCCBUILD_KROC"
 		cflags += " " + capture(programs["kroc"] + ["--cflags"])
 		cflags += " " + capture(programs["kroc"] + ["--ccincpath"])
-		print tidy_spaces(cflags)
+		print (tidy_spaces(cflags))
 	
 	def search_path(self):
 		krocdir = get_install_dir("@KROC_KROCDIR@", "/share/kroc")
@@ -691,7 +692,7 @@ class TVMToolchain(Toolchain):
 		f.write("# %s\n" % autogen_message)
 		f.write("exec %s $0.tbc \"$@\"\n" % (" ".join(programs["tvm_installed"])))
 		f.close()
-		os.chmod(output, 0755)
+		os.chmod(output, 0o755)
 
 	def run(self, program, args):
 		set_ld_path()
@@ -744,7 +745,7 @@ class TVMToolchain(Toolchain):
 			delete(base + ".tbc")
 
 	def cflags(self):
-		print "-DOCCBUILD_TVM"
+		print ("-DOCCBUILD_TVM")
 		# FIXME: what cflags?
 	
 	def search_path(self):
@@ -921,7 +922,7 @@ class TockToolchain:
 #TODO add clean rules for the Tock stuff!
 	def cflags(self):
 		cflags = "-DOCCBUILD_KROC"
-		print tidy_spaces(cflags)
+		print (tidy_spaces(cflags))
 	def search_path(self):
 		return capture(programs["tock"] + ["--module-path"]).strip().split(":") + capture(programs["tock"] + ["--include-path"]).strip().split(":") + capture(programs["tock"] + ["--lib-path"]).strip().split(":")
 
@@ -939,7 +940,7 @@ toolchains = {
 
 #{{{  usage
 def usage(f):
-	print >>f, """occbuild version """ + VERSION + """, for """ + target_cpu + """ """ + target_os + """
+	print ("""occbuild version """ + VERSION + """, for """ + target_cpu + """ """ + target_os + """
 Compile occam-pi libraries and programs
 Usage:
 
@@ -1003,7 +1004,7 @@ Options for --install/--install-examples mode:
   --prefix PREFIX     Select installation prefix PREFIX (mandatory)
   --destdir DESTDIR   Use staging directory DESTDIR
 
-Report bugs to <""" + CONTACT + """>."""
+Report bugs to <""" + CONTACT + """>.""", file=f)
 #}}}
 #{{{  main
 def main(args):
