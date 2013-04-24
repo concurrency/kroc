@@ -104,7 +104,7 @@ def run_command(cmd):
 
 def safe_sorted(l):
 	"""Like sorted(), but returns a mutable list."""
-	l = l[:]
+	l = list(l)
 	l.sort()
 	return l
 
