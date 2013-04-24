@@ -78,8 +78,7 @@ def output_file(bits, fn):
 	os.rename(fn + ".new", fn)
 
 def write_ins_header(defs, fn):
-	keys = defs.keys()
-	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
+	keys = sorted(defs.keys(), key=ins_key_to_int)
 	
 	bits = ["-- Generated automatically by make-dispatch.py; do not modify!\n\n"]
 	for k in keys:
@@ -96,8 +95,7 @@ def write_ins_header(defs, fn):
 	output_file(bits, fn)
 
 def write_names(defs, fn):
-	keys = defs.keys()
-	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
+	keys = sorted(defs.keys(), key=ins_key_to_int)
 	
 	bits = ["""/* Generated automatically by make-dispatch.py; do not modify! */
 
@@ -166,8 +164,7 @@ static inline int dispatch_instruction (ECTX ectx, BYTE instr)
 			bits.append("#endif\n")
 		last_conds[:] = conds
 
-	keys = defs.keys()
-	keys.sort(lambda a, b: cmp(ins_key_to_int(a), ins_key_to_int(b)))
+	keys = sorted(defs.keys(), key=ins_key_to_int)
 
 	for k in keys:
 		if k == "F_":
@@ -222,8 +219,7 @@ def write_jumptable(defs, fn, name, keys):
 				min = key_int
 			if key_int > max:
 				max = key_int
-	header_list = headers.keys()
-	header_list.sort()
+	header_list = sorted(headers.keys());
 	for h in header_list:
 		bits.append("#include \"%s\"\n" % h)
 
