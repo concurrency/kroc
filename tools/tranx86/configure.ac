@@ -1,6 +1,6 @@
 AC_INIT([tranx86], [1.4.1], [kroc-bugs@kent.ac.uk])
 AC_CONFIG_SRCDIR([main.c])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE
@@ -8,8 +8,8 @@ AM_INIT_AUTOMAKE
 AC_DEFINE_UNQUOTED([TARGET_CANONICAL],"${target}",[define canonical target])
 
 dnl Checks for programs.
+AC_LANG([C])
 AC_PROG_CC
-AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 
 KROC_CCSP_FLAGS
@@ -60,9 +60,7 @@ case "$host_cpu" in
   saved_CFLAGS="$CFLAGS"
   CFLAGS="$ARCH_DEFS $CFLAGS"
 
-  AC_RUN_IFELSE([
-  int main (void)
-  {
+  AC_RUN_IFELSE([AC_LANG_PROGRAM([],[
    __asm__ __volatile__ ("		\n"
     "	xorl	%%eax, %%eax		\n"
     "	je	.LTMP1			\n"
@@ -72,7 +70,7 @@ case "$host_cpu" in
     "	nop				\n"
     ::: "cc", "memory");
     return 0;
-  }], [can_do_dotlabels=yes], [can_do_dotlabels=no], [can_do_dotlabels=no])
+  ])], [can_do_dotlabels=yes], [can_do_dotlabels=no], [can_do_dotlabels=no])
 
   CFLAGS="$saved_CFLAGS"
   ;;

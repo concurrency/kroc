@@ -1,5 +1,5 @@
 AC_INIT([occ21], [1.4.1], [kroc-bugs@kent.ac.uk])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE
@@ -7,7 +7,6 @@ AM_INIT_AUTOMAKE
 dnl Checks for programs.
 AC_CHECK_TOOL(CC,gcc,:)
 
-dnl AM_PROG_CC_STDC
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 dnl AC_PROG_RANLIB

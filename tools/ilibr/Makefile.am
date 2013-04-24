@@ -7,7 +7,7 @@ srcdir = @srcdir@
 VPATH = @srcdir@
 
 DEFS = @DEFS@
-INCLUDES = -I. -I$(srcdir)/tcofflib
+AM_CPPFLAGS = -I. -I$(srcdir)/tcofflib
 
 SUBDIRS = tcofflib
 

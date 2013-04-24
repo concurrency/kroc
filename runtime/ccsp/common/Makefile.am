@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 @SET_MAKE@
-INCLUDES=-I@srcdir@/../include
+AM_CPPFLAGS = -I@srcdir@/../include
 
 noinst_LIBRARIES=libcommon.a
 

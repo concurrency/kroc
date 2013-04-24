@@ -3,7 +3,7 @@
 ###################################
 
 AC_INIT([tvm-posix], [1.0.0], [kroc-bugs@kent.ac.uk])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_CANONICAL_SYSTEM
 
 AM_INIT_AUTOMAKE
@@ -69,7 +69,7 @@ TVM_LIBTVM
 
 CFLAGS="$TVM_CFLAGS $CFLAGS"
 OCCAM_CHECK_CFLAGS([-Wall], [CFLAGS="$CFLAGS -Wall"])
-LIBS="-lm $TVM_LIBS $LIBS"
+LIBS="$TVM_LIBS $LIBS -lm"
 TVM_FIRMWARE_PATH="$datadir/tvm/${KROC_TARGET_PREFIX}firmware/"
 TVM_LIBRARY_PATH="$libdir/${KROC_TARGET_PREFIX}tvm/"
 
