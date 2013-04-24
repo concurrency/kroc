@@ -6,10 +6,13 @@ AM_INIT_AUTOMAKE
 dnl Checks for programs.
 OCCAM_OCCBUILD
 
+have_cuda=yes
 build_ocuda_examples=yes
 build_ocuda_sdl_examples=yes
 
-OCCAM_HAVE_CUDA(4.2, sm_20, ,[build_ocuda_examples=no])
+OCCAM_HAVE_CUDA(4.2, sm_20, ,[have_cuda=no])
+build_ocuda_examples=$have_cuda
+build_ocuda_sdl_examples=$have_cuda
 
 OCCAM_INCLUDE([course.module ocuda.module], ,[build_ocuda_examples=no])
 OCCAM_INCLUDE([sdlraster.module rastergraphics.module rastertext.module useful.module rasterio.module], ,[build_ocuda_sdl_examples=no])
