@@ -18,7 +18,7 @@
 #	Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
-import sys, os, re
+import sys, os, re, functools
 
 prog_name 	= "make-header.py"
 
@@ -83,13 +83,12 @@ def die(*s):
 	warn(*s)
 	sys.exit(1)
 
-def safe_sorted(list, cmp):
+def safe_sorted(lst, comp):
 	try:
-		return sorted(list, cmp)
+		return sorted(lst, key=functools.cmp_to_key(comp))
 	except NameError:
-		list = list[:]
-		list.sort(cmp)
-		return list
+		lst = list(lst)
+		return sorted(lst, key=functools.cmp_to_key(comp))
 
 def load_defines(defines, fn):
 	define_re = re.compile(r'^#define\s+(\S+)')
@@ -148,12 +147,12 @@ def test_symbol_requirements(defines, calls, symbols):
 	for name, symbol in symbols.items():
 		unsupported = False
 
-		if symbol.has_key("DEPEND"):
+		if "DEPENDS" in symbol:
 			for define in symbol["DEPEND"]:
-				unsupported = unsupported or (not defines.has_key(define))
-		if symbol.has_key("INCOMPATIBLE"):
+				unsupported = unsupported or (not define in defines)
+		if "INCOMPATIBLE" in symbol:
 			for define in symbol["INCOMPATIBLE"]:
-				unsupported = unsupported or defines.has_key(define)
+				unsupported = unsupported or (define in defines)
 		if unsupported:
 			for call in symbol["handles"]:
 				calls[call] = symbols["Y_unsupported"]
@@ -164,9 +163,9 @@ def enumerate_symbols(symbols):
 		prio_a = int(symbols[a].get("PRIO", 0))
 		prio_b = int(symbols[b].get("PRIO", 0))
 		if prio_a == prio_b:
-			return cmp(a, b)
+			return (a > b) - (a < b)
 		else:
-			return cmp(prio_b, prio_a)
+			return (prio_b > prio_a) - (prio_b < prio_a)
 
 	i = 0
 	for symbol in safe_sorted(symbols.keys(), compare_symbols):
@@ -527,18 +526,18 @@ def gen_sparc_cif_stub(f, symbol, inputs, outputs):
 	f.line("/* sparc unsupported */")
 
 def output_cif(defines, symbol_list, symbols, fn):
-	if defines.has_key("TARGET_CPU_386"):
+	if "TARGET_CPU_386" in defines:
 		arch_header = gen_i386_header
 		arch_generator = gen_i386_cif_stub
-	elif defines.has_key("TARGET_CPU_MIPS"):
+	elif "TARGET_CPU_MIPS" in defines:
 		warn("generating CIF stubs for unsupported architecture...")
 		arch_header = gen_mips_header
 		arch_generator = gen_mips_cif_stub
-	elif defines.has_key("TARGET_CPU_PPC64"):
+	elif "TARGET_CPU_PPC64" in defines:
 		warn("generating CIF stubs for unsupported architecture...")
 		arch_header = gen_ppc_header
 		arch_generator = gen_ppc64_cif_stub
-	elif defines.has_key("TARGET_CPU_SPARC"):
+	elif "TARGET_CPU_SPARC" in defines:
 		warn("generating CIF stubs for unsupported architecture...")
 		arch_header = gen_sparc_header
 		arch_generator = gen_sparc_cif_stub
@@ -577,8 +576,8 @@ def main(args):
 	enumerate_symbols(symbols)
 
 	symbol_list = safe_sorted(
-		symbols.keys(), 
-		lambda a, b: cmp(symbols[a]["offset"], symbols[b]["offset"])
+		symbols.keys(),
+		lambda a, b: (symbols[a]["offset"] > symbols[b]["offset"]) - (symbols[a]["offset"] < symbols[b]["offset"])
 	)
 
 	if type == "--kitable":
