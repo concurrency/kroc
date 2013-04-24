@@ -5,7 +5,6 @@ srcdir = @srcdir@
 VPATH = @srcdir@
 
 DEFS = @DEFS@ -Wall
-#INCLUDES = -I.
 
 SUBDIRS =
 
