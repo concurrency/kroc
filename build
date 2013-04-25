@@ -24,6 +24,8 @@
 # version of KRoC can cause build problems.
 unset ACLOCAL
 
+step="Initialising"
+
 supportaddress="kroc-bugs@kent.ac.uk"
 if [ "$1" = "" -o "$1" = "--help" ]; then
 	cat <<EOF
@@ -71,7 +73,7 @@ status () {
 }
 
 fail () {
-	status "Installation failed"
+	status "${step} failed - KRoC was not installed."
 	cat <<EOF
 The KRoC installation failed. If the messages above don't help you work
 out why, please mail:
@@ -86,6 +88,8 @@ EOF
 }
 
 status "Generating build system"
+step="Generating build system"
+
 autoreconf -v -f -i || fail
 
 if [ "$1" = "--autoreconf-only" ]; then
@@ -93,15 +97,18 @@ if [ "$1" = "--autoreconf-only" ]; then
 fi
 
 status "Configuring with arguments: $*"
+step="Configuration"
 ./configure "$@" || fail
 
 status "Cleaning source tree"
 make -k clean
 
 status "Compiling"
+step="Compilation"
 make || fail
 
 status "Installing"
+step="Installation"
 make install || fail
 
 status "Installation successful"
