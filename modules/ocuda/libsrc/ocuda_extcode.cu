@@ -52,6 +52,11 @@ static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 		return;
 	}
 
+	/* blank out */
+	for (i=0; i<MAX_GPU_INSTANCES; i++) {
+		devinfo[i].dnum = -1;
+	}
+
 	cudaGetDeviceCount (&ndevices);
 	if (get_last_cuda_error ("cudaGetDeviceCount()")) {
 		return;
@@ -126,6 +131,24 @@ static inline void real_cuda_init (int *d_count, int *sp) /*{{{*/
 	return;
 }
 /*}}}*/
+/*{{{  static inline void real_cuda_shutdown (void)*/
+/*
+ *	shuts-down cuda -- calls to reset device
+ */
+static inline void real_cuda_shutdown (void)
+{
+	int i;
+
+	for (i=0; i<MAX_GPU_INSTANCES; i++) {
+		if (devinfo[i].dnum >= 0) {
+			cudaSetDevice (devinfo[i].dnum);
+			cudaDeviceReset ();
+
+			devinfo[i].dnum = -1;
+		}
+	}
+}
+/*}}}*/
 static inline void real_cuda_devinfo (int dnum, ocuda_devinfo_t *result, int *res) /*{{{*/
 {
 	if ((dnum < 0) || (dnum >= MAX_GPU_INSTANCES)) {
@@ -142,8 +165,12 @@ extern "C" {
 	/* PROC C.cuda.init (INT d.count, RESULT INT res) */
 	__host__ void _cuda_init (int *ws) { real_cuda_init ((int *)(ws[0]), (int *)(ws[1])); }
 
+	/* PROC C.cuda.shutdown () */
+	__host__ void _cuda_shutdown (int *ws) { real_cuda_shutdown (); }
+
 	/* PROC C.cuda.devinfo (VAL INT dnum, RESULT OCUDA.DEVINFO data, RESULT INT res) */
 	__host__ void _cuda_devinfo (int *ws) { real_cuda_devinfo ((int)(ws[0]), (ocuda_devinfo_t *)(ws[1]), (int *)(ws[2])); }
+
 }
 
 

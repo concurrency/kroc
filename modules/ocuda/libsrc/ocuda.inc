@@ -63,6 +63,7 @@ DATA TYPE OCUDA.DEVINFO
 :
 
 #PRAGMA EXTERNAL "PROC C.cuda.init (INT d.count, RESULT INT res) = 0"
+#PRAGMA EXTERNAL "PROC C.cuda.shutdown () = 0"
 #PRAGMA EXTERNAL "PROC C.cuda.devinfo (VAL INT dnum, RESULT OCUDA.DEVINFO data, RESULT INT res) = 0"
 
 

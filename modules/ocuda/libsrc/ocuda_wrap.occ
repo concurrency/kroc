@@ -51,7 +51,7 @@ PROC ocuda.init (INT d.count, RESULT INT res)
 --
 PROC ocuda.shutdown (RESULT INT res)
   SEQ
-    -- no-op.
+    C.cuda.shutdown ()
     res := 0
 :
 --}}}
