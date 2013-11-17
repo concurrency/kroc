@@ -26,6 +26,7 @@
 #include <armccsp_types.h>
 #include <armccsp_if.h>
 
+
 static ccsp_sched_t *ccsp_sched;
 
 
@@ -34,6 +35,11 @@ static void ccsp_schedule (ccsp_sched_t *sched);
 static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes);
 static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes);
 static void ccsp_shutdown (ccsp_pws_t *p);
+static void ccsp_pause (ccsp_pws_t *p);
+static void ccsp_seterr (ccsp_pws_t *p);
+static void ccsp_seterrm (ccsp_pws_t *p, char *msg);
+static void ccsp_malloc (ccsp_pws_t *p, int bytes, void **ptrp);
+static void ccsp_mrelease (ccsp_pws_t *p, void *ptr);
 
 
 /*}}}*/
@@ -46,7 +52,13 @@ typedef struct TAG_ccsp_calltable {
 static ccsp_calltable_t ccsp_calltable[] = {
 	{ 3, (void (*)(ccsp_pws_t *))ccsp_chanout },			/* CALL_CHANOUT */
 	{ 3, (void (*)(ccsp_pws_t *))ccsp_chanin },			/* CALL_CHANIN */
-	{ 0, (void (*)(ccsp_pws_t *))ccsp_shutdown }			/* CALL_SHUTDOWN */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_shutdown },			/* CALL_SHUTDOWN */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_pause },			/* CALL_PAUSE */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_seterr },			/* CALL_SETERR */
+	{ 1, (void (*)(ccsp_pws_t *))ccsp_seterrm },			/* CALL_SETERRM */
+	{ 2, (void (*)(ccsp_pws_t *))ccsp_malloc },			/* CALL_MALLOC */
+	{ 1, (void (*)(ccsp_pws_t *))ccsp_mrelease },			/* CALL_MRELEASE */
+	{ -1, NULL }
 };
 
 
@@ -129,7 +141,63 @@ static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int byt
  */
 static void ccsp_shutdown (ccsp_pws_t *p)
 {
+	/* FIXME: do something better! */
 	armccsp_fatal ("finished :)");
+}
+/*}}}*/
+/*{{{  static void ccsp_pause (ccsp_pws_t *p)*/
+/*
+ *	called to reschedule -- puts the current process on the back of the run-queue and runs next.
+ */
+static void ccsp_pause (ccsp_pws_t *p)
+{
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_pause(): p=%p (stack=%p, base=%p, size=%d)\n", p, p->stack, p->stack_base, p->stack_size);
+#endif
+	ccsp_linkproc (p->sched, p);
+	ccsp_schedule (p->sched);
+}
+/*}}}*/
+/*{{{  static void ccsp_seterr (ccsp_pws_t *p)*/
+/*
+ *	hard run-time error (may be result of unhandled IF branch, empty ALT, overflow, etc.)
+ */
+static void ccsp_seterr (ccsp_pws_t *p)
+{
+	armccsp_fatal ("SetErr at %p, exiting", p->raddr);
+}
+/*}}}*/
+/*{{{  static void ccsp_seterrm (ccsp_pws_t *p, char *msg)*/
+/*
+ *	hard run-time error (typically application error)
+ */
+static void ccsp_seterrm (ccsp_pws_t *p, char *msg)
+{
+	armccsp_fatal ("SetErr at %p: %s", p->raddr, msg);
+}
+/*}}}*/
+/*{{{  static void ccsp_malloc (ccsp_pws_t *p, int bytes, void **ptrp)*/
+/*
+ *	dynamic memory allocation.
+ */
+static void ccsp_malloc (ccsp_pws_t *p, int bytes, void **ptrp)
+{
+	if (bytes <= 0) {
+		armccsp_fatal ("ccsp_malloc(): request for %d bytes", bytes);
+	}
+	*ptrp = armccsp_smalloc (bytes);
+}
+/*}}}*/
+/*{{{  static void ccsp_mrelease (ccsp_pws_t *p, void *ptr)*/
+/*
+ *	dynamic memory release.
+ */
+static void ccsp_mrelease (ccsp_pws_t *p, void *ptr)
+{
+	if (!ptr) {
+		armccsp_fatal ("ccsp_mrelease(): attempt to free NULL pointer");
+	}
+	armccsp_sfree (ptr);
 }
 /*}}}*/
 
@@ -183,19 +251,23 @@ int ccsp_initsched (void)
 	return 0;
 }
 /*}}}*/
-/*{{{  */
+/*{{{  void ccsp_first (ccsp_pws_t *p)*/
 /*
  *	one-time startup for the scheduler, called in main() context/stack.
  */
 void ccsp_first (ccsp_pws_t *p)
 {
-	p->stack = p->stack_base + (p->stack_size - 4);
+	// p->stack = p->stack_base + (p->stack_size - 4);
 
 	/* use our stack-pointer as the entry for other kernel things */
 	RuntimeSaveStack ((Workspace)p);
 	RuntimeSetEntry ((Workspace)p);
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_first(): p=%p, p->stack=%p (base=%p, size=%d), p->raddr=%p\n", p, p->stack, p->stack_base, p->stack_size, p->raddr);
+#endif
 	ccsp_linkproc (p->sched, p);
 
+	/* the first time we enter this the stack-pointer will be different from subsequent times, but safe */
 	ccsp_schedule (p->sched);
 }
 /*}}}*/
@@ -213,12 +285,28 @@ void ccsp_entry (ccsp_pws_t *wsp, const int call, void **args)
 			kfcn0 (wsp);
 		}
 		break;
+	case 1:
+		{
+			void (*kfcn1)(ccsp_pws_t *, void *) = \
+					(void (*)(ccsp_pws_t *, void *))ccsp_calltable[call].fcptr;
+
+			kfcn1 (wsp, args[1]);
+		}
+		break;
+	case 2:
+		{
+			void (*kfcn2)(ccsp_pws_t *, void *, void *) = \
+					(void (*)(ccsp_pws_t *, void *, void *))ccsp_calltable[call].fcptr;
+
+			kfcn2 (wsp, args[1], args[2]);
+		}
+		break;
 	case 3:
 		{
 			void (*kfcn3)(ccsp_pws_t *, void *, void *, void *) = \
 					(void (*)(ccsp_pws_t *, void *, void *, void *))ccsp_calltable[call].fcptr;
 
-			kfcn3 (wsp, args[0], args[1], args[2]);
+			kfcn3 (wsp, args[1], args[2], args[3]);
 		}
 		break;
 	default:

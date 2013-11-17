@@ -1,6 +1,6 @@
 /*
- *	armccsp.h -- runtime system definitions
- *	Copyright (C) 2013 Fred Barnes, University of Kent <frmb@kent.ac.uk>
+ *	cif.h -- CIF interface for ARM/CCSP
+ *	Copyright (C) 2013 Fred Barnes <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -17,21 +17,13 @@
  *	Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-#ifndef __ARMCCSP_H
-#define __ARMCCSP_H
+#ifndef __CIF_H
+#define __CIF_H
 
-extern void armccsp_fatal (const char *fmt, ...);
-extern void armccsp_error (const char *fmt, ...);
-extern void armccsp_warning (const char *fmt, ...);
+#include <stdint.h>
+#include <stdarg.h>
 
-extern void *armccsp_smalloc (const int bytes);
-extern void armccsp_sfree (void *ptr);
-extern void armccsp_sfreep (void **pptr);
+#include <armccsp_if.h>
 
 
-/* define this to enable various debugging things in the run-time */
-#define CCSP_DEBUG
-
-
-#endif	/* !__ARMCCSP_H */
-
+#endif	/* !__CIF_H */

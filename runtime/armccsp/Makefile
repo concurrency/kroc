@@ -17,7 +17,7 @@ INCLUDES += -I.
 INCLUDES += -I$(DEVKIT)/usr/include/dbus-1.0
 INCLUDES += -I$(DEVKIT)/usr/lib/dbus-1.0/include
 INCLUDES += -I$(DEVKIT)/usr/include
-CFLAGS = -DPCASM $(INCLUDES) -O0 -Wall -fPIC
+CFLAGS = -DPCASM $(INCLUDES) -O0 -Wall -fPIC -fomit-frame-pointer
 #LDFLAGS = -L$(DEVKIT)/usr/lib
 #LDFLAGS = --shared
 ARFLAGS = -r
@@ -33,4 +33,6 @@ $(TARGET): $(OBJS)
 .PHONY: clean
 clean:
 	rm -f $(OBJS) $(TARGET) $(DEPS)
+
+-include $(DEPS)
 

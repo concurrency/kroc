@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <armccsp.h>
+
 
 /*{{{  void armccsp_fatal (const char *fmt, ...)*/
 /*
@@ -100,6 +102,9 @@ void *armccsp_smalloc (const int bytes)
 			armccsp_fatal ("malloc(%d) failed: %s", bytes, strerror (errno));
 		}
 	}
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "armccsp_smalloc(): allocated %d bytes at %p - %p\n", bytes, ptr, (ptr + (bytes - 1)));
+#endif
 	return ptr;
 }
 /*}}}*/

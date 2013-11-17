@@ -20,7 +20,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdint.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include <armccsp.h>
 #include <armccsp_types.h>
@@ -75,24 +79,17 @@ int ccsp_init (void)
 /*{{{  void ProcStartupCode (Workspace wptr)*/
 /*
  *	called to run a process for the first time (startup)
+ *	Note: this is called in the stack of the process itself, not the run-time.
  */
 void ProcStartupCode (Workspace wptr)
 {
 	ccsp_pws_t *p = (ccsp_pws_t *)wptr;
+	void (*kfcn)(Workspace) = (void (*)(Workspace))p->iproc;
 
-	switch (p->nparams) {
-	case 0:
-		{
-			void (*kfcn0)(Workspace) = (void (*)(Workspace))p->iproc;
-
-			kfcn0 (wptr);
-		}
-		break;
-	}
+	kfcn (wptr);
 	return;
 }
 /*}}}*/
-
 
 /*{{{  Workspace ProcAllocInitial (const int paramwords, const int stackwords)*/
 /*
@@ -103,8 +100,9 @@ Workspace ProcAllocInitial (const int paramwords, const int stackwords)
 	ccsp_pws_t *p = armccsp_alloc_process ();
 
 	p->nparams = paramwords;
-	p->stack_size = stackwords * sizeof (uint32_t);
+	p->stack_size = WORKSPACE_SIZE (paramwords, stackwords) * sizeof (uint32_t);
 	p->stack_base = armccsp_smalloc (p->stack_size);
+	p->stack = p->stack_base + (p->stack_size - 4);
 
 	return (Workspace)p;
 }
@@ -123,4 +121,82 @@ void ProcStartInitial_blind (Workspace p, void (*fcn)(Workspace))
 	return;
 }
 /*}}}*/
+
+
+/*
+ * BELOW: these run in the context of the process, not the main stack.
+ */
+
+/*{{{  Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int stkwords)*/
+/*
+ *	lightweight process initialisation: assumes stack already allocated.
+ */
+Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int stkwords)
+{
+	ccsp_pws_t *newp;
+	ccsp_pws_t *pws = (ccsp_pws_t *)p;
+	int i;
+
+	newp = (ccsp_pws_t *)MAlloc (p, sizeof (ccsp_pws_t));
+
+#if 0
+fprintf (stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords=%d\n", p, newp, stack, nparams, stkwords);
+#endif
+	newp->sched = pws->sched;
+	newp->raddr = NULL;
+
+	newp->stack_base = (void *)stack;
+	newp->stack_size = WORKSPACE_SIZE (nparams, stkwords) * sizeof (int);
+	newp->link = NotProcess_p;
+	newp->pointer = NULL;
+	newp->priofinity = 0;
+	newp->iproc = NULL;
+	newp->nparams = nparams;
+	for (i=0; i<MAXPARAMS; i++) {
+		newp->params[i] = (uint32_t)NULL;
+	}
+
+	newp->stack = newp->stack_base + (newp->stack_size - 4);
+
+	return (Workspace)newp;
+}
+/*}}}*/
+/*{{{  void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg)*/
+/*
+ *	sets process parameter.
+ */
+void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg)
+{
+	ccsp_pws_t *pws = (ccsp_pws_t *)other;
+
+	pws->params[paramno] = (uint32_t)arg;
+}
+/*}}}*/
+/*{{{  void *ProcGetParamAny (Workspace p, int paramno)*/
+/*
+ *	gets process parameter.
+ */
+void *ProcGetParamAny (Workspace p, int paramno)
+{
+	ccsp_pws_t *pws = (ccsp_pws_t *)p;
+
+	return (void *)pws->params[paramno];
+}
+/*}}}*/
+
+/*{{{  void ProcPar (Workspace p, int nprocs, ...)*/
+/*
+ *	runs processes in parallel
+ */
+void ProcPar (Workspace p, int nprocs, ...)
+{
+	va_list ap;
+
+	va_start (ap, nprocs);
+	/* FIXME: do something meaningful! */
+	va_end (ap);
+}
+/*}}}*/
+
+
 

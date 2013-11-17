@@ -1,0 +1,27 @@
+#! /bin/bash
+
+PROG_CC="/usr/bin/arm-linux-gnueabi-gcc-4.6"
+PROG_CC_FLAGS="-DPCASM -O0 -Wall -fPIC -fomit-frame-pointer"
+PROG_CC_INCPATH="-I. -I/home/frmb/research/ev3/ev3sources/extra/linux-devkit/arm-none-linux-gnueabi/usr/include -I/home/frmb/kroc_linux/gitsrc/runtime/armccsp/"
+PROG_CC_LDFLAGS="/home/frmb/kroc_linux/gitsrc/runtime/armccsp/armccsp.a"
+
+if [ $# -ne 1 ]; then
+	exit 1
+fi
+
+if [ "$1" = "--cc" ]; then
+	printf '%s\n' "$PROG_CC"
+elif [ "$1" = "--cflags" ]; then
+	printf '%s\n' "$PROG_CC_FLAGS"
+elif [ "$1" = "--ccincpath" ]; then
+	printf '%s\n' "$PROG_CC_INCPATH"
+elif [ "$1" = "--cclibpath" ]; then
+	printf '\n'
+elif [ "$1" = "--ldflags" ]; then
+	printf '%s\n' "$PROG_CC_LDFLAGS"
+else
+	exit 1
+fi
+
+exit 0
+
