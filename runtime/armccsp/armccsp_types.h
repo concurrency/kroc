@@ -33,15 +33,21 @@ struct TAG_ccsp_sched;
 #define MAXPARAMS (16)
 
 /* process workspace type */
+/* XXX: important that the first few words stay in the order written (assembler macros access directly) */
 typedef struct TAG_ccsp_pws {
 	struct TAG_ccsp_sched *sched;			/* link to associated scheduler structure (used in enqueue) */
-	void *stack;					/* process stack (current) */
+	void *stack;					/* process stack (current, saved on kernel entry) */
+  	void *raddr;					/* process return address (saved link-register in effect) */
+
 	void *stack_base;				/* process stack (base address) */
+	uint32_t stack_size;				/* stack size (in bytes) */
 	struct TAG_ccsp_pws *link;			/* link to next process in queue */
 	void *pointer;
 	uint32_t priofinity;
-	uint32_t params[MAXPARAMS];
+
+	void *iproc;					/* address of initial process */
 	int nparams;
+	uint32_t params[MAXPARAMS];
 } _PACK_STRUCT ccsp_pws_t;
 
 #define NotProcess_p	NULL
@@ -54,6 +60,8 @@ typedef struct TAG_ccsp_sched {
 } _PACK_STRUCT ccsp_sched_t;
 
 
+extern int ccsp_initsched (void);
+extern void ccsp_first (ccsp_pws_t *p);
 extern ccsp_sched_t *ccsp_scheduler (void);
 
 #endif	/* !__ARMCCSP_TYPES_H */

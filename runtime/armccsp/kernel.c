@@ -24,13 +24,30 @@
 
 #include <armccsp.h>
 #include <armccsp_types.h>
-
+#include <armccsp_if.h>
 
 static ccsp_sched_t *ccsp_sched;
 
 
 /*{{{  forward definitions*/
 static void ccsp_schedule (ccsp_sched_t *sched);
+static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes);
+static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes);
+static void ccsp_shutdown (ccsp_pws_t *p);
+
+
+/*}}}*/
+/*{{{  call table*/
+typedef struct TAG_ccsp_calltable {
+	int nparams;
+	void (*fcptr)(ccsp_pws_t *);
+} ccsp_calltable_t;
+
+static ccsp_calltable_t ccsp_calltable[] = {
+	{ 3, (void (*)(ccsp_pws_t *))ccsp_chanout },			/* CALL_CHANOUT */
+	{ 3, (void (*)(ccsp_pws_t *))ccsp_chanin },			/* CALL_CHANIN */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_shutdown }			/* CALL_SHUTDOWN */
+};
 
 
 /*}}}*/
@@ -53,9 +70,9 @@ static void ccsp_linkproc (ccsp_sched_t *sched, ccsp_pws_t *p)
 /*}}}*/
 
 
-/*{{{  */
+/*{{{  static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)*/
 /*
- *	does channel output
+ *	channel output
  */
 static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)
 {
@@ -76,7 +93,43 @@ static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int by
 
 		memcpy (ddest, dataaddr, bytes);
 		ccsp_linkproc (other->sched, other);
+		*chanaddr = NotProcess_p;
 	}
+}
+/*}}}*/
+/*{{{  static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)*/
+/*
+ *	channel input
+ */
+static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)
+{
+	if (*chanaddr == NotProcess_p) {
+		/* we're the first */
+		p->pointer = dataaddr;
+		p->link = NULL;
+		*chanaddr = (void *)p;
+		ccsp_schedule (p->sched);
+	} else {
+		ccsp_pws_t *other;
+		void *dsrc;
+
+		/* we're the second, outputting process waiting */
+		other = (ccsp_pws_t *)*chanaddr;
+		dsrc = (void *)other->pointer;
+
+		memcpy (dataaddr, dsrc, bytes);
+		ccsp_linkproc (other->sched, other);
+		*chanaddr = NotProcess_p;
+	}
+}
+/*}}}*/
+/*{{{  static void ccsp_shutdown (ccsp_pws_t *p)*/
+/*
+ *	called to shut-down and exit -- done as the last thing in the initial process usually.
+ */
+static void ccsp_shutdown (ccsp_pws_t *p)
+{
+	armccsp_fatal ("finished :)");
 }
 /*}}}*/
 
@@ -96,6 +149,8 @@ static void ccsp_schedule (ccsp_sched_t *sched)
 		/* last one */
 		sched->fptr = NotProcess_p;
 	}
+
+	ProcessResume ((Workspace)sched->curp);
 
 	return;
 }
@@ -130,10 +185,50 @@ int ccsp_initsched (void)
 /*}}}*/
 /*{{{  */
 /*
- *	entry to all kernel functions, called in context of individual process.
+ *	one-time startup for the scheduler, called in main() context/stack.
  */
-void ccsp_entry (const int call, void **args)
+void ccsp_first (ccsp_pws_t *p)
 {
+	p->stack = p->stack_base + (p->stack_size - 4);
+
+	/* use our stack-pointer as the entry for other kernel things */
+	RuntimeSaveStack ((Workspace)p);
+	RuntimeSetEntry ((Workspace)p);
+	ccsp_linkproc (p->sched, p);
+
+	ccsp_schedule (p->sched);
+}
+/*}}}*/
+/*{{{  void ccsp_entry (ccsp_pws_t *wsp, const int call, void **args)*/
+/*
+ *	entry to all kernel functions.
+ */
+void ccsp_entry (ccsp_pws_t *wsp, const int call, void **args)
+{
+	switch (ccsp_calltable[call].nparams) {
+	case 0:
+		{
+			void (*kfcn0)(ccsp_pws_t *) = (void (*)(ccsp_pws_t *))ccsp_calltable[call].fcptr;
+
+			kfcn0 (wsp);
+		}
+		break;
+	case 3:
+		{
+			void (*kfcn3)(ccsp_pws_t *, void *, void *, void *) = \
+					(void (*)(ccsp_pws_t *, void *, void *, void *))ccsp_calltable[call].fcptr;
+
+			kfcn3 (wsp, args[0], args[1], args[2]);
+		}
+		break;
+	default:
+		armccsp_fatal ("ccsp_entry(%d): unsupported args", call);
+		break;
+	}
+
+	/* if we get back here, means we didn't deschedule */
+	ProcessResume ((Workspace)wsp);
+
 	return;
 }
 /*}}}*/

@@ -1,9 +1,10 @@
-TARGET = armccsp.o
+TARGET = armccsp.a
 SOURCES = support.c kfunc.c kernel.c
 
 CROSS_COMPILE = arm-linux-gnueabi-
 CC = gcc-4.6
 LD = ld
+AR = ar
 
 OBJS=$(SOURCES:%.c=%.o)
 DEPS=$(OBJS:%.o=%.d)
@@ -18,7 +19,8 @@ INCLUDES += -I$(DEVKIT)/usr/lib/dbus-1.0/include
 INCLUDES += -I$(DEVKIT)/usr/include
 CFLAGS = -DPCASM $(INCLUDES) -O0 -Wall -fPIC
 #LDFLAGS = -L$(DEVKIT)/usr/lib
-LDFLAGS = --shared
+#LDFLAGS = --shared
+ARFLAGS = -r
 
 all: $(TARGET)
 
@@ -26,7 +28,7 @@ all: $(TARGET)
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -MMD -MP -o $@ $<
 
 $(TARGET): $(OBJS)
-	$(CROSS_COMPILE)$(LD) $(LDFLAGS) -o $@ $(OBJS)
+	$(CROSS_COMPILE)$(AR) $(ARFLAGS) $@ $(OBJS)
 
 .PHONY: clean
 clean:
