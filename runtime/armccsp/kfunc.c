@@ -198,5 +198,67 @@ void ProcPar (Workspace p, int nprocs, ...)
 }
 /*}}}*/
 
+/*{{{  word ExternalCall0 (void *func)*/
+/*
+ *	external call for argument-less function.
+ */
+word ExternalCall0 (void *func)
+{
+	ccsp_sched_t *sched = ccsp_scheduler ();
+	word *stack = (word *)sched->stack;
+	word result;
+
+	stack -= 4;
+	EXTERNAL_CALL (func, stack, result);
+
+	return result;
+}
+/*}}}*/
+/*{{{  word ExternalCall1 (void *func, word arg)*/
+/*
+ *	external call for single-argument function.
+ */
+word ExternalCall1 (void *func, word arg)
+{
+	ccsp_sched_t *sched = ccsp_scheduler ();
+	word *stack = (word *)sched->stack;
+	word result;
+
+	stack -= 4;
+	*(stack--) = arg;
+
+	EXTERNAL_CALL (func, stack, result);
+
+	return result;
+}
+/*}}}*/
+/*{{{  word ExternalCallN (void *func, word argc, ...)*/
+/*
+ *	external call for variable-argument function.
+ */
+word ExternalCallN (void *func, word argc, ...)
+{
+	ccsp_sched_t *sched = ccsp_scheduler ();
+	word *stack = (word *)sched->stack;
+	va_list ap;
+	word result;
+	int i;
+
+	va_start (ap, argc);
+	stack -= (argc & ~0x03) + 4;
+	stack -= 4;
+
+	for (i=0; i<argc; i++) {
+		stack[i] = va_arg (ap, word);
+	}
+
+	va_end (ap);
+
+	EXTERNAL_CALL (func, stack, result);
+
+	return result;
+}
+/*}}}*/
+
 
 

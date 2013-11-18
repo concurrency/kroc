@@ -80,6 +80,25 @@ extern void ProcStartInitial_blind (Workspace p, void (*fcn)(Workspace));
 	} while (0)
 
 /*}}}*/
+/*{{{  EXTERNAL_CALL(func,stack,result): abstraction for external function call*/
+#define EXTERNAL_CALL(f,s,r) do { \
+	__asm__ __volatile__ ("							\n" \
+		"	mov	r4, sp			@ save SP here		\n" \
+		"	mov	sp, %2			@ new SP		\n" \
+		"	ldr	r0, [sp, #0]		@ parameters		\n" \
+		"	ldr	r1, [sp, #4]					\n" \
+		"	ldr	r2, [sp, #8]					\n" \
+		"	ldr	r3, [sp, #12]					\n" \
+		"	add	sp, sp, #16		@ adjust for reg-params	\n" \
+		"	mov	lr, pc						\n" \
+		"	bx	%1						\n" \
+		"	mov	sp, r4			@ restore previous SP	\n" \
+		"	mov	%0, r0			@ save result		\n" \
+		: "=r" (r) \
+		: "r" (f), "r" (s) \
+		: "memory", "cc", "r0", "r1", "r2", "r3", "r4", "lr"); \
+	} while (0)
+/*}}}*/
 
 /*
  * BELOW: the CIF API for ARM/CCSP.
@@ -204,6 +223,9 @@ extern void *ProcGetParamAny (Workspace p, int paramno);
 #define ProcGetParam(p,n,T) ((T)ProcGetParamAny (p, n))
 
 extern void ProcPar (Workspace p, int nprocs, ...);
+extern word ExternalCall0 (void *func);
+extern word ExternalCall1 (void *func, word arg);
+extern word ExternalCallN (void *func, word argc, ...);
 
 
 /*}}}*/
