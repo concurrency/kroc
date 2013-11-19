@@ -25,6 +25,10 @@ typedef uint32_t *Workspace;
 typedef void *Channel;
 typedef uint32_t word;
 
+typedef struct TAG_light_proc_barrier {
+	Workspace succ;
+	int count;
+} LightProcBarrier;
 
 /*}}}*/
 /*{{{  kernel call constants, must stay consistent with table in kernel.c*/
@@ -36,6 +40,8 @@ typedef uint32_t word;
 #define CALL_SETERRM 5
 #define CALL_MALLOC 6
 #define CALL_MRELEASE 7
+#define CALL_RUNP 8
+#define CALL_STOPP 9
 
 /*}}}*/
 /*{{{  functions that should only ever be called in the context of the main program, i.e. from main()*/
@@ -161,7 +167,7 @@ static inline void SetErr (Workspace p)
 	ENTER_KERNEL (p, call, dargs);
 }
 /*}}}*/
-/*{{{  static inline void SetErrM (Workspace p)*/
+/*{{{  static inline void SetErrM (Workspace p, const char *msg)*/
 /*
  *	hard run-time error (with message).
  */
@@ -212,6 +218,53 @@ static inline void MRelease (Workspace p, void *ptr)
 	ENTER_KERNEL (p, call, dargs);
 }
 /*}}}*/
+/*{{{  static inline void LightProcBarrierInit (Workspace p, LightProcBarrier *b, const int numprocs)*/
+/*
+ *	initialises a process barrier.
+ */
+static inline void LightProcBarrierInit (Workspace p, LightProcBarrier *b, const int numprocs)
+{
+	b->succ = p;
+	b->count = numprocs;
+}
+/*}}}*/
+/*{{{  static inline void RunP (Workspace p, Workspace other)*/
+/*
+ *	runs a process.
+ */
+static inline void RunP (Workspace p, Workspace other)
+{
+	void *dargs[2] = {(void *)p, (void *)other};
+	int call = CALL_RUNP;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
+/*{{{  static inline void StopP (Workspace p)*/
+/*
+ *	stops a process.
+ */
+static inline void StopP (Workspace p)
+{
+	void *dargs[1] = {(void *)p};
+	int call = CALL_STOPP;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
+/*{{{  static inline void LightProcBarrierWait (Workspace p, LightProcBarrier *b)*/
+/*
+ *	waits for completion of a lightweight process barrier.
+ *	most of the operational guts for this are in ProcStartupCode (kfunc.c)
+ */
+static inline void LightProcBarrierWait (Workspace p, LightProcBarrier *b)
+{
+	if (b->count) {
+		b->succ = p;
+		StopP (p);
+	}
+}
+/*}}}*/
 
 
 /*{{{  other things which are not macros, but defined in kfunc.c*/
@@ -223,6 +276,7 @@ extern void *ProcGetParamAny (Workspace p, int paramno);
 #define ProcGetParam(p,n,T) ((T)ProcGetParamAny (p, n))
 
 extern void ProcPar (Workspace p, int nprocs, ...);
+extern void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn);
 extern word ExternalCall0 (void *func);
 extern word ExternalCall1 (void *func, word arg);
 extern word ExternalCallN (void *func, word argc, ...);

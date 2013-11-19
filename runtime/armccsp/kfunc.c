@@ -49,6 +49,7 @@ static ccsp_pws_t *armccsp_alloc_process (void)
 	p->link = NotProcess_p;
 	p->pointer = NULL;
 	p->priofinity = 0;
+	p->pbar = NULL;
 	p->iproc = NULL;
 	p->nparams = 0;
 	for (i=0; i<MAXPARAMS; i++) {
@@ -87,6 +88,19 @@ void ProcStartupCode (Workspace wptr)
 	void (*kfcn)(Workspace) = (void (*)(Workspace))p->iproc;
 
 	kfcn (wptr);
+	/* Note: initial process will never get this far */
+	if (p->pbar == NULL) {
+		SetErrM (wptr, "top-level or parentless process terminated");
+	} else {
+		LightProcBarrier *bar = (LightProcBarrier *)p->pbar;
+
+		bar->count--;
+		if (!bar->count) {
+			/* last one */
+			RunP (wptr, bar->succ);
+		}
+		StopP (wptr);
+	}
 	return;
 }
 /*}}}*/
@@ -150,6 +164,7 @@ fprintf (stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords
 	newp->link = NotProcess_p;
 	newp->pointer = NULL;
 	newp->priofinity = 0;
+	newp->pbar = NULL;
 	newp->iproc = NULL;
 	newp->nparams = nparams;
 	for (i=0; i<MAXPARAMS; i++) {
@@ -191,10 +206,37 @@ void *ProcGetParamAny (Workspace p, int paramno)
 void ProcPar (Workspace p, int nprocs, ...)
 {
 	va_list ap;
+	LightProcBarrier bar;
+	int i;
+
+	LightProcBarrierInit (p, &bar, nprocs);
 
 	va_start (ap, nprocs);
-	/* FIXME: do something meaningful! */
+	for (i=0; i<nprocs; i++) {
+		Workspace ws = va_arg (ap, Workspace);
+		void *fcn = va_arg (ap, void *);
+
+		LightProcStart (p, &bar, ws, fcn);
+	}
 	va_end (ap);
+
+	LightProcBarrierWait (p, &bar);
+}
+/*}}}*/
+/*{{{  void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn)*/
+/*
+ *	starts a process
+ */
+void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn)
+{
+	ccsp_pws_t *pws = (ccsp_pws_t *)ws;
+
+	pws->pbar = (void *)bar;
+	pws->iproc = fcn;
+
+	RuntimeSetEntry (ws);
+
+	RunP (p, ws);
 }
 /*}}}*/
 

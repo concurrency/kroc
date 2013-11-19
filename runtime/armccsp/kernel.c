@@ -40,6 +40,8 @@ static void ccsp_seterr (ccsp_pws_t *p);
 static void ccsp_seterrm (ccsp_pws_t *p, char *msg);
 static void ccsp_malloc (ccsp_pws_t *p, int bytes, void **ptrp);
 static void ccsp_mrelease (ccsp_pws_t *p, void *ptr);
+static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other);
+static void ccsp_stopp (ccsp_pws_t *p);
 
 
 /*}}}*/
@@ -58,6 +60,8 @@ static ccsp_calltable_t ccsp_calltable[] = {
 	{ 1, (void (*)(ccsp_pws_t *))ccsp_seterrm },			/* CALL_SETERRM */
 	{ 2, (void (*)(ccsp_pws_t *))ccsp_malloc },			/* CALL_MALLOC */
 	{ 1, (void (*)(ccsp_pws_t *))ccsp_mrelease },			/* CALL_MRELEASE */
+	{ 1, (void (*)(ccsp_pws_t *))ccsp_runp },			/* CALL_RUNP */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_stopp },			/* CALL_STOPP */
 	{ -1, NULL }
 };
 
@@ -200,7 +204,24 @@ static void ccsp_mrelease (ccsp_pws_t *p, void *ptr)
 	armccsp_sfree (ptr);
 }
 /*}}}*/
-
+/*{{{  static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other)*/
+/*
+ *	called to schedule a process.
+ */
+static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other)
+{
+	ccsp_linkproc (other->sched, other);
+}
+/*}}}*/
+/*{{{  static void ccsp_stopp (ccsp_pws_t *p)*/
+/*
+ *	called to end a process (just reschedules something else).
+ */
+static void ccsp_stopp (ccsp_pws_t *p)
+{
+	ccsp_schedule (p->sched);
+}
+/*}}}*/
 
 /*{{{  static void ccsp_schedule (ccsp_sched_t *sched)*/
 /*

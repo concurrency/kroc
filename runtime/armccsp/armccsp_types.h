@@ -45,6 +45,7 @@ typedef struct TAG_ccsp_pws {
 	void *pointer;
 	uint32_t priofinity;
 
+	void *pbar;					/* process termination barrier (LightProcBarrier) */
 	void *iproc;					/* address of initial process */
 	int nparams;
 	uint32_t params[MAXPARAMS];
