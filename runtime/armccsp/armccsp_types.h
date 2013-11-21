@@ -44,6 +44,8 @@ typedef struct TAG_ccsp_pws {
 	struct TAG_ccsp_pws *link;			/* link to next process in queue */
 	void *pointer;
 	uint32_t priofinity;
+	struct TAG_ccsp_pws *tlink;			/* link to next when on timer queue */
+	int timeout;					/* timeout (absolute time) */
 
 	void *pbar;					/* process termination barrier (LightProcBarrier) */
 	void *iproc;					/* address of initial process */
@@ -58,6 +60,7 @@ typedef struct TAG_ccsp_sched {
 	void *stack;
 	ccsp_pws_t *curp;				/* currently executing process */
 	ccsp_pws_t *fptr, *bptr;			/* run-queue front and back pointers */
+	ccsp_pws_t *tptr;				/* timer-queue */
 } _PACK_STRUCT ccsp_sched_t;
 
 

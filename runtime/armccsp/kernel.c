@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 #include <armccsp.h>
 #include <armccsp_types.h>
@@ -42,6 +44,8 @@ static void ccsp_malloc (ccsp_pws_t *p, int bytes, void **ptrp);
 static void ccsp_mrelease (ccsp_pws_t *p, void *ptr);
 static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other);
 static void ccsp_stopp (ccsp_pws_t *p);
+static void ccsp_ldtimer (ccsp_pws_t *p, int *tvar);
+static void ccsp_tin (ccsp_pws_t *p, int *tvar);
 
 
 /*}}}*/
@@ -62,6 +66,8 @@ static ccsp_calltable_t ccsp_calltable[] = {
 	{ 1, (void (*)(ccsp_pws_t *))ccsp_mrelease },			/* CALL_MRELEASE */
 	{ 1, (void (*)(ccsp_pws_t *))ccsp_runp },			/* CALL_RUNP */
 	{ 0, (void (*)(ccsp_pws_t *))ccsp_stopp },			/* CALL_STOPP */
+	{ 1, (void (*)(ccsp_pws_t *))ccsp_ldtimer },			/* CALL_LDTIMER */
+	{ 1, (void (*)(ccsp_pws_t *))ccsp_tin },			/* CALL_TIN */
 	{ -1, NULL }
 };
 
@@ -75,6 +81,9 @@ static ccsp_calltable_t ccsp_calltable[] = {
  */
 static void ccsp_linkproc (ccsp_sched_t *sched, ccsp_pws_t *p)
 {
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_linkproc(): enqueue %p\n", p);
+#endif
 	p->link = NotProcess_p;			/* for sanity's sake */
 	if (sched->fptr == NotProcess_p) {
 		sched->fptr = p;
@@ -82,6 +91,34 @@ static void ccsp_linkproc (ccsp_sched_t *sched, ccsp_pws_t *p)
 		sched->bptr->link = p;
 	}
 	sched->bptr = p;
+}
+/*}}}*/
+/*{{{  static int ccsp_readtime (void)*/
+/*
+ *	reads the system clock.
+ */
+static int ccsp_readtime (void)
+{
+	struct timeval tv;
+
+	gettimeofday (&tv, NULL);
+	return (int)(tv.tv_sec * 1000000) + (int)tv.tv_usec;
+}
+/*}}}*/
+/*{{{  static void ccsp_processtimers (ccsp_sched_t *sched)*/
+/*
+ *	processes any pending timers, moving them from the timer-queue to the run-queue.
+ */
+static void ccsp_processtimers (ccsp_sched_t *sched)
+{
+	int now = ccsp_readtime ();
+
+	while ((sched->tptr != NotProcess_p) && Time_AFTER (sched->tptr->timeout, now)) {
+		/* this one is done, schedule */
+		ccsp_linkproc (sched, sched->tptr);
+		sched->tptr->timeout = now;		/* triggered *now* */
+		sched->tptr = sched->tptr->tlink;
+	}
 }
 /*}}}*/
 
@@ -210,6 +247,9 @@ static void ccsp_mrelease (ccsp_pws_t *p, void *ptr)
  */
 static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other)
 {
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_runp() p=%p (stack=%p), other=%p (stack=%p)\n", p, p->stack, other, other->stack);
+#endif
 	ccsp_linkproc (other->sched, other);
 }
 /*}}}*/
@@ -219,6 +259,56 @@ static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other)
  */
 static void ccsp_stopp (ccsp_pws_t *p)
 {
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_stopp() p=%p (stack=%p)\n", p, p->stack);
+#endif
+	ccsp_schedule (p->sched);
+}
+/*}}}*/
+/*{{{  static void ccsp_ldtimer (ccsp_pws_t *p, int *tvar)*/
+/*
+ *	reads the current time (in microseconds).
+ */
+static void ccsp_ldtimer (ccsp_pws_t *p, int *tvar)
+{
+	*tvar = ccsp_readtime ();
+}
+/*}}}*/
+/*{{{  static void ccsp_tin (ccsp_pws_t *p, int *tvar)*/
+/*
+ *	waits for a specific time (in microseconds).
+ */
+static void ccsp_tin (ccsp_pws_t *p, int *tvar)
+{
+	int now = ccsp_readtime ();
+	ccsp_pws_t *walk;
+
+	p->timeout = *tvar;
+
+	if (Time_AFTER (p->timeout, now)) {
+		/* already gone */
+		return;
+	}
+	/* place on timer queue */
+	p->tlink = NotProcess_p;
+	if (p->sched->tptr == NotProcess_p) {
+		p->sched->tptr = p;
+	} else {
+		walk = p->sched->tptr;
+		if (Time_AFTER (walk->timeout, p->timeout)) {
+			/* front of timer-queue */
+			p->tlink = walk;
+			p->sched->tptr = p;
+		} else {
+			/* somewhere down the line */
+			while ((walk->tlink != NotProcess_p) && Time_AFTER (p->timeout, walk->tlink->timeout)) {
+				walk = walk->tlink;
+			}
+			/* insert after 'walk' */
+			p->tlink = walk->tlink;
+			walk->tlink = p;
+		}
+	}
 	ccsp_schedule (p->sched);
 }
 /*}}}*/
@@ -229,16 +319,37 @@ static void ccsp_stopp (ccsp_pws_t *p)
  */
 static void ccsp_schedule (ccsp_sched_t *sched)
 {
+restart_schedule:
 	if (sched->fptr == NotProcess_p) {
-		armccsp_fatal ("deadlocked, no processes to run!");
+		if (sched->tptr == NotProcess_p) {
+			armccsp_fatal ("deadlocked, no processes to run!");
+		} else {
+			/* waiting for something to timeout */
+			int now = ccsp_readtime ();
+			int next = sched->tptr->timeout - now;
+
+			if (next > 0) {
+				struct timeval tv = { next / 1000000, next % 1000000 };
+
+				select (0, NULL, NULL, NULL, &tv);		/* sleep! */
+			}
+
+			ccsp_processtimers (sched);
+			goto restart_schedule;
+		}
 	}
 
 	sched->curp = sched->fptr;
 	if (sched->fptr == sched->bptr) {
 		/* last one */
 		sched->fptr = NotProcess_p;
+	} else {
+		sched->fptr = sched->fptr->link;
 	}
 
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_schedule(): running process at %p\n", sched->curp);
+#endif
 	ProcessResume ((Workspace)sched->curp);
 
 	return;
@@ -268,6 +379,7 @@ int ccsp_initsched (void)
 	ccsp_sched->curp = NotProcess_p;
 	ccsp_sched->fptr = NotProcess_p;
 	ccsp_sched->bptr = NotProcess_p;
+	ccsp_sched->tptr = NotProcess_p;
 
 	return 0;
 }

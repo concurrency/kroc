@@ -30,7 +30,7 @@ extern void armccsp_sfreep (void **pptr);
 
 
 /* define this to enable various debugging things in the run-time */
-#define CCSP_DEBUG
+// #define CCSP_DEBUG
 
 
 #endif	/* !__ARMCCSP_H */

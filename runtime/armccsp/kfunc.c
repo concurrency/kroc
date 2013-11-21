@@ -49,6 +49,9 @@ static ccsp_pws_t *armccsp_alloc_process (void)
 	p->link = NotProcess_p;
 	p->pointer = NULL;
 	p->priofinity = 0;
+	p->tlink = NotProcess_p;
+	p->timeout = 0;
+
 	p->pbar = NULL;
 	p->iproc = NULL;
 	p->nparams = 0;
@@ -87,6 +90,9 @@ void ProcStartupCode (Workspace wptr)
 	ccsp_pws_t *p = (ccsp_pws_t *)wptr;
 	void (*kfcn)(Workspace) = (void (*)(Workspace))p->iproc;
 
+#ifdef CCSP_DEBUG
+	ExternalCallN (fprintf, 3, stderr, "ProcStartupCode(%p): pre-fcn\n", wptr);
+#endif
 	kfcn (wptr);
 	/* Note: initial process will never get this far */
 	if (p->pbar == NULL) {
@@ -164,6 +170,9 @@ fprintf (stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords
 	newp->link = NotProcess_p;
 	newp->pointer = NULL;
 	newp->priofinity = 0;
+	newp->tlink = NotProcess_p;
+	newp->timeout = 0;
+
 	newp->pbar = NULL;
 	newp->iproc = NULL;
 	newp->nparams = nparams;

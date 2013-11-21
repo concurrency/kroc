@@ -42,6 +42,8 @@ typedef struct TAG_light_proc_barrier {
 #define CALL_MRELEASE 7
 #define CALL_RUNP 8
 #define CALL_STOPP 9
+#define CALL_LDTIMER 10
+#define CALL_TIN 11
 
 /*}}}*/
 /*{{{  functions that should only ever be called in the context of the main program, i.e. from main()*/
@@ -119,13 +121,13 @@ static inline void ChanInit (Workspace p, Channel *c)
 	*c = NULL;
 }
 /*}}}*/
-/*{{{  static inline void ChanOut (Workspace p, Channel *c, void *ptr, const int bytes)*/
+/*{{{  static inline void ChanOut (Workspace p, Channel *c, const void *ptr, const int bytes)*/
 /*
  *	channel output.
  */
-static inline void ChanOut (Workspace p, Channel *c, void *ptr, const int bytes)
+static inline void ChanOut (Workspace p, Channel *c, const void *ptr, const int bytes)
 {
-	void *dargs[4] = {(void *)p, (void *)c, ptr, (void *)bytes};
+	void *dargs[4] = {(void *)p, (void *)c, (void *)ptr, (void *)bytes};
 	int call = CALL_CHANOUT;
 
 	ENTER_KERNEL (p, call, dargs);
@@ -265,7 +267,51 @@ static inline void LightProcBarrierWait (Workspace p, LightProcBarrier *b)
 	}
 }
 /*}}}*/
+/*{{{  static inline int TimerRead (Workspace p)*/
+/*
+ *	reads the integer microsecond clock
+ */
+static inline int TimerRead (Workspace p)
+{
+	int tval;
+	void *dargs[2] = {(void *)p, (void *)&tval};
+	int call = CALL_LDTIMER;
 
+	ENTER_KERNEL (p, call, dargs);
+
+	return tval;
+}
+/*}}}*/
+/*{{{  static inline int TimerWait (Workspace p, int timeout)*/
+/*
+ *	waits until the specified time has passed.
+ */
+static inline int TimerWait (Workspace p, int timeout)
+{
+	int tval = timeout;
+	void *dargs[2] = {(void *)p, (void *)&tval};
+	int call = CALL_TIN;
+
+	ENTER_KERNEL (p, call, dargs);
+
+	return tval;
+}
+/*}}}*/
+/*{{{  static inline int Time_AFTER (int t1, int t2)*/
+/*
+ *	determines whether one time (t1) is after another (t2).
+ */
+static inline int Time_AFTER (int t1, int t2)
+{
+	int temp = t2 - t1;
+
+	if (temp & (1 << ((sizeof (int) * 8) - 1))) {
+		/* high-bit set, so yes */
+		return 1;
+	}
+	return 0;
+}
+/*}}}*/
 
 /*{{{  other things which are not macros, but defined in kfunc.c*/
 extern Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int stkwords);
