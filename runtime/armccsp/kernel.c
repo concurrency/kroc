@@ -113,7 +113,7 @@ static void ccsp_processtimers (ccsp_sched_t *sched)
 {
 	int now = ccsp_readtime ();
 
-	while ((sched->tptr != NotProcess_p) && Time_AFTER (sched->tptr->timeout, now)) {
+	while ((sched->tptr != NotProcess_p) && Time_AFTER (now, sched->tptr->timeout)) {
 		/* this one is done, schedule */
 		ccsp_linkproc (sched, sched->tptr);
 		sched->tptr->timeout = now;		/* triggered *now* */
@@ -285,7 +285,10 @@ static void ccsp_tin (ccsp_pws_t *p, int *tvar)
 
 	p->timeout = *tvar;
 
-	if (Time_AFTER (p->timeout, now)) {
+#if 1
+fprintf (stderr, "ccsp_tin(): now=%d, timeout=%d\n", now, p->timeout);
+#endif
+	if (Time_AFTER (now, p->timeout)) {
 		/* already gone */
 		return;
 	}
@@ -301,7 +304,7 @@ static void ccsp_tin (ccsp_pws_t *p, int *tvar)
 			p->sched->tptr = p;
 		} else {
 			/* somewhere down the line */
-			while ((walk->tlink != NotProcess_p) && Time_AFTER (p->timeout, walk->tlink->timeout)) {
+			while ((walk->tlink != NotProcess_p) && Time_AFTER (walk->tlink->timeout, p->timeout)) {
 				walk = walk->tlink;
 			}
 			/* insert after 'walk' */
@@ -320,6 +323,11 @@ static void ccsp_tin (ccsp_pws_t *p, int *tvar)
 static void ccsp_schedule (ccsp_sched_t *sched)
 {
 restart_schedule:
+	if (sched->tptr != NotProcess_p) {
+		/* have timers waiting, so cannot be deadlocked */
+		ccsp_processtimers (sched);
+	}
+
 	if (sched->fptr == NotProcess_p) {
 		if (sched->tptr == NotProcess_p) {
 			armccsp_fatal ("deadlocked, no processes to run!");
@@ -334,10 +342,11 @@ restart_schedule:
 				select (0, NULL, NULL, NULL, &tv);		/* sleep! */
 			}
 
-			ccsp_processtimers (sched);
 			goto restart_schedule;
 		}
 	}
+
+	/* got something, schedule it! */
 
 	sched->curp = sched->fptr;
 	if (sched->fptr == sched->bptr) {

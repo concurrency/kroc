@@ -299,7 +299,7 @@ static inline int TimerWait (Workspace p, int timeout)
 /*}}}*/
 /*{{{  static inline int Time_AFTER (int t1, int t2)*/
 /*
- *	determines whether one time (t1) is after another (t2).
+ *	determines whether one time (t2) is after another (t1).
  */
 static inline int Time_AFTER (int t1, int t2)
 {
