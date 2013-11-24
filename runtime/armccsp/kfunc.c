@@ -160,7 +160,7 @@ Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int 
 	newp = (ccsp_pws_t *)MAlloc (p, sizeof (ccsp_pws_t));
 
 #if 0
-fprintf (stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords=%d\n", p, newp, stack, nparams, stkwords);
+ExternalCallN (fprintf, 7, stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords=%d\n", p, newp, stack, nparams, stkwords);
 #endif
 	newp->sched = pws->sched;
 	newp->raddr = NULL;
@@ -191,6 +191,9 @@ fprintf (stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords
  */
 void LightProcFree (Workspace p, Workspace ws)
 {
+#if 0
+ExternalCallN (fprintf, 4, stderr, "LightProcFree(): p=%p, ws=%p\n", p, ws);
+#endif
 	MRelease (p, (void *)ws);
 }
 /*}}}*/
