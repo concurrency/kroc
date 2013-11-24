@@ -1,3 +1,6 @@
 kernel.d
 support.d
 kfunc.d
+kernel.su
+kfunc.su
+support.su

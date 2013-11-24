@@ -44,6 +44,15 @@ typedef struct TAG_light_proc_barrier {
 #define CALL_STOPP 9
 #define CALL_LDTIMER 10
 #define CALL_TIN 11
+#define CALL_ALT 12
+#define CALL_ALTEND 13
+#define CALL_ENBC 14
+#define CALL_DISC 15
+#define CALL_ALTWT 16
+#define CALL_TALT 17
+#define CALL_ENBT 18
+#define CALL_DIST 19
+#define CALL TALTWT 20
 
 /*}}}*/
 /*{{{  functions that should only ever be called in the context of the main program, i.e. from main()*/
@@ -312,9 +321,76 @@ static inline int Time_AFTER (int t1, int t2)
 	return 0;
 }
 /*}}}*/
+/*{{{  static inline void Alt (Workspace p)*/
+/*
+ *	start alternative.
+ */
+static inline void Alt (Workspace p)
+{
+	void *dargs[1] = {(void *)p};
+	int call = CALL_ALT;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
+/*{{{  static inline void AltEnd (Workspace p)*/
+/*
+ *	end alternative.
+ */
+static inline void AltEnd (Workspace p)
+{
+	void *dargs[1] = {(void *)p};
+	int call = CALL_ALTEND;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
+/*{{{  static inline int AltEnableChannel (Workspace p, const int guard, Channel *c)*/
+/*
+ *	enable channel.
+ */
+static inline int AltEnableChannel (Workspace p, const int guard, Channel *c)
+{
+	int enabled = 0;
+	void *dargs[4] = {(void *)p, (void *)guard, (void *)c, (void *)&enabled};
+	int call = CALL_ENBC;
+
+	ENTER_KERNEL (p, call, dargs);
+
+	return enabled;
+}
+/*}}}*/
+/*{{{  static inline int AltDisableChannel (Workspace p, const int guard, Channel *c)*/
+/*
+ *	disable channel.
+ */
+static inline int AltDisableChannel (Workspace p, const int guard, Channel *c)
+{
+	int fired = 0;
+	void *dargs[4] = {(void *)p, (void *)guard, (void *)c, (void *)&fired};
+	int call = CALL_DISC;
+
+	ENTER_KERNEL (p, call, dargs);
+
+	return fired;
+}
+/*}}}*/
+/*{{{  static inline void AltWait (Workspace p)*/
+/*
+ *	waits for one of the alternatives to become ready.
+ */
+static inline void AltWait (Workspace p)
+{
+	void *dargs[1] = {(void *)p};
+	int call = CALL_ALTWT;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
 
 /*{{{  other things which are not macros, but defined in kfunc.c*/
 extern Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int stkwords);
+extern void LightProcFree (Workspace p, Workspace ws);
 extern void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg);
 extern void *ProcGetParamAny (Workspace p, int paramno);
 
@@ -323,6 +399,9 @@ extern void *ProcGetParamAny (Workspace p, int paramno);
 
 extern void ProcPar (Workspace p, int nprocs, ...);
 extern void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn);
+
+extern int ProcAlt (Workspace p, ...);
+
 extern word ExternalCall0 (void *func);
 extern word ExternalCall1 (void *func, word arg);
 extern word ExternalCallN (void *func, word argc, ...);

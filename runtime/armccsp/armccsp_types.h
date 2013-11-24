@@ -42,7 +42,7 @@ typedef struct TAG_ccsp_pws {
 	void *stack_base;				/* process stack (base address) */
 	uint32_t stack_size;				/* stack size (in bytes) */
 	struct TAG_ccsp_pws *link;			/* link to next process in queue */
-	void *pointer;
+	void *pointer;					/* pointer to data (I/O) or ALT state */
 	uint32_t priofinity;
 	struct TAG_ccsp_pws *tlink;			/* link to next when on timer queue */
 	int timeout;					/* timeout (absolute time) */
@@ -54,6 +54,10 @@ typedef struct TAG_ccsp_pws {
 } _PACK_STRUCT ccsp_pws_t;
 
 #define NotProcess_p	NULL
+
+#define Enabling_p	((void *)(NotProcess_p + 1))
+#define Waiting_p	((void *)(NotProcess_p + 2))
+#define Ready_p		((void *)(NotProcess_p + 3))
 
 /* scheduler state */
 typedef struct TAG_ccsp_sched {

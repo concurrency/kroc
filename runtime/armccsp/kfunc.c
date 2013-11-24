@@ -185,6 +185,15 @@ fprintf (stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, nparams=%d, stkwords
 	return (Workspace)newp;
 }
 /*}}}*/
+/*{{{  void LightProcFree (Workspace p, Workspace ws)*/
+/*
+ *	lightweight process destruction: assumes stack released elsewhere.
+ */
+void LightProcFree (Workspace p, Workspace ws)
+{
+	MRelease (p, (void *)ws);
+}
+/*}}}*/
 /*{{{  void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg)*/
 /*
  *	sets process parameter.
@@ -248,6 +257,64 @@ void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn
 	RunP (p, ws);
 }
 /*}}}*/
+
+/*{{{  int ProcAlt (Workspace p, ...)*/
+/*
+ *	performs an alternative over a number of channels, list is NULL-terminated.  Returns the index of the ready-guard.
+ */
+int ProcAlt (Workspace p, ...)
+{
+	va_list ap;
+	int i;
+	int rdy = -1;
+	int enb = 0;
+
+	Alt (p);
+
+	/*{{{  enable*/
+	va_start (ap, p);
+	for (i=0; ; i++) {
+		Channel *c = va_arg (ap, Channel *);
+
+		if (c == NULL) {
+			break;
+		}
+		enb |= AltEnableChannel (p, 1, c);
+	}
+	va_end (ap);
+	/*}}}*/
+
+	if (!enb) {
+		/* nothing enabled, this is an error! */
+		SetErrM (p, "ProcAlt: no enabled guards!");
+	} else {
+		AltWait (p);
+	}
+
+	/*{{{  disabling*/
+	va_start (ap, p);
+	for (i=0; ; i++) {
+		Channel *c = va_arg (ap, Channel *);
+
+		if (c == NULL) {
+			break;
+		}
+		if (AltDisableChannel (p, 1, c)) {
+			if (rdy < 0) {
+				/* only select first ready guard in the list! */
+				rdy = i;
+			}
+		}
+	}
+	va_end (ap);
+	/*}}}*/
+
+	AltEnd (p);
+
+	return rdy;
+}
+/*}}}*/
+
 
 /*{{{  word ExternalCall0 (void *func)*/
 /*

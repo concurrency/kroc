@@ -46,6 +46,11 @@ static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other);
 static void ccsp_stopp (ccsp_pws_t *p);
 static void ccsp_ldtimer (ccsp_pws_t *p, int *tvar);
 static void ccsp_tin (ccsp_pws_t *p, int *tvar);
+static void ccsp_alt (ccsp_pws_t *p);
+static void ccsp_altend (ccsp_pws_t *p);
+static void ccsp_enbc (ccsp_pws_t *p, int guard, void **chanaddr, int *enb);
+static void ccsp_disc (ccsp_pws_t *p, int guard, void **chanaddr, int *fired);
+static void ccsp_altwt (ccsp_pws_t *p);
 
 
 /*}}}*/
@@ -68,6 +73,11 @@ static ccsp_calltable_t ccsp_calltable[] = {
 	{ 0, (void (*)(ccsp_pws_t *))ccsp_stopp },			/* CALL_STOPP */
 	{ 1, (void (*)(ccsp_pws_t *))ccsp_ldtimer },			/* CALL_LDTIMER */
 	{ 1, (void (*)(ccsp_pws_t *))ccsp_tin },			/* CALL_TIN */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_alt },			/* CALL_ALT */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_altend },			/* CALL_ALTEND */
+	{ 3, (void (*)(ccsp_pws_t *))ccsp_enbc },			/* CALL_ENBC */
+	{ 3, (void (*)(ccsp_pws_t *))ccsp_disc },			/* CALL_DISC */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_altwt },			/* CALL_ALTWT */
 	{ -1, NULL }
 };
 
@@ -140,9 +150,27 @@ static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int by
 		void *ddest;
 
 		/* we're the second, inputting process probably waiting */
-		/* FIXME: alting input */
 		other = (ccsp_pws_t *)*chanaddr;
 		ddest = (void *)other->pointer;
+
+		/* check for ALTint things */
+		if ((ddest == Enabling_p) || (ddest == Ready_p)) {
+			/* still enabling or already ready, make ready and leave ourselves here */
+			other->pointer = Ready_p;
+			p->pointer = dataaddr;
+			p->link = NULL;
+			*chanaddr = (void *)p;
+			ccsp_schedule (p->sched);
+		} else if (ddest == Waiting_p) {
+			/* waiting, make ready, reschedule and leave ourselves here */
+			other->pointer = Ready_p;
+			ccsp_linkproc (other->sched, other);
+
+			p->pointer = dataaddr;
+			p->link = NULL;
+			*chanaddr = (void *)p;
+			ccsp_schedule (p->sched);
+		}
 
 		memcpy (ddest, dataaddr, bytes);
 		ccsp_linkproc (other->sched, other);
@@ -285,7 +313,7 @@ static void ccsp_tin (ccsp_pws_t *p, int *tvar)
 
 	p->timeout = *tvar;
 
-#if 1
+#if 0
 fprintf (stderr, "ccsp_tin(): now=%d, timeout=%d\n", now, p->timeout);
 #endif
 	if (Time_AFTER (now, p->timeout)) {
@@ -315,6 +343,74 @@ fprintf (stderr, "ccsp_tin(): now=%d, timeout=%d\n", now, p->timeout);
 	ccsp_schedule (p->sched);
 }
 /*}}}*/
+/*{{{  static void ccsp_alt (ccsp_pws_t *p)*/
+/*
+ *	start alt.
+ */
+static void ccsp_alt (ccsp_pws_t *p)
+{
+	p->pointer = Enabling_p;
+}
+/*}}}*/
+/*{{{  static void ccsp_altend (ccsp_pws_t *p)*/
+/*
+ *	end alt.
+ */
+static void ccsp_altend (ccsp_pws_t *p)
+{
+	p->pointer = NotProcess_p;
+}
+/*}}}*/
+/*{{{  static void ccsp_enbc (ccsp_pws_t *p, int guard, void **chanaddr, int *enb)*/
+/*
+ *	enables a channel.
+ */
+static void ccsp_enbc (ccsp_pws_t *p, int guard, void **chanaddr, int *enb)
+{
+	if (!guard) {
+		*enb = 0;
+	} else if (*chanaddr == NotProcess_p) {
+		*chanaddr = (void *)p;
+		*enb = 1;
+	} else if (*chanaddr == (void *)p) {
+		*enb = 1;			/* although already enabled! */
+	} else {
+		*enb = 1;
+		p->pointer = Ready_p;
+	}
+}
+/*}}}*/
+/*{{{  static void ccsp_disc (ccsp_pws_t *p, int guard, void **chanaddr, int *fired)*/
+/*
+ *	disables a channel.
+ */
+static void ccsp_disc (ccsp_pws_t *p, int guard, void **chanaddr, int *fired)
+{
+	if (!guard) {
+		*fired = 0;
+	} else if (*chanaddr == (void *)p) {
+		*chanaddr = NotProcess_p;
+		*fired = 0;
+	} else if (*chanaddr == NotProcess_p) {
+		*fired = 0;
+	} else {
+		*fired = 1;
+	}
+}
+/*}}}*/
+/*{{{  static void ccsp_altwt (ccsp_pws_t *p)*/
+/*
+ *	does an alt wait, waiting for one of the alternatives to become ready
+ */
+static void ccsp_altwt (ccsp_pws_t *p)
+{
+	if (p->pointer == Enabling_p) {
+		p->pointer = Waiting_p;
+		ccsp_schedule (p->sched);
+	}
+}
+/*}}}*/
+
 
 /*{{{  static void ccsp_schedule (ccsp_sched_t *sched)*/
 /*
