@@ -332,7 +332,7 @@ fprintf (stderr, "ccsp_tin(): now=%d, timeout=%d\n", now, p->timeout);
 			p->sched->tptr = p;
 		} else {
 			/* somewhere down the line */
-			while ((walk->tlink != NotProcess_p) && Time_AFTER (walk->tlink->timeout, p->timeout)) {
+			while ((walk->tlink != NotProcess_p) && Time_AFTER (p->timeout, walk->tlink->timeout)) {
 				walk = walk->tlink;
 			}
 			/* insert after 'walk' */
