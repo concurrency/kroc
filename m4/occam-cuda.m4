@@ -55,7 +55,7 @@ no_cuda=""
 if test "$CUDA_CC" = "no" ; then
   no_cuda="yes"
 else
-  CUDA_CFLAGS="$(printf '%s' "$KROC_CCSP_CINCPATH") -Xcompiler $(printf '%s' "$KROC_CCSP_CFLAGS" | sed 's/^[ ]*//' | tr ' ' ',') -arch $def_compute_level"
+  CUDA_CFLAGS="$(printf '%s' "$KROC_CCSP_CINCPATH") -m32 -Xcompiler $(printf '%s' "$KROC_CCSP_CFLAGS" | sed 's/^[ ]*//' | tr ' ' ',') -arch $def_compute_level"
   CUDA_LIBS="-lcudart"
   cuda_major_version=$($CUDA_CC --version | \
   	grep 'release' | sed 's/.*release \([[0-9]]*\).\([[0-9]]*\).*/\1/')
