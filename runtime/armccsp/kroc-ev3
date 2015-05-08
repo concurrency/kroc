@@ -1,8 +1,11 @@
 #! /bin/bash
 
-PROG_CC="/usr/bin/arm-linux-gnueabi-gcc-4.6"
+DEVBASE=/media/ev3dev_2_img
+
+PROG_CC="/usr/bin/arm-linux-gnueabi-gcc-4.7"
 PROG_CC_FLAGS="-DPCASM -O0 -Wall -fPIC -fomit-frame-pointer"
-PROG_CC_INCPATH="-I. -I/home/frmb/research/ev3/ev3sources/extra/linux-devkit/arm-none-linux-gnueabi/usr/include -I/home/frmb/kroc_linux/gitsrc/runtime/armccsp/"
+# PROG_CC_INCPATH="-I. -I${DEVBASE}/usr/include -I${DEVBASE}/usr/include/arm-linux-gnueabi -I/home/frmb/kroc_linux/gitsrc/runtime/armccsp/"
+PROG_CC_INCPATH="-I. -I/home/frmb/kroc_linux/gitsrc/runtime/armccsp/"
 PROG_CC_LDFLAGS="/home/frmb/kroc_linux/gitsrc/runtime/armccsp/armccsp.a"
 
 if [ $# -ne 1 ]; then
