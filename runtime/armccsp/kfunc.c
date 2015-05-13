@@ -250,7 +250,7 @@ void ProcPar (Workspace p, int nprocs, ...)
 }
 /*}}}*/
 /*{{{  void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn)*/
-/* @APICALLCHAIN: ProcPar: =?, RuntimeSetEntry, RunP */
+/* @APICALLCHAIN: LightProcStart: =?, RuntimeSetEntry, RunP */
 /*
  *	starts a process
  */
