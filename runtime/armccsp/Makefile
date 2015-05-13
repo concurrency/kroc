@@ -1,6 +1,8 @@
 TARGET = armccsp.a
 SOURCES = support.c kfunc.c kernel.c
 
+CCHAIN = api-call-chain-armccsp
+
 CROSS_COMPILE = arm-linux-gnueabi-
 CC = gcc-4.7
 LD = ld
@@ -24,7 +26,7 @@ CFLAGS = -DPCASM $(INCLUDES) -O0 -Wall -fPIC -fomit-frame-pointer -fstack-usage
 #LDFLAGS = --shared
 ARFLAGS = -r
 
-all: $(TARGET)
+all: $(TARGET) $(CCHAIN)
 
 %.o: %.c
 	$(CROSS_COMPILE)$(CC) $(CFLAGS) -c -MMD -MP -o $@ $<
@@ -32,9 +34,12 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CROSS_COMPILE)$(AR) $(ARFLAGS) $@ $(OBJS)
 
+$(CCHAIN): $(TARGET) calltest.o
+	./makecallchain.sh > $(CCHAIN)
+
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(TARGET) $(DEPS)
+	rm -f $(OBJS) $(TARGET) $(DEPS) calltest.o $(CCHAIN)
 
 -include $(DEPS)
 

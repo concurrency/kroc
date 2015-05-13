@@ -1,6 +1,6 @@
 /*
  *	armccsp_if.h -- ARM/CCSP public interface for CIF style code
- *	Copyright (C) 2013 Fred Barnes, University of Kent <frmb@kent.ac.uk>
+ *	Copyright (C) 2013-2015 Fred Barnes, University of Kent <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -68,6 +68,9 @@ extern void ProcStartInitial_blind (Workspace p, void (*fcn)(Workspace));
 /*}}}*/
 
 /*{{{  ENTER_KERNEL(proc,call,args): abstraction for kernel entry proper*/
+
+/* @APICALLCHAIN: ENTER_KERNEL: =8 */
+
 #define ENTER_KERNEL(p,c,a) do { \
 	__asm__ __volatile__ ("							\n" \
 		"	mov	r0, %0						\n" \
@@ -98,6 +101,9 @@ extern void ProcStartInitial_blind (Workspace p, void (*fcn)(Workspace));
 
 /*}}}*/
 /*{{{  EXTERNAL_CALL(func,stack,result): abstraction for external function call*/
+
+/* @APICALLCHAIN: EXTERNAL_CALL: =20 */
+
 #define EXTERNAL_CALL(f,s,r) do { \
 	__asm__ __volatile__ ("							\n" \
 		"	mov	r4, sp			@ save SP here		\n" \
@@ -122,6 +128,7 @@ extern void ProcStartInitial_blind (Workspace p, void (*fcn)(Workspace));
  */
 
 /*{{{  static inline void ChanInit (Workspace p, Channel *c)*/
+/* @APICALLCHAIN: ChanInit: =? */
 /*
  *	initialises a channel (blanks it).
  */
@@ -131,6 +138,7 @@ static inline void ChanInit (Workspace p, Channel *c)
 }
 /*}}}*/
 /*{{{  static inline void ChanOut (Workspace p, Channel *c, const void *ptr, const int bytes)*/
+/* @APICALLCHAIN: ChanOut: =?, ENTER_KERNEL */
 /*
  *	channel output.
  */
@@ -143,6 +151,7 @@ static inline void ChanOut (Workspace p, Channel *c, const void *ptr, const int 
 }
 /*}}}*/
 /*{{{  static inline void ChanIn (Workspace p, Channel *c, void *ptr, const int bytes)*/
+/* @APICALLCHAIN: ChanIn: =?, ENTER_KERNEL */
 /*
  *	channel input.
  */
@@ -155,6 +164,7 @@ static inline void ChanIn (Workspace p, Channel *c, void *ptr, const int bytes)
 }
 /*}}}*/
 /*{{{  static inline void Reschedule (Workspace p)*/
+/* @APICALLCHAIN: Reschedule: =?, ENTER_KERNEL */
 /*
  *	reschedules -- scheduler yield.
  */
@@ -167,6 +177,7 @@ static inline void Reschedule (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline void SetErr (Workspace p)*/
+/* @APICALLCHAIN: SetErr: =?, ENTER_KERNEL */
 /*
  *	hard run-time error.
  */
@@ -179,6 +190,7 @@ static inline void SetErr (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline void SetErrM (Workspace p, const char *msg)*/
+/* @APICALLCHAIN: SetErrM: =?, ENTER_KERNEL */
 /*
  *	hard run-time error (with message).
  */
@@ -191,6 +203,7 @@ static inline void SetErrM (Workspace p, const char *msg)
 }
 /*}}}*/
 /*{{{  static inline void Shutdown (Workspace p)*/
+/* @APICALLCHAIN: Shutdown: =?, ENTER_KERNEL */
 /*
  *	shuts down the run-time system; last thing an application does.
  */
@@ -203,6 +216,7 @@ static inline void Shutdown (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline void *MAlloc (Workspace p, const int bytes)*/
+/* @APICALLCHAIN: MAlloc: =?, ENTER_KERNEL */
 /*
  *	dynamic memory allocation.
  */
@@ -218,6 +232,7 @@ static inline void *MAlloc (Workspace p, const int bytes)
 }
 /*}}}*/
 /*{{{  static inline void MRelease (Workspace p, void *ptr)*/
+/* @APICALLCHAIN: MRelease: =?, ENTER_KERNEL */
 /*
  *	dynamic memory release.
  */
@@ -230,6 +245,7 @@ static inline void MRelease (Workspace p, void *ptr)
 }
 /*}}}*/
 /*{{{  static inline void LightProcBarrierInit (Workspace p, LightProcBarrier *b, const int numprocs)*/
+/* @APICALLCHAIN: LightProcBarrierInit: =? */
 /*
  *	initialises a process barrier.
  */
@@ -240,6 +256,7 @@ static inline void LightProcBarrierInit (Workspace p, LightProcBarrier *b, const
 }
 /*}}}*/
 /*{{{  static inline void RunP (Workspace p, Workspace other)*/
+/* @APICALLCHAIN: RunP: =?, ENTER_KERNEL */
 /*
  *	runs a process.
  */
@@ -252,6 +269,7 @@ static inline void RunP (Workspace p, Workspace other)
 }
 /*}}}*/
 /*{{{  static inline void StopP (Workspace p)*/
+/* @APICALLCHAIN: StopP: =?, ENTER_KERNEL */
 /*
  *	stops a process.
  */
@@ -264,6 +282,7 @@ static inline void StopP (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline void LightProcBarrierWait (Workspace p, LightProcBarrier *b)*/
+/* @APICALLCHAIN: LightProcBarrierWait: =?, StopP */
 /*
  *	waits for completion of a lightweight process barrier.
  *	most of the operational guts for this are in ProcStartupCode (kfunc.c)
@@ -277,6 +296,7 @@ static inline void LightProcBarrierWait (Workspace p, LightProcBarrier *b)
 }
 /*}}}*/
 /*{{{  static inline int TimerRead (Workspace p)*/
+/* @APICALLCHAIN: TimerRead: =?, ENTER_KERNEL */
 /*
  *	reads the integer microsecond clock
  */
@@ -292,6 +312,7 @@ static inline int TimerRead (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline int TimerWait (Workspace p, int timeout)*/
+/* @APICALLCHAIN: TimerWait: =?, ENTER_KERNEL */
 /*
  *	waits until the specified time has passed.
  */
@@ -307,6 +328,7 @@ static inline int TimerWait (Workspace p, int timeout)
 }
 /*}}}*/
 /*{{{  static inline int Time_AFTER (int t1, int t2)*/
+/* @APICALLCHAIN: Time_AFTER: =? */
 /*
  *	determines whether one time (t2) is after another (t1).
  */
@@ -322,6 +344,7 @@ static inline int Time_AFTER (int t1, int t2)
 }
 /*}}}*/
 /*{{{  static inline void Alt (Workspace p)*/
+/* @APICALLCHAIN: Alt: =?, ENTER_KERNEL */
 /*
  *	start alternative.
  */
@@ -334,6 +357,7 @@ static inline void Alt (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline void AltEnd (Workspace p)*/
+/* @APICALLCHAIN: AltEnd: =?, ENTER_KERNEL */
 /*
  *	end alternative.
  */
@@ -346,6 +370,7 @@ static inline void AltEnd (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline int AltEnableChannel (Workspace p, const int guard, Channel *c)*/
+/* @APICALLCHAIN: AltEnableChannel: =?, ENTER_KERNEL */
 /*
  *	enable channel.
  */
@@ -361,6 +386,7 @@ static inline int AltEnableChannel (Workspace p, const int guard, Channel *c)
 }
 /*}}}*/
 /*{{{  static inline int AltDisableChannel (Workspace p, const int guard, Channel *c)*/
+/* @APICALLCHAIN: AltDisableChannel: =?, ENTER_KERNEL */
 /*
  *	disable channel.
  */
@@ -376,6 +402,7 @@ static inline int AltDisableChannel (Workspace p, const int guard, Channel *c)
 }
 /*}}}*/
 /*{{{  static inline void AltWait (Workspace p)*/
+/* @APICALLCHAIN: AltWait: =?, ENTER_KERNEL */
 /*
  *	waits for one of the alternatives to become ready.
  */

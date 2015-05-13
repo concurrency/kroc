@@ -1,6 +1,6 @@
 /*
  *	kfunc.c -- assorted ARM/CCSP kernel functions
- *	Copyright (C) 2013 Fred Barnes, University of Kent <frmb@kent.ac.uk>
+ *	Copyright (C) 2013-2015 Fred Barnes, University of Kent <frmb@kent.ac.uk>
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License as published by
@@ -148,6 +148,7 @@ void ProcStartInitial_blind (Workspace p, void (*fcn)(Workspace))
  */
 
 /*{{{  Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int stkwords)*/
+/* @APICALLCHAIN: LightProcInit: =?, MAlloc */
 /*
  *	lightweight process initialisation: assumes stack already allocated.
  */
@@ -186,6 +187,7 @@ ExternalCallN (fprintf, 7, stderr, "LightProcInit(): p=%p, newp=%p, stack=%p, np
 }
 /*}}}*/
 /*{{{  void LightProcFree (Workspace p, Workspace ws)*/
+/* @APICALLCHAIN: LightProcFree: =?, MRelease */
 /*
  *	lightweight process destruction: assumes stack released elsewhere.
  */
@@ -198,6 +200,7 @@ ExternalCallN (fprintf, 4, stderr, "LightProcFree(): p=%p, ws=%p\n", p, ws);
 }
 /*}}}*/
 /*{{{  void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg)*/
+/* @APICALLCHAIN: ProcParamAny: =? */
 /*
  *	sets process parameter.
  */
@@ -209,6 +212,7 @@ void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg)
 }
 /*}}}*/
 /*{{{  void *ProcGetParamAny (Workspace p, int paramno)*/
+/* @APICALLCHAIN: ProcGetParamAny: =? */
 /*
  *	gets process parameter.
  */
@@ -221,6 +225,7 @@ void *ProcGetParamAny (Workspace p, int paramno)
 /*}}}*/
 
 /*{{{  void ProcPar (Workspace p, int nprocs, ...)*/
+/* @APICALLCHAIN: ProcPar: =?, LightProcBarrierInit, LightProcStart, LightProcBarrierWait */
 /*
  *	runs processes in parallel
  */
@@ -245,6 +250,7 @@ void ProcPar (Workspace p, int nprocs, ...)
 }
 /*}}}*/
 /*{{{  void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn)*/
+/* @APICALLCHAIN: ProcPar: =?, RuntimeSetEntry, RunP */
 /*
  *	starts a process
  */
@@ -262,6 +268,7 @@ void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn
 /*}}}*/
 
 /*{{{  int ProcAlt (Workspace p, ...)*/
+/* @APICALLCHAIN: ProcAlt: =?, Alt, AltEnableChannel, SetErrM, AltWait, AltDisableChannel, AltEnd */
 /*
  *	performs an alternative over a number of channels, list is NULL-terminated.  Returns the index of the ready-guard.
  */
@@ -320,6 +327,7 @@ int ProcAlt (Workspace p, ...)
 
 
 /*{{{  word ExternalCall0 (void *func)*/
+/* @APICALLCHAIN: ExternalCall0: =?, ccsp_scheduler, EXTERNAL_CALL */
 /*
  *	external call for argument-less function.
  */
@@ -336,6 +344,7 @@ word ExternalCall0 (void *func)
 }
 /*}}}*/
 /*{{{  word ExternalCall1 (void *func, word arg)*/
+/* @APICALLCHAIN: ExternalCall1: =?, ccsp_scheduler, EXTERNAL_CALL */
 /*
  *	external call for single-argument function.
  */
@@ -354,6 +363,7 @@ word ExternalCall1 (void *func, word arg)
 }
 /*}}}*/
 /*{{{  word ExternalCallN (void *func, word argc, ...)*/
+/* @APICALLCHAIN: ExternalCallN: =?, ccsp_scheduler, EXTERNAL_CALL */
 /*
  *	external call for variable-argument function.
  */
