@@ -461,6 +461,7 @@ restart_schedule:
 }
 /*}}}*/
 /*{{{  ccsp_sched_t *ccsp_scheduler (void)*/
+/* @APICALLCHAIN: ccsp_scheduler: =? */
 /*
  *	returns the handle for the scheduler
  */

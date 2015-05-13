@@ -421,7 +421,9 @@ extern void LightProcFree (Workspace p, Workspace ws);
 extern void ProcParamAny (Workspace p, Workspace other, int paramno, void *arg);
 extern void *ProcGetParamAny (Workspace p, int paramno);
 
+/* @APICALLCHAIN: ProcParam: ProcParamAny */
 #define ProcParam(p,o,n,a) do { ProcParamAny (p, o, n, (void *)a); } while (0)
+/* @APICALLCHAIN: ProcGetParam: ProcGetParamAny */
 #define ProcGetParam(p,n,T) ((T)ProcGetParamAny (p, n))
 
 extern void ProcPar (Workspace p, int nprocs, ...);
