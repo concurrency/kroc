@@ -471,6 +471,7 @@ static inline void RuntimeSaveStack (Workspace p)
 }
 /*}}}*/
 /*{{{  static inline void RuntimeSetEntry (Workspace p)*/
+/* @APICALLCHAIN: RuntimeSetEntry: =8 */
 /*
  *	provides an entry-point for processes that can be ProcessResume()'d, simply
  *	branches off to ProcStartupCode (in kfunc.c).
