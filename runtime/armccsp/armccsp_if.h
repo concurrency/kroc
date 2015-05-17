@@ -52,7 +52,8 @@ typedef struct TAG_light_proc_barrier {
 #define CALL_TALT 17
 #define CALL_ENBT 18
 #define CALL_DIST 19
-#define CALL TALTWT 20
+#define CALL_TALTWT 20
+#define CALL_TESTCHAN 21
 
 /*}}}*/
 /*{{{  functions that should only ever be called in the context of the main program, i.e. from main()*/
@@ -414,6 +415,80 @@ static inline void AltWait (Workspace p)
 	ENTER_KERNEL (p, call, dargs);
 }
 /*}}}*/
+/*{{{  static inline void TAlt (Workspace p)*/
+/* @APICALLCHAIN: TAlt: =?, ENTER_KERNEL */
+/*
+ *	start timed alternative.
+ */
+static inline void TAlt (Workspace p)
+{
+	void *dargs[1] = {(void *)p};
+	int call = CALL_ALT;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
+/*{{{  static inline int AltEnableTimeout (Workspace p, const int guard, const int timeout)*/
+/* @APICALLCHAIN: AltEnableTimeout: =?, ENTER_KERNEL */
+/*
+ *	enable timeout.
+ */
+static inline int AltEnableTimeout (Workspace p, const int guard, const int timeout)
+{
+	int enabled = 0;
+	void *dargs[4] = {(void *)p, (void *)guard, (void *)timeout, (void *)&enabled};
+	int call = CALL_ENBT;
+
+	ENTER_KERNEL (p, call, dargs);
+
+	return enabled;
+}
+/*}}}*/
+/*{{{  static inline int AltDisableTimeout (Workspace p, const int guard, const int timeout)*/
+/* @APICALLCHAIN: AltDisableTimeout: =?, ENTER_KERNEL */
+/*
+ *	disable timeout.
+ */
+static inline int AltDisableTimeout (Workspace p, const int guard, const int timeout)
+{
+	int fired = 0;
+	void *dargs[4] = {(void *)p, (void *)guard, (void *)timeout, (void *)&fired};
+	int call = CALL_DIST;
+
+	ENTER_KERNEL (p, call, dargs);
+
+	return fired;
+}
+/*}}}*/
+/*{{{  static inline void TAltWait (Workspace p)*/
+/* @APICALLCHAIN: TAltWait: =?, ENTER_KERNEL */
+/*
+ *	waits for one of the alternatives to become ready (with timeout).
+ */
+static inline void TAltWait (Workspace p)
+{
+	void *dargs[1] = {(void *)p};
+	int call = CALL_TALTWT;
+
+	ENTER_KERNEL (p, call, dargs);
+}
+/*}}}*/
+/*{{{  static inline int TestChan (Workspace p, Channel *c)*/
+/* @APICALLCHAIN: TestChan: =?, ENTER_KERNEL */
+/*
+ *	tests to see if a channel is ready
+ */
+static inline int TestChan (Workspace p, Channel *c)
+{
+	int ready = 0;
+	void *dargs[3] = {(void *)p, (void *)c, (void *)&ready};
+	int call = CALL_TESTCHAN;
+
+	ENTER_KERNEL (p, call, dargs);
+
+	return ready;
+}
+/*}}}*/
 
 /*{{{  other things which are not macros, but defined in kfunc.c*/
 extern Workspace LightProcInit (Workspace p, word *stack, const int nparams, const int stkwords);
@@ -430,6 +505,8 @@ extern void ProcPar (Workspace p, int nprocs, ...);
 extern void LightProcStart (Workspace p, LightProcBarrier *bar, Workspace ws, void *fcn);
 
 extern int ProcAlt (Workspace p, ...);
+extern int ProcPriAlt (Workspace p, ...);
+extern int ProcPriAltSkip (Workspace p, ...);
 
 extern word ExternalCall0 (void *func);
 extern word ExternalCall1 (void *func, word arg);

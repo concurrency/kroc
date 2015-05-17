@@ -59,6 +59,9 @@ typedef struct TAG_ccsp_pws {
 #define Waiting_p	((void *)(NotProcess_p + 2))
 #define Ready_p		((void *)(NotProcess_p + 3))
 
+#define TimeNotSet_p	((void *)(NotProcess_p + 1))
+#define TimeSet_p	((void *)(NotProcess_p + 2))
+
 /* scheduler state */
 typedef struct TAG_ccsp_sched {
 	void *stack;

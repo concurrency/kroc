@@ -4,3 +4,5 @@ kfunc.d
 kernel.su
 kfunc.su
 support.su
+calltest.d
+calltest.su

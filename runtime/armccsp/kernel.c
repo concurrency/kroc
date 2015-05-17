@@ -51,6 +51,11 @@ static void ccsp_altend (ccsp_pws_t *p);
 static void ccsp_enbc (ccsp_pws_t *p, int guard, void **chanaddr, int *enb);
 static void ccsp_disc (ccsp_pws_t *p, int guard, void **chanaddr, int *fired);
 static void ccsp_altwt (ccsp_pws_t *p);
+static void ccsp_talt (ccsp_pws_t *p);
+static void ccsp_enbt (ccsp_pws_t *p, int guard, int timeout, int *enb);
+static void ccsp_dist (ccsp_pws_t *p, int guard, int timeout, int *fired);
+static void ccsp_taltwt (ccsp_pws_t *p);
+static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready);
 
 
 /*}}}*/
@@ -78,6 +83,11 @@ static ccsp_calltable_t ccsp_calltable[] = {
 	{ 3, (void (*)(ccsp_pws_t *))ccsp_enbc },			/* CALL_ENBC */
 	{ 3, (void (*)(ccsp_pws_t *))ccsp_disc },			/* CALL_DISC */
 	{ 0, (void (*)(ccsp_pws_t *))ccsp_altwt },			/* CALL_ALTWT */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_talt },			/* CALL_TALT */
+	{ 3, (void (*)(ccsp_pws_t *))ccsp_enbt },			/* CALL_ENBT */
+	{ 3, (void (*)(ccsp_pws_t *))ccsp_dist },			/* CALL_DIST */
+	{ 0, (void (*)(ccsp_pws_t *))ccsp_taltwt },			/* CALL_TALTWT */
+	{ 2, (void (*)(ccsp_pws_t *))ccsp_testchan },			/* CALL_TESTCHAN */
 	{ -1, NULL }
 };
 
@@ -410,7 +420,109 @@ static void ccsp_altwt (ccsp_pws_t *p)
 	}
 }
 /*}}}*/
+/*{{{  static void ccsp_talt (ccsp_pws_t *p)*/
+/*
+ *	start alt with timeout.
+ */
+static void ccsp_talt (ccsp_pws_t *p)
+{
+	p->pointer = Enabling_p;
+	p->tlink = TimeNotSet_p;
+}
+/*}}}*/
+/*{{{  static void ccsp_enbt (ccsp_pws_t *p, int guard, int timeout, int *enb)*/
+/*
+ *	enables a timeout.
+ */
+static void ccsp_enbt (ccsp_pws_t *p, int guard, int timeout, int *enb)
+{
+	if (!guard) {
+		*enb = 0;
+	} else {
+		int now = ccsp_readtime ();
 
+		if (Time_AFTER (now, timeout)) {
+			/* already timed out */
+			p->pointer = Ready_p;
+		} else if (p->tlink == TimeNotSet_p) {
+			/* first timeout encountered */
+			p->timeout = timeout;
+			p->tlink = TimeSet_p;
+		} else if (Time_AFTER (p->timeout, timeout)) {
+			/* this timeout is before previously set one */
+			p->timeout = timeout;
+		}
+		*enb = 1;
+	}
+}
+/*}}}*/
+/*{{{  static void ccsp_dist (ccsp_pws_t *p, int guard, int timeout, int *fired)*/
+/*
+ *	disables a timeout.
+ */
+static void ccsp_dist (ccsp_pws_t *p, int guard, int timeout, int *fired)
+{
+	if (!guard) {
+		*fired = 0;
+	} else {
+		int now = ccsp_readtime ();
+
+		if (p->tlink == NotProcess_p) {
+			/* not on the timer-queue anymore: probably timed out or already removed */
+		} else if ((p->tlink == TimeSet_p) || (p->tlink == TimeNotSet_p)) {
+			/* odd, but heyho */
+			p->tlink = NotProcess_p;
+		} else {
+			/* means we were on the timer-queue, so remove nicely */
+			ccsp_pws_t *prev, *walk;
+			ccsp_sched_t *sched = p->sched;
+
+			/* run down list to find us and previous */
+			for (prev = NotProcess_p, walk = sched->tptr; (walk != p) && (walk != NotProcess_p); prev = walk, walk = walk->tlink);
+			if (walk == p) {
+				if (prev == NotProcess_p) {
+					sched->tptr = p->tlink;
+				} else {
+					prev->tlink = p->tlink;
+				}
+			} /* else very odd! */
+			p->tlink = NotProcess_p;
+		}
+
+		if (Time_AFTER (now, timeout)) {
+			*fired = 1;
+		} else {
+			*fired = 0;
+		}
+	}
+}
+/*}}}*/
+/*{{{  static void ccsp_taltwt (ccsp_pws_t *p)*/
+/*
+ *	does a timed alt wait, waiting for one of the alternatives to become ready
+ */
+static void ccsp_taltwt (ccsp_pws_t *p)
+{
+	if (p->pointer == Enabling_p) {
+		/* FIXME: timer stuff */
+		p->pointer = Waiting_p;
+		ccsp_schedule (p->sched);
+	}
+}
+/*}}}*/
+/*{{{  static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready)*/
+/*
+ *	tests a channel to see if there's a process blocked in there.
+ */
+static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready)
+{
+	if (*chanaddr == NotProcess_p) {
+		*ready = 0;
+	} else {
+		*ready = 1;
+	}
+}
+/*}}}*/
 
 /*{{{  static void ccsp_schedule (ccsp_sched_t *sched)*/
 /*

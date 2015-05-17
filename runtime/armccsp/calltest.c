@@ -30,7 +30,7 @@ void test_calls_wptr (Workspace p, int i)
 
 void test_calls_wptr_chans (Workspace p, Channel *in0, Channel *in1, Channel *out)
 {
-	int data;
+	int data, timeo;
 	Channel local;
 	
 	ChanInit (p, &local);
@@ -45,7 +45,18 @@ void test_calls_wptr_chans (Workspace p, Channel *in0, Channel *in1, Channel *ou
 	AltDisableChannel (p, 1, in1);
 	AltEnd (p);
 
+	timeo = TimerRead (p);
+	TAlt (p);
+	AltEnableTimeout (p, 1, timeo);
+	TAltWait (p);
+	AltDisableTimeout (p, 1, timeo);
+	AltEnd (p);
+
 	ProcAlt (p, in0, in1, NULL);
+	ProcPriAlt (p, in0, in1, NULL);
+	ProcPriAltSkip (p, in0, in1, NULL);
+
+	TestChan (p, &local);
 }
 
 void dummyfcn (Workspace me, int arg0, int arg1)

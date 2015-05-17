@@ -324,6 +324,94 @@ int ProcAlt (Workspace p, ...)
 	return rdy;
 }
 /*}}}*/
+/*{{{  int ProcPriAlt (Workspace p, ...)*/
+/* @APICALLCHAIN: ProcPriAlt: =?, Alt, AltEnableChannel, SetErrM, AltWait, AltDisableChannel, AltEnd */
+/*
+ *	performs a prioritised alternative over a number of channels, list is NULL-terminated.  Returns the index of the ready-guard.
+ */
+int ProcPriAlt (Workspace p, ...)
+{
+	va_list ap;
+	int i;
+	int rdy = -1;
+	int enb = 0;
+
+	Alt (p);
+
+	/*{{{  enable*/
+	va_start (ap, p);
+	for (i=0; ; i++) {
+		Channel *c = va_arg (ap, Channel *);
+
+		if (c == NULL) {
+			break;
+		}
+		enb |= AltEnableChannel (p, 1, c);
+	}
+	va_end (ap);
+	/*}}}*/
+
+	if (!enb) {
+		/* nothing enabled, this is an error! */
+		SetErrM (p, "ProcPriAlt: no enabled guards!");
+	} else {
+		AltWait (p);
+	}
+
+	/*{{{  disabling*/
+	va_start (ap, p);
+	for (i=0; ; i++) {
+		Channel *c = va_arg (ap, Channel *);
+
+		if (c == NULL) {
+			break;
+		}
+		if (AltDisableChannel (p, 1, c)) {
+			if (rdy < 0) {
+				/* only select first ready guard in the list! */
+				rdy = i;
+			}
+		}
+	}
+	va_end (ap);
+	/*}}}*/
+
+	AltEnd (p);
+
+	return rdy;
+}
+/*}}}*/
+/*{{{  int ProcPriAltSkip (Workspace p, ...)*/
+/* @APICALLCHAIN: ProcPriAltSkip: =?, Alt, AltEnableChannel, SetErrM, AltWait, AltDisableChannel, AltEnd */
+/*
+ *	performs a prioritised alternative over a number of channels, or skips if none ready, list is NULL-terminated.  Returns the index of the ready-guard.
+ */
+int ProcPriAltSkip (Workspace p, ...)
+{
+	va_list ap;
+	int i;
+	int rdy = -1;
+
+	Alt (p);
+
+	va_start (ap, p);
+	for (i=0; ; i++) {
+		Channel *c = va_arg (ap, Channel *);
+
+		if (c == NULL) {
+			break;
+		}
+		if (TestChan (p, c)) {
+			/* this one is ready! */
+			rdy = i;
+			break;
+		}
+	}
+	va_end (ap);
+	
+	return rdy;
+}
+/*}}}*/
 
 
 /*{{{  word ExternalCall0 (void *func)*/
