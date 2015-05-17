@@ -61,7 +61,7 @@ static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready);
 /*}}}*/
 /*{{{  call table*/
 typedef struct TAG_ccsp_calltable {
-	int nparams;
+	int nparams;							/* number of parameters *after* the workspace pointer */
 	void (*fcptr)(ccsp_pws_t *);
 } ccsp_calltable_t;
 
