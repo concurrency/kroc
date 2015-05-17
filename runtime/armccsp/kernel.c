@@ -516,6 +516,9 @@ static void ccsp_taltwt (ccsp_pws_t *p)
  */
 static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready)
 {
+#if 0
+fprintf (stderr, "ccsp_testchan(): channel at %p, value is %p\n", chanaddr, *chanaddr);
+#endif
 	if (*chanaddr == NotProcess_p) {
 		*ready = 0;
 	} else {

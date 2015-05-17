@@ -395,11 +395,14 @@ int ProcPriAltSkip (Workspace p, ...)
 	va_start (ap, p);
 	for (i=0; ; i++) {
 		Channel *c = va_arg (ap, Channel *);
+		int xr;
 
 		if (c == NULL) {
+			/* end of list */
 			break;
 		}
-		if (TestChan (p, c)) {
+		xr = TestChan (p, c);
+		if (xr) {
 			/* this one is ready! */
 			rdy = i;
 			break;
