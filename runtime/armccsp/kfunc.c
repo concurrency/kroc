@@ -382,7 +382,7 @@ int ProcPriAlt (Workspace p, ...)
 }
 /*}}}*/
 /*{{{  int ProcPriAltSkip (Workspace p, ...)*/
-/* @APICALLCHAIN: ProcPriAltSkip: =?, Alt, AltEnableChannel, SetErrM, AltWait, AltDisableChannel, AltEnd */
+/* @APICALLCHAIN: ProcPriAltSkip: =?, TestChan */
 /*
  *	performs a prioritised alternative over a number of channels, or skips if none ready, list is NULL-terminated.  Returns the index of the ready-guard.
  */
@@ -391,8 +391,6 @@ int ProcPriAltSkip (Workspace p, ...)
 	va_list ap;
 	int i;
 	int rdy = -1;
-
-	Alt (p);
 
 	va_start (ap, p);
 	for (i=0; ; i++) {
