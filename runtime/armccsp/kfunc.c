@@ -321,6 +321,10 @@ int ProcAlt (Workspace p, ...)
 
 	AltEnd (p);
 
+	if (rdy < 0) {
+		SetErrM (p, "ProcAlt: no ready guard at end!");
+	}
+
 	return rdy;
 }
 /*}}}*/
@@ -378,11 +382,16 @@ int ProcPriAlt (Workspace p, ...)
 
 	AltEnd (p);
 
+	if (rdy < 0) {
+		SetErrM (p, "ProcPriAlt: no ready guard at end!");
+	}
+
+
 	return rdy;
 }
 /*}}}*/
 /*{{{  int ProcPriAltSkip (Workspace p, ...)*/
-/* @APICALLCHAIN: ProcPriAltSkip: =?, TestChan */
+/* @APICALLCHAIN: ProcPriAltSkip: =?, TestChan, Reschedule */
 /*
  *	performs a prioritised alternative over a number of channels, or skips if none ready, list is NULL-terminated.  Returns the index of the ready-guard.
  */
@@ -409,6 +418,10 @@ int ProcPriAltSkip (Workspace p, ...)
 		}
 	}
 	va_end (ap);
+
+	if (rdy < 0) {
+		Reschedule (p);
+	}
 	
 	return rdy;
 }

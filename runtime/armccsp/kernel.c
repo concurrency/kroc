@@ -149,6 +149,10 @@ static void ccsp_processtimers (ccsp_sched_t *sched)
  */
 static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)
 {
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_chanout(%p): channel word at %p = [%p]\n", p, chanaddr, *chanaddr);
+#endif
+
 	if (*chanaddr == NotProcess_p) {
 		/* we're the first */
 		p->pointer = dataaddr;
@@ -194,6 +198,10 @@ static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int by
  */
 static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)
 {
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_chanin(%p): channel word at %p = [%p]\n", p, chanaddr, *chanaddr);
+#endif
+
 	if (*chanaddr == NotProcess_p) {
 		/* we're the first */
 		p->pointer = dataaddr;
@@ -323,8 +331,8 @@ static void ccsp_tin (ccsp_pws_t *p, int *tvar)
 
 	p->timeout = *tvar;
 
-#if 0
-fprintf (stderr, "ccsp_tin(): now=%d, timeout=%d\n", now, p->timeout);
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_tin(%p): now=%d, timeout=%d\n", p, now, p->timeout);
 #endif
 	if (Time_AFTER (now, p->timeout)) {
 		/* already gone */
@@ -516,8 +524,8 @@ static void ccsp_taltwt (ccsp_pws_t *p)
  */
 static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready)
 {
-#if 0
-fprintf (stderr, "ccsp_testchan(): channel at %p, value is %p\n", chanaddr, *chanaddr);
+#ifdef CCSP_DEBUG
+	fprintf (stderr, "ccsp_testchan(%p): channel at %p, value is %p (ready at %p)\n", p, chanaddr, *chanaddr, ready);
 #endif
 	if (*chanaddr == NotProcess_p) {
 		*ready = 0;
