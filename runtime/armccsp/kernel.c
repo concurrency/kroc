@@ -101,7 +101,7 @@ static ccsp_calltable_t ccsp_calltable[] = {
  */
 static void ccsp_linkproc (ccsp_sched_t *sched, ccsp_pws_t *p)
 {
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_linkproc(): enqueue %p\n", p);
 #endif
 	p->link = NotProcess_p;			/* for sanity's sake */
@@ -135,6 +135,9 @@ static void ccsp_processtimers (ccsp_sched_t *sched)
 
 	while ((sched->tptr != NotProcess_p) && Time_AFTER (now, sched->tptr->timeout)) {
 		/* this one is done, schedule */
+#if defined(CCSP_DEBUG)
+		fprintf (stderr, "ccsp_processtimers(): timeout for %p\n", sched->tptr);
+#endif
 		ccsp_linkproc (sched, sched->tptr);
 		sched->tptr->timeout = now;		/* triggered *now* */
 		sched->tptr = sched->tptr->tlink;
@@ -149,7 +152,7 @@ static void ccsp_processtimers (ccsp_sched_t *sched)
  */
 static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)
 {
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_chanout(%p): channel word at %p = [%p]\n", p, chanaddr, *chanaddr);
 #endif
 
@@ -198,7 +201,7 @@ static void ccsp_chanout (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int by
  */
 static void ccsp_chanin (ccsp_pws_t *p, void **chanaddr, void *dataaddr, int bytes)
 {
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_chanin(%p): channel word at %p = [%p]\n", p, chanaddr, *chanaddr);
 #endif
 
@@ -238,7 +241,7 @@ static void ccsp_shutdown (ccsp_pws_t *p)
  */
 static void ccsp_pause (ccsp_pws_t *p)
 {
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_pause(): p=%p (stack=%p, base=%p, size=%d)\n", p, p->stack, p->stack_base, p->stack_size);
 #endif
 	ccsp_linkproc (p->sched, p);
@@ -293,7 +296,7 @@ static void ccsp_mrelease (ccsp_pws_t *p, void *ptr)
  */
 static void ccsp_runp (ccsp_pws_t *p, ccsp_pws_t *other)
 {
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_runp() p=%p (stack=%p), other=%p (stack=%p)\n", p, p->stack, other, other->stack);
 #endif
 	ccsp_linkproc (other->sched, other);
@@ -331,7 +334,7 @@ static void ccsp_tin (ccsp_pws_t *p, int *tvar)
 
 	p->timeout = *tvar;
 
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_tin(%p): now=%d, timeout=%d\n", p, now, p->timeout);
 #endif
 	if (Time_AFTER (now, p->timeout)) {
@@ -524,7 +527,7 @@ static void ccsp_taltwt (ccsp_pws_t *p)
  */
 static void ccsp_testchan (ccsp_pws_t *p, void **chanaddr, int *ready)
 {
-#ifdef CCSP_DEBUG
+#if defined(CCSP_DEBUG)
 	fprintf (stderr, "ccsp_testchan(%p): channel at %p, value is %p (ready at %p)\n", p, chanaddr, *chanaddr, ready);
 #endif
 	if (*chanaddr == NotProcess_p) {
