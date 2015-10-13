@@ -1793,7 +1793,13 @@ fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dy
 						deferred_cond (ts);
 						tstack_setprim (ts->stack, I_J, arch);
 						if (!ts->stack->ts_depth && options.pause_at_loopend) {
-							add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, y_opd));
+							/* FIX: if we're using the new CCSP in multiprocessor-mode, better do this as PAUSE then JUMP */
+							if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) == (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) {
+								arch->compose_kcall (ts, K_PAUSE, 0, 0);
+								add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, y_opd));
+							} else {
+								add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, y_opd));
+							}
 						} else {
 							add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, y_opd));
 						}
@@ -1940,7 +1946,13 @@ fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dy
 							add_to_ins_chain (compose_ins (INS_INC, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH));
 						}
 						if (options.pause_at_loopend) {
-							add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, le_l2));
+							/* FIX: if we're using the new CCSP in multiprocessor-mode, better do this as PAUSE then JUMP */
+							if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) == (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) {
+								arch->compose_kcall (ts, K_PAUSE, 0, 0);
+								add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, le_l2));
+							} else {
+								add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, le_l2));
+							}
 						} else {
 							add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, le_l2));
 						}
@@ -1974,7 +1986,13 @@ fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dy
 				add_to_ins_chain (compose_ins (INS_ADD, 2, 1, ARG_REG, tmp_reg, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH));
 				/* add_to_ins_chain (compose_ins (INS_INC, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH)); */
 				if (options.pause_at_loopend) {
-					add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, le_l2));
+					/* FIX: if we're using the new CCSP in multiprocessor-mode, better do this as PAUSE then JUMP */
+					if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) == (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) {
+						arch->compose_kcall (ts, K_PAUSE, 0, 0);
+						add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, le_l2));
+					} else {
+						add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, le_l2));
+					}
 				} else {
 					add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, le_l2));
 				}
@@ -2003,7 +2021,13 @@ fprintf (stderr, "MAINDYNCALL: label_name = [%s], fcn_name = [%s]\n", trtl->u.dy
 				/* increment index */
 				add_to_ins_chain (compose_ins (INS_DEC, 1, 1, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH, ARG_REGIND | ARG_DISP, REG_WPTR, le_wsoff << WSH));
 				if (options.pause_at_loopend) {
-					add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, le_l2));
+					/* FIX: if we're using the new CCSP in multiprocessor-mode, better do this as PAUSE then JUMP */
+					if ((options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) == (KRNLIFACE_NEWCCSP | KRNLIFACE_MP)) {
+						arch->compose_kcall (ts, K_PAUSE, 0, 0);
+						add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, le_l2));
+					} else {
+						add_to_ins_chain (compose_ins (INS_PJUMP, 1, 0, ARG_LABEL, le_l2));
+					}
 				} else {
 					add_to_ins_chain (compose_ins (INS_JUMP, 1, 0, ARG_LABEL, le_l2));
 				}

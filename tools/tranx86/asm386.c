@@ -648,7 +648,15 @@ static int disassemble_code (ins_chain *ins, FILE *outstream, int regtrace)
 			/* jump to somewhere, but poll scheduler and see if a reschedule is needed.  
 			 * The synch-flags 0(sf) and Tptr 4(sf) are checked for activity.
 			 * We know that (a) the tstack is empty and (b) we have two/three words below Wptr for stuff */
-			if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
+			if (options.kernel_interface & KRNLIFACE_MP) {
+				/* if this is set, multiprocessor kernel, so reschedule the old way */
+				fprintf (outstream, "# invalid PJUMP, defaulting to regular jump\n");
+				fprintf (stderr, "%s: warning: pjump stepped back to regular jump\n", progname);
+
+				fprintf (outstream, "\t%s\t", codes[INS_JUMP]);
+				drop_arg (tmp->in_args[0], outstream);
+				fprintf (outstream, "\n");
+			} else if (options.kernel_interface & (KRNLIFACE_NEWCCSP | KRNLIFACE_RMOX)) {
 				fprintf (outstream, "# generating PJUMP code\n");
 			#if 0	/* CMPXCHG8B version */
 				fprintf (outstream, "\tmovl\t$0, %%eax\n");
