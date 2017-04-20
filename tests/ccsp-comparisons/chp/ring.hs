@@ -5,7 +5,8 @@ import Control.Concurrent.CHP.Channels
 import Control.Concurrent.CHP.Console
 import Control.Concurrent.CHP.Monad
 import Control.Concurrent.CHP.Parallel
-import qualified Control.Concurrent.CHP.Utils
+import qualified Control.Concurrent.CHP.Composed
+import qualified Control.Concurrent.CHP.Connect
 import System.Environment
 import System.IO
 
@@ -29,13 +30,13 @@ rootElement cycles token this next = do
   rootElement (cycles - 1) token' this next
 
 printString c s = do
-  mapM_ (writeChannel c) s 
+  mapM_ (writeChannel c) s
 
 root :: ConsoleChans -> Int -> Chanin Int -> Chanout Int -> CHP ()
 root chans cycles this next = do
   writeChannel next 1
   token1 <- readChannel this
-  
+
   printString (cStderr chans) "start\n"
   token2 <- rootElement cycles token1 this next
   printString (cStderr chans) "end\n"
@@ -51,7 +52,7 @@ root chans cycles this next = do
 
 consoleMain :: Int -> ConsoleChans -> CHP ()
 consoleMain count chans = do
-  Control.Concurrent.CHP.Utils.cycle (c:cs)
+  Control.Concurrent.CHP.Composed.run $ Control.Concurrent.CHP.Composed.cycleR (c:cs)
   return ()
     where c  = root chans count
           cs = take (elements - 1) (repeat element)
