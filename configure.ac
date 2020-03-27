@@ -37,7 +37,7 @@ if test $OCCBUILD_TOOLCHAIN = tvm; then
   OCCAM_CONFIG_SUBDIRS(tools/tenctool)
   # OCCAM_CONFIG_SUBDIRS(tools/skroc)
   # OCCAM_CONFIG_SUBDIRS(tools/slinker)
-  OCCAM_CONFIG_SUBDIRS(tools/tinyswig)
+  # OCCAM_CONFIG_SUBDIRS(tools/tinyswig)
 
   OCCAM_CONFIG_TARGET_SUBDIRS(runtime/libtvm)
 
@@ -124,7 +124,7 @@ OCCAM_CONFIG_TARGET_SUBDIRS(tests/cgtests)
 #   OCCAM_CONFIG_TARGET_SUBDIRS(tests/occbench)
 # fi
  
-OCCAM_CONFIG_SUBDIRS(doc)
+# OCCAM_CONFIG_SUBDIRS(doc)
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
