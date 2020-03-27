@@ -11,11 +11,38 @@
 *.so
 *~
 
-
 # Dangerous, but we'll do it.
 config.h
 config.log
 defaults.scm
+
+# Build outputs/generated as part of build
+# 20200327 MCJ
+**tbc
+**compile*
+modules/random/examples/test-driver
+modules/useful/examples/test-driver
+runtime/libtvm/dispatch-cookie
+runtime/libtvm/dispatch_ins.c
+runtime/libtvm/ins_names.h
+runtime/libtvm/instructions.inc
+runtime/libtvm/jumptbl_ex_sec.c
+runtime/libtvm/jumptbl_pri.c
+runtime/libtvm/jumptbl_sec.c
+runtime/libtvm/stamp-h2
+runtime/libtvm/tvm_config.h
+tests/cgtests/test-driver
+tests/hereticc/test-driver
+tests/occbench/test-driver
+tools/plinker/build.pl
+tools/plinker/plinker.pl
+tools/plinker/store.pl
+tools/plinker/tce-dump.pl
+tools/tenctool/tencdump
+tools/tenctool/tencid
+tools/tenctool/tencstrip
+tvm/posix/tvm
+tvm/posix/tvm-posix
 
 # Built targets
 tools/mkoccdeps/mkoccdeps
