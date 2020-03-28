@@ -18,6 +18,7 @@ defaults.scm
 
 # Build outputs/generated as part of build
 # 20200327 MCJ
+**vscode*
 **tbc
 **compile*
 modules/random/examples/test-driver
