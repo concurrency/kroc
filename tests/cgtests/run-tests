@@ -82,11 +82,10 @@ def run_test(name, verbose, interpreter):
 				break
 			else:
 				continue
-
 		s = os.read(pr, 4096)
-		if s == "":
+		if s.decode("utf-8") == "":
 			break
-		buf.append(s)
+		buf.append(s.decode("utf-8"))
 	lines = [s.rstrip() for s in "".join(buf).split("\n")]
 
 	os.close(pr)
