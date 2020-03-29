@@ -1686,7 +1686,7 @@ PRIVATE void tpreevaltemp (paraminfo_t *const paraminfoptr, paraminfo_t *const p
 	/* bug 1000 3/10/90 CON */
 	
 	if (preeval (paraminfoptr->pmode, exp) && ((paraminfoptr->pmaxparamslotused > 0) || preevalrealbyvalue (paraminfoptr))) {
-		// DEBUG_MSG (("tinstance: simplifying param %d cos preeval/nested\n", i));
+		DEBUG_MSG (("tinstance: simplifying param %d cos preeval/nested\n", i));
 #if 0
 fprintf (stderr, "tinstance: parameter %d about to be simplified because preeval()\n", i);
 #endif
