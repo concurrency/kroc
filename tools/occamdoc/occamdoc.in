@@ -19,11 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 # MA 02110-1301, USA.
 
-import re, sys, xml.dom.minidom, codecs, getopt, os
-try:
-	from StringIO import StringIO
-except:
-	from io import StringIO
+import re, sys, xml.dom.minidom, codecs, StringIO, getopt, os
 
 VERSION = "$Revision$"[11:-2]
 CONTACT = "kroc-bugs@kent.ac.uk"
@@ -481,7 +477,7 @@ def parse_comment(lines):
 				level -= 1
 		parts[-1] += l + "\n"
 
-	parts = list(map(lambda s: s.strip(), parts))
+	parts = map(lambda s: s.strip(), parts)
 
 	if parts[0] == "":
 		parts[0] = None
@@ -859,7 +855,7 @@ def decl_to_xml(doc, decl, errors):
 	el.setAttribute("type", decl.type)
 	try:
 		decl_to_xml_body(doc, decl, el, errors)
-	except OccamDocException as e:
+	except OccamDocException, e:
 		errors.append("Error: In comment starting at " + decl.error_pos + ": " + str(e))
 		errors.append("  Skipping rest of " + decl.ident)
 	return el
@@ -1022,7 +1018,7 @@ def copy_file(filename, output_dir):
 	fo.close()
 
 def usage():
-	print ("""occamdoc, version """ + VERSION + """
+	print """occamdoc, version """ + VERSION + """
 Usage: occamdoc [OPTION]... FILE [FILE]...
 
 Read occam-pi source files and extract documentation.
@@ -1038,7 +1034,7 @@ Read occam-pi source files and extract documentation.
 -v                           Be verbose: say what's being done
 --help                       Display this help and exit
 
-Report bugs to <""" + CONTACT + """>.""")
+Report bugs to <""" + CONTACT + """>."""
 
 def main(args):
 	try:
@@ -1114,7 +1110,7 @@ def main(args):
 				else:
 					decls[ident] = decl
 			status("%d definitions\n" % len(decl.children))
-		except OccamDocException as e:
+		except OccamDocException, e:
 			status("failed\n")
 			print >>sys.stderr, "Error: At " + f.pos_str() + ": " + str(e)
 			print >>sys.stderr, "  Skipping rest of " + file
@@ -1145,11 +1141,11 @@ def main(args):
 		if output_dir is not None:
 			f.close()
 		status("done\n")
-	except OccamDocException as e:
+	except OccamDocException, e:
 		status("failed\n")
 		print >>sys.stderr, "Error: During output: " + str(e)
 		return 1
-	except IOError as e:
+	except IOError, e:
 		status("failed\n")
 		print >>sys.stderr, "Error writing XML file: " + str(e)
 		return 1
@@ -1179,11 +1175,11 @@ def main(args):
 			copy_file("occamdoc.css", output_dir)
 
 			status("done\n")
-	except OccamDocException as e:
+	except OccamDocException, e:
 		status("failed\n")
 		print >>sys.stderr, "Error: During conversion: " + str(e)
 		return 1
-	except IOError as e:
+	except IOError, e:
 		status("failed\n")
 		print >>sys.stderr, "Error: While writing output files: " + str(e)
 		return 1
