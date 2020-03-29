@@ -16,7 +16,7 @@ if test "x$OCCBUILD_API_VERSION" != x3; then
 fi
 
 OCCAM_CONFIG_SUBDIRS(tools/ilibr)
-OCCAM_CONFIG_SUBDIRS(tools/kroc)
+# OCCAM_CONFIG_SUBDIRS(tools/kroc)
 OCCAM_CONFIG_SUBDIRS(tools/mkoccdeps)
 if test $OCCBUILD_TOOLCHAIN != tock; then
   OCCAM_CONFIG_SUBDIRS(tools/occ21)
