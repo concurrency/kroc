@@ -104,7 +104,7 @@ def run_command(cmd):
 
 def safe_sorted(l):
 	"""Like sorted(), but returns a mutable list."""
-	l = l[:]
+	l = list(l)
 	l.sort()
 	return l
 
@@ -488,7 +488,7 @@ class KRoCToolchain(Toolchain):
 			need_mods.append("forall")
 
 		# Look for all the other modules we need.
-		full_path = search_path + capture(programs["kroc"] + ["--incpath"]).strip().split(":")
+		full_path = search_path + capture(programs["kroc"] + ["--incpath"]).strip().split(b":")
 		lib_opts = []
 		for need in need_mods:
 			fn = find_in_path("%s.module" % need, full_path)
