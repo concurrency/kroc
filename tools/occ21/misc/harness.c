@@ -564,7 +564,7 @@ PUBLIC char asmfilename[MAX_FILENAME_LENGTH];
 #endif
 
 arg2_help_page_type help_level = 0;
-arg2_help_page_info oc_help_info;
+extern arg2_help_page_info oc_help_info;
 /*}}}*/
 
 /*{{{  extra definitions for COMPILING_TO_JCODE*/

@@ -84,7 +84,7 @@ if test "x$KROC_BUILD_ROOT" != "x"; then
                 KROC_CCSP_ENABLE_CPUTIMERS=$enableval,
                 KROC_CCSP_ENABLE_CPUTIMERS=no)
 
-  KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -fomit-frame-pointer -fno-defer-pop"
+  KROC_CCSP_CFLAGS="$KROC_CCSP_CFLAGS -fomit-frame-pointer -fno-defer-pop -no-pie -fno-pie"
 
   case "$target_cpu" in
     x86_64)
